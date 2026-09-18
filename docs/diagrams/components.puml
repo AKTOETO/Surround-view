@@ -1,0 +1,53 @@
+@startuml Компоненты программного комплекса
+title Компоненты программного комплекса
+
+package "sv-server" {
+  [Transport] as Transport
+  [Input Adapters] as Adapters
+  [Time Synchronization] as TimeSync
+  [Configuration] as ServerConfig
+  [Calibration] as Calibration
+  [Geometry Generator] as Geometry
+  [GPU Backend] as GPU
+  [Render Pipeline] as Render
+  [Camera Controller] as CameraController
+  [Telemetry and Health] as Telemetry
+}
+
+package "sv-ui (Qt5)" {
+  [Video Sink] as VideoSink
+  [Touch Mapper] as TouchMapper
+  [Status Model] as StatusModel
+}
+
+package "sv-simulator" {
+  [3D World] as World
+  [Virtual Cameras] as VirtualCameras
+  [Sensor Model] as SensorModel
+  [CAN Model] as CANModel
+  [Recorder / Replayer] as Recorder
+}
+
+Transport --> Adapters
+Adapters --> TimeSync
+TimeSync --> Render
+ServerConfig --> Calibration
+ServerConfig --> Geometry
+Calibration --> Render
+Geometry --> Render
+GPU --> Render
+CameraController --> Render
+Render --> Telemetry
+Transport --> CameraController
+Transport --> VideoSink
+TouchMapper --> Transport
+Telemetry --> StatusModel
+World --> VirtualCameras
+World --> SensorModel
+World --> CANModel
+VirtualCameras --> Recorder
+SensorModel --> Recorder
+CANModel --> Recorder
+Recorder --> Transport
+
+@enduml

@@ -1,0 +1,29 @@
+@startuml
+title Обработка одного кадра в серверном pipeline
+
+participant "Camera/Simulator" as Source
+participant "Input Adapter" as Adapter
+participant "Time Sync" as Sync
+participant "Frame Queue" as Queue
+participant "GPU Render Pipeline" as GPU
+participant "Camera Controller" as Controller
+participant "Qt5 UI" as UI
+
+Source -> Adapter : camera_frame(camera_id, timestamp, payload)
+Adapter -> Sync : validated frame
+Sync -> Queue : enqueue by camera_id
+Queue -> GPU : synchronized camera textures
+Controller -> GPU : virtual camera state
+GPU -> GPU : bowl vertices
+GPU -> GPU : fisheye projection
+GPU -> GPU : sampling + masks + blending
+GPU -> UI : rendered_frame + render timestamp
+UI -> Controller : ui_camera_command
+Controller --> UI : camera_state
+
+alt stale or missing input
+  Sync -> GPU : last valid frame / placeholder policy
+  GPU -> UI : rendered frame + health telemetry
+end
+
+@enduml

@@ -1,0 +1,33 @@
+@startuml Контекст распределенной системы Surround View
+title Контекст распределенной системы Surround View
+
+actor "Оператор автомобиля" as Operator
+actor "Разработчик / исследователь" as Researcher
+
+rectangle "Ноутбук" {
+  component "sv-simulator\n3D мир + управление" as Simulator
+}
+
+rectangle "Головное устройство" {
+  component "sv-server\nсбор данных + GPU pipeline" as Server
+  component "sv-ui\nQt5 display + touch" as UI
+  database "Конфигурация и\ncalibration" as Config
+}
+
+cloud "Устройства автомобиля" {
+  component "Камеры" as Cameras
+  component "Сенсоры" as Sensors
+  component "CAN шина" as CAN
+}
+
+Operator --> UI : touch / presets
+Researcher --> Simulator : сценарий / управление
+Researcher --> Config : конфигурация
+Simulator --> Server : camera frames\nsensors / CAN
+Cameras --> Server : camera frames
+Sensors --> Server : sensor samples
+CAN --> Server : CAN frames
+Config --> Server : vehicle + calibration
+Server --> UI : rendered frame\nstate / telemetry
+
+@enduml
