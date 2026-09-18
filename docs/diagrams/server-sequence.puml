@@ -1,29 +1,59 @@
 @startuml
-title Обработка одного кадра в серверном pipeline
-
-participant "Camera/Simulator" as Source
-participant "Input Adapter" as Adapter
-participant "Time Sync" as Sync
-participant "Frame Queue" as Queue
-participant "GPU Render Pipeline" as GPU
-participant "Camera Controller" as Controller
-participant "Qt5 UI" as UI
-
-Source -> Adapter : camera_frame(camera_id, timestamp, payload)
-Adapter -> Sync : validated frame
-Sync -> Queue : enqueue by camera_id
-Queue -> GPU : synchronized camera textures
-Controller -> GPU : virtual camera state
-GPU -> GPU : bowl vertices
-GPU -> GPU : fisheye projection
-GPU -> GPU : sampling + masks + blending
-GPU -> UI : rendered_frame + render timestamp
-UI -> Controller : ui_camera_command
-Controller --> UI : camera_state
-
-alt stale or missing input
-  Sync -> GPU : last valid frame / placeholder policy
-  GPU -> UI : rendered frame + health telemetry
+title Входной набор, изменение ракурса и представление Qt Quick
+' Статус: проектная редакция 19.09.2026. Решения: SYSTEM_ARCHITECTURE.md, PROTOCOL.md.
+participant "Replay / producer" as Source
+participant "FrameSource + подбор" as Input
+participant "Контроллер камеры" as Controller
+participant "sv-core / GPU" as GPU
+participant "Выходной адаптер" as Output
+participant "Qt Quick (QML)" as UI
+participant "Общий trace" as Trace
+Source -> Input : camera_frame(session, sequence, clock, calibration)
+Input -> Input : framing / валидация / runtime mapping
+Input -> Input : ограниченные очереди, возраст и skew
+Input -> Trace : receive / frame_set_id / входы
+alt Есть свежие входы
+  Input -> GPU : набор и маски доступности
+  GPU -> GPU : upload только изменившихся входов
+else Нет пригодных входов
+  Input -> GPU : NO_INPUT, маска «нет данных»
 end
-
+Controller -> GPU : состояние и state_revision
+GPU -> GPU : готовая сетка + выборка + blending -> FBO
+GPU -> Trace : GPU duration / render_complete
+GPU -> Output : итоговый FBO
+Output -> Output : выходной readback, ограниченный слот
+Output -> UI : rendered_frame(frame_id, frame_set_id, revision, token)
+UI -> Trace : ui_receive(frame_id)
+UI -> Output : frame_release после копирования
+UI -> UI : upload результата в QSGTexture / scene graph
+UI -> Trace : ui_present_submit(frame_id, revision)
+note over UI,Trace
+  frameSwapped связывается с реально использованной текстурой.
+  Это программная передача на представление, не физический показ пикселя.
+end note
+group Команда на замороженных входах (PAUSED)
+  UI -> Trace : ui_event(command_id)
+  UI -> Controller : orbit / zoom / preset(command_id)
+  Controller -> Controller : проверить область, обновить revision
+  Controller --> UI : camera_state / ACK или причина отказа
+  Controller -> GPU : принятое состояние + IDs команд
+  GPU -> GPU : reuse геометрии и входных текстур; новый рендер
+  GPU -> Output : новый итоговый кадр
+  Output -> UI : frame_id + revision, включающая команду
+  UI -> Output : frame_release
+  UI -> Trace : первое ui_present_submit этой ревизии
+end
+group Потеря камеры в live-режиме
+  Input -> GPU : исключить stale, DEGRADED / NO_INPUT
+  GPU -> GPU : перенормировать доступные веса / no-data mask
+  Output -> UI : следующий результат + health / stale-overlay
+end
 @enduml
+
+/'
+Источники (ГОСТ Р 7.0.100–2018):
+1. QQuickWindow Class / The Qt Company. – Текст : электронный // Qt Quick 5.15 Documentation. – URL: https://doc.qt.io/archives/qt-5.15/qquickwindow.html (дата обращения: 19.09.2026).
+2. clock_gettime(3) : Linux manual page. – Текст : электронный // Linux man-pages. – URL: https://man7.org/linux/man-pages/man3/clock_gettime.3.html (дата обращения: 19.09.2026).
+3. ГОСТ Р 7.0.100–2018. Система стандартов по информации, библиотечному и издательскому делу. Библиографическая запись. Библиографическое описание. Общие требования и правила составления : национальный стандарт Российской Федерации : дата введения 2019-07-01. – Москва : Стандартинформ, 2018. – URL: https://docs.cntd.ru/document/1200161674 (дата обращения: 19.09.2026). – Текст : электронный.
+'/

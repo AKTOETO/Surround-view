@@ -1,33 +1,47 @@
-@startuml Контекст распределенной системы Surround View
-title Контекст распределенной системы Surround View
-
-actor "Оператор автомобиля" as Operator
-actor "Разработчик / исследователь" as Researcher
-
-rectangle "Ноутбук" {
-  component "sv-simulator\n3D мир + управление" as Simulator
+@startuml
+title Контекст Surround View: обязательный локальный стенд
+' Статус: проектная редакция 19.09.2026. Решения: SYSTEM_ARCHITECTURE.md, ADR-001/002/003.
+left to right direction
+actor "Оператор" as Operator
+actor "Исследователь" as Researcher
+rectangle "Один Linux-узел: local-reference" {
+  database "Запись + manifest\nКалибровка и конфигурация" as Data
+  component "sv-simulator\nЛёгкий producer + fault injection" as Producer
+  component "sv-server\nFrameSource + сведение времени\nsv-core: GPU + виртуальная камера" as Server
+  component "sv-ui\nQt 5.15, Qt Quick (QML)\nЖесты, изображение, статусы" as UI
+  component "sv-bench\nТо же sv-core без UI" as Bench
+  database "Trace и результаты опытов" as Trace
 }
-
-rectangle "Головное устройство" {
-  component "sv-server\nсбор данных + GPU pipeline" as Server
-  component "sv-ui\nQt5 display + touch" as UI
-  database "Конфигурация и\ncalibration" as Config
+rectangle "Расширения" {
+  component "Удалённый producer\nОтдельный сетевой профиль" as Remote
+  component "Live-камеры\nАппаратный адаптер" as Hardware
+  component "CAN / сенсоры\nСценарий задней передачи" as Vehicle
 }
-
-cloud "Устройства автомобиля" {
-  component "Камеры" as Cameras
-  component "Сенсоры" as Sensors
-  component "CAN шина" as CAN
-}
-
-Operator --> UI : touch / presets
-Researcher --> Simulator : сценарий / управление
-Researcher --> Config : конфигурация
-Simulator --> Server : camera frames\nsensors / CAN
-Cameras --> Server : camera frames
-Sensors --> Server : sensor samples
-CAN --> Server : CAN frames
-Config --> Server : vehicle + calibration
-Server --> UI : rendered frame\nstate / telemetry
-
+Researcher --> Data : набор, конфигурация, ROI
+Researcher --> Producer : сценарий
+Data --> Server : прямой replay (MUST)
+Data --> Producer : известные входы
+Data --> Bench
+Producer --> Server : camera_frame, IPC v1
+Operator --> UI : orbit / zoom / presets
+UI --> Server : команды + command_id
+Server --> UI : копируемый кадр + ревизия + health
+Server --> Trace
+UI --> Trace : receive / present_submit
+Bench --> Trace : метрики ядра
+Remote ..> Server : TCP после проверки полосы и часов
+Hardware ..> Server : FrameSource
+Vehicle ..> Server : нормализованное событие
+legend bottom
+  MUST: четыре камеры, replay, исследование сетки, отдельный сервер и Qt Quick (QML).
+  Пунктир: расширения. Полный 3D-мир и динамика автомобиля — COULD.
+  Источники приведены отдельным блоком в исходнике; решения — SYSTEM_ARCHITECTURE.md.
+endlegend
 @enduml
+
+/'
+Источники (ГОСТ Р 7.0.100–2018):
+1. Qt Quick / The Qt Company. – Текст : электронный // Qt 5.15 Documentation. – URL: https://doc.qt.io/archives/qt-5.15/qtquick-index.html (дата обращения: 19.09.2026).
+2. clock_gettime(3) : Linux manual page. – Текст : электронный // Linux man-pages. – URL: https://man7.org/linux/man-pages/man3/clock_gettime.3.html (дата обращения: 19.09.2026).
+3. ГОСТ Р 7.0.100–2018. Система стандартов по информации, библиотечному и издательскому делу. Библиографическая запись. Библиографическое описание. Общие требования и правила составления : национальный стандарт Российской Федерации : дата введения 2019-07-01. – Москва : Стандартинформ, 2018. – URL: https://docs.cntd.ru/document/1200161674 (дата обращения: 19.09.2026). – Текст : электронный.
+'/
