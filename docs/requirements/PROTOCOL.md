@@ -2,7 +2,7 @@
 
 ## Назначение и статус
 
-Редакция от 19.09.2026. Проектный контракт v1 для локальных копируемых кадров и независимого управления; реализация и машинная схема ещё должны быть проверены. Решения: [ADR-002/003](../SYSTEM_ARCHITECTURE.md), [конфигурация](CONFIGURATION.md), [приёмка](../VALIDATION.md). CLOCK_MONOTONIC локален узлу [1]; оптимизация DMA-BUF имеет отдельный контракт ресурсов [2].
+Рабочая редакция от 04.10.2026; основа от 19.09.2026. Проектный контракт v1 для локальных копируемых кадров и независимого управления; реализация и машинная схема ещё должны быть проверены. Решения: [[architecture/DECISIONS|ADR-002/003]], [конфигурация](CONFIGURATION.md), [приёмка](../validation/ACCEPTANCE.md). CLOCK_MONOTONIC локален узлу [[references/MEASUREMENT#S48|S48]]; оптимизация DMA-BUF имеет отдельный контракт ресурсов [[references/DEVELOPMENT#S50|S50]].
 
 ## Требования
 
@@ -18,6 +18,7 @@
 | PRO-F-008 | MUST | Malformed, duplicate, out_of_order и drops имеют разные счётчики; stale — состояние входа и отдельная причина исключения. | T-PRO-008: инъекции и различимые события. | R5 |
 | PRO-F-009 | MUST | Длины, dimensions, stride, плоскости, очереди и времена ожидания ограничены до выделения памяти. | T-PRO-009: overflow, превышение лимита, truncated stream, timeout и очистка ресурсов. | R5 |
 | PRO-F-010 | MUST | Управление и видеоданные имеют независимые ограниченные очереди и соединения. | T-PRO-010: переполнение видео не блокирует команды; trace потерь. | R5 |
+| PRO-F-011 | MUST | Telemetry/camera state передаёт calibration_id, диагностическое состояние, метод/показатель, камеры-кандидаты и причины INDETERMINATE. | T-PRO-011: сериализация всех состояний и unknown method; диагностика не подменяет READY/DEGRADED. | R4, R5 |
 
 ## Framing, handshake и пределы
 
@@ -61,7 +62,7 @@ V1 поддерживает одну плоскость interleaved RGB8 или 
 
 Replay отображает исходное время `s` в runtime: `t_release = t_anchor + (s−s_anchor)/speed`, speed > 0. Пауза сохраняет s; после resume/step новые anchor сохраняются в trace. При step release задаётся фактическим текущим временем, исходный s не меняет своего смысла. Для локального опыта UI/server/producer используют один domain; удалённый требует `a,b,uncertainty_ns,valid_interval` преобразования часов. Если погрешность сравнима с заявленной задержкой/окном, результат помечается неопределённым.
 
-Будущий DMA-BUF-адаптер дополнительно описывает FD, DRM format, размеры/плоскости, offsets/strides/modifiers, acquire/release synchronization и владельца. Импорт через EGLImage [2] не отменяет необходимость этого контракта.
+Будущий DMA-BUF-адаптер дополнительно описывает FD, DRM format, размеры/плоскости, offsets/strides/modifiers, acquire/release synchronization и владельца. Импорт через EGLImage [[references/DEVELOPMENT#S50|S50]] не отменяет необходимость этого контракта.
 
 ## Бюджет полосы
 
@@ -80,10 +81,7 @@ Replay отображает исходное время `s` в runtime: `t_relea
 
 В v1 расширение ограничено Classical CAN: channel, can_id, is_extended, DLC 0…8, data длиной DLC и bus timestamp/domain; remote/error frames отвергаются как неподдержанные. CAN FD требует новой capability и правил DLC. Для reverse signal сохраняются CAN ID, битовая позиция, длина, порядок битов, signed/scale/offset и таблица значений. Проверка байтов не заменяет проверку декодирования команды.
 
-## Источники
 
-Библиографические описания оформлены по ГОСТ Р 7.0.100–2018. Нумерация локальная для этого документа.
+## Связанные источники
 
-1. clock_gettime(3) : Linux manual page. – Текст : электронный // Linux man-pages. – URL: [https://man7.org/linux/man-pages/man3/clock_gettime.3.html](https://man7.org/linux/man-pages/man3/clock_gettime.3.html) (дата обращения: 19.09.2026).
-2. EGL_EXT_image_dma_buf_import / Khronos Group. – Текст : электронный // Khronos EGL Registry. – URL: [https://registry.khronos.org/EGL/extensions/EXT/EGL_EXT_image_dma_buf_import.txt](https://registry.khronos.org/EGL/extensions/EXT/EGL_EXT_image_dma_buf_import.txt) (дата обращения: 19.09.2026).
-3. ГОСТ Р 7.0.100–2018. Система стандартов по информации, библиотечному и издательскому делу. Библиографическая запись. Библиографическое описание. Общие требования и правила составления : национальный стандарт Российской Федерации : дата введения 2019-07-01. – Москва : Стандартинформ, 2018. – URL: [https://docs.cntd.ru/document/1200161674](https://docs.cntd.ru/document/1200161674) (дата обращения: 19.09.2026). – Текст : электронный.
+[[references/README|Единый каталог литературы и документации]].
