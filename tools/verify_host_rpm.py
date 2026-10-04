@@ -46,9 +46,11 @@ def main():
     if result.returncode:
         print((output / "build.log").read_text()[-12000:], file=sys.stderr)
         raise SystemExit(result.returncode)
-    packages = list((output / "RPMS").rglob("*.rpm"))
+    packages = [package for package in (output / "RPMS").rglob("*.rpm")
+                if subprocess.check_output([str(rpm), "-qp", "--queryformat", "%{NAME}", str(package)],
+                                           env=environment, text=True) == name]
     if len(packages) != 1:
-        raise RuntimeError("expected one native RPM")
+        raise RuntimeError("expected one main native RPM; debug subpackages are allowed")
     package = packages[0]
     listing = subprocess.check_output([str(rpm), "-qpl", str(package)], env=environment, text=True)
     requirements = subprocess.check_output([str(rpm), "-qp", "--requires", str(package)], env=environment, text=True)
