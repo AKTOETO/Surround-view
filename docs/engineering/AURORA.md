@@ -44,7 +44,7 @@ python3 tools/verify_host_rpm.py --profile gpu --output artifacts/rpm-host-gpu
 python3 tools/verify_host_rpm.py --profile cpu --output artifacts/rpm-host-cpu
 ```
 
-Требуются native RPM-tools и development-пакеты Linux из [[engineering/BUILD]]. Скрипт использует собственные **host-only** macros и `--nodeps`, поскольку Linux-стенд может иметь пакетную базу другого дистрибутива. Проверяет фактические payload paths и ELF requires, сохраняет log/listing в artifacts. Это исключение только для проверки native упаковки; оно не проверяет целевые BuildRequires, ABI Авроры и её security profile. `--toolchain-root` позволяет использовать распакованные RPM-tools локально без системной установки.
+Требуются native RPM-tools (включая `rpm2archive`), `bsdtar` и development-пакеты Linux из [[engineering/BUILD]]. Скрипт использует собственные **host-only** macros и `--nodeps`, поскольку Linux-стенд может иметь пакетную базу другого дистрибутива. Проверяет payload paths/ELF requires, распаковывает пакет и запускает core/native/scene smoke из installed layout, для GPU также renderer. Сохраняет log/listing и `INSTALLED_REPORT.md` в artifacts; RPM database тоже локальная. Это не проверяет целевые BuildRequires, ABI Авроры и её security profile. `--toolchain-root` позволяет использовать распакованные RPM-tools без системной установки; `--inspect-only` повторяет проверку уже собранных RPM без пересборки.
 
 На ПК после коммитов и при чистом рабочем дереве:
 
