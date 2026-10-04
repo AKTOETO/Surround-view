@@ -6,16 +6,24 @@
 #include <QMutex>
 #include <QObject>
 #include <QQuickImageProvider>
-class FrameProvider : public QQuickImageProvider {
+
+class FrameProvider : public QQuickImageProvider
+{
     QMutex mutex_;
     QImage image_;
 
   public:
-    FrameProvider() : QQuickImageProvider(QQuickImageProvider::Image) {}
+
+    FrameProvider() : QQuickImageProvider(QQuickImageProvider::Image)
+    {
+    }
+
     void setImage(QImage image);
     QImage requestImage(const QString &, QSize *, const QSize &) override;
 };
-class Bridge : public QObject {
+
+class Bridge : public QObject
+{
     Q_OBJECT
     Q_PROPERTY(QString frameUrl READ frameUrl NOTIFY changed)
     Q_PROPERTY(QString status READ status NOTIFY changed)
@@ -30,13 +38,19 @@ class Bridge : public QObject {
     void command(QJsonObject);
 
   public:
+
     Bridge(QString, FrameProvider *);
-    QString frameUrl() const {
+
+    QString frameUrl() const
+    {
         return url_;
     }
-    QString status() const {
+
+    QString status() const
+    {
         return status_;
     }
+
     Q_INVOKABLE void preset(QString);
     Q_INVOKABLE void orbit(double, double);
     Q_INVOKABLE void zoom(double);

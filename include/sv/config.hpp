@@ -2,8 +2,11 @@
 #include "sv/math.hpp"
 #include <boost/json.hpp>
 #include <filesystem>
-namespace sv {
-struct Config {
+
+namespace sv
+{
+struct Config
+{
     std::array<Camera, 4> cameras;
     Surface surface;
     View view;
@@ -13,6 +16,7 @@ struct Config {
     std::string profile_id;
     boost::json::value effective;
 };
+
 Config parse_config(const boost::json::value &);
 Config load_config(const std::filesystem::path &);
 boost::json::value read_json(const std::filesystem::path &);

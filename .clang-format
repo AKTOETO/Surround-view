@@ -1,5 +1,11 @@
-BasedOnStyle: LLVM
+BasedOnStyle: Microsoft
 IndentWidth: 4
 ColumnLimit: 100
-AllowShortFunctionsOnASingleLine: Empty
+BreakBeforeBraces: Allman
+AllowShortFunctionsOnASingleLine: None
 AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+AllowShortBlocksOnASingleLine: Never
+InsertBraces: true
+SeparateDefinitionBlocks: Always
+EmptyLineAfterAccessModifier: Always

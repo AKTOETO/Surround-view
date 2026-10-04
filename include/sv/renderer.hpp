@@ -1,12 +1,16 @@
 #pragma once
 #include "sv/frame.hpp"
 #include <memory>
-namespace sv {
-class Renderer {
+
+namespace sv
+{
+class Renderer
+{
     struct Impl;
     std::unique_ptr<Impl> impl_;
 
   public:
+
     explicit Renderer(const Config &);
     ~Renderer();
     Renderer(const Renderer &) = delete;
