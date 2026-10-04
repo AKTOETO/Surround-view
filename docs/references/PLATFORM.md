@@ -121,3 +121,27 @@
 - render и sync events
 - поиск блокировок GUI
 - сопоставление профилей ПК и устройства
+
+## S59
+
+**ОС Аврора. Сборка пакетов с mb2.** [Официальный источник](https://developer.auroraos.ru/doc/sdk/tools/mb2). Проверен 05.10.2026, документация 5.2.1. Выбор target и конкретного spec, расположение RPMS, режим без обновления зависимостей. Используется в [[engineering/AURORA]] и главе 3; выполнение этих команд в фактическом SDK ещё не подтверждено.
+
+## S60
+
+**ОС Аврора. Требования к spec-файлу.** [Официальный источник](https://developer.auroraos.ru/doc/software_development/guidelines/rpm_requirements/spec_requirements). Проверен 05.10.2026, 5.2.1. Preamble, Source0, BuildRequires, секции сборки/установки/files и несколько spec-профилей. Основание структуры двух лабораторных пакетов; не свидетельство их сертификации.
+
+## S61
+
+**ОС Аврора. rpm-validator.** [Официальный источник](https://developer.auroraos.ru/doc/sdk/tools/rpm_validator). Проверен 05.10.2026. Профиль определяет проверяемые зависимости и структуру приложения; runtime hardware test является отдельным этапом. Профиль проекта пока не выбран.
+
+## S62
+
+**ОС Аврора. rpmsign-external.** [Официальный источник](https://developer.auroraos.ru/doc/sdk/tools/rpmsign_external). Проверен 05.10.2026. Подпись и проверка RPM с сертификатами выбранной среды. В проекте ключи не хранятся, подпись целевого пакета ещё не выполнялась.
+
+## S66
+
+**ОС Аврора. Ручная установка Platform SDK.** [Официальный источник](https://developer.auroraos.ru/doc/sdk/psdk/setup). Проверен 05.10.2026. Tooling/target и `sdk-assistant list`; имена установленных комплектов должны подтверждаться средой пользователя.
+
+## S67
+
+**ОС Аврора 5.1.4. Создание нового проекта, CMake/Ninja.** [Официальный источник](https://developer.auroraos.ru/doc/5.1.4/sdk/app_development/work/create/create_new_project). Проверен 05.10.2026. Пример `%cmake -GNinja`, `%ninja_build`, `%ninja_install`. В будущей сборке проверить наличие этих макросов именно в выбранном SDK; версия источника указана явно.

@@ -71,6 +71,15 @@
 | S56 | [[references/DEVELOPMENT#S56\|EGL_MESA_platform_surfaceless]] | DEVELOPMENT |
 | S57 | [[references/DEVELOPMENT#S57\|QQuickImageProvider, Qt 6]] | DEVELOPMENT |
 | S58 | [[references/DEVELOPMENT#S58\|EGL_EXT_platform_device]] | DEVELOPMENT |
+| S59 | [[references/PLATFORM#S59\|Аврора: mb2]] | PLATFORM |
+| S60 | [[references/PLATFORM#S60\|Аврора: spec-файл RPM]] | PLATFORM |
+| S61 | [[references/PLATFORM#S61\|Аврора: rpm-validator]] | PLATFORM |
+| S62 | [[references/PLATFORM#S62\|Аврора: rpmsign-external]] | PLATFORM |
+| S63 | [[references/VISION#S63\|Urban Street 01, Poly Haven, CC0]] | VISION |
+| S64 | [[references/VISION#S64\|OpenCV VideoCapture]] | VISION |
+| S65 | [[references/VISION#S65\|OpenCV chessboard и solvePnP]] | VISION |
+| S66 | [[references/PLATFORM#S66\|Platform SDK setup]] | PLATFORM |
+| S67 | [[references/PLATFORM#S67\|Аврора: CMake/Ninja example]] | PLATFORM |
 
 ## Первое чтение
 

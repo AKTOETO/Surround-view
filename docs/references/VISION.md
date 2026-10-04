@@ -408,3 +408,15 @@ Fisheye camera model / OpenCV. – Текст : электронный // OpenCV
 **Статус:** просмотрен код преобразований linear-light/sRGB 04.10.2026. Документ — Candidate Recommendation Draft от 30.09.2026, рабочий проект, а не окончательный стандарт.
 
 **Использование:** раздел 1.4.4 первой главы, проверка численного примера линейного смешивания. Раздел с функциями `lin_sRGB` и `gam_sRGB` задаёт используемое преобразование. Применимость к входу требует подтверждения transfer function: видеоданные не считаются sRGB автоматически.
+
+## S63
+
+**Andreas Mischok. Urban Street 01, Poly Haven.** [Исходная HDR-панорама](https://polyhaven.com/a/urban_street_01), [условия CC0](https://polyhaven.com/license). Получена 05.10.2026. Фотографическая улица используется только как visual demo через общий центр виртуальных камер. SHA-256, размер и преобразования — [[engineering/SCENE]]. Она не является измеренной четырёхкамерной записью или ground truth внешней калибровки.
+
+## S64
+
+**OpenCV 4.13.0. cv::VideoCapture.** [Официальный API](https://docs.opencv.org/4.13.0/d8/dfe/classcv_1_1VideoCapture.html). Проверен 05.10.2026. Открытие источника, grab/retrieve, backend и capture properties. API используется native recorder; Linux-тест выполнен фактически с OpenCV 5.0.0 на видеофайлах, устройства ещё не проверены.
+
+## S65
+
+**OpenCV 4.13.0. Chessboard detection and pose estimation.** [Официальный calib3d API](https://docs.opencv.org/4.13.0/d9/d0c/group__calib3d.html). Проверены 05.10.2026 разделы `findChessboardCornersSB`, `drawChessboardCorners`, `solvePnP`. Число внутренних углов и система доски определяются отдельно от координат автомобиля. В OpenCV 5 detector подключается через objdetect; проверено локальными заголовками и image-based тестом.
