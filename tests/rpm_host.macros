@@ -1,4 +1,4 @@
 # Host-only packaging verification; never load this file in Aurora SDK.
-%cmake() cmake -S . -B build -DCMAKE_INSTALL_PREFIX=/usr %{**}
+%cmake(-) cmake -S . -B build -DCMAKE_INSTALL_PREFIX=/usr %{**}
 %ninja_build cmake --build build --parallel 4
 %ninja_install DESTDIR=%{buildroot} cmake --install build
