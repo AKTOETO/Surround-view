@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="864pt" height="360pt" viewBox="0 0 864 360" xmlns="http://www.w3.org/2000/svg" version="1.1">
+ <metadata>
+  <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+   <cc:Work>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:date>2026-10-05T02:13:30.921990</dc:date>
+    <dc:format>image/svg+xml</dc:format>
+    <dc:creator>
+     <cc:Agent>
+      <dc:title>Matplotlib v3.11.2, https://matplotlib.org/</dc:title>
+     </cc:Agent>
+    </dc:creator>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+ </defs>
+ <g id="figure_1">
+  <g id="patch_1">
+   <path d="M 0 360 
+L 864 360 
+L 864 0 
+L 0 0 
+z
+" style="fill: #ffffff"/>
+  </g>
+  <g id="axes_1">
+   <g id="patch_2">
+    <path d="M 32.172224 153.876871 
+L 205.488127 153.876871 
+Q 215.784121 153.876871 215.784121 149.89407 
+L 215.784121 69.574234 
+Q 215.784121 65.591433 205.488127 65.591433 
+L 32.172224 65.591433 
+Q 21.876229 65.591433 21.876229 69.574234 
+L 21.876229 149.89407 
+Q 21.876229 153.876871 32.172224 153.876871 
+z
+" clip-path="url(#pa431fee3f0)" style="fill: #dceee7; stroke: #40576b; stroke-width: 1.1; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_3">
+    <path d="M 323.89206 153.876871 
+L 522.947949 153.876871 
+Q 533.243943 153.876871 533.243943 149.89407 
+L 533.243943 69.574234 
+Q 533.243943 65.591433 522.947949 65.591433 
+L 323.89206 65.591433 
+Q 313.596066 65.591433 313.596066 69.574234 
+L 313.596066 149.89407 
+Q 313.596066 153.876871 323.89206 153.876871 
+z
+" clip-path="url(#pa431fee3f0)" style="fill: #dceaf5; stroke: #40576b; stroke-width: 1.1; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_4">
+    <path d="M 624.191892 153.876871 
+L 823.247781 153.876871 
+Q 833.543775 153.876871 833.543775 149.89407 
+L 833.543775 69.574234 
+Q 833.543775 65.591433 823.247781 65.591433 
+L 624.191892 65.591433 
+Q 613.895898 65.591433 613.895898 69.574234 
+L 613.895898 149.89407 
+Q 613.895898 153.876871 624.191892 153.876871 
+z
+" clip-path="url(#pa431fee3f0)" style="fill: #f9e8c9; stroke: #40576b; stroke-width: 1.1; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_5">
+    <path d="M 32.172224 319.826944 
+L 205.488127 319.826944 
+Q 215.784121 319.826944 215.784121 315.844142 
+L 215.784121 235.524307 
+Q 215.784121 231.541505 205.488127 231.541505 
+L 32.172224 231.541505 
+Q 21.876229 231.541505 21.876229 235.524307 
+L 21.876229 315.844142 
+Q 21.876229 319.826944 32.172224 319.826944 
+z
+" clip-path="url(#pa431fee3f0)" style="fill: #dceee7; stroke: #40576b; stroke-width: 1.1; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_6">
+    <path d="M 323.89206 319.826944 
+L 522.947949 319.826944 
+Q 533.243943 319.826944 533.243943 315.844142 
+L 533.243943 235.524307 
+Q 533.243943 231.541505 522.947949 231.541505 
+L 323.89206 231.541505 
+Q 313.596066 231.541505 313.596066 235.524307 
+L 313.596066 315.844142 
+Q 313.596066 319.826944 323.89206 319.826944 
+z
+" clip-path="url(#pa431fee3f0)" style="fill: #dceaf5; stroke: #40576b; stroke-width: 1.1; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_7">
+    <path d="M 624.191892 319.826944 
+L 823.247781 319.826944 
+Q 833.543775 319.826944 833.543775 315.844142 
+L 833.543775 235.524307 
+Q 833.543775 231.541505 823.247781 231.541505 
+L 624.191892 231.541505 
+Q 613.895898 231.541505 613.895898 235.524307 
+L 613.895898 315.844142 
+Q 613.895898 319.826944 624.191892 319.826944 
+z
+" clip-path="url(#pa431fee3f0)" style="fill: #f9e8c9; stroke: #40576b; stroke-width: 1.1; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_8">
+    <path d="M 219.501892 109.734152 
+Q 264.691588 109.734152 308.539643 109.734152 
+" clip-path="url(#pa431fee3f0)" style="fill: none; stroke: #40576b; stroke-width: 1.2; stroke-linecap: round"/>
+    <path d="M 303.339643 107.134152 
+L 308.539643 109.734152 
+L 303.339643 112.334152 
+z
+" clip-path="url(#pa431fee3f0)" style="fill: #40576b; stroke: #40576b; stroke-width: 1.2; stroke-linecap: round"/>
+   </g>
+   <g id="patch_9">
+    <path d="M 536.963024 109.734152 
+Q 573.572946 109.734152 608.841228 109.734152 
+" clip-path="url(#pa431fee3f0)" style="fill: none; stroke: #40576b; stroke-width: 1.2; stroke-linecap: round"/>
+    <path d="M 603.641228 107.134152 
+L 608.841228 109.734152 
+L 603.641228 112.334152 
+z
+" clip-path="url(#pa431fee3f0)" style="fill: #40576b; stroke: #40576b; stroke-width: 1.2; stroke-linecap: round"/>
+   </g>
+   <g id="patch_10">
+    <path d="M 219.501892 275.684224 
+Q 264.691588 275.684224 308.539643 275.684224 
+" clip-path="url(#pa431fee3f0)" style="fill: none; stroke: #40576b; stroke-width: 1.2; stroke-linecap: round"/>
+    <path d="M 303.339643 273.084224 
+L 308.539643 275.684224 
+L 303.339643 278.284224 
+z
+" clip-path="url(#pa431fee3f0)" style="fill: #40576b; stroke: #40576b; stroke-width: 1.2; stroke-linecap: round"/>
+   </g>
+   <g id="patch_11">
+    <path d="M 536.963024 275.684224 
+Q 573.572946 275.684224 608.841228 275.684224 
+" clip-path="url(#pa431fee3f0)" style="fill: none; stroke: #40576b; stroke-width: 1.2; stroke-linecap: round"/>
+    <path d="M 603.641228 273.084224 
+L 608.841228 275.684224 
+L 603.641228 278.284224 
+z
+" clip-path="url(#pa431fee3f0)" style="fill: #40576b; stroke: #40576b; stroke-width: 1.2; stroke-linecap: round"/>
+   </g>
+   <g id="text_1">
+    <text style="font-size: 9px; font-family: 'DejaVu Sans'" transform="translate(91.416738 101.269933)">Фото доски</text>
+    <text style="font-size: 9px; font-family: 'DejaVu Sans'" transform="translate(60.413847 112.072394)">findChessboardCornersSB</text>
+    <text style="font-size: 9px; font-family: 'DejaVu Sans'" transform="translate(81.501972 122.874152)">UV ↔ XYZ доски</text>
+   </g>
+   <g id="text_2">
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'" transform="translate(380.094224 100.329464)">fisheye::calibrate</text>
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'" transform="translate(383.448911 112.332199)">K, k; train views</text>
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'" transform="translate(397.137974 124.334933)">fixed skew</text>
+   </g>
+   <g id="text_3">
+    <text style="font-size: 9px; font-family: 'DejaVu Sans'" transform="translate(686.592024 101.269933)">Held-out images</text>
+    <text style="font-size: 9px; font-family: 'DejaVu Sans'" transform="translate(675.644368 112.072394)">solvePnP: board pose</text>
+    <text style="font-size: 9px; font-family: 'DejaVu Sans'" transform="translate(695.876087 122.874855)">p95 residual</text>
+   </g>
+   <g id="text_4">
+    <text style="font-size: 9px; font-family: 'DejaVu Sans'" transform="translate(64.347831 267.143365)">Измеренная площадка</text>
+    <text style="font-size: 9px; font-family: 'DejaVu Sans'" transform="translate(80.2708 278.099107)">XYZ автомобиля</text>
+    <text style="font-size: 9px; font-family: 'DejaVu Sans'" transform="translate(79.475566 288.900865)">независимые UV</text>
+   </g>
+   <g id="text_5">
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'" transform="translate(376.87938 266.279537)">NumPy LM / Huber</text>
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'" transform="translate(407.83563 278.282271)">K, k, T</text>
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'" transform="translate(378.846567 290.285006)">known-XYZ solver</text>
+   </g>
+   <g id="text_6">
+    <text style="font-size: 9px; font-family: 'DejaVu Sans'" transform="translate(674.733118 267.220006)">Known-XYZ validation</text>
+    <text style="font-size: 9px; font-family: 'DejaVu Sans'" transform="translate(680.919212 278.022467)">репроекция / rank</text>
+    <text style="font-size: 9px; font-family: 'DejaVu Sans'" transform="translate(677.426087 288.824928)">новый calibration ID</text>
+   </g>
+   <g id="text_7">
+    <text style="font-size: 13px; font-family: 'DejaVu Sans'; text-anchor: middle" x="432" y="13.099615" transform="rotate(-0 432 13.099615)">OpenCV-калибровка: разные пространства и виды проверки</text>
+   </g>
+  </g>
+ </g>
+ <defs>
+  <clipPath id="pa431fee3f0">
+   <rect x="3.00024" y="25.099615" width="857.99952" height="331.900145"/>
+  </clipPath>
+ </defs>
+</svg>
