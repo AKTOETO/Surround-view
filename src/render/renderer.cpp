@@ -1,7 +1,11 @@
 #include "sv/renderer.hpp"
+#include "sv/shaders.hpp"
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
 #include <GLES3/gl3.h>
+
+// Extension declarations depend on the API types defined by gl3.h.
+#include <GLES2/gl2ext.h>
 #include <algorithm>
 #include <cstdlib>
 #include <fstream>
@@ -14,12 +18,31 @@ namespace
 {
 std::string source(const std::string &name)
 {
-    std::ifstream f(std::string(SV_SHADER_DIR) + "/" + name);
-    if (!f)
+    if (name == "surface.vert")
     {
-        throw std::runtime_error("shader missing: " + name);
+        return std::string(surface_vertex);
     }
-    return {(std::istreambuf_iterator<char>(f)), {}};
+    if (name == "surface.frag")
+    {
+        return std::string(surface_fragment);
+    }
+    if (name == "projection.vert")
+    {
+        return std::string(projection_vertex);
+    }
+    if (name == "projection.frag")
+    {
+        return std::string(projection_fragment);
+    }
+    if (name == "vehicle.vert")
+    {
+        return std::string(vehicle_vertex);
+    }
+    if (name == "vehicle.frag")
+    {
+        return std::string(vehicle_fragment);
+    }
+    throw std::runtime_error("unknown embedded shader: " + name);
 }
 
 GLuint shader(GLenum kind, const std::string &text)
@@ -98,6 +121,54 @@ void check(const char *step)
         throw std::runtime_error(std::string(step) + ": GL error " + std::to_string(e));
     }
 }
+
+std::vector<float> vehicle_mesh(double length, double width)
+{
+    std::vector<float> vertices;
+    const auto box = [&](Vec3 low, Vec3 high, Vec3 paint)
+    {
+        std::array<Vec3, 8> corners{{{low.x, low.y, low.z},
+                                     {high.x, low.y, low.z},
+                                     {high.x, high.y, low.z},
+                                     {low.x, high.y, low.z},
+                                     {low.x, low.y, high.z},
+                                     {high.x, low.y, high.z},
+                                     {high.x, high.y, high.z},
+                                     {low.x, high.y, high.z}}};
+        const int faces[6][6]{{0, 2, 1, 0, 3, 2}, {4, 5, 6, 4, 6, 7}, {0, 1, 5, 0, 5, 4},
+                              {1, 2, 6, 1, 6, 5}, {2, 3, 7, 2, 7, 6}, {3, 0, 4, 3, 4, 7}};
+        const double lighting[6]{.5, 1., .72, .92, .85, .7};
+        for (int face = 0; face < 6; ++face)
+        {
+            for (int index : faces[face])
+            {
+                auto p = corners[index];
+                for (double v : {p.x, p.y, p.z, paint.x * lighting[face], paint.y * lighting[face],
+                                 paint.z * lighting[face]})
+                {
+                    vertices.push_back(float(v));
+                }
+            }
+        }
+    };
+    const double x = length / 2, y = width / 2;
+    box({-x, -y * .93, .35}, {x, y * .93, .85}, {.12, .42, .67});
+    box({-x * .48, -y * .78, .85}, {x * .4, y * .78, 1.35}, {.08, .17, .23});
+    box({-x * .48, -y * .8, 1.35}, {x * .4, y * .8, 1.4}, {.2, .55, .78});
+    for (double axle : {-x * .65, x * .65})
+    {
+        for (double side : {-y, y})
+        {
+            box({axle - .3, side - .12, .12}, {axle + .3, side + .12, .55}, {.075, .08, .09});
+        }
+    }
+    for (double side : {-y * .65, y * .65})
+    {
+        box({x, side - .13, .5}, {x + .025, side + .13, .67}, {.95, .94, .82});
+        box({-x - .025, side - .13, .5}, {-x, side + .13, .67}, {.9, .12, .1});
+    }
+    return vertices;
+}
 } // namespace
 
 struct Renderer::Impl
@@ -108,16 +179,33 @@ struct Renderer::Impl
     EGLContext context = EGL_NO_CONTEXT;
     EGLSurface surface = EGL_NO_SURFACE;
     GLuint prog = 0, projection = 0, vao = 0, vbo = 0, ebo = 0, fbo = 0, out = 0, depth = 0;
+    GLuint vehicle_program = 0, vehicle_vao = 0, vehicle_vbo = 0;
+    GLsizei vehicle_vertices = 0;
     std::array<GLuint, 4> inputs{};
     std::array<std::shared_ptr<const Image>, 4> uploaded{};
     uint64_t upload_count = 0;
+    RenderTiming timing;
+    GLuint draw_query = 0;
+    PFNGLGENQUERIESEXTPROC gen_queries = nullptr;
+    PFNGLDELETEQUERIESEXTPROC delete_queries = nullptr;
+    PFNGLBEGINQUERYEXTPROC begin_query = nullptr;
+    PFNGLENDQUERYEXTPROC end_query = nullptr;
+    PFNGLGETQUERYOBJECTUIVEXTPROC query_available = nullptr;
+    PFNGLGETQUERYOBJECTUI64VEXTPROC query_result = nullptr;
 
     ~Impl()
     {
         if (context != EGL_NO_CONTEXT)
         {
+            if (draw_query && delete_queries)
+            {
+                delete_queries(1, &draw_query);
+            }
             glDeleteProgram(prog);
             glDeleteProgram(projection);
+            glDeleteProgram(vehicle_program);
+            glDeleteBuffers(1, &vehicle_vbo);
+            glDeleteVertexArrays(1, &vehicle_vao);
             glDeleteBuffers(1, &vbo);
             glDeleteBuffers(1, &ebo);
             glDeleteVertexArrays(1, &vao);
@@ -169,6 +257,10 @@ Renderer::Renderer(const Config &c) : impl_(std::make_unique<Impl>())
         }
         i.display = platform(EGL_PLATFORM_DEVICE_EXT, devices[index], nullptr);
     }
+    else if (backend && std::string(backend) == "default")
+    {
+        i.display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+    }
     else
     {
         i.display = platform ? platform(EGL_PLATFORM_SURFACELESS_MESA, EGL_DEFAULT_DISPLAY, nullptr)
@@ -214,6 +306,39 @@ Renderer::Renderer(const Config &c) : impl_(std::make_unique<Impl>())
     }
     i.prog = program("surface.vert", "surface.frag");
     i.projection = program("projection.vert", "projection.frag");
+    i.vehicle_program = program("vehicle.vert", "vehicle.frag");
+    const auto body = vehicle_mesh(c.vehicle_length, c.vehicle_width);
+    i.vehicle_vertices = body.size() / 6;
+    glGenVertexArrays(1, &i.vehicle_vao);
+    glBindVertexArray(i.vehicle_vao);
+    glGenBuffers(1, &i.vehicle_vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, i.vehicle_vbo);
+    glBufferData(GL_ARRAY_BUFFER, body.size() * sizeof(float), body.data(), GL_STATIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), nullptr);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float),
+                          reinterpret_cast<void *>(3 * sizeof(float)));
+    const std::string extensions = reinterpret_cast<const char *>(glGetString(GL_EXTENSIONS));
+    if (extensions.find("GL_EXT_disjoint_timer_query") != std::string::npos)
+    {
+        i.gen_queries =
+            reinterpret_cast<PFNGLGENQUERIESEXTPROC>(eglGetProcAddress("glGenQueriesEXT"));
+        i.delete_queries =
+            reinterpret_cast<PFNGLDELETEQUERIESEXTPROC>(eglGetProcAddress("glDeleteQueriesEXT"));
+        i.begin_query =
+            reinterpret_cast<PFNGLBEGINQUERYEXTPROC>(eglGetProcAddress("glBeginQueryEXT"));
+        i.end_query = reinterpret_cast<PFNGLENDQUERYEXTPROC>(eglGetProcAddress("glEndQueryEXT"));
+        i.query_available = reinterpret_cast<PFNGLGETQUERYOBJECTUIVEXTPROC>(
+            eglGetProcAddress("glGetQueryObjectuivEXT"));
+        i.query_result = reinterpret_cast<PFNGLGETQUERYOBJECTUI64VEXTPROC>(
+            eglGetProcAddress("glGetQueryObjectui64vEXT"));
+        if (i.gen_queries && i.delete_queries && i.begin_query && i.end_query &&
+            i.query_available && i.query_result)
+        {
+            i.gen_queries(1, &i.draw_query);
+        }
+    }
     std::vector<float> vertices;
     for (auto p : i.mesh.vertices)
     {
@@ -267,11 +392,12 @@ Image Renderer::render(const FrameSet &set, const View &view)
 {
     auto &i = *impl_;
     auto &c = i.config;
+    i.timing = {};
     glBindFramebuffer(GL_FRAMEBUFFER, i.fbo);
     glViewport(0, 0, c.width, c.height);
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
-    glClearColor(.02f, .025f, .04f, 0);
+    glClearColor(.86f, .91f, .95f, 0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glUseProgram(i.prog);
     matrix(i.prog, "mvp", view.mvp(double(c.width) / c.height));
@@ -293,11 +419,13 @@ Image Renderer::render(const FrameSet &set, const View &view)
             }
             if (i.uploaded[k] != image)
             {
+                const auto upload_start = now_ns();
                 glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
                 glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, cam.width, cam.height, 0, GL_RGB,
                              GL_UNSIGNED_BYTE, image->pixels.data());
                 i.uploaded[k] = image;
                 i.upload_count++;
+                i.timing.upload_cpu_ms += (now_ns() - upload_start) / 1e6;
             }
             available[k] = 1;
         }
@@ -315,7 +443,20 @@ Image Renderer::render(const FrameSet &set, const View &view)
     }
     glUniform4iv(glGetUniformLocation(i.prog, "available"), 1, available);
     glBindVertexArray(i.vao);
+    if (i.draw_query)
+    {
+        i.begin_query(GL_TIME_ELAPSED_EXT, i.draw_query);
+    }
     glDrawElements(GL_TRIANGLES, i.mesh.indices.size(), GL_UNSIGNED_INT, nullptr);
+    glUseProgram(i.vehicle_program);
+    matrix(i.vehicle_program, "mvp", view.mvp(double(c.width) / c.height));
+    glBindVertexArray(i.vehicle_vao);
+    glDrawArrays(GL_TRIANGLES, 0, i.vehicle_vertices);
+    if (i.draw_query)
+    {
+        i.end_query(GL_TIME_ELAPSED_EXT);
+    }
+    const auto readback_start = now_ns();
     Image out{c.width, c.height, 4,
               std::vector<unsigned char>(static_cast<size_t>(c.width) * c.height * 4)},
         raw = out;
@@ -327,6 +468,24 @@ Image Renderer::render(const FrameSet &set, const View &view)
                     c.width * 4, out.pixels.data() + static_cast<size_t>(y) * c.width * 4);
     }
     check("render/readback");
+    i.timing.readback_copy_cpu_ms = (now_ns() - readback_start) / 1e6;
+    if (i.draw_query)
+    {
+        GLuint available = 0;
+        GLint disjoint = 0;
+        i.query_available(i.draw_query, GL_QUERY_RESULT_AVAILABLE_EXT, &available);
+        glGetIntegerv(GL_GPU_DISJOINT_EXT, &disjoint);
+        i.timing.gpu_timer_status = disjoint     ? "disjoint"
+                                    : !available ? "result_not_ready"
+                                                 : "valid";
+        if (available && !disjoint)
+        {
+            GLuint64 ns = 0;
+            i.query_result(i.draw_query, GL_QUERY_RESULT_EXT, &ns);
+            i.timing.gpu_draw_ms = ns / 1e6;
+        }
+        check("GPU timer query");
+    }
     return out;
 }
 
@@ -410,5 +569,30 @@ uint64_t Renderer::uploads() const
 size_t Renderer::triangles() const
 {
     return impl_->mesh.indices.size() / 3;
+}
+
+RenderTiming Renderer::last_timing() const
+{
+    return impl_->timing;
+}
+
+boost::json::object Renderer::capabilities() const
+{
+    GLint texture = 0, renderbuffer = 0;
+    glGetIntegerv(GL_MAX_TEXTURE_SIZE, &texture);
+    glGetIntegerv(GL_MAX_RENDERBUFFER_SIZE, &renderbuffer);
+    return {
+        {"gl_vendor", vendor()},
+        {"gl_renderer", device()},
+        {"gl_version", reinterpret_cast<const char *>(glGetString(GL_VERSION))},
+        {"glsl_version", reinterpret_cast<const char *>(glGetString(GL_SHADING_LANGUAGE_VERSION))},
+        {"gl_extensions", reinterpret_cast<const char *>(glGetString(GL_EXTENSIONS))},
+        {"egl_vendor", eglQueryString(impl_->display, EGL_VENDOR)},
+        {"egl_version", eglQueryString(impl_->display, EGL_VERSION)},
+        {"egl_extensions", eglQueryString(impl_->display, EGL_EXTENSIONS)},
+        {"max_texture_size", texture},
+        {"max_renderbuffer_size", renderbuffer},
+        {"ego_vehicle_triangles", impl_->vehicle_vertices / 3},
+        {"gpu_draw_timer_available", impl_->draw_query != 0}};
 }
 } // namespace sv

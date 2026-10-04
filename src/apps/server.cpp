@@ -1,5 +1,6 @@
 #include "sv/protocol.hpp"
 #include "sv/renderer.hpp"
+#include "sv/vision.hpp"
 #include <atomic>
 #include <boost/asio.hpp>
 #include <boost/asio/local/stream_protocol.hpp>
@@ -621,7 +622,7 @@ int main(int argc, char **argv)
                         if (cached_paths[k] != r.paths[k])
                         {
                             cached_images[k] =
-                                std::make_shared<sv::Image>(sv::read_ppm(r.paths[k]));
+                                std::make_shared<sv::Image>(sv::read_image(r.paths[k]));
                             cached_paths[k] = r.paths[k];
                         }
                         int64_t t = static_cast<int64_t>(now) + r.offset_ns[k];

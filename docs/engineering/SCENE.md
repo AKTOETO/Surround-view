@@ -1,0 +1,34 @@
+# Фотографическая сцена для виртуального обзора
+
+Файл проекта: `assets/demo/urban_street_01_1k.hdr`, Radiance HDR, 1024×512. Источник — [Urban Street 01, Poly Haven](https://polyhaven.com/a/urban_street_01), автор **Andreas Mischok**. Фотография улицы снята в Лондоне. Материалы Poly Haven распространяются по [CC0](https://polyhaven.com/license); допускаются изменение и распространение. Файл получен 05.10.2026 с официального CDN:
+
+`https://dl.polyhaven.org/file/ph-assets/HDRIs/hdr/1k/urban_street_01_1k.hdr`
+
+SHA-256: `4608de4584ad25b20c87944659841ac5d93162d26bbaa5146e379ad36d6227e0`. Хэш дополнительно записывается `sv-scene` в `provenance.json` каждого сформированного набора. Панорама добавлена как небольшой исходный ресурс; автоматически загружать её при сборке не нужно.
+
+## Что показывает изображение
+
+`sv-scene` декодирует HDR библиотекой OpenCV, строит обратные лучи четырёх fisheye-изображений через `cv::fisheye::undistortPoints`, поворачивает их в систему автомобиля и выбирает пиксели из equirectangular-панорамы. Для единичного направления $d$:
+
+$$
+u=W\left(\frac{\operatorname{atan2}(d_y,d_x)}{2\pi}+\frac12\right),\qquad
+v=\frac{H}{\pi}\arccos(d_z).
+$$
+
+После bilinear remap применяется per-channel Reinhard $L'=eL/(1+eL)$ и sRGB encoding. `--exposure` задаёт $e$; по умолчанию 1. Сохраняются четыре RGB8 PPM, manifest с calibration IDs/хэшами и отдельный provenance. Renderer получает эти изображения обычным путём, выполняет проекцию/смешение на bowl и добавляет простую объёмную ego-модель.
+
+**Это фотографическая демонстрация с виртуальной камерной системой.** В `street-demo.json` четыре повёрнутые камеры имеют общий оптический центр на высоте 1.6 m. Это обеспечивает согласованный обзор одной моноскопической панорамы, но не воспроизводит разнесённые камеры автомобиля, параллакс, заслонения, ошибку метрической калибровки или текущую видеосцену. Применение к обычной разнесённой конфигурации может создавать двойные контуры; происхождение не позволяет использовать такой набор как ground truth настоящего rig.
+
+Периферийные растяжения обусловлены bowl-проекцией и исходным разрешением 1K, а не улучшением/дорисовкой фотографий. Бледный внешний фон имеет alpha=0 и показывает область вне визуализируемой поверхности. Изображения в главе 3 — реальные readback-результаты `sv-bench`, а не макет UI. Научные численные проверки по-прежнему используют аналитические известные точки и контрольные fixtures.
+
+## Повторить
+
+```sh
+build/sv-scene --config configs/street-demo.json \
+  --panorama assets/demo/urban_street_01_1k.hdr --output artifacts/street-demo
+build/sv-bench --config configs/street-demo.json \
+  --manifest artifacts/street-demo/manifest.json --output artifacts/street-render \
+  --egl-platform surfaceless --warmup 3 --iterations 10
+```
+
+Для интерфейса запустить сервер и клиент по [[engineering/USAGE]], заменив synthetic config/manifest этими файлами. Для installed layout пути к config и panorama находятся под `/usr/share/surround-view/`. Материалы настоящих четырёх камер создавать `sv-capture` или собственным аппаратным адаптером, фиксируя реальные intrinsics/extrinsics; фотографическая демонстрация эту работу не заменяет.

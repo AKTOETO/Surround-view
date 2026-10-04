@@ -1,0 +1,12 @@
+#pragma once
+#include <string_view>
+
+namespace sv
+{
+inline constexpr std::string_view surface_vertex = R"SVGLSL(@SV_SURFACE_VERT@)SVGLSL";
+inline constexpr std::string_view surface_fragment = R"SVGLSL(@SV_SURFACE_FRAG@)SVGLSL";
+inline constexpr std::string_view projection_vertex = R"SVGLSL(@SV_PROJECTION_VERT@)SVGLSL";
+inline constexpr std::string_view projection_fragment = R"SVGLSL(@SV_PROJECTION_FRAG@)SVGLSL";
+inline constexpr std::string_view vehicle_vertex = R"SVGLSL(@SV_VEHICLE_VERT@)SVGLSL";
+inline constexpr std::string_view vehicle_fragment = R"SVGLSL(@SV_VEHICLE_FRAG@)SVGLSL";
+}

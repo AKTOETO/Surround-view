@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/surround-view">
+        <file>Main.qml</file>
+    </qresource>
+</RCC>

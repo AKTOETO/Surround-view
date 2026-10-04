@@ -1,4 +1,5 @@
 #include "sv/renderer.hpp"
+#include "sv/vision.hpp"
 #include <algorithm>
 #include <chrono>
 #include <cmath>
@@ -40,7 +41,7 @@ int main(int argc, char **argv)
             std::string v = argv[++a];
             if (key == "--egl-platform")
             {
-                if (v != "device" && v != "surfaceless")
+                if (v != "device" && v != "surfaceless" && v != "default")
                 {
                     throw std::runtime_error("unknown EGL platform");
                 }
@@ -117,7 +118,7 @@ int main(int argc, char **argv)
         set.health = "READY";
         for (int k = 0; k < 4; k++)
         {
-            auto image = std::make_shared<sv::Image>(sv::read_ppm(rows.front().paths[k]));
+            auto image = std::make_shared<sv::Image>(sv::read_image(rows.front().paths[k]));
             set.frames[k] = sv::Frame{k, 0, sv::now_ns(), 0, image};
         }
         sv::Renderer renderer(c);
@@ -137,9 +138,10 @@ int main(int argc, char **argv)
                 points.push_back({x(rng), y(rng), z(rng)});
             }
             auto gpu = renderer.project_points(cam, points);
+            auto reference = sv::project_opencv(cam, points);
             for (size_t j = 0; j < points.size(); j++)
             {
-                auto cpu = sv::project(cam, points[j]);
+                auto cpu = reference[j];
                 if (cpu.valid != gpu[j].valid)
                 {
                     mismatches++;
@@ -198,6 +200,7 @@ int main(int argc, char **argv)
             times.push_back(ms);
         }
         boost::json::object report{
+            {"opencv_version", sv::opencv_version()},
             {"profile_id", c.profile_id},
             {"gl_vendor", renderer.vendor()},
             {"gl_renderer", renderer.device()},
@@ -224,7 +227,9 @@ int main(int argc, char **argv)
             {"roi_samples", total},
             {"gpu_time_ms", nullptr},
             {"end_to_end_latency_ms", nullptr},
-            {"dataset", "analytic_fixture"}};
+            {"dataset", sv::read_json(manifest).as_object().if_contains("origin")
+                            ? sv::read_json(manifest).as_object().at("origin")
+                            : boost::json::value("unspecified_manifest")}};
         sv::write_json(std::filesystem::path(out) / "metrics.json", report);
         std::cout << boost::json::serialize(report) << '\n';
         if (mismatches || (!errors.empty() && *std::max_element(errors.begin(), errors.end()) > .1))

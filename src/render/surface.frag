@@ -24,7 +24,7 @@ void main()
 {
     if (abs(world.x) <= vehicle.x && abs(world.y) <= vehicle.y)
     {
-        color = vec4(.13, .16, .21, 1);
+        color = vec4(.2, .22, .24, 1);
         return;
     }
     vec3 sum = vec3(0);
@@ -77,5 +77,5 @@ void main()
         sum += w * linearize(x);
         total += w;
     }
-    color = total > 1e-6 ? vec4(encode(sum / total), 1) : vec4(.035, .045, .06, 0);
+    color = total > 1e-6 ? vec4(encode(sum / total), 1) : vec4(.86, .91, .95, 0);
 }

@@ -4,6 +4,14 @@
 
 namespace sv
 {
+struct RenderTiming
+{
+    double upload_cpu_ms = 0;
+    double readback_copy_cpu_ms = 0;
+    std::optional<double> gpu_draw_ms;
+    std::string gpu_timer_status = "extension_unavailable";
+};
+
 class Renderer
 {
     struct Impl;
@@ -21,5 +29,7 @@ class Renderer
     std::string device() const;
     uint64_t uploads() const;
     size_t triangles() const;
+    RenderTiming last_timing() const;
+    boost::json::object capabilities() const;
 };
 } // namespace sv

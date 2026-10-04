@@ -14,7 +14,7 @@ int main(int argc, char **argv)
     engine.addImageProvider("frames", provider);
     Bridge bridge(directory, provider);
     engine.rootContext()->setContextProperty("backend", &bridge);
-    engine.load(QUrl::fromLocalFile(SV_QML_PATH));
+    engine.load(QUrl(QStringLiteral("qrc:/surround-view/Main.qml")));
     if (engine.rootObjects().isEmpty())
     {
         return 1;
