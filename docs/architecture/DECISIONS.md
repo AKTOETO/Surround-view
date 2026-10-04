@@ -11,10 +11,12 @@
 | ADR-005 | Проектное | Одна точная модель `opencv_fisheye`, передняя полусфера; плоскость и аналитическая bowl как baseline | Независимые контрольные точки и соответствие доступным камерам. Другие поверхности добавлять после сравнения базовых |
 | ADR-006 | Проектное | Первоначальная/повторная калибровка по шаблону; диагностика перекрытий не применяет параметры автоматически | Проверочные наблюдения, наблюдаемость, ложные срабатывания; новая калибровка применяется атомарно между запусками |
 | ADR-007 | Проектное | Один источник истины для каждого типа документа; Markdown и встроенный PlantUML | Правила [[README\|карты документации]], валидные ссылки и прослеживаемость переноса |
-| ADR-008 | Проверено на Linux, 05.10.2026 | C++17; системная GLM 1.0.3 для RH view/perspective, FetchContent той же версии как fallback; Boost.JSON для данных, один Boost.Asio runner и один GL-владелец | Сборки GPU/CPU, независимые точки и IPC пройдены. Для Авроры проверить зависимости. Добавлять worker pool после выделения FrameSource и измерения декодирования |
-| ADR-009 | Проверено на Linux, 05.10.2026 | EGL/GLES 3: Mesa surfaceless и NVIDIA device platform; copied RGBA и QQuickImageProvider для desktop-проверки | Renderer подтверждён в отчётах, Qt-путь проверен offscreen. Float-FBO зависит от расширения; UI hardware latency, GPU timer queries и target-backend остаются открытыми |
+| ADR-008 | Проверено на Linux, 05.10.2026 | C++17; системные GLM/Boost/OpenCV/OpenSSL через REQUIRED; без FetchContent; один Asio runner и один GL-владелец | GPU/CPU/ASan/IPC пройдены. Аврора: подтвердить packages/ABI. Worker pool после FrameSource и измерения decoding |
+| ADR-009 | Проверено на Linux, 05.10.2026 | EGL/GLES 3: Mesa surfaceless и NVIDIA device; copied RGBA, embedded GLSL/QML, QQuickImageProvider | Renderer/Qt 5/6/native RPM подтверждены. Optional valid GPU timers добавлены; physical latency и target-backend открыты |
+| ADR-010 | Проверено на Linux, 05.10.2026 | Native C++ suite, integer RGB fixture, immutable Markdown reports и source/config/data hashes | 22 criteria RTX/Mesa. Сравнивать только одинаковую нагрузку, scope и Release; target-показатели ждут устройство |
+| ADR-011 | Подготовлено, target не проверен | Два offline spec-профиля GPU/CPU, общий Source0 из Git HEAD | Linux RPM payload проверен; SDK macros/dependencies и профиль установки Авроры ещё не подтверждены |
 
-ADR-002, ADR-004 и ADR-005 получили частичные свидетельства Linux-профиля: копируемый IPC, граница ядра и контрольные проекции. Их полные критерии, включая физическую задержку, реальные камеры и целевой профиль, ещё не закрыты. ADR-006 пока реализован только по известным пространственным соответствиям, без детектора снимков шаблона.
+ADR-002, ADR-004 и ADR-005 получили частичные Linux-свидетельства: IPC, границы библиотек и проекции. Полные критерии, включая display latency/реальные камеры/target, не закрыты. ADR-006 дополнен OpenCV detector/intrinsics по снимкам; known-XYZ привязка и неизвестные позы досок остаются разными задачами. Команды: [[engineering/USAGE]].
 
 ## Первые решения, которые нужно закрыть
 

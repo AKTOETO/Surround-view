@@ -10,7 +10,7 @@
 
 `sv-client` — единое имя клиента; прежнее `sv-ui` заменено. `sv-configurator` выполняет offline-калибровку на рабочей станции, формирует отчёт и проверенную конфигурацию. Сервер применяет её между запусками. Конфигуратор не входит в покадровый GPU-путь.
 
-Текущий код выделяет GPU в `sv-render`, использует прямую проекцию в fragment shader и QQuickImageProvider в desktop-клиенте. Чтение PPM и запись trace ещё выполняются в render-потоке; полный FrameSource-контракт, предварительные UV/LUT и схема worker pool ниже остаются планируемыми. Фактическое исполнение описано в [[diploma/03_PROTOTYPE_IMPLEMENTATION]].
+Текущий код выделяет GPU в `sv-render`, OpenCV — в `sv-vision`, проверки — в `sv-validation`; использует прямую fragment-проекцию и QQuickImageProvider. Decoding PPM/PNG/JPEG и trace выполняются в render-потоке; FrameSource, UV/LUT и worker pool ниже планируются. VideoCapture пока отдельный recorder. Фактическое исполнение — [[diploma/03_PROTOTYPE_IMPLEMENTATION]], сборка/RPM — [[engineering/BUILD]] и [[engineering/AURORA]].
 
 ## Компоненты и процессы
 

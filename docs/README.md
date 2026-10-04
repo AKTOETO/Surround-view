@@ -10,7 +10,8 @@
 4. [[requirements/SYSTEM|Обязательные функции и приоритеты]].
 5. [[planning/ROADMAP|План реализации]] и [[planning/THESIS|Структура текста диссертации]]; [[diploma/README|подготовленные главы]].
 6. [[research/CALIBRATION|Калибровка и диагностика]], [[research/EXPERIMENTS|Эксперименты]], [[validation/ACCEPTANCE|Приёмка и паспорт стенда]].
-7. [[prototype/README|Запуск рабочего Linux-профиля]], [[prototype/STATUS|что реализовано]], [[prototype/MEASUREMENTS|первичные результаты]].
+7. [[engineering/BUILD|Сборка]], [[engineering/USAGE|работа с кодом]], [[engineering/AURORA|RPM/SDK]], [[engineering/PLATFORM_TEST|переносимые проверки]], [[engineering/SCENE|фотографическая сцена]].
+8. [[prototype/STATUS|Что реализовано]], [[prototype/MEASUREMENTS|исторические результаты]], [[validation/baselines/PC_RTX|native RTX]] и [[validation/baselines/PC_MESA|native Mesa]].
 
 ## Структура и ответственность
 
@@ -22,8 +23,9 @@
 | `requirements/` | Проверяемые требования и контракты, каждый ID в одном месте | [[requirements/SYSTEM]] |
 | `diploma/` | Связный текст глав, их схемы и воспроизводимые иллюстрации | [[diploma/README]] |
 | `prototype/` | Команды рабочего профиля, фактические ограничения и первичные измерения | [[prototype/README]] |
+| `engineering/` | Единственные подробные инструкции по code/build/use/RPM и native suite | [[engineering/BUILD]] |
 | `planning/` | Полный порядок реализации и структура диссертации | [[planning/ROADMAP]] |
-| `validation/` | Профили, методика приёмки и трассировка требований | [[validation/ACCEPTANCE]] |
+| `validation/` | Приёмка/трассировка; `baselines/` — первичные native Markdown-отчёты | [[validation/ACCEPTANCE]] |
 | `archive/` | Прежние варианты темы и происхождение материалов | [[archive/README]] |
 
 ## Карта требований
@@ -45,7 +47,7 @@
 4. Источник получает один ID `Sxx` в `references/`; описания одной работы для нескольких глав объединяются. Перед цитированием проверять URL, версию, авторов, страницы и дату обращения.
 5. Архитектурные решения фиксируются в `architecture/DECISIONS` со статусом и условием пересмотра. Предварительные версии API и пороги не выдаются за подтверждённые.
 6. Имена файлов — стабильные ASCII-имена; заголовки и текст — на русском. Внутри хранилища использовать полные пути от `docs`, например `[[architecture/SYSTEM|Архитектура]]`. В корневых файлах — обычные относительные Markdown-ссылки.
-7. Схемы хранить в ограждённых блоках `plantuml` с `@startuml`/`@enduml`. Контекст, компоненты и последовательность находятся в `architecture/SYSTEM`; жизненный цикл калибровки — в `research/CALIBRATION`. Для научных графиков сохранять Python-скрипт рядом с главой, изображения — в её подкаталоге `figures/`, данные и методику — в Markdown-отчёте.
+7. Схемы хранить в ограждённых блоках `plantuml` с `@startuml`/`@enduml`. Контекст, компоненты и последовательность — `architecture/SYSTEM`; жизненный цикл калибровки — `research/CALIBRATION`. Python-скрипты рядом с главами; `diploma/figures/` разделён на theory/design/implementation/experiments/conclusion. Каждая картинка имеет подпись и отмеченный вид данных. Первичные результаты — Markdown-отчёты, большие traces/records — artifacts.
 8. Новую заметку создавать для отдельной ответственности; мелкие дополнения добавлять разделом существующей. Архивные заметки имеют явный статус и не определяют текущие сроки или MUST.
 9. Все отчёты о работах писать в Markdown. Будущие большие видеоданные и машинные трассы относятся к `data/` и `artifacts/`, вне хранилища документации; их происхождение и интерпретация описываются в Markdown.
 
