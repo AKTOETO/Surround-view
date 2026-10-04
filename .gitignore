@@ -1,3 +1,10 @@
 # Local Obsidian settings and installed plugins
 /.obsidian/
 /docs/.obsidian/
+
+# Reproducible local builds and generated experiment data
+/build*/
+/artifacts/
+/data/
+__pycache__/
+*.pyc
