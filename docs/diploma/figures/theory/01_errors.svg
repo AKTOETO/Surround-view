@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="720pt" height="288pt" viewBox="0 0 720 288" xmlns="http://www.w3.org/2000/svg" version="1.1">
+ <metadata>
+  <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+   <cc:Work>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:date>2026-10-05T02:13:30.691592</dc:date>
+    <dc:format>image/svg+xml</dc:format>
+    <dc:creator>
+     <cc:Agent>
+      <dc:title>Matplotlib v3.11.2, https://matplotlib.org/</dc:title>
+     </cc:Agent>
+    </dc:creator>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+ </defs>
+ <g id="figure_1">
+  <g id="patch_1">
+   <path d="M 0 288 
+L 720 288 
+L 720 0 
+L 0 0 
+z
+" style="fill: #ffffff"/>
+  </g>
+  <g id="axes_1">
+   <g id="patch_2">
+    <path d="M 41.556214 131.138874 
+L 264.324064 131.138874 
+Q 272.892059 131.138874 272.892059 128.020072 
+L 272.892059 72.921242 
+Q 272.892059 69.80244 264.324064 69.80244 
+L 41.556214 69.80244 
+Q 32.98822 69.80244 32.98822 72.921242 
+L 32.98822 128.020072 
+Q 32.98822 131.138874 41.556214 131.138874 
+z
+" clip-path="url(#p1c8c6845c9)" style="fill: #f9e8c9; stroke: #40576b; stroke-width: 1.1; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_3">
+    <path d="M 41.556214 248.093939 
+L 264.324064 248.093939 
+Q 272.892059 248.093939 272.892059 244.975138 
+L 272.892059 189.876307 
+Q 272.892059 186.757505 264.324064 186.757505 
+L 41.556214 186.757505 
+Q 32.98822 186.757505 32.98822 189.876307 
+L 32.98822 244.975138 
+Q 32.98822 248.093939 41.556214 248.093939 
+z
+" clip-path="url(#p1c8c6845c9)" style="fill: #dceaf5; stroke: #40576b; stroke-width: 1.1; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_4">
+    <path d="M 455.675936 188.316906 
+L 664.163796 188.316906 
+Q 672.73179 188.316906 672.73179 185.198104 
+L 672.73179 127.500272 
+Q 672.73179 124.38147 664.163796 124.38147 
+L 455.675936 124.38147 
+Q 447.107941 124.38147 447.107941 127.500272 
+L 447.107941 185.198104 
+Q 447.107941 188.316906 455.675936 188.316906 
+z
+" clip-path="url(#p1c8c6845c9)" style="fill: #dceaf5; stroke: #40576b; stroke-width: 1.1; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_5">
+    <path d="M 276.262813 103.541108 
+Q 360.000672 123.861833 442.434732 143.866164 
+" clip-path="url(#p1c8c6845c9)" style="fill: none; stroke: #40576b; stroke-width: 1.2; stroke-linecap: round"/>
+    <path d="M 437.994545 140.1132 
+L 442.434732 143.866164 
+L 436.768249 145.166535 
+z
+" clip-path="url(#p1c8c6845c9)" style="fill: #40576b; stroke: #40576b; stroke-width: 1.2; stroke-linecap: round"/>
+   </g>
+   <g id="patch_6">
+    <path d="M 276.247124 216.899624 
+Q 359.997909 194.03528 442.454418 171.524279 
+" clip-path="url(#p1c8c6845c9)" style="fill: none; stroke: #40576b; stroke-width: 1.2; stroke-linecap: round"/>
+    <path d="M 436.753247 170.385575 
+L 442.454418 171.524279 
+L 438.122752 175.401993 
+z
+" clip-path="url(#p1c8c6845c9)" style="fill: #40576b; stroke: #40576b; stroke-width: 1.2; stroke-linecap: round"/>
+   </g>
+   <g id="text_1">
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'" transform="translate(102.226077 97.152493)">Ошибка геометрии</text>
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'" transform="translate(115.712014 109.155227)">K, k, T камеры</text>
+   </g>
+   <g id="text_2">
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'" transform="translate(107.858889 214.107558)">Ошибка времени</text>
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'" transform="translate(91.787014 226.110293)">skew, возраст, очередь</text>
+   </g>
+   <g id="text_3">
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'" transform="translate(495.876897 152.945868)">Несовпадение контуров</text>
+    <text style="font-size: 10px; font-family: 'DejaVu Sans'" transform="translate(503.646428 164.947821)">и неверная свежесть</text>
+   </g>
+   <g id="text_4">
+    <g id="patch_7">
+     <path d="M 329.608828 121.324166 
+L 390.391172 121.324166 
+L 390.391172 104.404166 
+L 329.608828 104.404166 
+z
+" style="fill: #ffffff; opacity: 0.85"/>
+    </g>
+    <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle" x="360" y="115.202057" transform="rotate(-0 360 115.202057)">UV-остаток</text>
+   </g>
+   <g id="text_5">
+    <g id="patch_8">
+     <path d="M 292.116094 229.182727 
+L 427.883906 229.182727 
+L 427.883906 212.262727 
+L 292.116094 212.262727 
+z
+" style="fill: #ffffff; opacity: 0.85"/>
+    </g>
+    <text style="font-size: 9px; font-family: 'DejaVu Sans'; text-anchor: middle" x="360" y="223.060617" transform="rotate(-0 360 223.060617)">Движение между кадрами</text>
+   </g>
+   <g id="text_6">
+    <text style="font-size: 13px; font-family: 'DejaVu Sans'; text-anchor: middle" x="360" y="13.099615" transform="rotate(-0 360 13.099615)">Два независимых механизма дефекта изображения</text>
+   </g>
+  </g>
+ </g>
+ <defs>
+  <clipPath id="p1c8c6845c9">
+   <rect x="3.00024" y="25.099615" width="713.99952" height="259.900145"/>
+  </clipPath>
+ </defs>
+</svg>
