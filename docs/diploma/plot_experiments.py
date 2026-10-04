@@ -38,7 +38,7 @@ def generate(data,output,previews=None):
 
 if __name__=='__main__':
     parser=argparse.ArgumentParser();parent=Path(__file__).resolve().parent
-    parser.add_argument('--data',type=Path,default=parent.parent/'prototype/MEASUREMENTS.md');parser.add_argument('--output',type=Path,default=parent/'figures');parser.add_argument('--previews',type=Path)
+    parser.add_argument('--data',type=Path,default=parent.parent/'prototype/MEASUREMENTS.md');parser.add_argument('--output',type=Path,default=parent/'figures/experiments');parser.add_argument('--previews',type=Path)
     args=parser.parse_args();text=args.data.read_text();block=re.search(r'<!-- measurements: linux_prototype_v1 -->\s*```json\s*(.*?)\s*```',text,re.S)
     if not block:raise SystemExit('measurement block not found')
     generate(json.loads(block.group(1)),args.output,args.previews)
