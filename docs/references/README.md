@@ -1,6 +1,6 @@
 # Источники и порядок чтения
 
-Каталог объединяет повторные записи из Word и библиографии технических документов. У каждой работы один ID `Sxx`; разные главы ссылаются на ту же запись. Статус всех материалов — **к прочтению и проверке**. Даты обращения в перенесённых библиографических записях относятся к исходным документам.
+Каталог объединяет повторные записи из Word и библиографии технических документов. У каждой работы один ID `Sxx`; разные главы ссылаются на ту же запись. По выбранным источникам добавлены заметки о проверке разделов для первой главы от 04.10.2026. Остальные материалы остаются **к прочтению и проверке**; просмотр аннотации или раздела не означает полного изучения работы. Даты обращения в перенесённых библиографических записях относятся к исходным документам.
 
 ## Тематические разделы
 
@@ -63,6 +63,14 @@
 | S48 | [[references/MEASUREMENT#S48\|clock_gettime(3) : Linux manual page.]] | MEASUREMENT |
 | S49 | [[references/DEVELOPMENT#S49\|QQuickWindow Class]] | DEVELOPMENT |
 | S50 | [[references/DEVELOPMENT#S50\|EGL_EXT_image_dma_buf_import]] | DEVELOPMENT |
+| S51 | [[references/VISION#S51\|W3C CSS Color 4: преобразование linear-light/sRGB]] | VISION |
+| S52 | [[references/DEVELOPMENT#S52\|Khronos EXT_disjoint_timer_query]] | DEVELOPMENT |
+| S53 | [[references/DEVELOPMENT#S53\|Boost.JSON Documentation]] | DEVELOPMENT |
+| S54 | [[references/DEVELOPMENT#S54\|GLM Manual 1.0.3]] | DEVELOPMENT |
+| S55 | [[references/DEVELOPMENT#S55\|Threads and Boost.Asio]] | DEVELOPMENT |
+| S56 | [[references/DEVELOPMENT#S56\|EGL_MESA_platform_surfaceless]] | DEVELOPMENT |
+| S57 | [[references/DEVELOPMENT#S57\|QQuickImageProvider, Qt 6]] | DEVELOPMENT |
+| S58 | [[references/DEVELOPMENT#S58\|EGL_EXT_platform_device]] | DEVELOPMENT |
 
 ## Первое чтение
 

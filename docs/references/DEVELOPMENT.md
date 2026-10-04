@@ -1,10 +1,12 @@
 # Разработка и графический конвейер
 
-> Описания перенесены из исходных материалов. Ссылки и применимость к выбранным версиям предстоит проверить при чтении; перенос не означает, что источник уже изучен.
+> Исходные описания сохранены. Проверка выбранных разделов для первой главы отмечена отдельно у источников; остальные материалы остаются к чтению. Просмотр раздела не означает полного изучения работы или подтверждения её применимости к устройству.
 
 Каталог: [[references/README|Источники и порядок чтения]].
 
 ## S13
+
+**Проверка для главы 1 — 04.10.2026:** Проверены название и аннотация arXiv:2205.13281v2 от 05.01.2023. Источник используется для разграничения surround-view perception и проекционного визуального обзора; полный обзор не прочитан и его алгоритмы не сравнивались экспериментально.
 
 **Varun Ravi Kumar and others. Surround View Fisheye Camera Perception for Automated Driving: Overview Survey and Challenges**
 
@@ -116,6 +118,8 @@ Eigen предоставляет типы матриц, векторов, пре
 
 ## S25
 
+**Проверка для главы 1 — 04.10.2026:** Основной сайт не ответил в веб-просмотрщике. Просмотрено введение официальной документации [Ceres на Read the Docs](https://ceres-solver.readthedocs.io/latest/nnls_tutorial.html): нелинейные наименьшие квадраты и функции потерь. Источник обосновывает форму задачи оптимизации, но не выбор библиотеки для клиента Авроры.
+
 **Ceres Solver. Nonlinear Least Squares Tutorial**
 
 [Открыть источник](https://ceres-solver.readthedocs.io/latest/nnls_tutorial.html)
@@ -137,6 +141,8 @@ Eigen предоставляет типы матриц, векторов, пре
 - ограничение и фиксация параметров
 
 ## S26
+
+**Проверка для главы 1 — 04.10.2026:** Проверен официальный реестр спецификаций OpenGL ES. Конкретная версия и расширения проекта выбираются по устройству; наличие спецификации в реестре не подтверждает поддержку драйвером.
 
 **Khronos Group. OpenGL ES Registry**
 
@@ -226,6 +232,8 @@ V4L2 является низкоуровневым интерфейсом зах
 
 ## S31
 
+**Проверка для главы 1 — 04.10.2026:** Проверен официальный раздел Clocks and synchronization: различение clock, timestamps и running-time. Использование GStreamer в целевом приложении остаётся отдельным архитектурным решением.
+
 **GStreamer. Clocks and Synchronization**
 
 [Открыть источник](https://gstreamer.freedesktop.org/documentation/application-development/advanced/clocks.html)
@@ -314,6 +322,8 @@ API позволяет программно создавать и настраи
 
 ## S44
 
+**Проверка для главы 1 — 04.10.2026:** Проверены титульные данные SPRY270A, октябрь 2015, и разделы 2D/3D Surround View. В 3D-разделе, PDF-страница 9, описаны GPU-сетка, bowl и изменяемая точка наблюдения. Поэтому эти признаки не объявляются новизной проекта.
+
 **Surround view camera system for ADAS on TI’s TDAx SoCs**
 
 [Открыть источник](https://www.ti.com/lit/wp/spry270a/spry270a.pdf)
@@ -347,6 +357,8 @@ EGL_KHR_surfaceless_context / Khronos Group. – Текст : электронн
 
 ## S47
 
+**Проверка для главы 1 — 04.10.2026:** Архивный URL сначала не открылся; доступ через [официальный адрес Qt 5](https://doc.qt.io/qt-5/qtquick-visualcanvas-scenegraph.html) перенаправил на архив 5.15. Проверены Scene Graph and Rendering и требования к графическому потоку. Это версия источника, не подтверждение версии Qt целевого устройства.
+
 **Qt Quick Scene Graph**
 
 [Открыть источник](https://doc.qt.io/archives/qt-5.15/qtquick-visualcanvas-scenegraph.html)
@@ -377,3 +389,73 @@ QQuickWindow Class / The Qt Company. – Текст : электронный // 
 **Библиографическая запись из прежней документации:**
 
 EGL_EXT_image_dma_buf_import / Khronos Group. – Текст : электронный // Khronos EGL Registry. – URL: [https://registry.khronos.org/EGL/extensions/EXT/EGL_EXT_image_dma_buf_import.txt](https://registry.khronos.org/EGL/extensions/EXT/EGL_EXT_image_dma_buf_import.txt) (дата обращения: 19.09.2026).
+
+## S52
+
+**Khronos Group. EXT_disjoint_timer_query**
+
+[Открыть спецификацию расширения](https://registry.khronos.org/OpenGL/extensions/EXT/EXT_disjoint_timer_query.txt)
+
+**Статус:** просмотрены требования к валидности таймеров и рекомендации получения результатов 04.10.2026.
+
+**Использование:** раздел 1.7.2 первой главы. Проверять наличие расширения на устройстве, готовность результата и `GPU_DISJOINT_EXT`; недостоверные интервалы исключать с учётом причины. Поддержка расширения целевым GPU проекта не подтверждена.
+
+## S53
+
+**Boost.JSON. Documentation** / Boost C++ Libraries.
+
+[Открыть источник](https://www.boost.org/doc/libs/latest/libs/json/doc/html/index.html).
+
+**Проверено 05.10.2026:** Overview, Document Model, Parsing/Serializing и требования к включению библиотеки. Онлайн-адрес `latest` изменяемый; фактически использованная системная версия — Boost 1.92.0.
+
+**Использование:** раздел 2.9 и JSON-конфигурация/metadata Linux-прототипа. В сборке используется `Boost::json`. Наличие JSON-библиотеки не заменяет проверку прикладной схемы, а допустимость зависимости на Авроре остаётся открытой.
+
+## S54
+
+**GLM Manual, release 1.0.3** / G-Truc Creation.
+
+[Открыть источник фиксированной версии](https://github.com/g-truc/glm/blob/1.0.3/manual.md).
+
+**Проверено 05.10.2026:** включение GLM, преобразования матриц и конфигурация системы координат/clip range. В системе найдена GLM 1.0.3; fallback CMake закреплён на том же теге.
+
+**Использование:** разделы 2.9 и 3.2; `lookAtRH`, `perspectiveRH_NO`. В проекте отдельно фиксируются строковое хранение CPU-матрицы и column-major upload. GLM не определяет соглашения физических камер автоматически.
+
+## S55
+
+**Threads and Boost.Asio** / Christopher M. Kohlhoff; Boost C++ Libraries.
+
+[Открыть источник](https://www.boost.org/doc/libs/latest/doc/html/boost_asio/overview/core/threads.html).
+
+**Проверено 05.10.2026:** Thread Safety, Thread Pools, Internal Threads. Одновременное использование одного socket-объекта требует соблюдения правил сериализации; обработчики вызываются из потоков, исполняющих `io_context::run()`.
+
+**Использование:** разделы 2.9 и 3.5. Один runner обслуживает соединения/таймеры; основной поток владеет GL, между ними ограниченная очередь команд. Worker pool для декодирования пока не создан. Проверенная версия Boost — 1.92.0, онлайн-адрес `latest` изменяемый.
+
+## S56
+
+**EGL_MESA_platform_surfaceless**, version 2, 2016-10-13 / Khronos EGL Registry.
+
+[Открыть спецификацию](https://registry.khronos.org/EGL/extensions/MESA/EGL_MESA_platform_surfaceless.txt).
+
+**Проверено 05.10.2026:** Dependencies, Overview, New Behavior; в тексте реестра указан статус DRAFT. Платформа не зависит от оконной системы и не создаёт native window/pixmap surfaces.
+
+**Использование:** раздел 3.6 и Mesa-профиль. В прототипе используется pbuffer; название платформы не означает применение `EGL_NO_SURFACE`. Это отдельное расширение от S46 (`EGL_KHR_surfaceless_context`), разрешающего контекст без поверхности.
+
+## S57
+
+**QQuickImageProvider Class** / The Qt Company; Qt 6 Documentation.
+
+[Открыть источник](https://doc.qt.io/qt-6/qquickimageprovider.html).
+
+**Проверено 05.10.2026:** использование `image://`, способы выдачи QImage и требования reentrancy/thread safety. Публичный адрес Qt 6 обновляется; на рабочем стенде фактически использован Qt 6.11.2.
+
+**Использование:** раздел 3.7. Изображение хранится под mutex, клиент делает собственную копию RGBA перед release. Это desktop-путь; документ не подтверждает наличие конкретной версии Qt/API на Авроре.
+
+## S58
+
+**EGL_EXT_platform_device** / Khronos EGL Registry.
+
+[Открыть спецификацию](https://registry.khronos.org/EGL/extensions/EXT/EGL_EXT_platform_device.txt).
+
+**Проверено 05.10.2026:** Dependencies, получение EGLDisplay для EGLDeviceEXT и ограничения native surfaces. Перечисление устройств и выбор device display — разные операции; поддержка проверяется на конкретной реализации.
+
+**Использование:** раздел 3.6. NVIDIA-профиль получает display выбранного EGL-устройства и pbuffer-контекст; аппаратный путь подтверждён строкой GL_RENDERER в [[prototype/MEASUREMENTS]]. На Аврору вывод не распространяется.

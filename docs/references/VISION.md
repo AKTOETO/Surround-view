@@ -1,6 +1,6 @@
 # Камеры, калибровка и круговой обзор
 
-> Описания перенесены из исходных материалов. Ссылки и применимость к выбранным версиям предстоит проверить при чтении; перенос не означает, что источник уже изучен.
+> Исходные описания сохранены. Проверка выбранных разделов для первой главы отмечена отдельно у источников; остальные материалы остаются к чтению. Просмотр раздела не означает полного изучения работы или подтверждения её применимости к устройству.
 
 Каталог: [[references/README|Источники и порядок чтения]].
 
@@ -50,6 +50,8 @@
 
 ## S03
 
+**Проверка для главы 1 — 04.10.2026:** Проверены раздел Theory и описание калибровочного примера. Адрес 4.x перенаправляет на документацию OpenCV 4.13.0. Использованы перспективная модель и радиальные/тангенциальные искажения; версия документации не задаёт версию будущей сборки.
+
 **OpenCV. Camera Calibration with OpenCV**
 
 [Открыть источник](https://docs.opencv.org/4.x/d4/d94/tutorial_camera_calibration.html)
@@ -89,6 +91,8 @@
 
 ## S04
 
+**Проверка для главы 1 — 04.10.2026:** Проверено описание проекции fisheye в документации OpenCV 4.13.0. В первой главе принят нулевой скос; коэффициенты этой модели не взаимозаменяемы с коэффициентами обычной модели calib3d.
+
 **OpenCV. Fisheye Camera Model**
 
 [Открыть источник](https://docs.opencv.org/4.x/db/d58/group__calib3d__fisheye.html)
@@ -115,13 +119,15 @@ Fisheye camera model / OpenCV. – Текст : электронный // OpenCV
 
 ## S05
 
+**Проверка для главы 1 — 04.10.2026:** Проверены титульный лист, структура и постановка доступного PDF: технический отчёт MSR-TR-98-71, первоначальная дата 02.12.1998, позднейшие исправления перечислены на титуле. При цитировании этого URL указывать отчёт, не подставлять выходные данные журнальной статьи.
+
 **Zhengyou Zhang. A Flexible New Technique for Camera Calibration**
 
 [Открыть источник](https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/tr98-71.pdf)
 
 **Уровень:** Средний теоретический
 
-**Формат:** Научная статья, английский язык
+**Формат:** Технический отчёт MSR-TR-98-71, английский язык
 
 **Разделы главы:** 1.5
 
@@ -136,6 +142,8 @@ Fisheye camera model / OpenCV. – Текст : электронный // OpenCV
 - ошибка репроекции
 
 ## S06
+
+**Проверка для главы 1 — 04.10.2026:** Проверен раздел II-A доступной авторской версии: сравнение угловых проекций и радиально-симметричная модель. PDF содержит 15 страниц; выходные данные опубликованной журнальной версии по этому файлу отдельно не устанавливались.
 
 **Juho Kannala and Sami Brandt. A Generic Camera Model and Calibration Method for Conventional Wide Angle and Fish Eye Lenses**
 
@@ -158,6 +166,8 @@ Fisheye camera model / OpenCV. – Текст : электронный // OpenCV
 - границы применимости модели
 
 ## S07
+
+**Проверка для главы 1 — 04.10.2026:** Проверена страница авторов: второе издание, Cambridge University Press, март 2004. Доступны главы Introduction и Epipolar Geometry. Использование в главе 1 ограничено основаниями многовидовой геометрии; полного чтения книги не заявлено.
 
 **Richard Hartley and Andrew Zisserman. Multiple View Geometry in Computer Vision**
 
@@ -203,6 +213,8 @@ Fisheye camera model / OpenCV. – Текст : электронный // OpenCV
 
 ## S09
 
+**Проверка для главы 1 — 04.10.2026:** Проверены аннотация и описание gain compensation/multiband blending в авторском PDF. Рассматривается панорамное сшивание; автомобильное видео с разнесёнными камерами требует отдельной проверки параллакса и устойчивости во времени.
+
 **Matthew Brown and David Lowe. Automatic Panoramic Image Stitching Using Invariant Features**
 
 [Открыть источник](https://www.cs.ubc.ca/~lowe/papers/07brown.pdf)
@@ -225,6 +237,8 @@ Fisheye camera model / OpenCV. – Текст : электронный // OpenCV
 
 ## S10
 
+**Проверка для главы 1 — 04.10.2026:** Исходная страница аннотации и прямое открытие PDF не ответили в веб-просмотрщике. Найден первоисточник [spline83.pdf](https://persci.mit.edu/pub_pdfs/spline83.pdf), проверен доступный поисковый фрагмент раздела 3. По доступной авторской аннотации дополнительно подтверждены выходные данные: ACM Transactions on Graphics, 2(4), 217–236, 1983. Полный текст остаётся к проверке; в главе используется только принцип пирамидального объединения.
+
 **Peter Burt and Edward Adelson. A Multiresolution Spline with Application to Image Mosaics**
 
 [Открыть источник](https://persci.mit.edu/pub_abstracts/spline83_abs.html)
@@ -246,6 +260,8 @@ Fisheye camera model / OpenCV. – Текст : электронный // OpenCV
 - вычислительная стоимость метода
 
 ## S11
+
+**Проверка для главы 1 — 04.10.2026:** Проверены Introduction, Data flow и Steps to run: утилита получает данные камер и формирует CALMAT.BIN; перечислены требуемые входные файлы и условия демонстрационного стенда. Это пример организации процедуры, а не совместимый формат или реализация для Авроры.
 
 **Texas Instruments. Surround View Calibration**
 
@@ -294,6 +310,8 @@ Fisheye camera model / OpenCV. – Текст : электронный // OpenCV
 3D Surround View Application / Texas Instruments. – Текст : электронный // Vision Apps User Guide. – URL: [https://software-dl.ti.com/jacinto7/esd/processor-sdk-rtos-j721s2/latest/exports/docs/vision_apps/docs/user_guide/group_apps_srv_demos_app_srv_camera.html](https://software-dl.ti.com/jacinto7/esd/processor-sdk-rtos-j721s2/latest/exports/docs/vision_apps/docs/user_guide/group_apps_srv_demos_app_srv_camera.html) (дата обращения: 19.09.2026).
 
 ## S14
+
+**Проверка для главы 1 — 04.10.2026:** Проверена аннотация arXiv:2305.16840v1, дата подачи 26.05.2023. На странице указаны Jixiang Li, Jiahao Pi, Guohang Yan, Yikang Li. Использована постановка coarse-to-fine уточнения; полный алгоритм, код и опубликованные результаты не воспроизводились.
 
 **Jixiang Li and others. Automatic Surround Camera Calibration Method in Road Scene for Self Driving Car**
 
@@ -380,3 +398,13 @@ Fisheye camera model / OpenCV. – Текст : электронный // OpenCV
 - calib3d и fisheye
 - поиск углов и признаков
 - геометрические преобразования
+
+## S51
+
+**W3C. CSS Color Module Level 4 — Color Conversion Code**
+
+[Открыть зафиксированную редакцию](https://www.w3.org/TR/2026/CRD-css-color-4-20260930/#color-conversion-code)
+
+**Статус:** просмотрен код преобразований linear-light/sRGB 04.10.2026. Документ — Candidate Recommendation Draft от 30.09.2026, рабочий проект, а не окончательный стандарт.
+
+**Использование:** раздел 1.4.4 первой главы, проверка численного примера линейного смешивания. Раздел с функциями `lin_sRGB` и `gam_sRGB` задаёт используемое преобразование. Применимость к входу требует подтверждения transfer function: видеоданные не считаются sRGB автоматически.
