@@ -83,6 +83,16 @@ Bridge::Bridge(QString directory, FrameProvider *p) : directory_(std::move(direc
     control_.connectToServer(directory_ + "/control.sock");
 }
 
+Bridge::~Bridge()
+{
+    // QLocalSocket may emit disconnected during destruction. Its callbacks must not access
+    // strings/buffers after those members have already been destroyed.
+    control_.disconnect(this);
+    data_.disconnect(this);
+    control_.abort();
+    data_.abort();
+}
+
 void Bridge::write(QLocalSocket &socket, quint16 type, const QJsonObject &header)
 {
     auto metadata = QJsonDocument(header).toJson(QJsonDocument::Compact);

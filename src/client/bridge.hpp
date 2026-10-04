@@ -40,6 +40,7 @@ class Bridge : public QObject
   public:
 
     Bridge(QString, FrameProvider *);
+    ~Bridge() override;
 
     QString frameUrl() const
     {
