@@ -6,5 +6,7 @@
 /build*/
 /artifacts/
 /data/
+/RPMS/
+/installroot/
 __pycache__/
 *.pyc

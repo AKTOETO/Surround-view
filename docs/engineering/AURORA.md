@@ -37,6 +37,15 @@ Boost должен предоставлять именно JSON ≥1.75, GLM —
 
 ## Зафиксировать исходники
 
+Для проверки самого spec и CMake install layout на ПК существует `tools/verify_host_rpm.py`:
+
+```sh
+python3 tools/verify_host_rpm.py --profile gpu --output artifacts/rpm-host-gpu
+python3 tools/verify_host_rpm.py --profile cpu --output artifacts/rpm-host-cpu
+```
+
+Требуются native RPM-tools и development-пакеты Linux из [[engineering/BUILD]]. Скрипт использует собственные **host-only** macros и `--nodeps`, поскольку Linux-стенд может иметь пакетную базу другого дистрибутива. Проверяет фактические payload paths и ELF requires, сохраняет log/listing в artifacts. Это исключение только для проверки native упаковки; оно не проверяет целевые BuildRequires, ABI Авроры и её security profile. `--toolchain-root` позволяет использовать распакованные RPM-tools локально без системной установки.
+
 На ПК после коммитов и при чистом рабочем дереве:
 
 ```sh
