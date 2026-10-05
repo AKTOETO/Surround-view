@@ -34,6 +34,7 @@
 | `sv-bench` | Изолированный рендер, эффективная конфигурация, численная проверка |
 | `sv-platform-test` | Native критерии и portable JSON/Markdown для устройства |
 | `sv-client` | Desktop Qt/QML с QQuickImageProvider |
+| `sv-client-lib` | Запланирована; сейчас подключение и протокол реализованы непосредственно в Qt `Bridge` через QLocalSocket |
 | `sv-configurator` | `tools/configurator.py`, Python/NumPy CLI |
 | `sv-simulator` | `tools/simulator.py`, offline-генерация PPM/manifest |
 | `sv-calibrate`, `sv-capture`, `sv-scene` | OpenCV detector/fitter, recorder и фотографический generator |
@@ -55,3 +56,5 @@ QQuickImageProvider заменяет проектный QQuickItem/QSGTexture. �
 ## Уточнение следующего этапа 05.10.2026
 
 Запрошены live-источники `/dev/video*`, виртуальные камеры через отдельные сокеты, удалённые клиент/конфигуратор, движущийся автомобиль в полноценном 3D-мире и замкнутое отображение окружения. **В версии 0.2.0 это ещё не реализовано**: сервер читает replay-manifest и использует локальные Unix control/data sockets; `sv-capture` записывает входы отдельно, `sv-scene` преобразует неподвижную панораму. Параметры live/TCP/dome в текущий config добавлять нельзя: строгий parser их отклонит. Последовательность продолжения — [[planning/ROADMAP#Следующий этап: источники, удалённое управление и 3D-окружение]].
+
+В следующем этапе `sv-client` должен использовать отдельную `sv-client-lib` для локального Unix, TCP loopback и сервера на другой машине. Контракт — [[requirements/CLIENT#Клиентская библиотека sv-client-lib (план)]], решение — [[architecture/DECISIONS|ADR-012]]. На текущие бинарные файлы, конфигурацию и сохранённые baselines это уточнение плана не влияет.
