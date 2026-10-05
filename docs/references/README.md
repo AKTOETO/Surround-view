@@ -81,7 +81,7 @@
 | S66 | [[references/PLATFORM#S66\|Platform SDK setup]] | PLATFORM |
 | S67 | [[references/PLATFORM#S67\|Аврора: CMake/Ninja example]] | PLATFORM |
 | S68 | [[references/VISION#S68\|Zhang et al. Seamless 3D Surround View with a Novel Burger Model]] | VISION |
-| S69 | [[references/VISION#S69\|Burt and Adelson. Multiresolution Spline for Image Mosaics]] | VISION |
+| S69 | [[references/VISION#S69\|S69: перенаправление на S10 (Burt–Adelson)]] | VISION |
 | S70 | [[references/VISION#S70\|Khronos OpenGL ES 3.0 cube-map filtering]] | VISION |
 | S71 | [[references/VISION#S71\|OpenCV stitching warpers, seam estimators and blenders]] | VISION |
 

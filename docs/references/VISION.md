@@ -427,7 +427,7 @@ Fisheye camera model / OpenCV. – Текст : электронный // OpenCV
 
 ## S69
 
-**Peter J. Burt, Edward H. Adelson. A Multiresolution Spline with Application to Image Mosaics.** ACM Transactions on Graphics, 2(4), October 1983, pp. 217–236. [Копия полного текста](https://ai.stanford.edu/~kosecka/burt-adelson-spline83.pdf), DOI: 10.1145/245.247. Проверено 06.10.2026: abstract и описание многомасштабного слияния. Разные пространственные частоты объединяются с переходными полосами разных масштабов; метод мотивирует multi-band baseline, но не решает геометрическое несовпадение источников.
+Запись объединена с [[references/VISION#S10|S10]]: это одна и та же статья Burt–Adelson 1983. Старый ID сохранён как перенаправление для внешних ссылок. Дополнительная [копия полного текста](https://ai.stanford.edu/~kosecka/burt-adelson-spline83.pdf), DOI 10.1145/245.247, проверена 06.10.2026 по abstract и описанию многомасштабного слияния.
 
 ## S70
 
