@@ -13,6 +13,7 @@
 | Калибровка intrinsics/extrinsics по известным 3D-точкам | Независимые train/validation, RMSE и повторное оценивание | Реальная метрическая площадка отсутствует |
 | OpenCV detector и image-based intrinsics | `vision_tools`, synthetic projected images; hashes/disjoint train/validation | Held-out board pose fitted; нет real-camera испытаний и внешней привязки |
 | OpenCV VideoCapture recorder | Четыре видеофайла → PNG/manifest/timestamps, `vision_tools` | Не встроен в realtime server; host delivery times не sensor timestamps |
+| Blender 3D street fixture | Разнесённые centers, scripted motion, 4 × fisheye RGB, hashes/poses; replay/server smoke | Процедурный автомобиль; нет dense depth, интерактивного вождения и live producer |
 | Фотографическая street-demo | CC0 panorama, три actual GLES ракурса в главе 3 | Общий оптический центр, нет реального параллакса/калибровочной истины |
 | Геометрия `dome_floor_v1` | Верхняя полусфера + круглый пол; камера строго внутри; opaque fallback; mesh winding и containment checks | Панорама только для визуализации; coverage/seam/marker quality не сравнены с другими carriers |
 | Сервисная диагностика задней камеры | Заданный поворот, известные точки, INDETERMINATE | Нет анализа признаков перекрытий и статистики реальных ложных тревог |
@@ -37,7 +38,7 @@
 | `sv-client` | Desktop Qt/QML с QQuickImageProvider |
 | `sv-client-lib` | Запланирована; сейчас подключение и протокол реализованы непосредственно в Qt `Bridge` через QLocalSocket |
 | `sv-configurator` | `tools/configurator.py`, Python/NumPy CLI |
-| `sv-simulator` | `tools/simulator.py`, offline-генерация PPM/manifest |
+| `sv-simulator` | `tools/simulator.py` и `tools/blender/`: analytic/metric-3D offline PPM/manifest |
 | `sv-calibrate`, `sv-capture`, `sv-scene` | OpenCV detector/fitter, recorder и фотографический generator |
 
 QQuickImageProvider заменяет проектный QQuickItem/QSGTexture. Сервер имеет один io_context-runner и одного GL-владельца; общий worker pool отсутствует. Native qualification проверяет все manifest hashes, обычный replay-loader — ID/формат. Эти различия остаются явными. Основная инструкция по коду: [[engineering/BUILD]], [[engineering/USAGE]], [[engineering/AURORA]], [[engineering/PLATFORM_TEST]].
@@ -57,6 +58,6 @@ QQuickImageProvider заменяет проектный QQuickItem/QSGTexture. �
 
 ## Уточнение следующего этапа 05.10.2026
 
-Запрошены live-источники `/dev/video*`, виртуальные камеры через отдельные сокеты, удалённый клиент/конфигуратор и движущийся автомобиль в полноценном 3D-мире. В 0.3.0 уличная конфигурация использует `dome_floor_v1`; replay-manifest и локальные Unix control/data sockets остаются текущим server input. `sv-capture` записывает камеры отдельно, `sv-scene` генерирует неподвижную моноскопическую панораму. Реальный движущийся мир, аппаратный ввод и сетевой TCP-профиль сервера остаются следующими этапами. Строгий parser принимает только поля типов bowl и dome, прочие transport-настройки отклонит. Последовательность продолжения — [[planning/ROADMAP#Следующий этап: источники, удалённое управление и 3D-окружение]].
+Запрошены live-источники `/dev/video*`, виртуальные камеры через отдельные сокеты, удалённый клиент/конфигуратор и движущийся автомобиль в полноценном 3D-мире. В 0.3.0 уличная конфигурация использует `dome_floor_v1`; replay-manifest и локальные Unix control/data sockets остаются текущим server input. `sv-capture` записывает камеры отдельно, `sv-scene` генерирует неподвижную моноскопическую панораму. 06.10.2026 добавлена процедурная Blender-улица с разнесёнными cameras и заданным движением; offline-экспорт проверен через server replay ([[engineering/BLENDER]], [[validation/BLENDER_SMOKE]]). Интерактивное вождение, аппаратный ввод и сетевой TCP-профиль сервера остаются следующими этапами. Строгий parser принимает только поля типов bowl и dome, прочие transport-настройки отклонит. Последовательность продолжения — [[planning/ROADMAP#Следующий этап: источники, удалённое управление и 3D-окружение]].
 
 В следующем этапе `sv-client` должен использовать отдельную `sv-client-lib` для локального Unix, TCP loopback и сервера на другой машине. Контракт — [[requirements/CLIENT#Клиентская библиотека sv-client-lib (план)]], решение — [[architecture/DECISIONS|ADR-012]]. На текущие бинарные файлы, конфигурацию и сохранённые baselines это уточнение плана не влияет.

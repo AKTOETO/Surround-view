@@ -14,7 +14,9 @@
 | OpenSSL | Crypto development package | 3.6.4 | SHA-256 исходников и входных данных |
 | EGL / GLES | EGL и OpenGL ES 3 | NVIDIA / Mesa | GPU-профиль |
 | Qt | 5.15 либо 6, Core/Gui/Qml/Quick/Network | 6.11.2 | Desktop-клиент, опционально |
-| Python | Python 3, NumPy; Matplotlib для рисунков | 3.14.7 / 2.5.3 | Host-тесты, аналитический генератор, известные XYZ, графики |
+| Python | Python 3, NumPy, Pillow; Matplotlib для рисунков | 3.14.7 / 2.5.3 | Host-тесты, аналитический генератор, известные XYZ, графики |
+
+Blender 5.2.2 LTS проверен отдельно для host-генерации по [[engineering/BLENDER]]. Его установка не нужна для replay и не добавлена в CMake/RPM dependencies. Host-тест `blender_fixture` проверяет rig/conversion без Blender, используя NumPy/Pillow.
 
 Python **не нужен на устройстве** для `sv-platform-test`, `sv-calibrate`, `sv-capture` и `sv-scene`. Сравнение полученных отчётов выполняется на ПК стандартным Python без NumPy.
 

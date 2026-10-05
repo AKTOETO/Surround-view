@@ -10,8 +10,8 @@
 4. [[requirements/SYSTEM|Обязательные функции и приоритеты]].
 5. [[planning/ROADMAP|План реализации]] и [[planning/THESIS|Структура текста диссертации]]; [[diploma/README|подготовленные главы]].
 6. [[research/PROJECTION_AND_STITCHING|Обзор слияния четырёх камер и поверхностей]], [[research/CALIBRATION|Калибровка и диагностика]], [[research/EXPERIMENTS|Эксперименты]], [[validation/ACCEPTANCE|Приёмка и паспорт стенда]].
-7. [[engineering/BUILD|Сборка]], [[engineering/USAGE|работа с кодом]], [[engineering/AURORA|RPM/SDK]], [[engineering/PLATFORM_TEST|переносимые проверки]], [[engineering/SCENE|фотографическая сцена]].
-8. [[prototype/STATUS|Что реализовано]], [[prototype/MEASUREMENTS|исторические результаты]], [[validation/baselines/PC_RTX|native RTX]] и [[validation/baselines/PC_MESA|native Mesa]].
+7. [[engineering/BUILD|Сборка]], [[engineering/USAGE|работа с кодом]], [[engineering/AURORA|RPM/SDK]], [[engineering/PLATFORM_TEST|переносимые проверки]], [[engineering/SCENE|фотографическая сцена]], [[engineering/BLENDER|объёмная улица и экспорт камер]].
+8. [[prototype/STATUS|Что реализовано]], [[prototype/MEASUREMENTS|исторические результаты]], [[validation/baselines/PC_RTX|native RTX]], [[validation/baselines/PC_MESA|native Mesa]] и [[validation/BLENDER_SMOKE|Blender→server проверка]].
 
 ## Структура и ответственность
 
