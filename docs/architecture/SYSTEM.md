@@ -19,13 +19,20 @@
 | `sv-core` | Библиотека без Qt и транспорта: координаты, калибровка, поверхность, сетки, отображения, GPU-ресурсы и виртуальная камера |
 | `sv-server` | Основной host ядра: конфигурация, `FrameSource`, подбор наборов, команды, выходной адаптер, health и trace |
 | `sv-bench` | Host того же ядра на локальных данных: математические и performance-опыты без UI |
-| `sv-client` | Qt выбранной версии, Qt Quick (QML), QML-модули, проверенные для данного профиля; показ готового изображения, жесты, статусы и собственные события представления |
+| `sv-client-lib` (план) | C++17 API соединения с локальным/удалённым `sv-server`: Unix/TCP, handshake, команды/ACK, готовые кадры, состояния, таймауты и reconnect; без Qt и GPU |
+| `sv-client` | Qt выбранной версии, Qt Quick (QML), QML-модули, проверенные для данного профиля; планируемый Qt-адаптер `sv-client-lib`, показ готового изображения, жесты, статусы и собственные события представления |
 | `sv-configurator` | Первоначальная и повторная калибровка, проверка качества, экспорт версии параметров; алгоритмы — [[research/CALIBRATION]] |
 | `sv-simulator` | Лёгкий producer известного набора, сценарий времени и неисправностей; полный 3D-мир — расширение |
 
 
 
 `FrameSource` возвращает нормализованный кадр, владельца буфера и метаданные. `FileFrameSource` и `ProducerFrameSource` обязательны; `HardwareFrameSource` желателен. Выбор источника между запусками сохраняет одно ядро. Горячая замена — отдельная возможность. `sv-bench` изолирует стоимость метода; испытание server → UI остаётся обязательным.
+
+### Клиентская библиотека и способы подключения
+
+Проектное решение [[architecture/DECISIONS|ADR-012]] выделяет `sv-client-lib` как отдельный CMake target с публичными заголовками и install/export-пакетом. Внешнее приложение выбирает endpoint: локальные Unix control/data sockets либо TCP host и раздельные control/data ports. TCP работает как через loopback на том же устройстве, так и между ноутбуком и устройством сервера. Остальная работа с командами, состояниями и кадрами использует единый API; контракт — [[requirements/CLIENT#Клиентская библиотека sv-client-lib (план)]].
+
+Библиотека владеет соединением, декодированием протокола, очередями и сессией; Qt-адаптер переносит её события в UI thread. QImage, QML и события фактического представления остаются в приложении. Библиотека получает готовый серверный результат; выбор и открытие физических камер остаются на сервере. Первым потребителем является `sv-client`; будущий удалённый конфигуратор может использовать тот же API после выбора способа интеграции. В 0.2.0 отдельной библиотеки ещё нет, текущий `Bridge` напрямую использует `QLocalSocket`.
 
 ## Подготовка, кадр и команда
 
@@ -147,7 +154,7 @@ endlegend
 ```plantuml
 @startuml
 title Компоненты, границы ядра и выходного адаптера
-' Статус: проектная редакция 19.09.2026. Решения: SYSTEM.md, ADR-001/002/003.
+' Статус: проектная редакция 05.10.2026. sv-client-lib планируется: ADR-012.
 package "sv-core: без Qt и транспорта" {
   [Модель камеры и CPU-эталон] as Camera
   [Аналитическая bowl\nРавномерная / исследуемая сетка] as Geometry
@@ -163,8 +170,12 @@ package "sv-server" {
   [Выходной адаптер\nИтоговый readback + 3 слота + IPC] as Output
   [Health и trace] as Trace
 }
+package "sv-client-lib: C++17, без Qt/GPU (план)" {
+  [Сессия и общий протокол\nКоманды / кадры / bounded queues] as ClientLibrary
+  [Transport adapter\nUnix / TCP local / TCP remote] as ClientTransport
+}
 package "sv-client: Qt целевой версии, Qt Quick (QML)" {
-  [Клиент IPC\nОграниченная очередь] as Client
+  [Qt-адаптер клиентской библиотеки] as Client
   [QQuickItem / QSGTexture\nПоказ готового кадра] as Display
   [QML: жесты и пресеты] as Touch
   [QML: состояние и stale-overlay] as Status
@@ -189,11 +200,17 @@ View --> GPU
 GPU --> Output : итоговый FBO
 GPU --> Trace : GPU timings
 Sync --> Trace : возраст, skew, drops
-Output --> Client : rendered_frame
-Client --> Output : frame_release
+ClientLibrary --> ClientTransport : операции сессии
+ClientTransport --> ClientLibrary : пакеты / ошибки
+ClientTransport --> Control : handshake / команды / release
+Control --> ClientTransport : ACK / статус
+Output --> ClientTransport : rendered_frame
+ClientTransport --> Output : data handshake
+Client --> ClientLibrary : API / frame_release
+ClientLibrary --> Client : готовые кадры / события
 Client --> Display : байты и IDs
 Client --> Status : health / state
-Touch --> Control : команды
+Touch --> Client : команды
 Display --> UITrace : реально использованный frame_id
 UITrace --> Trace
 Data --> Producer
@@ -206,6 +223,7 @@ end note
 @enduml
 ```
 
+*Рисунок А.1 — Проектные границы компонентов после выделения клиентской библиотеки. Unix и TCP скрыты за общим API; `sv-client-lib` и удалённый профиль ещё не реализованы.*
 
 ## Кадр и команда
 

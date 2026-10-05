@@ -15,6 +15,7 @@
 | ADR-009 | Проверено на Linux, 05.10.2026 | EGL/GLES 3: Mesa surfaceless и NVIDIA device; copied RGBA, embedded GLSL/QML, QQuickImageProvider | Renderer/Qt 5/6/native RPM подтверждены. Optional valid GPU timers добавлены; physical latency и target-backend открыты |
 | ADR-010 | Проверено на Linux, 05.10.2026 | Native C++ suite, integer RGB fixture, immutable Markdown reports и source/config/data hashes | 22 criteria RTX/Mesa. Сравнивать только одинаковую нагрузку, scope и Release; target-показатели ждут устройство |
 | ADR-011 | Подготовлено, target не проверен | Два offline spec-профиля GPU/CPU, общий Source0 из Git HEAD | Linux RPM payload проверен; SDK macros/dependencies и профиль установки Авроры ещё не подтверждены |
+| ADR-012 | Проектное, 05.10.2026 | Отдельная C++17 `sv-client-lib` без Qt/GPU; `sv-client` использует её через Qt-адаптер. Один API поддерживает локальный Unix, TCP loopback и сервер на другой машине | [[requirements/CLIENT#Клиентская библиотека sv-client-lib (план)\|CLIB-F-001…008]]: общие команды/кадры/ошибки, lifecycle и bounded queues; Unix/TCP/two-host tests, installed CMake package. Текущий `Bridge` пока работает напрямую с QLocalSocket |
 
 ADR-002, ADR-004 и ADR-005 получили частичные Linux-свидетельства: IPC, границы библиотек и проекции. Полные критерии, включая display latency/реальные камеры/target, не закрыты. ADR-006 дополнен OpenCV detector/intrinsics по снимкам; known-XYZ привязка и неизвестные позы досок остаются разными задачами. Команды: [[engineering/USAGE]].
 
