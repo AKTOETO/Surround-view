@@ -24,6 +24,76 @@ build/sv-client /tmp/sv-street
 
 Сцена содержит настоящую фотографию улицы и виртуальную ego-модель; ограничения общего оптического центра подробно объяснены в [[engineering/SCENE]]. Один ряд manifest зацикливается по умолчанию. Это интерактивный просмотр фотографии, а не живая запись камер.
 
+## Запуск с миром из Blender
+
+Сохранённый мир находится в `assets/scenes/metric-street/street.blend`. Сервер получает четыре изображения камер через replay-manifest; сначала нужно экспортировать их из мира и преобразовать в fisheye-входы. Blender нужен на этапе экспорта, Python с NumPy/Pillow — на этапе конвертации. Подробности и происхождение ассетов: [[engineering/BLENDER]], [[engineering/ASSETS]].
+
+### 1. Подготовить запись из сохранённого мира
+
+Из корня проекта:
+
+```sh
+blender --background assets/scenes/metric-street/street.blend --python-expr '
+import bpy
+import sys
+from pathlib import Path
+root = Path.cwd()
+sys.path.insert(0, str(root / "tools/blender"))
+import scene
+scene.capture(bpy.data.scenes["SV Research Street"],
+              root / "artifacts/blender-street-capture",
+              frames=60, face_size=256)
+'
+
+python3 tools/blender/convert.py \
+  --capture artifacts/blender-street-capture \
+  --output artifacts/blender-street
+```
+
+Этот путь использует геометрию сохранённого `.blend`, включая сделанные в нём правки. `frames=60` создаёт две секунды сценарного движения при 30 FPS; offline-рендер занимает отдельное время. Для короткой проверки заменить 60 на 4. Если Blender отсутствует в PATH, указать абсолютный путь к бинарнику.
+
+Оба output-каталога должны быть новыми. Если `artifacts/blender-street/config.json` и `manifest.json` уже подготовлены, перейти к запуску сервера. Для повторной генерации использовать другие каталоги и заменить пути в командах ниже.
+
+Альтернатива — воссоздать исходный мир Python-скриптом и экспортировать его:
+
+```sh
+blender --background --python tools/blender/scene.py -- \
+  --output artifacts/blender-street-capture --frames 60 --face-size 256
+```
+
+После этой альтернативной команды выполнить ту же конвертацию. Она создаёт новый мир из кода; правки сохранённого `.blend` загружаются первым способом.
+
+### 2. Запустить сервер
+
+В первом терминале:
+
+```sh
+SV_EGL_PLATFORM=surfaceless build/sv-server \
+  --config artifacts/blender-street/config.json \
+  --manifest artifacts/blender-street/manifest.json \
+  --ipc-dir /tmp/sv-blender \
+  --trace artifacts/blender-server.jsonl --loop true
+```
+
+Использовать именно config, созданный конвертером: он содержит калибровку разнесённых Blender-камер и поверхность `dome_floor_v1`. Виртуальная камера располагается внутри купола, нижняя часть сцены отображается на отдельном круглом полу. `configs/street-demo.json` относится к фотографической панораме и этому набору не соответствует.
+
+### 3. Запустить клиент
+
+Во втором терминале, также из корня проекта:
+
+```sh
+build/sv-client /tmp/sv-blender
+```
+
+Путь должен совпадать с `--ipc-dir` сервера. Управление: перетаскивание — ракурс, колесо — расстояние, пресеты — сверху/спереди/сзади; пауза останавливает воспроизведение. Сервер завершать через `Ctrl+C`. Для получения кадра без GUI:
+
+```sh
+python3 tools/client.py --ipc-dir /tmp/sv-blender \
+  --preset front --output artifacts/blender-client-capture
+```
+
+После подготовки записи Blender можно закрыть: сервер и клиент работают с экспортированными кадрами. Движение автомобиля воспроизводится из записи; интерактивное вождение в Blender и live-передача кадров пока не реализованы.
+
 ## Аналитическая сцена и текстовый клиент
 
 ```sh
