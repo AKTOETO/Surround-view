@@ -1,6 +1,6 @@
 # Состояние прототипа и границы подтверждения
 
-Редакция 05.10.2026, Linux-профиль 0.3.0. Это карта фактически реализованного прототипа, а не объявление завершения всех MUST из [[requirements/SYSTEM]]. Рабочий профиль — `linux-prototype-v1`; его JSON намеренно уже полной проектной схемы из [[requirements/CONFIGURATION]]. Совпадение `schema_version: 1` означает версию этого явно именованного профиля, а не взаимозаменяемость всех полей прежнего YAML-примера.
+Редакция 06.10.2026, Linux-профиль 0.4.0. Это карта фактически реализованного прототипа, а не объявление завершения всех MUST из [[requirements/SYSTEM]]. Рабочий профиль — `linux-prototype-v1`; его JSON намеренно уже полной проектной схемы из [[requirements/CONFIGURATION]]. Совпадение `schema_version: 1` означает версию этого явно именованного профиля, а не взаимозаменяемость всех полей прежнего YAML-примера.
 
 ## Реализовано и проверено
 
@@ -15,13 +15,14 @@
 | OpenCV VideoCapture recorder | Четыре видеофайла → PNG/manifest/timestamps, `vision_tools` | Не встроен в realtime server; host delivery times не sensor timestamps |
 | Blender 3D street fixture | Разнесённые centers, scripted motion, 4 × fisheye RGB, hashes/poses; replay/server smoke | Процедурный автомобиль; нет dense depth, интерактивного вождения и live producer |
 | Фотографическая street-demo | CC0 panorama, три actual GLES ракурса в главе 3 | Общий оптический центр, нет реального параллакса/калибровочной истины |
-| Геометрия `dome_floor_v1` | Верхняя полусфера + круглый пол; камера строго внутри; opaque fallback; mesh winding и containment checks | Панорама только для визуализации; coverage/seam/marker quality не сравнены с другими carriers |
+| Купол, цилиндр и куб с полом | Shared containment, outward meshes; GPU coverage для 36 ракурсов, без отверстий геометрии | Это носители проекции; depth/visibility truth не восстановлены |
+| Три fusion-режима и диагностика | Native RGB/weights/coverage oracles; [[engineering/RENDERING]] | Нет graph-cut, multi-band, photometric correction; только initial first-frame screening |
 | Сервисная диагностика задней камеры | Заданный поворот, известные точки, INDETERMINATE | Нет анализа признаков перекрытий и статистики реальных ложных тревог |
 | Сервер с Asio и отдельным EGL-потоком | Пауза, управление, timeout/reconnect, shutdown | Один клиент и один ожидающий release; decoding в render-потоке |
 | Qt Quick desktop-клиент | Qt 6.11.2/5.15.19 offscreen; исправлен teardown Bridge | Не AuroraApp/Silica application; display latency не измерена |
 | SV01 framing и две очереди | Однобайтовое/объединённое чтение, malformed, control/data | Это подмножество протокола, не полная приёмка PRO-F-001…011 |
 | Исторические серии 0.1.0 и графики | [[prototype/MEASUREMENTS]], `run_experiments.py` | Короткие synthetic опыты; thermal/memory/display latency в этой серии не измерены |
-| Native hardware-comparison suite | 22 pass; шесть render-вариантов включают dome+floor | Новые v0.3 baselines требуют полного прогона на RTX и Mesa; нет target hardware/long-run/VRAM/IPC UI |
+| Native hardware-comparison suite | 25 pass в коротком smoke; десять render-вариантов включают оболочки и fusion | Новые v0.4 baselines требуют полного прогона на RTX и Mesa; нет target hardware/long-run/VRAM/IPC UI |
 | Offline RPM/spec и installed resources | Оба Linux native RPM, payload core/report/scene/GPU smoke; Qt/GLSL embedded | Aurora ABI/dependencies/validator/signing/installation не проверены |
 
 ## Отображение проектной архитектуры на код
@@ -32,6 +33,7 @@
 | `sv-vision` | Настоящий OpenCV: projection/images/board/intrinsics |
 | `sv-validation` | CPU criteria, SHA-256, statistics, system passport и report |
 | GPU-часть ядра | Выделенный target `sv-render`, `src/render/` |
+| `sv-gpu-validation` | Общие native/CTest орacles fusion и enclosure coverage |
 | `sv-server` | CLI, собственный поток Asio, основной render-поток |
 | `sv-bench` | Изолированный рендер, эффективная конфигурация, численная проверка |
 | `sv-platform-test` | Native критерии и portable JSON/Markdown для устройства |
@@ -58,6 +60,6 @@ QQuickImageProvider заменяет проектный QQuickItem/QSGTexture. �
 
 ## Уточнение следующего этапа 05.10.2026
 
-Запрошены live-источники `/dev/video*`, виртуальные камеры через отдельные сокеты, удалённый клиент/конфигуратор и движущийся автомобиль в полноценном 3D-мире. В 0.3.0 уличная конфигурация использует `dome_floor_v1`; replay-manifest и локальные Unix control/data sockets остаются текущим server input. `sv-capture` записывает камеры отдельно, `sv-scene` генерирует неподвижную моноскопическую панораму. 06.10.2026 добавлена процедурная Blender-улица с разнесёнными cameras и заданным движением; offline-экспорт проверен через server replay ([[engineering/BLENDER]], [[validation/BLENDER_SMOKE]]). Интерактивное вождение, аппаратный ввод и сетевой TCP-профиль сервера остаются следующими этапами. Строгий parser принимает только поля типов bowl и dome, прочие transport-настройки отклонит. Последовательность продолжения — [[planning/ROADMAP#Следующий этап: источники, удалённое управление и 3D-окружение]].
+Запрошены live-источники `/dev/video*`, виртуальные камеры через отдельные сокеты, удалённый клиент/конфигуратор и движущийся автомобиль в полноценном 3D-мире. В 0.4.0 уличная конфигурация использует `dome_floor_v1`; replay-manifest и локальные Unix control/data sockets остаются текущим server input. `sv-capture` записывает камеры отдельно, `sv-scene` генерирует неподвижную моноскопическую панораму. 06.10.2026 добавлена процедурная Blender-улица с разнесёнными cameras и заданным движением; offline-экспорт проверен через server replay ([[engineering/BLENDER]], [[validation/BLENDER_SMOKE]]). Интерактивное вождение, аппаратный ввод и сетевой TCP-профиль сервера остаются следующими этапами. Строгий parser принимает только поля типов bowl и dome, прочие transport-настройки отклонит. Последовательность продолжения — [[planning/ROADMAP#Следующий этап: источники, удалённое управление и 3D-окружение]].
 
 В следующем этапе `sv-client` должен использовать отдельную `sv-client-lib` для локального Unix, TCP loopback и сервера на другой машине. Контракт — [[requirements/CLIENT#Клиентская библиотека sv-client-lib (план)]], решение — [[architecture/DECISIONS|ADR-012]]. На текущие бинарные файлы, конфигурацию и сохранённые baselines это уточнение плана не влияет.

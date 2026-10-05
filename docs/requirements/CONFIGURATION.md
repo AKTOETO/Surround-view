@@ -160,3 +160,7 @@ Orbit position = target + distance·(cos(elevation)cos(azimuth), cos(elevation)s
 ## Расширение для калибровки
 
 Численный пример выше — baseline рендера, а не полный ввод `sv-configurator`. В машинную схему добавить ссылки/хэши обучающих и проверочных наблюдений, геометрию шаблона, отчёт, diagnostic method/version и зафиксированные пороги. Синтетическая остаточная ошибка `null` не заменяет независимую проверку. Эти поля пока не являются реализованным parser.
+
+## Расширение рабочего Linux-профиля 0.4.0
+
+Необязательный блок `fusion` выбирает edge_feather/hard_best_angle/angular_feather и color/coverage/weights. Cylinder/cube — строгие альтернативы `surface` с общими camera-inside checks. Полный фактически принимаемый контракт и примеры: [[engineering/RENDERING]]. Это добавление к рабочему JSON-профилю, а не реализация всех полей проектного YAML ниже/выше.

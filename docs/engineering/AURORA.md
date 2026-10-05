@@ -1,6 +1,6 @@
 # Aurora SDK, RPM и запуск проверки на устройстве
 
-Проверка источников: 05.10.2026, актуальные просмотренные страницы — ОС Аврора 5.2.1. Фактические SDK, выпуск устройства и hardware пока **не предоставлены**. Здесь подготовлен путь переноса версии 0.3.0; native RPM на Linux проверяет упаковку, но не подтверждает ABI, зависимости и установку Авроры. Новый профиль `dome_floor_v1` включает полусферу и нижний пол в GPU-пакет. Полный список Linux-команд — [[engineering/BUILD]], критерии и данные — [[engineering/PLATFORM_TEST]].
+Проверка источников: 05.10.2026, актуальные просмотренные страницы — ОС Аврора 5.2.1. Фактические SDK, выпуск устройства и hardware пока **не предоставлены**. Здесь подготовлен путь переноса версии 0.4.0; native RPM на Linux проверяет упаковку, но не подтверждает ABI, зависимости и установку Авроры. GPU-профиль включает купол/цилиндр/куб с полом, fusion и native render-oracles. Spec Version обновлён; RPM 0.4.0 и целевая сборка SDK ещё требуют отдельной проверки. Полный список Linux-команд — [[engineering/BUILD]], критерии и данные — [[engineering/PLATFORM_TEST]].
 
 ## Два RPM-профиля
 
@@ -50,7 +50,7 @@ python3 tools/verify_host_rpm.py --profile cpu --output artifacts/rpm-host-cpu
 
 ```sh
 python3 tools/make_source_archive.py --output artifacts/sources
-sha256sum artifacts/sources/surround-view-0.3.0.tar.gz
+sha256sum artifacts/sources/surround-view-0.4.0.tar.gz
 ```
 
 Скрипт берёт только **Git HEAD**, не локальные build/data/private files, добавляет `.source-revision`, нормализует tar/gzip metadata. Экспорт незакоммиченного дерева запрещён; одинаковая revision даёт одинаковый архив. Перенести архив и spec в рабочее пространство SDK. Ни файлы ключей подписи, ни большие traces в Source0 не входят.
@@ -68,7 +68,7 @@ mb2 -s packaging/rpm/surround-view.spec -t "$SV_TARGET" -n -X build
 mb2 -s packaging/rpm/surround-view-cpu.spec -t "$SV_TARGET" -n -X build
 ```
 
-Команды альтернативны. `-n` применим после установки зависимостей; `-X` сохраняет явно заданную 0.3.0 вместо автоматического суффикса версии. Результаты mb2 находятся в `RPMS/` выбранного рабочего каталога. В IDE явно выбрать нужный spec. По умолчанию client=0; для лабораторного Qt 5 client при release rpmbuild передать `--define 'sv_with_client 1'` и подтвердить runtime Qt/QML modules.
+Команды альтернативны. `-n` применим после установки зависимостей; `-X` сохраняет явно заданную 0.4.0 вместо автоматического суффикса версии. Результаты mb2 находятся в `RPMS/` выбранного рабочего каталога. В IDE явно выбрать нужный spec. По умолчанию client=0; для лабораторного Qt 5 client при release rpmbuild передать `--define 'sv_with_client 1'` и подтвердить runtime Qt/QML modules.
 
 ## Явная release-сборка Source0
 
@@ -76,14 +76,14 @@ mb2 -s packaging/rpm/surround-view-cpu.spec -t "$SV_TARGET" -n -X build
 
 ```sh
 mkdir -p artifacts/rpmbuild/SOURCES artifacts/rpmbuild/SPECS
-cp artifacts/sources/surround-view-0.3.0.tar.gz artifacts/rpmbuild/SOURCES/
+cp artifacts/sources/surround-view-0.4.0.tar.gz artifacts/rpmbuild/SOURCES/
 cp packaging/rpm/surround-view.spec artifacts/rpmbuild/SPECS/
 SV_RPM_TOP="$PWD/artifacts/rpmbuild"
 sb2 -t "$SV_TARGET" rpmbuild -bb --define "_topdir $SV_RPM_TOP" \
   "$SV_RPM_TOP/SPECS/surround-view.spec"
 ```
 
-Для CPU заменить имя spec на `surround-view-cpu.spec`, оставив Source0 `surround-view-0.3.0.tar.gz`. В этом режиме результаты в `artifacts/rpmbuild/RPMS/<архитектура>/`. **Не использовать `--nodeps` для целевой сборки**: необходимо подтвердить целевые BuildRequires. RPM автоматически формирует runtime ELF dependencies; проверить:
+Для CPU заменить имя spec на `surround-view-cpu.spec`, оставив Source0 `surround-view-0.4.0.tar.gz`. В этом режиме результаты в `artifacts/rpmbuild/RPMS/<архитектура>/`. **Не использовать `--nodeps` для целевой сборки**: необходимо подтвердить целевые BuildRequires. RPM автоматически формирует runtime ELF dependencies; проверить:
 
 ```sh
 rpm -qp --requires 'путь_к_полученному.rpm'

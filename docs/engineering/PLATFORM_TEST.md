@@ -1,6 +1,6 @@
 # Проверка ПК и будущего устройства Аврора
 
-Связи: [[engineering/BUILD]], [[engineering/AURORA]], [[validation/ACCEPTANCE]], [[prototype/STATUS]]. Первичные текущие отчёты: [[validation/baselines/PC_RTX]], [[validation/baselines/PC_MESA]]. Историческая серия 0.1.0 остаётся в [[prototype/MEASUREMENTS]] и не подменяется новой.
+Связи: [[engineering/BUILD]], [[engineering/AURORA]], [[validation/ACCEPTANCE]], [[prototype/STATUS]]. Исторические отчёты версии 0.2.0: [[validation/baselines/PC_RTX]], [[validation/baselines/PC_MESA]]. Историческая серия 0.1.0 остаётся в [[prototype/MEASUREMENTS]] и не подменяется новой.
 
 ## Контракт опыта
 
@@ -19,6 +19,7 @@
 | MATH_CENTRAL_INVALID | Центральный луч, точка позади и NaN | Центр совпадает; невалидные отвергнуты |
 | TRANSFORM_INVERSE | Жёсткое преобразование и обратное | Ошибка <1e-10 m |
 | CONFIG_STRICT | Неизвестное поле, неверное вращение, немонотонная модель | Все три отвергнуты |
+| ENCLOSURE_MESH | Купол, цилиндр и куб | Ненулевые площади и outward winding |
 | MESH_WINDING | Направление треугольников, центр и высота угла | Все площади положительны, контрольные Z совпадают |
 | SRGB_LINEAR | Round-trip и смешение в линейном цвете | Ошибка <1e-10 |
 | IMAGE_RGB_ORIGIN | PNG, BGR→RGB, асимметричный маркер | Красный верх / синий низ |
@@ -35,6 +36,8 @@
 | CACHED_INPUT_UPLOAD | Поворот виртуального ракурса | Четыре initial uploads, без повторной загрузки |
 | OUTPUT_DIMENSIONS | RGBA8 результата | Точное число байт |
 | GPU_RGBA_TOP_LEFT | Маркер через весь GPU/readback | Верные каналы, ровно один vertical flip |
+| GPU_FUSION_MODES | Linear blend, angular weights, hard tie и потеря камер | RGB ±1; coverage 0…4, palette contributions |
+| GPU_ENCLOSURE_COVERAGE | Три замкнутые оболочки × 12 ракурсов без входов | Каждый пиксель black/magenta, alpha=255; нет фоновых отверстий |
 | RENDER_VARIANTS | Все нагрузочные варианты | Три повтора каждого варианта, без GL-ошибок |
 
 Численные пороги проверяют согласованность модели; они не определяют допустимую ошибку парковки. При отсутствии backend добавляется `GPU_BACKEND`; аппаратные функции, отсутствующие на устройстве, получают `skip` с причиной. `--require-gpu` превращает недоступный backend в ошибку. Недоступный float diagnostic FBO отдельно даёт skip: работоспособность RGBA8-рендера не доказывает возможность проверки float kernel.
@@ -56,7 +59,7 @@
 
 GPU timer extension `EXT_disjoint_timer_query` [S52] проверяется динамически. При disjoint или неготовом результате значение исключается; причины и количество остаются в отчёте. Если расширения нет, `gpu_draw_ms=null`. GPU-время и readback **не складывать**: CPU-чтение уже включает ожидание. Physical sensor-to-display, IPC/UI latency и dedicated GPU memory пока равны null с объяснением.
 
-Варианты: plane H=0; bowl H=1.5; bowl_dense 64×64; bowl_720p 1280×720; bowl_upload с новыми image owners каждый кадр; `dome_floor` с полусферой и круглым полом. Остальные дают 640×360, 32×32 и кэшированные изображения. `triangles` относится к поверхности; 132 треугольника ego-модели указаны отдельно в `graphics` и участвуют в draw во всех вариантах. Эта серия проверяет корректность/стоимость рендера, но не метрики качества seam или геометрического искажения; это отдельный E-STITCH-01 опыт.
+Версия 0.4.0 имеет 25 критериев и десять workload. Варианты: plane H=0; bowl H=1.5; bowl_dense 64×64; bowl_720p 1280×720; bowl_upload с новыми image owners каждый кадр; `dome_floor` с полусферой и круглым полом; `cylinder_floor`, `cube_floor`, `dome_angular`, `dome_hard`. Оболочки радиуса/полуразмера 12 м, высота цилиндра/куба 12 м; их сетки отличаются от bowl, см. `triangles` в отчёте. Все, кроме bowl_720p, дают 640×360; новые варианты используют кэшированные входы. `triangles` относится к поверхности; 132 треугольника ego-модели указаны отдельно в `graphics` и участвуют в draw во всех вариантах. Эта серия проверяет корректность/стоимость рендера, но не метрики качества seam или геометрического искажения; это отдельный E-STITCH-01 опыт.
 
 По умолчанию 10 warmup + 60 измерений, три новых EGL-контекста **в одном процессе**, прямой/обратный порядок вариантов через повтор. Это не три независимых process runs и не длительный thermal stress. Новая CPU-копия входов для bowl_upload создаётся перед таймером; декодирование и захват отсутствуют в render benchmark. Для каждого повтора сохраняются все raw времена, min/mean/p50/p95/p99/max и population standard deviation. OpenCV принудительно использует один поток; `--opencv-threads N` меняет это явно и влияет на сопоставимость.
 
@@ -102,3 +105,7 @@ python3 tools/compare_reports.py docs/validation/baselines/PC_RTX.md \
 Если код изменился после сохранённой базы, заново собрать и измерить ПК с тем же исходным fingerprint, который упакован для устройства. Исторический PC report не редактировать под новые результаты. Таблица характеристик Авроры в дипломе заполняется только после actual-device запуска.
 
 [S52]: https://registry.khronos.org/OpenGL/extensions/EXT/EXT_disjoint_timer_query.txt
+
+## Короткая квалификация 0.4.0
+
+На 06.10.2026 пройдены 25 критериев с 3 iterations, 1 warmup, 1 repeat. Это smoke, не performance baseline. Свидетельства: [[validation/SURFACE_SCREENING]]. Для сравнения с Авророй заново получить полные PC/target отчёты одной revision и параметров; исторические 0.2.0 отчёты строгую сопоставимость с 0.4.0 не удовлетворяют.

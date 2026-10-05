@@ -1,6 +1,6 @@
 # Linux-прототип: сборка и запуск
 
-Версия 0.3.0. Эта заметка — навигация; подробные команды хранятся один раз в `engineering/`. Что проверено и что осталось: [[prototype/STATUS]]. Реализация: [[diploma/03_PROTOTYPE_IMPLEMENTATION]]. Исследование способов слияния текстур и surface carriers не входит в текущую реализацию; методика сравнения находится в [[research/PROJECTION_AND_STITCHING]].
+Версия 0.4.0. Эта заметка — навигация; подробные команды хранятся один раз в `engineering/`. Что проверено и что осталось: [[prototype/STATUS]]. Реализация: [[diploma/03_PROTOTYPE_IMPLEMENTATION]]. Три fusion-режима и пять носителей реализованы; инструкция — [[engineering/RENDERING]], first-frame screening — [[validation/SURFACE_SCREENING]]. Полная методика сравнения находится в [[research/PROJECTION_AND_STITCHING]].
 
 ## Зависимости и структура
 

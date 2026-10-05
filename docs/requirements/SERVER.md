@@ -42,3 +42,7 @@
 ## Связанные источники
 
 [[references/README|Единый каталог литературы и документации]].
+
+## Реализованный render baseline 0.4.0
+
+Три fusion-режима, coverage/weights и plane/bowl/dome/cylinder/cube описаны в [[engineering/RENDERING]]. Native орacles проверяют сумму/выбор вкладов на точных цветовых fixtures и 36 camera-inside ракурсов оболочек. Это частичные свидетельства SRV-F-007 и GPU-геометрии; NFR-Q-003/реальная visibility/quality приёмка остаются открытыми.

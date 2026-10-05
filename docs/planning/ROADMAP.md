@@ -117,3 +117,9 @@ ClientLibrary --> Client : события + владелец буфера
 Blender MCP подключён и проверен (5.2.2 LTS / protocol 13). Скрипты, параметры мира и исходный `.blend` в `assets/scenes/metric-street/` хранятся обычным Git; входные серии остаются в `artifacts/`. Git LFS отменён по решению пользователя. Каталог и происхождение исходных материалов — [[engineering/ASSETS]]. Повторение: [[engineering/BLENDER]]; свидетельства: [[validation/BLENDER_SMOKE]]. Следующие шаги: depth/visibility truth, независимые validation scenes, интерактивная траектория и realtime producer после FrameSource.
 
 GTest разрешён для новых проверок. При его выборе использовать установленный `GTest` CMake package и явный `BuildRequires` целевого SDK; правило offline dependencies из [[engineering/BUILD]] сохраняется.
+
+## Выполненный шаг 0.4.0 и следующий приоритет
+
+Реализованы `cylinder_floor_v1`, `cube_floor_v1`, shared containment, hard best-angle и angular-feather вместе с прежним edge-feather, coverage/weights и native орacles. [[engineering/RENDERING]] задаёт рабочий контракт, [[validation/SURFACE_SCREENING]] — 70 first-frame cases. Native suite расширена до 25 критериев и 10 workload. Эти результаты закрывают инженерный baseline оболочек/дешёвого fusion, но не quality acceptance E-STITCH-01.
+
+Следующий исследовательский шаг: metric markers, depth/visibility truth, photometric perturbations и видео; сравнение при общем resource budget, затем graph-cut/multi-band. Следующий инженерный шаг остаётся `FrameSource`, bounded producers и `sv-client-lib` с Unix/TCP согласно таблице выше. RPM 0.4.0 нужно перепроверить; целевой SDK и аппаратный baseline остаются отдельными этапами. Общую редактуру диплома выполнить после реализации и приёмки этих функций.

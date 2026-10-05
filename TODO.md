@@ -1,6 +1,6 @@
 # Начало проекта
 
-Состояние на 06.10.2026. Выполненные пункты относятся к Linux-профилю 0.3.0; полный результат на Авроре и реальные камеры остаются открытыми. Начат обзор способов слияния и mesh-носителей; сравнительное качество ещё не измерено. Подробности: [план реализации](docs/planning/ROADMAP.md), [границы прототипа](docs/prototype/STATUS.md), [карта документации](docs/README.md).
+Состояние на 06.10.2026. Выполненные пункты относятся к Linux-профилю 0.4.0; полный результат на Авроре и реальные камеры остаются открытыми. Начат обзор способов слияния и mesh-носителей; первый screening пяти носителей и трёх fusion-режимов выполнен; качество швов ещё не измерено. Подробности: [план реализации](docs/planning/ROADMAP.md), [границы прототипа](docs/prototype/STATUS.md), [карта документации](docs/README.md).
 
 ## Уже полученный результат
 
@@ -17,21 +17,21 @@
 - [x] Подготовить GPU/CPU RPM spec, Source0 из Git HEAD и проверить оба native Linux payload без checkout. Результат: [SDK/RPM workflow](docs/engineering/AURORA.md).
 - [x] Применить Microsoft clang-format с отдельными функциями/ветвями; зафиксировать изменения последовательными коммитами.
 - [x] Построить в рендерере сферический купол и круглый пол, закрепить виртуальную камеру внутри оболочки и убрать прозрачные отверстия фона. Сохранить bowl как отдельный тип для сравнительных измерений.
-- [x] Начать исследование объединения четырёх камер и surface carriers: описать direct projection, panorama/cubemap pipeline, hard/feather/graph-cut/multiband и plane/bowl/dome/cylinder/cube. Результат: [обзор и план E-STITCH-01](docs/research/PROJECTION_AND_STITCHING.md); сравнительных измерений ещё нет.
+- [x] Начать исследование объединения четырёх камер и surface carriers: описать direct projection, panorama/cubemap pipeline, hard/feather/graph-cut/multiband и plane/bowl/dome/cylinder/cube. Результат: [обзор и план E-STITCH-01](docs/research/PROJECTION_AND_STITCHING.md); первый screening есть в [отчёте](docs/validation/SURFACE_SCREENING.md), полноценный quality benchmark ещё открыт.
 
 ## Ближайшие действия
 
 1. Полностью разобрать S68–S71: восстановить точную геометрию Burger, записать входы, seam/blend, ограничения и параметры; не выводить метод из одного названия.
 2. Зафиксировать общий протокол [E-STITCH-01](docs/research/PROJECTION_AND_STITCHING.md): сцены/ракурсы, ground truth, photometric policy, coverage/seam/ghosting метрики и resource budget; разделить подбор и validation.
 3. Создать CPU-reference projection для plane/bowl/dome-floor, затем подготовить test scene с физически разнесёнными камерами и метрической истиной. Blender MCP проверен 06.10.2026; процедурная улица и разнесённые centers экспортируются через `tools/blender/`. Следующий шаг — depth/visibility truth и метрические markers; текущая запись подтверждает replay, но не завершает оценку качества.
-4. Добавлять fusion-варианты по одному: hard mask и distance feather, затем graph-cut seam; multi-band измерять отдельно после выбора маски. На видео проверить temporal jitter.
-5. После выбора blend-метода сравнить plane, bowl, dome+floor, cylinder+floor и cube; Burger/custom surface добавить после восстановления точной формулы. Сначала dense-reference quality, затем одинаковые triangle/memory budgets.
+4. Hard best-angle, edge-feather и angular-feather реализованы и проверены. Далее — photometric policy, graph-cut seam и multi-band после выбора маски; на видео проверить temporal jitter.
+5. Plane/bowl/dome/cylinder/cube реализованы; первый screening не имеет равного triangle budget и depth truth. Продолжить сравнение после выбора blend-метода; Burger/custom surface добавить после восстановления точной формулы. Сначала dense-reference quality, затем одинаковые triangle/memory budgets.
 6. Прочитать [главу 2](docs/diploma/02_REQUIREMENTS_AND_METHODS.md) и [границы прототипа](docs/prototype/STATUS.md); согласовать постановку и критерии с руководителем.
 7. Подготовить реальные шаблонные снимки и измерить привязку камер к ТС. Затем продолжить FrameSource, IPC/UI, RPM и Аврора по полному плану.
 
 ## Следующий этап по уточнению 06.10.2026
 
-Начать после фиксации версии 0.3.0. Подробная последовательность и условия приёмки: [расширение источников и окружения](docs/planning/ROADMAP.md#следующий-этап-источники-удалённое-управление-и-3d-окружение).
+Начать после фиксации версии 0.4.0. Подробная последовательность и условия приёмки: [расширение источников и окружения](docs/planning/ROADMAP.md#следующий-этап-источники-удалённое-управление-и-3d-окружение).
 
 - [ ] Вынести источники в `FrameSource`; выбирать replay, локальные `/dev/video*` и сокет каждого виртуального источника через конфигурацию сервера.
 - [ ] Реализовать bounded передачу кадров с идентификаторами, временными метками, калибровкой и reconnect; проверять отказ, skew и перегрузку каждого источника.
