@@ -1,0 +1,257 @@
+{
+  "asset_id": "metric-street-v1",
+  "file": "street.blend",
+  "size_bytes": 2189373,
+  "sha256": "a76745d0ca0b86c791255cbaf3047e2fe8011109b967388de4b3d88e479c79bb",
+  "created_date": "2026-10-06",
+  "source": "project-authored procedural Blender scene",
+  "external_assets": [],
+  "blender_version": "5.2.2 LTS",
+  "engine": "BLENDER_EEVEE",
+  "generator_revision": "9914d77",
+  "generator_files": {
+    "tools/blender/scene.py": "0581a164c597cff5a6ddd9948507beee208e31ffedf653cb0786d7fd29bcb78e",
+    "tools/blender/rig.py": "a31f63c433a031ca8a0c8e8645b075f0496c465a8511241389a6d9cd92c38d25"
+  },
+  "saved_T_world_from_vehicle": [
+    [
+      1.0,
+      0.0,
+      0.0,
+      0.2
+    ],
+    [
+      0.0,
+      1.0,
+      0.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      1.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0,
+      0.0,
+      1.0
+    ]
+  ],
+  "camera_config": [
+    {
+      "id": 0,
+      "name": "front",
+      "calibration_id": "blender-rig-front-v1",
+      "resolution": {
+        "width": 400,
+        "height": 400
+      },
+      "projection": {
+        "model": "opencv_fisheye",
+        "fx": 128.0,
+        "fy": 128.0,
+        "cx": 199.5,
+        "cy": 199.5,
+        "alpha": 0.0,
+        "k": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "theta_max_rad": 1.48,
+        "z_epsilon_m": 1e-06
+      },
+      "T_camera_from_vehicle": [
+        [
+          0.0,
+          -1.0,
+          0.0,
+          0.0
+        ],
+        [
+          -0.20791169081775934,
+          -0.0,
+          -0.9781476007338057,
+          1.322097050953647
+        ],
+        [
+          0.9781476007338057,
+          0.0,
+          -0.20791169081775934,
+          -2.131703400536686
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ]
+    },
+    {
+      "id": 1,
+      "name": "right",
+      "calibration_id": "blender-rig-right-v1",
+      "resolution": {
+        "width": 400,
+        "height": 400
+      },
+      "projection": {
+        "model": "opencv_fisheye",
+        "fx": 128.0,
+        "fy": 128.0,
+        "cx": 199.5,
+        "cy": 199.5,
+        "alpha": 0.0,
+        "k": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "theta_max_rad": 1.48,
+        "z_epsilon_m": 1e-06
+      },
+      "T_camera_from_vehicle": [
+        [
+          -1.0,
+          -6.123233995736766e-17,
+          0.0,
+          0.3499999999999999
+        ],
+        [
+          -1.2730919333264157e-17,
+          0.20791169081775934,
+          -0.9781476007338057,
+          1.3242281727213978
+        ],
+        [
+          5.989426641661592e-17,
+          -0.9781476007338057,
+          -0.20791169081775934,
+          -0.843101267091296
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ]
+    },
+    {
+      "id": 2,
+      "name": "rear",
+      "calibration_id": "blender-rig-rear-v1",
+      "resolution": {
+        "width": 400,
+        "height": 400
+      },
+      "projection": {
+        "model": "opencv_fisheye",
+        "fx": 128.0,
+        "fy": 128.0,
+        "cx": 199.5,
+        "cy": 199.5,
+        "alpha": 0.0,
+        "k": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "theta_max_rad": 1.48,
+        "z_epsilon_m": 1e-06
+      },
+      "T_camera_from_vehicle": [
+        [
+          1.2246467991473532e-16,
+          1.0,
+          -0.0,
+          2.8901664459877536e-16
+        ],
+        [
+          0.20791169081775934,
+          -2.5461838666528314e-17,
+          -0.9781476007338057,
+          1.322097050953647
+        ],
+        [
+          -0.9781476007338057,
+          1.1978853283323184e-16,
+          -0.20791169081775934,
+          -2.131703400536686
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ]
+    },
+    {
+      "id": 3,
+      "name": "left",
+      "calibration_id": "blender-rig-left-v1",
+      "resolution": {
+        "width": 400,
+        "height": 400
+      },
+      "projection": {
+        "model": "opencv_fisheye",
+        "fx": 128.0,
+        "fy": 128.0,
+        "cx": 199.5,
+        "cy": 199.5,
+        "alpha": 0.0,
+        "k": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "theta_max_rad": 1.48,
+        "z_epsilon_m": 1e-06
+      },
+      "T_camera_from_vehicle": [
+        [
+          1.0,
+          -6.123233995736766e-17,
+          0.0,
+          -0.3499999999999999
+        ],
+        [
+          -1.2730919333264157e-17,
+          -0.20791169081775934,
+          -0.9781476007338057,
+          1.3242281727213978
+        ],
+        [
+          5.989426641661592e-17,
+          0.9781476007338057,
+          -0.20791169081775934,
+          -0.843101267091296
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ]
+    }
+  ],
+  "storage": "ordinary Git, no Git LFS",
+  "license": "No separate project asset license has been declared; not licensed as Poly Haven CC0.",
+  "contents": {
+    "scene": "SV Research Street",
+    "objects": 300,
+    "meshes": 295,
+    "materials": 14,
+    "external_images": []
+  }
+}
