@@ -45,8 +45,11 @@ Pixel project(const Camera &, Vec3 vehicle_point);
 
 struct Surface
 {
+    std::string type = "rectangular_bowl_v1";
     double a = 2.6, b = 1.2, A = 6, B = 4.5, H = 1.5;
+    double dome_radius = 12;
     int nx = 32, ny = 32;
+    int dome_latitude_cells = 64, dome_longitude_cells = 128, floor_radial_cells = 32;
     Vec3 point(double x, double y) const;
 };
 
@@ -57,6 +60,8 @@ struct Mesh
 };
 
 Mesh make_mesh(const Surface &);
+Mesh make_floor_mesh(double radius, int radial_cells, int angular_cells);
+Mesh make_dome_mesh(double radius, int latitude_cells, int longitude_cells);
 
 struct View
 {

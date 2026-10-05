@@ -169,17 +169,40 @@ std::vector<float> vehicle_mesh(double length, double width)
     }
     return vertices;
 }
+
+void upload_mesh(const Mesh &mesh, GLuint &vao, GLuint &vbo, GLuint &ebo)
+{
+    std::vector<float> vertices;
+    vertices.reserve(mesh.vertices.size() * 3);
+    for (auto point : mesh.vertices)
+    {
+        vertices.insert(vertices.end(), {float(point.x), float(point.y), float(point.z)});
+    }
+    glGenVertexArrays(1, &vao);
+    glBindVertexArray(vao);
+    glGenBuffers(1, &vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
+    glGenBuffers(1, &ebo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh.indices.size() * sizeof(unsigned),
+                 mesh.indices.data(), GL_STATIC_DRAW);
+}
 } // namespace
 
 struct Renderer::Impl
 {
     Config config;
-    Mesh mesh;
+    Mesh mesh, floor_mesh, dome_mesh;
     EGLDisplay display = EGL_NO_DISPLAY;
     EGLContext context = EGL_NO_CONTEXT;
     EGLSurface surface = EGL_NO_SURFACE;
     GLuint prog = 0, projection = 0, vao = 0, vbo = 0, ebo = 0, fbo = 0, out = 0, depth = 0;
     GLuint vehicle_program = 0, vehicle_vao = 0, vehicle_vbo = 0;
+    GLuint floor_vao = 0, floor_vbo = 0, floor_ebo = 0;
+    GLuint dome_vao = 0, dome_vbo = 0, dome_ebo = 0;
     GLsizei vehicle_vertices = 0;
     std::array<GLuint, 4> inputs{};
     std::array<std::shared_ptr<const Image>, 4> uploaded{};
@@ -206,6 +229,12 @@ struct Renderer::Impl
             glDeleteProgram(vehicle_program);
             glDeleteBuffers(1, &vehicle_vbo);
             glDeleteVertexArrays(1, &vehicle_vao);
+            glDeleteBuffers(1, &floor_vbo);
+            glDeleteBuffers(1, &floor_ebo);
+            glDeleteVertexArrays(1, &floor_vao);
+            glDeleteBuffers(1, &dome_vbo);
+            glDeleteBuffers(1, &dome_ebo);
+            glDeleteVertexArrays(1, &dome_vao);
             glDeleteBuffers(1, &vbo);
             glDeleteBuffers(1, &ebo);
             glDeleteVertexArrays(1, &vao);
@@ -231,7 +260,17 @@ Renderer::Renderer(const Config &c) : impl_(std::make_unique<Impl>())
 {
     auto &i = *impl_;
     i.config = c;
-    i.mesh = make_mesh(c.surface);
+    if (c.surface.type == "dome_floor_v1")
+    {
+        i.floor_mesh = make_floor_mesh(c.surface.dome_radius, c.surface.floor_radial_cells,
+                                       c.surface.dome_longitude_cells);
+        i.dome_mesh = make_dome_mesh(c.surface.dome_radius, c.surface.dome_latitude_cells,
+                                     c.surface.dome_longitude_cells);
+    }
+    else
+    {
+        i.mesh = make_mesh(c.surface);
+    }
     auto platform = reinterpret_cast<PFNEGLGETPLATFORMDISPLAYEXTPROC>(
         eglGetProcAddress("eglGetPlatformDisplayEXT"));
     const char *backend = std::getenv("SV_EGL_PLATFORM");
@@ -339,24 +378,15 @@ Renderer::Renderer(const Config &c) : impl_(std::make_unique<Impl>())
             i.gen_queries(1, &i.draw_query);
         }
     }
-    std::vector<float> vertices;
-    for (auto p : i.mesh.vertices)
+    if (c.surface.type == "dome_floor_v1")
     {
-        vertices.push_back(p.x);
-        vertices.push_back(p.y);
-        vertices.push_back(p.z);
+        upload_mesh(i.floor_mesh, i.floor_vao, i.floor_vbo, i.floor_ebo);
+        upload_mesh(i.dome_mesh, i.dome_vao, i.dome_vbo, i.dome_ebo);
     }
-    glGenVertexArrays(1, &i.vao);
-    glBindVertexArray(i.vao);
-    glGenBuffers(1, &i.vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, i.vbo);
-    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, nullptr);
-    glGenBuffers(1, &i.ebo);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, i.ebo);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, i.mesh.indices.size() * sizeof(unsigned),
-                 i.mesh.indices.data(), GL_STATIC_DRAW);
+    else
+    {
+        upload_mesh(i.mesh, i.vao, i.vbo, i.ebo);
+    }
     glGenTextures(4, i.inputs.data());
     for (int k = 0; k < 4; k++)
     {
@@ -397,7 +427,7 @@ Image Renderer::render(const FrameSet &set, const View &view)
     glViewport(0, 0, c.width, c.height);
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
-    glClearColor(.86f, .91f, .95f, 0);
+    glClearColor(.28f, .36f, .43f, 1);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glUseProgram(i.prog);
     matrix(i.prog, "mvp", view.mvp(double(c.width) / c.height));
@@ -442,12 +472,29 @@ Image Renderer::render(const FrameSet &set, const View &view)
         glUniform1i(glGetUniformLocation(i.prog, ("input" + n).c_str()), k);
     }
     glUniform4iv(glGetUniformLocation(i.prog, "available"), 1, available);
-    glBindVertexArray(i.vao);
     if (i.draw_query)
     {
         i.begin_query(GL_TIME_ELAPSED_EXT, i.draw_query);
     }
-    glDrawElements(GL_TRIANGLES, i.mesh.indices.size(), GL_UNSIGNED_INT, nullptr);
+    const GLint region_location = glGetUniformLocation(i.prog, "surface_mode");
+    const GLint radius_location = glGetUniformLocation(i.prog, "dome_radius");
+    if (c.surface.type == "dome_floor_v1")
+    {
+        glUniform1f(radius_location, c.surface.dome_radius);
+        glUniform1i(region_location, 0);
+        glBindVertexArray(i.floor_vao);
+        glDrawElements(GL_TRIANGLES, i.floor_mesh.indices.size(), GL_UNSIGNED_INT, nullptr);
+        glUniform1i(region_location, 1);
+        glBindVertexArray(i.dome_vao);
+        glDrawElements(GL_TRIANGLES, i.dome_mesh.indices.size(), GL_UNSIGNED_INT, nullptr);
+    }
+    else
+    {
+        glUniform1f(radius_location, 1);
+        glUniform1i(region_location, 0);
+        glBindVertexArray(i.vao);
+        glDrawElements(GL_TRIANGLES, i.mesh.indices.size(), GL_UNSIGNED_INT, nullptr);
+    }
     glUseProgram(i.vehicle_program);
     matrix(i.vehicle_program, "mvp", view.mvp(double(c.width) / c.height));
     glBindVertexArray(i.vehicle_vao);
@@ -568,6 +615,10 @@ uint64_t Renderer::uploads() const
 
 size_t Renderer::triangles() const
 {
+    if (impl_->config.surface.type == "dome_floor_v1")
+    {
+        return (impl_->floor_mesh.indices.size() + impl_->dome_mesh.indices.size()) / 3;
+    }
     return impl_->mesh.indices.size() / 3;
 }
 

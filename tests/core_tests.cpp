@@ -74,6 +74,42 @@ int main(int argc, char **argv)
                  c = mesh.vertices.at(mesh.indices[i + 2]);
             check(sv::cross(b - a, c - a).z > 0, "positive nondegenerate triangles");
         }
+        const auto floor = sv::make_floor_mesh(12, 8, 24);
+        check(floor.indices.size() == (24 * 3 + 7 * 24 * 6), "disk floor triangulation");
+        for (size_t i = 0; i < floor.indices.size(); i += 3)
+        {
+            const auto a = floor.vertices.at(floor.indices[i]);
+            const auto b = floor.vertices.at(floor.indices[i + 1]);
+            const auto c = floor.vertices.at(floor.indices[i + 2]);
+            check(sv::cross(b - a, c - a).z > 0, "disk floor faces upward");
+        }
+        const auto dome = sv::make_dome_mesh(12, 8, 24);
+        check(std::abs(dome.vertices.back().z - 12) < 1e-12, "dome apex");
+        for (auto vertex : dome.vertices)
+        {
+            check(std::abs(std::sqrt(sv::dot(vertex, vertex)) - 12) < 1e-10 && vertex.z >= 0,
+                  "dome vertices lie on upper hemisphere");
+        }
+        for (size_t i = 0; i < dome.indices.size(); i += 3)
+        {
+            const auto a = dome.vertices.at(dome.indices[i]);
+            const auto b = dome.vertices.at(dome.indices[i + 1]);
+            const auto c = dome.vertices.at(dome.indices[i + 2]);
+            check(sv::dot(sv::cross(b - a, c - a), a + b + c) > 0, "dome triangles face outwards");
+        }
+        const auto street =
+            sv::load_config(std::filesystem::path(argv[1]).parent_path() / "street-demo.json");
+        check(street.surface.type == "dome_floor_v1" &&
+                  street.view.distance < street.surface.dome_radius,
+              "street demo virtual camera is inside dome");
+        rejects(
+            [&]
+            {
+                auto invalid = street.effective;
+                invalid.as_object()["virtual_camera"].as_object()["distance_m"] = 12.0;
+                sv::parse_config(invalid);
+            },
+            "camera on dome shell must be rejected");
         auto bad = config.effective;
         bad.as_object()["unexpected"] = 1;
         rejects([&] { sv::parse_config(bad); }, "unknown config key");

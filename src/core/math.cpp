@@ -191,6 +191,84 @@ Mesh make_mesh(const Surface &s)
     return m;
 }
 
+Mesh make_floor_mesh(double radius, int radial_cells, int angular_cells)
+{
+    if (!(std::isfinite(radius) && radius > 0) || radial_cells < 1 || angular_cells < 3)
+    {
+        throw std::invalid_argument("invalid floor mesh dimensions");
+    }
+    Mesh mesh;
+    mesh.vertices.push_back({0, 0, 0});
+    for (int r = 1; r <= radial_cells; ++r)
+    {
+        const double distance = radius * r / radial_cells;
+        for (int a = 0; a < angular_cells; ++a)
+        {
+            const double angle = 2 * pi * a / angular_cells;
+            mesh.vertices.push_back({distance * std::cos(angle), distance * std::sin(angle), 0});
+        }
+    }
+    for (int a = 0; a < angular_cells; ++a)
+    {
+        const unsigned next = (a + 1) % angular_cells;
+        mesh.indices.insert(mesh.indices.end(),
+                            {0, static_cast<unsigned>(1 + a), static_cast<unsigned>(1 + next)});
+    }
+    for (int r = 0; r < radial_cells - 1; ++r)
+    {
+        const unsigned inner = 1 + r * angular_cells, outer = inner + angular_cells;
+        for (int a = 0; a < angular_cells; ++a)
+        {
+            const unsigned next = (a + 1) % angular_cells;
+            const unsigned i0 = inner + a, i1 = inner + next, o0 = outer + a, o1 = outer + next;
+            mesh.indices.insert(mesh.indices.end(), {i0, o0, o1, i0, o1, i1});
+        }
+    }
+    return mesh;
+}
+
+Mesh make_dome_mesh(double radius, int latitude_cells, int longitude_cells)
+{
+    if (!(std::isfinite(radius) && radius > 0) || latitude_cells < 2 || longitude_cells < 3)
+    {
+        throw std::invalid_argument("invalid dome mesh dimensions");
+    }
+    Mesh mesh;
+    for (int latitude = 0; latitude < latitude_cells; ++latitude)
+    {
+        const double elevation = (pi / 2) * latitude / latitude_cells;
+        const double ring_radius = radius * std::cos(elevation);
+        for (int longitude = 0; longitude < longitude_cells; ++longitude)
+        {
+            const double angle = 2 * pi * longitude / longitude_cells;
+            mesh.vertices.push_back({ring_radius * std::cos(angle), ring_radius * std::sin(angle),
+                                     radius * std::sin(elevation)});
+        }
+    }
+    const unsigned apex = static_cast<unsigned>(mesh.vertices.size());
+    mesh.vertices.push_back({0, 0, radius});
+    for (int latitude = 0; latitude < latitude_cells - 1; ++latitude)
+    {
+        const unsigned lower = latitude * longitude_cells;
+        const unsigned upper = lower + longitude_cells;
+        for (int longitude = 0; longitude < longitude_cells; ++longitude)
+        {
+            const unsigned next = (longitude + 1) % longitude_cells;
+            const unsigned a = lower + longitude, b = lower + next;
+            const unsigned c = upper + longitude, d = upper + next;
+            mesh.indices.insert(mesh.indices.end(), {a, b, d, a, d, c});
+        }
+    }
+    const unsigned last_ring = (latitude_cells - 1) * longitude_cells;
+    for (int longitude = 0; longitude < longitude_cells; ++longitude)
+    {
+        const unsigned next = (longitude + 1) % longitude_cells;
+        mesh.indices.insert(mesh.indices.end(),
+                            {last_ring + static_cast<unsigned>(longitude), last_ring + next, apex});
+    }
+    return mesh;
+}
+
 Vec3 View::eye() const
 {
     return target + Vec3{std::cos(elevation) * std::cos(azimuth),

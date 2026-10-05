@@ -582,7 +582,11 @@ int main(int argc, char **argv)
                         accepted = false;
                         reason = "unknown_command";
                     }
-                    if (candidate.eye().z <= c.surface.H + .1)
+                    const bool invalid_clearance =
+                        c.surface.type == "dome_floor_v1"
+                            ? candidate.distance >= c.surface.dome_radius - .25
+                            : candidate.eye().z <= c.surface.H + .1;
+                    if (invalid_clearance)
                     {
                         accepted = false;
                         reason = "view_clearance";

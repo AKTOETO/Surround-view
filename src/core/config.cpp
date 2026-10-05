@@ -283,24 +283,49 @@ Config parse_config(const boost::json::value &value)
         c.cameras[a.id] = a;
     }
     const auto &s = o.at("surface").as_object();
-    keys(s,
-         {"type", "flat_half_length_m", "flat_half_width_m", "outer_half_length_m",
-          "outer_half_width_m", "corner_height_m", "uniform_cells"},
-         "surface");
-    require(str(s.at("type")) == "rectangular_bowl_v1", "surface: unsupported type");
-    c.surface.a = num(s.at("flat_half_length_m"));
-    c.surface.b = num(s.at("flat_half_width_m"));
-    c.surface.A = num(s.at("outer_half_length_m"));
-    c.surface.B = num(s.at("outer_half_width_m"));
-    c.surface.H = num(s.at("corner_height_m"));
-    require(c.surface.A > c.surface.a && c.surface.a > c.vehicle_length / 2 + c.margin &&
-                c.surface.B > c.surface.b && c.surface.b > c.vehicle_width / 2 + c.margin &&
-                c.surface.H >= 0,
-            "surface: invalid bounds/mask");
-    const auto &cells = s.at("uniform_cells").as_array();
-    require(cells.size() == 2, "surface.uniform_cells");
-    c.surface.nx = integer(cells[0], 2, 512);
-    c.surface.ny = integer(cells[1], 2, 512);
+    c.surface.type = str(s.at("type"));
+    if (c.surface.type == "rectangular_bowl_v1")
+    {
+        keys(s,
+             {"type", "flat_half_length_m", "flat_half_width_m", "outer_half_length_m",
+              "outer_half_width_m", "corner_height_m", "uniform_cells"},
+             "surface");
+        c.surface.a = num(s.at("flat_half_length_m"));
+        c.surface.b = num(s.at("flat_half_width_m"));
+        c.surface.A = num(s.at("outer_half_length_m"));
+        c.surface.B = num(s.at("outer_half_width_m"));
+        c.surface.H = num(s.at("corner_height_m"));
+        require(c.surface.A > c.surface.a && c.surface.a > c.vehicle_length / 2 + c.margin &&
+                    c.surface.B > c.surface.b && c.surface.b > c.vehicle_width / 2 + c.margin &&
+                    c.surface.H >= 0,
+                "surface: invalid bounds/mask");
+        const auto &cells = s.at("uniform_cells").as_array();
+        require(cells.size() == 2, "surface.uniform_cells");
+        c.surface.nx = integer(cells[0], 2, 512);
+        c.surface.ny = integer(cells[1], 2, 512);
+    }
+    else if (c.surface.type == "dome_floor_v1")
+    {
+        keys(s,
+             {"type", "dome_radius_m", "dome_latitude_cells", "dome_longitude_cells",
+              "floor_radial_cells"},
+             "surface");
+        c.surface.dome_radius = num(s.at("dome_radius_m"));
+        c.surface.dome_latitude_cells = integer(s.at("dome_latitude_cells"), 8, 256);
+        c.surface.dome_longitude_cells = integer(s.at("dome_longitude_cells"), 16, 512);
+        c.surface.floor_radial_cells = integer(s.at("floor_radial_cells"), 4, 256);
+        require(c.surface.dome_radius >
+                    std::hypot(c.vehicle_length / 2 + c.margin, c.vehicle_width / 2 + c.margin),
+                "surface: dome is too small to contain the vehicle");
+        c.surface.A = c.surface.B = c.surface.dome_radius;
+        c.surface.a = c.vehicle_length / 2 + c.margin;
+        c.surface.b = c.vehicle_width / 2 + c.margin;
+        c.surface.H = 0;
+    }
+    else
+    {
+        throw std::invalid_argument("surface: unsupported type");
+    }
     const auto &view = o.at("virtual_camera").as_object();
     keys(view, {"azimuth_rad", "elevation_rad", "distance_m", "fov_y_rad", "clip_m"},
          "virtual_camera");
@@ -312,8 +337,12 @@ Config parse_config(const boost::json::value &value)
     require(clips.size() == 2, "virtual_camera.clip_m");
     c.view.near_z = num(clips[0]);
     c.view.far_z = num(clips[1]);
+    const bool safe_view =
+        c.surface.type == "dome_floor_v1"
+            ? c.view.distance >= 6 && c.view.distance < c.surface.dome_radius - .25
+            : c.view.eye().z > c.surface.H + .1;
     require(c.view.elevation >= .35 && c.view.elevation <= pi / 2 && c.view.distance >= 6 &&
-                c.view.distance <= 18 && c.view.eye().z > c.surface.H + .1,
+                c.view.distance <= 18 && safe_view,
             "virtual_camera: unsafe position");
     c.view.mvp(1);
     const auto &out = o.at("output").as_object();

@@ -240,23 +240,35 @@ void qualify_gpu(const sv::Config &base, sv::FrameSet input, int iterations, int
         const char *name;
         double height;
         int cells, width, height_px;
-        bool fresh;
+        bool fresh, dome;
     };
 
-    const std::array<Variant, 5> variants{{{"plane", 0, 32, 640, 360, false},
-                                           {"bowl", 1.5, 32, 640, 360, false},
-                                           {"bowl_dense", 1.5, 64, 640, 360, false},
-                                           {"bowl_720p", 1.5, 32, 1280, 720, false},
-                                           {"bowl_upload", 1.5, 32, 640, 360, true}}};
+    const std::array<Variant, 6> variants{{{"plane", 0, 32, 640, 360, false, false},
+                                           {"bowl", 1.5, 32, 640, 360, false, false},
+                                           {"bowl_dense", 1.5, 64, 640, 360, false, false},
+                                           {"bowl_720p", 1.5, 32, 1280, 720, false, false},
+                                           {"bowl_upload", 1.5, 32, 640, 360, true, false},
+                                           {"dome_floor", 0, 32, 640, 360, false, true}}};
     for (int repeat = 0; repeat < repeats; ++repeat)
     {
         for (size_t index = 0; index < variants.size(); ++index)
         {
             const auto &variant = variants[repeat % 2 ? variants.size() - 1 - index : index];
             auto value = base.effective;
-            value.as_object()["surface"].as_object()["corner_height_m"] = variant.height;
-            value.as_object()["surface"].as_object()["uniform_cells"] =
-                Array{variant.cells, variant.cells};
+            if (variant.dome)
+            {
+                value.as_object()["surface"] = Object{{"type", "dome_floor_v1"},
+                                                      {"dome_radius_m", 12.},
+                                                      {"dome_latitude_cells", 64},
+                                                      {"dome_longitude_cells", 128},
+                                                      {"floor_radial_cells", 32}};
+            }
+            else
+            {
+                value.as_object()["surface"].as_object()["corner_height_m"] = variant.height;
+                value.as_object()["surface"].as_object()["uniform_cells"] =
+                    Array{variant.cells, variant.cells};
+            }
             value.as_object()["output"] =
                 Object{{"width", variant.width}, {"height", variant.height_px}};
             auto config = sv::parse_config(value);
@@ -317,7 +329,8 @@ void qualify_gpu(const sv::Config &base, sv::FrameSet input, int iterations, int
         }
     }
     criterion(checks, "RENDER_VARIANTS", "pass",
-              "Plane, bowl, dense mesh, 720p and new input uploads; raw distributions recorded");
+              "Plane, bowl, dense mesh, 720p, new input uploads and dome+floor; raw distributions "
+              "recorded");
 }
 #endif
 } // namespace

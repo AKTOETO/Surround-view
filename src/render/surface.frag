@@ -8,6 +8,8 @@ uniform vec4 intrinsics[4], distortion[4];
 uniform vec2 sizes[4], limits[4];
 uniform ivec4 available;
 uniform vec2 vehicle;
+uniform int surface_mode;
+uniform float dome_radius;
 
 vec3 linearize(vec3 x)
 {
@@ -22,7 +24,7 @@ vec3 encode(vec3 x)
 
 void main()
 {
-    if (abs(world.x) <= vehicle.x && abs(world.y) <= vehicle.y)
+    if (surface_mode == 0 && abs(world.x) <= vehicle.x && abs(world.y) <= vehicle.y)
     {
         color = vec4(.2, .22, .24, 1);
         return;
@@ -77,5 +79,18 @@ void main()
         sum += w * linearize(x);
         total += w;
     }
-    color = total > 1e-6 ? vec4(encode(sum / total), 1) : vec4(.86, .91, .95, 0);
+    if (total > 1e-6)
+    {
+        color = vec4(encode(sum / total), 1);
+    }
+    else if (surface_mode == 1)
+    {
+        float elevation = clamp(world.z / max(dome_radius, 1e-6), 0.0, 1.0);
+        color = vec4(mix(vec3(.66, .73, .78), vec3(.17, .27, .39),
+                         smoothstep(.35, .97, elevation)), 1);
+    }
+    else
+    {
+        color = vec4(.23, .24, .24, 1);
+    }
 }
