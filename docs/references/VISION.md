@@ -420,3 +420,19 @@ Fisheye camera model / OpenCV. – Текст : электронный // OpenCV
 ## S65
 
 **OpenCV 4.13.0. Chessboard detection and pose estimation.** [Официальный calib3d API](https://docs.opencv.org/4.13.0/d9/d0c/group__calib3d.html). Проверены 05.10.2026 разделы `findChessboardCornersSB`, `drawChessboardCorners`, `solvePnP`. Число внутренних углов и система доски определяются отдельно от координат автомобиля. В OpenCV 5 detector подключается через objdetect; проверено локальными заголовками и image-based тестом.
+
+## S68
+
+**Lin Zhang, Juntao Chen, Dongyang Liu, Ying Shen, Shengjie Zhao. Seamless 3D Surround View with a Novel Burger Model.** ICIP 2019, pp. 4150–4154. [Текст статьи](https://cslinzhang.github.io/home/files/ICIP2019.pdf), [IEEE record](https://ieeexplore.ieee.org/abstract/document/8803453/), DOI: 10.1109/ICIP.2019.8803453. Проверено 06.10.2026: введение, обзор 3D-носителей и метод. Статья объединяет четыре автомобильные камеры, graph-cut seam, multi-band blending и геометрию Burger. Это близкий методический аналог, а не доказательство пригодности её формы для нашей установки.
+
+## S69
+
+**Peter J. Burt, Edward H. Adelson. A Multiresolution Spline with Application to Image Mosaics.** ACM Transactions on Graphics, 2(4), October 1983, pp. 217–236. [Копия полного текста](https://ai.stanford.edu/~kosecka/burt-adelson-spline83.pdf), DOI: 10.1145/245.247. Проверено 06.10.2026: abstract и описание многомасштабного слияния. Разные пространственные частоты объединяются с переходными полосами разных масштабов; метод мотивирует multi-band baseline, но не решает геометрическое несовпадение источников.
+
+## S70
+
+**Khronos Group. OpenGL ES 3.0 Specification, §3.8.9.1 Seamless Cube Map Filtering.** [Официальная спецификация](https://registry.khronos.org/OpenGL/specs/es/3.0/es_spec_3.0.withchanges.pdf). Проверено 06.10.2026: правила линейной фильтрации через границу face. Поддержка сглаживания границ кубических текстур не означает автоматическую сшивку независимых камер и не устраняет параллакс.
+
+## S71
+
+**OpenCV. Images Stitching; Seam Estimation.** [Руководство stitching](https://docs.opencv.org/4.x/d1/d46/group__stitching.html), [seam estimation API](https://docs.opencv.org/4.x/d9/d24/group__stitching__seam.html), [detail blender API](https://docs.opencv.org/4.x/d5/d4b/classcv_1_1detail_1_1Blender.html). Проверено 06.10.2026: каталог включает plane/spherical/cylindrical warpers, graph-cut/Voronoi/DP seam finders и feather/multi-band blenders. Документация используется для пространства вариантов; project currently uses its own calibrated shader rather than `cv::Stitcher`.

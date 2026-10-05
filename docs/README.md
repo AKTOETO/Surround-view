@@ -1,6 +1,6 @@
 # Карта документации
 
-> Рабочая редакция от 05.10.2026. Linux-прототип и первая настольная серия реализованы; их границы зафиксированы в [[prototype/STATUS]]. Полные требования и перенос на Аврору остаются предметом дальнейшей проверки.
+> Рабочая редакция от 06.10.2026. Linux-прототип и первая настольная серия реализованы; обзор альтернативных способов fusion/surface начат, его сравнительный опыт ещё не выполнен. Полные требования и перенос на Аврору остаются предметом дальнейшей проверки.
 
 ## Порядок чтения
 
@@ -9,7 +9,7 @@
 3. [[architecture/SYSTEM|Компоненты и потоки]], [[architecture/MATHEMATICS|Математика]], [[architecture/DECISIONS|Решения и открытые вопросы]].
 4. [[requirements/SYSTEM|Обязательные функции и приоритеты]].
 5. [[planning/ROADMAP|План реализации]] и [[planning/THESIS|Структура текста диссертации]]; [[diploma/README|подготовленные главы]].
-6. [[research/CALIBRATION|Калибровка и диагностика]], [[research/EXPERIMENTS|Эксперименты]], [[validation/ACCEPTANCE|Приёмка и паспорт стенда]].
+6. [[research/PROJECTION_AND_STITCHING|Обзор слияния четырёх камер и поверхностей]], [[research/CALIBRATION|Калибровка и диагностика]], [[research/EXPERIMENTS|Эксперименты]], [[validation/ACCEPTANCE|Приёмка и паспорт стенда]].
 7. [[engineering/BUILD|Сборка]], [[engineering/USAGE|работа с кодом]], [[engineering/AURORA|RPM/SDK]], [[engineering/PLATFORM_TEST|переносимые проверки]], [[engineering/SCENE|фотографическая сцена]].
 8. [[prototype/STATUS|Что реализовано]], [[prototype/MEASUREMENTS|исторические результаты]], [[validation/baselines/PC_RTX|native RTX]] и [[validation/baselines/PC_MESA|native Mesa]].
 
@@ -17,7 +17,7 @@
 
 | Каталог | Что хранить | Основная заметка |
 |---|---|---|
-| `research/` | Постановка, исследовательские методы и программа опытов | [[research/TOPIC]] |
+| `research/` | Постановка, fusion/surface методы, калибровка и программа опытов | [[research/TOPIC]], [[research/PROJECTION_AND_STITCHING]] |
 | `references/` | Единственный каталог внешних источников и заметки о чтении | [[references/README]] |
 | `architecture/` | Компоненты, математические соглашения, диаграммы, ADR | [[architecture/SYSTEM]] |
 | `requirements/` | Проверяемые требования и контракты, каждый ID в одном месте | [[requirements/SYSTEM]] |

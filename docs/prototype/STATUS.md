@@ -14,7 +14,7 @@
 | OpenCV detector и image-based intrinsics | `vision_tools`, synthetic projected images; hashes/disjoint train/validation | Held-out board pose fitted; нет real-camera испытаний и внешней привязки |
 | OpenCV VideoCapture recorder | Четыре видеофайла → PNG/manifest/timestamps, `vision_tools` | Не встроен в realtime server; host delivery times не sensor timestamps |
 | Фотографическая street-demo | CC0 panorama, три actual GLES ракурса в главе 3 | Общий оптический центр, нет реального параллакса/калибровочной истины |
-| Геометрия `dome_floor_v1` | Верхняя полусфера + круглый пол; камера строго внутри; opaque fallback; mesh winding и containment checks | Фотографическая панорама только для визуализации; покрытие объективов не полное |
+| Геометрия `dome_floor_v1` | Верхняя полусфера + круглый пол; камера строго внутри; opaque fallback; mesh winding и containment checks | Панорама только для визуализации; coverage/seam/marker quality не сравнены с другими carriers |
 | Сервисная диагностика задней камеры | Заданный поворот, известные точки, INDETERMINATE | Нет анализа признаков перекрытий и статистики реальных ложных тревог |
 | Сервер с Asio и отдельным EGL-потоком | Пауза, управление, timeout/reconnect, shutdown | Один клиент и один ожидающий release; decoding в render-потоке |
 | Qt Quick desktop-клиент | Qt 6.11.2/5.15.19 offscreen; исправлен teardown Bridge | Не AuroraApp/Silica application; display latency не измерена |
@@ -49,7 +49,8 @@ QQuickImageProvider заменяет проектный QQuickItem/QSGTexture. �
 3. `FrameSource`-интерфейс и подготовка/декодирование в отдельном worker pool; TCP producer и аппаратный адаптер по необходимости.
 4. Дополнить draw/upload/readback и RSS измерениями IPC/UI/VRAM/thermal; длительная серия и replay clocks с speed/pause anchors.
 5. Диагностика по перекрытиям с движением/светом/skew, независимая настройка порогов, чувствительность и ложные тревоги.
-6. Дополнительные форматы и маски, UV/weight diagnostic views, quantitative seam/marker error, адаптивная сетка как отдельный опыт.
+6. E-STITCH-01: сравнить hard/feather/distance/graph-cut/multiband и plane/bowl/dome/cylinder/cube на одном независимом наборе. `dome_floor` platform smoke проверяет render/performance validity, не качество изображения.
+7. Дополнительные форматы и маски, UV/weight diagnostic views, quantitative seam/marker error, адаптивная сетка как отдельный опыт.
 7. Устройство/SDK Аврора: проверить dependencies/macros, собрать подготовленный RPM и выполнить native suite на железе; затем Aurora UI integration.
 
 Подробный план остаётся в [[planning/ROADMAP]], исполняемый список начала — в корневом `TODO.md`. Текст глав — [[diploma/README]].

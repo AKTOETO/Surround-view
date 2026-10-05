@@ -1,6 +1,6 @@
 # Источники и порядок чтения
 
-Каталог объединяет повторные записи из Word и библиографии технических документов. У каждой работы один ID `Sxx`; разные главы ссылаются на ту же запись. По выбранным источникам добавлены заметки о проверке разделов для первой главы от 04.10.2026. Остальные материалы остаются **к прочтению и проверке**; просмотр аннотации или раздела не означает полного изучения работы. Даты обращения в перенесённых библиографических записях относятся к исходным документам.
+Каталог объединяет повторные записи из Word и библиографии технических документов. У каждой работы один ID `Sxx`; разные главы ссылаются на ту же запись. 06.10.2026 добавлены S68–S71 для обзора camera fusion, multi-band, cubemap filtering и OpenCV stitching. Просмотренные части отмечены у источников; остальные материалы остаются **к прочтению и проверке**. Просмотр аннотации или раздела не означает полного изучения работы. Даты обращения в перенесённых библиографических записях относятся к исходным документам.
 
 ## Тематические разделы
 
@@ -80,6 +80,10 @@
 | S65 | [[references/VISION#S65\|OpenCV chessboard и solvePnP]] | VISION |
 | S66 | [[references/PLATFORM#S66\|Platform SDK setup]] | PLATFORM |
 | S67 | [[references/PLATFORM#S67\|Аврора: CMake/Ninja example]] | PLATFORM |
+| S68 | [[references/VISION#S68\|Zhang et al. Seamless 3D Surround View with a Novel Burger Model]] | VISION |
+| S69 | [[references/VISION#S69\|Burt and Adelson. Multiresolution Spline for Image Mosaics]] | VISION |
+| S70 | [[references/VISION#S70\|Khronos OpenGL ES 3.0 cube-map filtering]] | VISION |
+| S71 | [[references/VISION#S71\|OpenCV stitching warpers, seam estimators and blenders]] | VISION |
 
 ## Первое чтение
 
