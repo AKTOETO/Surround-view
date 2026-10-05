@@ -139,6 +139,22 @@ boost::json::array qualify_cpu(const Config &config, const std::filesystem::path
                     std::abs(config.surface.point(config.surface.A, config.surface.B).z -
                              config.surface.H) < 1e-10);
         });
+    run("ENCLOSURE_MESH", "Dome, cylinder cap and cube shell have nondegenerate outward triangles",
+        [&]
+        {
+            for (const auto &mesh :
+                 {make_dome_mesh(12, 8, 24), make_cylinder_shell(12, 12, 8, 24, 8),
+                  make_box_shell(12, 12, 8)})
+            {
+                for (size_t index = 0; index < mesh.indices.size(); index += 3)
+                {
+                    const auto a = mesh.vertices.at(mesh.indices[index]);
+                    const auto b = mesh.vertices.at(mesh.indices[index + 1]);
+                    const auto c = mesh.vertices.at(mesh.indices[index + 2]);
+                    require(dot(cross(b - a, c - a), a + b + c) > 0);
+                }
+            }
+        });
     run("SRGB_LINEAR", "sRGB round trip and linear half-intensity",
         [&]
         {

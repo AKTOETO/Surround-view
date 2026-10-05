@@ -10,6 +10,7 @@
 #include <map>
 #include <set>
 #ifdef SV_HAS_GPU
+#include "sv/render_validation.hpp"
 #include "sv/renderer.hpp"
 #endif
 
@@ -235,27 +236,50 @@ void qualify_gpu(const sv::Config &base, sv::FrameSet input, int iterations, int
         criterion(checks, "GPU_RGBA_TOP_LEFT", "fail", e.what());
     }
 
+    for (const auto &validation :
+         {std::make_pair("GPU_FUSION_MODES", sv::qualify_fusion_modes),
+          std::make_pair("GPU_ENCLOSURE_COVERAGE", sv::qualify_enclosure_coverage)})
+    {
+        try
+        {
+            validation.second(base);
+            criterion(checks, validation.first, "pass",
+                      "Closed-form RGB/coverage oracles or 36 complete interior enclosure views");
+        }
+        catch (const std::exception &error)
+        {
+            criterion(checks, validation.first, "fail", error.what());
+        }
+    }
+
     struct Variant
     {
         const char *name;
         double height;
         int cells, width, height_px;
-        bool fresh, dome;
+        bool fresh;
+        int enclosure;
+        const char *fusion;
     };
 
-    const std::array<Variant, 6> variants{{{"plane", 0, 32, 640, 360, false, false},
-                                           {"bowl", 1.5, 32, 640, 360, false, false},
-                                           {"bowl_dense", 1.5, 64, 640, 360, false, false},
-                                           {"bowl_720p", 1.5, 32, 1280, 720, false, false},
-                                           {"bowl_upload", 1.5, 32, 640, 360, true, false},
-                                           {"dome_floor", 0, 32, 640, 360, false, true}}};
+    const std::array<Variant, 10> variants{
+        {{"plane", 0, 32, 640, 360, false, 0, "edge_feather"},
+         {"bowl", 1.5, 32, 640, 360, false, 0, "edge_feather"},
+         {"bowl_dense", 1.5, 64, 640, 360, false, 0, "edge_feather"},
+         {"bowl_720p", 1.5, 32, 1280, 720, false, 0, "edge_feather"},
+         {"bowl_upload", 1.5, 32, 640, 360, true, 0, "edge_feather"},
+         {"dome_floor", 0, 32, 640, 360, false, 1, "edge_feather"},
+         {"cylinder_floor", 0, 32, 640, 360, false, 2, "edge_feather"},
+         {"cube_floor", 0, 32, 640, 360, false, 3, "edge_feather"},
+         {"dome_angular", 0, 32, 640, 360, false, 1, "angular_feather"},
+         {"dome_hard", 0, 32, 640, 360, false, 1, "hard_best_angle"}}};
     for (int repeat = 0; repeat < repeats; ++repeat)
     {
         for (size_t index = 0; index < variants.size(); ++index)
         {
             const auto &variant = variants[repeat % 2 ? variants.size() - 1 - index : index];
             auto value = base.effective;
-            if (variant.dome)
+            if (variant.enclosure == 1)
             {
                 value.as_object()["surface"] = Object{{"type", "dome_floor_v1"},
                                                       {"dome_radius_m", 12.},
@@ -263,12 +287,35 @@ void qualify_gpu(const sv::Config &base, sv::FrameSet input, int iterations, int
                                                       {"dome_longitude_cells", 128},
                                                       {"floor_radial_cells", 32}};
             }
+            else if (variant.enclosure == 2)
+            {
+                value.as_object()["surface"] = Object{{"type", "cylinder_floor_v1"},
+                                                      {"radius_m", 12.},
+                                                      {"height_m", 12.},
+                                                      {"vertical_cells", 32},
+                                                      {"angular_cells", 128},
+                                                      {"floor_radial_cells", 32}};
+            }
+            else if (variant.enclosure == 3)
+            {
+                value.as_object()["surface"] = Object{{"type", "cube_floor_v1"},
+                                                      {"half_extent_m", 12.},
+                                                      {"height_m", 12.},
+                                                      {"face_cells", 32}};
+            }
             else
             {
-                value.as_object()["surface"].as_object()["corner_height_m"] = variant.height;
-                value.as_object()["surface"].as_object()["uniform_cells"] =
-                    Array{variant.cells, variant.cells};
+                value.as_object()["surface"] =
+                    Object{{"type", "rectangular_bowl_v1"},
+                           {"flat_half_length_m", 2.6},
+                           {"flat_half_width_m", 1.2},
+                           {"outer_half_length_m", 6.},
+                           {"outer_half_width_m", 4.5},
+                           {"corner_height_m", variant.height},
+                           {"uniform_cells", Array{variant.cells, variant.cells}}};
             }
+            value.as_object()["fusion"] = Object{{"mode", variant.fusion}, {"diagnostic", "color"}};
+            value.as_object()["virtual_camera"].as_object()["distance_m"] = 8.5;
             value.as_object()["output"] =
                 Object{{"width", variant.width}, {"height", variant.height_px}};
             auto config = sv::parse_config(value);

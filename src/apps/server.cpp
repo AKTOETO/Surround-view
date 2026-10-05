@@ -582,11 +582,7 @@ int main(int argc, char **argv)
                         accepted = false;
                         reason = "unknown_command";
                     }
-                    const bool invalid_clearance =
-                        c.surface.type == "dome_floor_v1"
-                            ? candidate.distance >= c.surface.dome_radius - .25
-                            : candidate.eye().z <= c.surface.H + .1;
-                    if (invalid_clearance)
+                    if (!sv::safe_view(c.surface, candidate))
                     {
                         accepted = false;
                         reason = "view_clearance";
@@ -698,6 +694,8 @@ int main(int argc, char **argv)
                      {"width", c.width},
                      {"height", c.height},
                      {"pixel_format", "RGBA8"},
+                     {"fusion_mode", c.fusion.mode},
+                     {"diagnostic_view", c.fusion.diagnostic},
                      {"stride_bytes", c.width * 4},
                      {"row_origin", "top_left"},
                      {"health", last_set.health},

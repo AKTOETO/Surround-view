@@ -269,6 +269,113 @@ Mesh make_dome_mesh(double radius, int latitude_cells, int longitude_cells)
     return mesh;
 }
 
+Mesh make_cylinder_shell(double radius, double height, int vertical_cells, int angular_cells,
+                         int cap_radial_cells)
+{
+    if (!std::isfinite(radius) || radius <= 0 || !std::isfinite(height) || height <= 0 ||
+        vertical_cells < 1 || angular_cells < 3 || cap_radial_cells < 1)
+    {
+        throw std::invalid_argument("invalid cylinder dimensions");
+    }
+    Mesh mesh;
+    for (int z = 0; z <= vertical_cells; ++z)
+    {
+        for (int a = 0; a < angular_cells; ++a)
+        {
+            const double angle = 2 * pi * a / angular_cells;
+            mesh.vertices.push_back(
+                {radius * std::cos(angle), radius * std::sin(angle), height * z / vertical_cells});
+        }
+    }
+    for (int z = 0; z < vertical_cells; ++z)
+    {
+        for (int a = 0; a < angular_cells; ++a)
+        {
+            const unsigned lower = z * angular_cells;
+            const unsigned next = (a + 1) % angular_cells;
+            const unsigned p = lower + a, q = lower + next;
+            mesh.indices.insert(mesh.indices.end(),
+                                {p, q, q + angular_cells, p, q + angular_cells, p + angular_cells});
+        }
+    }
+    const auto cap = make_floor_mesh(radius, cap_radial_cells, angular_cells);
+    const unsigned offset = mesh.vertices.size();
+    for (auto point : cap.vertices)
+    {
+        point.z = height;
+        mesh.vertices.push_back(point);
+    }
+    for (auto index : cap.indices)
+    {
+        mesh.indices.push_back(offset + index);
+    }
+    return mesh;
+}
+
+Mesh make_box_shell(double half_extent, double height, int cells)
+{
+    if (!std::isfinite(half_extent) || half_extent <= 0 || !std::isfinite(height) || height <= 0 ||
+        cells < 1)
+    {
+        throw std::invalid_argument("invalid box dimensions");
+    }
+    Mesh mesh;
+    auto plane = [&](Vec3 origin, Vec3 u, Vec3 v)
+    {
+        const unsigned offset = mesh.vertices.size();
+        for (int y = 0; y <= cells; ++y)
+        {
+            for (int x = 0; x <= cells; ++x)
+            {
+                mesh.vertices.push_back(origin + u * (double(x) / cells) + v * (double(y) / cells));
+            }
+        }
+        for (int y = 0; y < cells; ++y)
+        {
+            for (int x = 0; x < cells; ++x)
+            {
+                const unsigned a = offset + y * (cells + 1) + x, b = a + 1;
+                const unsigned c = a + cells + 1, d = c + 1;
+                mesh.indices.insert(mesh.indices.end(), {a, b, d, a, d, c});
+            }
+        }
+    };
+    const double r = half_extent;
+    plane({r, -r, 0}, {0, 2 * r, 0}, {0, 0, height});
+    plane({-r, r, 0}, {0, -2 * r, 0}, {0, 0, height});
+    plane({r, r, 0}, {-2 * r, 0, 0}, {0, 0, height});
+    plane({-r, -r, 0}, {2 * r, 0, 0}, {0, 0, height});
+    plane({-r, -r, height}, {2 * r, 0, 0}, {0, 2 * r, 0});
+    return mesh;
+}
+
+bool safe_view(const Surface &surface, const View &view, double clearance)
+{
+    const auto eye = view.eye();
+    if (surface.type == "rectangular_bowl_v1")
+    {
+        return eye.z > surface.H + .1;
+    }
+    if (eye.z <= clearance)
+    {
+        return false;
+    }
+    const double radius = surface.enclosure_radius - clearance;
+    if (surface.type == "dome_floor_v1")
+    {
+        return dot(eye, eye) < radius * radius;
+    }
+    if (eye.z >= surface.enclosure_height - clearance)
+    {
+        return false;
+    }
+    if (surface.type == "cylinder_floor_v1")
+    {
+        return std::hypot(eye.x, eye.y) < radius;
+    }
+    return surface.type == "cube_floor_v1" && std::abs(eye.x) < radius && std::abs(eye.y) < radius;
+}
+
 Vec3 View::eye() const
 {
     return target + Vec3{std::cos(elevation) * std::cos(azimuth),

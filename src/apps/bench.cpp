@@ -202,6 +202,8 @@ int main(int argc, char **argv)
         boost::json::object report{
             {"opencv_version", sv::opencv_version()},
             {"profile_id", c.profile_id},
+            {"fusion_mode", c.fusion.mode},
+            {"diagnostic_view", c.fusion.diagnostic},
             {"gl_vendor", renderer.vendor()},
             {"gl_renderer", renderer.device()},
             {"backend",

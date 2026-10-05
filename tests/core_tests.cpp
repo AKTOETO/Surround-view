@@ -100,7 +100,7 @@ int main(int argc, char **argv)
         const auto street =
             sv::load_config(std::filesystem::path(argv[1]).parent_path() / "street-demo.json");
         check(street.surface.type == "dome_floor_v1" &&
-                  street.view.distance < street.surface.dome_radius,
+                  street.view.distance < street.surface.enclosure_radius,
               "street demo virtual camera is inside dome");
         rejects(
             [&]
@@ -110,6 +110,63 @@ int main(int argc, char **argv)
                 sv::parse_config(invalid);
             },
             "camera on dome shell must be rejected");
+        for (const auto &enclosure :
+             {sv::make_cylinder_shell(12, 10, 8, 24, 8), sv::make_box_shell(12, 10, 8)})
+        {
+            for (size_t index = 0; index < enclosure.indices.size(); index += 3)
+            {
+                const auto a = enclosure.vertices.at(enclosure.indices[index]);
+                const auto b = enclosure.vertices.at(enclosure.indices[index + 1]);
+                const auto c = enclosure.vertices.at(enclosure.indices[index + 2]);
+                check(sv::dot(sv::cross(b - a, c - a), a + b + c) > 0,
+                      "enclosure triangles face outwards without degeneracy");
+            }
+        }
+        rejects([] { sv::make_cylinder_shell(12, 0, 8, 24, 8); }, "zero cylinder height");
+        rejects([] { sv::make_box_shell(12, 10, 0); }, "empty cube grid");
+        for (const auto &surface_spec : {boost::json::object{{"type", "cylinder_floor_v1"},
+                                                             {"radius_m", 12.},
+                                                             {"height_m", 12.},
+                                                             {"vertical_cells", 32},
+                                                             {"angular_cells", 128},
+                                                             {"floor_radial_cells", 32}},
+                                         boost::json::object{{"type", "cube_floor_v1"},
+                                                             {"half_extent_m", 12.},
+                                                             {"height_m", 12.},
+                                                             {"face_cells", 32}}})
+        {
+            auto value = street.effective;
+            value.as_object()["surface"] = surface_spec;
+            auto parsed = sv::parse_config(value);
+            check(sv::safe_view(parsed.surface, parsed.view),
+                  "enclosure config accepts inside view");
+            value.as_object()["surface"].as_object()["height_m"] = 3.;
+            rejects([&] { sv::parse_config(value); }, "view above enclosure roof rejected");
+            auto outside = parsed.view;
+            outside.azimuth = 0;
+            outside.elevation = .35;
+            outside.distance = 18;
+            check(!sv::safe_view(parsed.surface, outside), "view outside wall rejected");
+        }
+        check(config.fusion.mode == "edge_feather" && config.fusion.edge_width_px == 24 &&
+                  config.fusion.diagnostic == "color",
+              "legacy fusion defaults preserved");
+        for (const char *mode : {"edge_feather", "angular_feather", "hard_best_angle"})
+        {
+            auto value = config.effective;
+            value.as_object()["fusion"] = boost::json::object{{"mode", mode}};
+            check(sv::parse_config(value).fusion.mode == mode, "supported fusion mode");
+            for (const auto &invalid :
+                 {boost::json::object{{"mode", "unknown"}},
+                  boost::json::object{{"mode", mode}, {"edge_width_px", 0}},
+                  boost::json::object{{"mode", mode}, {"angle_power", 33}},
+                  boost::json::object{{"mode", mode}, {"diagnostic", "invalid"}},
+                  boost::json::object{{"mode", mode}, {"extra", true}}})
+            {
+                value.as_object()["fusion"] = invalid;
+                rejects([&] { sv::parse_config(value); }, "invalid fusion parameters rejected");
+            }
+        }
         auto bad = config.effective;
         bad.as_object()["unexpected"] = 1;
         rejects([&] { sv::parse_config(bad); }, "unknown config key");

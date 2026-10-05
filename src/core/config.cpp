@@ -11,10 +11,14 @@ namespace sv
 namespace
 {
 void keys(const boost::json::object &o, std::initializer_list<const char *> list,
-          const std::string &p)
+          const std::string &p, std::initializer_list<const char *> optional = {})
 {
     std::set<std::string> allowed;
     for (auto k : list)
+    {
+        allowed.insert(k);
+    }
+    for (auto k : optional)
     {
         allowed.insert(k);
     }
@@ -186,11 +190,39 @@ Config parse_config(const boost::json::value &value)
     keys(o,
          {"schema_version", "profile_id", "units", "vehicle", "cameras", "surface",
           "virtual_camera", "output", "runtime"},
-         "config");
+         "config", {"fusion"});
     require(integer(o.at("schema_version"), 1, 1) == 1, "schema_version");
     Config c;
     c.effective = value;
     c.profile_id = str(o.at("profile_id"));
+    if (const auto *value = o.if_contains("fusion"))
+    {
+        const auto &fusion = value->as_object();
+        keys(fusion, {"mode"}, "fusion", {"diagnostic", "edge_width_px", "angle_power"});
+        c.fusion.mode = str(fusion.at("mode"));
+        require(c.fusion.mode == "edge_feather" || c.fusion.mode == "hard_best_angle" ||
+                    c.fusion.mode == "angular_feather",
+                "fusion.mode: unsupported mode");
+        if (const auto *diagnostic = fusion.if_contains("diagnostic"))
+        {
+            c.fusion.diagnostic = str(*diagnostic);
+        }
+        require(c.fusion.diagnostic == "color" || c.fusion.diagnostic == "coverage" ||
+                    c.fusion.diagnostic == "weights",
+                "fusion.diagnostic: unsupported view");
+        if (const auto *width = fusion.if_contains("edge_width_px"))
+        {
+            c.fusion.edge_width_px = num(*width);
+        }
+        if (const auto *power = fusion.if_contains("angle_power"))
+        {
+            c.fusion.angle_power = num(*power);
+        }
+        require(c.fusion.edge_width_px > 0 && c.fusion.edge_width_px <= 4096,
+                "fusion.edge_width_px: expected (0,4096]");
+        require(c.fusion.angle_power > 0 && c.fusion.angle_power <= 32,
+                "fusion.angle_power: expected (0,32]");
+    }
     const auto &units = o.at("units").as_object();
     keys(units, {"length", "angle", "time"}, "units");
     require(str(units.at("length")) == "m" && str(units.at("angle")) == "rad" &&
@@ -310,14 +342,43 @@ Config parse_config(const boost::json::value &value)
              {"type", "dome_radius_m", "dome_latitude_cells", "dome_longitude_cells",
               "floor_radial_cells"},
              "surface");
-        c.surface.dome_radius = num(s.at("dome_radius_m"));
+        c.surface.enclosure_radius = num(s.at("dome_radius_m"));
         c.surface.dome_latitude_cells = integer(s.at("dome_latitude_cells"), 8, 256);
         c.surface.dome_longitude_cells = integer(s.at("dome_longitude_cells"), 16, 512);
         c.surface.floor_radial_cells = integer(s.at("floor_radial_cells"), 4, 256);
-        require(c.surface.dome_radius >
+        require(c.surface.enclosure_radius >
                     std::hypot(c.vehicle_length / 2 + c.margin, c.vehicle_width / 2 + c.margin),
                 "surface: dome is too small to contain the vehicle");
-        c.surface.A = c.surface.B = c.surface.dome_radius;
+        c.surface.A = c.surface.B = c.surface.enclosure_radius;
+        c.surface.a = c.vehicle_length / 2 + c.margin;
+        c.surface.b = c.vehicle_width / 2 + c.margin;
+        c.surface.H = 0;
+    }
+    else if (c.surface.type == "cylinder_floor_v1" || c.surface.type == "cube_floor_v1")
+    {
+        if (c.surface.type == "cylinder_floor_v1")
+        {
+            keys(s,
+                 {"type", "radius_m", "height_m", "vertical_cells", "angular_cells",
+                  "floor_radial_cells"},
+                 "surface");
+            c.surface.enclosure_radius = num(s.at("radius_m"));
+            c.surface.enclosure_cells = integer(s.at("vertical_cells"), 2, 256);
+            c.surface.dome_longitude_cells = integer(s.at("angular_cells"), 16, 512);
+            c.surface.floor_radial_cells = integer(s.at("floor_radial_cells"), 4, 256);
+        }
+        else
+        {
+            keys(s, {"type", "half_extent_m", "height_m", "face_cells"}, "surface");
+            c.surface.enclosure_radius = num(s.at("half_extent_m"));
+            c.surface.enclosure_cells = integer(s.at("face_cells"), 2, 128);
+        }
+        c.surface.enclosure_height = num(s.at("height_m"));
+        require(c.surface.enclosure_radius > std::hypot(c.vehicle_length / 2 + c.margin,
+                                                        c.vehicle_width / 2 + c.margin) &&
+                    c.surface.enclosure_height > .5,
+                "surface: enclosure is too small");
+        c.surface.A = c.surface.B = c.surface.enclosure_radius;
         c.surface.a = c.vehicle_length / 2 + c.margin;
         c.surface.b = c.vehicle_width / 2 + c.margin;
         c.surface.H = 0;
@@ -337,12 +398,8 @@ Config parse_config(const boost::json::value &value)
     require(clips.size() == 2, "virtual_camera.clip_m");
     c.view.near_z = num(clips[0]);
     c.view.far_z = num(clips[1]);
-    const bool safe_view =
-        c.surface.type == "dome_floor_v1"
-            ? c.view.distance >= 6 && c.view.distance < c.surface.dome_radius - .25
-            : c.view.eye().z > c.surface.H + .1;
     require(c.view.elevation >= .35 && c.view.elevation <= pi / 2 && c.view.distance >= 6 &&
-                c.view.distance <= 18 && safe_view,
+                c.view.distance <= 18 && safe_view(c.surface, c.view),
             "virtual_camera: unsafe position");
     c.view.mvp(1);
     const auto &out = o.at("output").as_object();

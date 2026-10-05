@@ -1,7 +1,7 @@
 %{!?sv_with_client:%global sv_with_client 0}
 
 Name:           surround-view
-Version:        0.3.0
+Version:        0.4.0
 Release:        1
 Summary:        Surround view research tools and native platform qualification
 License:        LicenseRef-Proprietary AND CC0-1.0

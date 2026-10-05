@@ -10,6 +10,25 @@ uniform ivec4 available;
 uniform vec2 vehicle;
 uniform int surface_mode;
 uniform float dome_radius;
+uniform int fusion_mode, diagnostic_mode;
+uniform float edge_width_px, angle_power;
+
+vec3 camera_color(int i)
+{
+    if (i == 0)
+    {
+        return vec3(1, 0, 0);
+    }
+    if (i == 1)
+    {
+        return vec3(0, 1, 0);
+    }
+    if (i == 2)
+    {
+        return vec3(0, 0, 1);
+    }
+    return vec3(1, 1, 0);
+}
 
 vec3 linearize(vec3 x)
 {
@@ -26,11 +45,14 @@ void main()
 {
     if (surface_mode == 0 && abs(world.x) <= vehicle.x && abs(world.y) <= vehicle.y)
     {
-        color = vec4(.2, .22, .24, 1);
+        color = diagnostic_mode == 0 ? vec4(.2, .22, .24, 1) : vec4(1, 0, 1, 1);
         return;
     }
     vec3 sum = vec3(0);
     float total = 0.0;
+    float best = -1.0;
+    int winner = -1, observed = 0;
+    vec3 selected = vec3(0), contributions = vec3(0);
     for (int i = 0; i < 4; i++)
     {
         if (available[i] == 0)
@@ -57,6 +79,7 @@ void main()
             continue;
         }
         vec2 uv = (px + .5) / sizes[i];
+        observed++;
         vec3 x;
         if (i == 0)
         {
@@ -75,9 +98,42 @@ void main()
             x = texture(input3, uv).rgb;
         }
         float edge = min(min(px.x, px.y), min(sizes[i].x - 1.0 - px.x, sizes[i].y - 1.0 - px.y));
-        float w = clamp(edge / 24.0, 0.0, 1.0);
+        float angle_weight = pow(max(cos(theta), 0.0), angle_power);
+        if (fusion_mode == 1)
+        {
+            // Strict comparison gives the lower camera ID a deterministic tie break.
+            if (angle_weight > best)
+            {
+                best = angle_weight;
+                winner = i;
+                selected = x;
+            }
+            continue;
+        }
+        float w = clamp(edge / edge_width_px, 0.0, 1.0);
+        if (fusion_mode == 2)
+        {
+            w *= angle_weight;
+        }
         sum += w * linearize(x);
+        contributions += w * camera_color(i);
         total += w;
+    }
+    if (diagnostic_mode == 1)
+    {
+        // Display source validity independently from blending weights and fallback.
+        color = vec4(vec3(float(observed) / 4.0), 1);
+        return;
+    }
+    if (fusion_mode == 1 && winner >= 0)
+    {
+        color = vec4(diagnostic_mode == 2 ? camera_color(winner) : selected, 1);
+        return;
+    }
+    if (diagnostic_mode == 2)
+    {
+        color = vec4(total > 1e-6 ? contributions / total : vec3(0), 1);
+        return;
     }
     if (total > 1e-6)
     {

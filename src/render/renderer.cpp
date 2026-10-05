@@ -260,12 +260,28 @@ Renderer::Renderer(const Config &c) : impl_(std::make_unique<Impl>())
 {
     auto &i = *impl_;
     i.config = c;
-    if (c.surface.type == "dome_floor_v1")
+    if (c.surface.type != "rectangular_bowl_v1")
     {
-        i.floor_mesh = make_floor_mesh(c.surface.dome_radius, c.surface.floor_radial_cells,
-                                       c.surface.dome_longitude_cells);
-        i.dome_mesh = make_dome_mesh(c.surface.dome_radius, c.surface.dome_latitude_cells,
-                                     c.surface.dome_longitude_cells);
+        if (c.surface.type == "cube_floor_v1")
+        {
+            auto floor = c.surface;
+            floor.nx = floor.ny = floor.enclosure_cells;
+            i.floor_mesh = make_mesh(floor);
+            i.dome_mesh = make_box_shell(c.surface.enclosure_radius, c.surface.enclosure_height,
+                                         c.surface.enclosure_cells);
+        }
+        else
+        {
+            i.floor_mesh = make_floor_mesh(c.surface.enclosure_radius, c.surface.floor_radial_cells,
+                                           c.surface.dome_longitude_cells);
+            i.dome_mesh =
+                c.surface.type == "dome_floor_v1"
+                    ? make_dome_mesh(c.surface.enclosure_radius, c.surface.dome_latitude_cells,
+                                     c.surface.dome_longitude_cells)
+                    : make_cylinder_shell(c.surface.enclosure_radius, c.surface.enclosure_height,
+                                          c.surface.enclosure_cells, c.surface.dome_longitude_cells,
+                                          c.surface.floor_radial_cells);
+        }
     }
     else
     {
@@ -378,7 +394,7 @@ Renderer::Renderer(const Config &c) : impl_(std::make_unique<Impl>())
             i.gen_queries(1, &i.draw_query);
         }
     }
-    if (c.surface.type == "dome_floor_v1")
+    if (c.surface.type != "rectangular_bowl_v1")
     {
         upload_mesh(i.floor_mesh, i.floor_vao, i.floor_vbo, i.floor_ebo);
         upload_mesh(i.dome_mesh, i.dome_vao, i.dome_vbo, i.dome_ebo);
@@ -472,15 +488,27 @@ Image Renderer::render(const FrameSet &set, const View &view)
         glUniform1i(glGetUniformLocation(i.prog, ("input" + n).c_str()), k);
     }
     glUniform4iv(glGetUniformLocation(i.prog, "available"), 1, available);
+    glUniform1i(glGetUniformLocation(i.prog, "fusion_mode"), c.fusion.mode == "hard_best_angle" ? 1
+                                                             : c.fusion.mode == "angular_feather"
+                                                                 ? 2
+                                                                 : 0);
+    glUniform1i(glGetUniformLocation(i.prog, "diagnostic_mode"),
+                c.fusion.diagnostic == "coverage"  ? 1
+                : c.fusion.diagnostic == "weights" ? 2
+                                                   : 0);
+    glUniform1f(glGetUniformLocation(i.prog, "edge_width_px"), c.fusion.edge_width_px);
+    glUniform1f(glGetUniformLocation(i.prog, "angle_power"), c.fusion.angle_power);
     if (i.draw_query)
     {
         i.begin_query(GL_TIME_ELAPSED_EXT, i.draw_query);
     }
     const GLint region_location = glGetUniformLocation(i.prog, "surface_mode");
     const GLint radius_location = glGetUniformLocation(i.prog, "dome_radius");
-    if (c.surface.type == "dome_floor_v1")
+    if (c.surface.type != "rectangular_bowl_v1")
     {
-        glUniform1f(radius_location, c.surface.dome_radius);
+        glUniform1f(radius_location, c.surface.type == "dome_floor_v1"
+                                         ? c.surface.enclosure_radius
+                                         : c.surface.enclosure_height);
         glUniform1i(region_location, 0);
         glBindVertexArray(i.floor_vao);
         glDrawElements(GL_TRIANGLES, i.floor_mesh.indices.size(), GL_UNSIGNED_INT, nullptr);
@@ -495,10 +523,13 @@ Image Renderer::render(const FrameSet &set, const View &view)
         glBindVertexArray(i.vao);
         glDrawElements(GL_TRIANGLES, i.mesh.indices.size(), GL_UNSIGNED_INT, nullptr);
     }
-    glUseProgram(i.vehicle_program);
-    matrix(i.vehicle_program, "mvp", view.mvp(double(c.width) / c.height));
-    glBindVertexArray(i.vehicle_vao);
-    glDrawArrays(GL_TRIANGLES, 0, i.vehicle_vertices);
+    if (c.fusion.diagnostic == "color")
+    {
+        glUseProgram(i.vehicle_program);
+        matrix(i.vehicle_program, "mvp", view.mvp(double(c.width) / c.height));
+        glBindVertexArray(i.vehicle_vao);
+        glDrawArrays(GL_TRIANGLES, 0, i.vehicle_vertices);
+    }
     if (i.draw_query)
     {
         i.end_query(GL_TIME_ELAPSED_EXT);
@@ -615,7 +646,7 @@ uint64_t Renderer::uploads() const
 
 size_t Renderer::triangles() const
 {
-    if (impl_->config.surface.type == "dome_floor_v1")
+    if (impl_->config.surface.type != "rectangular_bowl_v1")
     {
         return (impl_->floor_mesh.indices.size() + impl_->dome_mesh.indices.size()) / 3;
     }
