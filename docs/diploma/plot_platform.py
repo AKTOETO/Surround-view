@@ -24,9 +24,9 @@ def generate(baseline, target, output):
         raise ValueError(comparison["reasons"])
     output.mkdir(parents=True, exist_ok=True)
     plt.rcParams.update({"font.family": "DejaVu Sans", "font.size": 10, "svg.fonttype": "none"})
-    variants = ["plane", "bowl", "bowl_dense", "bowl_720p", "bowl_upload"]
-    labels = ["Plane", "Bowl", "Dense", "720p", "New uploads"]
-    figure, axes = plt.subplots(1, 2, figsize=(12, 4.6), layout="constrained")
+    variants = ["plane", "bowl", "bowl_dense", "bowl_720p", "bowl_upload", "dome_floor"]
+    labels = ["Plane", "Bowl", "Dense", "720p", "New uploads", "Dome + floor"]
+    figure, axes = plt.subplots(1, 2, figsize=(13, 4.6), layout="constrained")
     for offset, report, color in [(-.18, baseline, "#287b8e"), (.18, target, "#ce9154")]:
         for axis, metric, title in zip(axes, ["render_readback_ms", "gpu_draw_ms"],
                                       ["CPU wall render / readback", "Только valid GPU draw query"]):
@@ -35,13 +35,13 @@ def generate(baseline, target, output):
             medians = [statistics.median(group) if group else np.nan for group in values]
             errors = [[mid - min(group) if group else 0 for mid, group in zip(medians, values)],
                       [max(group) - mid if group else 0 for mid, group in zip(medians, values)]]
-            axis.bar(np.arange(5) + offset, medians, .32, color=color, label=report["label"])
-            axis.errorbar(np.arange(5) + offset, medians, yerr=errors, fmt="none", ecolor="#344052", capsize=3)
-            axis.set(xticks=np.arange(5), xticklabels=labels, ylabel="Медиана p95 повторов, мс", title=title)
+            axis.bar(np.arange(len(variants)) + offset, medians, .32, color=color, label=report["label"])
+            axis.errorbar(np.arange(len(variants)) + offset, medians, yerr=errors, fmt="none", ecolor="#344052", capsize=3)
+            axis.set(xticks=np.arange(len(variants)), xticklabels=labels, ylabel="Медиана p95 повторов, мс", title=title)
             axis.grid(axis="y", alpha=.2)
             axis.set_axisbelow(True)
             axis.legend(fontsize=9)
-            axis.tick_params(axis="x", labelrotation=15)
+            axis.tick_params(axis="x", labelrotation=18, labelsize=8)
     figure.suptitle("Native suite 0.2.0: три новых EGL-контекста в одном процессе; ус — диапазон p95", fontsize=11)
     figure.savefig(output / "04_native_timings.svg")
     plt.close(figure)

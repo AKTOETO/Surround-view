@@ -116,7 +116,7 @@ def theory(output):
 
 def design(output):
     folder = output / "design"
-    figure, axis = canvas("Компоненты прототипа 0.2.0 и владельцы данных", (12, 5.8))
+    figure, axis = canvas("Компоненты прототипа 0.3.0 и владельцы данных", (12, 5.8))
     box(axis, .02, .65, .21, .23, "OpenCV capture /\nanalytic simulator /\nHDR panorama", GREEN)
     box(axis, .32, .65, .23, .23, "RGB8 + manifest\ncalibration IDs\nSHA-256")
     box(axis, .67, .65, .29, .23, "sv-server\nAsio: sockets\nmain: EGL owner")
@@ -248,7 +248,7 @@ def street(output, build, work, backend):
         axis.imshow(preview)
         axis.set_title(label, fontsize=11)
         axis.axis("off")
-    figure.suptitle("Readback GLES: фотографическая панорама + виртуальные камеры с общим центром + ego-модель", fontsize=11)
+    figure.suptitle("Readback GLES: фотоокружение на внутреннем куполе, пол под автомобилем и виртуальная камера внутри", fontsize=11)
     save(figure, work, "street_views.png")
 
 

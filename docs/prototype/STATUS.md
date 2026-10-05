@@ -1,6 +1,6 @@
 # Состояние прототипа и границы подтверждения
 
-Редакция 05.10.2026. Это карта фактически реализованного Linux-профиля, а не объявление завершения всех MUST из [[requirements/SYSTEM]]. Рабочий профиль — `linux-prototype-v1`; его JSON намеренно уже полной проектной схемы из [[requirements/CONFIGURATION]]. Совпадение `schema_version: 1` означает версию этого явно именованного профиля, а не взаимозаменяемость всех полей прежнего YAML-примера.
+Редакция 05.10.2026, Linux-профиль 0.3.0. Это карта фактически реализованного прототипа, а не объявление завершения всех MUST из [[requirements/SYSTEM]]. Рабочий профиль — `linux-prototype-v1`; его JSON намеренно уже полной проектной схемы из [[requirements/CONFIGURATION]]. Совпадение `schema_version: 1` означает версию этого явно именованного профиля, а не взаимозаменяемость всех полей прежнего YAML-примера.
 
 ## Реализовано и проверено
 
@@ -14,12 +14,13 @@
 | OpenCV detector и image-based intrinsics | `vision_tools`, synthetic projected images; hashes/disjoint train/validation | Held-out board pose fitted; нет real-camera испытаний и внешней привязки |
 | OpenCV VideoCapture recorder | Четыре видеофайла → PNG/manifest/timestamps, `vision_tools` | Не встроен в realtime server; host delivery times не sensor timestamps |
 | Фотографическая street-demo | CC0 panorama, три actual GLES ракурса в главе 3 | Общий оптический центр, нет реального параллакса/калибровочной истины |
+| Геометрия `dome_floor_v1` | Верхняя полусфера + круглый пол; камера строго внутри; opaque fallback; mesh winding и containment checks | Фотографическая панорама только для визуализации; покрытие объективов не полное |
 | Сервисная диагностика задней камеры | Заданный поворот, известные точки, INDETERMINATE | Нет анализа признаков перекрытий и статистики реальных ложных тревог |
 | Сервер с Asio и отдельным EGL-потоком | Пауза, управление, timeout/reconnect, shutdown | Один клиент и один ожидающий release; decoding в render-потоке |
 | Qt Quick desktop-клиент | Qt 6.11.2/5.15.19 offscreen; исправлен teardown Bridge | Не AuroraApp/Silica application; display latency не измерена |
 | SV01 framing и две очереди | Однобайтовое/объединённое чтение, malformed, control/data | Это подмножество протокола, не полная приёмка PRO-F-001…011 |
 | Исторические серии 0.1.0 и графики | [[prototype/MEASUREMENTS]], `run_experiments.py` | Короткие synthetic опыты; thermal/memory/display latency в этой серии не измерены |
-| Native hardware-comparison suite | 22 pass на RTX/Mesa; raw времена, draw/upload/readback, CPU RSS и hashes | Нет target hardware, long-run/VRAM/IPC UI и display latency |
+| Native hardware-comparison suite | 22 pass; шесть render-вариантов включают dome+floor | Новые v0.3 baselines требуют полного прогона на RTX и Mesa; нет target hardware/long-run/VRAM/IPC UI |
 | Offline RPM/spec и installed resources | Оба Linux native RPM, payload core/report/scene/GPU smoke; Qt/GLSL embedded | Aurora ABI/dependencies/validator/signing/installation не проверены |
 
 ## Отображение проектной архитектуры на код
@@ -55,6 +56,6 @@ QQuickImageProvider заменяет проектный QQuickItem/QSGTexture. �
 
 ## Уточнение следующего этапа 05.10.2026
 
-Запрошены live-источники `/dev/video*`, виртуальные камеры через отдельные сокеты, удалённые клиент/конфигуратор, движущийся автомобиль в полноценном 3D-мире и замкнутое отображение окружения. **В версии 0.2.0 это ещё не реализовано**: сервер читает replay-manifest и использует локальные Unix control/data sockets; `sv-capture` записывает входы отдельно, `sv-scene` преобразует неподвижную панораму. Параметры live/TCP/dome в текущий config добавлять нельзя: строгий parser их отклонит. Последовательность продолжения — [[planning/ROADMAP#Следующий этап: источники, удалённое управление и 3D-окружение]].
+Запрошены live-источники `/dev/video*`, виртуальные камеры через отдельные сокеты, удалённый клиент/конфигуратор и движущийся автомобиль в полноценном 3D-мире. В 0.3.0 уличная конфигурация использует `dome_floor_v1`; replay-manifest и локальные Unix control/data sockets остаются текущим server input. `sv-capture` записывает камеры отдельно, `sv-scene` генерирует неподвижную моноскопическую панораму. Реальный движущийся мир, аппаратный ввод и сетевой TCP-профиль сервера остаются следующими этапами. Строгий parser принимает только поля типов bowl и dome, прочие transport-настройки отклонит. Последовательность продолжения — [[planning/ROADMAP#Следующий этап: источники, удалённое управление и 3D-окружение]].
 
 В следующем этапе `sv-client` должен использовать отдельную `sv-client-lib` для локального Unix, TCP loopback и сервера на другой машине. Контракт — [[requirements/CLIENT#Клиентская библиотека sv-client-lib (план)]], решение — [[architecture/DECISIONS|ADR-012]]. На текущие бинарные файлы, конфигурацию и сохранённые baselines это уточнение плана не влияет.
