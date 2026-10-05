@@ -39,7 +39,7 @@ Manifest SHA-256:
 d91af117739c24ec52f173369692ad9793804ed1837fecd65f6751f5b7eb96bc
 ```
 
-Первичные local artifacts: `artifacts/blender-street-capture/capture.json`, `artifacts/blender-street/ground_truth.json`, `artifacts/blender-validation-final/smoke.json`, `bench/metrics.json` и `server.jsonl`. Скрипты и небольшой набор иллюстраций сохраняются обычным Git; binary `.blend` и полные серии остаются локальными. Git LFS отменён по решению пользователя.
+Первичные local artifacts: `artifacts/blender-street-capture/capture.json`, `artifacts/blender-street/ground_truth.json`, `artifacts/blender-validation-final/smoke.json`, `bench/metrics.json` и `server.jsonl`. Скрипты и небольшой набор иллюстраций сохраняются обычным Git; авторский `.blend` дополнительно сохранён в `assets/scenes/metric-street/` с provenance ([[engineering/ASSETS]]). Полные capture/replay-серии остаются локальными. Git LFS отменён по решению пользователя.
 
 ## Обнаруженные ограничения и действия
 
