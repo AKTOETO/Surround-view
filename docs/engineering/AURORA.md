@@ -153,3 +153,5 @@ python3 tools/compare_reports.py docs/validation/baselines/PC_RTX.md \
 Схема переноса и подписи изображений находятся в [[diploma/03_PROTOTYPE_IMPLEMENTATION]]; результаты двух PC backend — в [[diploma/04_EXPERIMENTAL_STUDY]].
 
 Оба research spec 0.5.0 включают static `sv-client-lib`/`sv-wire`, публичные headers и installed CMake export. GUI остаётся optional. Это позволяет собирать отдельного клиента из установленного пакета; инструкция — [[engineering/CLIENT_LIBRARY]]. UDP и target ABI этой упаковкой не подтверждаются.
+
+В spec `CMAKE_INSTALL_LIBDIR=%{_lib}` согласует относительный lib/lib64 с архитектурным RPM macro. Это сохраняет relocation installed CMake package и предотвращает расхождение с `%{_libdir}` в `%files`. Host verifier дополнительно проверяет development files и собирает отдельного consumer из распакованного RPM.

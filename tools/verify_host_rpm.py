@@ -61,12 +61,16 @@ def main():
     requirements = subprocess.check_output([*rpm_query, "-qp", "--requires", str(package)], env=environment, text=True)
     (output / "files.txt").write_text(listing)
     (output / "requires.txt").write_text(requirements)
-    expected = ["sv-project", "sv-core-tests", "sv-platform-test", "sv-calibrate", "sv-capture", "sv-scene"]
+    expected = ["sv-client-probe", "sv-project", "sv-core-tests", "sv-platform-test", "sv-calibrate", "sv-capture", "sv-scene"]
     if args.profile == "gpu":
         expected.extend(["sv-server", "sv-bench"])
     for executable in expected:
         if f"/usr/bin/{executable}\n" not in listing:
             raise RuntimeError(f"missing executable in RPM: {executable}")
+    for suffix in ["/libsv-client-lib.a", "/libsv-wire.a", "/sv/client.hpp", "/sv/protocol.hpp",
+                   "/cmake/svClient/svClientConfig.cmake", "/cmake/svClient/svClientTargets.cmake"]:
+        if not any(line.endswith(suffix) for line in listing.splitlines()):
+            raise RuntimeError(f"missing client development file: {suffix}")
     if any(token in listing for token in ["/.git/", "/build/", "/artifacts/", "__pycache__"]):
         raise RuntimeError("private/build files leaked into RPM")
     with tempfile.TemporaryDirectory(prefix="installed-smoke-", dir=output) as temporary:
@@ -79,6 +83,16 @@ def main():
             subprocess.run([str(rpm.parent / "rpm2archive"), "-"], stdin=source, stdout=destination,
                            env=environment, check=True)
         subprocess.run(["bsdtar", "-xf", str(archive), "-C", str(payload)], check=True)
+        consumer = temporary / "consumer"
+        subprocess.run(["cmake", "-S", str(ROOT / "examples/client"), "-B", str(consumer),
+                        f"-DCMAKE_PREFIX_PATH={payload / 'usr'}"], check=True, capture_output=True)
+        subprocess.run(["cmake", "--build", str(consumer), "-j", "2"], check=True, capture_output=True)
+        dependencies = subprocess.check_output(["ldd", str(consumer / "sv-client-probe")], text=True)
+        if any(name in dependencies for name in ["opencv", "libQt", "libEGL", "libGLES"]):
+            raise RuntimeError("installed client consumer links GUI/vision/GPU dependencies")
+        (output / "CLIENT_CONSUMER.md").write_text(
+            "# Installed RPM client consumer\n\nExternal CMake build passed using payload headers, static libraries and CMake exports.\n\n"
+            "No Qt/OpenCV/EGL/GLES in consumer ldd.\n\n```text\n" + dependencies + "```\n")
         config = payload / "usr/share/surround-view/configs/synthetic.json"
         subprocess.run([str(payload / "usr/bin/sv-core-tests"), str(config)], cwd=temporary, check=True)
         command = [str(payload / "usr/bin/sv-platform-test"), "--config", str(config), "--output", str(temporary / "report"),

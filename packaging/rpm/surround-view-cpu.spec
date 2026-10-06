@@ -25,6 +25,7 @@ qualifying an EGL backend. GPU and display results are explicitly unavailable.
 %build
 %cmake -GNinja \
     -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_INSTALL_LIBDIR=%{_lib} \
     -DSV_AURORA=ON \
     -DSV_GPU=OFF \
     -DSV_CLIENT=OFF \

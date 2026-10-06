@@ -37,6 +37,7 @@ This is a laboratory package, not a certified Aurora application.
 %build
 %cmake -GNinja \
     -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_INSTALL_LIBDIR=%{_lib} \
     -DSV_AURORA=ON \
     -DSV_GPU=ON \
     -DSV_CLIENT=%{sv_with_client} \
