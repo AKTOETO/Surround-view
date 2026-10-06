@@ -135,6 +135,10 @@ if __name__=='__main__':
         from calibration.study import main
         main(sys.argv[2:])
         raise SystemExit(0)
+    if len(sys.argv) > 1 and sys.argv[1] == 'calibrate-images':
+        from calibration.study import board_main
+        board_main(sys.argv[2:])
+        raise SystemExit(0)
     parser=argparse.ArgumentParser();parser.add_argument('mode',choices=['calibrate','diagnose']);parser.add_argument('--config',type=Path,required=True);parser.add_argument('--observations',type=Path,required=True);parser.add_argument('--output',type=Path,required=True);parser.add_argument('--threshold',type=float,default=1.)
     args=parser.parse_args();cfg=json.loads(args.config.read_text());obs=json.loads(args.observations.read_text());args.output.mkdir(parents=True,exist_ok=True)
     if args.mode=='diagnose':report=diagnose(cfg,obs,args.threshold)

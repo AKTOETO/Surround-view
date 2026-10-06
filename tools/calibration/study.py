@@ -176,6 +176,124 @@ def study(dataset, output, build, trials=5, render=False):
     return report
 
 
+def board_image_study(dataset, output, build, training_frames=3):
+    """Detect Blender chessboards, fit from early poses, and evaluate a held-out pose."""
+    dataset, output, build = (Path(p).resolve() for p in (dataset, output, build))
+    if output.exists():
+        raise ValueError('output must be a new directory')
+    capture = json.loads((dataset/'calibration-board-captures.json').read_text())
+    manifest = json.loads((dataset/'manifest.json').read_text())
+    truth_record = json.loads((dataset/'ground_truth.json').read_text())
+    truth = json.loads((dataset/'config.json').read_text())
+    nominal = json.loads((dataset/'nominal-config.json').read_text())
+    if not capture.get('cameras') or not capture['cameras'][0].get('views'):
+        raise ValueError('capture must contain camera views')
+    frames = len(capture['cameras'][0]['views'])
+    for record in capture['cameras']:
+        if len(record.get('views', [])) != frames:
+            raise ValueError('every camera must provide the same number of frame views')
+    if training_frames < 2 or training_frames >= frames:
+        raise ValueError('at least two train frames and one held-out frame are required')
+    for name, digest in manifest['sha256'].items():
+        image = (dataset/name).resolve()
+        if not image.is_relative_to(dataset) or hashlib.sha256(image.read_bytes()).hexdigest() != digest:
+            raise ValueError('dataset image checksum/path mismatch')
+    output.mkdir(parents=True)
+    for split, choose in (('train', lambda i: i < training_frames),
+                          ('validation', lambda i: i >= training_frames)):
+        cameras = []
+        for record in capture['cameras']:
+            views = []
+            for index, view in enumerate(record['views']):
+                if choose(index):
+                    entry = copy.deepcopy(view)
+                    entry['image'] = str((dataset/entry['image']).resolve())
+                    views.append(entry)
+            cameras.append({'id':record['id'], 'views':views})
+        (output/f'{split}-input.json').write_text(json.dumps(
+            {'schema_version':1, 'board':capture['board'], 'cameras':cameras}, indent=2)+'\n')
+    binary = build/'sv-calibrate'
+    detect_reports = {}
+    observations = {}
+    for split in ('train', 'validation'):
+        destination = output/f'detected-{split}'
+        process = subprocess.run([str(binary), 'board-observations', '--config',
+            str(dataset/'config.json'), '--input', str(output/f'{split}-input.json'),
+            '--output', str(destination)], capture_output=True, text=True, timeout=120)
+        if process.returncode:
+            raise RuntimeError(f'{split} board detection failed: {process.stderr.strip()}')
+        detect_reports[split] = json.loads((destination/'report.json').read_text())
+        observations[split] = json.loads((destination/'observations.json').read_text())
+    candidate_dir = output/'candidate'
+    process = subprocess.run([str(binary), 'extrinsics', '--config',
+        str(dataset/'nominal-config.json'), '--observations',
+        str(output/'detected-train'/'observations.json'), '--method', 'ransac_epnp_lm',
+        '--output', str(candidate_dir)], capture_output=True, text=True, timeout=120)
+    if process.returncode:
+        raise RuntimeError(f'extrinsic fit failed: {process.stderr.strip()}')
+    candidate = json.loads((candidate_dir/'config.json').read_text())
+    fit_report = json.loads((candidate_dir/'report.json').read_text())
+    rows = []
+    for base, estimated, actual, train, validation, fit in zip(
+            nominal['cameras'], candidate['cameras'], truth['cameras'],
+            observations['train']['cameras'], observations['validation']['cameras'],
+            fit_report['cameras']):
+        points = np.asarray(validation['points'], dtype=float)
+        pixels = np.asarray(validation['pixels'], dtype=float)
+        before = np.linalg.norm(project(base, points)-pixels, axis=1)
+        after = np.linalg.norm(project(estimated, points)-pixels, axis=1)
+        er, tr = np.asarray(estimated['T_camera_from_vehicle']), np.asarray(actual['T_camera_from_vehicle'])
+        center_est, center_true = -er[:3,:3].T@er[:3,3], -tr[:3,:3].T@tr[:3,3]
+        angle = np.rad2deg(np.arccos(np.clip((np.trace(er[:3,:3]@tr[:3,:3].T)-1)/2,-1,1)))
+        rows.append(dict(camera_id=base['id'], train_points=len(train['points']),
+            validation_points=len(validation['points']),
+            detected_corners_per_validation_view=detect_reports['validation']['captures'][base['id']]['views'][0]['detected_corners'],
+            train_rmse_px=fit['training_rmse_px'],
+            before_validation_rmse_px=float(np.sqrt(np.mean(before**2))),
+            before_validation_p95_px=float(np.quantile(before,.95)),
+            after_validation_rmse_px=float(np.sqrt(np.mean(after**2))),
+            after_validation_p95_px=float(np.quantile(after,.95)),
+            rotation_error_deg=float(angle),
+            center_error_m=float(np.linalg.norm(center_est-center_true)),
+            inliers=fit['inliers'], fit_ms=fit['fit_ms']))
+    report = dict(schema_version=1, suite_id='blender-image-calibration-v1',
+        blender_capture_sha256=truth_record['capture_sha256'],
+        input_manifest_sha256=hashlib.sha256((dataset/'manifest.json').read_bytes()).hexdigest(),
+        observation_sha256={split:detect_reports[split]['observation_sha256'] for split in detect_reports},
+        calibration_binary_sha256=hashlib.sha256(binary.read_bytes()).hexdigest(),
+        opencv_version=fit_report['opencv_version'], method=fit_report['method'],
+        training_frames=training_frames, validation_frames=frames-training_frames,
+        rows=rows, limitations=[
+            'Blender rendered chessboard images and measured board poses; no physical camera or target measurement',
+            'OpenCV symmetric chessboard corner order is supplied from the known synthetic scene',
+            'known intrinsics and known board-to-vehicle transforms; only camera extrinsics are fitted',
+            'one held-out pose on one procedural scene; no occlusion or target detection study'])
+    (output/'report.json').write_text(json.dumps(report, indent=2)+'\n')
+    lines = ['# Image-derived extrinsic calibration on Blender frames', '',
+        'OpenCV chessboard corners from RGB images; first poses train the native solver, last poses are held out.', '',
+        '| Camera | Train corners | Held-out corners | Before RMSE px | After RMSE px | Rotation error ° | Center error m |',
+        '|---:|---:|---:|---:|---:|---:|---:|']
+    for row in rows:
+        lines.append(f"| {row['camera_id']} | {row['train_points']} | {row['validation_points']} | "
+            f"{row['before_validation_rmse_px']:.5f} | {row['after_validation_rmse_px']:.5f} | "
+            f"{row['rotation_error_deg']:.5f} | {row['center_error_m']:.5f} |")
+    lines += ['', '## Limitations', '', *[f'- {item}' for item in report['limitations']],
+              '', 'Per-camera reports, corner annotations and candidate config are saved beside this report.', '']
+    (output/'REPORT.md').write_text('\n'.join(lines))
+    return report
+
+
+def board_main(arguments):
+    parser = argparse.ArgumentParser(description='Image-derived calibration from Blender board captures')
+    parser.add_argument('--dataset', required=True, type=Path)
+    parser.add_argument('--output', required=True, type=Path)
+    parser.add_argument('--build', default=Path('build'), type=Path)
+    parser.add_argument('--training-frames', type=int, default=3)
+    args = parser.parse_args(arguments)
+    report = board_image_study(args.dataset, args.output, args.build, args.training_frames)
+    print(json.dumps(report['rows'], indent=2))
+
+
 def main(arguments):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--dataset', required=True, type=Path)
