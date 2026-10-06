@@ -1,13 +1,13 @@
 # Aurora SDK, RPM и запуск проверки на устройстве
 
-Проверка источников: 05.10.2026, актуальные просмотренные страницы — ОС Аврора 5.2.1. Фактические SDK, выпуск устройства и hardware пока **не предоставлены**. Здесь подготовлен путь переноса версии 0.4.0; native RPM на Linux проверяет упаковку, но не подтверждает ABI, зависимости и установку Авроры. GPU-профиль включает купол/цилиндр/куб с полом, fusion и native render-oracles. Spec Version обновлён; RPM 0.4.0 и целевая сборка SDK ещё требуют отдельной проверки. Полный список Linux-команд — [[engineering/BUILD]], критерии и данные — [[engineering/PLATFORM_TEST]].
+Проверка источников: 05.10.2026, актуальные просмотренные страницы — ОС Аврора 5.2.1. Фактические SDK, выпуск устройства и hardware пока **не предоставлены**. Здесь подготовлен путь переноса версии 0.5.0; native RPM на Linux проверяет упаковку, но не подтверждает ABI, зависимости и установку Авроры. GPU-профиль включает купол/цилиндр/куб с полом, fusion и native render-oracles. Spec Version обновлён; RPM 0.5.0 и целевая сборка SDK ещё требуют отдельной проверки. Полный список Linux-команд — [[engineering/BUILD]], критерии и данные — [[engineering/PLATFORM_TEST]].
 
 ## Два RPM-профиля
 
 | Spec | Состав | Для чего |
 |---|---|---|
-| `packaging/rpm/surround-view.spec` | Core, OpenCV tools, native report, EGL renderer/bench/server; Qt client опционально | Проверка GPU и прототипа |
-| `packaging/rpm/surround-view-cpu.spec` | Core, OpenCV tools, native CPU report | Проверка toolchain/модели при недоступном EGL |
+| `packaging/rpm/surround-view.spec` | Core, OpenCV tools, native report, EGL renderer/bench/server, client library/probe; Qt client опционально | Проверка GPU и прототипа |
+| `packaging/rpm/surround-view-cpu.spec` | Core, OpenCV tools, native CPU report, client library/probe | Проверка toolchain/модели при недоступном EGL |
 
 Они устанавливают совпадающие пути и конфликтуют; одновременно устанавливается один профиль. Все исполняемые файлы — архитектурные, `BuildArch: noarch` не используется. `%install` получает только CMake install layout; runtime scriptlets, запуск тестов в `%check`, сеть из CMake отсутствуют. Два spec-файла нужны для разных составов пакета, а не как копии одной инструкции.
 
@@ -50,7 +50,7 @@ python3 tools/verify_host_rpm.py --profile cpu --output artifacts/rpm-host-cpu
 
 ```sh
 python3 tools/make_source_archive.py --output artifacts/sources
-sha256sum artifacts/sources/surround-view-0.4.0.tar.gz
+sha256sum artifacts/sources/surround-view-0.5.0.tar.gz
 ```
 
 Скрипт берёт только **Git HEAD**, не локальные build/data/private files, добавляет `.source-revision`, нормализует tar/gzip metadata. Экспорт незакоммиченного дерева запрещён; одинаковая revision даёт одинаковый архив. Перенести архив и spec в рабочее пространство SDK. Ни файлы ключей подписи, ни большие traces в Source0 не входят.
@@ -68,7 +68,7 @@ mb2 -s packaging/rpm/surround-view.spec -t "$SV_TARGET" -n -X build
 mb2 -s packaging/rpm/surround-view-cpu.spec -t "$SV_TARGET" -n -X build
 ```
 
-Команды альтернативны. `-n` применим после установки зависимостей; `-X` сохраняет явно заданную 0.4.0 вместо автоматического суффикса версии. Результаты mb2 находятся в `RPMS/` выбранного рабочего каталога. В IDE явно выбрать нужный spec. По умолчанию client=0; для лабораторного Qt 5 client при release rpmbuild передать `--define 'sv_with_client 1'` и подтвердить runtime Qt/QML modules.
+Команды альтернативны. `-n` применим после установки зависимостей; `-X` сохраняет явно заданную 0.5.0 вместо автоматического суффикса версии. Результаты mb2 находятся в `RPMS/` выбранного рабочего каталога. В IDE явно выбрать нужный spec. По умолчанию client=0; для лабораторного Qt 5 client при release rpmbuild передать `--define 'sv_with_client 1'` и подтвердить runtime Qt/QML modules.
 
 ## Явная release-сборка Source0
 
@@ -76,14 +76,14 @@ mb2 -s packaging/rpm/surround-view-cpu.spec -t "$SV_TARGET" -n -X build
 
 ```sh
 mkdir -p artifacts/rpmbuild/SOURCES artifacts/rpmbuild/SPECS
-cp artifacts/sources/surround-view-0.4.0.tar.gz artifacts/rpmbuild/SOURCES/
+cp artifacts/sources/surround-view-0.5.0.tar.gz artifacts/rpmbuild/SOURCES/
 cp packaging/rpm/surround-view.spec artifacts/rpmbuild/SPECS/
 SV_RPM_TOP="$PWD/artifacts/rpmbuild"
 sb2 -t "$SV_TARGET" rpmbuild -bb --define "_topdir $SV_RPM_TOP" \
   "$SV_RPM_TOP/SPECS/surround-view.spec"
 ```
 
-Для CPU заменить имя spec на `surround-view-cpu.spec`, оставив Source0 `surround-view-0.4.0.tar.gz`. В этом режиме результаты в `artifacts/rpmbuild/RPMS/<архитектура>/`. **Не использовать `--nodeps` для целевой сборки**: необходимо подтвердить целевые BuildRequires. RPM автоматически формирует runtime ELF dependencies; проверить:
+Для CPU заменить имя spec на `surround-view-cpu.spec`, оставив Source0 `surround-view-0.5.0.tar.gz`. В этом режиме результаты в `artifacts/rpmbuild/RPMS/<архитектура>/`. **Не использовать `--nodeps` для целевой сборки**: необходимо подтвердить целевые BuildRequires. RPM автоматически формирует runtime ELF dependencies; проверить:
 
 ```sh
 rpm -qp --requires 'путь_к_полученному.rpm'
@@ -151,3 +151,5 @@ python3 tools/compare_reports.py docs/validation/baselines/PC_RTX.md \
 - Реальный camera adapter: разрешения, timestamps, синхронизация и formats.
 
 Схема переноса и подписи изображений находятся в [[diploma/03_PROTOTYPE_IMPLEMENTATION]]; результаты двух PC backend — в [[diploma/04_EXPERIMENTAL_STUDY]].
+
+Оба research spec 0.5.0 включают static `sv-client-lib`/`sv-wire`, публичные headers и installed CMake export. GUI остаётся optional. Это позволяет собирать отдельного клиента из установленного пакета; инструкция — [[engineering/CLIENT_LIBRARY]]. UDP и target ABI этой упаковкой не подтверждаются.

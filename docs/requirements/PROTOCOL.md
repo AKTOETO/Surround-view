@@ -28,7 +28,7 @@
 
 ## Framing, handshake и пределы
 
-Начальный транспорт — Unix domain `SOCK_STREAM`: один control socket и один data socket в `ipc-dir`. Удалённый producer использует два TCP-соединения по той же схеме только в отдельном сетевом профиле. Внешний клиент связывает data с control через идентификатор сессии и одноразовый token handshake.
+Реализованы Unix/TCP для клиентского control/data в 0.5.0 ([[engineering/CLIENT_LIBRARY]]); входной remote producer остаётся планом. Начальный транспорт — Unix domain `SOCK_STREAM`: один control socket и один data socket в `ipc-dir`. Удалённый producer использует два TCP-соединения по той же схеме только в отдельном сетевом профиле. Внешний клиент связывает data с control через идентификатор сессии и одноразовый token handshake.
 
 Каждое сообщение начинается с фиксированного 24-байтового префикса; многобайтовые целые — unsigned big-endian, без padding:
 

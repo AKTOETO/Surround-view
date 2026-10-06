@@ -284,6 +284,22 @@ RTX и llvmpipe дают одинаковые признаки валиднос�
 
 Это first-frame screening с **неравными triangle budgets**, а не итоговый сравнительный опыт. Три timing samples после одного warmup не позволяют ранжировать производительность. Seam error, ghosting distance, temporal jitter, exposure sensitivity и качество относительно depth/visibility truth здесь не вычислены. Следующий этап — metric markers и независимые scenes, согласованный resource budget и длинное видео, затем graph-cut/multi-band. Исторические baselines §4.9 сохранены; native 0.4.0 smoke проходит 25 критериев, installed CMake payload тоже 25, RPM и устройство требуют отдельных прогонов.
 
+## 4.13 Проверка клиентской библиотеки и сетевой конфигурации
+
+После аудита планов выполнен Unix/TCP baseline 0.5.0. Release CTest проходит 10/10 групп, CPU Debug ASan/UBSan — 7/7. Новые native lifecycle cases проверяют invalid options, handshake/partial message deadlines, invalid RGBA payload и shutdown без поздних callback. Host integration использует настоящий сервер и два потребителя одной библиотеки — headless и Qt.
+
+| Сценарий | Наблюдаемый результат | Ограничение |
+|---|---|---|
+| Unix-only | В `/proc` у процесса нет IPv4/IPv6 TCP/UDP sockets | Linux host evidence, не target SDK |
+| TCP-only / combined | Команды/ACK и RGBA передаются через общий codec; Unix paths создаются только в enabled profile | Один session; two-host test ещё открыт |
+| Установленная библиотека | Отдельный CMake consumer успешно подключается; ldd не содержит Qt/OpenCV/EGL/GLES | Установленный Linux prefix; ABI Авроры не проверен |
+| Server restart | Consumer получает кадры двух различных session IDs | Loopback, не распределённые часы |
+| Pause/orbit/step | Orbit сохраняет decode/upload/mesh counters, step продвигает один набор и сохраняет паузу | File replay, live producer ещё отсутствует |
+| Irregular timestamps | Вместо фиксированных 33 ms воспроизводятся интервалы manifest | OS scheduling допускает jitter; это не sensor timing |
+| Qt TCP offscreen | ui_receive и ui_present_submit подтверждены | Не физический дисплей |
+
+Тест выявил отсутствие кадра после reconnect на паузе; сервер исправлен повторной публикацией для новой data-сессии. Неподдержанный UDP и override явной server connections через CLI отвергаются до открытия listeners. Эти проверки закрывают инженерные части M7/M8, но не подменяют целевой или quality этап. Аудит всех этапов — [[planning/AUDIT]], инструкции — [[engineering/CLIENT_LIBRARY]].
+
 ## Выводы по четвёртой главе
 
 Подтверждена работоспособность первого Linux-прототипа и создан воспроизводимый набор проверок и первичных измерений. Численная GPU-проекция совпадает с независимой моделью в пределах малой float-ошибки; сервисная калибровка снижает независимый остаток до уровня синтетического шума; контролируемое смещение обнаруживается и устраняется отдельной повторной процедурой.

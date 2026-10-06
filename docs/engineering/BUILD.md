@@ -1,6 +1,6 @@
 # Сборка, зависимости и установка
 
-Версия кода — 0.4.0. Добавлены cylinder/cube с полом и крышкой, три fusion-режима и coverage/weights; купол и bowl сохранены. Конфигурация и comparison harness — [[engineering/RENDERING]]. Виртуальная камера ограничена внутренностью купола, ненаблюдаемые текстурами направления получают непрозрачный фон. Начало работы: эта заметка → [[engineering/USAGE]] → [[engineering/PLATFORM_TEST]]. Для устройства использовать [[engineering/AURORA]], для происхождения демонстрации — [[engineering/SCENE]]. Фактические ограничения находятся в [[prototype/STATUS]].
+Версия кода — 0.5.0. Добавлены cylinder/cube с полом и крышкой, три fusion-режима и coverage/weights; купол и bowl сохранены. Конфигурация и comparison harness — [[engineering/RENDERING]]. Виртуальная камера ограничена внутренностью купола, ненаблюдаемые текстурами направления получают непрозрачный фон. Начало работы: эта заметка → [[engineering/USAGE]] → [[engineering/PLATFORM_TEST]]. Для устройства использовать [[engineering/AURORA]], для происхождения демонстрации — [[engineering/SCENE]]. Фактические ограничения находятся в [[prototype/STATUS]].
 
 ## Требования к среде
 
@@ -96,3 +96,7 @@ artifacts/install/bin/sv-platform-test \
 | `packaging/rpm` | Два spec-профиля: GPU и CPU |
 
 `.clang-format` основан на **Microsoft**, с Allman-скобками, отдельными определениями функций, запретом коротких однострочных ветвей и шириной 100. Запустить `clang-format -i` для изменённых `.cpp`/`.hpp`; шаблоны `.hpp.in` с GLSL так форматировать не следует. Сборочный отчёт хранит SHA-256 содержимого C++/GLSL/QML/CMake: различие реализации обнаруживается даже при одинаковом Git HEAD и незакоммиченных изменениях.
+
+## Клиентская development-часть 0.5.0
+
+`sv-client-lib`/`sv-wire` собираются также при `SV_CLIENT=OFF` и `SV_GPU=OFF`. Они устанавливают headers/static libraries и CMake package `svClient`; GUI опционален. Headless executable `sv-client-probe` демонстрирует API. Сборка независимого consumer и команды TCP — [[engineering/CLIENT_LIBRARY]]. Системные dependencies клиента — Boost.JSON/Asio и Threads; OpenCV/EGL/Qt не входят в его transitive link interface.

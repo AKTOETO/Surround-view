@@ -8,7 +8,7 @@ updated: 2026-10-06
 
 # Глава 3. Разработка системы интерактивного кругового обзора
 
-> Описывается Linux-прототип версии **0.4.0**. Введена поверхность «круглый пол + текстурированный купол» с виртуальной камерой внутри; bowl остаётся отдельным вариантом для сравнительных опытов. Используются OpenCV, native квалификация и offline RPM-профили. Целевые SDK/устройство Авроры и полная приёмка требований ещё не проверены. Результаты 0.1.0/0.2.0 в главе 4 сохранены как исторические baselines.
+> Описывается Linux-прототип версии **0.5.0**. Введена поверхность «круглый пол + текстурированный купол» с виртуальной камерой внутри; bowl остаётся отдельным вариантом для сравнительных опытов. Используются OpenCV, native квалификация и offline RPM-профили. Целевые SDK/устройство Авроры и полная приёмка требований ещё не проверены. Результаты 0.1.0/0.2.0 в главе 4 сохранены как исторические baselines.
 
 Результатом этапа разработки является воспроизводимый программный путь от четырёх известных камер до управляемого изображения в отдельном Qt Quick-клиенте. Математическое ядро, графический backend и host-приложения собраны как разные CMake targets. Помимо визуализации реализованы независимая проверка проекции, offline-оценивание параметров и сервисный критерий нарушения калибровки. Эти части дают основу для экспериментального раздела, хотя не заменяют весь комплекс для целевой платформы.
 
@@ -298,6 +298,46 @@ stop
 *Рисунок 3.11 — Реализованные ветви fusion и диагностики. Маска кузова обрабатывается на полу до проекции; в диагностике ego-модель не перекрывает карту.*
 
 Native `GPU_FUSION_MODES` проверяет независимые ожидаемые RGB для равных и угловых весов, равенство/отказ hard-selection и coverage от нуля до четырёх камер. Например, равная linear-смесь red/green/blue/white даёт sRGB около (188,188,188), а не (128,128,128). Канонические тесты не используют ground truth самой Blender-сцены. Контракт JSON и команды — [[engineering/RENDERING]], первый screening — §4.12.
+
+## 3.15 Универсальный клиент и конфигурация транспорта
+
+В 0.5.0 общий SV01 codec выделен в `sv-wire`, а асинхронное подключение/сессия/команды/кадры — в `sv-client-lib`. Публичный C++17 API не зависит от Qt/OpenCV/EGL; installed target `sv::client` используется самостоятельным CMake consumer. GUI Bridge переносит события библиотеки на UI thread, копирует QImage и освобождает серверный буфер. Headless probe использует тот же API.
+
+| Ответственность | Реализация | Проверка |
+|---|---|---|
+| Транспорт | Asio generic stream socket, Unix/TCP adapters | Native/headless/Qt TCP и прежний Python Unix |
+| Разрешённые listeners | Строгий блок connections; только явно включённые endpoints | Unix-only без IP sockets в `/proc`, TCP-only без Unix files, combined |
+| Сессия | Control handshake, случайный token связывает data | Restart/reconnect; новая сессия не повторяет pending команды |
+| Результат | Immutable owning Message, RGBA/stride/origin/IDs validation, explicit release | Invalid payload, copied frame, installed consumer |
+| Завершение | Stop/join/close и ограниченные очереди | Native lifecycle, CPU ASan/UBSan |
+
+```plantuml
+@startuml
+actor "GUI / headless" as App
+participant "sv-client-lib" as Lib
+participant "Server control" as Ctl
+participant "Server data" as Data
+App -> Lib : Endpoint + Options
+Lib -> Ctl : hello (Unix или TCP)
+Ctl --> Lib : session + data token + capabilities
+Lib -> Data : hello(session, token)
+Data --> Lib : hello_ack
+Lib --> App : ready
+App -> Lib : state / orbit / pause / step
+Lib -> Ctl : command_id + parameters
+Ctl --> Lib : ACK/reject + revision
+Data --> Lib : RGBA + session/frame/revision
+Lib --> App : owning immutable Message
+App -> Lib : release(metadata)
+Lib -> Data : frame/session/buffer token
+@enduml
+```
+
+*Рисунок 3.12 — Одинаковый клиентский контракт для Unix и TCP. Сервер не открывает отключённые transport endpoints; UDP не реализован.*
+
+`state` возвращает авторитетные view/paused/fusion/revision без мутации. После нового data handshake сервер повторяет готовый результат даже на паузе. Replay использует интервалы scenario timestamps manifest; decode/upload/mesh counters позволяют проверить повторное использование входов при повороте. Сетевые часы не считаются локальными: GUI не вычитает server monotonic timestamp из client timestamp.
+
+Библиотека покрывает опубликованные команды текущего сервера. Runtime calibration/source-management/config editing, UDP и несколько клиентов остаются расширениями. Полный рабочий API, defaults/deadlines, server JSON и примеры — [[engineering/CLIENT_LIBRARY]]. Испытание между двумя физическими машинами и Аврора остаются открытыми.
 
 ## Выводы по третьей главе
 
