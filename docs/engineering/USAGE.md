@@ -185,11 +185,26 @@ build/sv-calibrate detect --image data/board.png --columns 9 --rows 6 \
       {"image": "cam0-position1.png", "corner_order": "normal",
        "T_vehicle_from_board": [[1,0,0,4], [0,1,0,2], [0,0,1,1], [0,0,0,1]]},
       {"image": "cam0-position2.png", "corner_order": "reverse_x",
-       "T_vehicle_from_board": [[1,0,0,3], [0,0.866,-0.5,4], [0,0.5,0.866,1], [0,0,0,1]]}
+       "T_vehicle_from_board": [[1,0,0,3], [0,0.8660254,-0.5,4], [0,0.5,0.8660254,1], [0,0,0,1]]}
     ]},
-    {"id": 1, "views": [{"image": "...", "corner_order": "normal", "T_vehicle_from_board": [[...]]}]},
-    {"id": 2, "views": [{"image": "...", "corner_order": "normal", "T_vehicle_from_board": [[...]]}]},
-    {"id": 3, "views": [{"image": "...", "corner_order": "normal", "T_vehicle_from_board": [[...]]}]}
+    {"id": 1, "views": [
+      {"image": "cam1-position1.png", "corner_order": "normal",
+       "T_vehicle_from_board": [[1,0,0,4], [0,1,0,2], [0,0,1,1], [0,0,0,1]]},
+      {"image": "cam1-position2.png", "corner_order": "normal",
+       "T_vehicle_from_board": [[1,0,0,3], [0,0.8660254,-0.5,4], [0,0.5,0.8660254,1], [0,0,0,1]]}
+    ]},
+    {"id": 2, "views": [
+      {"image": "cam2-position1.png", "corner_order": "reverse_y",
+       "T_vehicle_from_board": [[1,0,0,4], [0,1,0,2], [0,0,1,1], [0,0,0,1]]},
+      {"image": "cam2-position2.png", "corner_order": "reverse_xy",
+       "T_vehicle_from_board": [[1,0,0,3], [0,0.8660254,-0.5,4], [0,0.5,0.8660254,1], [0,0,0,1]]}
+    ]},
+    {"id": 3, "views": [
+      {"image": "cam3-position1.png", "corner_order": "normal",
+       "T_vehicle_from_board": [[1,0,0,4], [0,1,0,2], [0,0,1,1], [0,0,0,1]]},
+      {"image": "cam3-position2.png", "corner_order": "reverse_x",
+       "T_vehicle_from_board": [[1,0,0,3], [0,0.8660254,-0.5,4], [0,0.5,0.8660254,1], [0,0,0,1]]}
+    ]}
   ]
 }
 ```
