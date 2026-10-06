@@ -279,3 +279,14 @@ python3 tools/producer.py --config artifacts/blender-street/socket-config.json \
 Для разных машин измените `source.cameras` на четыре TCP endpoints с явным адресом интерфейса **сервера** и портами 48080…48083. На ноутбуке передайте копию config, dataset и запустите producer с `--host SERVER_IP`. Для удалённого GUI также явно включите `connections.tcp` с отдельными control/data портами по [[engineering/CLIENT_LIBRARY]]; camera ports для клиента не подходят. Сами устройства камер в будущем будет открывать server-side adapter, а не GUI ноутбука. Детальный формат, ограничения времени/памяти и безопасность — [[engineering/SOURCES]]. Физическое двухмашинное испытание ещё не проведено.
 
 Producer автоматически восстанавливает каждую камеру после разрыва/перезапуска сервера в пределах заданного budget. После простоя пропускает устаревшие ряды. `producer.json` и `producer.md` сохраняют sent/skip/error/reconnect counters; повторный запуск требует нового имени отчёта. Для SIGINT/SIGTERM отчёт частичный, exit 130/143 ожидаем. Семантика счётчиков, limits и отличие sent от server processing — [[engineering/SOURCES#Восстановление producer и отчёт]]. Для запуска отдельных Python socket tests без GPU: `python3 tests/test_producer.py`.
+
+## Аналитический эталон купола и пола
+
+Для исследования геометрии без EGL используйте CPU-путь:
+
+```sh
+python3 tools/reference.py --config artifacts/blender-street/config.json \
+  --manifest artifacts/blender-street/manifest.json --output artifacts/reference-demo
+```
+
+Он создаёт цвет, coverage, четыре веса, точки на носителе и JSON/Markdown отчёт. Пять носителей и три fusion-режима сравниваются через `tools/compare_reference.py`; команды, форматы и ограничения — [[engineering/RENDERING#Независимый аналитический CPU-эталон]]. Это offline исследовательская утилита; `sv-server` продолжает использовать GPU renderer.

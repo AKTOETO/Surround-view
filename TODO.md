@@ -19,13 +19,15 @@
 - [x] Построить в рендерере сферический купол и круглый пол, закрепить виртуальную камеру внутри оболочки и убрать прозрачные отверстия фона. Сохранить bowl как отдельный тип для сравнительных измерений.
 - [x] Начать исследование объединения четырёх камер и surface carriers: описать direct projection, panorama/cubemap pipeline, hard/feather/graph-cut/multiband и plane/bowl/dome/cylinder/cube. Результат: [обзор и план E-STITCH-01](docs/research/PROJECTION_AND_STITCHING.md); первый screening есть в [отчёте](docs/validation/SURFACE_SCREENING.md), полноценный quality benchmark ещё открыт.
 
+- [x] Создать независимый dense CPU-эталон пяти носителей с аналитическими пересечениями, тремя fusion-режимами и сохранением coverage/weights; выполнить 30 случаев на Blender-записи. Кузов, scene depth/visibility и количественное GPU-сопоставление остаются открытыми. [Результат](docs/validation/ANALYTIC_REFERENCE.md).
+
 Аудит всех разделов TODO и этапов roadmap: [состояние и условия завершения](docs/planning/AUDIT.md). Личные действия автора и аппаратная приёмка не заменяются проверками прототипа.
 
 ## Ближайшие действия
 
 1. Полностью разобрать S68–S71: восстановить точную геометрию Burger, записать входы, seam/blend, ограничения и параметры; не выводить метод из одного названия.
 2. Зафиксировать общий протокол [E-STITCH-01](docs/research/PROJECTION_AND_STITCHING.md): сцены/ракурсы, ground truth, photometric policy, coverage/seam/ghosting метрики и resource budget; разделить подбор и validation.
-3. Создать CPU-reference projection для plane/bowl/dome-floor, затем подготовить test scene с физически разнесёнными камерами и метрической истиной. Blender MCP проверен 06.10.2026; процедурная улица и разнесённые centers экспортируются через `tools/blender/`. Следующий шаг — depth/visibility truth и метрические markers; текущая запись подтверждает replay, но не завершает оценку качества.
+3. Аналитический dense CPU-reference для plane/bowl/dome-floor/cylinder/cube реализован и проверен: [описание](docs/engineering/RENDERING.md#независимый-аналитический-cpu-эталон), [результаты](docs/validation/ANALYTIC_REFERENCE.md). Далее подготовить test scene с физически разнесёнными камерами и метрической истиной. Blender MCP проверен 06.10.2026; процедурная улица и разнесённые centers экспортируются через `tools/blender/`. Следующий шаг — depth/visibility truth и метрические markers; текущая запись подтверждает replay, но не завершает оценку качества.
 4. Hard best-angle, edge-feather и angular-feather реализованы и проверены. Далее — photometric policy, graph-cut seam и multi-band после выбора маски; на видео проверить temporal jitter.
 5. Plane/bowl/dome/cylinder/cube реализованы; первый screening не имеет равного triangle budget и depth truth. Продолжить сравнение после выбора blend-метода; Burger/custom surface добавить после восстановления точной формулы. Сначала dense-reference quality, затем одинаковые triangle/memory budgets.
 6. Прочитать [главу 2](docs/diploma/02_REQUIREMENTS_AND_METHODS.md) и [границы прототипа](docs/prototype/STATUS.md); согласовать постановку и критерии с руководителем.

@@ -193,3 +193,8 @@ end note
 ## Выполненная подготовка данных 06.10.2026
 
 Создан объёмный Blender-источник с разнесёнными optical centers и заданным движением: [[engineering/BLENDER]], [[validation/BLENDER_SMOKE]]. Установлены pose truth и replay compatibility; dense depth/visibility, количественные seam/ghosting metrics и сравнительные результаты вариантов ещё отсутствуют. Растяжение вертикальных объектов и двоение в перекрытиях уже наблюдаются на действующем dome-floor baseline.
+
+
+## Dense carrier reference: следующий выполненный шаг
+
+Аналитический CPU-эталон пяти носителей реализован независимо от GL/mesh и выполнен для двух ракурсов и трёх fusion-режимов. Он сохраняет точки пересечения, coverage, веса и provenance. [[engineering/RENDERING#Независимый аналитический CPU-эталон]], [[validation/ANALYTIC_REFERENCE]], [[diploma/04_EXPERIMENTAL_STUDY#4.16 Аналитический эталон носителя]]. Это подготовка проверки дискретизации: маски реального заслонения, image error GPU/CPU, seam/ghosting и temporal quality ещё открыты.

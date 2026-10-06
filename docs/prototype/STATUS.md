@@ -75,3 +75,10 @@ QQuickImageProvider заменяет проектный QQuickItem/QSGTexture. �
 ## Восстановление host producer
 
 `tools/producer.py` автоматически восстанавливает Unix/TCP camera connections с независимыми retry budgets, пропускает просроченные кадры и сохраняет JSON/Markdown отчёт, в том числе при SIGINT/SIGTERM. Проверка настоящего server restart, blocked handshake и slow receiver — [[validation/PRODUCER_RECOVERY]]. Это host-расширение 0.6.0; C++ API, native fingerprint и проверенные RPM не изменены. Аппаратный backend, sensor clocks и интерактивный Blender остаются открытыми.
+
+
+## Dense CPU-reference: выполненная часть исследования
+
+06.10.2026 добавлены `tools/reference.py` и `tools/compare_reference.py`: аналитические пересечения plane/bowl/dome-floor/cylinder/cube, независимый fisheye через atan2, билинейная выборка и три fusion-режима. Сохранены 30 offline случаев, coverage/weights/point maps, SHA-256 и иллюстрация. Десять новых CPU проверок и 13 CTest-групп проходят. [[engineering/RENDERING#Независимый аналитический CPU-эталон]], [[validation/ANALYTIC_REFERENCE]].
+
+Это закрывает подготовку плотного геометрического эталона в E-STITCH-01, но не полный CPU rasterizer автомобиля/сцены или quality benchmark. Следующий результат: независимые depth/visibility/metric markers, маска видимого кузова, количественное CPU/GPU сравнение на одинаковом кадре и отдельных validation scenes. Исторические native baselines/RPM относятся к сохранённым ревизиям; host-инструмент не добавляет критерии в native suite. Регистрация новой CTest-группы меняет CMakeLists, поэтому свежую сборку для нового platform baseline следует идентифицировать её собственным fingerprint.
