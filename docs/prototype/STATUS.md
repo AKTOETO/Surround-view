@@ -91,3 +91,7 @@ QQuickImageProvider заменяет проектный QQuickItem/QSGTexture. �
 Config persistence API, multi-client/control-only, subscriptions/canvas и trace — следующий этап, а не возможности текущего сервера. Он по-прежнему имеет одну сессию и legacy final output. Полный чеклист нового этапа находится в корневом TODO; он имеет приоритет над прежними предложениями прямого редактирования server config клиентами. Protobuf и C++20 не добавлены: решение и условия пересмотра описаны в новом контракте.
 
 Результаты первого этапа: 14/14 Release и 10/10 CPU ASan/UBSan, Qt 5 build/offscreen smoke, CLI Unix/TCP и installed consumer — [[validation/CLIENT_RESTRUCTURE]].
+
+## Дополнение 07.10.2026: монтаж и native extrinsics
+
+Добавлены deterministic Blender world rules, yaw/pitch/slide с per-camera overrides и сохранённый мир без LFS. `sv-vision` предоставляет четыре OpenCV pose pipeline; offline `sv-calibrate extrinsics` экспортирует candidate с provenance. Существующий configurator запускает 120 четырёхкамерных trials с независимой validation, failure counts и actual GLES до/после. Протокол и результаты — [[research/MOUNT_CALIBRATION]], [[validation/MOUNT_CALIBRATION]]. Серверная calibration job/ConfigService, image-based correspondences этого опыта, joint calibration и GUI редактор мира ещё не реализованы.

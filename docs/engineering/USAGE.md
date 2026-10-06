@@ -306,3 +306,27 @@ build/svctl --tcp 127.0.0.1 53101 53102 orbit 0.1 0
 ```
 
 Вывод — JSON ACK; exit 0 accepted, 2 arguments, 3 connection/timeout, 4 rejected. По умолчанию общий deadline 5000 ms; `--timeout-ms` задаётся перед командой. Сейчас GUI надо закрыть перед запуском CLI: сервер ещё односессионный. CLI открывает legacy data channel и освобождает кадры; control-only/отключение final, сохранение config и промежуточные subscriptions запланированы в [[architecture/CLIENT_SERVER_MODEL]]. Библиотека не повторяет CLI мутацию после потери соединения. Laptop `sv-simulator` ещё не реализован, существующие offline команды пока остаются рабочими средствами воспроизводимости.
+
+## Мир с погрешностями крепления и сравнение калибровки
+
+Рецепт `assets/scenarios/mount-errors-v1.json` задаёт seed, yaw/pitch/slide и world rules; сохранённая сцена — `assets/scenes/mount-errors/street.blend`. Генерация/экспорт — [[engineering/BLENDER#Правила мира и ошибки крепления камер]]. После конвертации запустить сервер и GUI с фактическими позами:
+
+```sh
+SV_EGL_PLATFORM=surfaceless build/sv-server --config artifacts/blender-mount-v1/config.json \
+  --manifest artifacts/blender-mount-v1/manifest.json --ipc-dir /tmp/sv-mount
+```
+
+В отдельном терминале:
+
+```sh
+build/sv-client /tmp/sv-mount
+```
+
+Для исследования восстановления из nominal poses:
+
+```sh
+python3 tools/configurator.py compare-mounts --dataset artifacts/blender-mount-v1 \
+  --output artifacts/mount-comparison-new --trials 5 --render
+```
+
+Output directory должен быть новым. Numeric experiment работает без Blender, если dataset уже экспортирован; `--render` требует EGL/GLES. Полный observation schema, методы и ограничения — [[research/MOUNT_CALIBRATION]], результаты — [[validation/MOUNT_CALIBRATION]]. Offline CLI экспортирует candidate; работающий сервер пока не принимает calibration jobs и не применяет этот candidate удалённой командой.

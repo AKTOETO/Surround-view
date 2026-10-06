@@ -76,3 +76,5 @@ Unix/TCP и API библиотеки: [[engineering/CLIENT_LIBRARY]]. Сверк
 Новая модель сервера и трёх клиентов, config transactions, products и timings: [[architecture/CLIENT_SERVER_MODEL]].
 
 Проверка переноса GUI, Qt-free CLI и GTest: [[validation/CLIENT_RESTRUCTURE]].
+
+Ошибки крепления и калибровка: [[research/MOUNT_CALIBRATION]] → [[validation/MOUNT_CALIBRATION]] → [[diploma/04_EXPERIMENTAL_STUDY#4.17 Восстановление положения камер при ошибках монтажа]]. Восстановление мира и правила — [[engineering/BLENDER]], происхождение файлов — [[engineering/ASSETS]].

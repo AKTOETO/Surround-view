@@ -79,3 +79,7 @@
 Зафиксирована новая модель [[architecture/CLIENT_SERVER_MODEL]]: server-owned config, несколько сессий, per-session view/subscriptions, intermediate products, optional final output и pipeline spans. Шесть PlantUML процессов задают ожидаемые тесты. Существующий GUI перенесён в `examples/sv-client`, начат touchscreen layout; `examples/svctl` предоставляет текущие команды через библиотеку без Qt. Тестовый installed consumer перенесён в `tests/fixtures/client-consumer`. `examples/sv-simulator` пока содержит только контракт, Qt 6 laptop GUI/live world ещё не реализованы.
 
 Config persistence API, multi-client/control-only, subscriptions/canvas и trace — следующий этап, а не возможности текущего сервера. Он по-прежнему имеет одну сессию и legacy final output. Полный чеклист нового этапа находится в корневом TODO; он имеет приоритет над прежними предложениями прямого редактирования server config клиентами. Protobuf и C++20 не добавлены: решение и условия пересмотра описаны в новом контракте.
+
+## Проверка 07.10.2026: ошибки монтажа
+
+Восстановлен доступ к Blender MCP, сохранены recipe и отдельный мир. Четыре native OpenCV метода, 120 четырёхкамерных trials, независимые numerical validation и actual GLES изображения задокументированы в [[validation/MOUNT_CALIBRATION]]. Финальные CPU CTest 11/11 и Release CTest 15/15. Не закрыты server calibration jobs, image detector в этом mount experiment, occlusion и GUI world generation. Это первый ограниченный known-intrinsics опыт, не полное исследование всех семейств.

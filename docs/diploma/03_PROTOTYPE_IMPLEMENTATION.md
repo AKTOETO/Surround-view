@@ -455,3 +455,7 @@ JSON/Markdown отчёт содержит четыре camera records с чис�
 [S64]: https://docs.opencv.org/4.13.0/d8/dfe/classcv_1_1VideoCapture.html
 [S65]: https://docs.opencv.org/4.13.0/d9/d0c/group__calib3d.html
 [S67]: https://developer.auroraos.ru/doc/5.1.4/sdk/app_development/work/create/create_new_project
+
+## Дополнение: воспроизводимые ошибки монтажа и extrinsics solver
+
+`tools/blender/scenario.py` валидирует компактный world recipe и формирует фактический rig из nominal. `src/vision/extrinsics.cpp` реализует known-intrinsics pose fitting с настоящим OpenCV, отдельный CLI adapter находится в `src/apps/calibrate_extrinsics.cpp`. Comparison service `tools/calibration/study.py` вызывается через существующий configurator и пригоден для дальнейшей интеграции в simulator GUI. Каждый слой отделяет train input от evaluator truth; численные результаты и рисунки — [[diploma/04_EXPERIMENTAL_STUDY#4.17 Восстановление положения камер при ошибках монтажа]]. Native solver ещё не подключён к серверному job API; offline export не меняет active config.
