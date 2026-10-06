@@ -92,6 +92,18 @@ class ClientTransportTests(unittest.TestCase):
                 self.assertTrue(any(m['accepted'] for m in acks))
                 self.assertTrue(all(m['pixel_format'] == 'RGBA8' and m['row_origin'] == 'top_left' for m in frames))
                 self.assertTrue(all(m['mesh_build_count'] == '1' for m in frames))
+                # The CLI uses the same installed public library, without Qt or config-file writes.
+                config_before = config.read_bytes()
+                for arguments, code in ((['state'], 0), (['preset', 'front'], 0),
+                                        (['orbit', '.01', '0'], 0), (['zoom', '.1'], 0),
+                                        (['command', 'unknown_test_command'], 4)):
+                    time.sleep(.08)
+                    cli = subprocess.run([str(BUILD / 'svctl'), *endpoint, '--timeout-ms', '3000',
+                                          *arguments], text=True, capture_output=True, timeout=5)
+                    self.assertEqual(cli.returncode, code, cli.stderr)
+                    reply = json.loads(cli.stdout)
+                    self.assertEqual(reply['accepted'], code == 0)
+                self.assertEqual(config.read_bytes(), config_before)
                 if qt and (BUILD / 'sv-client').exists():
                     time.sleep(.1)
                     env = os.environ.copy()
@@ -139,7 +151,7 @@ class ClientTransportTests(unittest.TestCase):
             prefix = directory / 'prefix'
             subprocess.run(['cmake', '--install', str(BUILD), '--prefix', str(prefix)], check=True, capture_output=True)
             consumer = directory / 'consumer'
-            subprocess.run(['cmake', '-S', str(ROOT / 'examples/client'), '-B', str(consumer),
+            subprocess.run(['cmake', '-S', str(ROOT / 'tests/fixtures/client-consumer'), '-B', str(consumer),
                 f'-DCMAKE_PREFIX_PATH={prefix}'], check=True, capture_output=True)
             subprocess.run(['cmake', '--build', str(consumer), '-j', '2'], check=True, capture_output=True)
             binary = consumer / 'sv-client-probe'

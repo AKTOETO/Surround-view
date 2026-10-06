@@ -61,7 +61,7 @@ def main():
     requirements = subprocess.check_output([*rpm_query, "-qp", "--requires", str(package)], env=environment, text=True)
     (output / "files.txt").write_text(listing)
     (output / "requires.txt").write_text(requirements)
-    expected = ["sv-client-probe", "sv-project", "sv-core-tests", "sv-source-tests", "sv-platform-test", "sv-calibrate", "sv-capture", "sv-scene"]
+    expected = ["svctl", "sv-client-probe", "sv-project", "sv-core-tests", "sv-source-tests", "sv-platform-test", "sv-calibrate", "sv-capture", "sv-scene"]
     if args.profile == "gpu":
         expected.extend(["sv-server", "sv-bench"])
     for executable in expected:
@@ -87,7 +87,7 @@ def main():
         package_configs = list((payload / "usr").rglob("svClientConfig.cmake"))
         if len(package_configs) != 1:
             raise RuntimeError("expected one installed svClient CMake config")
-        configure = subprocess.run(["cmake", "-S", str(ROOT / "examples/client"), "-B", str(consumer),
+        configure = subprocess.run(["cmake", "-S", str(ROOT / "tests/fixtures/client-consumer"), "-B", str(consumer),
                         f"-DsvClient_DIR={package_configs[0].parent}"], text=True, capture_output=True)
         if configure.returncode:
             raise RuntimeError(configure.stdout + configure.stderr)

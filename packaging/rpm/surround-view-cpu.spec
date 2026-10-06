@@ -40,6 +40,7 @@ qualifying an EGL backend. GPU and display results are explicitly unavailable.
 %files
 %defattr(-,root,root,-)
 %{_bindir}/sv-client-probe
+%{_bindir}/svctl
 %{_bindir}/sv-project
 %{_bindir}/sv-core-tests
 %{_bindir}/sv-source-tests

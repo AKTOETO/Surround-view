@@ -66,6 +66,16 @@ void Bridge::consume(sv::client::Event event)
     }
     const auto &m = *event.message;
     const auto &h = m.header;
+    if (m.type == 21 && h.at("accepted").as_bool())
+    {
+        serverInfo_ =
+            QString("Азимут: %1 рад · Высота: %2 рад\nРасстояние: %3 м\nРевизия состояния: %4")
+                .arg(h.at("azimuth_rad").as_double(), 0, 'f', 2)
+                .arg(h.at("elevation_rad").as_double(), 0, 'f', 2)
+                .arg(h.at("distance_m").as_double(), 0, 'f', 2)
+                .arg(QString::fromStdString(std::string(h.at("state_revision").as_string())));
+        emit changed();
+    }
     if (m.type == 21 && !h.at("accepted").as_bool())
     {
         status_ =

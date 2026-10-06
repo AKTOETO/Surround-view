@@ -53,6 +53,7 @@ This is a laboratory package, not a certified Aurora application.
 %files
 %defattr(-,root,root,-)
 %{_bindir}/sv-client-probe
+%{_bindir}/svctl
 %{_bindir}/sv-project
 %{_bindir}/sv-bench
 %{_bindir}/sv-server

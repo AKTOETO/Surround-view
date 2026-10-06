@@ -28,8 +28,10 @@ class Bridge : public QObject
     Q_OBJECT
     Q_PROPERTY(QString frameUrl READ frameUrl NOTIFY changed)
     Q_PROPERTY(QString status READ status NOTIFY changed)
+    Q_PROPERTY(QString serverInfo READ serverInfo NOTIFY changed)
     std::unique_ptr<sv::client::Client> client_;
     QString url_, status_ = "Соединение с сервером…", readyFrame_, lastPresented_;
+    QString serverInfo_ = "Ожидание ответа state";
     FrameProvider *provider_;
     std::atomic<unsigned> pending_events_{0};
     void consume(sv::client::Event);
@@ -48,6 +50,11 @@ class Bridge : public QObject
     QString status() const
     {
         return status_;
+    }
+
+    QString serverInfo() const
+    {
+        return serverInfo_;
     }
 
     Q_INVOKABLE void preset(QString);

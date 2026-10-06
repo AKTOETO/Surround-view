@@ -4,11 +4,15 @@ import QtQuick.Window 2.2
 Window {
     id: window
 
+    property bool showServerInfo: false
+    minimumWidth: 800
+    minimumHeight: 480
+
     width: 1120
     height: 760
     visible: true
     color: "#0d121b"
-    title: "Surround View — исследовательский прототип"
+    title: "Surround View — автомобильный клиент"
 
     Text {
         x: 28
@@ -22,7 +26,7 @@ Window {
     Text {
         x: 28
         y: 60
-        text: "Перетащите изображение для поворота · колесо мыши меняет расстояние"
+        text: "Поворот касанием · крупные кнопки для выбора ракурса и масштаба"
         color: "#99a8bc"
         font.pixelSize: 14
     }
@@ -31,7 +35,7 @@ Window {
         x: 24
         y: 98
         width: parent.width - 48
-        height: parent.height - 214
+        height: parent.height - 240
         color: "#dbe8f2"
         radius: 12
         clip: true
@@ -101,7 +105,7 @@ Window {
 
     Row {
         x: 24
-        y: parent.height - 96
+        y: parent.height - 116
         spacing: 10
 
         Repeater {
@@ -115,19 +119,19 @@ Window {
                 "label": "Сзади",
                 "cmd": "rear"
             }, {
-                "label": "Пауза",
-                "cmd": "pause"
+                "label": "Ближе",
+                "cmd": "closer"
             }, {
-                "label": "Продолжить",
-                "cmd": "resume"
+                "label": "Дальше",
+                "cmd": "farther"
             }, {
-                "label": "Шаг",
-                "cmd": "step"
+                "label": "Сервер",
+                "cmd": "info"
             }]
 
             Rectangle {
-                width: 138
-                height: 38
+                width: (window.width - 98) / 6
+                height: 64
                 radius: 7
                 color: button.containsMouse ? "#315275" : "#203247"
 
@@ -135,7 +139,7 @@ Window {
                     anchors.centerIn: parent
                     text: modelData.label
                     color: "#eef4fb"
-                    font.pixelSize: 14
+                    font.pixelSize: 18
                 }
 
                 MouseArea {
@@ -146,8 +150,14 @@ Window {
                     onClicked: {
                         if (index < 3)
                             backend.preset(modelData.cmd);
-                        else
-                            backend.action(modelData.cmd);
+                        else if (modelData.cmd === "closer")
+                            backend.zoom(-0.5);
+                        else if (modelData.cmd === "farther")
+                            backend.zoom(0.5);
+                        else {
+                            window.showServerInfo = !window.showServerInfo;
+                            backend.action("state");
+                        }
                     }
                 }
 
@@ -155,6 +165,23 @@ Window {
 
         }
 
+    }
+
+    Rectangle {
+        visible: window.showServerInfo
+        anchors.centerIn: parent
+        width: parent.width - 100
+        height: 220
+        radius: 12
+        color: "#203247"
+        Text {
+            anchors.fill: parent
+            anchors.margins: 28
+            color: "#eef4fb"
+            font.pixelSize: 22
+            wrapMode: Text.WordWrap
+            text: "Состояние сервера\n" + backend.serverInfo + "\n" + backend.status
+        }
     }
 
     Text {
