@@ -21,10 +21,10 @@
 | M4: одна камера GPU | EGL/FBO/projection/RGBA checks, timer scope и cached inputs | GPU/precision/extensions на устройстве Аврора |
 | M5: четыре камеры | Replay/synchronizer, пять carriers, три fusion, coverage/weights, initial screening | FrameSource/live sources; geometric/seam/ghosting quality truth, graph-cut/multi-band и равный budget |
 | M6: диагностика | Сервисный known-XYZ drift/recovery и INDETERMINATE | Overlap detector, реальные false alarm/sensitivity repeats и calibration data |
-| M7: сервер/library/UI | Unix/TCP библиотека и GUI, state/control/frame API, release, deadlines/reconnect, installed consumer | Две физические машины; 500-command stress/latency trace; runtime configuration/calibration/health API по capabilities |
+| M7: сервер/library/UI | Unix/TCP библиотека и GUI, state/control/frame API, release, deadlines/reconnect, installed consumer | Две физические машины; полный latency trace (500-command paused burst проверен); runtime configuration/calibration/health API по capabilities |
 | M8: отказы | Bounded sync/framing, replay skew/stale, malformed input, release timeout, reconnect/restart/shutdown | Live producer overload/fault injection, distributed clock mapping, долгие memory/thermal runs |
 | M9: Аврора | Offline CMake/REQUIRED dependencies, CPU/GPU spec, native suite, Linux package workflow | SDK BuildRequires/ABI, validator/signing/install и весь путь на устройстве; ПК не заменяет эту приёмку |
-| M10: основные опыты | Исторические RTX/Mesa серии, calibration/drift и first-frame surface screening | Полный актуальный PC baseline + устройство, независимые validation scenes/real recording, зафиксированные quality thresholds |
+| M10: основные опыты | Исторические RTX/Mesa серии, calibration/drift и first-frame surface screening | Полные актуальные PC RTX/Mesa baselines готовы ([[validation/CLIENT_SMOKE]]); устройство, независимые validation scenes/real recording, зафиксированные quality thresholds |
 | M11: текст/демонстрация | Главы 1–4 и предварительное заключение, подписанные figures/scripts, инструкции | Дополнить результатами всех оставшихся функций; общая редактура после реализации по просьбе пользователя |
 | M12: резерв | План предусмотрен | Финальная редакция/защита и воспроизведение после завершения M10/M11; сейчас этап не завершён |
 
@@ -50,6 +50,8 @@
 3. Зафиксировать photometric policy, реализовать graph-cut и multi-band с измерением памяти, seams/ghosting/temporal stability. Burger добавить только после восстановления точного опубликованного определения.
 4. Расширить библиотеку/runtime configurator по серверным capabilities; выполнить command burst, cancellation и overload tests. Для UDP сначала определить datagram semantics, затем писать codec/adapter.
 5. Продолжить интерактивный 3D-стенд/producer после FrameSource; scripted offline trajectory не считать управляемым автомобилем.
-6. Получить полные RTX/Mesa baselines текущей revision, длительные stress runs и актуальный RPM smoke. Устройство/SDK и two-host испытание описывать отдельно от loopback.
+6. Полные RTX/Mesa baselines 0.5.0 и актуальный RPM smoke сохранены ([[validation/CLIENT_SMOKE]]). Продолжить длительные stress runs. Устройство/SDK и two-host испытание описывать отдельно от loopback.
 
 Незавершённые пункты не удалены и не отмечены выполненными ради чистого чеклиста. Инструкции рабочего клиента — [[engineering/CLIENT_LIBRARY]], границы реализации — [[prototype/STATUS]].
+
+Последующая проверка: CPU/GPU RPM 0.5.0 и отдельные development consumers прошли; полный RTX/Mesa workload comparison сопоставим. 500 orbit-команд на паузе в пакетах по 16 проходят без новых decode/upload/mesh builds. Первичные отчёты и точные границы — [[validation/CLIENT_SMOKE]].

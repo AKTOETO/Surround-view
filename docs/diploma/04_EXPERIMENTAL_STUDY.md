@@ -286,7 +286,7 @@ RTX и llvmpipe дают одинаковые признаки валиднос�
 
 ## 4.13 Проверка клиентской библиотеки и сетевой конфигурации
 
-После аудита планов выполнен Unix/TCP baseline 0.5.0. Release CTest проходит 10/10 групп, CPU Debug ASan/UBSan — 7/7. Новые native lifecycle cases проверяют invalid options, handshake/partial message deadlines, invalid RGBA payload и shutdown без поздних callback. Host integration использует настоящий сервер и два потребителя одной библиотеки — headless и Qt.
+После аудита планов выполнен Unix/TCP baseline 0.5.0. Release CTest проходит 10/10 групп, CPU Debug ASan/UBSan — 7/7. Новые native lifecycle cases проверяют invalid options, handshake/partial message deadlines, invalid RGBA payload и shutdown без поздних callback. Host integration использует настоящий сервер и два потребителя одной библиотеки — headless и Qt. Дополнительно 500 orbit-команд на паузе приняты в пакетах по 16 без новых decode/upload/mesh builds. Полные RTX/Mesa baselines 0.5.0 (60 samples, 10 warmup, 3 contexts) и два Linux RPM с installed development consumers сохранены в [[validation/CLIENT_SMOKE]]; они дополняют исторический §4.9.
 
 | Сценарий | Наблюдаемый результат | Ограничение |
 |---|---|---|

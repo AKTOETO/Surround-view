@@ -86,6 +86,10 @@ Consumer использует `find_package(svClient CONFIG REQUIRED)` и `targe
 
 ## Приёмка и оставшаяся работа
 
-`client_lifecycle` проверяет invalid options, handshake/partial deadlines, неверный RGBA payload и отсутствие callback после stop. `client_transports` запускает настоящий сервер для Unix-only/TCP-only/combined, проверяет отсутствие IP sockets через `/proc`, внешний installed CMake consumer без Qt/OpenCV/EGL/GLES, Qt TCP offscreen, restart/reconnect, pause/step и нерегулярные replay intervals. `replay_ipc` сохраняет прежний Python/Unix interoperability path. SDK не запускает host Python tests; native lifecycle test не требует GPU.
+`client_lifecycle` проверяет invalid options, handshake/partial deadlines, неверный RGBA payload и отсутствие callback после stop. `client_transports` запускает настоящий сервер для Unix-only/TCP-only/combined, проверяет отсутствие IP sockets через `/proc`, внешний installed CMake consumer без Qt/OpenCV/EGL/GLES, Qt TCP offscreen, restart/reconnect, pause/step, 500-command paused bursts и нерегулярные replay intervals. `replay_ipc` сохраняет прежний Python/Unix interoperability path. SDK не запускает host Python tests; native lifecycle test не требует GPU.
 
 Проверены localhost Unix/TCP; испытание между двумя физическими машинами остаётся открытым. UDP, несколько одновременных клиентов, runtime configuration editing, calibration/diagnostic/source-management API, отдельные metrics subscriptions и bindings ещё не реализованы. Общий API должен расширяться вместе с server capabilities; универсальность не означает наличие отсутствующих операций.
+
+При использовании RPM каталог библиотек следует архитектурному `%{_lib}`. Если host CMake не ищет `lib64` через `CMAKE_PREFIX_PATH`, передать `-DsvClient_DIR=/usr/lib64/cmake/svClient` (либо фактический путь из `rpm -ql`). Для распакованного пакета указать тот же путь внутри payload prefix; export сохраняет относительные пути и допускает relocation.
+
+Результаты native/host suites, RPM и актуальные полные baselines: [[validation/CLIENT_SMOKE]].

@@ -23,8 +23,8 @@
 | Qt Quick desktop-клиент через библиотеку | Qt 6.11.2/5.15.19 offscreen; исправлен teardown Bridge | Не AuroraApp/Silica application; display latency не измерена |
 | SV01 framing и две очереди | Однобайтовое/объединённое чтение, malformed, control/data | Это подмножество протокола, не полная приёмка PRO-F-001…011 |
 | Исторические серии 0.1.0 и графики | [[prototype/MEASUREMENTS]], `run_experiments.py` | Короткие synthetic опыты; thermal/memory/display latency в этой серии не измерены |
-| Native hardware-comparison suite | 25 pass в коротком smoke; десять render-вариантов включают оболочки и fusion | Новые v0.4 baselines требуют полного прогона на RTX и Mesa; нет target hardware/long-run/VRAM/IPC UI |
-| Offline RPM/spec и installed resources | Оба Linux native RPM, payload core/report/scene/GPU smoke; Qt/GLSL embedded | Aurora ABI/dependencies/validator/signing/installation не проверены |
+| Native hardware-comparison suite | 25 pass в коротком smoke; десять render-вариантов включают оболочки и fusion | Полные v0.5 RTX/Mesa baselines сохранены в [[validation/CLIENT_SMOKE]]; нет target hardware/long-run/VRAM/IPC UI |
+| Offline RPM/spec и installed resources | Оба Linux RPM 0.5.0, payload core/report/scene/GPU и отдельный CMake client consumer; Qt/GLSL embedded | Aurora ABI/dependencies/validator/signing/installation не проверены |
 
 ## Отображение проектной архитектуры на код
 

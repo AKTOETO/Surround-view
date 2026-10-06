@@ -96,7 +96,7 @@ sv-platform-test --config /usr/share/surround-view/configs/synthetic.json \
 Скопировать результаты на ПК (точные команды и RPM-путь — [[engineering/AURORA]]) и сравнить:
 
 ```sh
-python3 tools/compare_reports.py docs/validation/baselines/PC_RTX.md \
+python3 tools/compare_reports.py docs/validation/baselines/PC_RTX_V05.md \
   artifacts/aurora/run-01/report.json --output artifacts/comparison.md --strict
 ```
 
@@ -109,3 +109,7 @@ python3 tools/compare_reports.py docs/validation/baselines/PC_RTX.md \
 ## Короткая квалификация 0.4.0
 
 На 06.10.2026 пройдены 25 критериев с 3 iterations, 1 warmup, 1 repeat. Это smoke, не performance baseline. Свидетельства: [[validation/SURFACE_SCREENING]]. Для сравнения с Авророй заново получить полные PC/target отчёты одной revision и параметров; исторические 0.2.0 отчёты строгую сопоставимость с 0.4.0 не удовлетворяют.
+
+## Полные PC baselines 0.5.0
+
+Сохранены [[validation/baselines/PC_RTX_V05]] и [[validation/baselines/PC_MESA_V05]]: 60 samples, 10 warmup, 3 contexts, 25 criteria, 10 workload. Строгая сопоставимость подтверждена в [[validation/PC_COMPARISON_V05]], происхождение/границы — [[validation/CLIENT_SMOKE]]. Эти отчёты использовать для устройства с той же implementation fingerprint/config/fixture/settings; исторические 0.2.0 остаются отдельными файлами.
