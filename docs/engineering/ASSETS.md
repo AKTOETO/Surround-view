@@ -117,3 +117,10 @@ sha256sum assets/demo/urban_street_01_1k.hdr \
 ```
 
 При пересылке или клонировании оба ассета приходят вместе с обычным Git. `.blend` — host-ресурс для авторинга; он не добавлен в runtime RPM Авроры. Панорама A01 остаётся установленным ресурсом `sv-scene`.
+
+## Seeded mount-error street, 07.10.2026
+
+- `assets/scenarios/mount-errors-v1.json` — авторский рецепт seed 20261007: building heights 4…11 м, spacing 9 м, yaw ±5°, pitch ±4°, slide ±0.15 м; SHA-256 `d0590728799f98cd44f56dc9d33ec04c03fd0b5f673c96351e61e997e67a006e`.
+- `assets/scenes/mount-errors/street.blend` — отдельный авторский мир Blender 5.2.2 LTS, 327 объектов, около 2.3 MB, без внешних текстур/моделей; SHA-256 `8acb78ff1f8953f3c6ac03e501b5faf54ee8cd0850b5b27776c19a4748facbc9`. Включает actual/nominal config и sampled offsets в свойствах scene. Сохранён обычным Git, без LFS; прежний metric-street сохранён.
+
+Мир восстановим из `tools/blender/{scene,rig,scenario}.py` и рецепта. Exact `.blend` hash зависит от Blender serialization и не обязан повториться при реконструкции; параметры/геометрия воспроизводятся при той же версии генератора. Capture RGB, synthetic observations, fitted candidates и GLES previews — производные опытов в `artifacts`, не новые исходные assets. Их избранные подписанные иллюстрации и скрипт входят в диплом. Команды — [[engineering/BLENDER]], методика — [[research/MOUNT_CALIBRATION]].

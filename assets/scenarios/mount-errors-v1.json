@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "seed": 20261007,
+  "world": {"building_height_m": [4.0, 11.0], "building_spacing_m": 9.0},
+  "mounts": {
+    "yaw_deg": 5.0,
+    "pitch_deg": 4.0,
+    "along_body_m": 0.15,
+    "overrides": {}
+  }
+}

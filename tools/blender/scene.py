@@ -23,6 +23,7 @@ from mathutils import Matrix, Vector
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from rig import FACES, configuration, face_basis, vehicle_pose
+from scenario import load as load_scenario, validate as validate_scenario, perturb
 
 
 def enum_value(owner, field, value):
@@ -108,7 +109,11 @@ def car(scene, name, xyz, paint, mats):
     return root
 
 
-def build_scene():
+def build_scene(recipe=None):
+    recipe = validate_scenario(recipe) if recipe is not None else None
+    nominal = configuration()
+    cfg, offsets = perturb(nominal, recipe) if recipe else (nominal, [])
+    rng = np.random.default_rng(recipe.get('seed', 0)) if recipe else None
     scene = bpy.data.scenes.new("SV Research Street")
     # Render engine is a dynamic enum. Its current value is valid on this host.
     scene.render.engine = bpy.context.scene.render.engine
@@ -154,9 +159,10 @@ def build_scene():
             box(scene, "parking bay", (x,y,.007), (.1,1.9,.014),mats['white'])
     for x in range(11,16):
         box(scene, "crosswalk", (x,0,.008), (.55,11.5,.016),mats['white'])
+    spacing = recipe['world']['building_spacing_m'] if recipe else 9
     for side in (-1,1):
-        for i, x in enumerate(range(-32,37,9)):
-            height = 5 + (i % 3) * 1.4
+        for i, x in enumerate(np.arange(-32,37,spacing)):
+            height = float(rng.uniform(*recipe['world']['building_height_m'])) if recipe else 5 + (i % 3) * 1.4
             mat = mats[['brick','cream','gray'][i%3]]
             box(scene, "building", (x,side*12,height/2), (7.5,6,height),mat,bevel=.08)
             for floor in range(int(height/2)):
@@ -175,12 +181,16 @@ def build_scene():
         box(scene,"bollard base",(x,y,.04),(.4,.4,.08),mats['rubber'])
         cylinder(scene,"yellow bollard",(x,y,.5),.11,1.,mats['yellow'])
     ego = car(scene,"Ego",(0,0,0),mats['blue'],mats)
-    for cam in configuration()['cameras']:
+    for cam in cfg['cameras']:
         transform = np.array(cam['T_camera_from_vehicle'])
         center = -transform[:3,:3].T @ transform[:3,3]
         marker = box(scene, "camera " + cam['name'], center, (.065,.065,.065),mats['rubber'],ego)
         marker.hide_render = True  # A locator must not occlude its own optical center.
     scene['sv_ego'] = ego.name
+    scene['sv_config'] = json.dumps(cfg)
+    scene['sv_nominal_config'] = json.dumps(nominal)
+    scene['sv_recipe'] = json.dumps(recipe)
+    scene['sv_mount_offsets'] = json.dumps(offsets)
     camera = bpy.data.cameras.new("SV capture optics")
     enum_value(camera,'type','PERSP')
     enum_value(camera,'sensor_fit','HORIZONTAL')
@@ -205,7 +215,7 @@ def check_optics(scene):
     try:
         camera.data.lens = 18
         scene.render.resolution_x = scene.render.resolution_y = 256
-        for cam in configuration()['cameras']:
+        for cam in json.loads(scene.get('sv_config', json.dumps(configuration())))['cameras']:
             optical = np.linalg.inv(cam['T_camera_from_vehicle'])
             for face in FACES:
                 pose = optical.copy()
@@ -235,7 +245,7 @@ def capture(scene, output, frames=2, face_size=256, start_frame=0):
     output = Path(output).resolve()
     optics_check = check_optics(scene)
     output.mkdir(parents=True, exist_ok=False)
-    cfg = configuration()
+    cfg = json.loads(scene.get('sv_config', json.dumps(configuration())))
     ego = scene.objects[scene['sv_ego']]
     scene.camera.data.lens = 18
     scene.render.resolution_x = scene.render.resolution_y = face_size
@@ -281,11 +291,14 @@ def capture(scene, output, frames=2, face_size=256, start_frame=0):
                 'view_transform':scene.view_settings.view_transform,
                 'face_size':face_size, 'fps':30, 'config':cfg, 'frames':rows,
                 'optics_check':optics_check,
+                'scenario_recipe':json.loads(scene.get('sv_recipe', 'null')),
+                'mount_offsets':json.loads(scene.get('sv_mount_offsets', '[]')),
+                'nominal_config':json.loads(scene.get('sv_nominal_config', json.dumps(cfg))),
                 'limitations':['procedural geometry, no real vehicle CAD',
                                'scripted translation, no vehicle physics',
                                'offline RGB capture, no depth/semantic truth yet'],
                 'script_sha256':{name:hashlib.sha256(Path(__file__).with_name(name).read_bytes()).hexdigest()
-                                 for name in ('scene.py','rig.py')},
+                                 for name in ('scene.py','rig.py','scenario.py')},
                 'sha256':{p.name:hashlib.sha256(p.read_bytes()).hexdigest()
                           for p in sorted(output.glob('*.png'))}}
     (output / 'capture.json').write_text(json.dumps(metadata,indent=2)+'\n')
@@ -296,8 +309,9 @@ def capture(scene, output, frames=2, face_size=256, start_frame=0):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output',required=True)
+    parser.add_argument('--scenario',type=Path)
     parser.add_argument('--frames',type=int,default=2)
     parser.add_argument('--face-size',type=int,default=256)
     parser.add_argument('--start-frame',type=int,default=0)
     args = parser.parse_args(sys.argv[sys.argv.index('--')+1:] if '--' in sys.argv else [])
-    capture(build_scene(),args.output,args.frames,args.face_size,args.start_frame)
+    capture(build_scene(load_scenario(args.scenario) if args.scenario else None),args.output,args.frames,args.face_size,args.start_frame)

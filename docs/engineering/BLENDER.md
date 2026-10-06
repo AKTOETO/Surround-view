@@ -131,3 +131,23 @@ python3 tools/blender/validate.py --dataset artifacts/blender-street \
 Validator создаёт временные Unix endpoints, запускает настоящий server и отдельный producer, проверяет четыре READY RGBA output и применённый ракурс, сохраняет `server-view.png`, trace/config и `smoke.json`. Output должен быть новым; `--source replay` (default) сохраняет прежнюю проверку. В 0.6.0 оба пути прошли на RTX 5070 Ti: [[validation/SOURCES_SMOKE]]. Это finite recording streaming, не realtime Blender rendering.
 
 Socket validator также сохраняет `producer.json`/`producer.md`; в конце finite smoke он штатно останавливает длительный producer через SIGTERM, поэтому status cancelled/exit 143 ожидаемы. Проверка этого lifecycle — [[validation/PRODUCER_RECOVERY]].
+
+## Правила мира и ошибки крепления камер
+
+07.10.2026 MCP повторно подключён: Blender 5.2.2 LTS, add-on 1.8 / protocol 13. Создана отдельная `SV Research Street` с 327 объектами; исходная пользовательская `Scene` сохранена. Рецепт — `assets/scenarios/mount-errors-v1.json`, готовый мир — `assets/scenes/mount-errors/street.blend`. Предыдущая metric-street не заменена.
+
+```sh
+blender --background --python tools/blender/scene.py -- \
+  --scenario assets/scenarios/mount-errors-v1.json \
+  --output artifacts/mount-capture-new --frames 1 --face-size 128
+python3 tools/blender/convert.py --capture artifacts/mount-capture-new \
+  --output artifacts/mount-dataset-new
+```
+
+Рецепт версии 1 содержит `seed`, `world.building_height_m` (диапазон 3…20 м), `building_spacing_m` (8…15 м), `mounts.yaw_deg`, `pitch_deg` (random half-ranges 0…20°), `along_body_m` (0…0.4 м) и `overrides` с ключами `"0"`…`"3"`. Override задаёт фактическое подписанное отклонение конкретной камеры, остальные значения выбираются uniform из симметричного диапазона. Домены ограничивают этот генератор, а не описывают статистику реальных автомобильных креплений.
+
+Yaw поворачивает оптический базис вокруг +Z автомобиля; pitch — вокруг локальной +X камеры (вправо), положительное значение поднимает взгляд. Сдвиг front/rear идёт вдоль +Y кузова, right/left — вдоль +X, без изменения высоты и расстояния от поверхности кузова. Это одна определённая модель монтажных ошибок, не полный 6-DoF perturbation. Модель автомобиля не перестраивает зеркала под сдвиг камеры; occlusion/self-occlusion ещё надо исследовать.
+
+Без `--scenario` сохраняется прежняя геометрия и номинальный rig. С рецептом vary высота/число этажей зданий, spacing и крепления; дорога/основная планировка остаются заданными генератором. Это параметризованная улица, не произвольный map editor. В `capture.json` добавлены recipe, sampled offsets и nominal config. Конвертер сохраняет отдельный `nominal-config.json`, true config/poses и recipe в `ground_truth.json`; `config.json` описывает фактическую capture calibration для replay. В калибровочный solver нужно передавать nominal config, а true config использовать только для синтеза наблюдений и оценки.
+
+Первое исследование и ограничения: [[research/MOUNT_CALIBRATION]], [[validation/MOUNT_CALIBRATION]]. Laptop GUI пока не содержит редактор этих правил; общий Python module `tools/blender/scenario.py` подготовлен для дальнейшего переиспользования, отдельного launch script не добавлено.

@@ -96,6 +96,11 @@ def convert(source, output):
                                          'view_transform','script_sha256','limitations')}
     truth['capture_sha256'] = hashlib.sha256((source / 'capture.json').read_bytes()).hexdigest()
     truth['optics_check'] = metadata.get('optics_check')
+    truth['scenario_recipe'] = metadata.get('scenario_recipe')
+    truth['mount_offsets'] = metadata.get('mount_offsets', [])
+    truth['true_config'] = cfg
+    if 'nominal_config' in metadata:
+        (output / 'nominal-config.json').write_text(json.dumps(metadata['nominal_config'],indent=2)+'\n')
     truth['converter_sha256'] = {
         path.name:hashlib.sha256(path.read_bytes()).hexdigest() for path in
         (Path(__file__),Path(__file__).with_name('rig.py'),

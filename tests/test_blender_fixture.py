@@ -11,6 +11,7 @@ from PIL import Image
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools' / 'blender'))
 from rig import configuration, cube_coordinates, vehicle_pose
+from scenario import perturb, validate
 from convert import bilinear, convert, convert_camera, linear_rgb, srgb8
 
 
@@ -32,6 +33,39 @@ class BlenderFixtureTests(unittest.TestCase):
         self.assertGreater(abs(centers[1][1]),1.061+.025)
         self.assertGreater(abs(centers[3][1]),1.061+.025)
         np.testing.assert_allclose(vehicle_pose(30)[:3,3],[2,0,0])
+
+    def test_mount_randomization_and_override(self):
+        nominal = configuration()
+        recipe = dict(schema_version=1, seed=42, mounts=dict(yaw_deg=5, pitch_deg=4, along_body_m=.15))
+        actual, offsets = perturb(nominal, recipe)
+        self.assertEqual(actual, perturb(nominal, recipe)[0])
+        self.assertEqual(nominal, configuration())
+        for camera, offset, base in zip(actual['cameras'], offsets, nominal['cameras']):
+            T, N = np.array(camera['T_camera_from_vehicle']), np.array(base['T_camera_from_vehicle'])
+            np.testing.assert_allclose(T[:3,:3] @ T[:3,:3].T, np.eye(3), atol=1e-14)
+            self.assertAlmostEqual(np.linalg.det(T[:3,:3]), 1)
+            delta = -T[:3,:3].T @ T[:3,3] + N[:3,:3].T @ N[:3,3]
+            axis = 1 if camera['id'] in (0,2) else 0
+            self.assertAlmostEqual(delta[axis], offset['along_body_m'])
+            self.assertLessEqual(abs(offset['yaw_deg']), 5)
+            self.assertLessEqual(abs(offset['pitch_deg']), 4)
+        zero, _ = perturb(nominal, dict(schema_version=1, seed=42))
+        for a, b in zip(zero['cameras'], nominal['cameras']):
+            np.testing.assert_allclose(a['T_camera_from_vehicle'], b['T_camera_from_vehicle'], atol=1e-14)
+        recipe['mounts']['overrides'] = {'0': dict(yaw_deg=1, pitch_deg=-2, along_body_m=.1)}
+        _, offsets = perturb(nominal, recipe)
+        self.assertEqual(offsets[0]['yaw_deg'], 1)
+        self.assertEqual(offsets[0]['pitch_deg'], -2)
+        self.assertEqual(offsets[0]['along_body_m'], .1)
+
+    def test_invalid_scenario_rules(self):
+        for recipe in (dict(schema_version=1, seed=-1), dict(schema_version=1, seed=True),
+                       dict(schema_version=1, mounts=dict(yaw_deg=21)),
+                       dict(schema_version=1, mounts=dict(overrides={'4': {}})),
+                       dict(schema_version=1, world=dict(building_height_m=[10,4])),
+                       dict(schema_version=1, unknown=True)):
+            with self.assertRaises(ValueError):
+                validate(recipe)
 
     def test_face_centers_and_image_axes(self):
         rays = np.array([[1,0,0],[-1,0,0],[0,1,0],[0,-1,0],[0,0,1],[0,0,-1]])
