@@ -15,6 +15,7 @@ def main():
     parser.add_argument('--dataset',type=Path,required=True)
     parser.add_argument('--validation',type=Path,required=True)
     parser.add_argument('--low-view',type=Path,required=True)
+    parser.add_argument('--socket-validation',type=Path,help='optional source socket smoke directory')
     args = parser.parse_args()
     output = Path(__file__).parent/'figures'/'implementation'
     output.mkdir(parents=True,exist_ok=True)
@@ -38,6 +39,8 @@ def main():
     fig.tight_layout()
     fig.savefig(output/'03_blender_surround.png',dpi=110,bbox_inches='tight')
     plt.close(fig)
+    if args.socket_validation:
+        Image.open(args.socket_validation/'server-view.png').save(output/'03_blender_socket.png')
 
 
 if __name__ == '__main__':
