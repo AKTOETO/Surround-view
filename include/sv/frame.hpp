@@ -20,6 +20,8 @@ struct Frame
     int camera_id = 0;
     uint64_t sequence = 0, release_ns = 0, scenario_ns = 0;
     std::shared_ptr<const Image> image;
+    std::string source_session = "", source_clock_domain = "";
+    uint64_t source_sequence = 0, source_timestamp_ns = 0;
 };
 
 struct FrameSet

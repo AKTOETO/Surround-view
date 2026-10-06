@@ -18,6 +18,20 @@ struct Connections
     uint16_t control_port = 0, data_port = 0;
 };
 
+struct CameraEndpoint
+{
+    std::string transport = "unix", path, address = "127.0.0.1";
+    uint16_t port = 0;
+};
+
+struct SourceConfig
+{
+    bool explicit_config = false, loop = true;
+    std::string type = "replay", manifest;
+    unsigned message_timeout_ms = 2000;
+    std::array<CameraEndpoint, 4> cameras;
+};
+
 struct Config
 {
     std::array<Camera, 4> cameras;
@@ -25,6 +39,7 @@ struct Config
     View view;
     Fusion fusion;
     Connections connections;
+    SourceConfig source;
     int width = 640, height = 360, queue_size = 3;
     double vehicle_length = 4.6, vehicle_width = 1.8, margin = .1;
     uint64_t skew_ns = 10000000, age_ns = 100000000;

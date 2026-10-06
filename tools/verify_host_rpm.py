@@ -61,7 +61,7 @@ def main():
     requirements = subprocess.check_output([*rpm_query, "-qp", "--requires", str(package)], env=environment, text=True)
     (output / "files.txt").write_text(listing)
     (output / "requires.txt").write_text(requirements)
-    expected = ["sv-client-probe", "sv-project", "sv-core-tests", "sv-platform-test", "sv-calibrate", "sv-capture", "sv-scene"]
+    expected = ["sv-client-probe", "sv-project", "sv-core-tests", "sv-source-tests", "sv-platform-test", "sv-calibrate", "sv-capture", "sv-scene"]
     if args.profile == "gpu":
         expected.extend(["sv-server", "sv-bench"])
     for executable in expected:
@@ -102,6 +102,9 @@ def main():
             "No Qt/OpenCV/EGL/GLES in consumer ldd.\n\n```text\n" + dependencies + "```\n")
         config = payload / "usr/share/surround-view/configs/synthetic.json"
         subprocess.run([str(payload / "usr/bin/sv-core-tests"), str(config)], cwd=temporary, check=True)
+        source_checks = subprocess.check_output([str(payload / "usr/bin/sv-source-tests"), str(config)],
+                                                cwd=temporary, text=True)
+        (output / "SOURCE_TESTS.md").write_text("# Installed native source checks\n\n```text\n" + source_checks + "```\n")
         command = [str(payload / "usr/bin/sv-platform-test"), "--config", str(config), "--output", str(temporary / "report"),
                    "--label", "installed-native-" + args.profile, "--iterations", "8", "--warmup", "2", "--repeats", "1"]
         command += ["--require-gpu", "--egl-platform", "surfaceless"] if args.profile == "gpu" else ["--cpu-only"]

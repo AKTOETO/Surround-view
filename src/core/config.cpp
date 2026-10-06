@@ -190,7 +190,7 @@ Config parse_config(const boost::json::value &value)
     keys(o,
          {"schema_version", "profile_id", "units", "vehicle", "cameras", "surface",
           "virtual_camera", "output", "runtime"},
-         "config", {"fusion", "connections"});
+         "config", {"fusion", "connections", "source"});
     require(integer(o.at("schema_version"), 1, 1) == 1, "schema_version");
     Config c;
     c.effective = value;
@@ -277,6 +277,70 @@ Config parse_config(const boost::json::value &value)
             require(!u.at("enabled").as_bool(), "connections.udp: not implemented");
         }
         require(n.unix_enabled || n.tcp_enabled, "connections: no enabled listener");
+    }
+    if (const auto *value = o.if_contains("source"))
+    {
+        const auto &s = value->as_object();
+        c.source.explicit_config = true;
+        c.source.type = str(s.at("type"));
+        if (c.source.type == "replay")
+        {
+            keys(s, {"type", "manifest"}, "source", {"loop"});
+            c.source.manifest = str(s.at("manifest"));
+            require(!c.source.manifest.empty(), "source.manifest: empty path");
+            if (const auto *loop = s.if_contains("loop"))
+            {
+                c.source.loop = loop->as_bool();
+            }
+        }
+        else if (c.source.type == "socket")
+        {
+            keys(s, {"type", "cameras"}, "source", {"message_timeout_ms"});
+            if (const auto *timeout = s.if_contains("message_timeout_ms"))
+            {
+                c.source.message_timeout_ms = integer(*timeout, 10, 60000);
+            }
+            const auto &cameras = s.at("cameras").as_array();
+            require(cameras.size() == 4, "source.cameras: four required");
+            std::set<int> ids;
+            std::set<std::string> endpoints;
+            for (const auto &value : cameras)
+            {
+                const auto &camera = value.as_object();
+                const int id = integer(camera.at("camera_id"), 0, 3);
+                require(ids.insert(id).second, "source.camera_id: duplicate");
+                auto &endpoint = c.source.cameras[id];
+                endpoint.transport = str(camera.at("transport"));
+                if (endpoint.transport == "unix")
+                {
+                    keys(camera, {"camera_id", "transport", "path"}, "source.camera");
+                    endpoint.path = str(camera.at("path"));
+                    require(!endpoint.path.empty() && endpoint.path.front() == '/' &&
+                                endpoint.path.size() <= 100,
+                            "source.camera.path: absolute path <=100 bytes required");
+                    require(endpoints.insert("unix:" + endpoint.path).second,
+                            "source.camera: duplicate endpoint");
+                }
+                else if (endpoint.transport == "tcp")
+                {
+                    keys(camera, {"camera_id", "transport", "address", "port"}, "source.camera");
+                    endpoint.address = str(camera.at("address"));
+                    endpoint.port = integer(camera.at("port"), 1, 65535);
+                    require(!endpoint.address.empty(), "source.camera.address: empty");
+                    require(endpoints.insert(endpoint.address + ":" + std::to_string(endpoint.port))
+                                .second,
+                            "source.camera: duplicate endpoint");
+                }
+                else
+                {
+                    throw std::invalid_argument("source.camera.transport: Unix/TCP required");
+                }
+            }
+        }
+        else
+        {
+            throw std::invalid_argument("source.type: replay/socket supported");
+        }
     }
     const auto &units = o.at("units").as_object();
     keys(units, {"length", "angle", "time"}, "units");

@@ -1,5 +1,6 @@
 #include "sv/protocol.hpp"
 #include "sv/renderer.hpp"
+#include "sv/source.hpp"
 #include "sv/vision.hpp"
 #include <atomic>
 #include <boost/asio.hpp>
@@ -41,7 +42,8 @@ struct ServerIO
     std::mutex mutex;
     std::deque<Command> commands;
     std::string session, token;
-    ServerIO(const sv::Connections &);
+    boost::json::array capabilities;
+    ServerIO(const sv::Connections &, const std::string &source_type);
     ~ServerIO();
     template <class Acceptor> void accept(Acceptor &, bool);
     void connected(Socket, bool);
@@ -217,8 +219,7 @@ struct Connection : std::enable_shared_from_this<Connection>
                   {{"session_id", host.session},
                    {"data_token", host.token},
                    {"profile", "linux-prototype-v1"},
-                   {"capabilities", boost::json::array{"replay", "orbit", "zoom", "preset", "pause",
-                                                       "step", "resume", "state", "copied_rgba"}}},
+                   {"capabilities", host.capabilities}},
                   {}});
             return;
         }
@@ -308,10 +309,16 @@ void ServerIO::new_session()
     session = std::to_string(sv::now_ns()) + "-" + token.substr(0, 16);
 }
 
-ServerIO::ServerIO(const sv::Connections &n)
+ServerIO::ServerIO(const sv::Connections &n, const std::string &source_type)
     : control(io), data(io), tcp_control(io), tcp_data(io), signals(io, SIGINT, SIGTERM),
       directory(n.unix_directory)
 {
+    capabilities = {source_type, "orbit",  "zoom",  "preset",
+                    "pause",     "resume", "state", "copied_rgba"};
+    if (source_type == "replay")
+    {
+        capabilities.push_back("step");
+    }
     try
     {
         if (n.unix_enabled)
@@ -492,7 +499,7 @@ int main(int argc, char **argv)
     {
         std::string cfg, manifest, trace = "artifacts/server_trace.jsonl";
         std::filesystem::path ipc;
-        bool looping = true;
+        bool looping = true, loop_explicit = false;
         for (int i = 1; i < argc; i++)
         {
             std::string key = argv[i];
@@ -519,14 +526,19 @@ int main(int argc, char **argv)
             }
             else if (key == "--loop")
             {
+                if (v != "true" && v != "false")
+                {
+                    throw std::runtime_error("--loop requires true|false");
+                }
                 looping = v == "true";
+                loop_explicit = true;
             }
             else
             {
                 throw std::runtime_error("unknown argument " + key);
             }
         }
-        if (cfg.empty() || manifest.empty())
+        if (cfg.empty())
         {
             throw std::runtime_error("usage: sv-server --config FILE --manifest FILE --ipc-dir DIR "
                                      "[--trace FILE --loop true|false]");
@@ -544,10 +556,32 @@ int main(int argc, char **argv)
         {
             asio::ip::make_address(c.connections.address);
         }
-        auto rows = sv::load_manifest(manifest, c);
+        if (c.source.explicit_config)
+        {
+            if (!manifest.empty() || loop_explicit)
+            {
+                throw std::runtime_error("CLI cannot override explicit source config");
+            }
+            if (c.source.type == "replay")
+            {
+                auto path = std::filesystem::path(c.source.manifest);
+                if (path.is_relative())
+                {
+                    path = std::filesystem::path(cfg).parent_path() / path;
+                }
+                manifest = path.string();
+                looping = c.source.loop;
+            }
+        }
+        if (c.source.type == "replay" && manifest.empty())
+        {
+            throw std::runtime_error("replay manifest required");
+        }
+        auto source = c.source.type == "socket" ? sv::make_socket_source(c)
+                                                : sv::make_replay_source(c, manifest, looping);
         sv::Renderer renderer(c);
         sv::Synchronizer sync(c);
-        ServerIO network(c.connections);
+        ServerIO network(c.connections, c.source.type);
         sv::View view = c.view;
         if (!std::filesystem::path(trace).parent_path().empty())
         {
@@ -565,14 +599,32 @@ int main(int argc, char **argv)
         };
         record(
             {{"event", "startup"}, {"gl_renderer", renderer.device()}, {"profile", c.profile_id}});
-        uint64_t revision = 0, frame_id = 0, sequence = 0, applied_command = 0, decode_count = 0;
-        size_t row = 0;
-        uint64_t last_generation = 0;
-        uint64_t next = sv::now_ns(), last_render = 0;
-        bool paused = false, step = false, dirty = true;
+        uint64_t revision = 0, frame_id = 0, sequence = 0, applied_command = 0;
+        uint64_t last_generation = 0, last_render = 0, source_request = 0;
+        bool paused = false, dirty = true;
         sv::FrameSet last_set;
-        std::array<std::filesystem::path, 4> cached_paths;
-        std::array<std::shared_ptr<const sv::Image>, 4> cached_images;
+        std::optional<Command> pending_source;
+        std::deque<Command> pending_commands;
+        auto answer = [&](const Command &cmd, bool accepted, const std::string &reason)
+        {
+            const auto id = cmd.message.header.at("command_id");
+            network.answer(cmd, {21,
+                                 {{"command_id", id},
+                                  {"accepted", accepted},
+                                  {"reason", reason},
+                                  {"state_revision", std::to_string(revision)},
+                                  {"paused", paused},
+                                  {"azimuth_rad", view.azimuth},
+                                  {"elevation_rad", view.elevation},
+                                  {"distance_m", view.distance},
+                                  {"fusion_mode", c.fusion.mode},
+                                  {"diagnostic_view", c.fusion.diagnostic}},
+                                 {}});
+            record({{"event", "command"},
+                    {"command_id", id},
+                    {"accepted", accepted},
+                    {"state_revision", std::to_string(revision)}});
+        };
         while (!network.stop)
         {
             const auto generation = network.generation.load();
@@ -581,8 +633,64 @@ int main(int argc, char **argv)
                 dirty = true;
                 last_generation = generation;
             }
-            for (auto &cmd : network.take())
+            for (auto &event : source->poll())
             {
+                if (event.kind == sv::SourceEvent::Kind::Failure)
+                {
+                    throw std::runtime_error("FrameSource: " + event.reason);
+                }
+                if (event.kind == sv::SourceEvent::Kind::Frames)
+                {
+                    for (auto &frame : event.frames)
+                    {
+                        if (frame)
+                        {
+                            sync.push(std::move(*frame));
+                        }
+                    }
+                    sequence = event.batch_id;
+                    last_set = sync.select(sv::now_ns());
+                    paused = event.paused;
+                    dirty = true;
+                    record({{"event", "frame_set"},
+                            {"health", last_set.health},
+                            {"skew_ns", std::to_string(last_set.skew_ns)},
+                            {"sequence", std::to_string(sequence)}});
+                }
+                else if (event.kind == sv::SourceEvent::Kind::Status)
+                {
+                    record({{"event", "source_status"},
+                            {"camera_id", event.camera_id},
+                            {"reason", event.reason}});
+                }
+                else if (pending_source && event.request_id == source_request)
+                {
+                    paused = event.paused;
+                    if (!event.reason.empty())
+                    {
+                        answer(*pending_source, false, event.reason);
+                        pending_source.reset();
+                        continue;
+                    }
+                    revision++;
+                    applied_command = sv::parse_decimal_u64(
+                        std::string(pending_source->message.header.at("command_id").as_string()));
+                    dirty = true;
+                    answer(*pending_source, true, "ok");
+                    pending_source.reset();
+                }
+            }
+            if (!pending_source && pending_commands.empty())
+            {
+                for (auto &cmd : network.take())
+                {
+                    pending_commands.push_back(std::move(cmd));
+                }
+            }
+            while (!pending_source && !pending_commands.empty())
+            {
+                auto cmd = std::move(pending_commands.front());
+                pending_commands.pop_front();
                 auto origin = cmd.origin.lock();
                 if (!origin || origin->closed)
                 {
@@ -593,6 +701,7 @@ int main(int argc, char **argv)
                 std::string reason = "ok";
                 auto candidate = view;
                 std::string id, type;
+                std::optional<sv::SourceAction> source_action;
                 try
                 {
                     id = std::string(m.header.at("command_id").as_string());
@@ -650,17 +759,15 @@ int main(int argc, char **argv)
                     }
                     else if (type == "pause")
                     {
-                        paused = true;
+                        source_action = sv::SourceAction::Pause;
                     }
                     else if (type == "resume")
                     {
-                        paused = false;
-                        next = sv::now_ns();
+                        source_action = sv::SourceAction::Resume;
                     }
                     else if (type == "step")
                     {
-                        paused = true;
-                        step = true;
+                        source_action = sv::SourceAction::Step;
                     }
                     else
                     {
@@ -678,6 +785,16 @@ int main(int argc, char **argv)
                     accepted = false;
                     reason = e.what();
                 }
+                if (accepted && source_action)
+                {
+                    if (source->request(*source_action, ++source_request))
+                    {
+                        pending_source = std::move(cmd);
+                        continue;
+                    }
+                    accepted = false;
+                    reason = "source_control_queue_full";
+                }
                 if (accepted && type != "state")
                 {
                     view = candidate;
@@ -685,74 +802,9 @@ int main(int argc, char **argv)
                     applied_command = sv::parse_decimal_u64(id);
                     dirty = true;
                 }
-                network.answer(cmd, {21,
-                                     {{"command_id", id},
-                                      {"accepted", accepted},
-                                      {"reason", reason},
-                                      {"state_revision", std::to_string(revision)},
-                                      {"paused", paused},
-                                      {"azimuth_rad", view.azimuth},
-                                      {"elevation_rad", view.elevation},
-                                      {"distance_m", view.distance},
-                                      {"fusion_mode", c.fusion.mode},
-                                      {"diagnostic_view", c.fusion.diagnostic}},
-                                     {}});
-                record({{"event", "command"},
-                        {"command_id", id},
-                        {"accepted", accepted},
-                        {"state_revision", std::to_string(revision)}});
+                answer(cmd, accepted, reason);
             }
-            uint64_t now = sv::now_ns();
-            if ((!paused && now >= next) || step)
-            {
-                const auto &r = rows[row];
-                for (int k = 0; k < 4; k++)
-                {
-                    if (!r.paths[k].empty())
-                    {
-                        if (cached_paths[k] != r.paths[k])
-                        {
-                            cached_images[k] =
-                                std::make_shared<sv::Image>(sv::read_image(r.paths[k]));
-                            cached_paths[k] = r.paths[k];
-                            ++decode_count;
-                        }
-                        int64_t t = static_cast<int64_t>(now) + r.offset_ns[k];
-                        if (t < 0)
-                        {
-                            throw std::runtime_error("negative runtime time");
-                        }
-                        sync.push({k, sequence, static_cast<uint64_t>(t), r.scenario_ns,
-                                   cached_images[k]});
-                    }
-                }
-                sequence++;
-                last_set = sync.select(now);
-                record({{"event", "frame_set"},
-                        {"health", last_set.health},
-                        {"skew_ns", std::to_string(last_set.skew_ns)},
-                        {"sequence", std::to_string(sequence)}});
-                row++;
-                if (row == rows.size())
-                {
-                    row = 0;
-                    if (!looping)
-                    {
-                        paused = true;
-                    }
-                }
-                const uint64_t interval =
-                    row > 0
-                        ? rows[row].scenario_ns - rows[row - 1].scenario_ns
-                        : (rows.size() > 1 ? rows[1].scenario_ns - rows[0].scenario_ns : 33333333);
-                if (interval > UINT64_MAX - now)
-                {
-                    throw std::runtime_error("replay interval overflow");
-                }
-                next = now + interval;
-                step = false;
-                dirty = true;
-            }
+            const auto now = sv::now_ns();
             if (!paused)
             {
                 auto current = sync.select(now);
@@ -764,6 +816,7 @@ int main(int argc, char **argv)
             }
             if (dirty && network.ready && !network.busy && now - last_render >= 16000000)
             {
+                const auto source_stats = source->stats();
                 auto start = sv::now_ns();
                 auto image = renderer.render(last_set, view);
                 auto done = sv::now_ns();
@@ -780,7 +833,12 @@ int main(int argc, char **argv)
                         input["sequence_id"] = std::to_string(last_set.frames[k]->sequence);
                         input["release_timestamp_ns"] =
                             std::to_string(last_set.frames[k]->release_ns);
-                        oldest = std::min(oldest, last_set.frames[k]->release_ns);
+                        const auto &frame = *last_set.frames[k];
+                        input["source_session_id"] = frame.source_session;
+                        input["source_clock_domain"] = frame.source_clock_domain;
+                        input["source_sequence_id"] = std::to_string(frame.source_sequence);
+                        input["source_timestamp_ns"] = std::to_string(frame.source_timestamp_ns);
+                        oldest = std::min(oldest, frame.release_ns);
                     }
                     inputs.push_back(input);
                 }
@@ -805,7 +863,13 @@ int main(int argc, char **argv)
                      {"oldest_release_timestamp_ns", std::to_string(oldest)},
                      {"render_complete_timestamp_ns", std::to_string(done)},
                      {"render_readback_ms", double(done - start) / 1e6},
-                     {"decode_count", std::to_string(decode_count)},
+                     {"source_type", c.source.type},
+                     {"timestamp_basis", "server_delivery"},
+                     {"source_received", std::to_string(source_stats.received)},
+                     {"source_rejected", std::to_string(source_stats.rejected)},
+                     {"decode_count", std::to_string(source_stats.decoded)},
+                     {"source_dropped_batches", std::to_string(source_stats.dropped)},
+                     {"source_queue_depth", source_stats.queued_batches},
                      {"mesh_build_count", std::to_string(renderer.mesh_builds())},
                      {"upload_count", std::to_string(renderer.uploads())}},
                     std::move(image.pixels)};
@@ -815,7 +879,13 @@ int main(int argc, char **argv)
                             {"frame_id", std::to_string(frame_id)},
                             {"state_revision", std::to_string(revision)},
                             {"health", last_set.health},
-                            {"decode_count", std::to_string(decode_count)},
+                            {"source_type", c.source.type},
+                            {"timestamp_basis", "server_delivery"},
+                            {"source_received", std::to_string(source_stats.received)},
+                            {"source_rejected", std::to_string(source_stats.rejected)},
+                            {"decode_count", std::to_string(source_stats.decoded)},
+                            {"source_dropped_batches", std::to_string(source_stats.dropped)},
+                            {"source_queue_depth", source_stats.queued_batches},
                             {"mesh_build_count", std::to_string(renderer.mesh_builds())},
                             {"upload_count", std::to_string(renderer.uploads())},
                             {"render_readback_ms", double(done - start) / 1e6}});
@@ -825,6 +895,7 @@ int main(int argc, char **argv)
             }
             std::this_thread::sleep_for(std::chrono::milliseconds(2));
         }
+        source->stop();
         record({{"event", "shutdown"}});
     }
     catch (const std::exception &e)
