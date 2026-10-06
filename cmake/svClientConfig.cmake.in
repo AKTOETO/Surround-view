@@ -1,0 +1,5 @@
+@PACKAGE_INIT@
+include(CMakeFindDependencyMacro)
+find_dependency(Boost 1.75 CONFIG COMPONENTS json)
+find_dependency(Threads)
+include("${CMAKE_CURRENT_LIST_DIR}/svClientTargets.cmake")

@@ -206,7 +206,7 @@ struct Renderer::Impl
     GLsizei vehicle_vertices = 0;
     std::array<GLuint, 4> inputs{};
     std::array<std::shared_ptr<const Image>, 4> uploaded{};
-    uint64_t upload_count = 0;
+    uint64_t upload_count = 0, mesh_build_count = 0;
     RenderTiming timing;
     GLuint draw_query = 0;
     PFNGLGENQUERIESEXTPROC gen_queries = nullptr;
@@ -287,6 +287,7 @@ Renderer::Renderer(const Config &c) : impl_(std::make_unique<Impl>())
     {
         i.mesh = make_mesh(c.surface);
     }
+    ++i.mesh_build_count;
     auto platform = reinterpret_cast<PFNEGLGETPLATFORMDISPLAYEXTPROC>(
         eglGetProcAddress("eglGetPlatformDisplayEXT"));
     const char *backend = std::getenv("SV_EGL_PLATFORM");
@@ -642,6 +643,11 @@ std::string Renderer::device() const
 uint64_t Renderer::uploads() const
 {
     return impl_->upload_count;
+}
+
+uint64_t Renderer::mesh_builds() const
+{
+    return impl_->mesh_build_count;
 }
 
 size_t Renderer::triangles() const

@@ -167,6 +167,37 @@ int main(int argc, char **argv)
                 rejects([&] { sv::parse_config(value); }, "invalid fusion parameters rejected");
             }
         }
+        check(config.connections.unix_enabled && !config.connections.tcp_enabled,
+              "legacy connection is Unix only");
+        for (const auto &n :
+             {boost::json::object{
+                  {"unix", boost::json::object{{"enabled", true}, {"directory", "/tmp/sv-test"}}}},
+              boost::json::object{{"tcp", boost::json::object{{"enabled", true},
+                                                              {"address", "127.0.0.1"},
+                                                              {"control_port", 53101},
+                                                              {"data_port", 53102}}}}})
+        {
+            auto value = config.effective;
+            value.as_object()["connections"] = n;
+            check(sv::parse_config(value).connections.explicit_config,
+                  "explicit connection policy");
+        }
+        for (const auto &n :
+             {boost::json::object{},
+              boost::json::object{{"udp", boost::json::object{{"enabled", true}}}},
+              boost::json::object{{"unix", boost::json::object{{"enabled", true}}}},
+              boost::json::object{
+                  {"unix", boost::json::object{{"enabled", true}, {"directory", "relative"}}}},
+              boost::json::object{{"tcp", boost::json::object{{"enabled", true},
+                                                              {"address", "127.0.0.1"},
+                                                              {"control_port", 53101},
+                                                              {"data_port", 53101}}}},
+              boost::json::object{{"extra", true}}})
+        {
+            auto value = config.effective;
+            value.as_object()["connections"] = n;
+            rejects([&] { sv::parse_config(value); }, "invalid connection policy rejected");
+        }
         auto bad = config.effective;
         bad.as_object()["unexpected"] = 1;
         rejects([&] { sv::parse_config(bad); }, "unknown config key");

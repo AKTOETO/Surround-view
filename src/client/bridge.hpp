@@ -1,11 +1,12 @@
 #pragma once
+#include "sv/client.hpp"
 #include <QElapsedTimer>
 #include <QImage>
 #include <QJsonObject>
-#include <QLocalSocket>
 #include <QMutex>
 #include <QObject>
 #include <QQuickImageProvider>
+#include <atomic>
 
 class FrameProvider : public QQuickImageProvider
 {
@@ -27,19 +28,16 @@ class Bridge : public QObject
     Q_OBJECT
     Q_PROPERTY(QString frameUrl READ frameUrl NOTIFY changed)
     Q_PROPERTY(QString status READ status NOTIFY changed)
-    QLocalSocket control_, data_;
-    QByteArray controlBytes_, dataBytes_;
-    QString directory_, session_, token_, url_, status_ = "Соединение с сервером…", readyFrame_,
-                                                lastPresented_;
+    std::unique_ptr<sv::client::Client> client_;
+    QString url_, status_ = "Соединение с сервером…", readyFrame_, lastPresented_;
     FrameProvider *provider_;
-    quint64 command_ = 0;
-    void consume(QLocalSocket *, QByteArray &, bool);
-    void write(QLocalSocket &, quint16, const QJsonObject &);
-    void command(QJsonObject);
+    std::atomic<unsigned> pending_events_{0};
+    void consume(sv::client::Event);
+    void command(QString, boost::json::object = {});
 
   public:
 
-    Bridge(QString, FrameProvider *);
+    Bridge(sv::client::Endpoint, FrameProvider *);
     ~Bridge() override;
 
     QString frameUrl() const

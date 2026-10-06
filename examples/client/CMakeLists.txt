@@ -1,0 +1,6 @@
+cmake_minimum_required(VERSION 3.20)
+project(svClientConsumer LANGUAGES CXX)
+set(CMAKE_CXX_STANDARD 17)
+find_package(svClient CONFIG REQUIRED)
+add_executable(sv-client-probe main.cpp)
+target_link_libraries(sv-client-probe PRIVATE sv::client)

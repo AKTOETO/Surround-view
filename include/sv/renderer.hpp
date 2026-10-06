@@ -28,6 +28,7 @@ class Renderer
     std::string vendor() const;
     std::string device() const;
     uint64_t uploads() const;
+    uint64_t mesh_builds() const;
     size_t triangles() const;
     RenderTiming last_timing() const;
     boost::json::object capabilities() const;

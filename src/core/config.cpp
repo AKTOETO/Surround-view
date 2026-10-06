@@ -190,7 +190,7 @@ Config parse_config(const boost::json::value &value)
     keys(o,
          {"schema_version", "profile_id", "units", "vehicle", "cameras", "surface",
           "virtual_camera", "output", "runtime"},
-         "config", {"fusion"});
+         "config", {"fusion", "connections"});
     require(integer(o.at("schema_version"), 1, 1) == 1, "schema_version");
     Config c;
     c.effective = value;
@@ -222,6 +222,61 @@ Config parse_config(const boost::json::value &value)
                 "fusion.edge_width_px: expected (0,4096]");
         require(c.fusion.angle_power > 0 && c.fusion.angle_power <= 32,
                 "fusion.angle_power: expected (0,32]");
+    }
+    if (const auto *value = o.if_contains("connections"))
+    {
+        const auto &connections = value->as_object();
+        keys(connections, {}, "connections", {"unix", "tcp", "udp"});
+        auto &n = c.connections;
+        n.explicit_config = true;
+        n.unix_enabled = false;
+        if (const auto *v = connections.if_contains("unix"))
+        {
+            const auto &u = v->as_object();
+            keys(u, {"enabled"}, "connections.unix", {"directory"});
+            n.unix_enabled = u.at("enabled").as_bool();
+            if (const auto *d = u.if_contains("directory"))
+            {
+                n.unix_directory = str(*d);
+            }
+            if (n.unix_enabled)
+            {
+                require(u.contains("directory") && !n.unix_directory.empty() &&
+                            n.unix_directory.size() <= 80 && n.unix_directory.front() == '/',
+                        "connections.unix.directory: absolute path <=80 bytes required");
+            }
+        }
+        if (const auto *v = connections.if_contains("tcp"))
+        {
+            const auto &t = v->as_object();
+            keys(t, {"enabled"}, "connections.tcp", {"address", "control_port", "data_port"});
+            n.tcp_enabled = t.at("enabled").as_bool();
+            if (const auto *a = t.if_contains("address"))
+            {
+                n.address = str(*a);
+            }
+            if (const auto *p = t.if_contains("control_port"))
+            {
+                n.control_port = integer(*p, 1, 65535);
+            }
+            if (const auto *p = t.if_contains("data_port"))
+            {
+                n.data_port = integer(*p, 1, 65535);
+            }
+            if (n.tcp_enabled)
+            {
+                require(t.contains("address") && !n.address.empty() && n.control_port &&
+                            n.data_port && n.control_port != n.data_port,
+                        "connections.tcp: explicit address and distinct ports required");
+            }
+        }
+        if (const auto *v = connections.if_contains("udp"))
+        {
+            const auto &u = v->as_object();
+            keys(u, {"enabled"}, "connections.udp");
+            require(!u.at("enabled").as_bool(), "connections.udp: not implemented");
+        }
+        require(n.unix_enabled || n.tcp_enabled, "connections: no enabled listener");
     }
     const auto &units = o.at("units").as_object();
     keys(units, {"length", "angle", "time"}, "units");

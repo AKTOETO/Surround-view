@@ -1,7 +1,7 @@
 %{!?sv_with_client:%global sv_with_client 0}
 
 Name:           surround-view
-Version:        0.4.0
+Version:        0.5.0
 Release:        1
 Summary:        Surround view research tools and native platform qualification
 License:        LicenseRef-Proprietary AND CC0-1.0
@@ -51,6 +51,7 @@ This is a laboratory package, not a certified Aurora application.
 
 %files
 %defattr(-,root,root,-)
+%{_bindir}/sv-client-probe
 %{_bindir}/sv-project
 %{_bindir}/sv-bench
 %{_bindir}/sv-server
@@ -62,4 +63,8 @@ This is a laboratory package, not a certified Aurora application.
 %if %{sv_with_client}
 %{_bindir}/sv-client
 %endif
+%{_libdir}/libsv-client-lib.a
+%{_libdir}/libsv-wire.a
+%{_libdir}/cmake/svClient
+%{_includedir}/sv
 %{_datadir}/surround-view

@@ -3,6 +3,7 @@
 #include "sv/vision.hpp"
 #include <atomic>
 #include <boost/asio.hpp>
+#include <boost/asio/generic/stream_protocol.hpp>
 #include <boost/asio/local/stream_protocol.hpp>
 #include <cmath>
 #include <csignal>
@@ -10,12 +11,13 @@
 #include <fstream>
 #include <iostream>
 #include <mutex>
+#include <openssl/rand.h>
 #include <thread>
 
 namespace
 {
 namespace asio = boost::asio;
-using Socket = asio::local::stream_protocol::socket;
+using Socket = asio::generic::stream_protocol::socket;
 struct Connection;
 
 struct Command
@@ -28,17 +30,22 @@ struct ServerIO
 {
     asio::io_context io;
     asio::local::stream_protocol::acceptor control, data;
+    asio::ip::tcp::acceptor tcp_control, tcp_data;
+    bool owns_control = false, owns_data = false;
     asio::signal_set signals;
     std::filesystem::path directory;
     std::thread worker;
     std::atomic<bool> stop{false}, ready{false}, busy{false};
+    std::atomic<uint64_t> generation{0};
     std::shared_ptr<Connection> ctl, video;
     std::mutex mutex;
     std::deque<Command> commands;
     std::string session, token;
-    ServerIO(const std::filesystem::path &);
+    ServerIO(const sv::Connections &);
     ~ServerIO();
-    void accept(bool);
+    template <class Acceptor> void accept(Acceptor &, bool);
+    void connected(Socket, bool);
+    void new_session();
     void deliver(Command);
     std::vector<Command> take();
     void answer(const Command &, sv::Message);
@@ -115,7 +122,7 @@ struct Connection : std::enable_shared_from_this<Connection>
         {
             return;
         }
-        if (output.size() >= (is_control ? 64 : 1))
+        if (output.size() >= (is_control ? 64 : 2))
         {
             close();
             return;
@@ -203,6 +210,7 @@ struct Connection : std::enable_shared_from_this<Connection>
             hello = true;
             if (!is_control)
             {
+                ++host.generation;
                 host.ready = true;
             }
             send({2,
@@ -210,7 +218,7 @@ struct Connection : std::enable_shared_from_this<Connection>
                    {"data_token", host.token},
                    {"profile", "linux-prototype-v1"},
                    {"capabilities", boost::json::array{"replay", "orbit", "zoom", "preset", "pause",
-                                                       "step", "copied_rgba"}}},
+                                                       "step", "resume", "state", "copied_rgba"}}},
                   {}});
             return;
         }
@@ -267,44 +275,107 @@ struct Connection : std::enable_shared_from_this<Connection>
     }
 };
 
-ServerIO::ServerIO(const std::filesystem::path &dir)
-    : control(io), data(io), signals(io, SIGINT, SIGTERM), directory(dir)
+template <class Acceptor> void ServerIO::accept(Acceptor &listener, bool c)
 {
-    std::filesystem::create_directories(dir);
-    if (std::filesystem::exists(dir / "control.sock") || std::filesystem::exists(dir / "data.sock"))
+    listener.async_accept(
+        [this, &listener, c](auto ec, auto socket)
+        {
+            if (!ec)
+            {
+                connected(Socket(std::move(socket)), c);
+            }
+            if (!stop && listener.is_open())
+            {
+                accept(listener, c);
+            }
+        });
+}
+
+void ServerIO::new_session()
+{
+    std::array<unsigned char, 24> bytes{};
+    if (RAND_bytes(bytes.data(), bytes.size()) != 1)
     {
-        throw std::runtime_error("IPC paths already exist; select a fresh --ipc-dir");
+        throw std::runtime_error("session entropy failure");
     }
-    bool ctl_owned = false, data_owned = false;
+    constexpr char hex[] = "0123456789abcdef";
+    token.clear();
+    for (auto b : bytes)
+    {
+        token += hex[b >> 4];
+        token += hex[b & 15];
+    }
+    session = std::to_string(sv::now_ns()) + "-" + token.substr(0, 16);
+}
+
+ServerIO::ServerIO(const sv::Connections &n)
+    : control(io), data(io), tcp_control(io), tcp_data(io), signals(io, SIGINT, SIGTERM),
+      directory(n.unix_directory)
+{
     try
     {
-        control.open();
-        control.bind(asio::local::stream_protocol::endpoint((dir / "control.sock").string()));
-        ctl_owned = true;
-        control.listen(2);
-        data.open();
-        data.bind(asio::local::stream_protocol::endpoint((dir / "data.sock").string()));
-        data_owned = true;
-        data.listen(2);
+        if (n.unix_enabled)
+        {
+            std::filesystem::create_directories(directory);
+            if (std::filesystem::exists(directory / "control.sock") ||
+                std::filesystem::exists(directory / "data.sock"))
+            {
+                throw std::runtime_error("IPC paths already exist; select fresh paths");
+            }
+            control.open();
+            control.bind(
+                asio::local::stream_protocol::endpoint((directory / "control.sock").string()));
+            owns_control = true;
+            control.listen(2);
+            data.open();
+            data.bind(asio::local::stream_protocol::endpoint((directory / "data.sock").string()));
+            owns_data = true;
+            data.listen(2);
+        }
+        if (n.tcp_enabled)
+        {
+            auto address = asio::ip::make_address(n.address);
+            auto bind = [&](auto &acceptor, uint16_t port)
+            {
+                asio::ip::tcp::endpoint endpoint(address, port);
+                acceptor.open(endpoint.protocol());
+                acceptor.set_option(asio::socket_base::reuse_address(true));
+                if (address.is_v6())
+                {
+                    acceptor.set_option(asio::ip::v6_only(true));
+                }
+                acceptor.bind(endpoint);
+                acceptor.listen(2);
+            };
+            bind(tcp_control, n.control_port);
+            bind(tcp_data, n.data_port);
+        }
+        new_session();
+        if (n.unix_enabled)
+        {
+            accept(control, true);
+            accept(data, false);
+        }
+        if (n.tcp_enabled)
+        {
+            accept(tcp_control, true);
+            accept(tcp_data, false);
+        }
+        signals.async_wait([this](auto, int) { stop = true; });
+        worker = std::thread([this] { io.run(); });
     }
     catch (...)
     {
-        if (ctl_owned)
+        if (owns_control)
         {
-            std::filesystem::remove(dir / "control.sock");
+            std::filesystem::remove(directory / "control.sock");
         }
-        if (data_owned)
+        if (owns_data)
         {
-            std::filesystem::remove(dir / "data.sock");
+            std::filesystem::remove(directory / "data.sock");
         }
         throw;
     }
-    session = std::to_string(sv::now_ns());
-    token = session + "-data";
-    accept(true);
-    accept(false);
-    signals.async_wait([this](auto, int) { stop = true; });
-    worker = std::thread([this] { io.run(); });
 }
 
 ServerIO::~ServerIO()
@@ -323,40 +394,31 @@ ServerIO::~ServerIO()
     {
         video->close();
     }
-    std::filesystem::remove(directory / "control.sock");
-    std::filesystem::remove(directory / "data.sock");
+    if (owns_control)
+    {
+        std::filesystem::remove(directory / "control.sock");
+    }
+    if (owns_data)
+    {
+        std::filesystem::remove(directory / "data.sock");
+    }
 }
 
-void ServerIO::accept(bool c)
+void ServerIO::connected(Socket socket, bool c)
 {
-    auto &listener = c ? control : data;
-    listener.async_accept(
-        [this, c](auto ec, Socket socket)
-        {
-            if (!ec)
-            {
-                auto &current = c ? ctl : video;
-                if (current && !current->closed)
-                {
-                    boost::system::error_code ignored;
-                    socket.close(ignored);
-                }
-                else
-                {
-                    if (c)
-                    {
-                        session = std::to_string(sv::now_ns());
-                        token = session + "-data";
-                    }
-                    current = std::make_shared<Connection>(std::move(socket), *this, c);
-                    current->start();
-                }
-            }
-            if (!stop)
-            {
-                accept(c);
-            }
-        });
+    auto &current = c ? ctl : video;
+    if (current && !current->closed)
+    {
+        boost::system::error_code ignored;
+        socket.close(ignored);
+        return;
+    }
+    if (c)
+    {
+        new_session();
+    }
+    current = std::make_shared<Connection>(std::move(socket), *this, c);
+    current->start();
 }
 
 void ServerIO::deliver(Command command)
@@ -464,16 +526,28 @@ int main(int argc, char **argv)
                 throw std::runtime_error("unknown argument " + key);
             }
         }
-        if (cfg.empty() || manifest.empty() || ipc.empty())
+        if (cfg.empty() || manifest.empty())
         {
             throw std::runtime_error("usage: sv-server --config FILE --manifest FILE --ipc-dir DIR "
                                      "[--trace FILE --loop true|false]");
         }
         auto c = sv::load_config(cfg);
+        if (c.connections.explicit_config && !ipc.empty())
+        {
+            throw std::runtime_error("--ipc-dir cannot override explicit connections config");
+        }
+        if (!c.connections.explicit_config && !ipc.empty())
+        {
+            c.connections.unix_directory = ipc.string();
+        }
+        if (c.connections.tcp_enabled)
+        {
+            asio::ip::make_address(c.connections.address);
+        }
         auto rows = sv::load_manifest(manifest, c);
         sv::Renderer renderer(c);
         sv::Synchronizer sync(c);
-        ServerIO network(ipc);
+        ServerIO network(c.connections);
         sv::View view = c.view;
         if (!std::filesystem::path(trace).parent_path().empty())
         {
@@ -491,8 +565,9 @@ int main(int argc, char **argv)
         };
         record(
             {{"event", "startup"}, {"gl_renderer", renderer.device()}, {"profile", c.profile_id}});
-        uint64_t revision = 0, frame_id = 0, sequence = 0, applied_command = 0;
+        uint64_t revision = 0, frame_id = 0, sequence = 0, applied_command = 0, decode_count = 0;
         size_t row = 0;
+        uint64_t last_generation = 0;
         uint64_t next = sv::now_ns(), last_render = 0;
         bool paused = false, step = false, dirty = true;
         sv::FrameSet last_set;
@@ -500,6 +575,12 @@ int main(int argc, char **argv)
         std::array<std::shared_ptr<const sv::Image>, 4> cached_images;
         while (!network.stop)
         {
+            const auto generation = network.generation.load();
+            if (generation != last_generation && network.ready)
+            {
+                dirty = true;
+                last_generation = generation;
+            }
             for (auto &cmd : network.take())
             {
                 auto origin = cmd.origin.lock();
@@ -527,7 +608,11 @@ int main(int argc, char **argv)
                         }
                         return x;
                     };
-                    if (type == "orbit")
+                    if (type == "state")
+                    {
+                        // Query returns authoritative state without a mutation.
+                    }
+                    else if (type == "orbit")
                     {
                         candidate.azimuth = std::remainder(
                             candidate.azimuth + number("azimuth_delta_rad"), 2 * sv::pi);
@@ -593,7 +678,7 @@ int main(int argc, char **argv)
                     accepted = false;
                     reason = e.what();
                 }
-                if (accepted)
+                if (accepted && type != "state")
                 {
                     view = candidate;
                     revision++;
@@ -604,7 +689,13 @@ int main(int argc, char **argv)
                                      {{"command_id", id},
                                       {"accepted", accepted},
                                       {"reason", reason},
-                                      {"state_revision", std::to_string(revision)}},
+                                      {"state_revision", std::to_string(revision)},
+                                      {"paused", paused},
+                                      {"azimuth_rad", view.azimuth},
+                                      {"elevation_rad", view.elevation},
+                                      {"distance_m", view.distance},
+                                      {"fusion_mode", c.fusion.mode},
+                                      {"diagnostic_view", c.fusion.diagnostic}},
                                      {}});
                 record({{"event", "command"},
                         {"command_id", id},
@@ -624,6 +715,7 @@ int main(int argc, char **argv)
                             cached_images[k] =
                                 std::make_shared<sv::Image>(sv::read_image(r.paths[k]));
                             cached_paths[k] = r.paths[k];
+                            ++decode_count;
                         }
                         int64_t t = static_cast<int64_t>(now) + r.offset_ns[k];
                         if (t < 0)
@@ -649,7 +741,15 @@ int main(int argc, char **argv)
                         paused = true;
                     }
                 }
-                next = now + 33333333;
+                const uint64_t interval =
+                    row > 0
+                        ? rows[row].scenario_ns - rows[row - 1].scenario_ns
+                        : (rows.size() > 1 ? rows[1].scenario_ns - rows[0].scenario_ns : 33333333);
+                if (interval > UINT64_MAX - now)
+                {
+                    throw std::runtime_error("replay interval overflow");
+                }
+                next = now + interval;
                 step = false;
                 dirty = true;
             }
@@ -705,6 +805,8 @@ int main(int argc, char **argv)
                      {"oldest_release_timestamp_ns", std::to_string(oldest)},
                      {"render_complete_timestamp_ns", std::to_string(done)},
                      {"render_readback_ms", double(done - start) / 1e6},
+                     {"decode_count", std::to_string(decode_count)},
+                     {"mesh_build_count", std::to_string(renderer.mesh_builds())},
                      {"upload_count", std::to_string(renderer.uploads())}},
                     std::move(image.pixels)};
                 if (network.publish(std::move(output)))
@@ -713,6 +815,8 @@ int main(int argc, char **argv)
                             {"frame_id", std::to_string(frame_id)},
                             {"state_revision", std::to_string(revision)},
                             {"health", last_set.health},
+                            {"decode_count", std::to_string(decode_count)},
+                            {"mesh_build_count", std::to_string(renderer.mesh_builds())},
                             {"upload_count", std::to_string(renderer.uploads())},
                             {"render_readback_ms", double(done - start) / 1e6}});
                     dirty = false;
