@@ -1,3 +1,4 @@
+#include "board_observations.hpp"
 #include "calibrate_extrinsics.hpp"
 #include "sv/report.hpp"
 #include "sv/vision.hpp"
@@ -58,12 +59,16 @@ int main(int argc, char **argv)
         if (argc < 2)
         {
             throw std::runtime_error(
-                "usage: sv-calibrate detect|intrinsics|extrinsics --output NEW_DIR [options]");
+                "usage: sv-calibrate detect|intrinsics|extrinsics|board-observations [options]");
         }
         const std::string mode = argv[1];
         if (mode == "extrinsics")
         {
             return calibrate_extrinsics_command(argc, argv);
+        }
+        if (mode == "board-observations")
+        {
+            return board_observations_command(argc, argv);
         }
         std::map<std::string, std::string> options;
         const std::set<std::string> allowed{"--image",       "--dataset", "--output",
