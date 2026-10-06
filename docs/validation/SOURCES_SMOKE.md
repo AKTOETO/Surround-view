@@ -39,7 +39,7 @@ sv-source-tests /usr/share/surround-view/configs/synthetic.json
 
 ## Открытые условия
 
-Не выполнены физическое двухмашинное испытание, аппаратный capture/cancellation и exposure timestamps, clock mapping, длительный overload/RSS/thermal, автоматический producer reconnect, realtime Blender rendering/вождение. Интеграция producer проверена на analytic recording и сохранённой Blender-записи; оба source режима validator пройдены. Предыдущая проверка мира — [[validation/BLENDER_SMOKE]]. Source decoder ограничивает сообщение, а mailbox — число owning frames; это не замер пикового RSS.
+Не выполнены физическое двухмашинное испытание, аппаратный capture/cancellation и exposure timestamps, clock mapping, длительный overload/RSS/thermal, realtime Blender rendering/вождение. Интеграция producer проверена на analytic recording и сохранённой Blender-записи; оба source режима validator пройдены. Предыдущая проверка мира — [[validation/BLENDER_SMOKE]]. Source decoder ограничивает сообщение, а mailbox — число owning frames; это не замер пикового RSS.
 
 ## Linux RPM 0.6.0
 
@@ -61,3 +61,5 @@ Source0 обоих пакетов экспортирован из `674102a0b1e6b
 [[validation/baselines/PC_RTX_V06]] и [[validation/baselines/PC_MESA_V06]]: Release revision `6e2707e4b52a786b2c8580a6cf08e11043eb5454`, 60 samples/10 warmup/3 contexts, OpenCV threads=1, по 25 pass, 10 workloads. Strict comparison прошёл: [[validation/PC_COMPARISON_V06]]. Серии запущены последовательно; это короткие render/readback измерения, не full server/thermal/display latency. Старые 0.5 отчёты не менялись.
 
 Первый запуск с label Mesa фактически использовал NVIDIA: он оставлен только в локальном `artifacts/platform-mesa-v06` и **не опубликован** как Mesa baseline. Для правильного запуска выбран `/usr/share/glvnd/egl_vendor.d/50_mesa.json`, actual GL_RENDERER — `llvmpipe (LLVM 22.1.8, 256 bits)`, raw report в `artifacts/platform-mesa-v06-forced`. `LIBGL_ALWAYS_SOFTWARE=1` отдельно недостаточен при GLVND. Инструкция — [[engineering/PLATFORM_TEST]].
+
+Последующее host-расширение producer добавляет автоматический reconnect, late-drop и JSON/Markdown отчёты: [[validation/PRODUCER_RECOVERY]]. Первоначальная host acceptance содержала три cases; текущая camera_sources включает 13 cases. C++ payload и первичные native baselines выше не изменены.

@@ -386,13 +386,45 @@ note bottom of R : Replay либо SocketSource;\nbackend выбирается c
 
 На паузе socket worker продолжает читать и проверять поток, но отбрасывает новые входы. Это предотвращает накопление старого видео до resume; принятые до pause кадры обрабатываются перед completion. `step` имеет смысл только для конечной replay-последовательности, поэтому socket backend отклоняет его без изменения revision. Клиент узнаёт доступные операции из capabilities.
 
-Host producer проверяет хэши и calibration IDs записи, читает изображения четырьмя потоками и передаёт их в отдельные сокеты. Он позволяет использовать сохранённый Blender-мир как источник данных без создания `/dev/video*`. Он пока не рендерит интерактивный мир и не выполняет автоматический reconnect; перезапуск утилиты создаёт новые сессии. Прямой VideoCapture backend отложен до реализации ограниченного shutdown: блокирующий вызов драйвера нельзя считать отменяемым только потому, что он перенесён в thread.
+Host producer проверяет хэши и calibration IDs записи, читает изображения четырьмя потоками и передаёт их в отдельные сокеты. Он позволяет использовать сохранённый Blender-мир как источник данных без создания `/dev/video*`. Он пока не рендерит интерактивный мир; автоматический reconnect с ограниченным budget и новыми сессиями реализован в следующем подразделе. Прямой VideoCapture backend отложен до реализации ограниченного shutdown: блокирующий вызов драйвера нельзя считать отменяемым только потому, что он перенесён в thread.
 
 ![Обзор Blender-улицы после передачи через виртуальные камеры](figures/implementation/03_blender_socket.png)
 
 *Рисунок 3.14 — Actual RGBA readback `sv-server` на RTX 5070 Ti: Blender recording → четыре Unix producer sockets → купол + пол. Показано сохранённое окружение автомобиля; растяжения и швы текущей проекции остаются предметом исследования качества. Рисунок публикует `plot_blender.py --socket-validation`; это не рендер внешней Blender-камеры.*
 
 Решение и пределы подтверждаются собственным кодом: [source.hpp](../../include/sv/source.hpp), [replay.cpp](../../src/sources/replay.cpp), [socket.cpp](../../src/sources/socket.cpp), [producer.py](../../tools/producer.py). Подробный контракт и команды — [[engineering/SOURCES]], результаты — [[validation/SOURCES_SMOKE]]. Свойства thread pool, драйверов и realtime Blender, которые в коде отсутствуют, этим компонентам не приписываются.
+
+## 3.17 Восстановление producer и сохранение актуальности
+
+Однократное подключение завершало camera worker при первом разрыве. Это мешало независимо перезапускать сервер во время настройки: остальные процессы приходилось запускать заново. Host producer теперь различает transport failure, ошибку протокола и пользовательскую остановку. Каждая камера имеет собственные retry budget, socket timeout и interruptible backoff. EOF/timeout закрывает текущий socket целиком; новый handshake создаёт новую session, source sequence начинается с 0. Успешный send сбрасывает budget, malformed handshake завершает данную камеру без повторов.
+
+При восстановлении недостаточно повторить все пропущенные кадры: такой burst создаёт запоздалое видео и быстро переполняет bounded server queue. Producer сохраняет общий epoch записи и перед очередным send сравнивает текущее monotonic время с запланированным. Если lateness превышает настроенный budget, ряд учитывается как пропущенный. Проверка повторяется после handshake, поскольку сам connect мог задержать кадр. Это ограничение возраста до send, а не гарантия свежести sensor exposure на сервере.
+
+```plantuml
+@startuml
+participant "Camera worker" as P
+participant "sv-server" as S
+participant "Локальное расписание" as T
+P -> S : frame / session A
+... server restart ...
+P -> S : следующий send
+S --x P : EOF / reset
+P -> P : close socket, bounded retry
+P -> T : текущий epoch + scenario offset
+T --> P : устаревшие ряды
+P -> P : skip без catch-up burst
+P -> S : новый HELLO
+S --> P : session B
+P -> T : проверить lateness после handshake
+P -> S : актуальный frame / sequence 0
+@enduml
+```
+
+*Рисунок 3.15 — Восстановление одного источника без накопления application backlog. Уже переданные в kernel байты не отзываются; камеры восстанавливаются независимо.*
+
+JSON/Markdown отчёт содержит четыре camera records с числами отправок, late/missing skips, transport errors, reconnects и временем блокировки send. Запись отчёта не создаёт unbounded history: сохраняются счётчики и последняя session/error. `completed` описывает завершение расписания; type 10 не имеет ACK обработки, поэтому sent нельзя объявлять числом кадров, использованных рендерером. При stop сохраняются частичные результаты; отказ одной камеры не завершает workers остальных камер.
+
+Испытания используют настоящий sv-server с перезапуском на Unix/TCP и отдельные socket receivers для blocked handshake/slow read. Наблюдается восстановление четырёх READY inputs с новыми sessions, а просроченные ряды пропускаются. Методика/первичные отчёты — [[validation/PRODUCER_RECOVERY]], рабочие параметры — [[engineering/SOURCES]]. Двухмашинная синхронизация часов, долговременный RSS и аппаратный capture этим опытом не подтверждаются.
 
 ## Выводы по третьей главе
 

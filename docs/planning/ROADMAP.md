@@ -138,4 +138,8 @@ Unix/TCP реализовать первыми; UDP планировать от�
 
 Выполнены replay `FrameSource` с отдельным decode worker, выбор replay/socket через config, четыре независимых Unix/TCP virtual-camera endpoints, per-camera bounded queues, pause barrier, provenance и producer проверенных записей. Native fixture пригоден для RPM без Python; host acceptance — [[validation/SOURCES_SMOKE]]. Source endpoints не смешиваются с client connections.
 
-Далее: server-side `/dev/video*` adapter с ограниченным shutdown, аппаратные timestamps и clock mapping; physical two-host test; интерактивный Blender render/управление и producer reconnect; depth/visibility truth и quality-метрики. Наличие socket source не закрывает эти пункты и полный M5/M8/M9.
+Далее: server-side `/dev/video*` adapter с ограниченным shutdown, аппаратные timestamps и clock mapping; physical two-host test; интерактивный Blender render/управление; depth/visibility truth и quality-метрики. Наличие socket source не закрывает эти пункты и полный M5/M8/M9.
+
+## Host producer: восстановление после отказов
+
+Автоматический per-camera reconnect, retry/timeouts, fixed schedule с late-drop и JSON/Markdown report реализованы. Unix/TCP actual-server restart возвращает четыре READY-потока; stalled handshake/slow reader не останавливает соседние камеры. [[validation/PRODUCER_RECOVERY]] закрывает этот инженерный пункт M8. Длительные RSS/thermal runs, physical two-host capture clocks и аппаратный backend остаются отдельными условиями. C++ payload/fingerprint не менялся; новые native baselines из-за host-утилиты не требуются.

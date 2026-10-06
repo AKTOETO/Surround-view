@@ -66,3 +66,5 @@ Unix/TCP и API библиотеки: [[engineering/CLIENT_LIBRARY]]. Сверк
 Корневой `TODO.md` лежит вне отдельного хранилища `docs`: открывать его в редакторе проекта. Существующие настройки `.obsidian` в корне сохранены; Obsidian может создать отдельные настройки внутри `docs` при его первом открытии. Оба каталога настроек и установленные плагины исключены из Git через `.gitignore`.
 
 Текущая инженерная проверка 0.6.0: [[validation/SOURCES_SMOKE]], [[validation/baselines/PC_RTX_V06]], [[validation/baselines/PC_MESA_V06]], [[validation/PC_COMPARISON_V06]]. Отчёты 0.5.0 и более ранние сохранены как исторические.
+
+Восстановление producer после отказов и runtime reports: [[validation/PRODUCER_RECOVERY]], [[engineering/SOURCES#Восстановление producer и отчёт]].

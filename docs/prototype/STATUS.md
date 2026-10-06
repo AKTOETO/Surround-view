@@ -71,3 +71,7 @@ QQuickImageProvider заменяет проектный QQuickItem/QSGTexture. �
 ## Источники 0.6.0
 
 Вход выбирается из config: replay worker либо четыре Unix/TCP socket cameras. `tools/producer.py` передаёт verified recording четырьмя независимыми потоками; GL только забирает готовые frames. Пауза имеет source completion barrier; socket-входы на паузе читаются и отбрасываются, step недоступен. Проверки 12/12 Release, 8/8 CPU ASan/UBSan и source saturation/fault/reconnect — [[validation/SOURCES_SMOKE]]. Полный формат — [[engineering/SOURCES]]. Исторические уточнения 0.5.0 выше описывают предыдущую версию; аппаратный backend и realtime Blender остаются открытыми.
+
+## Восстановление host producer
+
+`tools/producer.py` автоматически восстанавливает Unix/TCP camera connections с независимыми retry budgets, пропускает просроченные кадры и сохраняет JSON/Markdown отчёт, в том числе при SIGINT/SIGTERM. Проверка настоящего server restart, blocked handshake и slow receiver — [[validation/PRODUCER_RECOVERY]]. Это host-расширение 0.6.0; C++ API, native fingerprint и проверенные RPM не изменены. Аппаратный backend, sensor clocks и интерактивный Blender остаются открытыми.
