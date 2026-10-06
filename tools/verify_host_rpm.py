@@ -84,9 +84,16 @@ def main():
                            env=environment, check=True)
         subprocess.run(["bsdtar", "-xf", str(archive), "-C", str(payload)], check=True)
         consumer = temporary / "consumer"
-        subprocess.run(["cmake", "-S", str(ROOT / "examples/client"), "-B", str(consumer),
-                        f"-DCMAKE_PREFIX_PATH={payload / 'usr'}"], check=True, capture_output=True)
-        subprocess.run(["cmake", "--build", str(consumer), "-j", "2"], check=True, capture_output=True)
+        package_configs = list((payload / "usr").rglob("svClientConfig.cmake"))
+        if len(package_configs) != 1:
+            raise RuntimeError("expected one installed svClient CMake config")
+        configure = subprocess.run(["cmake", "-S", str(ROOT / "examples/client"), "-B", str(consumer),
+                        f"-DsvClient_DIR={package_configs[0].parent}"], text=True, capture_output=True)
+        if configure.returncode:
+            raise RuntimeError(configure.stdout + configure.stderr)
+        compile_result = subprocess.run(["cmake", "--build", str(consumer), "-j", "2"], text=True, capture_output=True)
+        if compile_result.returncode:
+            raise RuntimeError(compile_result.stdout + compile_result.stderr)
         dependencies = subprocess.check_output(["ldd", str(consumer / "sv-client-probe")], text=True)
         if any(name in dependencies for name in ["opencv", "libQt", "libEGL", "libGLES"]):
             raise RuntimeError("installed client consumer links GUI/vision/GPU dependencies")

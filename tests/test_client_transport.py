@@ -3,6 +3,7 @@ import json
 import os
 from pathlib import Path
 import socket
+import select
 import subprocess
 import sys
 import tempfile
@@ -11,7 +12,7 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'tools'))
-from ipc import Client
+from ipc import Client, pack, receive
 from simulator import generate
 BUILD = Path(sys.argv[1]).resolve()
 CONFIG = Path(sys.argv[2]).resolve()
@@ -231,6 +232,27 @@ class ClientTransportTests(unittest.TestCase):
                 self.assertEqual(int(stepped['frame_set_id']), int(moved['frame_set_id']) + 1)
                 self.assertTrue(stepped['paused'])
                 self.assertEqual(int(stepped['decode_count']), int(moved['decode_count']) + 4)
+                # 500 commands in bounded bursts; control/video progress independently on pause.
+                baseline_revision = int(stepped['state_revision'])
+                final = stepped
+                for start in range(0, 500, 16):
+                    count = min(16, 500 - start)
+                    for _ in range(count):
+                        client.command_id += 1
+                        client.control.sendall(pack(20, dict(command_id=str(client.command_id),
+                            type='orbit', azimuth_delta_rad=.001, elevation_delta_rad=0.)))
+                    for _ in range(count):
+                        kind, ack, _ = receive(client.control)
+                        self.assertEqual(kind, 21)
+                        self.assertTrue(ack['accepted'])
+                    if select.select([client.data], [], [], 0)[0]:
+                        final = client.frame()[0]
+                if int(final['state_revision']) < int(ack['state_revision']):
+                    final = revision_frame(ack)
+                self.assertEqual(int(final['state_revision']), baseline_revision + 500)
+                self.assertEqual(final['decode_count'], stepped['decode_count'])
+                self.assertEqual(final['upload_count'], stepped['upload_count'])
+                self.assertEqual(final['mesh_build_count'], stepped['mesh_build_count'])
                 client.command('resume')
                 time.sleep(1.3)
             finally:
