@@ -10,7 +10,7 @@
 | Валидация JSON | Отрицательные тесты единиц, версии, матриц, камер, поверхности и монотонности | Нет полной JSON Schema нормативного профиля, произвольных масок и resize/crop |
 | EGL/GLES 3, четыре текстуры, linear-RGB blending и ego-модель | Mesa/RTX; GPU projection, асимметричный RGBA marker, optional valid draw query | Final readback синхронный; таймер зависит от расширения |
 | Ограниченные очереди и синхронизация | C++-проверки возраста, skew, дубликатов, очередей | Replay и socket sources; аппаратные timestamps и распределённые часы не проверены |
-| Калибровка intrinsics/extrinsics по известным 3D-точкам | Независимые train/validation, RMSE и повторное оценивание | Реальная метрическая площадка отсутствует |
+| Калибровка intrinsics/extrinsics | Known-XYZ solver, независимая validation; native chessboard image detector строит vehicle XYZ из измеренной pose доски | На реальной метрической площадке точность image-derived workflow не измерена; detector order требует контрольной метки |
 | OpenCV detector и image-based intrinsics | `vision_tools`, synthetic projected images; hashes/disjoint train/validation | Held-out board pose fitted; нет real-camera испытаний и внешней привязки |
 | OpenCV VideoCapture recorder | Четыре видеофайла → PNG/manifest/timestamps, `vision_tools` | Не встроен в realtime server; host delivery times не sensor timestamps |
 | Blender 3D street fixture | Разнесённые centers, scripted motion, 4 × fisheye RGB, hashes/poses; replay/server smoke | Процедурный автомобиль; нет dense depth, интерактивного вождения и live Blender render |

@@ -44,6 +44,8 @@ build/sv-calibrate extrinsics --config nominal.json \
 
 Observation JSON: `schema_version: 1`, четыре `cameras` в порядке ID 0…3; каждый record имеет `id`, `points` (N×3 в метрах ТС), `pixels` (N×2 top-left). Требуются ≥6 noncoplanar finite соответствий и корректная конфигурация с известными intrinsics. Результат — candidate `config.json` и provenance `report.json`; calibration ID включает method и hash наблюдений. Утилита не меняет активный config работающего сервера. Для применения необходимы независимая quality gate и серверный ConfigService.
 
+Чтобы получить соответствия непосредственно из снимков, `sv-calibrate board-observations` использует OpenCV `findChessboardCornersSB`. JSON задаёт `inner_corners`, метрический `square_size_m`, для каждого image — measured `T_vehicle_from_board` и проверенный вручную `corner_order`. Инструмент сохраняет нумерованные detection-изображения, observations и SHA-256 report; затем observations можно передать extrinsics CLI. Это первый image-derived путь, но он требует внешнего измерения pose доски. Симметрия шахматного узора создаёт неоднозначность ориентации: порядок сверяется по маркировке на шаблоне; автоматического asymmetric-marker detector пока нет. Несколько досок/позиций должны дать noncoplanar aggregate XYZ. Инструкция и пример schema: [[engineering/USAGE#OpenCV: внешняя калибровка по изображениям]]. Экспериментальные метрики главы 4 от этих кадров пока не получены.
+
 ## Следующий серверный workflow
 
 ```plantuml

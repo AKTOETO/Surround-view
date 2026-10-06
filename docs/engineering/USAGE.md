@@ -170,6 +170,42 @@ build/sv-calibrate detect --image data/board.png --columns 9 --rows 6 \
 
 Детектор: `cv::findChessboardCornersSB`, grayscale и normalize-image. Точность углов на синтетических проецированных изображениях проверяется вместе с полным fitting CLI; качество на снимках реального объектива нужно оценить отдельно. Стороны доски, неоднозначность её ориентации и измеренную привязку к автомобилю фиксировать до внешней калибровки.
 
+## OpenCV: внешняя калибровка по изображениям
+
+`board-observations` обнаруживает внутренние углы в кадрах всех четырёх камер и переводит метрические координаты доски в систему автомобиля. Каждая позиция доски должна быть независимо измерена относительно автомобиля. Для проверки строгого noncoplanar-профиля дайте каждой камере несколько кадров с разными, неплоско расположенными в совокупности позициями доски.
+
+Входной JSON `board-captures.json` задаёт внутренние углы, размер клетки и кадры с `T_vehicle_from_board`:
+
+```json
+{
+  "schema_version": 1,
+  "board": {"inner_corners": [9, 6], "square_size_m": 0.03},
+  "cameras": [
+    {"id": 0, "views": [
+      {"image": "cam0-position1.png", "corner_order": "normal",
+       "T_vehicle_from_board": [[1,0,0,4], [0,1,0,2], [0,0,1,1], [0,0,0,1]]},
+      {"image": "cam0-position2.png", "corner_order": "reverse_x",
+       "T_vehicle_from_board": [[1,0,0,3], [0,0.866,-0.5,4], [0,0.5,0.866,1], [0,0,0,1]]}
+    ]},
+    {"id": 1, "views": [{"image": "...", "corner_order": "normal", "T_vehicle_from_board": [[...]]}]},
+    {"id": 2, "views": [{"image": "...", "corner_order": "normal", "T_vehicle_from_board": [[...]]}]},
+    {"id": 3, "views": [{"image": "...", "corner_order": "normal", "T_vehicle_from_board": [[...]]}]}
+  ]
+}
+```
+
+Матрица преобразует координаты шаблона `(x·square, y·square, 0)` в метры автомобиля. Допустимы `corner_order`: `normal`, `reverse_x`, `reverse_y`, `reverse_xy`. Обычная шахматная доска симметрична: порядок углов нужно сверить с меткой ориентации на шаблоне и нумерацией углов в `annotated/cameraN_viewM.png`. Неверный порядок систематически портит привязку, хотя детектор сообщает успех. Для реальной установки используйте доску с асимметричной меткой ориентации; автоматическое чтение такой метки пока не реализовано.
+
+```sh
+build/sv-calibrate board-observations --config configs/synthetic.json \
+  --input data/board-captures.json --output artifacts/board-observations
+build/sv-calibrate extrinsics --config configs/synthetic.json \
+  --observations artifacts/board-observations/observations.json \
+  --method ransac_epnp_lm --output artifacts/board-pose-candidate
+```
+
+Первый шаг пишет observations, распознанные углы с номерами, SHA-256 и отчёт об OpenCV. Второй экспортирует candidate extrinsics; передавать его работающему серверу пока нельзя: runtime ConfigService и quality gate ещё не реализованы. Углы должны относиться к config-разрешению, detector работает по исходному изображению без resize/crop. Эта команда создаёт image-derived соответствия, но эксперимент сравнения четырёх методов в главе 4 всё ещё использует синтетические XYZ/UV.
+
 ## OpenCV: внутренняя калибровка по снимкам
 
 Создать dataset JSON рядом с фотографиями:

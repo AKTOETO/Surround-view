@@ -82,4 +82,8 @@ Config persistence API, multi-client/control-only, subscriptions/canvas и trace
 
 ## Проверка 07.10.2026: ошибки монтажа
 
-Восстановлен доступ к Blender MCP, сохранены recipe и отдельный мир. Четыре native OpenCV метода, 120 четырёхкамерных trials, независимые numerical validation и actual GLES изображения задокументированы в [[validation/MOUNT_CALIBRATION]]. Финальные CPU CTest 11/11 и Release CTest 15/15. Не закрыты server calibration jobs, image detector в этом mount experiment, occlusion и GUI world generation. Это первый ограниченный known-intrinsics опыт, не полное исследование всех семейств.
+Восстановлен доступ к Blender MCP, сохранены recipe и отдельный мир. Четыре native OpenCV метода, 120 четырёхкамерных trials, независимые numerical validation и actual GLES изображения задокументированы в [[validation/MOUNT_CALIBRATION]]. Финальные CPU CTest 11/11 и Release CTest 15/15. Не закрыты server calibration jobs, эксперимент с image-derived points, occlusion и GUI world generation. Это первый ограниченный known-intrinsics опыт, не полное исследование всех семейств.
+
+## Дополнение 07.10.2026: image-derived correspondences
+
+`sv-calibrate board-observations` использует OpenCV для поиска chessboard corners в исходных снимках, строит metric vehicle XYZ из измеренных `T_vehicle_from_board`, сохраняет annotated detections и hashes. Команда собирается в Release и CPU profiles. Это делает подготовку observations image-based, но не завершает исследование качества: pose доски требуется измерить заранее, симметричную ориентацию проверить вручную; полный fitting пока остаётся offline. См. [[engineering/USAGE#OpenCV: внешняя калибровка по изображениям]].
