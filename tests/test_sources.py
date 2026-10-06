@@ -12,6 +12,7 @@ sys.path.insert(0, str(ROOT / 'tools'))
 from ipc import Client, pack, receive
 from simulator import generate
 from producer import stream
+from test_producer import ProducerTests
 BUILD, CONFIG = Path(sys.argv[1]), Path(sys.argv[2])
 
 
@@ -186,6 +187,108 @@ class SocketSources(unittest.TestCase):
                 self.assertIn(server.returncode, (0, -15), error)
             if transport == 'unix':
                 self.assertFalse(any(Path(e['path']).exists() for e in endpoints))
+
+    def producer_server_restart(self, transport):
+        with tempfile.TemporaryDirectory(prefix='sv-restart-') as temporary:
+            directory = Path(temporary)
+            config = json.loads(CONFIG.read_text())
+            config['runtime'].update(skew_window_ms=80, max_input_age_ms=200)
+            ipc = directory / 'client'
+            config['connections'] = dict(unix=dict(enabled=True, directory=str(ipc)))
+            endpoints, reservations = [], []
+            for i in range(4):
+                endpoint = dict(camera_id=i, transport=transport)
+                if transport == 'unix':
+                    endpoint['path'] = str(directory / f'camera{i}.sock')
+                else:
+                    reservation = socket.socket()
+                    reservation.bind(('127.0.0.1', 0))
+                    endpoint.update(address='127.0.0.1', port=reservation.getsockname()[1])
+                    reservations.append(reservation)
+                endpoints.append(endpoint)
+            config['source'] = dict(type='socket', cameras=endpoints)
+            config_path = directory / 'config.json'
+            config_path.write_text(json.dumps(config))
+            manifest = generate(directory / 'fixture', config, 2)
+            report_path = directory / 'producer.json'
+            for reservation in reservations:
+                reservation.close()
+            server, producer, client = None, None, None
+
+            def start_server(index):
+                process = subprocess.Popen([str(BUILD / 'sv-server'), '--config', str(config_path),
+                    '--trace', str(directory / f'server{index}.jsonl')],
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+                deadline = time.monotonic() + 5
+                while not (ipc / 'data.sock').exists():
+                    if process.poll() is not None:
+                        raise RuntimeError(process.communicate()[1])
+                    if time.monotonic() > deadline:
+                        process.terminate()
+                        process.communicate(timeout=5)
+                        raise TimeoutError('restarted server startup')
+                    time.sleep(.01)
+                return process
+
+            def ready():
+                deadline = time.monotonic() + 4
+                while time.monotonic() < deadline:
+                    header, _ = client.frame()
+                    if header['health'] == 'READY':
+                        return [c['source_session_id'] for c in header['inputs']]
+                raise TimeoutError('producer did not restore four-camera READY')
+
+            try:
+                server = start_server(0)
+                client = Client(ipc)
+                producer = subprocess.Popen([sys.executable, str(ROOT / 'tools/producer.py'),
+                    '--config', str(config_path), '--manifest', str(manifest), '--loops', '60',
+                    '--reconnect-attempts', '60', '--reconnect-delay-ms', '20',
+                    '--timeout-ms', '200', '--max-lateness-ms', '40', '--report', str(report_path)],
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+                original_sessions = ready()
+                client.close()
+                client = None
+                server.terminate()
+                _, error = server.communicate(timeout=5)
+                self.assertEqual(server.returncode, 0, error)
+                server = None
+                time.sleep(.25)
+                server = start_server(1)
+                client = Client(ipc)
+                restored_sessions = ready()
+                self.assertTrue(all(a != b for a, b in zip(original_sessions, restored_sessions)))
+                client.close()
+                client = None
+                _, error = producer.communicate(timeout=7)
+                self.assertEqual(producer.returncode, 0, error)
+                report = json.loads(report_path.read_text())
+                result_dir = Path(tempfile.mkdtemp(prefix=f'producer-{transport}-', dir=BUILD.resolve()))
+                (result_dir / 'report.json').write_text(report_path.read_text())
+                (result_dir / 'report.md').write_text(report_path.with_suffix('.md').read_text())
+                self.assertEqual(report['status'], 'completed')
+                self.assertGreater(sum(c['skipped_late_frames'] for c in report['cameras']), 0)
+                for camera in report['cameras']:
+                    self.assertGreaterEqual(camera['connections'], 2)
+                    self.assertGreater(camera['transport_failures'], 0)
+                    self.assertEqual(camera['scheduled_frames'], camera['sent_frames'] +
+                        camera['skipped_late_frames'] + camera['skipped_missing_frames'])
+            finally:
+                if client:
+                    client.close()
+                if producer and producer.poll() is None:
+                    producer.terminate()
+                    producer.communicate(timeout=5)
+                if server:
+                    server.terminate()
+                    _, error = server.communicate(timeout=5)
+                    self.assertIn(server.returncode, (0, -15), error)
+
+    def test_producer_restores_unix_after_server_restart(self):
+        self.producer_server_restart('unix')
+
+    def test_producer_restores_tcp_after_server_restart(self):
+        self.producer_server_restart('tcp')
 
     def test_producer_validates_before_connecting(self):
         with tempfile.TemporaryDirectory(prefix='sv-producer-') as temporary:

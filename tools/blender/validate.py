@@ -63,7 +63,8 @@ def validate(build, dataset, output, source='replay'):
             client = Client(ipc)
             if source == 'socket':
                 producer = subprocess.Popen([sys.executable, str(Path(__file__).resolve().parents[1]/'producer.py'),
-                    '--config', str(deployment), '--manifest', str(dataset/'manifest.json'), '--loops', '200'],
+                    '--config', str(deployment), '--manifest', str(dataset/'manifest.json'), '--loops', '200',
+                    '--report', str(output/'producer.json')],
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
             frames = []
             while len(frames) < 4:
@@ -100,7 +101,9 @@ def validate(build, dataset, output, source='replay'):
         finally:
             if producer:
                 producer.terminate()
-                producer.communicate(timeout=5)
+                _, producer_error = producer.communicate(timeout=5)
+                if producer.returncode not in (0, 143):
+                    raise RuntimeError('producer failed: '+producer_error)
             if client:
                 client.close()
             server.terminate()
