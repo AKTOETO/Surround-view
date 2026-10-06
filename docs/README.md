@@ -70,3 +70,5 @@ Unix/TCP и API библиотеки: [[engineering/CLIENT_LIBRARY]]. Сверк
 Восстановление producer после отказов и runtime reports: [[validation/PRODUCER_RECOVERY]], [[engineering/SOURCES#Восстановление producer и отчёт]].
 
 Аналитический CPU-эталон пяти носителей: [[engineering/RENDERING#Независимый аналитический CPU-эталон]], [[validation/ANALYTIC_REFERENCE]].
+
+Компоненты, устройства и ОС — две PlantUML-диаграммы: [[architecture/DEPLOYMENT]].
