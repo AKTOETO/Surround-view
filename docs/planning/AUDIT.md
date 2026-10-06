@@ -72,3 +72,10 @@
 06.10.2026 добавлены `tools/reference.py` и `tools/compare_reference.py`: аналитические пересечения plane/bowl/dome-floor/cylinder/cube, независимый fisheye через atan2, билинейная выборка и три fusion-режима. Сохранены 30 offline случаев, coverage/weights/point maps, SHA-256 и иллюстрация. Десять новых CPU проверок и 13 CTest-групп проходят. [[engineering/RENDERING#Независимый аналитический CPU-эталон]], [[validation/ANALYTIC_REFERENCE]].
 
 Это закрывает подготовку плотного геометрического эталона в E-STITCH-01, но не полный CPU rasterizer автомобиля/сцены или quality benchmark. Следующий результат: независимые depth/visibility/metric markers, маска видимого кузова, количественное CPU/GPU сравнение на одинаковом кадре и отдельных validation scenes. Исторические native baselines/RPM относятся к сохранённым ревизиям; host-инструмент не добавляет критерии в native suite. Регистрация новой CTest-группы меняет CMakeLists, поэтому свежую сборку для нового platform baseline следует идентифицировать её собственным fingerprint.
+
+
+## Приоритетная архитектура 07.10.2026
+
+Зафиксирована новая модель [[architecture/CLIENT_SERVER_MODEL]]: server-owned config, несколько сессий, per-session view/subscriptions, intermediate products, optional final output и pipeline spans. Шесть PlantUML процессов задают ожидаемые тесты. Существующий GUI перенесён в `examples/sv-client`, начат touchscreen layout; `examples/svctl` предоставляет текущие команды через библиотеку без Qt. Тестовый installed consumer перенесён в `tests/fixtures/client-consumer`. `examples/sv-simulator` пока содержит только контракт, Qt 6 laptop GUI/live world ещё не реализованы.
+
+Config persistence API, multi-client/control-only, subscriptions/canvas и trace — следующий этап, а не возможности текущего сервера. Он по-прежнему имеет одну сессию и legacy final output. Полный чеклист нового этапа находится в корневом TODO; он имеет приоритет над прежними предложениями прямого редактирования server config клиентами. Protobuf и C++20 не добавлены: решение и условия пересмотра описаны в новом контракте.

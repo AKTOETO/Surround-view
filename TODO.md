@@ -111,3 +111,56 @@
 - [ ] После Unix/TCP спроектировать UDP-профиль: назначения каналов, packetization/reassembly, sessions, loss/reorder/duplicates, deadlines и подтверждение команд; затем реализовать адаптер и тесты. Текущий stream-протокол сам по себе UDP не обеспечивает.
 
 Проверено после аудита: 500 команд на паузе, полные RTX/Mesa baselines 0.6.0 и оба Linux RPM 0.6.0 с development consumer. [Результаты 0.6.0](docs/validation/SOURCES_SMOKE.md), [предыдущая серия](docs/validation/CLIENT_SMOKE.md). Replay/socket FrameSource закрыт в 0.6.0; аппаратный backend, интерактивный Blender render, UDP/quality и целевой перенос остаются открытыми.
+
+## Перестройка по требованиям 07.10.2026: сервер и три клиента
+
+Приоритетный контракт: [ответственность, шесть PlantUML workflows и проверки](docs/architecture/CLIENT_SERVER_MODEL.md). Этот этап заменяет прежние предложения о прямой записи server config конфигуратором. Существующие offline файлы на ноутбуке остаются черновиками/fixtures, не способом изменения работающего сервера.
+
+### Границы и примеры
+
+- [x] Зафиксировать ответственность: сервер вычисляет продукты и единолично валидирует/применяет/сохраняет config; библиотека предоставляет API; приложения — её потребители.
+- [x] Описать процессы: connect/multi-session, config transaction, подписки/отключение final, trace, live simulator; привязать к unit/integration сценариям.
+- [x] Перенести существующий GUI в `examples/sv-client/`; installed consumer — в `tests/fixtures/client-consumer/`; сохранить binary/API и offline сборку.
+- [x] Создать `examples/svctl/`: Boost/STL без Qt, существующие команды через `sv-client-lib`, JSON ACK, deadline/exit codes, отсутствие прямой записи config.
+- [x] Начать touchscreen UI: крупные кнопки ракурсов/масштаба, single-touch orbit и панель state; убрать инженерные replay-команды с главного экрана.
+- [ ] Завершить Qt 5 automotive client под Аврору: платформенный lifecycle/UI integration, DPI и физические touch targets, жесты, информационная вкладка, проверка реального экрана.
+- [ ] Реализовать Qt 6 laptop GUI `examples/sv-simulator/`; сейчас есть только контракт/README, полноценного приложения нет.
+
+### Сервер, конфигурация и библиотека
+
+- [ ] Разбить `server.cpp` на sessions/transport, config, pipeline, products и telemetry; логические структуры вместо общего объекта с сотнями полей.
+- [ ] Реализовать несколько одновременных клиентов: session registry, независимые control/data queues, tokens, release deadlines, bounded budgets и shutdown.
+- [ ] Добавить control-only client mode; не открывать data channel для CLI без подписок.
+- [ ] Сделать view/subscriptions локальными для сессии; сохранить глобальные source/calibration/fusion/default-view только через ConfigService.
+- [ ] Реализовать типизированные client API для config read/update/validate/status и подписок/trace; wire codec скрыть за доменным API.
+- [ ] Реализовать server-owned ConfigStore: immutable snapshots, active/persisted revisions, optimistic concurrency, prepare/atomic persistence/frame-boundary apply и pending_restart.
+- [ ] Обработать duplicate operation IDs, lost ACK/status query, disk errors и восстановление после падения; библиотека не повторяет мутации вслепую.
+- [ ] Добавлять каждую новую серверную операцию одновременно в `svctl`; CLI должен покрывать все функции настройки, доступные GUI.
+- [ ] Перевести offline configurator на черновики/экспорт и server API для применения; никакой клиент не изменяет серверный файл напрямую.
+- [x] Оценить Protobuf: на первом этапе оставить SV01/Boost.JSON, зафиксировать причины и условия пересмотра; не добавлять protoc/runtime без обоснованной потребности и SDK-проверки.
+
+### Управление продуктами и измерения pipeline
+
+- [ ] Реализовать per-session subscriptions с products/camera mask/view/resolution/FPS, negotiated capabilities и effective revision boundary.
+- [ ] Отключать выдачу final frame отдельно для каждого клиента; при отсутствии всех final consumers пропускать final render/readback/encode.
+- [ ] Добавить самостоятельный `stitched_canvas` до virtual view: прямоугольный холст, явная projection/domain/validity, выбор любых камер, в том числе трёх из четырёх; пересчитывать нормировку весов.
+- [ ] Публиковать промежуточные camera frames, coverage, четыре веса, projection maps и metadata через общий product API; ограничить память/полосу/частоту.
+- [ ] Ввести pipeline spans: receive/decode, queues/sync, projection/fusion, upload/draw/readback, publish/send; trace/frame-set/config IDs, clock domains, statuses и sampling/ring budgets.
+- [ ] Отделять CPU wall, GPU query validity и client receive/present; не суммировать перекрытия и не вычитать часы разных машин без clock mapping.
+- [ ] Проверить slow subscriber isolation, no-final counters, три-camera masks, stale revisions, budget_exceeded и trace saturation.
+
+### Один инженерный инструмент и полноценный мир
+
+- [ ] Включить в laptop GUI все существующие пользовательские режимы: synthetic/photographic/Blender datasets, replay/producer/capture, calibration, carrier/fusion, reference/experiments/reports и assets provenance.
+- [ ] Выделить reusable application services и job adapters с progress/cancellation/error/report; не вставлять shell commands в QML и не создавать новые разрозненные launch scripts.
+- [ ] Реализовать загрузку карты/сцены и автомобиля, управление движением, camera rig, четыре live streams, независимые pose/timestamp truth, deterministic pause/reset.
+- [ ] Использовать сервер на целевом устройстве и simulator на ноутбуке: control/output через `sv-client-lib`, изображения — отдельным producer protocol; провести настоящий two-host опыт.
+- [ ] Переносить функции Python tools поэтапно с проверкой эквивалентности; сохранять scripts восстановления мира, независимые oracles, тесты и рисунки диплома.
+
+### Поддерживаемость и приёмка
+
+- [ ] Ввести небольшие интерфейсы в местах внешних эффектов (`IConfigStore`, `IClock`, `IFrameSource`, `IProductSink`, `IWorldEngine`), RAII/PImpl и mock implementations; не создавать абстракции без ответственности.
+- [x] Начать C++ unit tests на системном GTest для CLI; без FetchContent. Python оставить для integration и независимой математики.
+- [ ] Добавить GTest/mock проверки config transactions, sessions, scheduler/subscriptions и timing clock; C++ интеграцию где это упрощает проверку.
+- [x] Оставить C++17 до конкретной необходимости C++20 и проверки Aurora toolchain; не повышать стандарт только ради номера.
+- [ ] Обновить главы диплома/архитектуру/RPM/USAGE после каждого реализованного этапа; финально привести документацию к единому актуальному описанию без устаревших утверждений.
