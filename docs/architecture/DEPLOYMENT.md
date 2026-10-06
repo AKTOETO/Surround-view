@@ -125,7 +125,7 @@ end note
 @startuml
 left to right direction
 skinparam componentStyle rectangle
-skinparam shadowing false
+skinparam shadowing true
 skinparam wrapWidth 230
 
 node "Ноутбук оператора\nLinux — поддержанный host-профиль\nконкретный ноутбук / two-host запуск не проверены" as Laptop {
