@@ -12,6 +12,7 @@ No external assets, downloads, add-ons or current-scene deletion are used.
 """
 import argparse
 import hashlib
+import importlib
 import json
 import math
 from pathlib import Path
@@ -24,6 +25,10 @@ from mathutils import Matrix, Vector
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from rig import FACES, configuration, face_basis, vehicle_pose
 from scenario import load as load_scenario, validate as validate_scenario, perturb
+import board_targets
+
+# Blender MCP and the interactive console keep Python modules between captures.
+importlib.reload(board_targets)
 
 
 def enum_value(owner, field, value):
@@ -234,7 +239,7 @@ def check_optics(scene):
     return {'points':len(errors), 'max_error_px':max(errors), 'threshold_px':.001}
 
 
-def capture(scene, output, frames=2, face_size=256, start_frame=0):
+def capture(scene, output, frames=2, face_size=256, start_frame=0, calibration_boards=False):
     """Render all optical centers at exactly the same scenario pose per row.
 
     Write completion metadata only after every requested image was saved.
@@ -246,7 +251,21 @@ def capture(scene, output, frames=2, face_size=256, start_frame=0):
     optics_check = check_optics(scene)
     output.mkdir(parents=True, exist_ok=False)
     cfg = json.loads(scene.get('sv_config', json.dumps(configuration())))
+    nominal_cfg = json.loads(scene.get('sv_nominal_config', json.dumps(cfg)))
+    if calibration_boards:
+        # Give the metric-target dataset enough pixels for corner detection while preserving FOV.
+        for candidate in (cfg, nominal_cfg):
+            for cam in candidate['cameras']:
+                cam['resolution']['width'] *= 2
+                cam['resolution']['height'] *= 2
+                projection = cam['projection']
+                projection['fx'] *= 2
+                projection['fy'] *= 2
+                projection['cx'] = (projection['cx'] + .5) * 2 - .5
+                projection['cy'] = (projection['cy'] + .5) * 2 - .5
+                cam['calibration_id'] += '-board-800'
     ego = scene.objects[scene['sv_ego']]
+    targets = board_targets.create_targets(scene) if calibration_boards else None
     scene.camera.data.lens = 18
     scene.render.resolution_x = scene.render.resolution_y = face_size
     rows = []
@@ -256,7 +275,11 @@ def capture(scene, output, frames=2, face_size=256, start_frame=0):
         ego.matrix_world = Matrix(pose.tolist())
         scene.frame_set(frame + 1)
         captures = []
+        board_records = []
         for cam in cfg['cameras']:
+            target_pose = board_targets.pose(cam, frame, pose) if targets else None
+            if targets:
+                board_targets.set_target(targets, cam['id'], pose, target_pose)
             transform = np.array(cam['T_camera_from_vehicle'])
             optical_pose = pose @ np.linalg.inv(transform)
             paths = {}
@@ -274,8 +297,15 @@ def capture(scene, output, frames=2, face_size=256, start_frame=0):
                 paths[face] = filename
             captures.append({'id':cam['id'], 'faces':paths,
                              'T_world_from_camera':optical_pose.tolist()})
-        rows.append({'scenario_timestamp_ns':str(round(frame * 1_000_000_000 / 30)),
-                     'T_world_from_vehicle':pose.tolist(), 'cameras':captures})
+            if targets:
+                board_records.append({'camera_id':cam['id'],
+                                      'T_vehicle_from_board':target_pose.tolist(),
+                                      'corner_order':'reverse_x'})
+        row = {'scenario_timestamp_ns':str(round(frame * 1_000_000_000 / 30)),
+               'T_world_from_vehicle':pose.tolist(), 'cameras':captures}
+        if targets:
+            row['calibration_boards'] = board_records
+        rows.append(row)
     # A true 3D overview, separate from sv-server's reconstructed surround view.
     scene.camera.location = (10,-12,10)
     direction = Vector((1,0,0.4)) - scene.camera.location
@@ -292,13 +322,16 @@ def capture(scene, output, frames=2, face_size=256, start_frame=0):
                 'face_size':face_size, 'fps':30, 'config':cfg, 'frames':rows,
                 'optics_check':optics_check,
                 'scenario_recipe':json.loads(scene.get('sv_recipe', 'null')),
+                'calibration_board':({'inner_corners':list(board_targets.INNER_CORNERS),
+                                      'square_size_m':board_targets.SQUARE_SIZE_M}
+                                     if calibration_boards else None),
                 'mount_offsets':json.loads(scene.get('sv_mount_offsets', '[]')),
-                'nominal_config':json.loads(scene.get('sv_nominal_config', json.dumps(cfg))),
+                'nominal_config':nominal_cfg,
                 'limitations':['procedural geometry, no real vehicle CAD',
                                'scripted translation, no vehicle physics',
                                'offline RGB capture, no depth/semantic truth yet'],
                 'script_sha256':{name:hashlib.sha256(Path(__file__).with_name(name).read_bytes()).hexdigest()
-                                 for name in ('scene.py','rig.py','scenario.py')},
+                                 for name in ('scene.py','rig.py','scenario.py','board_targets.py')},
                 'sha256':{p.name:hashlib.sha256(p.read_bytes()).hexdigest()
                           for p in sorted(output.glob('*.png'))}}
     (output / 'capture.json').write_text(json.dumps(metadata,indent=2)+'\n')
@@ -313,5 +346,7 @@ if __name__ == '__main__':
     parser.add_argument('--frames',type=int,default=2)
     parser.add_argument('--face-size',type=int,default=256)
     parser.add_argument('--start-frame',type=int,default=0)
+    parser.add_argument('--calibration-boards',action='store_true')
     args = parser.parse_args(sys.argv[sys.argv.index('--')+1:] if '--' in sys.argv else [])
-    capture(build_scene(load_scenario(args.scenario) if args.scenario else None),args.output,args.frames,args.face_size,args.start_frame)
+    capture(build_scene(load_scenario(args.scenario) if args.scenario else None),args.output,
+            args.frames,args.face_size,args.start_frame,args.calibration_boards)

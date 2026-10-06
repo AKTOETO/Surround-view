@@ -110,6 +110,24 @@ def convert(source, output):
                 'calibration_ids':[c['calibration_id'] for c in cfg['cameras']],
                 'frames':rows, 'sha256':hashes}
     (output / 'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
+    board = metadata.get('calibration_board')
+    if board:
+        cameras = []
+        for camera_id in range(4):
+            views = []
+            for frame_id, row in enumerate(metadata['frames']):
+                capture = row['calibration_boards'][camera_id]
+                if capture['camera_id'] != camera_id:
+                    raise ValueError('calibration board camera IDs must be ordered 0..3')
+                views.append({'image':rows[frame_id]['paths'][camera_id],
+                              'corner_order':capture['corner_order'],
+                              'T_vehicle_from_board':capture['T_vehicle_from_board']})
+            cameras.append({'id':camera_id,'views':views})
+        board_input = {'schema_version':1,
+                       'board':{'inner_corners':board['inner_corners'],
+                                'square_size_m':board['square_size_m']},
+                       'cameras':cameras}
+        (output/'calibration-board-captures.json').write_text(json.dumps(board_input,indent=2)+'\n')
     return output / 'manifest.json'
 
 
