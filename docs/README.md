@@ -11,7 +11,7 @@
 5. [[planning/ROADMAP|План реализации]] и [[planning/THESIS|Структура текста диссертации]]; [[diploma/README|подготовленные главы]].
 6. [[research/PROJECTION_AND_STITCHING|Обзор слияния четырёх камер и поверхностей]], [[research/CALIBRATION|Калибровка и диагностика]], [[research/EXPERIMENTS|Эксперименты]], [[validation/ACCEPTANCE|Приёмка и паспорт стенда]].
 7. [[engineering/SOURCES|Источники кадров и виртуальные камеры]], [[engineering/BUILD|Сборка]], [[engineering/USAGE|работа с кодом]], [[engineering/AURORA|RPM/SDK]], [[engineering/PLATFORM_TEST|переносимые проверки]], [[engineering/SCENE|фотографическая сцена]], [[engineering/BLENDER|объёмная улица и экспорт камер]], [[engineering/ASSETS|ассеты и восстановление мира]].
-8. [[prototype/STATUS|Что реализовано]], [[prototype/MEASUREMENTS|исторические результаты]], [[validation/baselines/PC_RTX|native RTX]], [[validation/baselines/PC_MESA|native Mesa]] и [[validation/BLENDER_SMOKE|Blender→server проверка]].
+8. [[prototype/STATUS|Что реализовано]], [[prototype/MEASUREMENTS|исторические результаты]], [[validation/baselines/PC_RTX|native RTX]], [[validation/baselines/PC_MESA|native Mesa]], [[validation/BLENDER_SMOKE|Blender→server проверка]] и [[validation/IMAGE_CALIBRATION|image-derived калибровка]].
 
 ## Структура и ответственность
 
@@ -77,4 +77,4 @@ Unix/TCP и API библиотеки: [[engineering/CLIENT_LIBRARY]]. Сверк
 
 Проверка переноса GUI, Qt-free CLI и GTest: [[validation/CLIENT_RESTRUCTURE]].
 
-Ошибки крепления и калибровка: [[research/MOUNT_CALIBRATION]] → [[validation/MOUNT_CALIBRATION]] → [[diploma/04_EXPERIMENTAL_STUDY#4.17 Восстановление положения камер при ошибках монтажа]]. Восстановление мира и правила — [[engineering/BLENDER]], происхождение файлов — [[engineering/ASSETS]].
+Ошибки крепления и калибровка: [[research/MOUNT_CALIBRATION]] → [[validation/MOUNT_CALIBRATION]] → [[diploma/04_EXPERIMENTAL_STUDY#4.17 Восстановление положения камер при ошибках монтажа]]. Извлечение наблюдений из изображений: [[research/IMAGE_CALIBRATION]] → [[validation/IMAGE_CALIBRATION]] → [[diploma/04_EXPERIMENTAL_STUDY#4.18 Внешняя калибровка по рендеренным изображениям]]. Восстановление мира и правила — [[engineering/BLENDER]], происхождение файлов — [[engineering/ASSETS]].

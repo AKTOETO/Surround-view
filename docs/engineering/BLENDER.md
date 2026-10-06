@@ -151,3 +151,19 @@ Yaw поворачивает оптический базис вокруг +Z а�
 Без `--scenario` сохраняется прежняя геометрия и номинальный rig. С рецептом vary высота/число этажей зданий, spacing и крепления; дорога/основная планировка остаются заданными генератором. Это параметризованная улица, не произвольный map editor. В `capture.json` добавлены recipe, sampled offsets и nominal config. Конвертер сохраняет отдельный `nominal-config.json`, true config/poses и recipe в `ground_truth.json`; `config.json` описывает фактическую capture calibration для replay. В калибровочный solver нужно передавать nominal config, а true config использовать только для синтеза наблюдений и оценки.
 
 Первое исследование и ограничения: [[research/MOUNT_CALIBRATION]], [[validation/MOUNT_CALIBRATION]]. Laptop GUI пока не содержит редактор этих правил; общий Python module `tools/blender/scenario.py` подготовлен для дальнейшего переиспользования, отдельного launch script не добавлено.
+
+## Изображения калибровочной доски
+
+Опция `--calibration-boards` добавляет в capture 9×6 внутренних углов с размером клетки 0.2 м и меняющимися позами, по одной видимой доске на камеру в каждом кадре. В метаданных для каждого вида сохраняется `T_vehicle_from_board`; начало — нижний левый внутренний угол доски, как требует schema observations. Рендерная сетка имеет белую внешнюю рамку, поэтому для размещения mesh origin сдвигается на одну клетку. Сторона симметричной доски задаётся генератором (`corner_order`), что допустимо для синтетического контроля, но не переносится на физическую доску без асимметричной метки или ручной проверки.
+
+```sh
+blender --background --python tools/blender/scene.py -- \
+  --scenario assets/scenarios/mount-errors-v1.json \
+  --output artifacts/board-capture --frames 4 --face-size 512 --calibration-boards
+python3 tools/blender/convert.py --capture artifacts/board-capture \
+  --output artifacts/board-data
+python3 tools/configurator.py calibrate-images --dataset artifacts/board-data \
+  --output artifacts/board-calibration --build build --training-frames 3
+```
+
+На проверенном Blender MCP получены 16 кадров, все с 54/54 углами; три позы на камеру используются для fit, четвёртая — только для валидации. Итог: [[validation/IMAGE_CALIBRATION]], постановка исследования: [[research/IMAGE_CALIBRATION]]. Физическая точность, ошибки измерения поз доски, частичное обнаружение и окклюзия пока не проверялись. Если `blender` недоступен как CLI, можно выполнить scene builder/capture через подключённый Blender MCP; генератор не меняет исходную пользовательскую сцену.

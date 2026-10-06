@@ -219,7 +219,21 @@ build/sv-calibrate extrinsics --config configs/synthetic.json \
   --method ransac_epnp_lm --output artifacts/board-pose-candidate
 ```
 
-Первый шаг пишет observations, распознанные углы с номерами, SHA-256 и отчёт об OpenCV. Второй экспортирует candidate extrinsics; передавать его работающему серверу пока нельзя: runtime ConfigService и quality gate ещё не реализованы. Углы должны относиться к config-разрешению, detector работает по исходному изображению без resize/crop. Эта команда создаёт image-derived соответствия, но эксперимент сравнения четырёх методов в главе 4 всё ещё использует синтетические XYZ/UV.
+Первый шаг пишет observations, распознанные углы с номерами, SHA-256 и отчёт об OpenCV. Второй экспортирует candidate extrinsics; передавать его работающему серверу пока нельзя: runtime ConfigService и quality gate ещё не реализованы. Углы должны относиться к config-разрешению, detector работает по исходному изображению без resize/crop. Первый полный image-derived опыт на Blender RGB теперь выполнен: [[validation/IMAGE_CALIBRATION]]. Таблица сравнения четырёх solver methods выше по-прежнему основана на аналитических XYZ/UV.
+
+Чтобы повторить опыт с Blender доской, выполните из корня проекта (output-каталоги должны быть новыми):
+
+```sh
+blender --background --python tools/blender/scene.py -- \
+  --scenario assets/scenarios/mount-errors-v1.json \
+  --output artifacts/board-capture --frames 4 --face-size 512 --calibration-boards
+python3 tools/blender/convert.py --capture artifacts/board-capture \
+  --output artifacts/board-data
+python3 tools/configurator.py calibrate-images --dataset artifacts/board-data \
+  --output artifacts/board-calibration --build build --training-frames 3
+```
+
+Dataset содержит train/validation observations, annotations, candidate config и Markdown/JSON отчёт. Настройка capture, работа через Blender MCP и границы воспроизводимости: [[engineering/BLENDER#Изображения калибровочной доски]].
 
 ## OpenCV: внутренняя калибровка по снимкам
 

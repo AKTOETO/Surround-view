@@ -87,3 +87,7 @@ Config persistence API, multi-client/control-only, subscriptions/canvas и trace
 ## Дополнение 07.10.2026: image-derived correspondences
 
 `sv-calibrate board-observations` использует OpenCV для поиска chessboard corners в исходных снимках, строит metric vehicle XYZ из измеренных `T_vehicle_from_board`, сохраняет annotated detections и hashes. Команда собирается в Release и CPU profiles. Это делает подготовку observations image-based, но не завершает исследование качества: pose доски требуется измерить заранее, симметричную ориентацию проверить вручную; полный fitting пока остаётся offline. См. [[engineering/USAGE#OpenCV: внешняя калибровка по изображениям]].
+
+## Дополнение 07.10.2026: первый image-derived результат
+
+Обновлено после Blender E-CAL-IMG-01: проведена генерация RGB досок, native detection, split по позам, fit по первым трём и независимый reprojection по четвёртой. Детектор нашёл 16/16 видов и 54/54 угла в каждой held-out картинке; RMSE nominal 12.95–21.48 px, после fit 0.133–0.146 px. Подробный протокол и provenance: [[validation/IMAGE_CALIBRATION]], исследовательская часть: [[research/IMAGE_CALIBRATION]]. Реальные фотографии, survey error, occlusion/quality sweeps и server calibration job остаются открытыми.
