@@ -91,7 +91,7 @@ artifacts/install/bin/sv-platform-test \
 | `src/render` | EGL/GLES, surface/vehicle shaders, GPU timers и финальный readback |
 | `src/validation` | Native критерии, статистика, SHA-256, системный паспорт и Markdown-отчёт |
 | `src/apps` | Отдельные CLI-программы |
-| `src/client` | Qt/QML-мост и упакованные ресурсы |
+| `examples/sv-client` | Qt/QML-мост и упакованные ресурсы |
 | `tools`, `tests` | Host-оркестрация, генераторы и независимые проверки |
 | `packaging/rpm` | Два spec-профиля: GPU и CPU |
 
@@ -100,3 +100,16 @@ artifacts/install/bin/sv-platform-test \
 ## Клиентская development-часть 0.5.0
 
 `sv-client-lib`/`sv-wire` собираются также при `SV_CLIENT=OFF` и `SV_GPU=OFF`. Они устанавливают headers/static libraries и CMake package `svClient`; GUI опционален. Headless executable `sv-client-probe` демонстрирует API. Сборка независимого consumer и команды TCP — [[engineering/CLIENT_LIBRARY]]. Системные dependencies клиента — Boost.JSON/Asio и Threads; OpenCV/EGL/Qt не входят в его transitive link interface.
+
+
+## Клиентские примеры и GTest
+
+GUI находится в `examples/sv-client`, Qt-free CLI — в `examples/svctl`; он собирается и при `SV_CLIENT=OFF`. `examples/sv-simulator` пока содержит контракт будущего Qt 6 laptop GUI. Installed consumer находится в `tests/fixtures/client-consumer`. Сборка `svctl` не требует Qt; оба RPM spec включают CLI, но новую ревизию пакетов ещё надо квалифицировать отдельно от исторических 0.6.0 payload.
+
+```sh
+cmake -S . -B build -DSV_GTEST_TESTS=ON
+cmake --build build --target svctl svctl-option-tests
+ctest --test-dir build -R svctl_options --output-on-failure
+```
+
+GTest ищется как системный REQUIRED package только при `BUILD_TESTING=ON` и явном `SV_GTEST_TESTS=ON`; скачивания нет. По умолчанию опция OFF, native RPM fixtures от GTest не зависят. В Aurora SDK с `BUILD_TESTING=OFF` host unit tests не собираются. C++17 сохраняется до подтверждённой необходимости C++20 и проверки target toolchain.

@@ -290,3 +290,19 @@ python3 tools/reference.py --config artifacts/blender-street/config.json \
 ```
 
 Он создаёт цвет, coverage, четыре веса, точки на носителе и JSON/Markdown отчёт. Пять носителей и три fusion-режима сравниваются через `tools/compare_reference.py`; команды, форматы и ограничения — [[engineering/RENDERING#Независимый аналитический CPU-эталон]]. Это offline исследовательская утилита; `sv-server` продолжает использовать GPU renderer.
+
+
+## svctl и примеры клиентов
+
+`sv-client` теперь собирается из `examples/sv-client/`: крупные кнопки ракурсов/масштаба, orbit касанием, панель текущего state. Для инженерных replay-команд используйте `svctl`, работающий через ту же библиотеку без Qt:
+
+```sh
+build/svctl --unix /tmp/sv-blender state
+build/svctl --unix /tmp/sv-blender pause
+build/svctl --unix /tmp/sv-blender step
+build/svctl --unix /tmp/sv-blender preset top
+build/svctl --unix /tmp/sv-blender resume
+build/svctl --tcp 127.0.0.1 53101 53102 orbit 0.1 0
+```
+
+Вывод — JSON ACK; exit 0 accepted, 2 arguments, 3 connection/timeout, 4 rejected. По умолчанию общий deadline 5000 ms; `--timeout-ms` задаётся перед командой. Сейчас GUI надо закрыть перед запуском CLI: сервер ещё односессионный. CLI открывает legacy data channel и освобождает кадры; control-only/отключение final, сохранение config и промежуточные subscriptions запланированы в [[architecture/CLIENT_SERVER_MODEL]]. Библиотека не повторяет CLI мутацию после потери соединения. Laptop `sv-simulator` ещё не реализован, существующие offline команды пока остаются рабочими средствами воспроизводимости.

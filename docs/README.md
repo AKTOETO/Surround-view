@@ -72,3 +72,7 @@ Unix/TCP и API библиотеки: [[engineering/CLIENT_LIBRARY]]. Сверк
 Аналитический CPU-эталон пяти носителей: [[engineering/RENDERING#Независимый аналитический CPU-эталон]], [[validation/ANALYTIC_REFERENCE]].
 
 Компоненты, устройства и ОС — две PlantUML-диаграммы: [[architecture/DEPLOYMENT]].
+
+Новая модель сервера и трёх клиентов, config transactions, products и timings: [[architecture/CLIENT_SERVER_MODEL]].
+
+Проверка переноса GUI, Qt-free CLI и GTest: [[validation/CLIENT_RESTRUCTURE]].

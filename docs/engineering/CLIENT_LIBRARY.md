@@ -1,6 +1,6 @@
 # Универсальная клиентская библиотека: рабочий Unix/TCP API
 
-Linux-профиль 0.6.0 (библиотека введена в 0.5.0). `sv-client-lib` — C++17-библиотека без Qt, OpenCV и GPU; текущие потребители — Qt `sv-client` и headless `sv-client-probe`. Общий codec выделен в `sv-wire`. Установленный CMake target — `sv::client`. Проектные требования и дальнейшие операции: [[requirements/CLIENT]], политика listeners — [[requirements/CONFIGURATION]].
+Linux-профиль 0.6.0 (библиотека введена в 0.5.0). `sv-client-lib` — C++17-библиотека без Qt, OpenCV и GPU; текущие потребители — Qt `sv-client` и CLI `svctl` и тестовый `sv-client-probe`. Общий codec выделен в `sv-wire`. Установленный CMake target — `sv::client`. Проектные требования и дальнейшие операции: [[requirements/CLIENT]], политика listeners — [[requirements/CONFIGURATION]].
 
 Входы виртуальных камер отделены от клиентских connections: [[engineering/SOURCES]]. В socket source capability `step` не объявляется, команда отклоняется; pause/orbit/resume остаются доступны.
 
@@ -78,7 +78,7 @@ Handshake проверяет codec version и связывает data/session с
 
 ```sh
 cmake --install build --prefix artifacts/install-v05
-cmake -S examples/client -B artifacts/external-client \
+cmake -S tests/fixtures/client-consumer -B artifacts/external-client \
   -DCMAKE_PREFIX_PATH="$PWD/artifacts/install-v05"
 cmake --build artifacts/external-client -j 2
 artifacts/external-client/sv-client-probe --tcp 127.0.0.1 53101 53102 --frames 3
@@ -95,3 +95,5 @@ Consumer использует `find_package(svClient CONFIG REQUIRED)` и `targe
 При использовании RPM каталог библиотек следует архитектурному `%{_lib}`. Если host CMake не ищет `lib64` через `CMAKE_PREFIX_PATH`, передать `-DsvClient_DIR=/usr/lib64/cmake/svClient` (либо фактический путь из `rpm -ql`). Для распакованного пакета указать тот же путь внутри payload prefix; export сохраняет относительные пути и допускает relocation.
 
 Результаты native/host suites, RPM и актуальные полные baselines: [[validation/CLIENT_SMOKE]].
+
+Новый целевой API и процессы: [[architecture/CLIENT_SERVER_MODEL]]. Пока config persistence, control-only, несколько клиентов и subscriptions не реализованы; generic `command()` не заменяет их серверную реализацию.
