@@ -59,3 +59,5 @@
 ## Дополнение 0.6.0
 
 Устранены blocking decode в GL-потоке и отсутствие virtual-camera endpoints. `FrameSource`/producer recordings, queues/pause/reconnect/fault cases реализованы и проверены: [[validation/SOURCES_SMOKE]]. В STATUS устранена дублирующая устаревшая строка о запланированной `sv-client-lib`; текущая архитектура и USAGE согласованы с worker и manifest intervals. Остаток M5/M8 — аппаратный backend, полные clocks и длительные/quality опыты; M9 по-прежнему требует SDK/устройства.
+
+Повторная package qualification 0.6.0 и новые PC RTX/Mesa baselines завершены; оба RPM содержат native source fixture. Strict comparison и происхождение: [[validation/SOURCES_SMOKE]]. Сквозной Blender/socket producer также проверен на сохранённом мире; интерактивное вождение остаётся открытым.

@@ -69,10 +69,13 @@ GPU timer extension `EXT_disjoint_timer_query` [S52] проверяется ди
 build/sv-platform-test --config configs/synthetic.json \
   --output artifacts/platform-rtx --label PC-RTX5070Ti \
   --egl-platform device --require-gpu
+__EGL_VENDOR_LIBRARY_FILENAMES=/usr/share/glvnd/egl_vendor.d/50_mesa.json \
 LIBGL_ALWAYS_SOFTWARE=1 build/sv-platform-test --config configs/synthetic.json \
   --output artifacts/platform-mesa --label PC-Mesa \
   --egl-platform surfaceless --require-gpu
 ```
+
+Путь Mesa vendor JSON выше относится к этому Linux-ПК; на другом стенде найти установленный EGL vendor file и проверить фактический GL_RENDERER. Само `LIBGL_ALWAYS_SOFTWARE=1` может оставить NVIDIA при GLVND.
 
 При нескольких EGL devices выбрать `SV_EGL_DEVICE` после проверки фактического `GL_RENDERER`; имя NVIDIA в системной конфигурации само по себе не доказывает аппаратный рендер. Сохранить исходный report и параметры фоновой нагрузки/энергопрофиля для длительных опытов. Для CPU smoke:
 
@@ -96,7 +99,7 @@ sv-platform-test --config /usr/share/surround-view/configs/synthetic.json \
 Скопировать результаты на ПК (точные команды и RPM-путь — [[engineering/AURORA]]) и сравнить:
 
 ```sh
-python3 tools/compare_reports.py docs/validation/baselines/PC_RTX_V05.md \
+python3 tools/compare_reports.py docs/validation/baselines/PC_RTX_V06.md \
   artifacts/aurora/run-01/report.json --output artifacts/comparison.md --strict
 ```
 
@@ -113,3 +116,7 @@ python3 tools/compare_reports.py docs/validation/baselines/PC_RTX_V05.md \
 ## Полные PC baselines 0.5.0
 
 Сохранены [[validation/baselines/PC_RTX_V05]] и [[validation/baselines/PC_MESA_V05]]: 60 samples, 10 warmup, 3 contexts, 25 criteria, 10 workload. Строгая сопоставимость подтверждена в [[validation/PC_COMPARISON_V05]], происхождение/границы — [[validation/CLIENT_SMOKE]]. Эти отчёты использовать для устройства с той же implementation fingerprint/config/fixture/settings; исторические 0.2.0 остаются отдельными файлами.
+
+## Текущие PC baselines 0.6.0
+
+Новые первичные отчёты: [[validation/baselines/PC_RTX_V06]], [[validation/baselines/PC_MESA_V06]]. По 25 pass/10 workloads, 60 samples/10 warmup/3 contexts, source fingerprint совпадает с C++ payload Linux RPM 0.6.0. Strict comparison: [[validation/PC_COMPARISON_V06]]. Происхождение и package checks — [[validation/SOURCES_SMOKE]]. Для новых target measurements использовать эту версию кода и те же settings; source lifecycle повторить отдельно через установленный `sv-source-tests`.

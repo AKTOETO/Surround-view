@@ -360,13 +360,13 @@ package "Устройство сервера" {
   [Client control/data io_context] as N
 }
 B --> P : RGB / manifest / hashes
-P --> E : Unix или TCP / RGB8
+P -> E : Unix или TCP / RGB8
 E --> S
 S --> Q : Q кадров каждой камеры
 R --> Q : Q четырёхкамерных наборов
 Q --> G : poll
 G --> N : RGBA + provenance
-C <--> N : команды / ACK / RGBA / release
+C <-> N : команды / ACK / RGBA / release
 note bottom of R : Replay либо SocketSource;\nbackend выбирается config
 @enduml
 ```
@@ -387,6 +387,10 @@ note bottom of R : Replay либо SocketSource;\nbackend выбирается c
 На паузе socket worker продолжает читать и проверять поток, но отбрасывает новые входы. Это предотвращает накопление старого видео до resume; принятые до pause кадры обрабатываются перед completion. `step` имеет смысл только для конечной replay-последовательности, поэтому socket backend отклоняет его без изменения revision. Клиент узнаёт доступные операции из capabilities.
 
 Host producer проверяет хэши и calibration IDs записи, читает изображения четырьмя потоками и передаёт их в отдельные сокеты. Он позволяет использовать сохранённый Blender-мир как источник данных без создания `/dev/video*`. Он пока не рендерит интерактивный мир и не выполняет автоматический reconnect; перезапуск утилиты создаёт новые сессии. Прямой VideoCapture backend отложен до реализации ограниченного shutdown: блокирующий вызов драйвера нельзя считать отменяемым только потому, что он перенесён в thread.
+
+![Обзор Blender-улицы после передачи через виртуальные камеры](figures/implementation/03_blender_socket.png)
+
+*Рисунок 3.14 — Actual RGBA readback `sv-server` на RTX 5070 Ti: Blender recording → четыре Unix producer sockets → купол + пол. Показано сохранённое окружение автомобиля; растяжения и швы текущей проекции остаются предметом исследования качества. Рисунок публикует `plot_blender.py --socket-validation`; это не рендер внешней Blender-камеры.*
 
 Решение и пределы подтверждаются собственным кодом: [source.hpp](../../include/sv/source.hpp), [replay.cpp](../../src/sources/replay.cpp), [socket.cpp](../../src/sources/socket.cpp), [producer.py](../../tools/producer.py). Подробный контракт и команды — [[engineering/SOURCES]], результаты — [[validation/SOURCES_SMOKE]]. Свойства thread pool, драйверов и realtime Blender, которые в коде отсутствуют, этим компонентам не приписываются.
 

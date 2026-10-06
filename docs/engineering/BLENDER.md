@@ -120,3 +120,12 @@ python3 docs/diploma/plot_blender.py \
 ## Источники кадров в рабочем профиле 0.6.0
 
 Реализованы replay worker и четыре независимых виртуальных входа Unix/TCP. Нормативное описание полей `source`, producer handshake/type 10, границы времени и очередей: [[engineering/SOURCES]]. Команды Blender → producer → server → client: [[engineering/USAGE#Blender-запись через виртуальные камеры]]. Полный проектный контракт выше не объявляется завершённым; аппаратный backend, UDP и интерактивное вождение остаются открытыми.
+
+## Сквозная проверка virtual-camera producer
+
+```sh
+python3 tools/blender/validate.py --dataset artifacts/blender-street \
+  --output artifacts/blender-virtual-new --source socket
+```
+
+Validator создаёт временные Unix endpoints, запускает настоящий server и отдельный producer, проверяет четыре READY RGBA output и применённый ракурс, сохраняет `server-view.png`, trace/config и `smoke.json`. Output должен быть новым; `--source replay` (default) сохраняет прежнюю проверку. В 0.6.0 оба пути прошли на RTX 5070 Ti: [[validation/SOURCES_SMOKE]]. Это finite recording streaming, не realtime Blender rendering.

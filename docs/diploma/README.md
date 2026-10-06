@@ -48,3 +48,7 @@ python3 docs/diploma/plot_platform.py
 `figures/` разделён на `theory/`, `design/`, `implementation/`, `experiments/`, `conclusion/`. Каждая картинка встроена в соответствующую главу с номером и подписью; в ней различаются аналитический расчёт, модельная схема и реальное наблюдение программы. PlantUML остаётся прямо в Markdown. Инструкция по сборке/использованию/упаковке: [[engineering/BUILD]], [[engineering/USAGE]], [[engineering/AURORA]].
 
 Вернуться к [[README|карте документации]].
+
+## Дополнение 0.6.0
+
+Глава 3 (§3.16) описывает source workers, per-camera queues и разделение producer/client endpoints; рисунок 3.14 — actual server output новой socket pipeline. `plot_blender.py` принимает дополнительный `--socket-validation artifacts/blender-virtual-v06`, остальные параметры сохранены. Глава 4 (§4.9.4/§4.14) содержит новые PC baselines и source tests; старые измерения не переписаны. Происхождение — [[validation/SOURCES_SMOKE]].
