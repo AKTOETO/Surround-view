@@ -75,6 +75,13 @@ class CameraReceivers:
                         self.handshake.set()
                         self.stop.wait(3)
                         continue
+                    if camera == 0 and self.stalled == 'drip':
+                        reply = pack(2, dict(session_id=session, camera_id=camera, timestamp_basis='server_delivery'))
+                        for byte in reply:
+                            client.sendall(bytes([byte]))
+                            if self.stop.wait(.02):
+                                break
+                        continue
                     client.sendall(pack(2, dict(session_id=session, camera_id=camera,
                         timestamp_basis='wrong' if camera == 0 and self.stalled == 'invalid' else 'server_delivery')))
                     if camera == 0 and self.stalled == 'payload':
@@ -225,6 +232,23 @@ class ProducerTests(unittest.TestCase):
                 self.assertEqual(cameras[0]['connections'], 0)
                 self.assertEqual(cameras[0]['transport_failures'], 0)
                 self.assertIn('handshake rejected', cameras[0]['last_error'])
+                self.assertTrue(all(c['status'] == 'completed' for c in cameras[1:]))
+            finally:
+                receivers.close()
+
+    def test_handshake_deadline_survives_slow_drip(self):
+        with tempfile.TemporaryDirectory(prefix='sv-producer-') as temporary:
+            config, manifest = fixture(Path(temporary))
+            receivers = CameraReceivers(config, stalled='drip')
+            try:
+                before = time.monotonic()
+                with self.assertRaises(ProducerError) as raised:
+                    stream(config, manifest, loops=3, reconnect_attempts=0, timeout_ms=100)
+                self.assertLess(time.monotonic() - before, 1.)
+                cameras = raised.exception.report['cameras']
+                self.assertEqual(cameras[0]['status'], 'failed')
+                self.assertEqual(cameras[0]['transport_failures'], 1)
+                self.assertEqual(cameras[0]['connections'], 0)
                 self.assertTrue(all(c['status'] == 'completed' for c in cameras[1:]))
             finally:
                 receivers.close()

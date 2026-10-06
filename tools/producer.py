@@ -75,6 +75,23 @@ def _dataset(config, manifest_path, loops, host):
     return manifest_path, cameras, endpoints, rows, times, paths
 
 
+def _receive_hello(connection, timeout_ms):
+    deadline = time.monotonic() + timeout_ms / 1000.
+
+    class DeadlineReader:
+        def recv(self, count):
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise TimeoutError('producer handshake deadline expired')
+            connection.settimeout(remaining)
+            return connection.recv(count)
+
+    try:
+        return receive(DeadlineReader())
+    finally:
+        connection.settimeout(timeout_ms / 1000.)
+
+
 def stream(config, manifest_path, loops=1, host=None, stop=None, *, reconnect_attempts=5,
            reconnect_delay_ms=100, timeout_ms=1000, max_lateness_ms=100, report_path=None):
     if (not 0 <= reconnect_attempts <= 10000 or not 1 <= reconnect_delay_ms <= 60000 or
@@ -172,10 +189,14 @@ def stream(config, manifest_path, loops=1, host=None, stop=None, *, reconnect_at
                                     address = (str(address_ip), endpoint['port'])
                                 connection.settimeout(timeout_ms / 1000.)
                                 connection.connect(address)
+                                if stop.is_set():
+                                    return
                                 connection.sendall(pack(1, dict(role='producer', camera_id=camera['id'],
                                     calibration_id=camera['calibration_id'], **resolution,
                                     pixel_format='RGB8', row_origin='top_left', clock_domain='producer_monotonic')))
-                                kind, hello, payload = receive(connection)
+                                if stop.is_set():
+                                    return
+                                kind, hello, payload = _receive_hello(connection, timeout_ms)
                                 if (kind != 2 or payload or hello['camera_id'] != camera['id'] or
                                         not isinstance(hello['session_id'], str) or not hello['session_id'] or
                                         hello['timestamp_basis'] != 'server_delivery'):
@@ -211,6 +232,8 @@ def stream(config, manifest_path, loops=1, host=None, stop=None, *, reconnect_at
                             stats['last_error'] = str(error)[:1024]
                             close()
                             failures += 1
+                            if stop.is_set():
+                                return
                             if failures > reconnect_attempts:
                                 raise RuntimeError('reconnect budget exhausted: ' + str(error)) from error
                             if stop.wait(reconnect_delay_ms / 1000.):
