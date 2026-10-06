@@ -116,3 +116,7 @@ python3 docs/diploma/plot_blender.py \
 2. Измерить ошибки разметки и вертикальных объектов, швы/ghosting и temporal stability; сравнить fusion и carriers по [[research/PROJECTION_AND_STITCHING]].
 3. Добавить интерактивную траекторию и четыре live producer после `FrameSource` и socket-input контракта.
 4. Добавить реалистичную модель автомобиля и материалы с фиксированной лицензией; текущий мир процедурный.
+
+## Источники кадров в рабочем профиле 0.6.0
+
+Реализованы replay worker и четыре независимых виртуальных входа Unix/TCP. Нормативное описание полей `source`, producer handshake/type 10, границы времени и очередей: [[engineering/SOURCES]]. Команды Blender → producer → server → client: [[engineering/USAGE#Blender-запись через виртуальные камеры]]. Полный проектный контракт выше не объявляется завершённым; аппаратный backend, UDP и интерактивное вождение остаются открытыми.

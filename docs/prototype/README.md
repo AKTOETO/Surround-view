@@ -1,6 +1,6 @@
 # Linux-прототип: сборка и запуск
 
-Версия 0.5.0. Эта заметка — навигация; подробные команды хранятся один раз в `engineering/`. Что проверено и что осталось: [[prototype/STATUS]]. Реализация: [[diploma/03_PROTOTYPE_IMPLEMENTATION]]. Три fusion-режима и пять носителей реализованы; инструкция — [[engineering/RENDERING]], first-frame screening — [[validation/SURFACE_SCREENING]]. Полная методика сравнения находится в [[research/PROJECTION_AND_STITCHING]].
+Версия 0.6.0. Эта заметка — навигация; подробные команды хранятся один раз в `engineering/`. Что проверено и что осталось: [[prototype/STATUS]]. Реализация: [[diploma/03_PROTOTYPE_IMPLEMENTATION]]. Три fusion-режима и пять носителей реализованы; инструкция — [[engineering/RENDERING]], first-frame screening — [[validation/SURFACE_SCREENING]]. Полная методика сравнения находится в [[research/PROJECTION_AND_STITCHING]].
 
 ## Зависимости и структура
 
@@ -16,7 +16,7 @@
 
 ## Сервер и интерактивный клиент
 
-[[engineering/USAGE|Replay, сервер/клиент, управление, capture и формат manifest]]. Прямого live producer в сервере нет; OpenCV recorder готовит запись.
+[[engineering/USAGE|Replay, сервер/клиент, управление, capture и формат manifest]]. FrameSource принимает replay либо четыре Unix/TCP producer-входа: [[engineering/SOURCES]]. OpenCV recorder готовит запись; прямой VideoCapture backend пока не встроен.
 
 ## Калибровка и диагностика
 

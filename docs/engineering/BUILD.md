@@ -1,6 +1,6 @@
 # Сборка, зависимости и установка
 
-Версия кода — 0.5.0. Добавлены cylinder/cube с полом и крышкой, три fusion-режима и coverage/weights; купол и bowl сохранены. Конфигурация и comparison harness — [[engineering/RENDERING]]. Виртуальная камера ограничена внутренностью купола, ненаблюдаемые текстурами направления получают непрозрачный фон. Начало работы: эта заметка → [[engineering/USAGE]] → [[engineering/PLATFORM_TEST]]. Для устройства использовать [[engineering/AURORA]], для происхождения демонстрации — [[engineering/SCENE]]. Фактические ограничения находятся в [[prototype/STATUS]].
+Версия кода — 0.6.0. FrameSource/replay worker и виртуальные Unix/TCP-камеры описаны в [[engineering/SOURCES]]. Добавлены cylinder/cube с полом и крышкой, три fusion-режима и coverage/weights; купол и bowl сохранены. Конфигурация и comparison harness — [[engineering/RENDERING]]. Виртуальная камера ограничена внутренностью купола, ненаблюдаемые текстурами направления получают непрозрачный фон. Начало работы: эта заметка → [[engineering/USAGE]] → [[engineering/PLATFORM_TEST]]. Для устройства использовать [[engineering/AURORA]], для происхождения демонстрации — [[engineering/SCENE]]. Фактические ограничения находятся в [[prototype/STATUS]].
 
 ## Требования к среде
 

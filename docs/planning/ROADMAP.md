@@ -1,6 +1,6 @@
 # Подробный план реализации
 
-Единственный действующий план полного проекта. Стартовый чеклист находится в корневом `TODO.md`; содержание диссертации — [[planning/THESIS]]. Тема и обязательный результат: [[research/TOPIC]]. На 06.10.2026 рабочий Linux-профиль 0.5.0 содержит математическое ядро, GPU/replay, калибровочные инструменты, пять носителей/три fusion-режима, screening, Unix/TCP сервер и общую клиентскую библиотеку с GUI/headless consumers. Проверка каждого этапа и незакрытые условия — [[planning/AUDIT]]. Ни один полный целевой этап не объявляется завершённым по одному Linux smoke. Реальные данные, полный контракт, UDP/live sources и Аврора остаются открытыми. Свидетельства — [[prototype/STATUS]], [[research/PROJECTION_AND_STITCHING]], [[prototype/MEASUREMENTS]].
+Единственный действующий план полного проекта. Стартовый чеклист находится в корневом `TODO.md`; содержание диссертации — [[planning/THESIS]]. Тема и обязательный результат: [[research/TOPIC]]. На 06.10.2026 рабочий Linux-профиль 0.6.0 содержит математическое ядро, GPU/replay, калибровочные инструменты, пять носителей/три fusion-режима, screening, Unix/TCP сервер и общую клиентскую библиотеку с GUI/headless consumers. Проверка каждого этапа и незакрытые условия — [[planning/AUDIT]]. Ни один полный целевой этап не объявляется завершённым по одному Linux smoke. Реальные данные, полный контракт, UDP/hardware sources и Аврора остаются открытыми. Свидетельства — [[prototype/STATUS]], [[research/PROJECTION_AND_STITCHING]], [[prototype/MEASUREMENTS]].
 
 ## Зависимости и результаты
 
@@ -61,7 +61,7 @@
 
 ## Следующий этап: источники, удалённое управление и 3D-окружение
 
-Это требования пользователя от 05.10.2026, **план с частичной реализацией в 0.5.0**. Unix/TCP и клиентская библиотека реализованы; FrameSource/live/UDP/управляемый мир остаются планом. Рабочие команды сохраняются в [[engineering/USAGE]]; состояние кода — [[prototype/STATUS]].
+Это требования пользователя от 05.10.2026, **план с частичной реализацией в 0.5.0**. Unix/TCP и клиентская библиотека реализованы; в 0.6.0 добавлены replay/socket FrameSource и producer записей. Hardware capture, интерактивный мир и UDP остаются планом. Рабочие команды сохраняются в [[engineering/USAGE]]; состояние кода — [[prototype/STATUS]].
 
 | Порядок | Решение и граница | Что проверить |
 |---|---|---|
@@ -104,7 +104,7 @@ ClientLibrary --> Client : события + владелец буфера
 @enduml
 ```
 
-*Рисунок П.1 — Предлагаемое взаимодействие следующего этапа. `sv-client-lib` отделяет клиентский API от Unix/TCP; выбор аппаратных или виртуальных входов задаётся серверной конфигурацией. В 0.5.0 библиотека и Unix/TCP реализованы; схема FrameSource/live producer остаётся проектной.*
+*Рисунок П.1 — Предлагаемое взаимодействие следующего этапа. `sv-client-lib` отделяет клиентский API от Unix/TCP; выбор аппаратных или виртуальных входов задаётся серверной конфигурацией. В 0.5.0 библиотека и Unix/TCP реализованы; в 0.6.0 replay/socket FrameSource реализован, аппаратный backend и интерактивный рендер остаются проектными.*
 
 Unix/TCP поля `connections` и пример портов описаны в [[engineering/CLIENT_LIBRARY]]; UDP-профиль ещё предстоит закрепить в [[requirements/PROTOCOL]] и [[requirements/CONFIGURATION]]; текущие Unix socket paths не являются TCP endpoints. Для управления через сеть предусмотреть явную настройку доступа; локальный режим по умолчанию привязывается к loopback. Не использовать время получения пакета как время экспозиции: при разных машинах сохранить clock domain и измеренный способ сопоставления часов.
 
@@ -122,7 +122,7 @@ GTest разрешён для новых проверок. При его выб�
 
 Реализованы `cylinder_floor_v1`, `cube_floor_v1`, shared containment, hard best-angle и angular-feather вместе с прежним edge-feather, coverage/weights и native орacles. [[engineering/RENDERING]] задаёт рабочий контракт, [[validation/SURFACE_SCREENING]] — 70 first-frame cases. Native suite расширена до 25 критериев и 10 workload. Эти результаты закрывают инженерный baseline оболочек/дешёвого fusion, но не quality acceptance E-STITCH-01.
 
-Следующий исследовательский шаг: metric markers, depth/visibility truth, photometric perturbations и видео; сравнение при общем resource budget, затем graph-cut/multi-band. Следующий инженерный шаг остаётся `FrameSource`, bounded producers и `sv-client-lib` с Unix/TCP согласно таблице выше. RPM 0.4.0 нужно перепроверить; целевой SDK и аппаратный baseline остаются отдельными этапами. Общую редактуру диплома выполнить после реализации и приёмки этих функций.
+Следующий исследовательский шаг: metric markers, depth/visibility truth, photometric perturbations и видео; сравнение при общем resource budget, затем graph-cut/multi-band. Replay/socket FrameSource и bounded producer записей реализованы в 0.6.0 ([[engineering/SOURCES]]). Следующий инженерный шаг — аппаратный backend с cancellation и two-host acceptance. Оба Linux RPM 0.5.0 проверены; целевой SDK и аппаратный baseline остаются отдельными этапами. Общую редактуру диплома выполнить после реализации и приёмки этих функций.
 
 ## Универсальная клиентская библиотека: уточнение 06.10.2026
 
@@ -133,3 +133,9 @@ Unix/TCP реализовать первыми; UDP планировать от�
 ## Закрытые инженерные пункты аудита 0.5.0
 
 Реализованы `sv-client-lib`/`sv-wire`, installed `sv::client`, GUI migration, Unix/TCP/combined listeners и Unix-only без IP sockets. Добавлены query state, paused reconnect frame, decode/mesh counters, step acceptance и manifest-driven replay intervals. Использование — [[engineering/CLIENT_LIBRARY]], проверка и оставшиеся пункты — [[planning/AUDIT]].
+
+## Закрытые инженерные пункты 0.6.0 и следующий шаг
+
+Выполнены replay `FrameSource` с отдельным decode worker, выбор replay/socket через config, четыре независимых Unix/TCP virtual-camera endpoints, per-camera bounded queues, pause barrier, provenance и producer проверенных записей. Native fixture пригоден для RPM без Python; host acceptance — [[validation/SOURCES_SMOKE]]. Source endpoints не смешиваются с client connections.
+
+Далее: server-side `/dev/video*` adapter с ограниченным shutdown, аппаратные timestamps и clock mapping; physical two-host test; интерактивный Blender render/управление и producer reconnect; depth/visibility truth и quality-метрики. Наличие socket source не закрывает эти пункты и полный M5/M8/M9.
