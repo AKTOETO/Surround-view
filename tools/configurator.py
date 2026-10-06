@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Offline known-point calibration. No image corner detector or live auto-calibration."""
-import argparse, copy, hashlib, json, os
+import argparse, copy, hashlib, json, os, sys
 from pathlib import Path
 import numpy as np
 
@@ -131,6 +131,10 @@ def calibrate(cfg, observations, max_validation_px=1.):
 
 
 if __name__=='__main__':
+    if len(sys.argv) > 1 and sys.argv[1] == 'compare-mounts':
+        from calibration.study import main
+        main(sys.argv[2:])
+        raise SystemExit(0)
     parser=argparse.ArgumentParser();parser.add_argument('mode',choices=['calibrate','diagnose']);parser.add_argument('--config',type=Path,required=True);parser.add_argument('--observations',type=Path,required=True);parser.add_argument('--output',type=Path,required=True);parser.add_argument('--threshold',type=float,default=1.)
     args=parser.parse_args();cfg=json.loads(args.config.read_text());obs=json.loads(args.observations.read_text());args.output.mkdir(parents=True,exist_ok=True)
     if args.mode=='diagnose':report=diagnose(cfg,obs,args.threshold)

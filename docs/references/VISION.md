@@ -436,3 +436,7 @@ Fisheye camera model / OpenCV. – Текст : электронный // OpenCV
 ## S71
 
 **OpenCV. Images Stitching; Seam Estimation.** [Руководство stitching](https://docs.opencv.org/4.x/d1/d46/group__stitching.html), [seam estimation API](https://docs.opencv.org/4.x/d9/d24/group__stitching__seam.html), [detail blender API](https://docs.opencv.org/4.x/d5/d4b/classcv_1_1detail_1_1Blender.html). Проверено 06.10.2026: каталог включает plane/spherical/cylindrical warpers, graph-cut/Voronoi/DP seam finders и feather/multi-band blenders. Документация используется для пространства вариантов; project currently uses its own calibrated shader rather than `cv::Stitcher`.
+
+## S72
+
+**OpenCV. Perspective-n-Point pose computation and refinement.** [Официальное описание ветки 5.x](https://github.com/opencv/opencv/blob/5.x/modules/geometry/doc/solvePnP.markdown), [calib3d API 4.12](https://docs.opencv.org/4.12.0/d9/d0c/group__calib3d.html). Проверено 07.10.2026: ITERATIVE/EPnP/SQPnP, planar IPPE, RANSAC и refinement. Используется для постановки [[research/MOUNT_CALIBRATION]]; фактически исполняется системный C++ OpenCV 5.0.0. Нормализованная fisheye-подготовка отделена от pinhole pose solver; автоматически переносить смысл порогов из pixels в normalized coordinates нельзя.
