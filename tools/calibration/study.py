@@ -294,6 +294,168 @@ def board_main(arguments):
     print(json.dumps(report['rows'], indent=2))
 
 
+def _pose_noise(rng, translation_sigma_m, rotation_sigma_rad):
+    """Sample a small vehicle-frame perturbation for one surveyed board pose."""
+    angles = rng.normal(0.0, rotation_sigma_rad, size=3)
+    sx, sy, sz = np.sin(angles)
+    cx, cy, cz = np.cos(angles)
+    rx = np.array([[1, 0, 0], [0, cx, -sx], [0, sx, cx]])
+    ry = np.array([[cy, 0, sy], [0, 1, 0], [-sy, 0, cy]])
+    rz = np.array([[cz, -sz, 0], [sz, cz, 0], [0, 0, 1]])
+    delta = np.eye(4)
+    delta[:3, :3] = rz @ ry @ rx
+    delta[:3, 3] = rng.normal(0.0, translation_sigma_m, size=3)
+    return delta
+
+
+def board_survey_study(dataset, image_study, output, build, seed=7731, repeats=5):
+    """Measure extrinsic recovery sensitivity to independent board-pose survey noise."""
+    dataset, image_study, output, build = (Path(p).resolve() for p in (dataset, image_study, output, build))
+    if output.exists():
+        raise ValueError('output must be a new directory')
+    if repeats < 1 or repeats > 20:
+        raise ValueError('repeats must be 1..20')
+    capture = json.loads((dataset/'calibration-board-captures.json').read_text())
+    image_report = json.loads((image_study/'report.json').read_text())
+    truth_record = json.loads((dataset/'ground_truth.json').read_text())
+    truth = json.loads((dataset/'config.json').read_text())
+    nominal = json.loads((dataset/'nominal-config.json').read_text())
+    train = json.loads((image_study/'detected-train'/'observations.json').read_text())
+    validation = json.loads((image_study/'detected-validation'/'observations.json').read_text())
+    binary = build/'sv-calibrate'
+    if not binary.is_file():
+        raise ValueError(f'calibration CLI not found: {binary}')
+    corners = int(capture['board']['inner_corners'][0] * capture['board']['inner_corners'][1])
+    records = {int(record['id']): record for record in capture['cameras']}
+    if set(records) != {0, 1, 2, 3}:
+        raise ValueError('capture must contain camera IDs 0..3')
+    capture_frames = len(records[0]['views'])
+    training_frames = int(image_report['training_frames'])
+    if (training_frames < 2 or training_frames >= capture_frames or
+            any(len(record['views']) != capture_frames for record in records.values())):
+        raise ValueError('image study must define at least two train poses and leave a held-out pose')
+    for record in records.values():
+        record['views'] = record['views'][:training_frames]
+    if any(len(camera['points']) != training_frames * corners for camera in train['cameras']):
+        raise ValueError('train observations do not match board pose/corner counts')
+    output.mkdir(parents=True)
+    translation_levels_mm = (0., 1., 2., 5., 10.)
+    rotation_levels_deg = (0., .05, .1, .25, .5)
+    rows = []
+    nominal_by_id = {int(camera['id']): camera for camera in nominal['cameras']}
+    truth_by_id = {int(camera['id']): camera for camera in truth['cameras']}
+    validation_by_id = {int(camera['id']): camera for camera in validation['cameras']}
+    for translation_mm in translation_levels_mm:
+        for rotation_deg in rotation_levels_deg:
+            case = f't{translation_mm:g}mm-r{rotation_deg:g}deg'
+            for repeat in range(repeats):
+                rng_seed = seed + repeat * 100003
+                folder = output/case/f'repeat{repeat:02d}'
+                folder.mkdir(parents=True)
+                perturbed = copy.deepcopy(train)
+                for camera in perturbed['cameras']:
+                    camera_id = int(camera['id'])
+                    points = np.asarray(camera['points'], dtype=float).reshape(training_frames, corners, 3)
+                    surveyed = records[camera_id]['views']
+                    for view_index, view in enumerate(surveyed):
+                        exact = np.asarray(view['T_vehicle_from_board'], dtype=float)
+                        rng = np.random.default_rng(rng_seed + camera_id * 1009 + view_index * 9176)
+                        delta = _pose_noise(rng, translation_mm / 1000., np.deg2rad(rotation_deg))
+                        local_points = (points[view_index] - exact[:3, 3]) @ exact[:3, :3]
+                        measured = delta @ exact
+                        points[view_index] = local_points @ measured[:3, :3].T + measured[:3, 3]
+                    camera['points'] = points.reshape(-1, 3).tolist()
+                observations_path = folder/'observations.json'
+                observations_path.write_text(json.dumps(perturbed, indent=2)+'\n')
+                candidate_dir = folder/'candidate'
+                process = subprocess.run([str(binary), 'extrinsics', '--config',
+                    str(dataset/'nominal-config.json'), '--observations', str(observations_path),
+                    '--method', 'ransac_epnp_lm', '--output', str(candidate_dir)],
+                    capture_output=True, text=True, timeout=120)
+                row = dict(translation_sigma_mm=translation_mm, rotation_sigma_deg=rotation_deg,
+                           repeat=repeat, seed=rng_seed, success=process.returncode == 0)
+                if process.returncode:
+                    row['error'] = process.stderr.strip()
+                    rows.append(row)
+                    continue
+                candidate = json.loads((candidate_dir/'config.json').read_text())
+                fit = json.loads((candidate_dir/'report.json').read_text())
+                candidate_by_id = {int(camera['id']): camera for camera in candidate['cameras']}
+                fit_by_id = {int(camera['camera_id']): camera for camera in fit['cameras']}
+                metrics = []
+                for camera_id in range(4):
+                    base = nominal_by_id[camera_id]
+                    estimated = candidate_by_id[camera_id]
+                    actual = truth_by_id[camera_id]
+                    heldout = validation_by_id[camera_id]
+                    points = np.asarray(heldout['points'], dtype=float)
+                    pixels = np.asarray(heldout['pixels'], dtype=float)
+                    residual = np.linalg.norm(project(estimated, points)-pixels, axis=1)
+                    e, t = np.asarray(estimated['T_camera_from_vehicle']), np.asarray(actual['T_camera_from_vehicle'])
+                    center_e, center_t = -e[:3,:3].T@e[:3,3], -t[:3,:3].T@t[:3,3]
+                    rotation_error = np.rad2deg(np.arccos(np.clip((np.trace(e[:3,:3]@t[:3,:3].T)-1)/2,-1,1)))
+                    metrics.append(dict(camera_id=camera_id,
+                        before_validation_rmse_px=float(np.sqrt(np.mean(np.linalg.norm(project(base, points)-pixels, axis=1)**2))),
+                        after_validation_rmse_px=float(np.sqrt(np.mean(residual**2))),
+                        after_validation_p95_px=float(np.quantile(residual,.95)),
+                        rotation_error_deg=float(rotation_error),
+                        center_error_m=float(np.linalg.norm(center_e-center_t)),
+                        train_inliers=fit_by_id[camera_id]['inliers'],
+                        train_fit_rmse_px=fit_by_id[camera_id]['training_rmse_px']))
+                row['cameras'] = metrics
+                rows.append(row)
+    successful = [row for row in rows if row['success']]
+    summary = []
+    for translation_mm in translation_levels_mm:
+        for rotation_deg in rotation_levels_deg:
+            selected = [row for row in successful if row['translation_sigma_mm'] == translation_mm
+                        and row['rotation_sigma_deg'] == rotation_deg]
+            cameras = [camera for row in selected for camera in row['cameras']]
+            summary.append(dict(translation_sigma_mm=translation_mm, rotation_sigma_deg=rotation_deg,
+                successful_fits=len(selected), repeats=repeats, median_validation_rmse_px=float(np.median(
+                    [camera['after_validation_rmse_px'] for camera in cameras])) if cameras else None,
+                median_rotation_error_deg=float(np.median([camera['rotation_error_deg'] for camera in cameras])) if cameras else None,
+                median_center_error_mm=1000*float(np.median([camera['center_error_m'] for camera in cameras])) if cameras else None))
+    report = dict(schema_version=1, suite_id='blender-board-survey-noise-v1', seed=seed, repeats=repeats,
+        input_capture_sha256=truth_record['capture_sha256'],
+        training_observation_sha256=hashlib.sha256((image_study/'detected-train'/'observations.json').read_bytes()).hexdigest(),
+        validation_observation_sha256=hashlib.sha256((image_study/'detected-validation'/'observations.json').read_bytes()).hexdigest(),
+        study_source_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+        calibration_binary_sha256=hashlib.sha256(binary.read_bytes()).hexdigest(),
+        noise_model='independent isotropic Gaussian xyz translation and vehicle-frame xyz Euler rotation per camera and board pose; held-out surveyed poses remain exact',
+        rows=rows, summary=summary,
+        limitations=['single procedural scene and detector dataset',
+                     'simulated target survey error; no measured physical target poses',
+                     'known intrinsics and held-out board poses; only camera extrinsics are evaluated'])
+    (output/'report.json').write_text(json.dumps(report, indent=2)+'\n')
+    lines = ['# Sensitivity to board-pose survey error', '',
+        'Median across successful camera fits; validation images and board poses remain unchanged.', '',
+        '| Translation sigma, mm | Rotation sigma, deg | Successful fits | Held-out RMSE, px | Rotation error, deg | Center error, mm |',
+        '|---:|---:|---:|---:|---:|---:|']
+    for item in summary:
+        lines.append(f"| {item['translation_sigma_mm']:g} | {item['rotation_sigma_deg']:g} | {item['successful_fits']}/{repeats} | "
+                     f"{item['median_validation_rmse_px'] if item['median_validation_rmse_px'] is not None else 'NA'} | "
+                     f"{item['median_rotation_error_deg'] if item['median_rotation_error_deg'] is not None else 'NA'} | "
+                     f"{item['median_center_error_mm'] if item['median_center_error_mm'] is not None else 'NA'} |")
+    lines += ['', '## Limitations', '', *[f'- {item}' for item in report['limitations']], '']
+    (output/'REPORT.md').write_text('\n'.join(lines))
+    return report
+
+
+def board_survey_main(arguments):
+    parser = argparse.ArgumentParser(description='Measure extrinsic recovery sensitivity to board survey error')
+    parser.add_argument('--dataset', required=True, type=Path)
+    parser.add_argument('--image-study', required=True, type=Path,
+                        help='output directory previously created by calibrate-images')
+    parser.add_argument('--output', required=True, type=Path)
+    parser.add_argument('--build', default=Path('build'), type=Path)
+    parser.add_argument('--seed', type=int, default=7731)
+    parser.add_argument('--repeats', type=int, default=5)
+    args = parser.parse_args(arguments)
+    report = board_survey_study(args.dataset, args.image_study, args.output, args.build, args.seed, args.repeats)
+    print(json.dumps(report['summary'], indent=2))
+
+
 def main(arguments):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--dataset', required=True, type=Path)

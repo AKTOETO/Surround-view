@@ -20,6 +20,7 @@
 - [x] Начать исследование объединения четырёх камер и surface carriers: описать direct projection, panorama/cubemap pipeline, hard/feather/graph-cut/multiband и plane/bowl/dome/cylinder/cube. Результат: [обзор и план E-STITCH-01](docs/research/PROJECTION_AND_STITCHING.md); первый screening есть в [отчёте](docs/validation/SURFACE_SCREENING.md), полноценный quality benchmark ещё открыт.
 
 - [x] Создать независимый dense CPU-эталон пяти носителей с аналитическими пересечениями, тремя fusion-режимами и сохранением coverage/weights; выполнить 30 случаев на Blender-записи. Кузов, scene depth/visibility и количественное GPU-сопоставление остаются открытыми. [Результат](docs/validation/ANALYTIC_REFERENCE.md).
+- [x] Выполнить E-CAL-SURVEY-01: чувствительность внешней калибровки к ошибкам геодезической привязки доски (25 условий, 125 fits, медианные held-out RMSE и ошибки центра камеры). Результат: [отчёт](docs/validation/BOARD_SURVEY_SENSITIVITY.md), [раздел 4.19](docs/diploma/04_EXPERIMENTAL_STUDY.md#419-чувствительность-внешней-калибровки-к-ошибкам-геодезической-привязки-калибровочной-доски-e-cal-survey-01).
 
 Аудит всех разделов TODO и этапов roadmap: [состояние и условия завершения](docs/planning/AUDIT.md). Личные действия автора и аппаратная приёмка не заменяются проверками прототипа.
 
