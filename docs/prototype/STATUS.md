@@ -9,16 +9,16 @@
 | Проекция fisheye, V→C, GLM view, плоскость/bowl | Реальный OpenCV; 8000 NumPy и 8192 native analytic/OpenCV points | Нет CPU-растеризатора полного изображения |
 | Валидация JSON | Отрицательные тесты единиц, версии, матриц, камер, поверхности и монотонности | Нет полной JSON Schema нормативного профиля, произвольных масок и resize/crop |
 | EGL/GLES 3, четыре текстуры, linear-RGB blending и ego-модель | Mesa/RTX; GPU projection, асимметричный RGBA marker, optional valid draw query | Final readback синхронный; таймер зависит от расширения |
-| Ограниченные очереди и синхронизация | C++-проверки возраста, skew, дубликатов, очередей | Replay и socket sources; аппаратные timestamps и распределённые часы не проверены |
+| Ограниченные очереди и синхронизация | C++-проверки возраста, skew, дубликатов, очередей | Replay/socket и начальный OpenCV/V4L2 source; физические камеры, аппаратные timestamps и распределённые часы не проверены |
 | Калибровка intrinsics/extrinsics | Known-XYZ solver, независимая validation; native chessboard image detector строит vehicle XYZ из измеренной pose доски | На реальной метрической площадке точность image-derived workflow не измерена; detector order требует контрольной метки |
 | OpenCV detector и image-based intrinsics | `vision_tools`, synthetic projected images; hashes/disjoint train/validation | Held-out board pose fitted; нет real-camera испытаний и внешней привязки |
-| OpenCV VideoCapture recorder | Четыре видеофайла → PNG/manifest/timestamps, `vision_tools` | Не встроен в realtime server; host delivery times не sensor timestamps |
+| OpenCV VideoCapture | Recorder для файлов и начальный realtime server adapter `source.type=camera` | Host delivery times не sensor timestamps; реальные камеры и остановка на разных драйверах ещё не проверены |
 | Blender 3D street fixture | Разнесённые centers, scripted motion, 4 × fisheye RGB, hashes/poses; replay/server smoke | Процедурный автомобиль; нет dense depth, интерактивного вождения и live Blender render |
 | Фотографическая street-demo | CC0 panorama, три actual GLES ракурса в главе 3 | Общий оптический центр, нет реального параллакса/калибровочной истины |
 | Купол, цилиндр и куб с полом | Shared containment, outward meshes; GPU coverage для 36 ракурсов, без отверстий геометрии | Это носители проекции; depth/visibility truth не восстановлены |
 | Три fusion-режима и диагностика | Native RGB/weights/coverage oracles; [[engineering/RENDERING]] | Нет graph-cut, multi-band, photometric correction; только initial first-frame screening |
 | Сервисная диагностика задней камеры | Заданный поворот, известные точки, INDETERMINATE | Нет анализа признаков перекрытий и статистики реальных ложных тревог |
-| Сервер с Asio и отдельным EGL-потоком | Unix/TCP listeners по config, state/pause/step, timeout/reconnect, decode/mesh counters | Один клиент и один ожидающий release; decode вынесен в source worker; аппаратный capture backend отсутствует |
+| Сервер с Asio и отдельным EGL-потоком | Unix/TCP listeners по config, state/pause/step, timeout/reconnect, decode/mesh counters | Один клиент и один ожидающий release; V4L2 adapter есть, но реальные устройства и driver shutdown не проверены |
 | Универсальная клиентская библиотека | GUI/headless, Unix/TCP localhost, installed CMake consumer, RGBA ownership, deadlines и restart/reconnect | Нет UDP, two-host испытания, runtime config/calibration/source-management API |
 | Qt Quick desktop-клиент через библиотеку | Qt 6.11.2/5.15.19 offscreen; исправлен teardown Bridge | Не AuroraApp/Silica application; display latency не измерена |
 | SV01 framing и две очереди | Однобайтовое/объединённое чтение, malformed, control/data | Это подмножество протокола, не полная приёмка PRO-F-001…011 |
@@ -51,7 +51,7 @@ QQuickImageProvider заменяет проектный QQuickItem/QSGTexture. �
 
 1. Испытать существующий OpenCV detector/fitter на реальных снимках; измерить привязку к автомобилю и независимые XYZ.
 2. Полная машинная схема, контроль calibration/manifest-хэшей, систематическое сообщение пути ошибочного поля, report-контракт.
-3. Прямой аппаратный backend `/dev/video*` с cancellation/deadlines; интерактивный Blender producer, two-host acceptance и сопоставление clock domains. Replay/Unix/TCP FrameSource реализованы: [[engineering/SOURCES]].
+3. Проверить `/dev/video*` adapter на реальных камерах, добавить cancellation/deadlines; затем интерактивный Blender producer, two-host acceptance и сопоставление clock domains. Replay/Unix/TCP/V4L2 FrameSource описаны в [[engineering/SOURCES]].
 4. Дополнить draw/upload/readback и RSS измерениями IPC/UI/VRAM/thermal; длительная серия и replay clocks с speed/pause anchors.
 5. Диагностика по перекрытиям с движением/светом/skew, независимая настройка порогов, чувствительность и ложные тревоги.
 6. E-STITCH-01: сравнить hard/feather/distance/graph-cut/multiband и plane/bowl/dome/cylinder/cube на одном независимом наборе. `dome_floor` platform smoke проверяет render/performance validity, не качество изображения.
@@ -72,7 +72,7 @@ QQuickImageProvider заменяет проектный QQuickItem/QSGTexture. �
 
 ## Источники 0.6.0
 
-Вход выбирается из config: replay worker либо четыре Unix/TCP socket cameras. `tools/producer.py` передаёт verified recording четырьмя независимыми потоками; GL только забирает готовые frames. Пауза имеет source completion barrier; socket-входы на паузе читаются и отбрасываются, step недоступен. Проверки 12/12 Release, 8/8 CPU ASan/UBSan и source saturation/fault/reconnect — [[validation/SOURCES_SMOKE]]. Полный формат — [[engineering/SOURCES]]. Исторические уточнения 0.5.0 выше описывают предыдущую версию; аппаратный backend и realtime Blender остаются открытыми.
+Вход выбирается из config: replay worker, четыре Unix/TCP socket cameras или четыре локальных V4L2 устройства. `tools/producer.py` передаёт verified recording четырьмя независимыми потоками; GL только забирает готовые frames. Пауза имеет source completion barrier; socket-входы на паузе читаются и отбрасываются, step недоступен. Проверки 12/12 Release и 8/8 CPU ASan/UBSan относятся к replay/socket baseline [[validation/SOURCES_SMOKE]]; новая lifecycle проверка camera source не подключает физические сенсоры. Полный формат и ограничения — [[engineering/SOURCES]].
 
 ## Восстановление host producer
 
@@ -88,7 +88,7 @@ QQuickImageProvider заменяет проектный QQuickItem/QSGTexture. �
 
 ## Приоритетная архитектура 07.10.2026
 
-Зафиксирована новая модель [[architecture/CLIENT_SERVER_MODEL]]: server-owned config, несколько сессий, per-session view/subscriptions, intermediate products, optional final output и pipeline spans. Шесть PlantUML процессов задают ожидаемые тесты. Существующий GUI перенесён в `examples/sv-client`, начат touchscreen layout; `examples/svctl` предоставляет текущие команды через библиотеку без Qt. Тестовый installed consumer перенесён в `tests/fixtures/client-consumer`. `examples/sv-simulator` пока содержит только контракт, Qt 6 laptop GUI/live world ещё не реализованы.
+Зафиксирована целевая модель [[architecture/CLIENT_SERVER_MODEL]]: server-owned config, несколько сессий, per-session view/subscriptions, intermediate products, optional final output и подробные pipeline spans. Шесть PlantUML процессов задают ожидаемые тесты. GUI перенесён в `examples/sv-client`, начат touchscreen layout; `examples/svctl` предоставляет текущие команды через библиотеку без Qt. Installed consumer находится в `tests/fixtures/client-consumer`. `examples/sv-simulator` собирается как начальная Qt 6 control GUI, но live world и редактор камер/observations ещё не реализованы.
 
 Config persistence API, multi-client/control-only, subscriptions/canvas и trace — следующий этап, а не возможности текущего сервера. Он по-прежнему имеет одну сессию и legacy final output. Полный чеклист нового этапа находится в корневом TODO; он имеет приоритет над прежними предложениями прямого редактирования server config клиентами. Protobuf и C++20 не добавлены: решение и условия пересмотра описаны в новом контракте.
 

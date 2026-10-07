@@ -119,7 +119,7 @@ python3 docs/diploma/plot_blender.py \
 
 ## Источники кадров в рабочем профиле 0.6.0
 
-Реализованы replay worker и четыре независимых виртуальных входа Unix/TCP. Нормативное описание полей `source`, producer handshake/type 10, границы времени и очередей: [[engineering/SOURCES]]. Команды Blender → producer → server → client: [[engineering/USAGE#Blender-запись через виртуальные камеры]]. Полный проектный контракт выше не объявляется завершённым; аппаратный backend, UDP и интерактивное вождение остаются открытыми.
+Реализованы replay worker, четыре независимых виртуальных входа Unix/TCP и локальный OpenCV/V4L2 adapter. Нормативное описание полей `source`, producer handshake/type 10, границы времени и очередей: [[engineering/SOURCES]]. Команды Blender → producer → server → client: [[engineering/USAGE#Blender-запись через виртуальные камеры]]. Физическая приёмка камер/драйверов, UDP и интерактивное вождение остаются открытыми.
 
 ## Сквозная проверка virtual-camera producer
 

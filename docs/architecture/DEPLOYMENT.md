@@ -28,7 +28,7 @@ node "Рабочая станция / проверенный стенд\nArch Li
   component "tools/producer.py\nчетыре независимых camera streams\nreconnect / late-drop / reports" as Producer
 
   node "Процесс sv-server" as Server {
-    component "sv-sources / FrameSource\nreplay decode worker ИЛИ\n4 Unix/TCP camera inputs\nbounded queues" as Sources
+    component "sv-sources / FrameSource\nreplay ИЛИ 4 Unix/TCP inputs\nИЛИ 4 OpenCV/V4L2 devices\nbounded queues" as Sources
     component "sv-core\nconfig, math, mesh, synchronizer\nвиртуальная камера и frame sets" as Core
     component "sv-vision\nOpenCV image decode / projection" as Vision
     component "sv-render\nодин владелец EGL/GLES 3\nplane / bowl / dome / cylinder / cube\nпол, fusion, RGBA readback" as Render
@@ -101,9 +101,9 @@ Producer --> Reports
 Build --> RPM
 
 note bottom of Sources
-  Replay и socket — альтернативы при запуске.
-  Live /dev/video* и смешанные источники
-  в sv-server пока не реализованы.
+  Replay, socket и camera — альтернативы при запуске.
+  Физическая приёмка камер/драйверов не выполнена;
+  смешивание источников не поддерживается.
 end note
 note bottom of Transport
   Один клиент одновременно.
@@ -141,7 +141,7 @@ node "Целевое устройство ТС\nОС Аврора — верси
     component "sv-sources\nсуществующие replay / Unix/TCP inputs" as TargetSources #DDEEFF
     component "sv-core + sv-vision + sv-render\nсинхронизация / OpenCV / EGL/GLES" as TargetPipeline #DDEEFF
     component "Управление и выход\nUnix/TCP listeners по config\nsv-wire" as TargetTransport #DDEEFF
-    component "Будущий hardware source\n/dev/video*, capture deadlines\nsensor timestamps" as Hardware #EEEEEE
+    component "OpenCV/V4L2 capture adapter\n/dev/video*; host delivery timestamps\nblocking read зависит от драйвера" as Hardware #DDEEFF
   }
   component "sv-platform-test\nсбор отчёта для сравнения с ПК" as TargetTest #DDEEFF
   component "Вариант локального sv-client\n+ sv-client-lib\nAurora UI integration ещё предстоит" as LocalClient #FFF1CC
@@ -158,7 +158,7 @@ RemoteLib <--> TargetTransport : планируемый two-host TCP\ncontrol/da
 RemoteProducer --> TargetSources : планируемый two-host TCP\nчетыре RGB8 camera endpoints
 RemoteConfig --> Package : config / calibration resources
 FutureConfig ..> RemoteLib : API управления config / sources\nещё не реализован
-Cameras ..> Hardware : локальные /dev/video*\nтребует реализации / проверки
+Cameras ..> Hardware : локальные /dev/video*\nфизические устройства ещё не проверены
 Hardware ..> TargetPipeline
 TargetSources --> TargetPipeline
 TargetPipeline --> TargetGPU

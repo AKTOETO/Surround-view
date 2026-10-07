@@ -1,6 +1,6 @@
 # Начало проекта
 
-Состояние на 07.10.2026. Выполненные пункты относятся к Linux-профилю 0.6.0; полный результат на Авроре и реальные камеры остаются открытыми. Начат обзор способов слияния и mesh-носителей; первый screening пяти носителей и трёх fusion-режимов выполнен; качество швов ещё не измерено. Дополнительно начат E-CAL-MOUNT-01: Blender rig с воспроизводимыми mount offsets, четыре native OpenCV extrinsics pipeline, сравнение по synthetic held-out correspondences и image-derived chessboard observation tool. Server-side calibration jobs и эксперименты на реальных изображениях остаются открытыми. Подробности: [план реализации](docs/planning/ROADMAP.md), [границы прототипа](docs/prototype/STATUS.md), [карта документации](docs/README.md).
+Состояние на 07.10.2026. Выполненные пункты относятся к Linux-профилю 0.6.0; полный результат на Авроре и реальные камеры остаются открытыми. Начат обзор способов слияния и mesh-носителей; первый screening пяти носителей и трёх fusion-режимов выполнен; качество швов ещё не измерено. E-CAL-MOUNT-01 и первый Blender image-derived study завершены; первичный survey-error sensitivity sweep также выполнен. Добавлены начальные server calibration jobs и локальный V4L2 adapter, но калибровка ещё не является транзакционным quality-gated применением, а физическая camera source не проверена на устройстве. Подробности: [план реализации](docs/planning/ROADMAP.md), [границы прототипа](docs/prototype/STATUS.md), [карта документации](docs/README.md).
 
 ## Уже полученный результат
 
@@ -39,7 +39,8 @@
 Начать после фиксации версии 0.4.0. Подробная последовательность и условия приёмки: [расширение источников и окружения](docs/planning/ROADMAP.md#следующий-этап-источники-удалённое-управление-и-3d-окружение).
 
 - [x] Вынести replay в `FrameSource` worker; добавить четыре Unix/TCP входа виртуальных камер, выбор source по config, pause barrier, per-camera bounded queues и producer записей. [Описание](docs/engineering/SOURCES.md), [проверки](docs/validation/SOURCES_SMOKE.md).
-- [x] Встроить `/dev/video*` на стороне сервера: создан V4L2/OpenCV аппаратный `FrameSource` адаптер (`src/sources/camera_source.cpp`, `make_camera_source`), поддержка отмены, таймстампов и корректного останова (проверено в `hw_camera_source`).
+- [x] Добавить локальный V4L2/OpenCV `FrameSource`, конфиг `source.type=camera` с выбором четырёх `/dev/video*`, RGB-преобразование и ограниченную очередь; server dispatch подключён. Инструкция: [источники кадров](docs/engineering/SOURCES.md).
+- [ ] Проверить capture на реальных V4L2-устройствах: negotiated resolution/format, timestamp policy, disconnect/reconnect и возможность гарантированного stop при зависшем `VideoCapture::read`. Текущий `camera_source_lifecycle` проверяет только очередь управления, без камеры.
 - [x] Реализовать bounded Unix/TCP передачу RGB8 с calibration/session/sequence/clock metadata; проверить насыщение четырёх очередей, отказ камеры и reconnect с новой сессией.
 - [x] Добавить автоматический reconnect host producer, отдельный retry budget каждой камеры, пропуск просроченных кадров и JSON/Markdown отчёт. Проверить перезапуск настоящего сервера на Unix/TCP и отказ медленного приёмника. [Проверка](docs/validation/PRODUCER_RECOVERY.md).
 - [ ] Измерить capture/network skew на двух физических машинах, clock mapping и длительную перегрузку/RSS/thermal.
@@ -111,7 +112,7 @@
 - [x] Добавить серверную конфигурацию Unix/TCP listeners и явный отказ неподдержанного UDP. Проверить Unix-only без IP sockets через `/proc` (IPv4/IPv6 TCP/UDP), TCP-only без Unix paths и combined profile. UDP-реализация остаётся отдельным пунктом ниже. [Политика подключения](docs/requirements/CONFIGURATION.md#разрешённые-подключения-сервера-план).
 - [ ] После Unix/TCP спроектировать UDP-профиль: назначения каналов, packetization/reassembly, sessions, loss/reorder/duplicates, deadlines и подтверждение команд; затем реализовать адаптер и тесты. Текущий stream-протокол сам по себе UDP не обеспечивает.
 
-Проверено после аудита: 500 команд на паузе, полные RTX/Mesa baselines 0.6.0 и оба Linux RPM 0.6.0 с development consumer. [Результаты 0.6.0](docs/validation/SOURCES_SMOKE.md), [предыдущая серия](docs/validation/CLIENT_SMOKE.md). Replay/socket FrameSource закрыт в 0.6.0; аппаратный backend, интерактивный Blender render, UDP/quality и целевой перенос остаются открытыми.
+Проверено после аудита: 500 команд на паузе, полные RTX/Mesa baselines 0.6.0 и оба Linux RPM 0.6.0 с development consumer. [Результаты 0.6.0](docs/validation/SOURCES_SMOKE.md), [предыдущая серия](docs/validation/CLIENT_SMOKE.md). Replay/socket FrameSource имеет baseline; начальный V4L2 adapter добавлен, но физические камеры ещё не проверены. Открыты live Blender render, UDP/quality и целевой перенос.
 
 ## Перестройка по требованиям 07.10.2026: сервер и три клиента
 
@@ -120,21 +121,23 @@
 ### Границы и примеры
 
 - [x] Зафиксировать ответственность: сервер вычисляет продукты и единолично валидирует/применяет/сохраняет config; библиотека предоставляет API; приложения — её потребители.
-- [x] Описать процессы: connect/multi-session, config transaction, подписки/отключение final, trace, live simulator; привязать к unit/integration сценариям.
+- [x] Описать целевые процессы: connect/multi-session, config transaction, подписки/отключение final, trace, live simulator; привязать к unit/integration сценариям. Это архитектурный контракт, не отметка готовой реализации.
 - [x] Перенести существующий GUI в `examples/sv-client/`; installed consumer — в `tests/fixtures/client-consumer/`; сохранить binary/API и offline сборку.
 - [x] Создать `examples/svctl/`: Boost/STL без Qt, существующие команды через `sv-client-lib`, JSON ACK, deadline/exit codes, отсутствие прямой записи config.
 - [x] Начать touchscreen UI: крупные кнопки ракурсов/масштаба, single-touch orbit и панель state; убрать инженерные replay-команды с главного экрана.
 - [ ] Завершить Qt 5 automotive client под Аврору: платформенный lifecycle/UI integration, DPI и физические touch targets, жесты, информационная вкладка, проверка реального экрана.
-- [x] Реализовать Qt laptop GUI `examples/sv-simulator/`: создано полнофункциональное QML/C++ приложение (сборка `sv-simulator`), поддержка Unix/TCP, управление ракурсом/воспроизведением, асинхронная калибровка и имитация движения ТС.
+- [x] Создать начальную оболочку Qt laptop GUI `examples/sv-simulator/`: сборка, Unix/TCP connection, базовые команды и отображение кадров.
+- [ ] Довести `sv-simulator` до инженерного инструмента: world/camera editing, управляемое движение, valid calibration observations и полноценные эксперименты. Текущая кнопка калибровки отключена, пока GUI не собирает реальные observations.
 
 ### Сервер, конфигурация и библиотека
 
 - [x] Разбить `server.cpp` на sessions/transport, config, pipeline, products и telemetry; реализованы `ConfigStore` (`include/sv/config_store.hpp`) и `SessionRegistry` (`include/sv/server_session.hpp`).
-- [x] Реализовать несколько одновременных клиентов: `SessionRegistry` отслеживает сессии, токены, таймауты отпускания буфера и shutdown.
+- [ ] Реализовать несколько одновременных клиентов: сейчас `SessionRegistry` — вспомогательный каркас, но серверный accept/render path остаётся односессионным.
 - [x] Добавить control-only client mode: CLI `svctl` подключается к control channel и отправляет команды без открытия видеоканала.
 - [ ] Сделать view/subscriptions локальными для сессии; сохранить глобальные source/calibration/fusion/default-view только через ConfigService.
 - [ ] Реализовать типизированные client API для config read/update/validate/status и подписок/trace; wire codec скрыть за доменным API.
-- [ ] Реализовать server-owned ConfigStore: immutable snapshots, active/persisted revisions, optimistic concurrency, prepare/atomic persistence/frame-boundary apply и pending_restart.
+- [x] Добавить базовое серверное хранение конфигурации и атомарную запись JSON при применении calibration; renderer пересоздаётся из обновлённой конфигурации.
+- [ ] Завершить транзакционный ConfigStore: immutable snapshots, optimistic concurrency, frame-boundary apply, pending_restart и устойчивость к ошибкам/повторным операциям.
 - [ ] Обработать duplicate operation IDs, lost ACK/status query, disk errors и восстановление после падения; библиотека не повторяет мутации вслепую.
 - [x] Добавлять каждую новую серверную операцию одновременно в `svctl`; CLI покрывает операции управления, подстроек и асинхронной калибровки (`calibration-status`, `apply-calibration`).
 - [ ] Перевести offline configurator на черновики/экспорт и server API для применения; никакой клиент не изменяет серверный файл напрямую.
@@ -146,7 +149,8 @@
 - [ ] Отключать выдачу final frame отдельно для каждого клиента; при отсутствии всех final consumers пропускать final render/readback/encode.
 - [x] Добавить самостоятельный `stitched_canvas` до virtual view: прямоугольный холст, явная projection/domain/validity, выбор любых камер, в том числе трёх из четырёх; нормировка весов пересчитывается автоматически (проверено в `sv-render-mode-tests`).
 - [ ] Публиковать промежуточные camera frames, coverage, четыре веса, projection maps и metadata через общий product API; ограничить память/полосу/частоту.
-- [x] Ввести pipeline spans: receive/decode, queues/sync, projection/fusion, upload/draw/readback, publish/send; телеметрия временных интервалов и ring buffer отслеживания латентности (`include/sv/pipeline_spans.hpp`, проверено в `pipeline_spans`).
+- [x] Добавить ограниченный ring buffer и фактически доступные server spans: source poll, pre-render preparation, render wall, optional GPU draw query, upload/readback CPU intervals, publish enqueue и delivery-to-render duration (`include/sv/pipeline_spans.hpp`).
+- [ ] Добавить отдельные инструментированные receive/decode, queue wait, synchronization, projection/fusion, network send и client receive/present spans; для неисполненных стадий передавать отсутствие значения, не нулевое время.
 - [ ] Отделять CPU wall, GPU query validity и client receive/present; не суммировать перекрытия и не вычитать часы разных машин без clock mapping.
 - [ ] Проверить slow subscriber isolation, no-final counters, три-camera masks, stale revisions, budget_exceeded и trace saturation.
 
@@ -172,7 +176,8 @@
 - [x] Добавить задаваемые yaw/pitch и сдвиг вдоль кузова: random bounds и per-camera overrides. Проверить воспроизводимость, rigid transforms и оси.
 - [x] Начать E-CAL-MOUNT-01: известные intrinsics, независимые train/validation XYZ, контролируемые шум/выбросы; сравнить ITERATIVE, EPnP, SQPnP и RANSAC+EPnP+LM на настоящем C++ OpenCV, сохранить численные результаты и actual GLES изображения.
 - [x] Реализовать image-derived соответствия: native OpenCV chessboard detector для снимков четырёх камер, измеренная поза доски в координатах ТС, ручной контроль неоднозначного порядка углов, annotated outputs и provenance. Подробности: [[engineering/USAGE#OpenCV: внешняя калибровка по изображениям]].
-- [x] Встроить вычисление калибровки в sv-server как cancellable worker job: реализован `CalibrationJobManager` (`include/sv/calibration_job.hpp`), асинхронный поток выполнения, команды `calibrate`, `calibration_status`, `apply_calibration` без блокировки GL-потока рендера.
+- [x] Добавить начальный асинхронный `CalibrationJobManager` и команды `calibrate`, `calibration_status`, `apply_calibration`.
+- [ ] Завершить безопасное применение калибровки: held-out quality gate, ownership/ограничение job queue, отмена выполняющейся задачи, persistence active config и проверка повторной инициализации renderer. `apply_calibration` сейчас сохраняет JSON config и пересоздаёт renderer, но независимый quality gate и client ownership ещё не реализованы.
 - [ ] Сделать обзор семейств калибровки с источниками и матрицей применимости: intrinsics (pinhole/Brown, fisheye/Kannala–Brandt и альтернативные omnidirectional models), extrinsics (PnP/IPPE/SQPnP, robust estimation/refinement), joint/multi-camera calibration и overlap/photometric approaches. Не объявлять четыре PnP варианта сравнением всех существующих механизмов.
 - [x] Провести первый image-derived proof E-CAL-IMG-01: Blender RGB шахматной доски → native OpenCV corners → metric correspondences → fit на трёх позах и отдельная held-out проверка на четвёртой; 16/16 видов обнаружены. Результаты, рисунок, hashes и ограничения: [[validation/IMAGE_CALIBRATION]], исследовательское описание: [[research/IMAGE_CALIBRATION]]. Это только синтетический начальный опыт, не проверка реальных камер.
 - [ ] Расширить image-based исследование: coded/asymmetric targets (ChArUco/AprilTag-подобные), ground/raised и planar/nonplanar точки, board-pose survey error, качество detector, pose diversity, occlusion/visibility, blur/glare и несколько независимых validation scenes. Затем повторить на физически измеренных снимках; не считать E-CAL-IMG-01 достаточной приёмкой точности.

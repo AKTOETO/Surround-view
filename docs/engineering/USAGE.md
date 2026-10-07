@@ -157,6 +157,23 @@ build/sv-capture --config configs/synthetic.json --output artifacts/cameras-01 \
 
 Метки — host steady-clock **после retrieve**, а не аппаратные exposure timestamps. Цикл включает последовательный захват и запись на диск; это recorder для подготовки данных, не realtime producer. Replay worker воспроизводит интервалы manifest; file decode и scheduling добавляют задержку, аппаратная синхронность не гарантируется. EOF одного входа или неправильный формат завершает запись ошибкой; неполный каталог не выдаётся за успешный набор.
 
+## Запуск сервера с локальными V4L2 камерами
+
+`configs/v4l2-camera.json` показывает формат `source.type=camera` и четыре `/dev/video*`. До запуска проверьте пути через `v4l2-ctl --list-devices` и измените `devices` на реальные устройства. Пример содержит **синтетические** разрешения 320×180, intrinsics и extrinsics: замените их измеренными значениями, иначе изображение будет захвачено, но геометрия результата будет неверной.
+
+```sh
+SV_EGL_PLATFORM=surfaceless build/sv-server \
+  --config configs/v4l2-camera.json --ipc-dir /tmp/sv-v4l2
+```
+
+Во втором терминале:
+
+```sh
+build/sv-client /tmp/sv-v4l2
+```
+
+Сервер преобразует BGR, grayscale или BGRA в RGB8; кадр с размером, отличным от config, отбрасывается. Live capture не поддерживает `step`. Остановка ждёт текущий вызов OpenCV `VideoCapture::read`, поэтому задержка зависит от драйвера. Реальные камеры в этой среде не подключались; этот пример документирует способ запуска и не является hardware acceptance.
+
 Затем запустить `sv-bench`/`sv-server` с теми же config и `artifacts/cameras-01/manifest.json`. Для проверки всех hashes использовать `sv-platform-test --manifest ...`: обычный replay-loader сейчас проверяет IDs и формат, но не сканирует все хэши заранее.
 
 ## OpenCV: детекция калибровочного шаблона
@@ -370,7 +387,7 @@ build/svctl --unix /tmp/sv-blender resume
 build/svctl --tcp 127.0.0.1 53101 53102 orbit 0.1 0
 ```
 
-Вывод — JSON ACK; exit 0 accepted, 2 arguments, 3 connection/timeout, 4 rejected. По умолчанию общий deadline 5000 ms; `--timeout-ms` задаётся перед командой. Сейчас GUI надо закрыть перед запуском CLI: сервер ещё односессионный. CLI открывает legacy data channel и освобождает кадры; control-only/отключение final, сохранение config и промежуточные subscriptions запланированы в [[architecture/CLIENT_SERVER_MODEL]]. Библиотека не повторяет CLI мутацию после потери соединения. Laptop `sv-simulator` ещё не реализован, существующие offline команды пока остаются рабочими средствами воспроизводимости.
+Вывод — JSON ACK; exit 0 accepted, 2 arguments, 3 connection/timeout, 4 rejected. По умолчанию общий deadline 5000 ms; `--timeout-ms` задаётся перед командой. Сейчас GUI надо закрыть перед запуском CLI: сервер ещё односессионный. CLI открывает legacy data channel и освобождает кадры; calibration job commands доступны через generic command path, а config/subscriptions/diagnostic API остаются в плане. Библиотека не повторяет CLI мутацию после потери соединения. `sv-simulator` уже собирается как начальный Qt GUI, но полноценный мир и редактор камер/наблюдений ещё не реализованы.
 
 ## Мир с погрешностями крепления и сравнение калибровки
 

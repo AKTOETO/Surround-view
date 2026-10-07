@@ -11,7 +11,7 @@
 | GPU regression с явным Mesa vendor | 4/4 групп: render_modes, camera_sources, replay_ipc, client_transports |
 | Injected blocked decode | GL-facing poll/request не ждут loader; pause completion после декодирования |
 | Replay lifecycle | Pause barrier, один step, cache, bounded mailbox, decode failure и stopped request rejection |
-| Source config | Replay/socket приняты; unknown type, duplicate camera, relative Unix path и invalid timeout отвергнуты |
+| Source config (baseline revision) | Replay/socket приняты; unknown type, duplicate camera, relative Unix path и invalid timeout отвергнуты. V4L2 adapter добавлен позднее и этим отчётом не проверяется |
 | Socket saturation | Q последних frames каждой из четырёх камер; независимые quotas, точный drop count, cleanup/shutdown |
 | Настоящий сервер Unix и TCP | Четыре RGB8 входа, READY, provenance, pause/orbit/resume, source step rejection |
 | Camera faults | Duplicate закрывает один вход; остальные дают DEGRADED; новая session/sequence=0 восстанавливает READY |

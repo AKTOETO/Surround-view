@@ -30,6 +30,8 @@ struct SourceConfig
     std::string type = "replay", manifest;
     unsigned message_timeout_ms = 2000;
     std::array<CameraEndpoint, 4> cameras;
+    std::array<std::string, 4> camera_devices = {
+        "/dev/video0", "/dev/video1", "/dev/video2", "/dev/video3"};
 };
 
 struct Config

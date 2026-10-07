@@ -337,9 +337,29 @@ Config parse_config(const boost::json::value &value)
                 }
             }
         }
+        else if (c.source.type == "camera")
+        {
+            keys(s, {"type"}, "source", {"devices"});
+            if (const auto *devices = s.if_contains("devices"))
+            {
+                const auto &list = devices->as_array();
+                require(list.size() == 4, "source.devices: four camera device paths required");
+                std::set<std::string> unique;
+                for (size_t id = 0; id < list.size(); ++id)
+                {
+                    c.source.camera_devices[id] = str(list[id]);
+                    require(!c.source.camera_devices[id].empty() &&
+                                c.source.camera_devices[id].front() == '/' &&
+                                c.source.camera_devices[id].size() <= 255,
+                            "source.devices: absolute paths up to 255 bytes required");
+                    require(unique.insert(c.source.camera_devices[id]).second,
+                            "source.devices: duplicate camera path");
+                }
+            }
+        }
         else
         {
-            throw std::invalid_argument("source.type: replay/socket supported");
+            throw std::invalid_argument("source.type: replay/socket/camera supported");
         }
     }
     const auto &units = o.at("units").as_object();
