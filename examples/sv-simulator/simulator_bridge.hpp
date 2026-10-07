@@ -77,6 +77,7 @@ public:
 
 signals:
     void changed();
+    void frameReceived();
 
 private:
     void consume(sv::client::Event event);

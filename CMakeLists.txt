@@ -148,6 +148,8 @@ include(CTest)
 if(BUILD_TESTING OR SV_PLATFORM_TEST)
   add_executable(sv-calibration-job-tests tests/calibration_job_tests.cpp)
 target_link_libraries(sv-calibration-job-tests PRIVATE sv-vision)
+target_compile_definitions(sv-calibration-job-tests PRIVATE
+  SV_TEST_CONFIG_PATH="${CMAKE_CURRENT_SOURCE_DIR}/configs/synthetic.json")
 add_executable(sv-camera-source-tests tests/camera_source_tests.cpp)
 target_link_libraries(sv-camera-source-tests PRIVATE sv-sources)
 add_executable(sv-pipeline-spans-tests tests/pipeline_spans_tests.cpp)
@@ -212,6 +214,19 @@ install(DIRECTORY assets/demo/ DESTINATION ${CMAKE_INSTALL_DATADIR}/surround-vie
 
 if(BUILD_TESTING AND SV_GTEST_TESTS)
   find_package(GTest CONFIG REQUIRED)
+  add_executable(sv-config-store-tests tests/config_store_tests.cpp)
+  target_link_libraries(sv-config-store-tests PRIVATE sv-core GTest::gtest_main)
+  target_compile_definitions(sv-config-store-tests PRIVATE
+    SV_TEST_CONFIG_PATH="${CMAKE_CURRENT_SOURCE_DIR}/configs/synthetic.json")
+  add_test(NAME config_store_persistence COMMAND sv-config-store-tests)
+  if(SV_CLIENT)
+    add_executable(sv-simulator-discovery-tests
+      tests/simulator_discovery_tests.cpp examples/sv-simulator/ipc_discovery.cpp)
+    target_include_directories(sv-simulator-discovery-tests PRIVATE examples/sv-simulator)
+    target_link_libraries(sv-simulator-discovery-tests PRIVATE
+      Qt${QT_VERSION_MAJOR}::Core GTest::gtest_main)
+    add_test(NAME simulator_ipc_discovery COMMAND sv-simulator-discovery-tests)
+  endif()
   add_executable(svctl-option-tests tests/svctl_options.cpp examples/svctl/options.cpp)
   target_include_directories(svctl-option-tests PRIVATE examples/svctl)
   target_link_libraries(svctl-option-tests PRIVATE sv-client-lib GTest::gtest_main)

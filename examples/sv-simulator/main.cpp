@@ -2,6 +2,7 @@
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
+#include <QTimer>
 #include <iostream>
 #include <stdexcept>
 
@@ -23,6 +24,7 @@ int main(int argc, char **argv)
     QGuiApplication app(argc, argv);
     sv::client::Endpoint endpoint;
     bool explicit_endpoint = false;
+    bool smoke = false;
 
     try
     {
@@ -53,6 +55,10 @@ int main(int argc, char **argv)
                              "Without an endpoint, local IPC discovery starts automatically.\n";
                 return 0;
             }
+            else if (arg == "--smoke")
+            {
+                smoke = true;
+            }
             else
             {
                 throw std::invalid_argument("unknown or incomplete argument: " + arg);
@@ -72,6 +78,18 @@ int main(int argc, char **argv)
 
     auto *provider = new SimulatorFrameProvider();
     SimulatorBridge bridge(endpoint, provider);
+    int smoke_result = 0;
+    if (smoke)
+    {
+        smoke_result = 1;
+        QObject::connect(&bridge, &SimulatorBridge::frameReceived, &app,
+                         [&app, &smoke_result]
+                         {
+                             smoke_result = 0;
+                             QTimer::singleShot(100, &app, &QCoreApplication::quit);
+                         });
+        QTimer::singleShot(10000, &app, &QCoreApplication::quit);
+    }
 
     QQmlApplicationEngine engine;
     engine.addImageProvider(QStringLiteral("frames"), provider);
@@ -90,5 +108,6 @@ int main(int argc, char **argv)
         Qt::QueuedConnection);
 
     engine.load(url);
-    return app.exec();
+    const int app_result = app.exec();
+    return smoke ? smoke_result : app_result;
 }

@@ -168,7 +168,8 @@
 
 - [x] Ввести небольшие интерфейсы в местах внешних эффектов (`IConfigStore`, `IClock`, `IFrameSource`, `IProductSink`), RAII/PImpl и `MockClock`/`MockProductSink` реализации; добавлено в `include/sv/interfaces.hpp` и протестировано.
 - [x] Начать C++ unit tests на системном GTest для CLI; без FetchContent. Python оставить для integration и независимой математики.
-- [ ] Добавить GTest/mock проверки config transactions, sessions, scheduler/subscriptions и timing clock; C++ интеграцию где это упрощает проверку.
+- [x] Сделать Release C++ checks активными (не `assert` под `NDEBUG`); добавить GTest на atomic ConfigStore persistence/rejection и фильтрацию IPC discovery candidates. Calibration job проверяет persisted extrinsics, а transport integration запускает GUI simulator smoke для TCP и auto-discovered Unix.
+- [ ] Добавить дополнительные GTest/mock сценарии полноценной config transaction, server sessions, scheduler/subscriptions и timing clock; аппаратную camera capture проверять только на доступном V4L2 fixture/device.
 - [x] Оставить C++17 до конкретной необходимости C++20 и проверки Aurora toolchain; не повышать стандарт только ради номера.
 - [ ] Обновить главы диплома/архитектуру/RPM/USAGE после каждого реализованного этапа; финально привести документацию к единому актуальному описанию без устаревших утверждений.
 

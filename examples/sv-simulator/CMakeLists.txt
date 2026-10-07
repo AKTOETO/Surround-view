@@ -8,6 +8,8 @@ find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Gui Qml Quick Networ
 
 add_executable(sv-simulator
     main.cpp
+    ipc_discovery.cpp
+    ipc_discovery.hpp
     simulator_bridge.cpp
     simulator_bridge.hpp
     simulator.qrc

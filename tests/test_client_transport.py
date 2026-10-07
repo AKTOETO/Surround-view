@@ -50,7 +50,7 @@ def process_ip_sockets(pid):
 
 
 class ClientTransportTests(unittest.TestCase):
-    def run_profile(self, profile, qt=False, probe=None):
+    def run_profile(self, profile, qt=False, probe=None, simulator=False, discover=False):
         with tempfile.TemporaryDirectory(prefix='sv-transport-') as td:
             directory = Path(td)
             cfg = json.loads(CONFIG.read_text())
@@ -114,6 +114,19 @@ class ClientTransportTests(unittest.TestCase):
                     self.assertEqual(result.returncode, 0, result.stderr)
                     self.assertIn('ui_receive', result.stdout, result.stderr)
                     self.assertIn('ui_present_submit', result.stdout, result.stderr)
+                if simulator and (BUILD / 'examples/sv-simulator/sv-simulator').exists():
+                    env = os.environ.copy()
+                    env.update(QT_QPA_PLATFORM='offscreen', QT_QUICK_BACKEND='software')
+                    if discover:
+                        env['SV_IPC_DIR'] = str(ipc)
+                        simulator_endpoint = []
+                    else:
+                        simulator_endpoint = endpoint
+                    result = subprocess.run(
+                        [str(BUILD / 'examples/sv-simulator/sv-simulator'),
+                         *simulator_endpoint, '--smoke'],
+                        text=True, capture_output=True, env=env, timeout=12)
+                    self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
             finally:
                 server.terminate()
                 _, err = server.communicate(timeout=5)
@@ -122,10 +135,10 @@ class ClientTransportTests(unittest.TestCase):
             self.assertFalse((ipc / 'data.sock').exists())
 
     def test_unix_only_no_ip_socket(self):
-        self.run_profile('unix')
+        self.run_profile('unix', simulator=True, discover=True)
 
     def test_tcp_only_native_and_qt(self):
-        self.run_profile('tcp', qt=True)
+        self.run_profile('tcp', qt=True, simulator=True)
 
     def test_combined_profile(self):
         self.run_profile('both')

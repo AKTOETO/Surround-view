@@ -1,6 +1,6 @@
 #include "simulator_bridge.hpp"
+#include "ipc_discovery.hpp"
 #include <QDir>
-#include <QFileInfo>
 #include <QProcessEnvironment>
 #include <QSettings>
 #include <QStandardPaths>
@@ -175,6 +175,7 @@ void SimulatorBridge::consume(sv::client::Event event)
         client_->release(h);
     }
     emit changed();
+    emit frameReceived();
 }
 
 void SimulatorBridge::beginConnection(sv::client::Endpoint endpoint, int timeout,
@@ -336,16 +337,7 @@ void SimulatorBridge::discoverLocal(int timeout, int reconnect)
     }
     candidates << "/tmp/sv-prototype" << "/tmp/sv-street" << "/tmp/sv-blender";
 
-    for (const auto &candidate : candidates)
-    {
-        const auto normalized = QDir::cleanPath(candidate);
-        if (QDir::isAbsolutePath(normalized) && !discovery_candidates_.contains(normalized) &&
-            QFileInfo::exists(QDir(normalized).filePath("control.sock")) &&
-            QFileInfo::exists(QDir(normalized).filePath("data.sock")))
-        {
-            discovery_candidates_ << normalized;
-        }
-    }
+    discovery_candidates_ = discover_local_ipc_candidates(candidates);
 
     if (discovery_candidates_.isEmpty())
     {

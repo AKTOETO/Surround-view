@@ -24,6 +24,8 @@ build/examples/sv-simulator/sv-simulator --unix /tmp/sv-v4l2
 build/examples/sv-simulator/sv-simulator --tcp 192.168.1.20 53101 53102
 ```
 
+For an automated connection/frame smoke run, add `--smoke`; the process exits successfully after receiving a frame and exits with status 1 if no frame arrives within ten seconds.
+
 The connection panel allows editing the Unix directory or TCP host/ports. Timeout, reconnect interval, and retry count configure the client library. These are client transport options; they do not rewrite the server config. Endpoint values are saved with Qt `QSettings`.
 
 ## Available server controls
