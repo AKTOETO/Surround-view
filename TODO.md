@@ -144,7 +144,7 @@
 
 - [ ] Реализовать per-session subscriptions с products/camera mask/view/resolution/FPS, negotiated capabilities и effective revision boundary.
 - [ ] Отключать выдачу final frame отдельно для каждого клиента; при отсутствии всех final consumers пропускать final render/readback/encode.
-- [ ] Добавить самостоятельный `stitched_canvas` до virtual view: прямоугольный холст, явная projection/domain/validity, выбор любых камер, в том числе трёх из четырёх; пересчитывать нормировку весов.
+- [x] Добавить самостоятельный `stitched_canvas` до virtual view: прямоугольный холст, явная projection/domain/validity, выбор любых камер, в том числе трёх из четырёх; нормировка весов пересчитывается автоматически (проверено в `sv-render-mode-tests`).
 - [ ] Публиковать промежуточные camera frames, coverage, четыре веса, projection maps и metadata через общий product API; ограничить память/полосу/частоту.
 - [ ] Ввести pipeline spans: receive/decode, queues/sync, projection/fusion, upload/draw/readback, publish/send; trace/frame-set/config IDs, clock domains, statuses и sampling/ring budgets.
 - [ ] Отделять CPU wall, GPU query validity и client receive/present; не суммировать перекрытия и не вычитать часы разных машин без clock mapping.
