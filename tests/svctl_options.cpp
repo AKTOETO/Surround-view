@@ -19,6 +19,17 @@ TEST(SvctlOptions, TcpAndOrbitUnits)
     EXPECT_DOUBLE_EQ(options.request.parameters.at("azimuth_delta_rad").as_double(), -.2);
 }
 
+TEST(SvctlOptions, CalibrationCommands)
+{
+    const auto status_opts = sv::ctl::parse({"calibration-status", "calib-job-42"});
+    EXPECT_EQ(status_opts.request.operation, "calibration_status");
+    EXPECT_EQ(status_opts.request.parameters.at("job_id").as_string(), "calib-job-42");
+
+    const auto apply_opts = sv::ctl::parse({"apply-calibration", "calib-job-42"});
+    EXPECT_EQ(apply_opts.request.operation, "apply_calibration");
+    EXPECT_EQ(apply_opts.request.parameters.at("job_id").as_string(), "calib-job-42");
+}
+
 TEST(SvctlOptions, GenericCommandPreservesParameters)
 {
     const auto options =
@@ -41,6 +52,8 @@ TEST(SvctlOptions, InvalidArgumentsNeverReachNetwork)
         {"zoom", "inf"},
         {"preset"},
         {"state", "extra"},
+        {"calibration-status"},
+        {"apply-calibration"},
         {"typo"},
         {"--unknown"},
         {"command", "extension", "--params", "[]"},

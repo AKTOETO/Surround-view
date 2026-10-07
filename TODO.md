@@ -136,7 +136,7 @@
 - [ ] Реализовать типизированные client API для config read/update/validate/status и подписок/trace; wire codec скрыть за доменным API.
 - [ ] Реализовать server-owned ConfigStore: immutable snapshots, active/persisted revisions, optimistic concurrency, prepare/atomic persistence/frame-boundary apply и pending_restart.
 - [ ] Обработать duplicate operation IDs, lost ACK/status query, disk errors и восстановление после падения; библиотека не повторяет мутации вслепую.
-- [ ] Добавлять каждую новую серверную операцию одновременно в `svctl`; CLI должен покрывать все функции настройки, доступные GUI.
+- [x] Добавлять каждую новую серверную операцию одновременно в `svctl`; CLI покрывает операции управления, подстроек и асинхронной калибровки (`calibration-status`, `apply-calibration`).
 - [ ] Перевести offline configurator на черновики/экспорт и server API для применения; никакой клиент не изменяет серверный файл напрямую.
 - [x] Оценить Protobuf: на первом этапе оставить SV01/Boost.JSON, зафиксировать причины и условия пересмотра; не добавлять protoc/runtime без обоснованной потребности и SDK-проверки.
 
