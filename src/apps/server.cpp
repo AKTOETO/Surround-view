@@ -3,6 +3,7 @@
 #include "sv/protocol.hpp"
 #include "sv/renderer.hpp"
 #include "sv/server_session.hpp"
+#include "sv/pipeline_spans.hpp"
 #include "sv/source.hpp"
 #include "sv/vision.hpp"
 #include <atomic>
@@ -644,6 +645,7 @@ int main(int argc, char **argv)
         uint64_t frame_id = 0, sequence = 0, applied_command = 0;
         uint64_t last_generation = 0, last_render = 0, source_request = 0;
         bool paused = false, dirty = true;
+        sv::PipelineSpanTracker span_tracker;
         sv::FrameSet last_set;
         std::optional<Command> pending_source;
         std::deque<Command> pending_commands;
@@ -681,7 +683,10 @@ int main(int argc, char **argv)
                 dirty = true;
                 last_generation = generation;
             }
-            for (auto &event : source->poll())
+            const auto poll_start = sv::now_ns();
+            auto events = source->poll();
+            const auto poll_end = sv::now_ns();
+            for (auto &event : events)
             {
                 if (event.kind == sv::SourceEvent::Kind::Failure)
                 {
@@ -988,8 +993,19 @@ int main(int argc, char **argv)
                      {"source_dropped_batches", std::to_string(source_stats.dropped)},
                      {"source_queue_depth", source_stats.queued_batches},
                      {"mesh_build_count", std::to_string(renderer.mesh_builds())},
-                     {"upload_count", std::to_string(renderer.uploads())}},
+                     {"upload_count", std::to_string(renderer.uploads())},
+                     {"pipeline_median_latency_ms", span_tracker.median_total_latency_ms()}},
                     std::move(image.pixels)};
+                sv::FrameTelemetry ft;
+                ft.frame_id = frame_id;
+                ft.sequence_id = sequence;
+                ft.config_revision = config_store.revision();
+                ft.timestamp_ns = done;
+                ft.receive_decode_ms = static_cast<double>(poll_end - poll_start) / 1e6;
+                ft.upload_draw_readback_ms = static_cast<double>(done - start) / 1e6;
+                ft.total_pipeline_ms = static_cast<double>(done - poll_start) / 1e6;
+                span_tracker.record_frame(ft);
+
                 if (network.publish(std::move(output)))
                 {
                     record({{"event", "rendered"},
@@ -1005,7 +1021,8 @@ int main(int argc, char **argv)
                             {"source_queue_depth", source_stats.queued_batches},
                             {"mesh_build_count", std::to_string(renderer.mesh_builds())},
                             {"upload_count", std::to_string(renderer.uploads())},
-                            {"render_readback_ms", double(done - start) / 1e6}});
+                            {"render_readback_ms", double(done - start) / 1e6},
+                            {"pipeline_median_latency_ms", span_tracker.median_total_latency_ms()}});
                     dirty = false;
                     last_render = done;
                 }
