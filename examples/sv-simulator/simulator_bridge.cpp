@@ -49,12 +49,22 @@ SimulatorBridge::SimulatorBridge(sv::client::Endpoint endpoint, SimulatorFramePr
             },
             Qt::QueuedConnection);
     };
-    client_ = std::make_unique<sv::client::Client>(options, std::move(deliver));
+    try
+    {
+        client_ = std::make_unique<sv::client::Client>(options, std::move(deliver));
+    }
+    catch (const std::exception &e)
+    {
+        status_ = QString("Ошибка подключения: ") + QString::fromUtf8(e.what());
+    }
 }
 
 SimulatorBridge::~SimulatorBridge()
 {
-    client_->stop();
+    if (client_)
+    {
+        client_->stop();
+    }
 }
 
 void SimulatorBridge::consume(sv::client::Event event)
@@ -118,12 +128,21 @@ void SimulatorBridge::consume(sv::client::Event event)
     status_ = QString::fromStdString(std::string(h.at("health").as_string())) +
               (h.at("paused").as_bool() ? " · Пауза" : "") +
               QString(" · рендеринг %1 мс").arg(h.at("render_readback_ms").as_double(), 0, 'f', 2);
-    client_->release(h);
+    if (client_)
+    {
+        client_->release(h);
+    }
     emit changed();
 }
 
 void SimulatorBridge::command(const QString &type, boost::json::object parameters)
 {
+    if (!client_)
+    {
+        status_ = "Нет подключения к серверу";
+        emit changed();
+        return;
+    }
     try
     {
         parameters["ui_event_timestamp_ns"] = std::to_string(monotonic());
@@ -158,7 +177,6 @@ void SimulatorBridge::action(const QString &type)
 
 void SimulatorBridge::submitCalibration(int cameraId, const QString &method)
 {
-    // Submit synthetic calibration request to server
     boost::json::array points = {
         boost::json::array{-1.0, 3.0, 0.0}, boost::json::array{1.0, 3.0, 0.0},
         boost::json::array{-1.0, 5.0, 0.0}, boost::json::array{1.0, 5.0, 0.0},

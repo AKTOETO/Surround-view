@@ -1,249 +1,322 @@
-import QtQuick 2.15
-import QtQuick.Window 2.15
-import QtQuick.Controls 2.15
-import QtQuick.Layouts 1.15
+import QtQuick 2.6
+import QtQuick.Window 2.2
 
 Window {
     id: window
     width: 1280
     height: 720
+    minimumWidth: 960
+    minimumHeight: 600
     visible: true
     title: "sv-simulator — 3D Surround View Simulator & Control Center"
-    color: "#181b20"
+    color: "#141820"
 
-    ColumnLayout {
-        anchors.fill: parent
-        spacing: 0
+    // Top Header Bar
+    Rectangle {
+        id: header
+        x: 0; y: 0
+        width: parent.width
+        height: 52
+        color: "#1e2430"
 
-        // Top Status Header Bar
-        Rectangle {
-            Layout.fillWidth: true
-            implicitHeight: 48
-            color: "#21252d"
+        Text {
+            x: 20
+            anchors.verticalCenter: parent.verticalCenter
+            text: "sv-simulator"
+            color: "#00d1b2"
+            font.bold: true
+            font.pixelSize: 20
+        }
 
-            RowLayout {
-                anchors.fill: parent
-                anchors.leftMargin: 16
-                anchors.rightMargin: 16
-                spacing: 16
+        Text {
+            x: 160
+            anchors.verticalCenter: parent.verticalCenter
+            text: bridge.status
+            color: "#64d2ff"
+            font.pixelSize: 13
+        }
 
-                Text {
-                    text: "sv-simulator"
-                    color: "#00d1b2"
-                    font.bold: true
-                    font.pixelSize: 18
+        Text {
+            anchors.right: parent.right
+            anchors.rightMargin: 20
+            anchors.verticalCenter: parent.verticalCenter
+            text: bridge.serverInfo
+            color: "#8e9bb0"
+            font.pixelSize: 11
+            horizontalAlignment: Text.AlignRight
+        }
+    }
+
+    // Main Content Area
+    Rectangle {
+        x: 0
+        y: 52
+        width: parent.width - 340
+        height: parent.height - 52
+        color: "#0a0c10"
+
+        Image {
+            id: frameImage
+            anchors.fill: parent
+            anchors.margins: 8
+            fillMode: Image.PreserveAspectFit
+            cache: false
+            source: bridge.frameUrl
+        }
+
+        Text {
+            anchors.centerIn: parent
+            visible: frameImage.source.toString() === ""
+            text: "Ожидание видеоданных с сервера..."
+            color: "#4a5568"
+            font.pixelSize: 18
+        }
+
+        // Overlay Mouse Control for Orbit
+        MouseArea {
+            id: orbitArea
+            property real lastX: 0
+            property real lastY: 0
+            property real deltaX: 0
+            property real deltaY: 0
+
+            anchors.fill: parent
+            onPressed: {
+                lastX = mouse.x;
+                lastY = mouse.y;
+            }
+            onPositionChanged: {
+                if (pressed) {
+                    deltaX += mouse.x - lastX;
+                    deltaY += mouse.y - lastY;
+                    lastX = mouse.x;
+                    lastY = mouse.y;
                 }
+            }
+            onWheel: bridge.zoom(-wheel.angleDelta.y / 480)
 
-                Rectangle {
-                    width: 1; height: 24; color: "#3a3f4d"
-                }
-
-                Text {
-                    text: bridge.status
-                    color: "#e0e6ed"
-                    font.pixelSize: 13
-                    Layout.fillWidth: true
-                }
-
-                Text {
-                    text: bridge.serverInfo
-                    color: "#8c9ba5"
-                    font.pixelSize: 11
-                    horizontalAlignment: Text.AlignRight
+            Timer {
+                interval: 33
+                running: true
+                repeat: true
+                onTriggered: {
+                    if (orbitArea.deltaX !== 0 || orbitArea.deltaY !== 0) {
+                        bridge.orbit(orbitArea.deltaX * 0.005, -orbitArea.deltaY * 0.005);
+                        orbitArea.deltaX = 0;
+                        orbitArea.deltaY = 0;
+                    }
                 }
             }
         }
+    }
 
-        // Main Content Area
-        RowLayout {
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            spacing: 0
+    // Right Control Sidebar
+    Rectangle {
+        x: parent.width - 340
+        y: 52
+        width: 340
+        height: parent.height - 52
+        color: "#1a1f2c"
 
-            // Left Viewport Panel
-            Rectangle {
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                color: "#121418"
+        Column {
+            anchors.fill: parent
+            anchors.margins: 16
+            spacing: 16
 
-                Image {
-                    id: frameImage
-                    anchors.fill: parent
-                    fillMode: Image.PreserveAspectFit
-                    source: bridge.frameUrl
-                    cache: false
-                }
+            Text {
+                text: "УПРАВЛЕНИЕ РАКУРСОМ"
+                color: "#8e9bb0"
+                font.bold: true
+                font.pixelSize: 12
+            }
 
-                // Overlay Controls
-                Row {
-                    anchors.bottom: parent.bottom
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    anchors.bottomMargin: 16
-                    spacing: 8
+            Row {
+                spacing: 8
+                width: parent.width
 
-                    Button {
-                        text: "Пауза"
-                        onClicked: bridge.action("pause")
-                    }
-                    Button {
-                        text: "Старт"
-                        onClicked: bridge.action("resume")
-                    }
-                    Button {
-                        text: "Шаг"
-                        onClicked: bridge.action("step")
+                Repeater {
+                    model: [
+                        { label: "Сверху", cmd: "top" },
+                        { label: "Спереди", cmd: "front" },
+                        { label: "Сзади", cmd: "rear" }
+                    ]
+
+                    Rectangle {
+                        width: 98
+                        height: 38
+                        radius: 6
+                        color: btnMouse.containsMouse ? "#2b3448" : "#222a3a"
+                        border.color: "#384358"
+                        border.width: 1
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: modelData.label
+                            color: "#e2e8f0"
+                            font.pixelSize: 13
+                        }
+
+                        MouseArea {
+                            id: btnMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            onClicked: bridge.preset(modelData.cmd)
+                        }
                     }
                 }
             }
 
-            // Right Control Sidebar
-            Rectangle {
-                implicitWidth: 360
-                Layout.fillHeight: true
-                color: "#1e222b"
+            Row {
+                spacing: 8
+                width: parent.width
 
-                ColumnLayout {
-                    anchors.fill: parent
-                    anchors.margins: 16
-                    spacing: 16
-
-                    Text {
-                        text: "Управление ракурсом"
-                        color: "#ffffff"
-                        font.bold: true
-                        font.pixelSize: 15
-                    }
-
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: 8
-                        Button {
-                            Layout.fillWidth: true
-                            text: "Сверху"
-                            onClicked: bridge.preset("top")
-                        }
-                        Button {
-                            Layout.fillWidth: true
-                            text: "Спереди"
-                            onClicked: bridge.preset("front")
-                        }
-                        Button {
-                            Layout.fillWidth: true
-                            text: "Сзади"
-                            onClicked: bridge.preset("rear")
-                        }
-                    }
-
-                    GridLayout {
-                        columns: 2
-                        Layout.fillWidth: true
-                        rowSpacing: 8
-                        columnSpacing: 8
-
-                        Button {
-                            Layout.fillWidth: true
-                            text: " Orbit ◄"
-                            onClicked: bridge.orbit(-0.15, 0.0)
-                        }
-                        Button {
-                            Layout.fillWidth: true
-                            text: "Orbit ► "
-                            onClicked: bridge.orbit(0.15, 0.0)
-                        }
-                        Button {
-                            Layout.fillWidth: true
-                            text: " Orbit ▲"
-                            onClicked: bridge.orbit(0.0, 0.1)
-                        }
-                        Button {
-                            Layout.fillWidth: true
-                            text: "Orbit ▼ "
-                            onClicked: bridge.orbit(0.0, -0.1)
-                        }
-                        Button {
-                            Layout.fillWidth: true
-                            text: " Zoom In +"
-                            onClicked: bridge.zoom(-0.5)
-                        }
-                        Button {
-                            Layout.fillWidth: true
-                            text: "Zoom Out -"
-                            onClicked: bridge.zoom(0.5)
-                        }
-                    }
+                Repeater {
+                    model: [
+                        { label: "Ближе +", action: "zoom_in" },
+                        { label: "Дальше -", action: "zoom_out" }
+                    ]
 
                     Rectangle {
-                        Layout.fillWidth: true; height: 1; color: "#3a3f4d"
-                    }
+                        width: 150
+                        height: 38
+                        radius: 6
+                        color: zMouse.containsMouse ? "#2b3448" : "#222a3a"
+                        border.color: "#384358"
+                        border.width: 1
 
-                    Text {
-                        text: "Асинхронная калибровка"
-                        color: "#ffffff"
-                        font.bold: true
-                        font.pixelSize: 15
-                    }
-
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: 8
-
-                        Button {
-                            Layout.fillWidth: true
-                            text: "Запустить (Cam 0)"
-                            onClicked: bridge.submitCalibration(0, "iterative")
+                        Text {
+                            anchors.centerIn: parent
+                            text: modelData.label
+                            color: "#e2e8f0"
+                            font.pixelSize: 13
                         }
-                        Button {
-                            Layout.fillWidth: true
-                            text: "Статус"
-                            onClicked: bridge.checkCalibrationStatus("")
-                        }
-                        Button {
-                            Layout.fillWidth: true
-                            text: "Применить"
-                            onClicked: bridge.applyCalibration("")
+
+                        MouseArea {
+                            id: zMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            onClicked: {
+                                if (modelData.action === "zoom_in") bridge.zoom(-0.5);
+                                else bridge.zoom(0.5);
+                            }
                         }
                     }
+                }
+            }
 
-                    Text {
-                        text: bridge.calibrationStatus
-                        color: "#00d1b2"
-                        font.pixelSize: 12
-                        wrapMode: Text.Wrap
-                        Layout.fillWidth: true
-                    }
+            Rectangle { width: parent.width; height: 1; color: "#2d3748" }
+
+            Text {
+                text: "ВОСПРОИЗВЕДЕНИЕ"
+                color: "#8e9bb0"
+                font.bold: true
+                font.pixelSize: 12
+            }
+
+            Row {
+                spacing: 8
+
+                Repeater {
+                    model: [
+                        { label: "Пауза", cmd: "pause" },
+                        { label: "Старт", cmd: "resume" },
+                        { label: "Шаг", cmd: "step" }
+                    ]
 
                     Rectangle {
-                        Layout.fillWidth: true; height: 1; color: "#3a3f4d"
-                    }
+                        width: 98
+                        height: 38
+                        radius: 6
+                        color: pMouse.containsMouse ? "#2b3448" : "#222a3a"
+                        border.color: "#384358"
+                        border.width: 1
 
-                    Text {
-                        text: "Имитация движения ТС"
-                        color: "#ffffff"
-                        font.bold: true
-                        font.pixelSize: 15
-                    }
+                        Text {
+                            anchors.centerIn: parent
+                            text: modelData.label
+                            color: "#e2e8f0"
+                            font.pixelSize: 13
+                        }
 
-                    Text {
-                        text: "Скорость: " + speedSlider.value.toFixed(1) + " м/с"
-                        color: "#8c9ba5"
-                        font.pixelSize: 12
+                        MouseArea {
+                            id: pMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            onClicked: bridge.action(modelData.cmd)
+                        }
                     }
-                    Slider {
-                        id: speedSlider
-                        Layout.fillWidth: true
-                        from: -5.0
-                        to: 15.0
-                        value: bridge.vehicleSpeed
-                        onValueChanged: bridge.setVehicleSpeed(value)
-                    }
+                }
+            }
 
-                    Button {
-                        Layout.fillWidth: true
-                        text: "Сброс позиции ТС"
-                        onClicked: bridge.resetVehicle()
-                    }
+            Rectangle { width: parent.width; height: 1; color: "#2d3748" }
 
-                    Item { Layout.fillHeight: true }
+            Text {
+                text: "СЕРВЕРНАЯ КАЛИБРОВКА"
+                color: "#8e9bb0"
+                font.bold: true
+                font.pixelSize: 12
+            }
+
+            Row {
+                spacing: 8
+
+                Rectangle {
+                    width: 98; height: 38; radius: 6
+                    color: c1Mouse.containsMouse ? "#2b3448" : "#222a3a"
+                    border.color: "#384358"; border.width: 1
+                    Text { anchors.centerIn: parent; text: "Запустить"; color: "#e2e8f0"; font.pixelSize: 12 }
+                    MouseArea { id: c1Mouse; anchors.fill: parent; hoverEnabled: true; onClicked: bridge.submitCalibration(0, "iterative") }
+                }
+
+                Rectangle {
+                    width: 98; height: 38; radius: 6
+                    color: c2Mouse.containsMouse ? "#2b3448" : "#222a3a"
+                    border.color: "#384358"; border.width: 1
+                    Text { anchors.centerIn: parent; text: "Статус"; color: "#e2e8f0"; font.pixelSize: 12 }
+                    MouseArea { id: c2Mouse; anchors.fill: parent; hoverEnabled: true; onClicked: bridge.checkCalibrationStatus("") }
+                }
+
+                Rectangle {
+                    width: 98; height: 38; radius: 6
+                    color: c3Mouse.containsMouse ? "#2b3448" : "#222a3a"
+                    border.color: "#384358"; border.width: 1
+                    Text { anchors.centerIn: parent; text: "Применить"; color: "#e2e8f0"; font.pixelSize: 12 }
+                    MouseArea { id: c3Mouse; anchors.fill: parent; hoverEnabled: true; onClicked: bridge.applyCalibration("") }
+                }
+            }
+
+            Text {
+                width: parent.width
+                text: bridge.calibrationStatus
+                color: "#00d1b2"
+                font.pixelSize: 12
+                wrapMode: Text.WordWrap
+            }
+
+            Rectangle { width: parent.width; height: 1; color: "#2d3748" }
+
+            Text {
+                text: "ИМИТАЦИЯ ДВИЖЕНИЯ ТС"
+                color: "#8e9bb0"
+                font.bold: true
+                font.pixelSize: 12
+            }
+
+            Row {
+                spacing: 8
+                Rectangle {
+                    width: 150; height: 36; radius: 6
+                    color: v1Mouse.containsMouse ? "#2b3448" : "#222a3a"
+                    border.color: "#384358"; border.width: 1
+                    Text { anchors.centerIn: parent; text: "Вперед (5 м/с)"; color: "#e2e8f0"; font.pixelSize: 12 }
+                    MouseArea { id: v1Mouse; anchors.fill: parent; hoverEnabled: true; onClicked: bridge.setVehicleSpeed(5.0) }
+                }
+                Rectangle {
+                    width: 150; height: 36; radius: 6
+                    color: v2Mouse.containsMouse ? "#2b3448" : "#222a3a"
+                    border.color: "#384358"; border.width: 1
+                    Text { anchors.centerIn: parent; text: "Стоп (0 м/с)"; color: "#e2e8f0"; font.pixelSize: 12 }
+                    MouseArea { id: v2Mouse; anchors.fill: parent; hoverEnabled: true; onClicked: bridge.resetVehicle() }
                 }
             }
         }
