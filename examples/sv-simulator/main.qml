@@ -118,10 +118,113 @@ Window {
         height: parent.height - 52
         color: "#1a1f2c"
 
-        Column {
+        Flickable {
             anchors.fill: parent
-            anchors.margins: 16
-            spacing: 16
+            contentWidth: width
+            contentHeight: controlsColumn.height + 32
+            clip: true
+
+            Column {
+                id: controlsColumn
+                x: 16
+                y: 16
+                width: parent.width - 32
+                height: childrenRect.height
+                spacing: 12
+
+            Text {
+                text: "ПОДКЛЮЧЕНИЕ К СЕРВЕРУ"
+                color: "#8e9bb0"
+                font.bold: true
+                font.pixelSize: 12
+            }
+
+            Text { text: "Локальный IPC каталог"; color: "#718096"; font.pixelSize: 11 }
+            Rectangle {
+                width: parent.width; height: 34; radius: 5; color: "#111620"
+                border.color: "#384358"
+                TextInput {
+                    id: ipcDirectory
+                    anchors.fill: parent; anchors.margins: 8
+                    text: bridge.unixDirectory
+                    color: "#e2e8f0"; font.pixelSize: 12
+                    selectByMouse: true
+                }
+            }
+            Row {
+                spacing: 8
+                Rectangle {
+                    width: 145; height: 34; radius: 5
+                    color: findMouse.containsMouse ? "#176b68" : "#155451"
+                    Text { anchors.centerIn: parent; text: "Найти IPC"; color: "white"; font.pixelSize: 12 }
+                    MouseArea {
+                        id: findMouse; anchors.fill: parent; hoverEnabled: true
+                        onClicked: bridge.discoverLocal(timeoutInput.text, reconnectInput.text)
+                    }
+                }
+                Rectangle {
+                    width: 145; height: 34; radius: 5
+                    color: unixMouse.containsMouse ? "#2b3448" : "#222a3a"
+                    Text { anchors.centerIn: parent; text: "Подключить Unix"; color: "#e2e8f0"; font.pixelSize: 12 }
+                    MouseArea {
+                        id: unixMouse; anchors.fill: parent; hoverEnabled: true
+                        onClicked: bridge.connectUnix(ipcDirectory.text, timeoutInput.text, reconnectInput.text, retriesInput.text)
+                    }
+                }
+            }
+
+            Text { text: "Удалённый TCP endpoint"; color: "#718096"; font.pixelSize: 11 }
+            Row {
+                spacing: 5
+                Rectangle {
+                    width: 142; height: 34; radius: 5; color: "#111620"; border.color: "#384358"
+                    TextInput { id: tcpHost; anchors.fill: parent; anchors.margins: 7; text: bridge.tcpHost; color: "#e2e8f0"; font.pixelSize: 12; selectByMouse: true }
+                }
+                Rectangle {
+                    width: 78; height: 34; radius: 5; color: "#111620"; border.color: "#384358"
+                    TextInput { id: controlPort; anchors.fill: parent; anchors.margins: 7; text: String(bridge.controlPort); color: "#e2e8f0"; font.pixelSize: 12; selectByMouse: true; validator: IntValidator { bottom: 1; top: 65535 } }
+                }
+                Rectangle {
+                    width: 78; height: 34; radius: 5; color: "#111620"; border.color: "#384358"
+                    TextInput { id: dataPort; anchors.fill: parent; anchors.margins: 7; text: String(bridge.dataPort); color: "#e2e8f0"; font.pixelSize: 12; selectByMouse: true; validator: IntValidator { bottom: 1; top: 65535 } }
+                }
+            }
+            Row {
+                spacing: 8
+                Rectangle {
+                    width: 145; height: 34; radius: 5
+                    color: tcpMouse.containsMouse ? "#2b3448" : "#222a3a"
+                    Text { anchors.centerIn: parent; text: "Подключить TCP"; color: "#e2e8f0"; font.pixelSize: 12 }
+                    MouseArea {
+                        id: tcpMouse; anchors.fill: parent; hoverEnabled: true
+                        onClicked: bridge.connectTcp(tcpHost.text, controlPort.text, dataPort.text, timeoutInput.text, reconnectInput.text, retriesInput.text)
+                    }
+                }
+                Rectangle {
+                    width: 145; height: 34; radius: 5
+                    color: disconnectMouse.containsMouse ? "#543333" : "#3a292d"
+                    Text { anchors.centerIn: parent; text: "Отключиться"; color: "#e2e8f0"; font.pixelSize: 12 }
+                    MouseArea { id: disconnectMouse; anchors.fill: parent; hoverEnabled: true; onClicked: bridge.disconnectFromServer() }
+                }
+            }
+            Text { text: "timeout / reconnect / retries"; color: "#718096"; font.pixelSize: 11 }
+            Row {
+                spacing: 5
+                Rectangle {
+                    width: 100; height: 32; radius: 5; color: "#111620"; border.color: "#384358"
+                    TextInput { id: timeoutInput; anchors.fill: parent; anchors.margins: 7; text: String(bridge.timeoutMs); color: "#e2e8f0"; font.pixelSize: 12; validator: IntValidator { bottom: 1; top: 60000 } }
+                }
+                Rectangle {
+                    width: 100; height: 32; radius: 5; color: "#111620"; border.color: "#384358"
+                    TextInput { id: reconnectInput; anchors.fill: parent; anchors.margins: 7; text: String(bridge.reconnectMs); color: "#e2e8f0"; font.pixelSize: 12; validator: IntValidator { bottom: 1; top: 60000 } }
+                }
+                Rectangle {
+                    width: 100; height: 32; radius: 5; color: "#111620"; border.color: "#384358"
+                    TextInput { id: retriesInput; anchors.fill: parent; anchors.margins: 7; text: String(bridge.maxRetries); color: "#e2e8f0"; font.pixelSize: 12; validator: IntValidator { bottom: 0; top: 1000 } }
+                }
+            }
+
+            Rectangle { width: parent.width; height: 1; color: "#2d3748" }
 
             Text {
                 text: "УПРАВЛЕНИЕ РАКУРСОМ"
@@ -257,6 +360,23 @@ Window {
                 font.pixelSize: 12
             }
 
+            Rectangle {
+                width: parent.width; height: 34; radius: 5
+                color: "#111620"; border.color: "#384358"
+                TextInput {
+                    id: calibrationJobId
+                    anchors.fill: parent; anchors.margins: 8
+                    color: "#e2e8f0"; font.pixelSize: 12
+                    selectByMouse: true
+                }
+                Text {
+                    anchors.fill: parent; anchors.margins: 8
+                    text: "ID задачи, например calib-job-3"
+                    visible: calibrationJobId.text.length === 0
+                    color: "#718096"; font.pixelSize: 12
+                }
+            }
+
             Row {
                 spacing: 8
 
@@ -273,7 +393,7 @@ Window {
                     color: c2Mouse.containsMouse ? "#2b3448" : "#222a3a"
                     border.color: "#384358"; border.width: 1
                     Text { anchors.centerIn: parent; text: "Статус"; color: "#e2e8f0"; font.pixelSize: 12 }
-                    MouseArea { id: c2Mouse; anchors.fill: parent; hoverEnabled: true; onClicked: bridge.checkCalibrationStatus("") }
+                    MouseArea { id: c2Mouse; anchors.fill: parent; hoverEnabled: true; onClicked: bridge.checkCalibrationStatus(calibrationJobId.text) }
                 }
 
                 Rectangle {
@@ -281,7 +401,7 @@ Window {
                     color: c3Mouse.containsMouse ? "#2b3448" : "#222a3a"
                     border.color: "#384358"; border.width: 1
                     Text { anchors.centerIn: parent; text: "Применить"; color: "#e2e8f0"; font.pixelSize: 12 }
-                    MouseArea { id: c3Mouse; anchors.fill: parent; hoverEnabled: true; onClicked: bridge.applyCalibration("") }
+                    MouseArea { id: c3Mouse; anchors.fill: parent; hoverEnabled: true; onClicked: bridge.applyCalibration(calibrationJobId.text) }
                 }
             }
 
@@ -296,28 +416,14 @@ Window {
             Rectangle { width: parent.width; height: 1; color: "#2d3748" }
 
             Text {
-                text: "ИМИТАЦИЯ ДВИЖЕНИЯ ТС"
+                text: "ДИАГНОСТИКА СЕРВЕРА"
                 color: "#8e9bb0"
                 font.bold: true
                 font.pixelSize: 12
             }
 
-            Row {
-                spacing: 8
-                Rectangle {
-                    width: 150; height: 36; radius: 6
-                    color: v1Mouse.containsMouse ? "#2b3448" : "#222a3a"
-                    border.color: "#384358"; border.width: 1
-                    Text { anchors.centerIn: parent; text: "Вперед (5 м/с)"; color: "#e2e8f0"; font.pixelSize: 12 }
-                    MouseArea { id: v1Mouse; anchors.fill: parent; hoverEnabled: true; onClicked: bridge.setVehicleSpeed(5.0) }
-                }
-                Rectangle {
-                    width: 150; height: 36; radius: 6
-                    color: v2Mouse.containsMouse ? "#2b3448" : "#222a3a"
-                    border.color: "#384358"; border.width: 1
-                    Text { anchors.centerIn: parent; text: "Стоп (0 м/с)"; color: "#e2e8f0"; font.pixelSize: 12 }
-                    MouseArea { id: v2Mouse; anchors.fill: parent; hoverEnabled: true; onClicked: bridge.resetVehicle() }
-                }
+            Text { width: parent.width; text: bridge.pipelineInfo; color: "#cbd5e0"; font.pixelSize: 11; wrapMode: Text.WordWrap }
+            Text { width: parent.width; text: bridge.sourceInfo; color: "#cbd5e0"; font.pixelSize: 11; wrapMode: Text.WordWrap }
             }
         }
     }

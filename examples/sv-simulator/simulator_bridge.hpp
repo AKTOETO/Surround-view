@@ -7,7 +7,9 @@
 #include <QMutex>
 #include <QObject>
 #include <QQuickImageProvider>
+#include <QStringList>
 #include <atomic>
+#include <cstdint>
 #include <memory>
 
 class SimulatorFrameProvider : public QQuickImageProvider
@@ -31,8 +33,15 @@ class SimulatorBridge : public QObject
     Q_PROPERTY(QString status READ status NOTIFY changed)
     Q_PROPERTY(QString serverInfo READ serverInfo NOTIFY changed)
     Q_PROPERTY(QString calibrationStatus READ calibrationStatus NOTIFY changed)
-    Q_PROPERTY(double vehicleSpeed READ vehicleSpeed WRITE setVehicleSpeed NOTIFY vehicleChanged)
-    Q_PROPERTY(double vehicleSteering READ vehicleSteering WRITE setVehicleSteering NOTIFY vehicleChanged)
+    Q_PROPERTY(QString unixDirectory READ unixDirectory NOTIFY changed)
+    Q_PROPERTY(QString tcpHost READ tcpHost NOTIFY changed)
+    Q_PROPERTY(int controlPort READ controlPort NOTIFY changed)
+    Q_PROPERTY(int dataPort READ dataPort NOTIFY changed)
+    Q_PROPERTY(int timeoutMs READ timeoutMs NOTIFY changed)
+    Q_PROPERTY(int reconnectMs READ reconnectMs NOTIFY changed)
+    Q_PROPERTY(int maxRetries READ maxRetries NOTIFY changed)
+    Q_PROPERTY(QString pipelineInfo READ pipelineInfo NOTIFY changed)
+    Q_PROPERTY(QString sourceInfo READ sourceInfo NOTIFY changed)
 
 public:
     SimulatorBridge(sv::client::Endpoint endpoint, SimulatorFrameProvider *provider);
@@ -42,8 +51,15 @@ public:
     QString status() const { return status_; }
     QString serverInfo() const { return serverInfo_; }
     QString calibrationStatus() const { return calibrationStatus_; }
-    double vehicleSpeed() const { return vehicleSpeed_; }
-    double vehicleSteering() const { return vehicleSteering_; }
+    QString unixDirectory() const { return unixDirectory_; }
+    QString tcpHost() const { return tcpHost_; }
+    int controlPort() const { return controlPort_; }
+    int dataPort() const { return dataPort_; }
+    int timeoutMs() const { return timeoutMs_; }
+    int reconnectMs() const { return reconnectMs_; }
+    int maxRetries() const { return maxRetries_; }
+    QString pipelineInfo() const { return pipelineInfo_; }
+    QString sourceInfo() const { return sourceInfo_; }
 
     Q_INVOKABLE void preset(const QString &name);
     Q_INVOKABLE void orbit(double az, double elevation);
@@ -52,30 +68,46 @@ public:
     Q_INVOKABLE void submitCalibration(int cameraId, const QString &method);
     Q_INVOKABLE void checkCalibrationStatus(const QString &jobId);
     Q_INVOKABLE void applyCalibration(const QString &jobId);
-    Q_INVOKABLE void setVehicleSpeed(double speed);
-    Q_INVOKABLE void setVehicleSteering(double steering);
-    Q_INVOKABLE void resetVehicle();
+    Q_INVOKABLE void connectUnix(const QString &directory, int timeoutMs,
+                                 int reconnectMs, int maxRetries);
+    Q_INVOKABLE void connectTcp(const QString &host, int controlPort, int dataPort,
+                                int timeoutMs, int reconnectMs, int maxRetries);
+    Q_INVOKABLE void discoverLocal(int timeoutMs, int reconnectMs);
+    Q_INVOKABLE void disconnectFromServer();
 
 signals:
     void changed();
-    void vehicleChanged();
 
 private:
     void consume(sv::client::Event event);
     void command(const QString &type, boost::json::object parameters = {});
+    void beginConnection(sv::client::Endpoint endpoint, int timeoutMs,
+                         int reconnectMs, int maxRetries, const QString &label);
+    void tryNextDiscoveryCandidate();
 
-    std::unique_ptr<sv::client::Client> client_;
+    std::shared_ptr<sv::client::Client> client_;
     QString url_;
     QString status_ = "Соединение с сервером…";
     QString serverInfo_ = "Ожидание ответа сервера";
     QString calibrationStatus_ = "Калибровочные задачи не запускались";
     SimulatorFrameProvider *provider_;
     std::atomic<unsigned> pending_events_{0};
+    std::atomic<uint64_t> connection_generation_{0};
+    bool active_unix_endpoint_ = true;
+    QStringList discovery_candidates_;
+    int discovery_index_ = 0;
+    int discovery_timeout_ms_ = 1000;
+    int discovery_reconnect_ms_ = 500;
 
-    double vehicleSpeed_ = 0.0;
-    double vehicleSteering_ = 0.0;
-    double vehicleX_ = 0.0;
-    double vehicleY_ = 0.0;
-    double vehicleYaw_ = 0.0;
+    QString unixDirectory_ = "/tmp/sv-prototype";
+    QString tcpHost_ = "127.0.0.1";
+    int controlPort_ = 53101;
+    int dataPort_ = 53102;
+    int timeoutMs_ = 2000;
+    int reconnectMs_ = 1000;
+    int maxRetries_ = 10;
+    QString pipelineInfo_ = "Нет данных о задержках";
+    QString sourceInfo_ = "Источник и камеры появятся после первого кадра";
+
     QString lastCalibJobId_;
 };

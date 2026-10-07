@@ -127,6 +127,8 @@
 - [x] Начать touchscreen UI: крупные кнопки ракурсов/масштаба, single-touch orbit и панель state; убрать инженерные replay-команды с главного экрана.
 - [ ] Завершить Qt 5 automotive client под Аврору: платформенный lifecycle/UI integration, DPI и физические touch targets, жесты, информационная вкладка, проверка реального экрана.
 - [x] Создать начальную оболочку Qt laptop GUI `examples/sv-simulator/`: сборка, Unix/TCP connection, базовые команды и отображение кадров.
+- [x] Добавить в laptop GUI редактируемые Unix/TCP endpoints, timeout/reconnect options, сохранение настроек и ограниченный поиск локальных IPC каталогов по `SV_IPC_DIR`, `$XDG_RUNTIME_DIR` и документированным defaults; показывать источник, камеры и доступные pipeline timings.
+- [ ] Добавить типизированные серверные API чтения/изменения конфигурации, прежде чем показывать переключатели fusion, source, mesh или output в GUI. Сейчас доступны только команды ракурса, replay control, calibration job status/apply и чтение frame metadata.
 - [ ] Довести `sv-simulator` до инженерного инструмента: world/camera editing, управляемое движение, valid calibration observations и полноценные эксперименты. Текущая кнопка калибровки отключена, пока GUI не собирает реальные observations.
 
 ### Сервер, конфигурация и библиотека

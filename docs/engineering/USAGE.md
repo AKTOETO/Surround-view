@@ -6,6 +6,8 @@
 
 В 0.5.0 GUI использует `sv-client-lib`. Настройка `connections`, Unix-only/TCP-only/combined, команды запуска с Blender и внешний CMake consumer: [[engineering/CLIENT_LIBRARY]]. Без блока connections прежние Unix-команды ниже сохраняются. `state` запрашивает состояние; replay следует интервалам manifest, на wrap используется первый интервал (для одного ряда — 33.333333 ms).
 
+Laptop GUI принимает `--unix DIR` или `--tcp HOST CONTROL_PORT DATA_PORT`; без аргументов он ищет локальные Unix IPC endpoints в ограниченном списке стандартных мест. Панель соединения позволяет редактировать endpoint, timeout/reconnect/retries, а Qt сохраняет последние значения. GUI показывает доступную frame/source telemetry, но сервер пока не предоставляет общего API чтения и изменения конфигурации. Подробности discovery и его ограничения: [README sv-simulator](../../examples/sv-simulator/README.md).
+
 ## Быстрый запуск с фотографической улицей
 
 ```sh
