@@ -1,3 +1,4 @@
+#include "sv/calibration_job.hpp"
 #include "sv/config_store.hpp"
 #include "sv/protocol.hpp"
 #include "sv/renderer.hpp"
@@ -343,8 +344,9 @@ ServerIO::ServerIO(const sv::Connections &n, const std::string &source_type,
     : control(io), data(io), tcp_control(io), tcp_data(io), signals(io, SIGINT, SIGTERM),
       directory(n.unix_directory)
 {
-    capabilities = {source_type, "orbit",  "zoom",  "preset",
-                    "pause",     "resume", "state", "copied_rgba"};
+    capabilities = {source_type, "orbit",  "zoom",  "preset", "pause",
+                    "resume",    "state",  "copied_rgba", "calibrate",
+                    "calibration_status", "apply_calibration"};
     if (source_type == "replay")
     {
         capabilities.push_back("step");
@@ -609,6 +611,7 @@ int main(int argc, char **argv)
         }
 
         sv::ConfigStore config_store(initial_cfg);
+        sv::CalibrationJobManager calib_jobs;
 
         auto source = initial_cfg.source.type == "socket"
                           ? sv::make_socket_source(*config_store.active())
@@ -645,22 +648,25 @@ int main(int argc, char **argv)
         std::optional<Command> pending_source;
         std::deque<Command> pending_commands;
 
-        auto answer = [&](const Command &cmd, bool accepted, const std::string &reason)
+        auto answer = [&](const Command &cmd, bool accepted, const std::string &reason,
+                          boost::json::object extra = {})
         {
             const auto id = cmd.message.header.at("command_id");
-            network.answer(
-                cmd, {21,
-                      {{"command_id", id},
-                       {"accepted", accepted},
-                       {"reason", reason},
-                       {"state_revision", std::to_string(config_store.revision())},
-                       {"paused", paused},
-                       {"azimuth_rad", view.azimuth},
-                       {"elevation_rad", view.elevation},
-                       {"distance_m", view.distance},
-                       {"fusion_mode", config_store.active()->fusion.mode},
-                       {"diagnostic_view", config_store.active()->fusion.diagnostic}},
-                      {}});
+            boost::json::object hdr{{"command_id", id},
+                                    {"accepted", accepted},
+                                    {"reason", reason},
+                                    {"state_revision", std::to_string(config_store.revision())},
+                                    {"paused", paused},
+                                    {"azimuth_rad", view.azimuth},
+                                    {"elevation_rad", view.elevation},
+                                    {"distance_m", view.distance},
+                                    {"fusion_mode", config_store.active()->fusion.mode},
+                                    {"diagnostic_view", config_store.active()->fusion.diagnostic}};
+            for (auto &kv : extra)
+            {
+                hdr[kv.key()] = kv.value();
+            }
+            network.answer(cmd, {21, std::move(hdr), {}});
             record({{"event", "command"},
                     {"command_id", id},
                     {"accepted", accepted},
@@ -740,6 +746,7 @@ int main(int argc, char **argv)
                 auto &m = cmd.message;
                 bool accepted = true;
                 std::string reason = "ok";
+                boost::json::object extra_res;
                 auto candidate = view;
                 std::string id, type;
                 std::optional<sv::SourceAction> source_action;
@@ -760,7 +767,6 @@ int main(int argc, char **argv)
                     };
                     if (type == "state")
                     {
-                        // Query returns authoritative state without a mutation.
                     }
                     else if (type == "orbit")
                     {
@@ -810,6 +816,75 @@ int main(int argc, char **argv)
                     {
                         source_action = sv::SourceAction::Step;
                     }
+                    else if (type == "calibrate")
+                    {
+                        int cam_id = static_cast<int>(m.header.at("camera_id").as_int64());
+                        if (cam_id < 0 || cam_id >= 4)
+                        {
+                            throw std::runtime_error("camera_id must be 0..3");
+                        }
+                        const auto &pts_arr = m.header.at("points").as_array();
+                        const auto &pix_arr = m.header.at("pixels").as_array();
+                        if (pts_arr.size() != pix_arr.size() || pts_arr.size() < 6)
+                        {
+                            throw std::runtime_error("at least 6 corresponding points required");
+                        }
+                        std::vector<sv::Vec3> points;
+                        std::vector<sv::Pixel> pixels;
+                        for (size_t i = 0; i < pts_arr.size(); ++i)
+                        {
+                            const auto &pt = pts_arr[i].as_array();
+                            const auto &px = pix_arr[i].as_array();
+                            points.push_back({pt[0].as_double(), pt[1].as_double(), pt[2].as_double()});
+                            pixels.push_back({px[0].as_double(), px[1].as_double(), true});
+                        }
+                        sv::ExtrinsicOptions opts;
+                        if (m.header.contains("method"))
+                        {
+                            opts.method = std::string(m.header.at("method").as_string());
+                        }
+                        std::string calib_job_id = calib_jobs.submit_job(
+                            cam_id, config_store.active()->cameras[cam_id], points, pixels, opts);
+                        extra_res["job_id"] = calib_job_id;
+                    }
+                    else if (type == "calibration_status")
+                    {
+                        std::string calib_job_id = std::string(m.header.at("job_id").as_string());
+                        auto job_opt = calib_jobs.get_job(calib_job_id);
+                        if (!job_opt)
+                        {
+                            accepted = false;
+                            reason = "job_not_found";
+                        }
+                        else
+                        {
+                            extra_res["job_id"] = calib_job_id;
+                            extra_res["job_state"] = sv::to_string(job_opt->state);
+                            if (job_opt->state == sv::JobState::Completed)
+                            {
+                                extra_res["training_rmse_px"] = job_opt->calibration.training_rmse_px;
+                                extra_res["inliers"] = static_cast<int64_t>(job_opt->calibration.inliers);
+                            }
+                            else if (job_opt->state == sv::JobState::Failed)
+                            {
+                                extra_res["error"] = job_opt->error_message;
+                            }
+                        }
+                    }
+                    else if (type == "apply_calibration")
+                    {
+                        std::string calib_job_id = std::string(m.header.at("job_id").as_string());
+                        std::string apply_err;
+                        if (!calib_jobs.apply_job_to_config(calib_job_id, config_store, apply_err))
+                        {
+                            accepted = false;
+                            reason = apply_err;
+                        }
+                        else
+                        {
+                            dirty = true;
+                        }
+                    }
                     else
                     {
                         accepted = false;
@@ -836,13 +911,14 @@ int main(int argc, char **argv)
                     accepted = false;
                     reason = "source_control_queue_full";
                 }
-                if (accepted && type != "state")
+                if (accepted && type != "state" && type != "calibrate" &&
+                    type != "calibration_status" && type != "apply_calibration")
                 {
                     view = candidate;
                     applied_command = sv::parse_decimal_u64(id);
                     dirty = true;
                 }
-                answer(cmd, accepted, reason);
+                answer(cmd, accepted, reason, extra_res);
             }
             const auto now = sv::now_ns();
             if (!paused)
