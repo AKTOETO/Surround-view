@@ -2,6 +2,7 @@
 
 #include "sv/config_store.hpp"
 #include "sv/extrinsics.hpp"
+#include <algorithm>
 #include <atomic>
 #include <condition_variable>
 #include <deque>
@@ -9,6 +10,7 @@
 #include <memory>
 #include <mutex>
 #include <optional>
+#include <stdexcept>
 #include <string>
 #include <thread>
 #include <unordered_map>
@@ -80,7 +82,33 @@ public:
                            const std::vector<Pixel> &pixels,
                            const ExtrinsicOptions &options)
     {
+        if (camera_id < 0 || camera_id >= 4 || points.size() != pixels.size() ||
+            points.size() < 6 || points.size() > max_points_per_job)
+        {
+            throw std::invalid_argument("calibration job input size/camera ID invalid");
+        }
         std::lock_guard<std::mutex> lock(mutex_);
+        if (queue_.size() >= max_queued_jobs)
+        {
+            throw std::runtime_error("calibration_job_queue_full");
+        }
+        if (jobs_.size() >= max_retained_jobs)
+        {
+            auto old = std::find_if(jobs_.begin(), jobs_.end(), [](const auto &entry)
+            {
+                const auto state = entry.second.result.state;
+                return state == JobState::Completed || state == JobState::Failed ||
+                       state == JobState::Cancelled;
+            });
+            if (old != jobs_.end())
+            {
+                jobs_.erase(old);
+            }
+            if (jobs_.size() >= max_retained_jobs)
+            {
+                throw std::runtime_error("calibration_job_capacity_reached");
+            }
+        }
         uint64_t id = ++job_counter_;
         std::string job_id = "calib-job-" + std::to_string(id);
 
@@ -127,29 +155,63 @@ public:
         return false;
     }
 
-    bool apply_job_to_config(const std::string &job_id, ConfigStore &config_store, std::string &error)
+    std::optional<Config> config_for_job(const std::string &job_id, const Config &active,
+                                         std::string &error) const
     {
         auto job_opt = get_job(job_id);
         if (!job_opt)
         {
             error = "job_not_found";
-            return false;
+            return std::nullopt;
         }
         if (job_opt->state != JobState::Completed)
         {
             error = "job_not_completed";
-            return false;
+            return std::nullopt;
         }
-        auto active_cfg = config_store.active();
-        Config new_cfg = *active_cfg;
+        Config new_cfg = active;
         int cam_id = job_opt->camera_id;
         if (cam_id < 0 || cam_id >= 4)
         {
             error = "invalid_camera_id";
-            return false;
+            return std::nullopt;
         }
         new_cfg.cameras[cam_id] = job_opt->calibration.camera;
-        return config_store.update(new_cfg, error);
+        if (new_cfg.effective.is_object())
+        {
+            auto &camera = new_cfg.effective.as_object().at("cameras").as_array().at(cam_id).as_object();
+            if (camera.at("id").as_int64() != cam_id)
+            {
+                error = "config_camera_order_mismatch";
+                return std::nullopt;
+            }
+            boost::json::array matrix;
+            for (int row = 0; row < 4; ++row)
+            {
+                matrix.push_back(boost::json::array{
+                    new_cfg.cameras[cam_id].T[row * 4], new_cfg.cameras[cam_id].T[row * 4 + 1],
+                    new_cfg.cameras[cam_id].T[row * 4 + 2], new_cfg.cameras[cam_id].T[row * 4 + 3]});
+            }
+            camera["T_camera_from_vehicle"] = std::move(matrix);
+            camera["calibration_id"] = new_cfg.cameras[cam_id].calibration_id;
+            try
+            {
+                new_cfg = parse_config(new_cfg.effective);
+            }
+            catch (const std::exception &exception)
+            {
+                error = exception.what();
+                return std::nullopt;
+            }
+        }
+        error.clear();
+        return new_cfg;
+    }
+
+    bool apply_job_to_config(const std::string &job_id, ConfigStore &config_store, std::string &error)
+    {
+        auto candidate = config_for_job(job_id, *config_store.active(), error);
+        return candidate && config_store.update(*candidate, error);
     }
 
 private:
@@ -215,6 +277,8 @@ private:
                 if (it != jobs_.end() && it->second.result.state != JobState::Cancelled)
                 {
                     it->second.result = res;
+                    it->second.points.clear();
+                    it->second.pixels.clear();
                 }
             }
         }
@@ -227,6 +291,9 @@ private:
     std::deque<std::string> queue_;
     std::unordered_map<std::string, JobTask> jobs_;
     std::thread worker_;
+    static constexpr size_t max_points_per_job = 10000;
+    static constexpr size_t max_queued_jobs = 32;
+    static constexpr size_t max_retained_jobs = 128;
 };
 
 } // namespace sv

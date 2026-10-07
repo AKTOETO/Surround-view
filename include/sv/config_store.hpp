@@ -2,9 +2,13 @@
 
 #include "sv/interfaces.hpp"
 #include <atomic>
+#include <filesystem>
+#include <fstream>
 #include <memory>
 #include <mutex>
+#include <stdexcept>
 #include <string>
+#include <utility>
 
 namespace sv
 {
@@ -12,9 +16,10 @@ namespace sv
 class ConfigStore : public IConfigStore
 {
 public:
-    explicit ConfigStore(const Config &initial_config)
+    explicit ConfigStore(const Config &initial_config, std::filesystem::path persistence_path = {})
         : active_(std::make_shared<Config>(initial_config)),
           persisted_(std::make_shared<Config>(initial_config)),
+          persistence_path_(std::move(persistence_path)),
           revision_(0)
     {
     }
@@ -32,16 +37,42 @@ public:
 
     bool update(const Config &new_config, std::string &error_reason) override
     {
-        (void)error_reason;
         std::lock_guard<std::mutex> lock(mutex_);
-        active_ = std::make_shared<Config>(new_config);
-        revision_++;
-        return true;
+        try
+        {
+            auto updated = std::make_shared<Config>(new_config);
+            if (!persistence_path_.empty())
+            {
+                if (!updated->effective.is_object())
+                {
+                    throw std::invalid_argument("updated config has no serializable effective JSON");
+                }
+                (void)parse_config(updated->effective);
+                write_atomic(updated->effective);
+            }
+            active_ = std::move(updated);
+            if (!persistence_path_.empty())
+            {
+                persisted_ = active_;
+            }
+            revision_++;
+            error_reason.clear();
+            return true;
+        }
+        catch (const std::exception &error)
+        {
+            error_reason = error.what();
+            return false;
+        }
     }
 
     void persist() override
     {
         std::lock_guard<std::mutex> lock(mutex_);
+        if (!persistence_path_.empty())
+        {
+            write_atomic(active_->effective);
+        }
         persisted_ = active_;
     }
 
@@ -52,9 +83,42 @@ public:
     }
 
 private:
+    void write_atomic(const boost::json::value &value) const
+    {
+        if (!persistence_path_.parent_path().empty())
+        {
+            std::filesystem::create_directories(persistence_path_.parent_path());
+        }
+        auto temporary = persistence_path_;
+        temporary += ".tmp";
+        try
+        {
+            std::ofstream stream(temporary, std::ios::binary | std::ios::trunc);
+            if (!stream)
+            {
+                throw std::runtime_error("cannot open temporary config file " + temporary.string());
+            }
+            stream << boost::json::serialize(value) << '\n';
+            stream.flush();
+            if (!stream)
+            {
+                throw std::runtime_error("cannot write temporary config file " + temporary.string());
+            }
+            stream.close();
+            std::filesystem::rename(temporary, persistence_path_);
+        }
+        catch (...)
+        {
+            std::error_code ignored;
+            std::filesystem::remove(temporary, ignored);
+            throw;
+        }
+    }
+
     mutable std::mutex mutex_;
     std::shared_ptr<const Config> active_;
     std::shared_ptr<const Config> persisted_;
+    std::filesystem::path persistence_path_;
     std::atomic<uint64_t> revision_;
 };
 

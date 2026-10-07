@@ -611,14 +611,24 @@ int main(int argc, char **argv)
             throw std::runtime_error("replay manifest required");
         }
 
-        sv::ConfigStore config_store(initial_cfg);
+        sv::ConfigStore config_store(initial_cfg, std::filesystem::absolute(cfg_path));
         sv::CalibrationJobManager calib_jobs;
 
-        auto source = initial_cfg.source.type == "socket"
-                          ? sv::make_socket_source(*config_store.active())
-                          : sv::make_replay_source(*config_store.active(), manifest_path, looping);
+        std::unique_ptr<sv::FrameSource> source;
+        if (initial_cfg.source.type == "socket")
+        {
+            source = sv::make_socket_source(*config_store.active());
+        }
+        else if (initial_cfg.source.type == "camera")
+        {
+            source = sv::make_camera_source(*config_store.active());
+        }
+        else
+        {
+            source = sv::make_replay_source(*config_store.active(), manifest_path, looping);
+        }
 
-        sv::Renderer renderer(*config_store.active());
+        auto renderer = std::make_unique<sv::Renderer>(*config_store.active());
         sv::Synchronizer sync(*config_store.active());
         ServerIO network(config_store.active()->connections, config_store.active()->source.type,
                          config_store.active()->view);
@@ -639,7 +649,7 @@ int main(int argc, char **argv)
             log << boost::json::serialize(obj) << '\n';
         };
         record({{"event", "startup"},
-                {"gl_renderer", renderer.device()},
+                {"gl_renderer", renderer->device()},
                 {"profile", config_store.active()->profile_id}});
 
         uint64_t frame_id = 0, sequence = 0, applied_command = 0;
@@ -755,6 +765,7 @@ int main(int argc, char **argv)
                 auto candidate = view;
                 std::string id, type;
                 std::optional<sv::SourceAction> source_action;
+                bool fatal_renderer_error = false;
                 try
                 {
                     id = std::string(m.header.at("command_id").as_string());
@@ -880,13 +891,30 @@ int main(int argc, char **argv)
                     {
                         std::string calib_job_id = std::string(m.header.at("job_id").as_string());
                         std::string apply_err;
-                        if (!calib_jobs.apply_job_to_config(calib_job_id, config_store, apply_err))
+                        auto config_candidate = calib_jobs.config_for_job(
+                            calib_job_id, *config_store.active(), apply_err);
+                        if (!config_candidate)
                         {
                             accepted = false;
                             reason = apply_err;
                         }
+                        else if (!config_store.update(*config_candidate, apply_err))
+                        {
+                            accepted = false;
+                            reason = "config_persist_failed:" + apply_err;
+                        }
                         else
                         {
+                            renderer.reset();
+                            try
+                            {
+                                renderer = std::make_unique<sv::Renderer>(*config_store.active());
+                            }
+                            catch (...)
+                            {
+                                fatal_renderer_error = true;
+                                throw;
+                            }
                             dirty = true;
                         }
                     }
@@ -903,18 +931,31 @@ int main(int argc, char **argv)
                 }
                 catch (const std::exception &e)
                 {
+                    if (fatal_renderer_error)
+                    {
+                        throw;
+                    }
                     accepted = false;
                     reason = e.what();
                 }
                 if (accepted && source_action)
                 {
-                    if (source->request(*source_action, ++source_request))
+                    if (*source_action == sv::SourceAction::Step &&
+                        config_store.active()->source.type != "replay")
+                    {
+                        accepted = false;
+                        reason = "step_unsupported_for_source";
+                    }
+                    else if (source->request(*source_action, ++source_request))
                     {
                         pending_source = std::move(cmd);
                         continue;
                     }
-                    accepted = false;
-                    reason = "source_control_queue_full";
+                    else
+                    {
+                        accepted = false;
+                        reason = "source_control_queue_full";
+                    }
                 }
                 if (accepted && type != "state" && type != "calibrate" &&
                     type != "calibration_status" && type != "apply_calibration")
@@ -939,7 +980,7 @@ int main(int argc, char **argv)
             {
                 const auto source_stats = source->stats();
                 auto start = sv::now_ns();
-                auto image = renderer.render(last_set, view);
+                auto image = renderer->render(last_set, view);
                 auto done = sv::now_ns();
                 frame_id++;
                 boost::json::array inputs;
@@ -964,6 +1005,20 @@ int main(int argc, char **argv)
                     }
                     inputs.push_back(input);
                 }
+                const auto timing = renderer->last_timing();
+                const double render_wall_ms = static_cast<double>(done - start) / 1e6;
+                sv::FrameTelemetry ft;
+                ft.frame_id = frame_id;
+                ft.sequence_id = sequence;
+                ft.config_revision = config_store.revision();
+                ft.timestamp_ns = done;
+                ft.source_poll_ms = static_cast<double>(poll_end - poll_start) / 1e6;
+                ft.pre_render_prepare_ms = static_cast<double>(start - poll_end) / 1e6;
+                ft.render_wall_ms = render_wall_ms;
+                ft.gpu_draw_ms = timing.gpu_draw_ms;
+                ft.upload_cpu_ms = timing.upload_cpu_ms;
+                ft.readback_copy_cpu_ms = timing.readback_copy_cpu_ms;
+                ft.total_pipeline_ms = static_cast<double>(done - oldest) / 1e6;
                 sv::Message output{
                     11,
                     {{"frame_id", std::to_string(frame_id)},
@@ -984,7 +1039,10 @@ int main(int argc, char **argv)
                      {"clock_domain", "local_monotonic"},
                      {"oldest_release_timestamp_ns", std::to_string(oldest)},
                      {"render_complete_timestamp_ns", std::to_string(done)},
-                     {"render_readback_ms", double(done - start) / 1e6},
+                     {"render_readback_ms", render_wall_ms},
+                     {"server_receive_to_render_ms", ft.total_pipeline_ms},
+                     {"previous_frames_median_server_receive_to_render_ms", span_tracker.median_total_latency_ms()},
+                     {"pipeline_spans_ms", ft.to_json().at("spans_ms")},
                      {"source_type", config_store.active()->source.type},
                      {"timestamp_basis", "server_delivery"},
                      {"source_received", std::to_string(source_stats.received)},
@@ -992,21 +1050,17 @@ int main(int argc, char **argv)
                      {"decode_count", std::to_string(source_stats.decoded)},
                      {"source_dropped_batches", std::to_string(source_stats.dropped)},
                      {"source_queue_depth", source_stats.queued_batches},
-                     {"mesh_build_count", std::to_string(renderer.mesh_builds())},
-                     {"upload_count", std::to_string(renderer.uploads())},
-                     {"pipeline_median_latency_ms", span_tracker.median_total_latency_ms()}},
+                     {"mesh_build_count", std::to_string(renderer->mesh_builds())},
+                     {"upload_count", std::to_string(renderer->uploads())}},
                     std::move(image.pixels)};
-                sv::FrameTelemetry ft;
-                ft.frame_id = frame_id;
-                ft.sequence_id = sequence;
-                ft.config_revision = config_store.revision();
-                ft.timestamp_ns = done;
-                ft.receive_decode_ms = static_cast<double>(poll_end - poll_start) / 1e6;
-                ft.upload_draw_readback_ms = static_cast<double>(done - start) / 1e6;
-                ft.total_pipeline_ms = static_cast<double>(done - poll_start) / 1e6;
-                span_tracker.record_frame(ft);
 
-                if (network.publish(std::move(output)))
+                const auto publish_start = sv::now_ns();
+                const bool published = network.publish(std::move(output));
+                ft.publish_enqueue_ms = static_cast<double>(sv::now_ns() - publish_start) / 1e6;
+                span_tracker.record_frame(ft);
+                record({{"event", "pipeline_span"}, {"frame_id", std::to_string(frame_id)},
+                        {"telemetry", ft.to_json()}});
+                if (published)
                 {
                     record({{"event", "rendered"},
                             {"frame_id", std::to_string(frame_id)},
@@ -1019,10 +1073,11 @@ int main(int argc, char **argv)
                             {"decode_count", std::to_string(source_stats.decoded)},
                             {"source_dropped_batches", std::to_string(source_stats.dropped)},
                             {"source_queue_depth", source_stats.queued_batches},
-                            {"mesh_build_count", std::to_string(renderer.mesh_builds())},
-                            {"upload_count", std::to_string(renderer.uploads())},
-                            {"render_readback_ms", double(done - start) / 1e6},
-                            {"pipeline_median_latency_ms", span_tracker.median_total_latency_ms()}});
+                            {"mesh_build_count", std::to_string(renderer->mesh_builds())},
+                            {"upload_count", std::to_string(renderer->uploads())},
+                            {"render_readback_ms", render_wall_ms},
+                            {"server_receive_to_render_ms", ft.total_pipeline_ms},
+                            {"server_receive_to_render_median_ms", span_tracker.median_total_latency_ms()}});
                     dirty = false;
                     last_render = done;
                 }

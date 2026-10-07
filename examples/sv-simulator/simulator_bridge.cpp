@@ -35,7 +35,7 @@ SimulatorBridge::SimulatorBridge(sv::client::Endpoint endpoint, SimulatorFramePr
     options.endpoint = std::move(endpoint);
     auto deliver = [this](sv::client::Event event)
     {
-        if (pending_events_.fetch_add(1) >= 64)
+        if (pending_events_.fetch_add(1) >= 64 && event.kind != sv::client::Event::Kind::Message)
         {
             --pending_events_;
             return;
@@ -175,24 +175,12 @@ void SimulatorBridge::action(const QString &type)
     command(type);
 }
 
-void SimulatorBridge::submitCalibration(int cameraId, const QString &method)
+void SimulatorBridge::submitCalibration(int, const QString &)
 {
-    boost::json::array points = {
-        boost::json::array{-1.0, 3.0, 0.0}, boost::json::array{1.0, 3.0, 0.0},
-        boost::json::array{-1.0, 5.0, 0.0}, boost::json::array{1.0, 5.0, 0.0},
-        boost::json::array{-0.5, 4.0, 0.5}, boost::json::array{0.5, 4.0, 0.5},
-        boost::json::array{-1.2, 3.5, -0.2}, boost::json::array{1.2, 3.5, -0.2}
-    };
-    boost::json::array pixels = {
-        boost::json::array{480.0, 240.0}, boost::json::array{800.0, 240.0},
-        boost::json::array{520.0, 310.0}, boost::json::array{760.0, 310.0},
-        boost::json::array{560.0, 260.0}, boost::json::array{720.0, 260.0},
-        boost::json::array{470.0, 230.0}, boost::json::array{810.0, 230.0}
-    };
-    command("calibrate", {{"camera_id", cameraId},
-                          {"points", points},
-                          {"pixels", pixels},
-                          {"method", method.toStdString()}});
+    calibrationStatus_ =
+        "Калибровка не запущена: GUI пока не передаёт измеренные observations. "
+        "Фиктивные точки не используются.";
+    emit changed();
 }
 
 void SimulatorBridge::checkCalibrationStatus(const QString &jobId)

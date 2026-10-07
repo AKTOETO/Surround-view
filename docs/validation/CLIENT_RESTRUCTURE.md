@@ -31,4 +31,4 @@
 
 ## Что остаётся открытым
 
-Сервер всё ещё односессионный; CLI занимает legacy control/data и освобождает входящие final frames. Control-only, server-owned config transactions, несколько clients/views, optional final output, промежуточный canvas и полный pipeline trace описаны, но ещё не реализованы. `examples/sv-simulator` содержит только контракт будущего Qt 6 приложения. Аврора/реальный touchscreen/two-host/live world не испытывались. Protobuf/C++20 не введены; условия пересмотра записаны в архитектуре.
+На момент проверенной ревизии сервер был односессионным, а `sv-simulator` содержал только контракт будущего Qt 6 приложения. Последующие коммиты добавили базовую Qt control GUI, calibration job commands, ConfigStore persistence для calibration и coarse pipeline timings; они не входят в этот исторический test report. Сервер остаётся односессионным; multi-client, per-session products, полный pipeline trace и физический two-host/Aurora опыт не подтверждены. Protobuf/C++20 не введены; условия пересмотра записаны в архитектуре.

@@ -262,10 +262,10 @@ Window {
 
                 Rectangle {
                     width: 98; height: 38; radius: 6
-                    color: c1Mouse.containsMouse ? "#2b3448" : "#222a3a"
+                    color: "#202631"
                     border.color: "#384358"; border.width: 1
-                    Text { anchors.centerIn: parent; text: "Запустить"; color: "#e2e8f0"; font.pixelSize: 12 }
-                    MouseArea { id: c1Mouse; anchors.fill: parent; hoverEnabled: true; onClicked: bridge.submitCalibration(0, "iterative") }
+                    Text { anchors.centerIn: parent; text: "Нет observations"; color: "#798496"; font.pixelSize: 12 }
+                    enabled: false
                 }
 
                 Rectangle {
