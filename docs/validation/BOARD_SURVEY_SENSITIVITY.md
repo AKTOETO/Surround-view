@@ -1,7 +1,7 @@
 # E-CAL-SURVEY-01: чувствительность к измерению позы калибровочной доски
 
-**Дата:** 07.10.2026. **Статус:** первичный sensitivity sweep на Blender dataset.  
-**Базовые изображения и observations:** [[validation/IMAGE_CALIBRATION]].  
+**Дата:** 07.10.2026. **Статус:** первичный sensitivity sweep на Blender dataset.
+**Базовые изображения и observations:** [[validation/IMAGE_CALIBRATION]].
 **Локальный полный JSON:** `artifacts/board-survey-v5/report.json`.
 
 ## Вопрос и метод

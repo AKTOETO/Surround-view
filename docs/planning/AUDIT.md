@@ -58,7 +58,7 @@
 
 ## Дополнение 0.6.0
 
-Устранены blocking decode в GL-потоке и отсутствие virtual-camera endpoints. `FrameSource`/producer recordings, queues/pause/reconnect/fault cases реализованы и проверены: [[validation/SOURCES_SMOKE]]. В STATUS устранена дублирующая устаревшая строка о запланированной `sv-client-lib`; текущая архитектура и USAGE согласованы с worker и manifest intervals. Остаток M5/M8 — аппаратный backend, полные clocks и длительные/quality опыты; M9 по-прежнему требует SDK/устройства.
+Устранены blocking decode в GL-потоке и отсутствие virtual-camera endpoints. `FrameSource`/producer recordings, queues/pause/reconnect/fault cases реализованы и проверены: [[validation/SOURCES_SMOKE]]. Аудит 07.10.2026 добавил начальный OpenCV/V4L2 adapter, но физические устройства и shutdown через драйвер не проверены; камера отмечает host delivery clock, не sensor exposure clock. Полные clocks, длительные/quality опыты и M9 SDK/устройство остаются открытыми.
 
 Повторная package qualification 0.6.0 и новые PC RTX/Mesa baselines завершены; оба RPM содержат native source fixture. Strict comparison и происхождение: [[validation/SOURCES_SMOKE]]. Сквозной Blender/socket producer также проверен на сохранённом мире; интерактивное вождение остаётся открытым.
 
@@ -76,7 +76,7 @@
 
 ## Приоритетная архитектура 07.10.2026
 
-Зафиксирована новая модель [[architecture/CLIENT_SERVER_MODEL]]: server-owned config, несколько сессий, per-session view/subscriptions, intermediate products, optional final output и pipeline spans. Шесть PlantUML процессов задают ожидаемые тесты. Существующий GUI перенесён в `examples/sv-client`, начат touchscreen layout; `examples/svctl` предоставляет текущие команды через библиотеку без Qt. Тестовый installed consumer перенесён в `tests/fixtures/client-consumer`. `examples/sv-simulator` пока содержит только контракт, Qt 6 laptop GUI/live world ещё не реализованы.
+Зафиксирована целевая модель [[architecture/CLIENT_SERVER_MODEL]]: server-owned config, несколько сессий, per-session view/subscriptions, intermediate products, optional final output и подробные pipeline spans. Шесть PlantUML процессов задают ожидаемые тесты. GUI перенесён в `examples/sv-client`, начат touchscreen layout; `examples/svctl` предоставляет текущие команды через библиотеку без Qt. Installed consumer находится в `tests/fixtures/client-consumer`. На момент этой записи `sv-simulator` был только контрактом; последующая ревизия добавила начальную Qt 6 control GUI, но live world и редактор камер/observations ещё не реализованы.
 
 Config persistence API, multi-client/control-only, subscriptions/canvas и trace — следующий этап, а не возможности текущего сервера. Он по-прежнему имеет одну сессию и legacy final output. Полный чеклист нового этапа находится в корневом TODO; он имеет приоритет над прежними предложениями прямого редактирования server config клиентами. Protobuf и C++20 не добавлены: решение и условия пересмотра описаны в новом контракте.
 
