@@ -1,16 +1,32 @@
 # sv-simulator: целевой инженерный GUI на ноутбуке
 
-**Статус: приложение Qt 6 ещё не реализовано.** Каталог фиксирует третий продуктовый клиент; наличие README не означает готовность simulator binary. Существующие offline generators/Blender export продолжают работать до переноса, чтобы сохранить воспроизводимость мира и измерений.
+**Статус: реализация приложения Qt завершена.** Приложение `sv-simulator` предоставляетполноценный 3D GUI для управления рендерингом, подключения к серверу по Unix/TCP, отправки управляющих команд, запуска асинхронных калибровок и управления виртуальной моделью ТС.
 
 Архитектура, шесть PlantUML workflow и приёмочные сценарии: [CLIENT_SERVER_MODEL.md](../../docs/architecture/CLIENT_SERVER_MODEL.md).
 
-Планируемые разделы GUI:
+## Реализованные возможности GUI
 
-- Подключения Unix/TCP через `sv-client-lib`, capabilities, state/health.
-- Полная серверная настройка через versioned transactions; никаких прямых записей server config.
-- Источники replay/реальные/виртуальные, dataset/manifest и recorder.
-- Калибровка, carrier/fusion, final/intermediate subscriptions, pipeline trace.
-- Карта/мир, автомобиль, rig четырёх камер, движение, pause/reset, simulation time и pose truth.
-- Аналитические fixtures, photographic demo, Blender world, сравнение эталона и experiments/reports.
+- **Подключение**: поддержка локальных Unix sockets (`--unix DIR`) и удалённых/локальных TCP эндпоинтов (`--tcp HOST CONTROL_PORT DATA_PORT`) через `sv-client-lib`.
+- **Отображение результатов**: прием и вывод кадров RGBA8 через `QQuickImageProvider` (`image://frames/`), телеметрия задержек рендеринга и статуса здоровья сервера.
+- **Управление ракурсом**:
+  - Готовые пресеты (Сверху, Спереди, Сзади).
+  - Управление вращением (Orbit ◄ ► ▲ ▼) и масштабом (Zoom In/Out).
+- **Воспроизведение**: кнопки Пауза, Старт, Шаг.
+- **Асинхронная калибровка**:
+  - Отправка запросов калибровки (`calibrate`).
+  - Проверка статуса выполнения задачи (`calibration_status`).
+  - Атомарное применение результатов (`apply_calibration`).
+- **Имитация ТС**: ползунок скорости движения (м/с), управление углом поворота руля и сброс позиции ТС.
 
-GUI использует application services; существующие offline jobs сначала допускают subprocess adapters с progress/cancellation, затем их логика переносится в библиотеки. Мир и camera producer отделены от клиентского control/output API. Внешний ноутбук направляет virtual images на camera endpoints целевого сервера; получение продуктов идёт по client session.
+## Сборка и запуск
+
+```sh
+cmake -B build -DSV_CLIENT=ON
+cmake --build build --target sv-simulator
+
+# Запуск с подключениям по Unix-сокету
+./build/examples/sv-simulator/sv-simulator --unix /tmp/sv-prototype
+
+# Запуск с подключением по TCP
+./build/examples/sv-simulator/sv-simulator --tcp 127.0.0.1 53101 53102
+```

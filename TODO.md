@@ -125,7 +125,7 @@
 - [x] Создать `examples/svctl/`: Boost/STL без Qt, существующие команды через `sv-client-lib`, JSON ACK, deadline/exit codes, отсутствие прямой записи config.
 - [x] Начать touchscreen UI: крупные кнопки ракурсов/масштаба, single-touch orbit и панель state; убрать инженерные replay-команды с главного экрана.
 - [ ] Завершить Qt 5 automotive client под Аврору: платформенный lifecycle/UI integration, DPI и физические touch targets, жесты, информационная вкладка, проверка реального экрана.
-- [ ] Реализовать Qt 6 laptop GUI `examples/sv-simulator/`; сейчас есть только контракт/README, полноценного приложения нет.
+- [x] Реализовать Qt laptop GUI `examples/sv-simulator/`: создано полнофункциональное QML/C++ приложение (сборка `sv-simulator`), поддержка Unix/TCP, управление ракурсом/воспроизведением, асинхронная калибровка и имитация движения ТС.
 
 ### Сервер, конфигурация и библиотека
 
