@@ -62,7 +62,7 @@ build/sv-client-probe --unix /tmp/sv-blender --frames 3
 | `command(type, parameters)` | Общая точка доступа к опубликованным командам, включая будущие; unsupported command возвращает reject |
 | State event | `connecting`, `ready`, `disconnected`, `retry_exhausted` |
 | Message event, type 2 | Hello/capabilities сервера |
-| Message event, type 21 | ACK/reject с command_id, accepted/reason и state_revision; запрос state возвращает также paused/ракурс/fusion |
+| Message event, type 21 | ACK/reject с command_id, accepted/reason и state_revision; запрос state возвращает также paused/ракурс/fusion. Ревизия увеличивается после принятой мутации view/source или успешного применения калибровки; rejected и read-only команды её не меняют |
 | Message event, type 11 | Неизменяемый `shared_ptr<const Message>` владеет RGBA8 top-left payload и исходными метаданными |
 | Error event | Причина транспорта/протокола/таймаута; потерянные pending-команды получают отдельный `session_lost` с command_id |
 | `release(frame_header)` | Возвращает frame/session/buffer token; release не уничтожает уже полученный CPU-буфер, старый session не отправляется |

@@ -652,7 +652,7 @@ int main(int argc, char **argv)
                 {"gl_renderer", renderer->device()},
                 {"profile", config_store.active()->profile_id}});
 
-        uint64_t frame_id = 0, sequence = 0, applied_command = 0;
+        uint64_t frame_id = 0, sequence = 0, applied_command = 0, state_revision = 0;
         uint64_t last_generation = 0, last_render = 0, source_request = 0;
         bool paused = false, dirty = true;
         sv::PipelineSpanTracker span_tracker;
@@ -667,7 +667,7 @@ int main(int argc, char **argv)
             boost::json::object hdr{{"command_id", id},
                                     {"accepted", accepted},
                                     {"reason", reason},
-                                    {"state_revision", std::to_string(config_store.revision())},
+                                    {"state_revision", std::to_string(state_revision)},
                                     {"paused", paused},
                                     {"azimuth_rad", view.azimuth},
                                     {"elevation_rad", view.elevation},
@@ -682,7 +682,7 @@ int main(int argc, char **argv)
             record({{"event", "command"},
                     {"command_id", id},
                     {"accepted", accepted},
-                    {"state_revision", std::to_string(config_store.revision())}});
+                    {"state_revision", std::to_string(state_revision)}});
         };
 
         while (!network.stop)
@@ -737,6 +737,7 @@ int main(int argc, char **argv)
                     }
                     applied_command = sv::parse_decimal_u64(
                         std::string(pending_source->message.header.at("command_id").as_string()));
+                    ++state_revision;
                     dirty = true;
                     answer(*pending_source, true, "ok");
                     pending_source.reset();
@@ -915,6 +916,7 @@ int main(int argc, char **argv)
                                 fatal_renderer_error = true;
                                 throw;
                             }
+                            ++state_revision;
                             dirty = true;
                         }
                     }
@@ -962,6 +964,7 @@ int main(int argc, char **argv)
                 {
                     view = candidate;
                     applied_command = sv::parse_decimal_u64(id);
+                    ++state_revision;
                     dirty = true;
                 }
                 answer(cmd, accepted, reason, extra_res);
@@ -1023,7 +1026,7 @@ int main(int argc, char **argv)
                     11,
                     {{"frame_id", std::to_string(frame_id)},
                      {"frame_set_id", std::to_string(sequence)},
-                     {"state_revision", std::to_string(config_store.revision())},
+                     {"state_revision", std::to_string(state_revision)},
                      {"applied_command_id", std::to_string(applied_command)},
                      {"buffer_token", std::to_string(done) + ":" + std::to_string(frame_id)},
                      {"width", config_store.active()->width},
@@ -1064,7 +1067,7 @@ int main(int argc, char **argv)
                 {
                     record({{"event", "rendered"},
                             {"frame_id", std::to_string(frame_id)},
-                            {"state_revision", std::to_string(config_store.revision())},
+                            {"state_revision", std::to_string(state_revision)},
                             {"health", last_set.health},
                             {"source_type", config_store.active()->source.type},
                             {"timestamp_basis", "server_delivery"},
