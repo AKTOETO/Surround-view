@@ -1,6 +1,6 @@
 #pragma once
 
-#include "sv/config.hpp"
+#include "sv/interfaces.hpp"
 #include <atomic>
 #include <memory>
 #include <mutex>
@@ -9,7 +9,7 @@
 namespace sv
 {
 
-class ConfigStore
+class ConfigStore : public IConfigStore
 {
 public:
     explicit ConfigStore(const Config &initial_config)
@@ -19,18 +19,18 @@ public:
     {
     }
 
-    std::shared_ptr<const Config> active() const
+    std::shared_ptr<const Config> active() const override
     {
         std::lock_guard<std::mutex> lock(mutex_);
         return active_;
     }
 
-    uint64_t revision() const
+    uint64_t revision() const override
     {
         return revision_.load();
     }
 
-    bool update(const Config &new_config, std::string &error_reason)
+    bool update(const Config &new_config, std::string &error_reason) override
     {
         (void)error_reason;
         std::lock_guard<std::mutex> lock(mutex_);
@@ -39,7 +39,7 @@ public:
         return true;
     }
 
-    void persist()
+    void persist() override
     {
         std::lock_guard<std::mutex> lock(mutex_);
         persisted_ = active_;

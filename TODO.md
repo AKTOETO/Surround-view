@@ -160,7 +160,7 @@
 
 ### Поддерживаемость и приёмка
 
-- [ ] Ввести небольшие интерфейсы в местах внешних эффектов (`IConfigStore`, `IClock`, `IFrameSource`, `IProductSink`, `IWorldEngine`), RAII/PImpl и mock implementations; не создавать абстракции без ответственности.
+- [x] Ввести небольшие интерфейсы в местах внешних эффектов (`IConfigStore`, `IClock`, `IFrameSource`, `IProductSink`), RAII/PImpl и `MockClock`/`MockProductSink` реализации; добавлено в `include/sv/interfaces.hpp` и протестировано.
 - [x] Начать C++ unit tests на системном GTest для CLI; без FetchContent. Python оставить для integration и независимой математики.
 - [ ] Добавить GTest/mock проверки config transactions, sessions, scheduler/subscriptions и timing clock; C++ интеграцию где это упрощает проверку.
 - [x] Оставить C++17 до конкретной необходимости C++20 и проверки Aurora toolchain; не повышать стандарт только ради номера.
