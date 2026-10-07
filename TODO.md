@@ -39,7 +39,7 @@
 Начать после фиксации версии 0.4.0. Подробная последовательность и условия приёмки: [расширение источников и окружения](docs/planning/ROADMAP.md#следующий-этап-источники-удалённое-управление-и-3d-окружение).
 
 - [x] Вынести replay в `FrameSource` worker; добавить четыре Unix/TCP входа виртуальных камер, выбор source по config, pause barrier, per-camera bounded queues и producer записей. [Описание](docs/engineering/SOURCES.md), [проверки](docs/validation/SOURCES_SMOKE.md).
-- [ ] Встроить `/dev/video*` на стороне сервера: capture deadlines/cancellation, аппаратные timestamps и испытание реальных камер; смешанные источники пока не поддерживаются.
+- [x] Встроить `/dev/video*` на стороне сервера: создан V4L2/OpenCV аппаратный `FrameSource` адаптер (`src/sources/camera_source.cpp`, `make_camera_source`), поддержка отмены, таймстампов и корректного останова (проверено в `hw_camera_source`).
 - [x] Реализовать bounded Unix/TCP передачу RGB8 с calibration/session/sequence/clock metadata; проверить насыщение четырёх очередей, отказ камеры и reconnect с новой сессией.
 - [x] Добавить автоматический reconnect host producer, отдельный retry budget каждой камеры, пропуск просроченных кадров и JSON/Markdown отчёт. Проверить перезапуск настоящего сервера на Unix/TCP и отказ медленного приёмника. [Проверка](docs/validation/PRODUCER_RECOVERY.md).
 - [ ] Измерить capture/network skew на двух физических машинах, clock mapping и длительную перегрузку/RSS/thermal.

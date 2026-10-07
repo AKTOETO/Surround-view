@@ -42,7 +42,6 @@ class FrameSource
   public:
 
     virtual ~FrameSource() = default;
-    // Nonblocking submission; false means the bounded control queue is full/stopped.
     virtual bool request(SourceAction, uint64_t request_id) = 0;
     virtual std::vector<SourceEvent> poll() = 0;
     virtual SourceStats stats() const = 0;
@@ -53,4 +52,5 @@ using ImageLoader = std::function<Image(const std::filesystem::path &)>;
 std::unique_ptr<FrameSource> make_replay_source(const Config &, const std::filesystem::path &,
                                                 bool loop, ImageLoader loader = {});
 std::unique_ptr<FrameSource> make_socket_source(const Config &);
+std::unique_ptr<FrameSource> make_camera_source(const Config &);
 } // namespace sv
