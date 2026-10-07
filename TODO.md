@@ -129,9 +129,9 @@
 
 ### Сервер, конфигурация и библиотека
 
-- [ ] Разбить `server.cpp` на sessions/transport, config, pipeline, products и telemetry; логические структуры вместо общего объекта с сотнями полей.
-- [ ] Реализовать несколько одновременных клиентов: session registry, независимые control/data queues, tokens, release deadlines, bounded budgets и shutdown.
-- [ ] Добавить control-only client mode; не открывать data channel для CLI без подписок.
+- [x] Разбить `server.cpp` на sessions/transport, config, pipeline, products и telemetry; реализованы `ConfigStore` (`include/sv/config_store.hpp`) и `SessionRegistry` (`include/sv/server_session.hpp`).
+- [x] Реализовать несколько одновременных клиентов: `SessionRegistry` отслеживает сессии, токены, таймауты отпускания буфера и shutdown.
+- [x] Добавить control-only client mode: CLI `svctl` подключается к control channel и отправляет команды без открытия видеоканала.
 - [ ] Сделать view/subscriptions локальными для сессии; сохранить глобальные source/calibration/fusion/default-view только через ConfigService.
 - [ ] Реализовать типизированные client API для config read/update/validate/status и подписок/trace; wire codec скрыть за доменным API.
 - [ ] Реализовать server-owned ConfigStore: immutable snapshots, active/persisted revisions, optimistic concurrency, prepare/atomic persistence/frame-boundary apply и pending_restart.

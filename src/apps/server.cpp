@@ -1,5 +1,7 @@
+#include "sv/config_store.hpp"
 #include "sv/protocol.hpp"
 #include "sv/renderer.hpp"
+#include "sv/server_session.hpp"
 #include "sv/source.hpp"
 #include "sv/vision.hpp"
 #include <atomic>
@@ -27,8 +29,9 @@ struct Command
     std::weak_ptr<Connection> origin;
 };
 
-struct ServerIO
+class ServerIO
 {
+public:
     asio::io_context io;
     asio::local::stream_protocol::acceptor control, data;
     asio::ip::tcp::acceptor tcp_control, tcp_data;
@@ -38,34 +41,44 @@ struct ServerIO
     std::thread worker;
     std::atomic<bool> stop{false}, ready{false}, busy{false};
     std::atomic<uint64_t> generation{0};
-    std::shared_ptr<Connection> ctl, video;
+
+    sv::SessionRegistry sessions;
+    std::shared_ptr<Connection> active_ctl;
+    std::shared_ptr<Connection> active_video;
     std::mutex mutex;
     std::deque<Command> commands;
-    std::string session, token;
+    std::string session_id, token;
     boost::json::array capabilities;
-    ServerIO(const sv::Connections &, const std::string &source_type);
+
+    ServerIO(const sv::Connections &connections_cfg, const std::string &source_type,
+             const sv::View &default_view);
     ~ServerIO();
-    template <class Acceptor> void accept(Acceptor &, bool);
-    void connected(Socket, bool);
-    void new_session();
-    void deliver(Command);
+
+    template <class Acceptor> void accept(Acceptor &acceptor, bool is_control);
+    void connected(Socket socket, bool is_control);
+    void new_session(const sv::View &default_view);
+    void deliver(Command cmd);
     std::vector<Command> take();
-    void answer(const Command &, sv::Message);
-    bool publish(sv::Message);
+    void answer(const Command &cmd, sv::Message message);
+    bool publish(sv::Message message);
 };
 
 struct Connection : std::enable_shared_from_this<Connection>
 {
     Socket socket;
     ServerIO &host;
-    bool is_control, hello = false;
+    bool is_control;
+    bool hello = false;
     std::atomic<bool> closed{false};
-    asio::steady_timer deadline, release_timer;
+    asio::steady_timer deadline;
+    asio::steady_timer release_timer;
     sv::Decoder decoder;
     std::array<unsigned char, 8192> input{};
     std::deque<std::shared_ptr<std::vector<unsigned char>>> output;
     uint64_t last_command = 0;
-    std::string frame_id, buffer_token;
+    std::string frame_id;
+    std::string buffer_token;
+    std::string bound_session_id;
 
     Connection(Socket s, ServerIO &h, bool c)
         : socket(std::move(s)), host(h), is_control(c), deadline(h.io), release_timer(h.io)
@@ -83,6 +96,7 @@ struct Connection : std::enable_shared_from_this<Connection>
         deadline.cancel();
         release_timer.cancel();
         socket.close(ec);
+
         if (!is_control)
         {
             host.ready = false;
@@ -90,10 +104,14 @@ struct Connection : std::enable_shared_from_this<Connection>
         }
         else
         {
-            host.ready = false;
-            if (host.video)
+            if (!bound_session_id.empty())
             {
-                host.video->close();
+                host.sessions.remove_session(bound_session_id);
+            }
+            host.ready = false;
+            if (host.active_video)
+            {
+                host.active_video->close();
             }
         }
     }
@@ -203,20 +221,30 @@ struct Connection : std::enable_shared_from_this<Connection>
             {
                 throw std::runtime_error("hello required");
             }
-            if (!is_control && (!host.ctl || !host.ctl->hello ||
-                                m.header.at("session_id").as_string() != host.session ||
-                                m.header.at("data_token").as_string() != host.token))
-            {
-                throw std::runtime_error("session handshake mismatch");
-            }
-            hello = true;
             if (!is_control)
             {
+                std::string req_session = std::string(m.header.at("session_id").as_string());
+                std::string req_token = std::string(m.header.at("data_token").as_string());
+                if (!host.sessions.attach_data_channel(req_session, req_token))
+                {
+                    throw std::runtime_error("session handshake mismatch");
+                }
+                bound_session_id = req_session;
+                hello = true;
                 ++host.generation;
                 host.ready = true;
+                send({2,
+                      {{"session_id", req_session},
+                       {"data_token", req_token},
+                       {"profile", "linux-prototype-v1"},
+                       {"capabilities", host.capabilities}},
+                      {}});
+                return;
             }
+            bound_session_id = host.session_id;
+            hello = true;
             send({2,
-                  {{"session_id", host.session},
+                  {{"session_id", host.session_id},
                    {"data_token", host.token},
                    {"profile", "linux-prototype-v1"},
                    {"capabilities", host.capabilities}},
@@ -225,7 +253,7 @@ struct Connection : std::enable_shared_from_this<Connection>
         }
         if (!is_control)
         {
-            if (m.type != 22 || m.header.at("session_id").as_string() != host.session)
+            if (m.type != 22 || m.header.at("session_id").as_string() != bound_session_id)
             {
                 throw std::runtime_error("release required");
             }
@@ -261,7 +289,7 @@ struct Connection : std::enable_shared_from_this<Connection>
     {
         frame_id = std::string(message.header.at("frame_id").as_string());
         buffer_token = std::string(message.header.at("buffer_token").as_string());
-        message.header["session_id"] = host.session;
+        message.header["session_id"] = bound_session_id;
         send(std::move(message));
         release_timer.expires_after(std::chrono::milliseconds(250));
         auto self = shared_from_this();
@@ -292,7 +320,7 @@ template <class Acceptor> void ServerIO::accept(Acceptor &listener, bool c)
         });
 }
 
-void ServerIO::new_session()
+void ServerIO::new_session(const sv::View &default_view)
 {
     std::array<unsigned char, 24> bytes{};
     if (RAND_bytes(bytes.data(), bytes.size()) != 1)
@@ -306,10 +334,12 @@ void ServerIO::new_session()
         token += hex[b >> 4];
         token += hex[b & 15];
     }
-    session = std::to_string(sv::now_ns()) + "-" + token.substr(0, 16);
+    session_id = std::to_string(sv::now_ns()) + "-" + token.substr(0, 16);
+    sessions.create_session(session_id, token, default_view);
 }
 
-ServerIO::ServerIO(const sv::Connections &n, const std::string &source_type)
+ServerIO::ServerIO(const sv::Connections &n, const std::string &source_type,
+                   const sv::View &default_view)
     : control(io), data(io), tcp_control(io), tcp_data(io), signals(io, SIGINT, SIGTERM),
       directory(n.unix_directory)
 {
@@ -342,7 +372,7 @@ ServerIO::ServerIO(const sv::Connections &n, const std::string &source_type)
         if (n.tcp_enabled)
         {
             auto address = asio::ip::make_address(n.address);
-            auto bind = [&](auto &acceptor, uint16_t port)
+            auto bind_acceptor = [&](auto &acceptor, uint16_t port)
             {
                 asio::ip::tcp::endpoint endpoint(address, port);
                 acceptor.open(endpoint.protocol());
@@ -354,10 +384,10 @@ ServerIO::ServerIO(const sv::Connections &n, const std::string &source_type)
                 acceptor.bind(endpoint);
                 acceptor.listen(2);
             };
-            bind(tcp_control, n.control_port);
-            bind(tcp_data, n.data_port);
+            bind_acceptor(tcp_control, n.control_port);
+            bind_acceptor(tcp_data, n.data_port);
         }
-        new_session();
+        new_session(default_view);
         if (n.unix_enabled)
         {
             accept(control, true);
@@ -393,13 +423,13 @@ ServerIO::~ServerIO()
     {
         worker.join();
     }
-    if (ctl)
+    if (active_ctl)
     {
-        ctl->close();
+        active_ctl->close();
     }
-    if (video)
+    if (active_video)
     {
-        video->close();
+        active_video->close();
     }
     if (owns_control)
     {
@@ -413,7 +443,7 @@ ServerIO::~ServerIO()
 
 void ServerIO::connected(Socket socket, bool c)
 {
-    auto &current = c ? ctl : video;
+    auto &current = c ? active_ctl : active_video;
     if (current && !current->closed)
     {
         boost::system::error_code ignored;
@@ -422,7 +452,7 @@ void ServerIO::connected(Socket socket, bool c)
     }
     if (c)
     {
-        new_session();
+        new_session({});
     }
     current = std::make_shared<Connection>(std::move(socket), *this, c);
     current->start();
@@ -479,9 +509,9 @@ bool ServerIO::publish(sv::Message message)
     asio::post(io,
                [this, message = std::move(message)]() mutable
                {
-                   if (video && !video->closed && video->hello)
+                   if (active_video && !active_video->closed && active_video->hello)
                    {
-                       video->publish(std::move(message));
+                       active_video->publish(std::move(message));
                    }
                    else
                    {
@@ -497,8 +527,8 @@ int main(int argc, char **argv)
 {
     try
     {
-        std::string cfg, manifest, trace = "artifacts/server_trace.jsonl";
-        std::filesystem::path ipc;
+        std::string cfg_path, manifest_path, trace_path = "artifacts/server_trace.jsonl";
+        std::filesystem::path ipc_path;
         bool looping = true, loop_explicit = false;
         for (int i = 1; i < argc; i++)
         {
@@ -510,19 +540,19 @@ int main(int argc, char **argv)
             std::string v = argv[++i];
             if (key == "--config")
             {
-                cfg = v;
+                cfg_path = v;
             }
             else if (key == "--manifest")
             {
-                manifest = v;
+                manifest_path = v;
             }
             else if (key == "--ipc-dir")
             {
-                ipc = v;
+                ipc_path = v;
             }
             else if (key == "--trace")
             {
-                trace = v;
+                trace_path = v;
             }
             else if (key == "--loop")
             {
@@ -530,7 +560,7 @@ int main(int argc, char **argv)
                 {
                     throw std::runtime_error("--loop requires true|false");
                 }
-                looping = v == "true";
+                looping = (v == "true");
                 loop_explicit = true;
             }
             else
@@ -538,56 +568,63 @@ int main(int argc, char **argv)
                 throw std::runtime_error("unknown argument " + key);
             }
         }
-        if (cfg.empty())
+        if (cfg_path.empty())
         {
             throw std::runtime_error("usage: sv-server --config FILE --manifest FILE --ipc-dir DIR "
                                      "[--trace FILE --loop true|false]");
         }
-        auto c = sv::load_config(cfg);
-        if (c.connections.explicit_config && !ipc.empty())
+        auto initial_cfg = sv::load_config(cfg_path);
+        if (initial_cfg.connections.explicit_config && !ipc_path.empty())
         {
             throw std::runtime_error("--ipc-dir cannot override explicit connections config");
         }
-        if (!c.connections.explicit_config && !ipc.empty())
+        if (!initial_cfg.connections.explicit_config && !ipc_path.empty())
         {
-            c.connections.unix_directory = ipc.string();
+            initial_cfg.connections.unix_directory = ipc_path.string();
         }
-        if (c.connections.tcp_enabled)
+        if (initial_cfg.connections.tcp_enabled)
         {
-            asio::ip::make_address(c.connections.address);
+            asio::ip::make_address(initial_cfg.connections.address);
         }
-        if (c.source.explicit_config)
+        if (initial_cfg.source.explicit_config)
         {
-            if (!manifest.empty() || loop_explicit)
+            if (!manifest_path.empty() || loop_explicit)
             {
                 throw std::runtime_error("CLI cannot override explicit source config");
             }
-            if (c.source.type == "replay")
+            if (initial_cfg.source.type == "replay")
             {
-                auto path = std::filesystem::path(c.source.manifest);
+                auto path = std::filesystem::path(initial_cfg.source.manifest);
                 if (path.is_relative())
                 {
-                    path = std::filesystem::path(cfg).parent_path() / path;
+                    path = std::filesystem::path(cfg_path).parent_path() / path;
                 }
-                manifest = path.string();
-                looping = c.source.loop;
+                manifest_path = path.string();
+                looping = initial_cfg.source.loop;
             }
         }
-        if (c.source.type == "replay" && manifest.empty())
+        if (initial_cfg.source.type == "replay" && manifest_path.empty())
         {
             throw std::runtime_error("replay manifest required");
         }
-        auto source = c.source.type == "socket" ? sv::make_socket_source(c)
-                                                : sv::make_replay_source(c, manifest, looping);
-        sv::Renderer renderer(c);
-        sv::Synchronizer sync(c);
-        ServerIO network(c.connections, c.source.type);
-        sv::View view = c.view;
-        if (!std::filesystem::path(trace).parent_path().empty())
+
+        sv::ConfigStore config_store(initial_cfg);
+
+        auto source = initial_cfg.source.type == "socket"
+                          ? sv::make_socket_source(*config_store.active())
+                          : sv::make_replay_source(*config_store.active(), manifest_path, looping);
+
+        sv::Renderer renderer(*config_store.active());
+        sv::Synchronizer sync(*config_store.active());
+        ServerIO network(config_store.active()->connections, config_store.active()->source.type,
+                         config_store.active()->view);
+
+        sv::View view = config_store.active()->view;
+        if (!std::filesystem::path(trace_path).parent_path().empty())
         {
-            std::filesystem::create_directories(std::filesystem::path(trace).parent_path());
+            std::filesystem::create_directories(std::filesystem::path(trace_path).parent_path());
         }
-        std::ofstream log(trace);
+        std::ofstream log(trace_path);
         if (!log)
         {
             throw std::runtime_error("cannot open trace");
@@ -597,34 +634,39 @@ int main(int argc, char **argv)
             obj["timestamp_ns"] = std::to_string(sv::now_ns());
             log << boost::json::serialize(obj) << '\n';
         };
-        record(
-            {{"event", "startup"}, {"gl_renderer", renderer.device()}, {"profile", c.profile_id}});
-        uint64_t revision = 0, frame_id = 0, sequence = 0, applied_command = 0;
+        record({{"event", "startup"},
+                {"gl_renderer", renderer.device()},
+                {"profile", config_store.active()->profile_id}});
+
+        uint64_t frame_id = 0, sequence = 0, applied_command = 0;
         uint64_t last_generation = 0, last_render = 0, source_request = 0;
         bool paused = false, dirty = true;
         sv::FrameSet last_set;
         std::optional<Command> pending_source;
         std::deque<Command> pending_commands;
+
         auto answer = [&](const Command &cmd, bool accepted, const std::string &reason)
         {
             const auto id = cmd.message.header.at("command_id");
-            network.answer(cmd, {21,
-                                 {{"command_id", id},
-                                  {"accepted", accepted},
-                                  {"reason", reason},
-                                  {"state_revision", std::to_string(revision)},
-                                  {"paused", paused},
-                                  {"azimuth_rad", view.azimuth},
-                                  {"elevation_rad", view.elevation},
-                                  {"distance_m", view.distance},
-                                  {"fusion_mode", c.fusion.mode},
-                                  {"diagnostic_view", c.fusion.diagnostic}},
-                                 {}});
+            network.answer(
+                cmd, {21,
+                      {{"command_id", id},
+                       {"accepted", accepted},
+                       {"reason", reason},
+                       {"state_revision", std::to_string(config_store.revision())},
+                       {"paused", paused},
+                       {"azimuth_rad", view.azimuth},
+                       {"elevation_rad", view.elevation},
+                       {"distance_m", view.distance},
+                       {"fusion_mode", config_store.active()->fusion.mode},
+                       {"diagnostic_view", config_store.active()->fusion.diagnostic}},
+                      {}});
             record({{"event", "command"},
                     {"command_id", id},
                     {"accepted", accepted},
-                    {"state_revision", std::to_string(revision)}});
+                    {"state_revision", std::to_string(config_store.revision())}});
         };
+
         while (!network.stop)
         {
             const auto generation = network.generation.load();
@@ -672,7 +714,6 @@ int main(int argc, char **argv)
                         pending_source.reset();
                         continue;
                     }
-                    revision++;
                     applied_command = sv::parse_decimal_u64(
                         std::string(pending_source->message.header.at("command_id").as_string()));
                     dirty = true;
@@ -774,7 +815,7 @@ int main(int argc, char **argv)
                         accepted = false;
                         reason = "unknown_command";
                     }
-                    if (!sv::safe_view(c.surface, candidate))
+                    if (!sv::safe_view(config_store.active()->surface, candidate))
                     {
                         accepted = false;
                         reason = "view_clearance";
@@ -798,7 +839,6 @@ int main(int argc, char **argv)
                 if (accepted && type != "state")
                 {
                     view = candidate;
-                    revision++;
                     applied_command = sv::parse_decimal_u64(id);
                     dirty = true;
                 }
@@ -827,7 +867,8 @@ int main(int argc, char **argv)
                 {
                     boost::json::object input{{"camera_id", k},
                                               {"used", bool(last_set.frames[k])},
-                                              {"calibration_id", c.cameras[k].calibration_id}};
+                                              {"calibration_id",
+                                               config_store.active()->cameras[k].calibration_id}};
                     if (last_set.frames[k])
                     {
                         input["sequence_id"] = std::to_string(last_set.frames[k]->sequence);
@@ -846,15 +887,15 @@ int main(int argc, char **argv)
                     11,
                     {{"frame_id", std::to_string(frame_id)},
                      {"frame_set_id", std::to_string(sequence)},
-                     {"state_revision", std::to_string(revision)},
+                     {"state_revision", std::to_string(config_store.revision())},
                      {"applied_command_id", std::to_string(applied_command)},
                      {"buffer_token", std::to_string(done) + ":" + std::to_string(frame_id)},
-                     {"width", c.width},
-                     {"height", c.height},
+                     {"width", config_store.active()->width},
+                     {"height", config_store.active()->height},
                      {"pixel_format", "RGBA8"},
-                     {"fusion_mode", c.fusion.mode},
-                     {"diagnostic_view", c.fusion.diagnostic},
-                     {"stride_bytes", c.width * 4},
+                     {"fusion_mode", config_store.active()->fusion.mode},
+                     {"diagnostic_view", config_store.active()->fusion.diagnostic},
+                     {"stride_bytes", config_store.active()->width * 4},
                      {"row_origin", "top_left"},
                      {"health", last_set.health},
                      {"paused", paused},
@@ -863,7 +904,7 @@ int main(int argc, char **argv)
                      {"oldest_release_timestamp_ns", std::to_string(oldest)},
                      {"render_complete_timestamp_ns", std::to_string(done)},
                      {"render_readback_ms", double(done - start) / 1e6},
-                     {"source_type", c.source.type},
+                     {"source_type", config_store.active()->source.type},
                      {"timestamp_basis", "server_delivery"},
                      {"source_received", std::to_string(source_stats.received)},
                      {"source_rejected", std::to_string(source_stats.rejected)},
@@ -877,9 +918,9 @@ int main(int argc, char **argv)
                 {
                     record({{"event", "rendered"},
                             {"frame_id", std::to_string(frame_id)},
-                            {"state_revision", std::to_string(revision)},
+                            {"state_revision", std::to_string(config_store.revision())},
                             {"health", last_set.health},
-                            {"source_type", c.source.type},
+                            {"source_type", config_store.active()->source.type},
                             {"timestamp_basis", "server_delivery"},
                             {"source_received", std::to_string(source_stats.received)},
                             {"source_rejected", std::to_string(source_stats.rejected)},
