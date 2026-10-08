@@ -22,7 +22,11 @@ Python **не нужен на устройстве** для `sv-platform-test`, 
 
 В OpenCV 4 требуются `core`, `calib3d`, `imgproc`, `imgcodecs`, `videoio`. В OpenCV 5 CMake выбирает `geometry`, `calib`, `objdetect` вместо прежнего монолитного `calib3d`; исходники учитывают перенос детектора. Проверен OpenCV 5; совместимость с веткой 4 заложена в сборке, но требует проверки на соответствующем SDK.
 
-**CMake ничего не скачивает.** Все библиотеки ищутся через `find_package`/`pkg-config` с `REQUIRED`; отсутствие зависимости останавливает конфигурацию. `FetchContent` отсутствует и в Linux-, и в Aurora-профиле. Установить development-пакеты в выбранную среду до конфигурации. Название `opencv5` в `pkg-config` этого ПК отличается от часто встречающегося `opencv4`; проект использует CMake-конфигурацию OpenCV, а не угадывает имя `.pc`.
+GLM и OpenCV сначала ищутся в системных пакетах. Для обычной Linux-разработки `SV_FETCH_MISSING_DEPS=ON` (по умолчанию) может получить закреплённые исходники через CMake `FetchContent` и собрать их вместе с проектом. Для OpenCV включаются только используемые модули; nested build наследует компилятор, sysroot и toolchain-файл. Первый запуск требует сети и может занять значительное время. Это fallback разработчика, не способ поставки Aurora RPM: оба Aurora spec задают `SV_FETCH_MISSING_DEPS=OFF` и требуют отдельные GLM/OpenCV development RPM. Для offline-сборки также нужны уже установленные system packages.
+
+Fallback не применяется к Boost.JSON/Asio, OpenSSL, EGL/GLES и Qt: это платформенные зависимости, которые должны приходить из системных/SDK пакетов. При исходной сборке OpenCV её shared libraries устанавливаются в приватный каталог пакета с `$ORIGIN` RPATH; лицензии OpenCV и GLM включаются в package payload. CMake как исполняемый build tool тоже должен уже быть предоставлен SDK: FetchContent запускается только после старта CMake. RPM build tool dependencies относятся к build environment, а GLM/OpenCV fallback работает на этапе `%build`, после разрешения `BuildRequires`. Название `opencv5` в `pkg-config` этого ПК отличается от часто встречающегося `opencv4`; проект использует CMake-конфигурацию OpenCV, а не угадывает имя `.pc`.
+
+Настройки и версии fallback находятся в `cmake/FetchMissingDependencies.cmake`. Для воспроизводимой offline-сборки можно указать подготовленные исходники, например `-DFETCHCONTENT_SOURCE_DIR_GLM=/path/to/glm -DFETCHCONTENT_SOURCE_DIR_SV_OPENCV_SOURCE=/path/to/opencv`; при `FETCHCONTENT_FULLY_DISCONNECTED=ON` без этих деревьев конфигурация завершится понятной ошибкой.
 
 ```sh
 cmake --version
@@ -65,6 +69,7 @@ ctest --test-dir build-cpu --output-on-failure
 | `SV_QT_MAJOR` | Автовыбор | Принудительно 5 или 6 |
 | `SV_PLATFORM_TEST` | ON | Native отчёт и `sv-core-tests` для устройства |
 | `SV_AURORA` | OFF | Offline SDK-профиль, отключает host Python-тесты |
+| `SV_FETCH_MISSING_DEPS` | ON for Linux, OFF for Aurora | Скачать и собрать отсутствующие GLM/OpenCV для development builds; Aurora использует отдельные SDK RPM |
 | `SV_PYTHON_TESTS` | ON | Регистрация Python-тестов; принудительно OFF при cross-compiling |
 | `SV_SANITIZERS` | OFF | ASan/UBSan для исследования CPU-кода |
 | `BUILD_TESTING` | ON | Регистрация CTest; RPM собирается с OFF |

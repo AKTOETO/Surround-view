@@ -118,6 +118,13 @@
 
 Приоритетный контракт: [ответственность, шесть PlantUML workflows и проверки](docs/architecture/CLIENT_SERVER_MODEL.md). Этот этап заменяет прежние предложения о прямой записи server config конфигуратором. Существующие offline файлы на ноутбуке остаются черновиками/fixtures, не способом изменения работающего сервера.
 
+## Aurora RPM dependencies
+
+- [ ] Подготовить отдельные target RPM для GLM и OpenCV (development/runtime части, версии и ABI под выбранный SDK), опубликовать их в репозитории SDK и проверить `mb2 installdeps`.
+- [ ] Разрешить build-host CMake ≥3.20 и Ninja через SDK build environment; CMake не является dependency, которую проект может получить через FetchContent до запуска сборки.
+- [ ] Собрать GPU и CPU application RPM с FetchContent выключенным, проверить RPM Requires/Provides, payload и запуск на target. До появления SDK/устройства этот пункт остаётся непроверенным.
+- [x] Сохранить FetchContent только как system-first fallback для developer CMake builds; Aurora spec использует отдельные GLM/OpenCV BuildRequires и сеть во время упаковки не требует.
+
 ### Границы и примеры
 
 - [x] Зафиксировать ответственность: сервер вычисляет продукты и единолично валидирует/применяет/сохраняет config; библиотека предоставляет API; приложения — её потребители.

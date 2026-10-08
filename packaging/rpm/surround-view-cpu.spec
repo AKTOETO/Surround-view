@@ -1,13 +1,13 @@
 Name:           surround-view-cpu
 Version:        0.6.0
-Release:        1
+Release:        2
 Summary:        CPU and camera qualification tools for Aurora
-License:        LicenseRef-Proprietary AND CC0-1.0
+License:        LicenseRef-Proprietary AND CC0-1.0 AND Apache-2.0 AND MIT
 Source0:        surround-view-%{version}.tar.gz
 Conflicts:      surround-view
 
 BuildRequires:  gcc-c++
-BuildRequires:  cmake >= 3.20
+# CMake is a build-host tool supplied by the Aurora SDK/mb2 environment.
 BuildRequires:  ninja
 BuildRequires:  boost-devel >= 1.75
 BuildRequires:  glm-devel
@@ -23,19 +23,21 @@ qualifying an EGL backend. GPU and display results are explicitly unavailable.
 %autosetup -n surround-view-%{version}
 
 %build
-%cmake -GNinja \
+cmake -S . -B build -G Ninja \
     -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_INSTALL_PREFIX=%{_prefix} \
     -DCMAKE_INSTALL_LIBDIR=%{_lib} \
     -DSV_AURORA=ON \
     -DSV_GPU=OFF \
     -DSV_CLIENT=OFF \
     -DSV_PLATFORM_TEST=ON \
+    -DSV_FETCH_MISSING_DEPS=OFF \
     -DSV_PYTHON_TESTS=OFF \
     -DBUILD_TESTING=OFF
-%ninja_build
+ninja -C build %{?_smp_mflags}
 
 %install
-%ninja_install
+DESTDIR="%{buildroot}" cmake --install build
 
 %files
 %defattr(-,root,root,-)

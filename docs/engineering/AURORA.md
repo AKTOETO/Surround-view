@@ -29,11 +29,13 @@ sb2 -t "$SV_TARGET" rpm --eval '%ninja_build'
 sb2 -t "$SV_TARGET" rpm --eval '%ninja_install'
 ```
 
-Переменная `SV_TARGET` — шаблон для замены, а не существующий комплект. Не угадывать точный номер релиза по версии страницы документации. В [[validation/ACCEPTANCE]] записать выпуск/архитектуру/SDK/Qt/драйвер и результат проверки пакетов. Названия `boost-devel`, `glm-devel`, `opencv-devel` в spec — ожидаемые package names; если target использует другие имена, проверить реальные provider packages и скорректировать `BuildRequires` в отдельном коммите.
+Переменная `SV_TARGET` — шаблон для замены, а не существующий комплект. Не угадывать точный номер релиза по версии страницы документации. В [[validation/ACCEPTANCE]] записать выпуск/архитектуру/SDK/Qt/драйвер и результат проверки пакетов. Все библиотеки для целевого RPM, включая GLM и OpenCV, должны предоставляться SDK или отдельными target RPM необходимой версии.
 
-Boost должен предоставлять именно JSON ≥1.75, GLM — CMake config, OpenCV — нужные modules из [[engineering/BUILD]], OpenSSL — Crypto. Проверять target-пакеты, не host `/usr/include` и не x86_64 `.so`. Если зависимости отсутствуют, сначала подготовить их RPM под тот же target или согласовать иной dependency profile; **не добавлять FetchContent**. Установка development-пакетов относится к подготовке SDK. Автоматический `mb2 installdeps` может обращаться к target repositories; для полностью offline сборки предварительно установить все зависимости и использовать `mb2 -n`.
+Boost должен предоставлять именно JSON ≥1.75, OpenSSL — Crypto; EGL/GLES нужны GPU-профилю. Оба Aurora spec используют `SV_FETCH_MISSING_DEPS=OFF` и объявляют GLM/OpenCV как BuildRequires: целевой RPM не должен скачивать или собирать большие зависимости внутри приложения. Сейчас проверка пользователя показала, что целевой SDK не предоставляет `cmake >= 3.20`, `glm-devel` и `opencv-devel >= 4.5`; значит, до сборки приложения нужно подготовить/подключить подходящие target RPM и репозиторий. GLM и OpenCV из зафиксированных upstream-версий можно отдельно упаковать под ABI Авроры. CMake/Ninja/compiler — build-host инструменты SDK; CMake сам не может загрузить собственную замену, так как FetchContent запускается лишь после старта CMake. Проверить наличие исполняемого CMake в build environment и его версию отдельно от target BuildRequires.
 
-Макросы `%cmake -GNinja`, `%ninja_build`, `%ninja_install` соответствуют [официальному CMake/Ninja примеру](https://developer.auroraos.ru/doc/5.1.4/sdk/app_development/work/create/create_new_project). Их фактическое раскрытие проверять в выбранном SDK: host-макросы из `tests/rpm_host.macros` **никогда не загружать в Aurora SDK**, они предназначены только для native packaging smoke на ПК.
+Корневой CMake-проект сохраняет `SV_FETCH_MISSING_DEPS=ON` как удобный fallback для Linux-разработки и изолированных проверок. Это не политика Aurora RPM: отдельная упаковка GLM/OpenCV позволяет менеджеру пакетов разрешать ABI-зависимости, переиспользовать их несколькими приложениями и собирать приложение без сетевого доступа.
+
+Оба spec напрямую вызывают `cmake`, `ninja` и `cmake --install`, чтобы не требовать RPM-макроса `cmake` при разрешении target BuildRequires. Эти команды должны быть доступны в PATH внутри build environment SDK. RPM-макросы `%cmake`, `%ninja_build`, `%ninja_install` соответствуют [официальному CMake/Ninja примеру](https://developer.auroraos.ru/doc/5.1.4/sdk/app_development/work/create/create_new_project), но host-макросы из `tests/rpm_host.macros` **никогда не загружать в Aurora SDK**: они предназначены только для native packaging smoke на ПК.
 
 ## Зафиксировать исходники
 
@@ -83,7 +85,7 @@ sb2 -t "$SV_TARGET" rpmbuild -bb --define "_topdir $SV_RPM_TOP" \
   "$SV_RPM_TOP/SPECS/surround-view.spec"
 ```
 
-Для CPU заменить имя spec на `surround-view-cpu.spec`, оставив Source0 `surround-view-0.6.0.tar.gz`. В этом режиме результаты в `artifacts/rpmbuild/RPMS/<архитектура>/`. **Не использовать `--nodeps` для целевой сборки**: необходимо подтвердить целевые BuildRequires. RPM автоматически формирует runtime ELF dependencies; проверить:
+Для CPU заменить имя spec на `surround-view-cpu.spec`, оставив Source0 `surround-view-0.6.0.tar.gz`. В этом режиме результаты в `artifacts/rpmbuild/RPMS/<архитектура>/`. **Не использовать `--nodeps` для целевой сборки**: необходимо подтвердить целевые BuildRequires, включая GLM/OpenCV отдельными target RPM; остальные SDK dependencies должны быть доступны штатно. RPM автоматически формирует runtime ELF dependencies; проверить:
 
 ```sh
 rpm -qp --requires 'путь_к_полученному.rpm'
