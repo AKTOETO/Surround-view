@@ -28,6 +28,10 @@ TEST(SvctlOptions, CalibrationCommands)
     const auto apply_opts = sv::ctl::parse({"apply-calibration", "calib-job-42"});
     EXPECT_EQ(apply_opts.request.operation, "apply_calibration");
     EXPECT_EQ(apply_opts.request.parameters.at("job_id").as_string(), "calib-job-42");
+
+    const auto cancel_opts = sv::ctl::parse({"cancel-calibration", "calib-job-42"});
+    EXPECT_EQ(cancel_opts.request.operation, "cancel_calibration");
+    EXPECT_EQ(cancel_opts.request.parameters.at("job_id").as_string(), "calib-job-42");
 }
 
 TEST(SvctlOptions, GenericCommandPreservesParameters)
@@ -53,6 +57,7 @@ TEST(SvctlOptions, InvalidArgumentsNeverReachNetwork)
         {"preset"},
         {"state", "extra"},
         {"calibration-status"},
+        {"cancel-calibration"},
         {"apply-calibration"},
         {"typo"},
         {"--unknown"},

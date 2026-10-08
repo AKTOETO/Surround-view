@@ -130,6 +130,16 @@ Options parse(const std::vector<std::string> &args)
         }
         parameters["job_id"] = job_id;
     }
+    else if (operation == "cancel-calibration")
+    {
+        operation = "cancel_calibration";
+        const auto &job_id = next();
+        if (job_id.empty())
+        {
+            throw std::invalid_argument("empty job_id");
+        }
+        parameters["job_id"] = job_id;
+    }
     else if (operation == "command")
     {
         operation = next();
@@ -174,7 +184,8 @@ std::string usage()
 {
     return "svctl [--unix DIR | --tcp HOST CONTROL_PORT DATA_PORT] [--timeout-ms N]\n"
            "      state | pause | resume | step | preset NAME | orbit AZ_RAD EL_RAD | zoom METERS\n"
-           "      calibration-status JOB_ID | apply-calibration JOB_ID\n"
+           "      calibration-status JOB_ID | cancel-calibration JOB_ID | apply-calibration "
+           "JOB_ID\n"
            "      command TYPE [--params JSON_OBJECT]\n"
            "Default: Unix /tmp/sv-prototype, state. Output: one JSON ACK.\n"
            "Exit codes: 0 accepted, 2 arguments, 3 connection/timeout, 4 rejected.\n";

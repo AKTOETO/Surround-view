@@ -12,6 +12,7 @@ build/svctl --unix /tmp/sv-prototype zoom -0.5
 build/svctl --unix /tmp/sv-prototype pause
 build/svctl --unix /tmp/sv-prototype step
 build/svctl --unix /tmp/sv-prototype resume
+build/svctl --unix /tmp/sv-prototype cancel-calibration calib-job-42
 build/svctl --unix /tmp/sv-prototype command state --params '{}'
 ```
 

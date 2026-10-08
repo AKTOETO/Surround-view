@@ -14,6 +14,7 @@
 #include <csignal>
 #include <deque>
 #include <fstream>
+#include <functional>
 #include <iostream>
 #include <mutex>
 #include <openssl/rand.h>
@@ -52,9 +53,11 @@ class ServerIO
     std::deque<Command> commands;
     std::string session_id, token;
     boost::json::array capabilities;
+    std::function<void(const std::string &)> on_control_session_closed;
 
     ServerIO(const sv::Connections &connections_cfg, const std::string &source_type,
-             const sv::View &default_view);
+             const sv::View &default_view,
+             std::function<void(const std::string &)> on_session_closed);
     ~ServerIO();
 
     template <class Acceptor> void accept(Acceptor &acceptor, bool is_control);
@@ -109,6 +112,10 @@ struct Connection : std::enable_shared_from_this<Connection>
         {
             if (!bound_session_id.empty())
             {
+                if (host.on_control_session_closed)
+                {
+                    host.on_control_session_closed(bound_session_id);
+                }
                 host.sessions.remove_session(bound_session_id);
             }
             host.ready = false;
@@ -342,13 +349,23 @@ void ServerIO::new_session(const sv::View &default_view)
 }
 
 ServerIO::ServerIO(const sv::Connections &n, const std::string &source_type,
-                   const sv::View &default_view)
+                   const sv::View &default_view,
+                   std::function<void(const std::string &)> on_session_closed)
     : control(io), data(io), tcp_control(io), tcp_data(io), signals(io, SIGINT, SIGTERM),
-      directory(n.unix_directory)
+      directory(n.unix_directory), on_control_session_closed(std::move(on_session_closed))
 {
-    capabilities = {source_type,        "orbit", "zoom",        "preset",    "pause",
-                    "resume",           "state", "copied_rgba", "calibrate", "calibration_status",
-                    "apply_calibration"};
+    capabilities = {source_type,
+                    "orbit",
+                    "zoom",
+                    "preset",
+                    "pause",
+                    "resume",
+                    "state",
+                    "copied_rgba",
+                    "calibrate",
+                    "calibration_status",
+                    "apply_calibration",
+                    "cancel_calibration"};
     if (source_type == "replay")
     {
         capabilities.push_back("step");
@@ -632,7 +649,8 @@ int main(int argc, char **argv)
         auto renderer = std::make_unique<sv::Renderer>(*config_store.active());
         sv::Synchronizer sync(*config_store.active());
         ServerIO network(config_store.active()->connections, config_store.active()->source.type,
-                         config_store.active()->view);
+                         config_store.active()->view, [&calib_jobs](const std::string &session_id)
+                         { calib_jobs.cancel_session(session_id); });
 
         sv::View view = config_store.active()->view;
         if (!std::filesystem::path(trace_path).parent_path().empty())
@@ -897,14 +915,15 @@ int main(int argc, char **argv)
                             opts.method = std::string(m.header.at("method").as_string());
                         }
                         std::string calib_job_id = calib_jobs.submit_job(
-                            cam_id, config_store.active()->cameras[cam_id], points, pixels,
+                            origin->bound_session_id, cam_id,
+                            config_store.active()->cameras[cam_id], points, pixels,
                             validation_points, validation_pixels, opts);
                         extra_res["job_id"] = calib_job_id;
                     }
                     else if (type == "calibration_status")
                     {
                         std::string calib_job_id = std::string(m.header.at("job_id").as_string());
-                        auto job_opt = calib_jobs.get_job(calib_job_id);
+                        auto job_opt = calib_jobs.get_job(calib_job_id, origin->bound_session_id);
                         if (!job_opt)
                         {
                             accepted = false;
@@ -931,12 +950,22 @@ int main(int argc, char **argv)
                             }
                         }
                     }
+                    else if (type == "cancel_calibration")
+                    {
+                        std::string calib_job_id = std::string(m.header.at("job_id").as_string());
+                        if (!calib_jobs.cancel_job(calib_job_id, origin->bound_session_id))
+                        {
+                            accepted = false;
+                            reason = "job_not_found_or_not_cancellable";
+                        }
+                    }
                     else if (type == "apply_calibration")
                     {
                         std::string calib_job_id = std::string(m.header.at("job_id").as_string());
                         std::string apply_err;
-                        auto config_candidate = calib_jobs.config_for_job(
-                            calib_job_id, *config_store.active(), apply_err);
+                        auto config_candidate =
+                            calib_jobs.config_for_job(calib_job_id, origin->bound_session_id,
+                                                      *config_store.active(), apply_err);
                         if (!config_candidate)
                         {
                             accepted = false;
