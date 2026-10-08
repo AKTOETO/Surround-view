@@ -914,10 +914,11 @@ int main(int argc, char **argv)
                         {
                             opts.method = std::string(m.header.at("method").as_string());
                         }
+                        const auto [active_config, base_config_revision] = config_store.snapshot();
                         std::string calib_job_id = calib_jobs.submit_job(
-                            origin->bound_session_id, config_store.revision(), cam_id,
-                            config_store.active()->cameras[cam_id], points, pixels,
-                            validation_points, validation_pixels, opts);
+                            origin->bound_session_id, base_config_revision, cam_id,
+                            active_config->cameras[cam_id], points, pixels, validation_points,
+                            validation_pixels, opts);
                         extra_res["job_id"] = calib_job_id;
                     }
                     else if (type == "calibration_status")
@@ -965,9 +966,11 @@ int main(int argc, char **argv)
                     {
                         std::string calib_job_id = std::string(m.header.at("job_id").as_string());
                         std::string apply_err;
+                        const auto [active_config, active_config_revision] =
+                            config_store.snapshot();
                         auto config_candidate = calib_jobs.config_for_job(
-                            calib_job_id, origin->bound_session_id, config_store.revision(),
-                            *config_store.active(), apply_err);
+                            calib_job_id, origin->bound_session_id, active_config_revision,
+                            *active_config, apply_err);
                         if (!config_candidate)
                         {
                             accepted = false;
@@ -980,10 +983,13 @@ int main(int argc, char **argv)
                             // remains unchanged.
                             auto candidate_renderer =
                                 std::make_unique<sv::Renderer>(*config_candidate);
-                            if (!config_store.update(*config_candidate, apply_err))
+                            if (!config_store.update_if_revision(*config_candidate,
+                                                                 active_config_revision, apply_err))
                             {
                                 accepted = false;
-                                reason = "config_persist_failed:" + apply_err;
+                                reason = apply_err == "stale_config_revision"
+                                             ? apply_err
+                                             : "config_persist_failed:" + apply_err;
                             }
                             else
                             {

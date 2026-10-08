@@ -1,9 +1,9 @@
 #include "sv/config_store.hpp"
 #include <boost/json.hpp>
-#include <gtest/gtest.h>
 #include <chrono>
 #include <filesystem>
 #include <fstream>
+#include <gtest/gtest.h>
 #include <string>
 
 namespace
@@ -37,6 +37,13 @@ TEST(ConfigStorePersistence, ValidUpdateReplacesFileBeforePublishingSnapshot)
     EXPECT_EQ(store.revision(), 1U);
     EXPECT_EQ(store.active()->cameras[0].calibration_id, "persisted-camera-calibration");
     EXPECT_EQ(store.persisted()->cameras[0].calibration_id, "persisted-camera-calibration");
+
+    auto stale = *store.active();
+    change_calibration_id(stale, "stale-overwrite");
+    EXPECT_FALSE(store.update_if_revision(stale, 0, error));
+    EXPECT_EQ(error, "stale_config_revision");
+    EXPECT_EQ(store.revision(), 1U);
+    EXPECT_EQ(store.active()->cameras[0].calibration_id, "persisted-camera-calibration");
 
     std::ifstream input(path);
     ASSERT_TRUE(input.good());

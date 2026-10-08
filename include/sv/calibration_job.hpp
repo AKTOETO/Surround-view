@@ -282,9 +282,9 @@ class CalibrationJobManager
     bool apply_job_to_config(const std::string &job_id, const std::string &owner_session_id,
                              ConfigStore &config_store, std::string &error)
     {
-        auto candidate = config_for_job(job_id, owner_session_id, config_store.revision(),
-                                        *config_store.active(), error);
-        return candidate && config_store.update(*candidate, error);
+        const auto [active, revision] = config_store.snapshot();
+        auto candidate = config_for_job(job_id, owner_session_id, revision, *active, error);
+        return candidate && config_store.update_if_revision(*candidate, revision, error);
     }
 
   private:
