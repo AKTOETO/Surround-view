@@ -942,25 +942,24 @@ int main(int argc, char **argv)
                             accepted = false;
                             reason = apply_err;
                         }
-                        else if (!config_store.update(*config_candidate, apply_err))
-                        {
-                            accepted = false;
-                            reason = "config_persist_failed:" + apply_err;
-                        }
                         else
                         {
-                            renderer.reset();
-                            try
+                            // Prepare all fallible runtime state before persisting the new config.
+                            // If renderer construction or persistence fails, the active pair
+                            // remains unchanged.
+                            auto candidate_renderer =
+                                std::make_unique<sv::Renderer>(*config_candidate);
+                            if (!config_store.update(*config_candidate, apply_err))
                             {
-                                renderer = std::make_unique<sv::Renderer>(*config_store.active());
+                                accepted = false;
+                                reason = "config_persist_failed:" + apply_err;
                             }
-                            catch (...)
+                            else
                             {
-                                fatal_renderer_error = true;
-                                throw;
+                                renderer.swap(candidate_renderer);
+                                ++state_revision;
+                                dirty = true;
                             }
-                            ++state_revision;
-                            dirty = true;
                         }
                     }
                     else
