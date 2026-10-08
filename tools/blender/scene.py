@@ -26,6 +26,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from rig import FACES, configuration, face_basis, vehicle_pose
 from scenario import load as load_scenario, validate as validate_scenario, perturb
 import board_targets
+import depth as depth_tools
 
 # Blender MCP and the interactive console keep Python modules between captures.
 importlib.reload(board_targets)
@@ -239,7 +240,8 @@ def check_optics(scene):
     return {'points':len(errors), 'max_error_px':max(errors), 'threshold_px':.001}
 
 
-def capture(scene, output, frames=2, face_size=256, start_frame=0, calibration_boards=False):
+def capture(scene, output, frames=2, face_size=256, start_frame=0, calibration_boards=False,
+            depth_truth=False):
     """Render all optical centers at exactly the same scenario pose per row.
 
     Write completion metadata only after every requested image was saved.
@@ -268,6 +270,8 @@ def capture(scene, output, frames=2, face_size=256, start_frame=0, calibration_b
     targets = board_targets.create_targets(scene) if calibration_boards else None
     scene.camera.data.lens = 18
     scene.render.resolution_x = scene.render.resolution_y = face_size
+    depth_dir = output / 'depth'
+    depth_state = depth_tools.attach_depth_output(scene, depth_dir) if depth_truth else None
     rows = []
     for index in range(frames):
         frame = start_frame + index
@@ -283,6 +287,7 @@ def capture(scene, output, frames=2, face_size=256, start_frame=0, calibration_b
             transform = np.array(cam['T_camera_from_vehicle'])
             optical_pose = pose @ np.linalg.inv(transform)
             paths = {}
+            depth_paths = {}
             for face in FACES:
                 # Negative optical Z cannot occur inside the supported <180-degree FOV.
                 if face == 'nz':
@@ -293,10 +298,21 @@ def capture(scene, output, frames=2, face_size=256, start_frame=0, calibration_b
                 scene.camera.matrix_world = Matrix(matrix.tolist())
                 filename = f"frame{index:04d}_cam{cam['id']}_{face}.png"
                 scene.render.filepath = str(output / filename)
+                depth_filename = None
+                if depth_state:
+                    depth_output = depth_state[-1]
+                    depth_stem = f"frame{index:04d}_cam{cam['id']}_{face}_depth_####"
+                    depth_output.file_name = depth_stem
+                    depth_filename = depth_stem.replace('####', f'{frame + 1:04d}') + '.exr'
                 bpy.ops.render.render(write_still=True, scene=scene.name)
                 paths[face] = filename
-            captures.append({'id':cam['id'], 'faces':paths,
-                             'T_world_from_camera':optical_pose.tolist()})
+                if depth_state:
+                    depth_paths[face] = str(Path('depth') / depth_filename)
+            camera_capture = {'id':cam['id'], 'faces':paths,
+                              'T_world_from_camera':optical_pose.tolist()}
+            if depth_truth:
+                camera_capture['depth_faces'] = depth_paths
+            captures.append(camera_capture)
             if targets:
                 board_records.append({'camera_id':cam['id'],
                                       'T_vehicle_from_board':target_pose.tolist(),
@@ -306,6 +322,7 @@ def capture(scene, output, frames=2, face_size=256, start_frame=0, calibration_b
         if targets:
             row['calibration_boards'] = board_records
         rows.append(row)
+    depth_tools.restore_depth_output(scene, depth_state)
     # A true 3D overview, separate from sv-server's reconstructed surround view.
     scene.camera.location = (10,-12,10)
     direction = Vector((1,0,0.4)) - scene.camera.location
@@ -327,13 +344,18 @@ def capture(scene, output, frames=2, face_size=256, start_frame=0, calibration_b
                                      if calibration_boards else None),
                 'mount_offsets':json.loads(scene.get('sv_mount_offsets', '[]')),
                 'nominal_config':nominal_cfg,
+                'depth_truth':({'schema_version':1,
+                                'encoding':'OpenEXR float32 camera-Z in metres; 1e10 means no hit',
+                                'independent_of_surround_view_renderer':True}
+                               if depth_truth else None),
                 'limitations':['procedural geometry, no real vehicle CAD',
                                'scripted translation, no vehicle physics',
-                               'offline RGB capture, no depth/semantic truth yet'],
+                               'offline render; no sensor noise, rolling shutter or exposure skew'] +
+                              ([] if depth_truth else ['depth/semantic truth not exported']),
                 'script_sha256':{name:hashlib.sha256(Path(__file__).with_name(name).read_bytes()).hexdigest()
-                                 for name in ('scene.py','rig.py','scenario.py','board_targets.py')},
-                'sha256':{p.name:hashlib.sha256(p.read_bytes()).hexdigest()
-                          for p in sorted(output.glob('*.png'))}}
+                                 for name in ('scene.py','rig.py','scenario.py','board_targets.py','depth.py')},
+                'sha256':{p.relative_to(output).as_posix():hashlib.sha256(p.read_bytes()).hexdigest()
+                          for p in sorted([*output.glob('*.png'), *depth_dir.glob('*.exr')])}}
     (output / 'capture.json').write_text(json.dumps(metadata,indent=2)+'\n')
     print(f"SV capture complete: {output}")
     return output
@@ -347,6 +369,8 @@ if __name__ == '__main__':
     parser.add_argument('--face-size',type=int,default=256)
     parser.add_argument('--start-frame',type=int,default=0)
     parser.add_argument('--calibration-boards',action='store_true')
+    parser.add_argument('--depth-truth',action='store_true',
+                        help='export float32 camera-Z OpenEXR faces from Blender Z pass')
     args = parser.parse_args(sys.argv[sys.argv.index('--')+1:] if '--' in sys.argv else [])
     capture(build_scene(load_scenario(args.scenario) if args.scenario else None),args.output,
-            args.frames,args.face_size,args.start_frame,args.calibration_boards)
+            args.frames,args.face_size,args.start_frame,args.calibration_boards,args.depth_truth)

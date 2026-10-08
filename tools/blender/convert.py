@@ -12,6 +12,7 @@ from PIL import Image
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from simulator import camera_rays
 from rig import cube_coordinates
+from depth_truth import convert_camera_depth, read_openexr_depth
 
 
 def linear_rgb(image):
@@ -71,7 +72,7 @@ def convert(source, output):
     if [cam['id'] for cam in cfg['cameras']] != list(range(4)):
         raise ValueError('camera IDs must be ordered 0..3')
     output.mkdir(parents=True, exist_ok=False)
-    rows, hashes = [], {}
+    rows, hashes, depth_hashes, depth_rows = [], {}, {}, []
     for index, row in enumerate(metadata['frames']):
         if [cam['id'] for cam in row['cameras']] != list(range(4)):
             raise ValueError('capture camera IDs must be ordered 0..3')
@@ -89,6 +90,24 @@ def convert(source, output):
             (output / filename).write_bytes(encoded)
             hashes[filename] = hashlib.sha256(encoded).hexdigest()
             paths.append(filename)
+            if 'depth_faces' in capture:
+                depth_faces = {}
+                for face, depth_name in capture['depth_faces'].items():
+                    if depth_name not in metadata['sha256']:
+                        raise ValueError(f'unhashed depth face: {depth_name}')
+                    depth_path = (source / depth_name).resolve()
+                    if not depth_path.is_relative_to(source) or hashlib.sha256(depth_path.read_bytes()).hexdigest() != metadata['sha256'][depth_name]:
+                        raise ValueError(f'unsafe path or depth checksum mismatch: {depth_name}')
+                    depth_faces[face] = read_openexr_depth(depth_path)
+                radial = convert_camera_depth(cam, depth_faces, metadata['face_size'])
+                depth_filename = f'depth_camera{cam["id"]}_{index:04d}.npy'
+                np.save(output / depth_filename, radial, allow_pickle=False)
+                depth_hashes[depth_filename] = hashlib.sha256((output / depth_filename).read_bytes()).hexdigest()
+        if any('depth_faces' in cam for cam in row['cameras']):
+            if not all('depth_faces' in cam for cam in row['cameras']):
+                raise ValueError('depth truth must be present for all four cameras in a frame')
+            depth_rows.append({'scenario_timestamp_ns': row['scenario_timestamp_ns'],
+                               'files': [f'depth_camera{camera_id}_{index:04d}.npy' for camera_id in range(4)]})
         rows.append({'scenario_timestamp_ns':row['scenario_timestamp_ns'],
                      'paths':paths, 'offset_ns':[0]*4})
     (output / 'config.json').write_text(json.dumps(cfg,indent=2)+'\n')
@@ -99,12 +118,20 @@ def convert(source, output):
     truth['scenario_recipe'] = metadata.get('scenario_recipe')
     truth['mount_offsets'] = metadata.get('mount_offsets', [])
     truth['true_config'] = cfg
+    if depth_rows:
+        if len(depth_rows) != len(rows):
+            raise ValueError('depth truth must cover every RGB frame')
+        truth['depth_truth'] = {'schema_version':1,
+                                'meaning':'radial range from camera optical center, metres',
+                                'encoding':'float32 NPY; NaN means no visible surface',
+                                'frames':depth_rows, 'sha256':depth_hashes}
     if 'nominal_config' in metadata:
         (output / 'nominal-config.json').write_text(json.dumps(metadata['nominal_config'],indent=2)+'\n')
     truth['converter_sha256'] = {
         path.name:hashlib.sha256(path.read_bytes()).hexdigest() for path in
         (Path(__file__),Path(__file__).with_name('rig.py'),
-         Path(__file__).resolve().parents[1]/'simulator.py')}
+         Path(__file__).resolve().parents[1]/'simulator.py',
+         Path(__file__).resolve().parents[1]/'depth_truth.py')}
     (output / 'ground_truth.json').write_text(json.dumps(truth,indent=2)+'\n')
     manifest = {'schema_version':1, 'origin':metadata['origin'],
                 'calibration_ids':[c['calibration_id'] for c in cfg['cameras']],

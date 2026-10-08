@@ -44,13 +44,13 @@ Server --> Render
 
 ## Зависимости и запуск
 
-Blender нужен только на машине генерации. Конвертер и dataset smoke требуют Python, NumPy, Pillow; Python-модуль OpenCV не требуется. Рендерер и native-инструменты используют настоящую C++ OpenCV по [[engineering/BUILD]]. Никаких загрузок через CMake нет; Blender не входит в runtime-зависимости RPM для Авроры.
+Blender нужен только на машине генерации. Обычный конвертер и dataset smoke требуют Python, NumPy, Pillow; `--depth-truth` дополнительно требует Python-модуль OpenEXR, чтобы декодировать float EXR (OpenCV Python не требуется). Рендерер и native-инструменты используют настоящую C++ OpenCV по [[engineering/BUILD]]. Никаких загрузок через CMake нет; Blender и OpenEXR не входят в runtime-зависимости RPM для Авроры.
 
 Из корня проекта:
 
 ```sh
 blender --background --python tools/blender/scene.py -- \
-  --output artifacts/blender-street-capture --frames 4 --face-size 256
+  --output artifacts/blender-street-capture --frames 4 --face-size 256 --depth-truth
 python3 tools/blender/convert.py \
   --capture artifacts/blender-street-capture --output artifacts/blender-street
 python3 tools/blender/validate.py --build build \
@@ -66,7 +66,7 @@ import sys
 sys.path.insert(0, '/path/to/surround-view/tools/blender')
 import scene
 street = scene.build_scene()
-scene.capture(street, '/path/to/new/capture', frames=4, face_size=256)
+scene.capture(street, '/path/to/new/capture', frames=4, face_size=256, depth_truth=True)
 ```
 
 MCP вызовы имеют отдельные пространства переменных: в следующем вызове заново импортировать модуль и выбирать сцену через `bpy.data.scenes`. В интерфейсе переключиться на `SV Research Street`, чтобы редактировать созданный мир. Capture проверяет Blender pixel-center conventions на 72 точках до записи кадров. Диапазоны CLI: `frames=1..300`, `face-size=32..2048`, `start-frame>=0`; большие серии требуют соответствующего диска и времени.
@@ -93,10 +93,12 @@ EGL_PLATFORM=surfaceless SV_EGL_PLATFORM=surfaceless build/sv-server \
 | `tools/blender/scene.py`, `rig.py` | Полный исходник процедурного мира, масштаб, rig и траектория; обычный Git |
 | `assets/scenes/metric-street/street.blend` | Сохранённый авторский мир; обычный Git, metadata в `provenance.json` |
 | `capture/street.blend` | Снимок сцены очередного capture; результат выполнения в `artifacts/` |
-| `capture/capture.json` | Оптика, позы, движок, версии, checksums PNG/скриптов и optics check |
+| `capture/capture.json` | Оптика, позы, движок, версии, checksums изображений/EXR/скриптов и optics check |
 | `capture/overview.png` | Истинная 3D-сцена для визуальной проверки |
 | `replay/config.json`, `manifest.json` | Строго совместимые входы текущего прототипа |
-| `replay/ground_truth.json` | Сценарные позы и происхождение; dense depth/semantic truth пока отсутствует |
+| `capture/depth/*.exr` | Опциональный Blender float-Z для каждого кадра, камеры и используемой cube face; `1e10` означает отсутствие поверхности. `nz` не снимается, так как FOV камер < 180° |
+| `replay/depth_camera*_*.npy` | При включённом depth capture — radial range в метрах на fisheye сетке; `NaN` означает отсутствие поверхности |
+| `replay/ground_truth.json` | Сценарные позы, происхождение, hashes и карта depth truth при её наличии; semantic labels пока отсутствуют |
 
 По решению пользователя **Git LFS не используется**. Исходный мир сохранён обычным Git в `assets/scenes/metric-street/street.blend` вместе с provenance; его также можно воссоздать скриптами. Каталог и восстановление всех исходных материалов — [[engineering/ASSETS]]. Новые capture-снимки и полные входные серии сохраняются в игнорируемом `artifacts/`. В документацию входят небольшие PNG реальных рендеров. Для переноса на другой компьютер передать архив capture/replay напрямую либо повторить генерацию. Для сравнения качества на разных платформах предпочтительнее один архив с одинаковыми байтами и SHA-256.
 
@@ -112,7 +114,7 @@ python3 docs/diploma/plot_blender.py \
 
 ## Следующие этапы
 
-1. Depth/visibility/semantic truth и независимые метрические маркеры; отдельные сцены подбора и оценки.
+1. Semantic labels и независимые метрические маркеры; отдельные сцены подбора и оценки. Depth truth v1 уже экспортируется и проверен, но нужна проверка его ошибки на аналитических примитивах.
 2. Измерить ошибки разметки и вертикальных объектов, швы/ghosting и temporal stability; сравнить fusion и carriers по [[research/PROJECTION_AND_STITCHING]].
 3. Добавить интерактивную траекторию и четыре live producer после `FrameSource` и socket-input контракта.
 4. Добавить реалистичную модель автомобиля и материалы с фиксированной лицензией; текущий мир процедурный.

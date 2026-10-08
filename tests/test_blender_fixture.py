@@ -13,6 +13,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools' / 'blender'
 from rig import configuration, cube_coordinates, vehicle_pose
 from scenario import perturb, validate
 from convert import bilinear, convert, convert_camera, linear_rgb, srgb8
+from depth_truth import _sample_depth, convert_camera_depth
 
 
 class BlenderFixtureTests(unittest.TestCase):
@@ -114,6 +115,27 @@ class BlenderFixtureTests(unittest.TestCase):
         pixels = np.array([[[0,0,0],[255,255,255]]],np.uint8)
         value = srgb8(bilinear(linear_rgb(pixels),np.array([[.5,0]])))
         np.testing.assert_array_equal(value,[[188,188,188]])
+
+    def test_depth_truth_returns_radial_range_and_nan_for_no_hit(self):
+        camera = configuration()['cameras'][0]
+        face_size = 32
+        faces = {name:np.full((face_size,face_size),5.,np.float32)
+                 for name in ('px','nx','py','ny','pz')}
+        ranges = convert_camera_depth(camera,faces,face_size)
+        center = (int(camera['projection']['cy']),int(camera['projection']['cx']))
+        self.assertAlmostEqual(float(ranges[center]),5.,delta=.001)
+        off_axis = (center[0],center[1]+40)
+        expected = 5./np.cos(np.arctan2(40,camera['projection']['fx']))
+        self.assertAlmostEqual(float(ranges[off_axis]),float(expected),delta=.01)
+        missing = {name:np.full((face_size,face_size),1e10,np.float32) for name in faces}
+        self.assertTrue(np.isnan(convert_camera_depth(camera,missing,face_size)).all())
+
+    def test_depth_sampling_never_selects_invalid_zero_weight_texel(self):
+        # At uv=(0, 0), the first sample has all interpolation weight, but
+        # it is invalid. The only valid sample has a zero coefficient.
+        image = np.array([[1e10, 7.0], [1e10, 1e10]], dtype=np.float32)
+        sampled = _sample_depth(image, np.array([[0.0, 0.0]]), 1e9)
+        self.assertEqual(float(sampled[0]), 7.0)
 
     def test_manifest_hashes_and_failure(self):
         with tempfile.TemporaryDirectory() as temporary:
