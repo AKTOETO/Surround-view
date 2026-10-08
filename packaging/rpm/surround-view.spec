@@ -2,7 +2,7 @@
 
 Name:           surround-view
 Version:        0.6.0
-Release:        2
+Release:        3
 Summary:        Surround view research tools and native platform qualification
 License:        LicenseRef-Proprietary AND CC0-1.0 AND Apache-2.0 AND MIT
 Source0:        surround-view-%{version}.tar.gz
@@ -67,6 +67,8 @@ DESTDIR="%{buildroot}" cmake --install build
 %{_bindir}/sv-scene
 %if %{sv_with_client}
 %{_bindir}/sv-client
+%{_datadir}/applications/surround-view.desktop
+%{_datadir}/icons/hicolor/128x128/apps/surround-view.png
 %endif
 %{_libdir}/libsv-client-lib.a
 %{_libdir}/libsv-wire.a

@@ -1,0 +1,15 @@
+[Desktop Entry]
+Type=Application
+X-Nemo-Application-Type=silica-qt5
+Icon=surround-view
+Exec=/usr/bin/sv-client
+Name=Surround View
+Name[ru]=Обзор вокруг автомобиля
+
+[X-Application]
+Permissions=Internet
+OrganizationName=ru.mai
+ApplicationName=SurroundView
+
+[X-Aurora-Application]
+Orientation=Landscape;LandscapeInverted

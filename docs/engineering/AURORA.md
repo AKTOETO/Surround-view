@@ -11,7 +11,7 @@
 
 Они устанавливают совпадающие пути и конфликтуют; одновременно устанавливается один профиль. Все исполняемые файлы — архитектурные, `BuildArch: noarch` не используется. `%install` получает только CMake install layout; runtime scriptlets, запуск тестов в `%check`, сеть из CMake отсутствуют. Два spec-файла нужны для разных составов пакета, а не как копии одной инструкции.
 
-Это **лабораторные CLI-пакеты**, предназначенные для согласованной исследовательской среды устройства. Опциональный Qt Quick client пока desktop prototype: здесь нет AuroraApp/Silica lifecycle, launcher/manifest и подтверждённого application security profile. Для публичного приложения понадобится отдельная интеграция. Список допустимых API и проверку профиля сверять с [публичными API Авроры](https://developer.auroraos.ru/doc/software_development/reference/public_api); наличие Boost/OpenCV/GLM на ПК не гарантирует их доступность в target repository.
+Это **лабораторные пакеты**, предназначенные для согласованной исследовательской среды устройства. Для optional Qt Quick client подготовлены Aurora `.desktop` entry и icon в соответствии с [требованиями к desktop-файлу](https://developer.auroraos.ru/doc/software_development/guidelines/rpm_requirements/desktop_requirements) и [spec-файлу](https://developer.auroraos.ru/doc/software_development/guidelines/rpm_requirements/spec_requirements). AuroraApp/Silica lifecycle, реальное устройство, rpm-validator и application security profile пока не проверены; desktop entry сам по себе не означает эту приёмку. Список допустимых API и проверку профиля сверять с [публичными API Авроры](https://developer.auroraos.ru/doc/software_development/reference/public_api); наличие Boost/OpenCV/GLM на ПК не гарантирует их доступность в target repository.
 
 Поле License отражает пока непубличный исследовательский код и CC0 фотоисточник. Это упаковочная метка, не выбранная открытая лицензия исходников. До распространения закрепить фактическую лицензию проекта и соответствующие файлы; CC0 происхождение фото уже описано в [[engineering/SCENE]].
 
@@ -152,6 +152,9 @@ python3 tools/compare_reports.py docs/validation/baselines/PC_RTX.md \
 - Native criteria и сравнимые render/upload/readback времена на железе.
 - Qt/AuroraApp lifecycle и собственный launcher для будущего приложения.
 - Реальный camera adapter: разрешения, timestamps, синхронизация и formats.
+- Desktop entry/icon через target `rpm-validator`; запуск и разрешения на устройстве.
+
+GUI RPM включает `packaging/aurora/surround-view.desktop` и иконку `packaging/aurora/icons/surround-view.png` только при `sv_with_client=1`. Desktop entry запускает `/usr/bin/sv-client`, задаёт landscape ориентацию и `Internet` permission для возможного TCP-подключения; стандартный endpoint остаётся локальным Unix socket. SVG — исходник иконки, PNG — установленный файл (`rsvg-convert --width 128 --height 128`). Настройки следуют официальным [desktop](https://developer.auroraos.ru/doc/software_development/guidelines/rpm_requirements/desktop_requirements) и [RPM spec](https://developer.auroraos.ru/doc/software_development/guidelines/rpm_requirements/spec_requirements) требованиям. Aurora SDK и устройство ещё не доступны для запуска `rpm-validator`; наличие desktop entry не означает готовность AuroraApp/Silica lifecycle.
 
 Схема переноса и подписи изображений находятся в [[diploma/03_PROTOTYPE_IMPLEMENTATION]]; результаты двух PC backend — в [[diploma/04_EXPERIMENTAL_STUDY]].
 

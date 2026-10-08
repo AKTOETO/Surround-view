@@ -151,6 +151,12 @@ if(SV_CLIENT)
     target_include_directories(sv-client PRIVATE examples/sv-client)
     target_link_libraries(sv-client PRIVATE sv-client-lib Qt${QT_VERSION_MAJOR}::Core Qt${QT_VERSION_MAJOR}::Gui Qt${QT_VERSION_MAJOR}::Qml Qt${QT_VERSION_MAJOR}::Quick Qt${QT_VERSION_MAJOR}::Network)
     install(TARGETS sv-client RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+    if(SV_AURORA)
+      install(FILES packaging/aurora/surround-view.desktop
+        DESTINATION ${CMAKE_INSTALL_DATADIR}/applications)
+      install(FILES packaging/aurora/icons/surround-view.png
+        DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/128x128/apps)
+    endif()
     add_subdirectory(examples/sv-simulator)
   endif()
 endif()

@@ -57,7 +57,7 @@ int main()
 
     sv::CalibrationJobManager manager;
     const std::string owner = "session-owner-a";
-    std::string job_id = manager.submit_job(owner, 0, initial, points, pixels, validation_points,
+    std::string job_id = manager.submit_job(owner, 0, 0, initial, points, pixels, validation_points,
                                             validation_pixels, options);
     check(!job_id.empty(), "job id assigned");
 
@@ -89,7 +89,20 @@ int main()
           "another session cannot cancel calibration job");
     auto cfg = sv::load_config(SV_TEST_CONFIG_PATH);
     std::string err;
-    check(!manager.config_for_job(job_id, "session-owner-b", cfg, err).has_value(),
+    const auto stale_id = manager.submit_job(owner, 0, 0, initial, points, pixels,
+                                             validation_points, validation_pixels, options);
+    retry = 0;
+    while (retry++ < 50)
+    {
+        const auto current = manager.get_job(stale_id, owner);
+        check(current.has_value(), "stale candidate retained");
+        if (current->state == sv::JobState::Completed || current->state == sv::JobState::Failed)
+        {
+            break;
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+    }
+    check(!manager.config_for_job(job_id, "session-owner-b", 0, cfg, err).has_value(),
           "another session cannot apply calibration job");
     const auto persisted_path =
         std::filesystem::temp_directory_path() /
@@ -99,6 +112,9 @@ int main()
 
     check(manager.apply_job_to_config(job_id, owner, store, err), "completed calibration applied");
     check(store.revision() == 1, "calibration update increments config revision");
+    check(!manager.config_for_job(stale_id, owner, store.revision(), *store.active(), err),
+          "job based on an old config revision cannot overwrite newer calibration");
+    check(err == "stale_config_revision", "stale calibration rejection is explicit");
 
     std::ifstream persisted_input(persisted_path);
     check(persisted_input.good(), "calibration config was persisted");
@@ -108,7 +124,7 @@ int main()
         check(std::abs(persisted.cameras[0].T[i] - res.calibration.camera.T[i]) < 1e-9,
               "persisted calibration extrinsics match solver result");
     }
-    check(persisted.cameras[0].calibration_id == initial.calibration_id,
+    check(persisted.cameras[0].calibration_id == res.calibration.camera.calibration_id,
           "persisted calibration id matches solver result");
     std::filesystem::remove(persisted_path);
 
@@ -117,7 +133,7 @@ int main()
     {
         pixel.u += 20.0;
     }
-    const auto rejected_id = manager.submit_job(owner, 0, initial, points, pixels,
+    const auto rejected_id = manager.submit_job(owner, store.revision(), 0, initial, points, pixels,
                                                 validation_points, corrupted_validation, options);
     retry = 0;
     while (retry < 50)
@@ -132,10 +148,12 @@ int main()
         std::this_thread::sleep_for(std::chrono::milliseconds(20));
         ++retry;
     }
-    check(res.state == sv::JobState::Completed, "poor held-out fit reports metrics");
+    check(res.state == sv::JobState::Completed, ("poor held-out fit reports metrics: " +
+                                                 sv::to_string(res.state) + " " + res.error_message)
+                                                    .c_str());
     check(!res.quality_accepted, "quality gate rejects poor held-out fit");
     check(res.validation_rmse_px > 3.0, "poor validation RMSE reported");
-    check(!manager.config_for_job(rejected_id, owner, cfg, err),
+    check(!manager.config_for_job(rejected_id, owner, store.revision(), *store.active(), err),
           "quality-rejected calibration cannot apply");
     check(err == "calibration_quality_gate_failed", "quality-gate failure is explicit");
 
@@ -155,7 +173,7 @@ int main()
             return sv::calibrate_extrinsics(camera, job_points, job_pixels, job_options);
         });
     const auto running_id = cancellable_manager.submit_job(
-        owner, 0, initial, points, pixels, validation_points, validation_pixels, options);
+        owner, 0, 0, initial, points, pixels, validation_points, validation_pixels, options);
     {
         std::unique_lock<std::mutex> lock(calibration_mutex);
         calibration_cv.wait(lock, [&] { return started_count >= 1; });
@@ -180,7 +198,7 @@ int main()
           "cancelled running job cannot complete");
 
     const auto disconnected_id = cancellable_manager.submit_job(
-        owner, 0, initial, points, pixels, validation_points, validation_pixels, options);
+        owner, 0, 0, initial, points, pixels, validation_points, validation_pixels, options);
     {
         std::unique_lock<std::mutex> lock(calibration_mutex);
         calibration_cv.wait(lock, [&] { return started_count >= 2; });

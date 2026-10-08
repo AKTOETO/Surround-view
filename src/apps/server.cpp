@@ -915,7 +915,7 @@ int main(int argc, char **argv)
                             opts.method = std::string(m.header.at("method").as_string());
                         }
                         std::string calib_job_id = calib_jobs.submit_job(
-                            origin->bound_session_id, cam_id,
+                            origin->bound_session_id, config_store.revision(), cam_id,
                             config_store.active()->cameras[cam_id], points, pixels,
                             validation_points, validation_pixels, opts);
                         extra_res["job_id"] = calib_job_id;
@@ -932,6 +932,8 @@ int main(int argc, char **argv)
                         else
                         {
                             extra_res["job_id"] = calib_job_id;
+                            extra_res["base_config_revision"] =
+                                std::to_string(job_opt->base_config_revision);
                             extra_res["job_state"] = sv::to_string(job_opt->state);
                             if (job_opt->state == sv::JobState::Completed)
                             {
@@ -963,9 +965,9 @@ int main(int argc, char **argv)
                     {
                         std::string calib_job_id = std::string(m.header.at("job_id").as_string());
                         std::string apply_err;
-                        auto config_candidate =
-                            calib_jobs.config_for_job(calib_job_id, origin->bound_session_id,
-                                                      *config_store.active(), apply_err);
+                        auto config_candidate = calib_jobs.config_for_job(
+                            calib_job_id, origin->bound_session_id, config_store.revision(),
+                            *config_store.active(), apply_err);
                         if (!config_candidate)
                         {
                             accepted = false;

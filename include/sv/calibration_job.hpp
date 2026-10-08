@@ -51,6 +51,7 @@ inline std::string to_string(JobState state)
 struct CalibrationJobResult
 {
     std::string job_id;
+    uint64_t base_config_revision = 0;
     int camera_id = 0;
     JobState state = JobState::Pending;
     ExtrinsicCalibration calibration;
@@ -87,9 +88,9 @@ class CalibrationJobManager
         }
     }
 
-    std::string submit_job(const std::string &owner_session_id, int camera_id,
-                           const Camera &initial_camera, const std::vector<Vec3> &points,
-                           const std::vector<Pixel> &pixels,
+    std::string submit_job(const std::string &owner_session_id, uint64_t base_config_revision,
+                           int camera_id, const Camera &initial_camera,
+                           const std::vector<Vec3> &points, const std::vector<Pixel> &pixels,
                            const std::vector<Vec3> &validation_points,
                            const std::vector<Pixel> &validation_pixels,
                            const ExtrinsicOptions &options)
@@ -131,6 +132,7 @@ class CalibrationJobManager
 
         JobTask task;
         task.owner_session_id = owner_session_id;
+        task.result.base_config_revision = base_config_revision;
         task.camera_id = camera_id;
         task.initial_camera = initial_camera;
         task.points = points;
@@ -211,7 +213,8 @@ class CalibrationJobManager
     }
 
     std::optional<Config> config_for_job(const std::string &job_id,
-                                         const std::string &owner_session_id, const Config &active,
+                                         const std::string &owner_session_id,
+                                         uint64_t active_config_revision, const Config &active,
                                          std::string &error) const
     {
         auto job_opt = get_job(job_id, owner_session_id);
@@ -223,6 +226,11 @@ class CalibrationJobManager
         if (job_opt->state != JobState::Completed)
         {
             error = "job_not_completed";
+            return std::nullopt;
+        }
+        if (job_opt->base_config_revision != active_config_revision)
+        {
+            error = "stale_config_revision";
             return std::nullopt;
         }
         if (!job_opt->quality_accepted)
@@ -274,7 +282,8 @@ class CalibrationJobManager
     bool apply_job_to_config(const std::string &job_id, const std::string &owner_session_id,
                              ConfigStore &config_store, std::string &error)
     {
-        auto candidate = config_for_job(job_id, owner_session_id, *config_store.active(), error);
+        auto candidate = config_for_job(job_id, owner_session_id, config_store.revision(),
+                                        *config_store.active(), error);
         return candidate && config_store.update(*candidate, error);
     }
 
@@ -329,12 +338,15 @@ class CalibrationJobManager
             auto start_time = std::chrono::steady_clock::now();
             CalibrationJobResult res;
             res.job_id = job_id;
+            res.base_config_revision = task.result.base_config_revision;
             res.camera_id = task.camera_id;
 
             try
             {
                 res.calibration =
                     calibrator_(task.initial_camera, task.points, task.pixels, task.options);
+                res.calibration.camera.calibration_id =
+                    task.initial_camera.calibration_id + "-server-" + job_id;
                 if (cancellation_requested(job_id))
                 {
                     res.state = JobState::Cancelled;
@@ -387,6 +399,7 @@ class CalibrationJobManager
                     {
                         res = {};
                         res.job_id = job_id;
+                        res.base_config_revision = task.result.base_config_revision;
                         res.camera_id = task.camera_id;
                         res.state = JobState::Cancelled;
                         res.duration_ms =
