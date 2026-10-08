@@ -82,7 +82,7 @@ Config persistence API, multi-client/control-only, subscriptions/canvas и trace
 
 ## Проверка 07.10.2026: ошибки монтажа
 
-Восстановлен доступ к Blender MCP, сохранены recipe и отдельный мир. Четыре native OpenCV метода, 120 четырёхкамерных trials, независимые numerical validation и actual GLES изображения задокументированы в [[validation/MOUNT_CALIBRATION]]. Финальные CPU CTest 11/11 и Release CTest 15/15. Не закрыты server calibration jobs, эксперимент с image-derived points, occlusion и GUI world generation. Это первый ограниченный known-intrinsics опыт, не полное исследование всех семейств.
+Исторический аудит mount-исследования: Blender recipe и мир сохранены, четыре native OpenCV метода, 120 четырёхкамерных trials, независимые numerical validation и actual GLES изображения описаны в [[validation/MOUNT_CALIBRATION]]. Последующие дополнения ниже закрыли image-derived synthetic experiment и начальные server calibration jobs; остаются quality gate, ownership/cancellation, occlusion и GUI world generation. Это первый ограниченный known-intrinsics опыт, не полное исследование всех семейств.
 
 ## Дополнение 07.10.2026: image-derived correspondences
 
@@ -90,4 +90,8 @@ Config persistence API, multi-client/control-only, subscriptions/canvas и trace
 
 ## Дополнение 07.10.2026: первый image-derived результат
 
-Обновлено после Blender E-CAL-IMG-01: проведена генерация RGB досок, native detection, split по позам, fit по первым трём и независимый reprojection по четвёртой. Детектор нашёл 16/16 видов и 54/54 угла в каждой held-out картинке; RMSE nominal 12.95–21.48 px, после fit 0.133–0.146 px. Подробный протокол и provenance: [[validation/IMAGE_CALIBRATION]], исследовательская часть: [[research/IMAGE_CALIBRATION]]. Реальные фотографии, survey error, occlusion/quality sweeps и server calibration job остаются открытыми.
+Обновлено после Blender E-CAL-IMG-01: проведена генерация RGB досок, native detection, split по позам, fit по первым трём и независимый reprojection по четвёртой. Детектор нашёл 16/16 видов и 54/54 угла в каждой held-out картинке; RMSE nominal 12.95–21.48 px, после fit 0.133–0.146 px. Подробный протокол и provenance: [[validation/IMAGE_CALIBRATION]], исследовательская часть: [[research/IMAGE_CALIBRATION]]. Реальные фотографии, survey error, occlusion/quality sweeps и quality-gated server application остаются открытыми.
+
+## Дополнение 09.10.2026: проверка текущего состояния реализации
+
+Сверено с кодом и тестами после добавления simulator IPC discovery и persistence checks. `examples/sv-simulator` — начальная Qt 6 GUI, а не только контракт. Сервер уже имеет `ConfigStore`, отдельный `state_revision` и асинхронные calibration jobs; применение результата сохраняет extrinsics и пересоздаёт renderer. Подтверждение: `config_store_persistence`, `calibration_job`, `simulator_ipc_discovery`, `client_transports` и полный CTest на ревизии 3e4367f. Незакрытыми остаются полноценный ConfigService, multi-session, quality-gated/cancellable calibration и GUI-редактор мира. Aurora SDK, камеры и two-host acceptance данным прогоном не проверялись.

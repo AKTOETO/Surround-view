@@ -1,6 +1,6 @@
 # Состояние прототипа и границы подтверждения
 
-Редакция 06.10.2026, Linux-профиль 0.6.0. Это карта фактически реализованного прототипа, а не объявление завершения всех MUST из [[requirements/SYSTEM]]. Рабочий профиль — `linux-prototype-v1`; его JSON намеренно уже полной проектной схемы из [[requirements/CONFIGURATION]]. Совпадение `schema_version: 1` означает версию этого явно именованного профиля, а не взаимозаменяемость всех полей прежнего YAML-примера.
+Редакция 09.10.2026, Linux-профиль 0.6.0. Это карта фактически реализованного прототипа, а не объявление завершения всех MUST из [[requirements/SYSTEM]]. Рабочий профиль — `linux-prototype-v1`; его JSON намеренно уже полной проектной схемы из [[requirements/CONFIGURATION]]. Совпадение `schema_version: 1` означает версию этого явно именованного профиля, а не взаимозаменяемость всех полей прежнего YAML-примера.
 
 ## Реализовано и проверено
 
@@ -42,7 +42,7 @@
 | `sv-client-lib` / `sv-wire` | Общий Asio API/codec без Qt/OpenCV/GPU; installed `sv::client` |
 | `sv-client` | Desktop Qt/QML через библиотеку, QQuickImageProvider |
 | `sv-configurator` | `tools/configurator.py`, Python/NumPy CLI |
-| `sv-simulator` | `tools/simulator.py` и `tools/blender/`: analytic/metric-3D offline PPM/manifest |
+| `sv-simulator` | Начальная Qt 6 GUI в `examples/sv-simulator/`: Unix/TCP подключение, ограниченный поиск локальных IPC endpoints, поддерживаемые команды и диагностика кадров. `tools/simulator.py` и `tools/blender/` отдельно создают offline PPM/manifest и Blender-сцену |
 | `sv-calibrate`, `sv-capture`, `sv-scene` | OpenCV detector/fitter, recorder и фотографический generator |
 
 QQuickImageProvider заменяет проектный QQuickItem/QSGTexture. Сервер имеет клиентский io_context-runner, отдельный source worker и одного GL-владельца; общий worker pool отсутствует. Native qualification проверяет все manifest hashes, обычный replay-loader — ID/формат. Эти различия остаются явными. Основная инструкция по коду: [[engineering/BUILD]], [[engineering/USAGE]], [[engineering/AURORA]], [[engineering/PLATFORM_TEST]].
@@ -90,10 +90,14 @@ QQuickImageProvider заменяет проектный QQuickItem/QSGTexture. �
 
 Зафиксирована целевая модель [[architecture/CLIENT_SERVER_MODEL]]: server-owned config, несколько сессий, per-session view/subscriptions, intermediate products, optional final output и подробные pipeline spans. Шесть PlantUML процессов задают ожидаемые тесты. GUI перенесён в `examples/sv-client`, начат touchscreen layout; `examples/svctl` предоставляет текущие команды через библиотеку без Qt. Installed consumer находится в `tests/fixtures/client-consumer`. `examples/sv-simulator` собирается как начальная Qt 6 control GUI, но live world и редактор камер/observations ещё не реализованы.
 
-Config persistence API, multi-client/control-only, subscriptions/canvas и trace — следующий этап, а не возможности текущего сервера. Он по-прежнему имеет одну сессию и legacy final output. Полный чеклист нового этапа находится в корневом TODO; он имеет приоритет над прежними предложениями прямого редактирования server config клиентами. Protobuf и C++20 не добавлены: решение и условия пересмотра описаны в новом контракте.
+Начальная локальная `ConfigStore` с атомарной записью и отдельным `state_revision` реализована и покрыта тестами; это ещё не полный публичный API конфигурации и не транзакционное применение всех параметров на границе кадра. Calibration jobs доступны через команды `calibrate`, `calibration_status`, `apply_calibration`; применение сохраняет extrinsics через `ConfigStore` и пересоздаёт renderer. Пока отсутствуют held-out quality gate, ownership/cancellation и защита от конкурирующего применения. Multi-client/control-only, per-session subscriptions/canvas и полная trace остаются следующими этапами. Сервер по-прежнему обслуживает одну сессию и выдаёт legacy final output. Полный чеклист находится в корневом TODO. Protobuf и C++20 не добавлены: решение и условия пересмотра описаны в контракте.
 
 Результаты первого этапа: 14/14 Release и 10/10 CPU ASan/UBSan, Qt 5 build/offscreen smoke, CLI Unix/TCP и installed consumer — [[validation/CLIENT_RESTRUCTURE]].
 
 ## Дополнение 07.10.2026: монтаж и native extrinsics
 
-Добавлены deterministic Blender world rules, yaw/pitch/slide с per-camera overrides и сохранённый мир без LFS. `sv-vision` предоставляет четыре OpenCV pose pipeline; offline `sv-calibrate extrinsics` экспортирует candidate с provenance. Существующий configurator запускает 120 четырёхкамерных trials с независимой validation, failure counts и actual GLES до/после. Протокол и результаты — [[research/MOUNT_CALIBRATION]], [[validation/MOUNT_CALIBRATION]]. Серверная calibration job/ConfigService, image-based correspondences этого опыта, joint calibration и GUI редактор мира ещё не реализованы.
+Добавлены deterministic Blender world rules, yaw/pitch/slide с per-camera overrides и сохранённый мир без LFS. `sv-vision` предоставляет четыре OpenCV pose pipeline; offline `sv-calibrate extrinsics` экспортирует candidate с provenance. Configurator запускает 120 четырёхкамерных trials с независимой validation, failure counts и actual GLES до/после. Протокол и результаты — [[research/MOUNT_CALIBRATION]], [[validation/MOUNT_CALIBRATION]]. Позднее добавлены image-derived chessboard observations и начальные серверные calibration jobs; это не заменяет joint calibration, held-out quality gate и аппаратную оценку. Полноценный ConfigService и GUI-редактор мира остаются нереализованными.
+
+## Дополнение 09.10.2026: серверные операции и документация
+
+`ConfigStore` атомарно сохраняет валидные изменения и сохраняет активный snapshot при ошибке записи; `state_revision` увеличивается для принятых изменений состояния. `CalibrationJobManager` выполняет асинхронные задания, а `svctl` может запросить статус и применить результат. Проверки сохранения, rollback и применения extrinsics входят в CTest. Это начальный механизм: held-out quality gate, владение и отмена job, многосессионный ConfigService и применение всех runtime-настроек ещё открыты. Статус клиентского GUI и доступные команды описаны в [[engineering/USAGE]] и `examples/sv-simulator/README.md`.
