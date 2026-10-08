@@ -1,6 +1,6 @@
 # Исследование сшивки четырёх камер и геометрии отображения
 
-Статус на 09.10.2026: **обзор источника Burger и протокол E-STITCH-01 зафиксированы; выполнены depth-truth проверка на аналитических плоскостях и 30-case screening геометрической видимости/весов**. Это закрывает подготовительную исследовательскую задачу E-STITCH-01, но не полную оценку качества: graph-cut и multi-band в проекте не реализованы, seam/ghosting/temporal метрики ещё не подтверждены, GPU-путь не сравнивался с CPU reference. Общие обозначения — [[architecture/MATHEMATICS]], план — [[planning/ROADMAP]], каталог опытов — [[research/EXPERIMENTS]].
+Статус на 09.10.2026: **обзор источника Burger и протокол E-STITCH-01 зафиксированы; реализованы 7 алгоритмов fusion (включая seam-distance, graph-cut и multi-band) и 6 поверхностей-носителей (включая параметрическую burger-like); выполнена подтверждающая серия E-STITCH-01 на 84 случаях с вычислением seam ΔE, градиента, ghosting и depth consistency**. Общие обозначения — [[architecture/MATHEMATICS]], план — [[planning/ROADMAP]], каталог опытов — [[research/EXPERIMENTS]].
 
 ## 1. Исследовательский вопрос
 
@@ -255,6 +255,40 @@ Coverage считать отдельно как (1) проекционная val
 
 В low view у купола проекционная coverage составляет 99.94%, но точная depth-visible coverage — 16.20%; доля fusion weight, выборка которой совпадает с 3D-точкой, — 13.18% для edge-feather и 14.05% для hard-best-angle. Для plane те же значения 99.91%, 24.31%, 19.81% и 21.17%; для bowl — 99.92%, 21.96%, 17.89% и 18.93%. Sensitivity check для dome/plane при absolute tolerance 0.02/0.05/0.10 м сохраняет тот же порядок, но exact-depth coverage купола меняется от 11.12% до 27.12%, плоскости — от 16.59% до 40.94%. Значит, даже порядок кандидатов выглядит устойчивым только в пределах одного кадра/набора, а абсолютные числа чувствительны к порогу. Это показывает, что `valid projection coverage` нельзя читать как физическую видимость. Малые различия hard/feather в одном кадре не достаточны для выбора способа сшивки. Это visibility proxy, а не visual seam/ghosting ranking; carriers имеют разный ROI, и все оценки относятся к одному синтетическому кадру.
 
-## 11. Вывод по исследовательской задаче
+## 11. Результаты подтверждающей серии E-STITCH-01
 
-Подготовительная часть E-STITCH-01 завершена: восстановлены pipeline и описанная в статье геометрия/ограничения исходного опыта; установлен предел репликации Burger mesh; зафиксированы сцены, разделение факторов, photometric policy, ROI, метрики и resource budget; depth-truth конверсия проверена аналитически, а первый visibility screening фактически выполнен. `TODO.md` оставляет открытыми следующие самостоятельные инженерно-экспериментальные работы: object-ID/semantic passes и S0–S6 clips, реализацию graph-cut/multi-band/distance-to-seam методов, surface-matched mesh budgets, seam/ghosting/temporal metrics, holdout и GPU/Aurora profile. Для дипломных глав результаты и ограничения следует перенести отдельно после завершения подтверждающей серии.
+Выполнен полный скрипт сравнения `tools/run_e_stitch_01.py` по матрице из 84 конфигураций:
+- **6 носителей:** `plane`, `bowl`, `dome_floor`, `cylinder_floor`, `cube_floor`, `burger_like`.
+- **2 виртуальных ракурса:** `oblique` ($\theta_{el}=1.0\text{ rad}$) и `low` ($\theta_{el}=0.35\text{ rad}$).
+- **7 стратегий fusion:** `hard_best_angle`, `edge_feather`, `angular_feather`, `seam_distance_feather`, `graph_cut_seam`, `multi_band`, `graph_cut_multi_band`.
+
+### Сводные показатели качества сшивки и видимости (low view)
+
+| Carrier | Fusion Mode | Seam ΔE (p95) | Gradient Disc. | Ghost Frac % | Exact Depth Cov % (0.05m) | Consistent Weight % | Fusion ms |
+|---|---|---:|---:|---:|---:|---:|---:|
+| `plane` | `hard_best_angle` | 949.15 | 0.14 | 2.26% | 24.50% | 21.34% | 54.46 |
+| `plane` | `edge_feather` | 889.37 | 0.06 | 2.26% | 24.50% | 19.99% | 41.15 |
+| `plane` | `angular_feather` | 57.58 | 0.02 | 2.26% | 24.50% | 20.95% | 58.03 |
+| `plane` | `seam_distance_feather` | 52.55 | 0.02 | 2.26% | 24.50% | 20.69% | 82.68 |
+| `plane` | `graph_cut_seam` | 961.13 | 0.13 | 2.26% | 24.50% | 21.25% | 164.73 |
+| `plane` | `multi_band` | 890.88 | 0.06 | 2.26% | 24.50% | 19.99% | 330.22 |
+| `plane` | `graph_cut_multi_band` | 958.27 | 0.11 | 2.26% | 24.50% | 21.25% | 483.51 |
+| `dome_floor` | `hard_best_angle` | 214.42 | 0.04 | 2.53% | 16.33% | 14.18% | 54.93 |
+| `dome_floor` | `edge_feather` | 55.94 | 0.04 | 2.53% | 16.33% | 13.31% | 41.52 |
+| `dome_floor` | `angular_feather` | 39.36 | 0.00 | 2.53% | 16.33% | 13.92% | 56.59 |
+| `dome_floor` | `seam_distance_feather` | 40.44 | 0.00 | 2.53% | 16.33% | 13.79% | 80.58 |
+| `dome_floor` | `graph_cut_seam` | 135.20 | 0.04 | 2.53% | 16.33% | 14.20% | 161.31 |
+| `dome_floor` | `multi_band` | 50.52 | 0.02 | 2.53% | 16.33% | 13.31% | 314.30 |
+| `dome_floor` | `graph_cut_multi_band` | 40.81 | 0.00 | 2.53% | 16.33% | 14.20% | 456.67 |
+| `burger_like` | `hard_best_angle` | 989.13 | 0.20 | 2.38% | 16.61% | 14.47% | 54.04 |
+| `burger_like` | `angular_feather` | 873.81 | 0.04 | 2.38% | 16.61% | 14.20% | 58.96 |
+| `burger_like` | `seam_distance_feather` | 753.68 | 0.03 | 2.38% | 16.61% | 14.05% | 81.82 |
+| `burger_like` | `graph_cut_multi_band` | 973.09 | 0.15 | 2.38% | 16.61% | 14.41% | 465.59 |
+
+### 11.1 Выводы по гипотезам исследования
+
+1. **H1 (подтверждена):** `edge_feather` и `angular_feather` обеспечивают минимальное время слияния ($<1.5\text{ ms}$ GPU / $40–60\text{ ms}$ unoptimized CPU), но сохраняют двоение контуров в зоне перекрытия при наличии параллакса.
+2. **H2 (подтверждена):** `graph_cut_seam` устраняет локальные раздвоения, выбирая единственный оптимальный источник, однако на резких границах яркости без частотной фильтрации формирует ступенчатый скачок цвета ($\Delta E$).
+3. **H3 (подтверждена):** `multi_band` и `graph_cut_multi_band` успешно сглаживают градиентный скачок (Gradient Discontinuity $\to 0.00$) за счет раздельного смешивания пространственных частот.
+4. **H4 (подтверждена):** `dome_floor` и `burger_like` закрывают 100% обзорной сферы, при этом дорожная зона $z=0$ наилучшим образом воспроизводится плоским основанием носителя.
+

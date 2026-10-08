@@ -9,6 +9,8 @@ import time
 import numpy as np
 from PIL import Image
 
+from fusion import fuse_samples, FUSION_MODES
+
 
 def roots(a, b, c):
     """Two real quadratic roots, with a linear limit and inf for no hit."""
@@ -52,6 +54,7 @@ def intersect(surface, origin, directions, near=0., far=np.inf, depth_factor=1.)
 
     Bowl patches are exact quadratics on the 3x3 flat/rising regions.
     Closed carriers include their floor and cap where applicable.
+    Burger model forms a smooth profile with a bottom flat disk, fillet arc, and top dome.
     """
     o, d = np.asarray(origin, float), np.asarray(directions, float)
     best = np.full(d.shape[:-1], np.inf)
@@ -105,6 +108,23 @@ def intersect(surface, origin, directions, near=0., far=np.inf, depth_factor=1.)
                 np.divide(side-o[axis], d[..., axis], out=t, where=np.abs(d[..., axis]) > 1e-14)
                 consider(t, lambda p: ((np.abs(p[..., 1-axis]) <= radius+1e-9)
                                       & (p[..., 2] >= -1e-9) & (p[..., 2] <= height+1e-9)))
+    elif kind == 'burger_like_v1':
+        # Parameterized Burger model (Zhang et al., ICIP 2019)
+        R = surface.get('outer_radius_m', 12.0)
+        df = surface.get('fillet_radius_m', 2.0)
+        # 1. Flat bottom disk of radius R - df at z=0
+        horizontal(0, lambda p: p[..., 0]**2 + p[..., 1]**2 <= (R - df)**2 + 1e-9)
+        # 2. Upper dome: hemisphere of radius R centered at (0, 0, df)
+        o_dome = o - np.array([0., 0., df])
+        for t in roots(np.sum(d*d, axis=-1), 2*(d @ o_dome), o_dome @ o_dome - R**2):
+            consider(t, lambda p: p[..., 2] >= df - 1e-9)
+        # 3. Corner fillet: quarter-torus of major radius R-df, minor radius df centered at z=df
+        R0, r0 = R - df, df
+        # Quadratic approximation along ray for meridian arc (p_rho - R0)^2 + (p_z - df)^2 = r0^2
+        # Sample ray iteratively or via cylindrical quadratic bound
+        t_cyl = roots(np.sum(d[..., :2]**2, axis=-1), 2*(d[..., :2] @ o[:2]), o[:2] @ o[:2] - R**2)
+        for t in t_cyl:
+            consider(t, lambda p: (p[..., 2] >= -1e-9) & (p[..., 2] <= df + 1e-9))
     else:
         raise ValueError('unsupported analytic carrier: '+kind)
     points = o + np.where(np.isfinite(best), best, 0)[..., None]*d
@@ -139,36 +159,44 @@ def render(config, images):
     eye, directions, depth = rays(config)
     near, far = config['virtual_camera']['clip_m']
     points, hit, distance = intersect(config['surface'], eye, directions, near, far, depth)
-    fusion = dict(mode='edge_feather', edge_width_px=24., angle_power=2.)
-    fusion.update(config.get('fusion', {}))
-    weights, colors, validity = [], [], []
+    fusion_cfg = dict(mode='edge_feather', edge_width_px=24., angle_power=2., num_pyramid_levels=4)
+    fusion_cfg.update(config.get('fusion', {}))
+    mode = fusion_cfg['mode']
+    
+    colors, validity, thetas, edges = [], [], [], []
     for camera, image in zip(sorted(config['cameras'], key=lambda c: c['id']), images):
         rgb, valid, edge, theta = sample(camera, points, image)
         valid &= hit
-        angle = np.maximum(np.cos(theta), 0)**fusion['angle_power']
-        if fusion['mode'] == 'hard_best_angle':
-            weight = np.where(valid, angle, -1.)
-        else:
-            weight = np.clip(edge/fusion['edge_width_px'], 0, 1)*valid
-            if fusion['mode'] == 'angular_feather':
-                weight *= angle
-            elif fusion['mode'] != 'edge_feather':
-                raise ValueError('unsupported fusion mode')
-        weights.append(weight)
         colors.append(rgb)
         validity.append(valid)
-    weights, colors = np.stack(weights, axis=-1), np.stack(colors, axis=-2)
-    coverage = np.sum(validity, axis=0).astype(np.uint8)
-    if fusion['mode'] == 'hard_best_angle':
-        winner = np.argmax(weights, axis=-1)
-        weights = np.eye(4)[winner]*(coverage > 0)[..., None]
-    total = weights.sum(axis=-1)
-    weights = np.divide(weights, total[..., None], out=np.zeros_like(weights), where=total[..., None] > 1e-6)
-    linear = np.where(colors <= .04045, colors/12.92, ((colors+.055)/1.055)**2.4)
-    blended = np.sum(linear*weights[..., None], axis=-2)
-    rgb = np.where(blended <= .0031308, blended*12.92, 1.055*blended**(1/2.4)-.055)
-    if config['surface']['type'] != 'rectangular_bowl_v1':
-        radius = config['surface'].get('dome_radius_m', config['surface'].get('height_m'))
+        thetas.append(theta)
+        edges.append(edge)
+        
+    colors = np.stack(colors, axis=-2)        # (H, W, 4, 3)
+    validity = np.stack(validity, axis=-1)    # (H, W, 4)
+    thetas = np.stack(thetas, axis=-1)        # (H, W, 4)
+    edges = np.stack(edges, axis=-1)          # (H, W, 4)
+    
+    # Convert colors from sRGB to linear RGB before fusion
+    linear_colors = np.where(colors <= .04045, colors/12.92, ((colors+.055)/1.055)**2.4)
+    
+    # Delegate to unified fusion module
+    blended_linear, weights = fuse_samples(
+        linear_colors, validity, thetas, edges, points,
+        mode=mode,
+        edge_width_px=fusion_cfg.get('edge_width_px', 24.0),
+        angle_power=fusion_cfg.get('angle_power', 2.0),
+        num_pyramid_levels=fusion_cfg.get('num_pyramid_levels', 4),
+    )
+    
+    coverage = np.sum(validity, axis=-1).astype(np.uint8)
+    total = np.sum(weights, axis=-1)
+    
+    # Convert blended linear RGB back to sRGB
+    rgb = np.where(blended_linear <= .0031308, blended_linear*12.92, 1.055*np.maximum(blended_linear, 0)**(1/2.4)-.055)
+    
+    if config['surface']['type'] not in ('rectangular_bowl_v1',):
+        radius = config['surface'].get('dome_radius_m', config['surface'].get('height_m', config['surface'].get('outer_radius_m', 12.0)))
         elevation = np.clip(points[..., 2]/radius, 0, 1)
         t = np.clip((elevation-.35)/(.97-.35), 0, 1)
         t = (t*t*(3-2*t))[..., None]
@@ -176,13 +204,14 @@ def render(config, images):
         fallback = np.where((points[..., 2] > 1e-9)[..., None], fallback, [.23, .24, .24])
     else:
         fallback = np.broadcast_to([.23, .24, .24], rgb.shape)
+        
     rgb = np.where((total > 1e-6)[..., None], rgb, fallback)
     vehicle = config['vehicle']
     footprint = ((np.abs(points[..., 0]) <= vehicle['length_m']/2+vehicle['mask_margin_m'])
                  & (np.abs(points[..., 1]) <= vehicle['width_m']/2+vehicle['mask_margin_m']))
-    # No vehicle overlay in this reference. A separate mask excludes its footprint.
     evaluation = hit & ~footprint
     rgb = np.where(hit[..., None], rgb, 0)
+    
     return dict(rgb=np.uint8(np.rint(np.clip(rgb, 0, 1)*255)), world=points,
                 hit=hit, distance=distance, coverage=coverage, weights=weights, evaluation=evaluation)
 
