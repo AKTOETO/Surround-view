@@ -1,6 +1,6 @@
 # Подробный план реализации
 
-Единственный действующий план полного проекта. Актуальные открытые задачи находятся в корневом `TODO.md`; содержание диссертации — [[planning/THESIS]]. Тема и обязательный результат: [[research/TOPIC]]. На 09.10.2026 Linux-профиль 0.6.x содержит математическое ядро, GPU/replay, калибровочные инструменты, пять носителей/три fusion-режима, screening, Unix/TCP сервер и `sv-client-lib` с GUI/headless consumers. Протокол реально реализованных операций отделён от целевой архитектуры. `sv-simulator` имеет Qt Quick 3D driving preview, пока не подключённый как live camera producer. Depth truth v1 экспортируется, но не прошёл валидацию на аналитических сценах. Проверка этапов — [[planning/AUDIT]]. Реальные данные, multi-session/config/subscription API, UDP, target SDK и Aurora acceptance остаются открытыми. Свидетельства — [[prototype/STATUS]], [[research/PROJECTION_AND_STITCHING]], [[prototype/MEASUREMENTS]].
+Единственный действующий план полного проекта. Актуальные открытые задачи находятся в корневом `TODO.md`; содержание диссертации — [[planning/THESIS]]. Тема и обязательный результат: [[research/TOPIC]]. На 09.10.2026 Linux-профиль 0.6.x содержит математическое ядро, GPU/replay, калибровочные инструменты, пять носителей/три fusion-режима, screening, Unix/TCP сервер и `sv-client-lib` с GUI/headless consumers. Протокол реально реализованных операций отделён от целевой архитектуры. `sv-simulator` имеет Qt Quick 3D driving preview, пока не подключённый как live camera producer. Depth truth прошёл smoke export и аналитическую проверку на фронтальных/наклонных плоскостях; sphere/cube EXR validation, semantic visibility и image-based stitch quality ещё открыты. Выполнен один 30-case depth visibility screening без seam/temporal ranking. Проверка этапов — [[planning/AUDIT]]. Реальные данные, multi-session/config/subscription API, UDP, target SDK и Aurora acceptance остаются открытыми. Свидетельства — [[prototype/STATUS]], [[research/PROJECTION_AND_STITCHING]], [[validation/DEPTH_VISIBILITY_TRUTH]], [[validation/STITCH_VISIBILITY]], [[prototype/MEASUREMENTS]].
 
 ## Зависимости и результаты
 
@@ -15,7 +15,7 @@
 | M7 — сервер, клиентская библиотека и UI | M5 | `sv-client-lib` с общим API локального/удалённого подключения; `sv-client` через библиотеку, bounded IPC/TCP, QML, orbit/zoom/preset, calibration/health status | Один клиентский API проходит Unix/loopback/две машины; полный trace, 500 команд на паузе; измерен первый представленный кадр принятой ревизии |
 | M8 — воспроизводимость и отказы | M6, M7 | Producer, skew/drops/disconnect, перегрузка, reconnect, clocks, shutdown | E-ROBUST-01; ограниченные ресурсы, различимые состояния, повтор опыта |
 | M9 — целевой конвейер Авроры | Разведка M1; M5, M7 | Сборка/пакетирование, источники, GPU/server, клиент и зависимости на реальном устройстве | Полный путь работает на устройстве; собственный паспорт, формат/разрешение и timings; эмулятор недостаточен для вывода о производительности |
-| M10 — основные опыты | M6, M8, M9 | Зафиксировать пороги; сравнить surface carriers и методы слияния, калибровку, дрейф, ресурсы и задержку ПК/устройства | Воспроизводимые отчёты по [[research/EXPERIMENTS]], отдельно E-SURFACE-01/E-STITCH-01; все MUST имеют свидетельства |
+| M10 — основные опыты | M6, M8, M9 | Подтверждающие E-SURFACE-01/E-STITCH-01 серии: image-based seam/ghosting/temporal metrics, равные mesh/resource budgets, calibration/drift и задержка на ПК/целевом устройстве | Воспроизводимые отчёты по [[research/EXPERIMENTS]]; E-STITCH-01 protocol и single-frame depth-visibility screening закрыты, quality confirmation и MUST evidence остаются открыты |
 | M11 — текст и демонстрация | Пишется с M1; итог после M10 | Связать обзор, модели, реализацию и результаты; показать ограничения | Главы, таблица методов fusion/geometry, пакет повторного запуска и сценарий защиты |
 | M12 — резерв | M11 | Замечания руководителя, повторная сборка и запуск | Финальная версия, восстановимая среда и проверенные материалы |
 
@@ -27,7 +27,7 @@
 
 Обзор вести сравнительной таблицей: входы, поверхность, калибровка, контроль смещения, бюджет ресурсов, метрики и конкретное отличие опыта. Для данных сохранить источник, условия использования, хэши, истину/калибровку и независимые наблюдения. Выделить наборы настройки и итоговой оценки до подбора порогов.
 
-Исследование от 06.10.2026: сначала завершить чтение аналогов и выбрать малозатратные варианты слияния; обзор — [[research/PROJECTION_AND_STITCHING]]. Две оси сравнивать раздельно: (1) hard/feather/distance/graph-cut/multi-band; (2) plane/bowl/dome+floor/cylinder/cube/Burger. Сначала выбрать finalists на synthetic screen-опыте, затем подтвердить на независимой реальной 4-camera записи. Cube-map — направленное texture representation, она автоматически не заменяет поверхность дороги.
+Исследовательский протокол и primary-source review завершены 09.10.2026; сейчас открыта подтверждающая серия. Две оси сравнивать раздельно: (1) hard/feather/distance/graph-cut/multi-band; (2) plane/bowl/dome+floor/cylinder/cube/parameterized burger-like. Screen-опыт уже измерил projection/depth visibility на одной Blender frame, но выбор finalists требует image-based seam/ghosting data и равных mesh/memory budgets. Cube-map — направленное texture representation, она автоматически не заменяет поверхность дороги.
 
 ## M3–M5: корректность до оптимизации
 
@@ -47,7 +47,7 @@
 
 Порядок вариантов чередовать; прогрев и независимые повторы заданы в [[validation/ACCEPTANCE]]. Сохранять распределения, максимумы, пропуски, повторы, очереди, частоты и температуру при доступности. Гипотеза может дать отрицательный результат. После опыта не менять пороги в той же версии протокола.
 
-Для E-STITCH-01 зафиксировать цветовую компенсацию, маски и RGB-пространство. Сначала измерить reference-quality при плотной сетке, затем ограничить triangle/memory budget и исследовать adaptive mesh. Не называть проекционную визуализацию reconstruction: скрытые направления и глубина остаются unknown.
+Для E-STITCH-01 уже зафиксированы photometric policy, masks, RGB space, scenes, метрики и resource budget в [[research/PROJECTION_AND_STITCHING]]. Дальше реализовать graph-cut/multi-band и object-ID/depth metrics, измерить reference quality на плотной сетке, затем ограничить triangle/memory budget и исследовать adaptive mesh. Не называть проекционную визуализацию reconstruction: скрытые направления и глубина остаются unknown.
 
 Обзор писать во время чтения, математическую главу — вместе с CPU-моделью, архитектуру — во время реализации, результаты — сразу после опыта. Последний этап предназначен для редактуры и воспроизведения демонстрации.
 
@@ -113,13 +113,13 @@ Unix/TCP поля `connections` и пример портов описаны в [
 
 Процедурная Blender-сцена содержит улицу, упрощённый автомобиль, четыре разнесённых оптических центра и scripted motion; offline export проверен через replay/IPC. В laptop GUI также есть отдельный процедурный визуальный мир с машиной и keyboard steering/follow camera. Это не физическая CAD-модель, не Blender simulation и пока не источник четырёх кадров для сервера. Полноценные vehicle dynamics/asset fidelity и связанный live producer остаются открытыми.
 
-Blender MCP подключён и проверен (5.2.2 LTS / protocol 13). Скрипты, параметры мира и исходный `.blend` хранятся в обычном Git; входные серии остаются в `artifacts/`, Git LFS не используется. Каталог ассетов: [[engineering/ASSETS]]. Blender float-Z → radial-range depth truth v1 добавлена и smoke-проверена; повторение и границы: [[engineering/BLENDER]], [[validation/DEPTH_VISIBILITY_TRUTH]]. Далее: проверка глубины на аналитических сценах, object-ID/semantic visibility, независимые validation scenes и подключение driving preview как realtime producer.
+Blender MCP подключён и проверен (5.2.2 LTS / protocol 13). Скрипты, параметры мира и исходный `.blend` хранятся в обычном Git; входные серии остаются в `artifacts/`, Git LFS не используется. Каталог ассетов: [[engineering/ASSETS]]. Blender float-Z → radial-range depth truth прошла smoke export и аналитическую front/tilted-plane validation; выполнен один 30-case depth visibility screen. Далее: sphere/cube EXR raster checks, object-ID/semantic visibility, независимые validation scenes, seam/ghosting/temporal quality и подключение driving preview как realtime producer.
 
 GTest разрешён для новых проверок. При его выборе использовать установленный `GTest` CMake package и явный `BuildRequires` целевого SDK; правило offline dependencies из [[engineering/BUILD]] сохраняется.
 
 ## Текущий исследовательский backlog
 
-Подробные незакрытые пункты, сгруппированные по приоритету, собраны только в [[../TODO]]. Подтверждённые результаты, чтобы не превращать их в повторные задачи: аналитический carrier reference — [[validation/ANALYTIC_REFERENCE]], Blender depth truth smoke — [[validation/DEPTH_VISIBILITY_TRUTH]], E-CAL-MOUNT-01 — [[validation/MOUNT_CALIBRATION]], image-derived synthetic calibration — [[validation/IMAGE_CALIBRATION]], producer recovery — [[validation/PRODUCER_RECOVERY]]. Эти отчёты являются свидетельствами; их повторное выполнение не требуется, кроме расширений и независимых подтверждений, перечисленных в TODO.
+Подробные незакрытые пункты, сгруппированные по приоритету, собраны только в [[../TODO]]. Подтверждённые результаты: analytic carrier reference — [[validation/ANALYTIC_REFERENCE]], depth conversion/visibility — [[validation/DEPTH_VISIBILITY_TRUTH]], [[validation/STITCH_VISIBILITY]], E-CAL-MOUNT-01 — [[validation/MOUNT_CALIBRATION]], image-derived synthetic calibration — [[validation/IMAGE_CALIBRATION]], producer recovery — [[validation/PRODUCER_RECOVERY]]. Повтор этих узких опытов не требуется; TODO перечисляет только расширения и независимые подтверждения.
 
 Серверный calibration-job workflow (held-out gate, session ownership/cancel, stale revision rejection и revision-checked atomic apply) описан в [[engineering/PROTOCOL_IMPLEMENTED]]. Он не равен общему ConfigService. Целевая схема multi-session/subscriptions/products дана в [[architecture/CLIENT_SERVER_MODEL]] и ещё не реализована.
 

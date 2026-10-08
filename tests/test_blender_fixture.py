@@ -10,10 +10,13 @@ import numpy as np
 from PIL import Image
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools' / 'blender'))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools'))
 from rig import configuration, cube_coordinates, vehicle_pose
 from scenario import perturb, validate
 from convert import bilinear, convert, convert_camera, linear_rgb, srgb8
 from depth_truth import _sample_depth, convert_camera_depth
+from validate_depth_plane import evaluate as evaluate_depth_plane
+from compare_visibility import evaluate as evaluate_visibility, project as project_visibility
 
 
 class BlenderFixtureTests(unittest.TestCase):
@@ -136,6 +139,38 @@ class BlenderFixtureTests(unittest.TestCase):
         image = np.array([[1e10, 7.0], [1e10, 1e10]], dtype=np.float32)
         sampled = _sample_depth(image, np.array([[0.0, 0.0]]), 1e9)
         self.assertEqual(float(sampled[0]), 7.0)
+
+    def test_depth_truth_matches_independent_analytic_plane(self):
+        coarse = evaluate_depth_plane(32, [0, 0, 1], 2.0)
+        fine = evaluate_depth_plane(256, [0, 0, 1], 2.0)
+        self.assertEqual(fine['valid_fraction_of_comparable'], 1.0)
+        self.assertLess(fine['absolute_error_m']['p95_m'],
+                        coarse['absolute_error_m']['p95_m'] * .2)
+
+        tilted = evaluate_depth_plane(128, [.16, -.11, .98], 6.0)
+        self.assertEqual(tilted['valid_fraction_of_comparable'], 1.0)
+        self.assertLess(tilted['nearby_core_roi_m']['p95_m'], .0001)
+
+    def test_visibility_projection_and_no_return_weight_accounting(self):
+        config = configuration()
+        config['output'].update(width=96, height=54)
+        camera = config['cameras'][0]
+        transform = np.asarray(camera['T_camera_from_vehicle'])
+        center = -transform[:3, :3].T @ transform[:3, 3]
+        point = center + transform[:3, :3].T @ [0., 0., 5.]
+        uv, distance, valid = project_visibility(camera, point.reshape(1, 1, 3))
+        np.testing.assert_allclose(uv[0, 0], [199.5, 199.5], atol=1e-10)
+        self.assertAlmostEqual(float(distance[0, 0]), 5.)
+        self.assertTrue(bool(valid[0, 0]))
+
+        images = [np.zeros((400, 400, 3), dtype=float) for _ in range(4)]
+        no_returns = [np.full((400, 400), np.nan, dtype=np.float32) for _ in range(4)]
+        metrics, diagnostic = evaluate_visibility(config, images, no_returns)
+        self.assertGreater(metrics['projected_pixels'], 0)
+        self.assertEqual(metrics['exact_surface_coverage_fraction'], 0.)
+        self.assertAlmostEqual(
+            metrics['weighted_contribution_fraction']['depth_has_no_return'], 1.)
+        self.assertEqual(diagnostic.shape, (54, 96, 3))
 
     def test_manifest_hashes_and_failure(self):
         with tempfile.TemporaryDirectory() as temporary:

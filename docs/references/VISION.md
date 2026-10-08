@@ -440,3 +440,7 @@ Fisheye camera model / OpenCV. – Текст : электронный // OpenCV
 ## S72
 
 **OpenCV. Perspective-n-Point pose computation and refinement.** [Официальное описание ветки 5.x](https://github.com/opencv/opencv/blob/5.x/modules/geometry/doc/solvePnP.markdown), [calib3d API 4.12](https://docs.opencv.org/4.12.0/d9/d0c/group__calib3d.html). Проверено 07.10.2026: ITERATIVE/EPnP/SQPnP, planar IPPE, RANSAC и refinement. Используется для постановки [[research/MOUNT_CALIBRATION]]; фактически исполняется системный C++ OpenCV 5.0.0. Нормализованная fisheye-подготовка отделена от pinhole pose solver; автоматически переносить смысл порогов из pixels в normalized coordinates нельзя.
+
+## S73
+
+**Fan Zhang, Feng Liu. Parallax-tolerant Image Stitching.** CVPR 2014, pp. 3262–3269. [CVF open-access record and paper](https://openaccess.thecvf.com/content_cvpr_2014/html/Zhang_Parallax-tolerant_Image_Stitching_2014_CVPR_paper.html). Проверено 09.10.2026: abstract, introduction and method. The paper states that seam cutting and blending alone cannot handle significant parallax; it adds local alignment/content-preserving warp and uses seam quality to select alignment. Supporting limit for [[research/PROJECTION_AND_STITCHING]]: a visually smooth seam is not proof of geometrically correct multi-camera reconstruction.

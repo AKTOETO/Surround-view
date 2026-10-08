@@ -128,4 +128,16 @@ MPLCONFIGDIR=/tmp/sv-reference-mpl python3 docs/diploma/plot_reference.py \
 
 Сравнительный прогон создаёт 30 случаев: пять носителей × два ракурса × три режима. Камера: azimuth 0.8 rad, distance 8.5 m, elevation 1.0 / 0.35 rad; прочие view/output/input параметры наследуются из config. Прогон сохраняет эффективный JSON каждого случая и общий отчёт. Время `render_seconds` — один host CPU вызов с подготовленными изображениями, без file decode/NPZ; оно не является устойчивым benchmark или сравнением с GPU.
 
-Ограничения: глубина **носителя** не является глубиной реальных объектов Blender; заслонение и физическая видимость не вычисляются. Footprint не исключает весь силуэт кузова в GPU render. Для будущего сравнения RGB CPU/GPU нужны одинаковые кадр/config/view, отдельная маска видимого кузова, корректная обработка background/silhouette и выбранная метрика. Отсутствие carrier misses не означает наблюдаемость всех поверхностей четырьмя камерами. Первичные результаты и границы опыта: [[validation/ANALYTIC_REFERENCE]].
+Ограничения: глубина **носителя** не является глубиной реальных объектов Blender; сам `reference.py` не вычисляет заслонение и физическую видимость. Отдельный host-инструмент ниже делает depth-consistency screening. Footprint не исключает весь силуэт кузова в GPU render. Для image-quality compare GPU/CPU всё ещё нужны одинаковые кадр/config/view, object-ID/semantic truth и корректная обработка background/silhouette. Отсутствие carrier misses не означает наблюдаемость всех поверхностей четырьмя камерами. Первичные результаты геометрии и depth visibility: [[validation/ANALYTIC_REFERENCE]], [[validation/STITCH_VISIBILITY]].
+
+## Depth-truth visibility screening
+
+`tools/compare_visibility.py` — host-only исследовательский consumer четырёх RGB и четырёх radial-depth карт одной синхронной Blender frame. Он проверяет checksums/calibration/timestamps, повторяет analytic CPU render для 5 carriers × 2 views × 3 fusion modes, затем сравнивает ожидаемую дальность до каждой carrier point с измеренной глубиной на sampled source pixel. Tolerance defaults: `max(0.05 m, 1% range)`. Это не добавляет depth-aware decision в production renderer; инструмент только оценивает геометрическую согласованность текущего веса blend.
+
+```sh
+python3 tools/compare_visibility.py \
+  --dataset artifacts/blender-depth-truth-dataset-fixed \
+  --output artifacts/stitch-visibility-v3
+```
+
+Требуются NumPy и Pillow, данные должны содержать `config.json`, `manifest.json`, `ground_truth.json`, четыре RGB-файла и четыре проверяемых NPY depth maps. Report содержит source hashes, coverage, доли matching/occluded/no-return weights и ограничения; одна heatmap сохраняется как `visibility-dome-low-edge_feather.png`. Методика и результаты: [[validation/STITCH_VISIBILITY]]. Сейчас прогон использует один Blender frame с face-size 32 и analytic CPU reference; он не даёт seam/ghosting/temporal ranking и не проверяет GLES server readback.

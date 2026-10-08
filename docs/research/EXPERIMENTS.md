@@ -2,7 +2,7 @@
 
 ## Назначение и статус
 
-Рабочая редакция от 06.10.2026; основа от 19.09.2026 по [аудиту](../archive/AUDIT.md). Это план проверки гипотезы, не отчёт о полученных результатах. Требования — [SYSTEM.md](../requirements/SYSTEM.md), математика — [MATHEMATICS.md](../architecture/MATHEMATICS.md), профили, пороги и приёмка — [ACCEPTANCE.md](../validation/ACCEPTANCE.md). Календарь ведётся только в [ROADMAP.md](../planning/ROADMAP.md).
+Рабочая редакция от 09.10.2026; основа от 19.09.2026 по [аудиту](../archive/AUDIT.md). Это план проверки гипотезы с отдельными уже выполненными screening-результатами. Требования — [SYSTEM.md](../requirements/SYSTEM.md), математика — [MATHEMATICS.md](../architecture/MATHEMATICS.md), профили, пороги и приёмка — [ACCEPTANCE.md](../validation/ACCEPTANCE.md). Календарь ведётся только в [ROADMAP.md](../planning/ROADMAP.md).
 
 ## Исследовательские направления
 
@@ -49,7 +49,7 @@
 |---|---|---|
 | E-MATH-01 | Центральный луч, известные повороты, симметрия, границы FOV и сингулярности | CPU/GPU UV, валидность, NaN/Inf, p99 и максимум; тесты независимых контрольных точек |
 | E-SURFACE-01 | Плоскость и несколько H/A/B при достаточной точности сетки | Покрытие ROI, положение маркеров, геометрическое двоение и яркостный шов; отдельно наземные и вертикальные объекты |
-| E-STITCH-01 (начат 06.10.2026) | Стратегии слияния × surface carriers в screen/confirmation этапах | Coverage/fallback, независимая ошибка точек, duplicate edges, seam color/gradient, temporal seam motion, CPU/GPU/memory; протокол: [[research/PROJECTION_AND_STITCHING]] |
+| E-STITCH-01 (protocol закрыт 09.10.2026; подтверждающая серия открыта) | Стратегии слияния × surface carriers; screening выполнен на 30 сочетаниях | Измерены projection/depth-exact coverage и доли веса на matched/occluded samples; image seam/ghosting/temporal metrics, graph-cut/multi-band, holdout и GPU budget остаются отдельной подтверждающей серией: [[validation/STITCH_VISIBILITY]], [[research/PROJECTION_AND_STITCHING]] |
 | E-MESH-01 (SHOULD) | Равномерная и исследуемая дискретизация на трёх конфигурациях | p50/p95/p99/max UV- и экранной ошибки, валидность, треугольники, память, подготовка и GPU-время; кривые ошибка/стоимость |
 | E-INTERACTIVE-01 | Замороженные входы, 500 команд orbit/zoom/preset; затем движущиеся входы | Reuse ресурсов, command/state/frame linkage, частота новых видов и распределение отклика |
 | E-PERF-01 | Вход 640×360, 1280×720, 1920×1080 × три плотности сетки; затем отдельный sweep выхода | Ядро и полный путь до Qt Quick; p50/p95/p99, максимальные паузы, drops, повторы, очереди и стоимость выходного адаптера |

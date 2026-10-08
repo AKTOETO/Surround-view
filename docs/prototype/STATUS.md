@@ -13,10 +13,10 @@
 | Калибровка intrinsics/extrinsics | Known-XYZ solver, независимая validation; native chessboard image detector строит vehicle XYZ из измеренной pose доски | На реальной метрической площадке точность image-derived workflow не измерена; detector order требует контрольной метки |
 | OpenCV detector и image-based intrinsics | `vision_tools`, synthetic projected images; hashes/disjoint train/validation | Held-out board pose fitted; нет real-camera испытаний и внешней привязки |
 | OpenCV VideoCapture | Recorder для файлов и начальный realtime server adapter `source.type=camera` | Host delivery times не sensor timestamps; реальные камеры и остановка на разных драйверах ещё не проверены |
-| Blender 3D street fixture | Разнесённые centers, scripted motion, 4 × fisheye RGB, hashes/poses; replay/server smoke; EXR depth → radial-range truth smoke | Упрощённый автомобиль; depth не проверена на аналитических сценах, нет semantic/object-ID/body masks и live Blender render |
+| Blender 3D street fixture | Разнесённые centers, scripted motion, 4 × fisheye RGB, hashes/poses; replay/server smoke; EXR depth → radial-range truth; independent analytic-plane converter validation | Упрощённый автомобиль; нет semantic/object-ID/body masks, sphere/cube EXR validation и live Blender render |
 | Фотографическая street-demo | CC0 panorama, три actual GLES ракурса в главе 3 | Общий оптический центр, нет реального параллакса/калибровочной истины |
 | Купол, цилиндр и куб с полом | Shared containment, outward meshes; GPU coverage для 36 ракурсов, без отверстий геометрии | Это носители проекции; depth truth пока не используется при рендере, visibility masks и качество на независимых сценах не оценены |
-| Три fusion-режима и диагностика | Native RGB/weights/coverage oracles; [[engineering/RENDERING]] | Нет graph-cut, multi-band, photometric correction; только initial first-frame screening |
+| Три fusion-режима и диагностика | Native RGB/weights/coverage oracles; 30-case CPU depth-visibility screening across carriers/views/modes; [[engineering/RENDERING]], [[validation/STITCH_VISIBILITY]] | Нет graph-cut, multi-band, photometric correction, seam/ghosting/temporal quality ranking or independent validation scenes |
 | Сервисная диагностика задней камеры | Заданный поворот, известные точки, INDETERMINATE | Нет анализа признаков перекрытий и статистики реальных ложных тревог |
 | Сервер с Asio и отдельным EGL-потоком | Unix/TCP listeners по config, state/pause/step, timeout/reconnect, decode/mesh counters | Один клиент и один ожидающий release; V4L2 adapter есть, но реальные устройства и driver shutdown не проверены |
 | Универсальная клиентская библиотека | GUI/headless, Unix/TCP localhost, installed CMake consumer, RGBA ownership, deadlines и restart/reconnect; calibration jobs доступны через generic command API | Нет UDP, two-host испытания и типизированного доменного API для общей config/calibration/source management |
@@ -49,7 +49,7 @@ QQuickImageProvider заменяет проектный QQuickItem/QSGTexture. �
 
 ## Следующие обязательные работы
 
-Приоритетный список с критериями завершения находится в корневом [[../TODO]]. Ключевые оставшиеся условия: реальные калибровочные наблюдения и проверка V4L2; аналитическая валидация depth truth; количественное сравнение seam/ghosting/temporal quality; typed ConfigService и многосессионный server path; two-host и Aurora target acceptance.
+Приоритетный список с критериями завершения находится в корневом [[../TODO]]. Ключевые оставшиеся условия: реальные калибровочные наблюдения и проверка V4L2; независимая validation sphere/cube/semantic depth truth; image-based сравнение seam/ghosting/temporal quality; typed ConfigService и многосессионный server path; two-host и Aurora target acceptance.
 
 Подробный план остаётся в [[planning/ROADMAP]], исполняемый список начала — в корневом `TODO.md`. Текст глав — [[diploma/README]].
 
@@ -76,7 +76,7 @@ QQuickImageProvider заменяет проектный QQuickItem/QSGTexture. �
 
 06.10.2026 добавлены `tools/reference.py` и `tools/compare_reference.py`: аналитические пересечения plane/bowl/dome-floor/cylinder/cube, независимый fisheye через atan2, билинейная выборка и три fusion-режима. Сохранены 30 offline случаев, coverage/weights/point maps, SHA-256 и иллюстрация. Десять новых CPU проверок и 13 CTest-групп проходят. [[engineering/RENDERING#Независимый аналитический CPU-эталон]], [[validation/ANALYTIC_REFERENCE]].
 
-Это закрывает подготовку плотного геометрического эталона в E-STITCH-01, но не полный CPU rasterizer автомобиля/сцены или quality benchmark. Blender depth truth v1 теперь экспортируется и покрыта smoke-тестом; следующая работа — аналитическая проверка погрешности, semantic/visibility labels, body mask и количественное CPU/GPU сравнение на одинаковых кадрах и независимых validation scenes. Исторические native baselines/RPM относятся к сохранённым ревизиям; host-инструмент не добавляет критерии в native suite.
+Это закрывает подготовку плотного геометрического эталона в E-STITCH-01. Дополнительно `tools/validate_depth_plane.py` сравнивает cube-depth conversion с аналитическими плоскостями, а `tools/compare_visibility.py` измеряет 30 случаев по одной Blender RGB/depth frame. Это не image-quality ranking и не GPU rasterizer oracle. Следующие работы — sphere/cube EXR validation, semantic/visibility labels, body mask, graph-cut/multi-band implementations и количественное CPU/GPU сравнение на одинаковых holdout scenes/clips. Исторические native baselines/RPM относятся к сохранённым ревизиям; host-инструмент не добавляет критерии в native suite.
 
 
 ## Приоритетная архитектура 07.10.2026
