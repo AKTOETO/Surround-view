@@ -2,6 +2,8 @@
 
 Linux-профиль 0.6.0 (библиотека введена в 0.5.0). `sv-client-lib` — C++17-библиотека без Qt, OpenCV и GPU; текущие потребители — Qt `sv-client` и CLI `svctl` и тестовый `sv-client-probe`. Общий codec выделен в `sv-wire`. Установленный CMake target — `sv::client`. Проектные требования и дальнейшие операции: [[requirements/CLIENT]], политика listeners — [[requirements/CONFIGURATION]].
 
+Wire-level framing, реальные типы сообщений, command schemas и порядок server calibration workflow вынесены в [[engineering/PROTOCOL_IMPLEMENTED]].
+
 Входы виртуальных камер отделены от клиентских connections: [[engineering/SOURCES]]. В socket source capability `step` не объявляется, команда отклоняется; pause/orbit/resume остаются доступны.
 
 ## Настройка сервера

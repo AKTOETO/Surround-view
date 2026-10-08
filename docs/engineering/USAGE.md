@@ -238,7 +238,7 @@ build/sv-calibrate extrinsics --config configs/synthetic.json \
   --method ransac_epnp_lm --output artifacts/board-pose-candidate
 ```
 
-Первый шаг пишет observations, распознанные углы с номерами, SHA-256 и отчёт об OpenCV. Второй экспортирует candidate extrinsics; передавать его работающему серверу пока нельзя: runtime ConfigService и quality gate ещё не реализованы. Углы должны относиться к config-разрешению, detector работает по исходному изображению без resize/crop. Первый полный image-derived опыт на Blender RGB теперь выполнен: [[validation/IMAGE_CALIBRATION]]. Таблица сравнения четырёх solver methods выше по-прежнему основана на аналитических XYZ/UV.
+Первый шаг пишет observations, распознанные углы с номерами, SHA-256 и отчёт об OpenCV. Второй экспортирует candidate extrinsics. Online apply выполняется только через server calibration job: сервер требует независимые train/validation и quality gate, поэтому не копируйте candidate напрямую в активный config. Углы должны относиться к config-разрешению, detector работает по исходному изображению без resize/crop. Первый image-derived опыт на Blender RGB: [[validation/IMAGE_CALIBRATION]]. Точная wire-последовательность: [[engineering/PROTOCOL_IMPLEMENTED]]. Таблица сравнения четырёх solver methods выше по-прежнему основана на аналитических XYZ/UV.
 
 Чтобы повторить опыт с Blender доской, выполните из корня проекта (output-каталоги должны быть новыми):
 
