@@ -43,4 +43,4 @@ The current server protocol does not expose arbitrary config read/update, source
 
 ## Verification limits
 
-The GUI has been compiled on Linux. Remote two-host operation, Aurora, physical cameras, and interactive Blender-world simulation have not been accepted. Read [[engineering/CLIENT_LIBRARY]], [[engineering/USAGE]], and [[architecture/CLIENT_SERVER_MODEL]] for the current protocol boundary.
+The GUI and visual driving preview have been compiled/smoke-tested on Linux. Remote two-host operation, Aurora, physical cameras, and using the driving preview as a live camera producer have not been accepted. Read [[engineering/CLIENT_LIBRARY]], [[engineering/USAGE]], and [[architecture/CLIENT_SERVER_MODEL]] for the current protocol boundary.

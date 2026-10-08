@@ -504,7 +504,7 @@ stop
 
 *Рисунок 1.9 — Разделение контроля, повторного оценивания и принятия калибровки. Это проектная последовательность, а не результат испытаний диагностического алгоритма.*
 
-Повторная калибровка необходима после подтверждённого изменения установки, замены компонентов или устойчивого превышения обоснованного порога на пригодных контрольных наблюдениях. Новый набор проверяется целиком, получает идентификатор и сохраняется с предыдущей версией. Для начального профиля предусматривается применение при перезапуске; самопроизвольное изменение параметров во время покадровой обработки не требуется.
+Повторная калибровка необходима после подтверждённого изменения установки, замены компонентов или устойчивого превышения обоснованного порога на пригодных контрольных наблюдениях. Новый набор проверяется целиком, получает идентификатор и сохраняется с предыдущей версией. В прототипе отдельная calibration job применяет прошедший held-out gate candidate через server-side revision-checked config/renderer swap; произвольная смена остальных runtime-параметров пока не поддерживается.
 
 Порог и число подтверждений определяются на отдельных данных. В проверочных опытах измеряются доля обнаруженных нарушений, частота ложных срабатываний на исправной системе, время обнаружения, правильность локализации и доля случаев «недостаточно данных». Если метод всегда отказывается от вывода, он может иметь мало ложных тревог, но не решает задачу. Эта система показателей позволяет оценивать полезность диагностики вместе с её областью применимости.
 
@@ -641,30 +641,30 @@ IPC проектируется с разделением команд, небо�
 
 | ID | Источник и использованная часть | Запись каталога |
 |---|---|---|
-| [S03] | OpenCV, Camera calibration: перспективная модель и искажения | [[references/VISION#S03\|S03]] |
-| [S04] | OpenCV, Fisheye camera model: проекция и параметры | [[references/VISION#S04\|S04]] |
-| [S05] | Zhang, технический отчёт MSR-TR-98-71: постановка и этапы калибровки | [[references/VISION#S05\|S05]] |
-| [S06] | Kannala–Brandt: раздел II-A, угловые модели | [[references/VISION#S06\|S06]] |
-| [S07] | Hartley–Zisserman, второе издание: доступные главы Introduction и Epipolar Geometry | [[references/VISION#S07\|S07]] |
-| [S09] | Brown–Lowe: компенсация усиления и multiband blending | [[references/VISION#S09\|S09]] |
-| [S10] | Burt–Adelson: принцип многомасштабного объединения, доступный фрагмент раздела 3 | [[references/VISION#S10\|S10]] |
-| [S68] | Zhang и соавторы: четыре камеры, graph-cut, multiband и Burger carrier; введение и метод | [[references/VISION#S68\|S68]] |
-| [S70] | Khronos OpenGL ES 3.0: seamless filtering на рёбрах cubemap | [[references/VISION#S70\|S70]] |
-| [S71] | OpenCV stitching API: варианты warp, seam selection и blender | [[references/VISION#S71\|S71]] |
-| [S11] | TI Vision Apps: входы и артефакт процедуры калибровки | [[references/VISION#S11\|S11]] |
-| [S13] | Kumar и соавторы: обзор класса задач surround-view perception, аннотация | [[references/DEVELOPMENT#S13\|S13]] |
-| [S14] | Li и соавторы, arXiv:2305.16840v1: аннотация и постановка уточнения поз | [[references/VISION#S14\|S14]] |
-| [S20] | Аврора: раздел о разработке приложений и SDK | [[references/PLATFORM#S20\|S20]] |
-| [S21] | Аврора: допустимые зависимости и профиль приложения | [[references/PLATFORM#S21\|S21]] |
-| [S22] | Аврора: фреймворк Qt, используемые и отсутствующие модули | [[references/PLATFORM#S22\|S22]] |
-| [S25] | Ceres Solver: постановка нелинейных наименьших квадратов | [[references/DEVELOPMENT#S25\|S25]] |
-| [S26] | Khronos: реестр версий OpenGL ES и расширений | [[references/DEVELOPMENT#S26\|S26]] |
-| [S31] | GStreamer: clock и running-time | [[references/DEVELOPMENT#S31\|S31]] |
-| [S39] | Аврора: анализ производительности QML | [[references/PLATFORM#S39\|S39]] |
-| [S44] | TI, SPRY270A, 2015: разделы о 2D и 3D Surround View | [[references/DEVELOPMENT#S44\|S44]] |
-| [S47] | Qt Quick Scene Graph, документация 5.15: граф сцены и потоки | [[references/DEVELOPMENT#S47\|S47]] |
-| [S51] | W3C CSS Color 4, рабочий проект: функции преобразования linear-light/sRGB | [[references/VISION#S51\|S51]] |
-| [S52] | Khronos EXT_disjoint_timer_query: асинхронные измерения и валидность | [[references/DEVELOPMENT#S52\|S52]] |
+| [S03] | OpenCV, Camera calibration: перспективная модель и искажения | [[references/VISION#S03|S03]] |
+| [S04] | OpenCV, Fisheye camera model: проекция и параметры | [[references/VISION#S04|S04]] |
+| [S05] | Zhang, технический отчёт MSR-TR-98-71: постановка и этапы калибровки | [[references/VISION#S05|S05]] |
+| [S06] | Kannala–Brandt: раздел II-A, угловые модели | [[references/VISION#S06|S06]] |
+| [S07] | Hartley–Zisserman, второе издание: доступные главы Introduction и Epipolar Geometry | [[references/VISION#S07|S07]] |
+| [S09] | Brown–Lowe: компенсация усиления и multiband blending | [[references/VISION#S09|S09]] |
+| [S10] | Burt–Adelson: принцип многомасштабного объединения, доступный фрагмент раздела 3 | [[references/VISION#S10|S10]] |
+| [S68] | Zhang и соавторы: четыре камеры, graph-cut, multiband и Burger carrier; введение и метод | [[references/VISION#S68|S68]] |
+| [S70] | Khronos OpenGL ES 3.0: seamless filtering на рёбрах cubemap | [[references/VISION#S70|S70]] |
+| [S71] | OpenCV stitching API: варианты warp, seam selection и blender | [[references/VISION#S71|S71]] |
+| [S11] | TI Vision Apps: входы и артефакт процедуры калибровки | [[references/VISION#S11|S11]] |
+| [S13] | Kumar и соавторы: обзор класса задач surround-view perception, аннотация | [[references/DEVELOPMENT#S13|S13]] |
+| [S14] | Li и соавторы, arXiv:2305.16840v1: аннотация и постановка уточнения поз | [[references/VISION#S14|S14]] |
+| [S20] | Аврора: раздел о разработке приложений и SDK | [[references/PLATFORM#S20|S20]] |
+| [S21] | Аврора: допустимые зависимости и профиль приложения | [[references/PLATFORM#S21|S21]] |
+| [S22] | Аврора: фреймворк Qt, используемые и отсутствующие модули | [[references/PLATFORM#S22|S22]] |
+| [S25] | Ceres Solver: постановка нелинейных наименьших квадратов | [[references/DEVELOPMENT#S25|S25]] |
+| [S26] | Khronos: реестр версий OpenGL ES и расширений | [[references/DEVELOPMENT#S26|S26]] |
+| [S31] | GStreamer: clock и running-time | [[references/DEVELOPMENT#S31|S31]] |
+| [S39] | Аврора: анализ производительности QML | [[references/PLATFORM#S39|S39]] |
+| [S44] | TI, SPRY270A, 2015: разделы о 2D и 3D Surround View | [[references/DEVELOPMENT#S44|S44]] |
+| [S47] | Qt Quick Scene Graph, документация 5.15: граф сцены и потоки | [[references/DEVELOPMENT#S47|S47]] |
+| [S51] | W3C CSS Color 4, рабочий проект: функции преобразования linear-light/sRGB | [[references/VISION#S51|S51]] |
+| [S52] | Khronos EXT_disjoint_timer_query: асинхронные измерения и валидность | [[references/DEVELOPMENT#S52|S52]] |
 
 [S03]: https://docs.opencv.org/4.13.0/d4/d94/tutorial_camera_calibration.html
 [S04]: https://docs.opencv.org/4.13.0/db/d58/group__calib3d__fisheye.html

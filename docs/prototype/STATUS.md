@@ -1,6 +1,6 @@
 # Состояние прототипа и границы подтверждения
 
-Редакция 09.10.2026, Linux-профиль 0.6.0. Это карта фактически реализованного прототипа, а не объявление завершения всех MUST из [[requirements/SYSTEM]]. Рабочий профиль — `linux-prototype-v1`; его JSON намеренно уже полной проектной схемы из [[requirements/CONFIGURATION]]. Совпадение `schema_version: 1` означает версию этого явно именованного профиля, а не взаимозаменяемость всех полей прежнего YAML-примера.
+Редакция 09.10.2026, Linux-профиль 0.6.x. Это карта фактически реализованного прототипа, а не объявление завершения всех MUST из [[requirements/SYSTEM]]. Рабочий профиль — `linux-prototype-v1`; его JSON намеренно уже полной проектной схемы из [[requirements/CONFIGURATION]]. Совпадение `schema_version: 1` означает версию этого явно именованного профиля, а не взаимозаменяемость всех полей прежнего YAML-примера.
 
 ## Реализовано и проверено
 
@@ -13,13 +13,13 @@
 | Калибровка intrinsics/extrinsics | Known-XYZ solver, независимая validation; native chessboard image detector строит vehicle XYZ из измеренной pose доски | На реальной метрической площадке точность image-derived workflow не измерена; detector order требует контрольной метки |
 | OpenCV detector и image-based intrinsics | `vision_tools`, synthetic projected images; hashes/disjoint train/validation | Held-out board pose fitted; нет real-camera испытаний и внешней привязки |
 | OpenCV VideoCapture | Recorder для файлов и начальный realtime server adapter `source.type=camera` | Host delivery times не sensor timestamps; реальные камеры и остановка на разных драйверах ещё не проверены |
-| Blender 3D street fixture | Разнесённые centers, scripted motion, 4 × fisheye RGB, hashes/poses; replay/server smoke | Процедурный автомобиль; нет dense depth, интерактивного вождения и live Blender render |
+| Blender 3D street fixture | Разнесённые centers, scripted motion, 4 × fisheye RGB, hashes/poses; replay/server smoke; EXR depth → radial-range truth smoke | Упрощённый автомобиль; depth не проверена на аналитических сценах, нет semantic/object-ID/body masks и live Blender render |
 | Фотографическая street-demo | CC0 panorama, три actual GLES ракурса в главе 3 | Общий оптический центр, нет реального параллакса/калибровочной истины |
-| Купол, цилиндр и куб с полом | Shared containment, outward meshes; GPU coverage для 36 ракурсов, без отверстий геометрии | Это носители проекции; depth/visibility truth не восстановлены |
+| Купол, цилиндр и куб с полом | Shared containment, outward meshes; GPU coverage для 36 ракурсов, без отверстий геометрии | Это носители проекции; depth truth пока не используется при рендере, visibility masks и качество на независимых сценах не оценены |
 | Три fusion-режима и диагностика | Native RGB/weights/coverage oracles; [[engineering/RENDERING]] | Нет graph-cut, multi-band, photometric correction; только initial first-frame screening |
 | Сервисная диагностика задней камеры | Заданный поворот, известные точки, INDETERMINATE | Нет анализа признаков перекрытий и статистики реальных ложных тревог |
 | Сервер с Asio и отдельным EGL-потоком | Unix/TCP listeners по config, state/pause/step, timeout/reconnect, decode/mesh counters | Один клиент и один ожидающий release; V4L2 adapter есть, но реальные устройства и driver shutdown не проверены |
-| Универсальная клиентская библиотека | GUI/headless, Unix/TCP localhost, installed CMake consumer, RGBA ownership, deadlines и restart/reconnect | Нет UDP, two-host испытания, runtime config/calibration/source-management API |
+| Универсальная клиентская библиотека | GUI/headless, Unix/TCP localhost, installed CMake consumer, RGBA ownership, deadlines и restart/reconnect; calibration jobs доступны через generic command API | Нет UDP, two-host испытания и типизированного доменного API для общей config/calibration/source management |
 | Qt Quick desktop-клиент через библиотеку | Qt 6.11.2/5.15.19 offscreen; исправлен teardown Bridge | Не AuroraApp/Silica application; display latency не измерена |
 | SV01 framing и две очереди | Однобайтовое/объединённое чтение, malformed, control/data | Это подмножество протокола, не полная приёмка PRO-F-001…011 |
 | Исторические серии 0.1.0 и графики | [[prototype/MEASUREMENTS]], `run_experiments.py` | Короткие synthetic опыты; thermal/memory/display latency в этой серии не измерены |
@@ -42,27 +42,20 @@
 | `sv-client-lib` / `sv-wire` | Общий Asio API/codec без Qt/OpenCV/GPU; installed `sv::client` |
 | `sv-client` | Desktop Qt/QML через библиотеку, QQuickImageProvider |
 | `sv-configurator` | `tools/configurator.py`, Python/NumPy CLI |
-| `sv-simulator` | Начальная Qt 6 GUI в `examples/sv-simulator/`: Unix/TCP подключение, ограниченный поиск локальных IPC endpoints, поддерживаемые команды и диагностика кадров. `tools/simulator.py` и `tools/blender/` отдельно создают offline PPM/manifest и Blender-сцену |
+| `sv-simulator` | Qt 6 GUI в `examples/sv-simulator/`: Unix/TCP, ограниченный IPC discovery, серверные diagnostics и визуальный keyboard-driven Qt Quick 3D driving preview. `tools/simulator.py`/`tools/blender/` отдельно создают offline PPM/manifest и Blender-сцену |
 | `sv-calibrate`, `sv-capture`, `sv-scene` | OpenCV detector/fitter, recorder и фотографический generator |
 
 QQuickImageProvider заменяет проектный QQuickItem/QSGTexture. Сервер имеет клиентский io_context-runner, отдельный source worker и одного GL-владельца; общий worker pool отсутствует. Native qualification проверяет все manifest hashes, обычный replay-loader — ID/формат. Эти различия остаются явными. Основная инструкция по коду: [[engineering/BUILD]], [[engineering/USAGE]], [[engineering/AURORA]], [[engineering/PLATFORM_TEST]].
 
 ## Следующие обязательные работы
 
-1. Испытать существующий OpenCV detector/fitter на реальных снимках; измерить привязку к автомобилю и независимые XYZ.
-2. Полная машинная схема, контроль calibration/manifest-хэшей, систематическое сообщение пути ошибочного поля, report-контракт.
-3. Проверить `/dev/video*` adapter на реальных камерах, добавить cancellation/deadlines; затем интерактивный Blender producer, two-host acceptance и сопоставление clock domains. Replay/Unix/TCP/V4L2 FrameSource описаны в [[engineering/SOURCES]].
-4. Дополнить draw/upload/readback и RSS измерениями IPC/UI/VRAM/thermal; длительная серия и replay clocks с speed/pause anchors.
-5. Диагностика по перекрытиям с движением/светом/skew, независимая настройка порогов, чувствительность и ложные тревоги.
-6. E-STITCH-01: сравнить hard/feather/distance/graph-cut/multiband и plane/bowl/dome/cylinder/cube на одном независимом наборе. `dome_floor` platform smoke проверяет render/performance validity, не качество изображения.
-7. Дополнительные форматы и маски, UV diagnostic views (weights/coverage уже есть), quantitative seam/marker error, адаптивная сетка как отдельный опыт.
-8. Устройство/SDK Аврора: проверить dependencies/macros, собрать подготовленный RPM и выполнить native suite на железе; затем Aurora UI integration.
+Приоритетный список с критериями завершения находится в корневом [[../TODO]]. Ключевые оставшиеся условия: реальные калибровочные наблюдения и проверка V4L2; аналитическая валидация depth truth; количественное сравнение seam/ghosting/temporal quality; typed ConfigService и многосессионный server path; two-host и Aurora target acceptance.
 
 Подробный план остаётся в [[planning/ROADMAP]], исполняемый список начала — в корневом `TODO.md`. Текст глав — [[diploma/README]].
 
 ## Уточнение следующего этапа 05.10.2026
 
-Запрошены live-источники `/dev/video*`, виртуальные камеры через отдельные сокеты, удалённый клиент/конфигуратор и движущийся автомобиль в полноценном 3D-мире. В 0.5.0 уличная конфигурация использует `dome_floor_v1`; Входом остаётся replay-manifest; готовые кадры и команды передаются через Unix/TCP. `sv-capture` записывает камеры отдельно, `sv-scene` генерирует неподвижную моноскопическую панораму. 06.10.2026 добавлена процедурная Blender-улица с разнесёнными cameras и заданным движением; offline-экспорт проверен через server replay ([[engineering/BLENDER]], [[validation/BLENDER_SMOKE]]). Интерактивное вождение и аппаратный ввод остаются следующими этапами. Строгий parser принимает plane/bowl/dome/cylinder/cube, fusion и Unix/TCP connections; UDP явно отвергается. Последовательность продолжения — [[planning/ROADMAP#Следующий этап: источники, удалённое управление и 3D-окружение]].
+Запрошены live-источники `/dev/video*`, виртуальные камеры через отдельные сокеты, удалённый клиент/конфигуратор и 3D-сцена. Есть offline Blender-улица с движением по траектории и отдельный keyboard-driven Qt Quick 3D preview в `sv-simulator`; последний пока визуальный и не передаёт кадры серверу. Готовые кадры Blender передаются через replay-manifest или Unix/TCP producer. `sv-capture` записывает камеры отдельно, `sv-scene` генерирует фотопанораму. Строгий parser принимает plane/bowl/dome/cylinder/cube, fusion и Unix/TCP connections; UDP явно отвергается. Порядок продолжения — [[planning/ROADMAP#Следующий этап: источники, удалённое управление и 3D-окружение]].
 
 07.10.2026 выполнен первый Blender image-derived extrinsics experiment: четыре кадра на камеру, native OpenCV chessboard detection, train/held-out split, offline candidate fit и report/figure. Детали, численные результаты и границы synthetic evidence: [[validation/IMAGE_CALIBRATION]], [[research/IMAGE_CALIBRATION]]. Это не runtime calibration в сервере и не физическая приёмка камеры.
 
@@ -76,21 +69,21 @@ QQuickImageProvider заменяет проектный QQuickItem/QSGTexture. �
 
 ## Восстановление host producer
 
-`tools/producer.py` автоматически восстанавливает Unix/TCP camera connections с независимыми retry budgets, пропускает просроченные кадры и сохраняет JSON/Markdown отчёт, в том числе при SIGINT/SIGTERM. Проверка настоящего server restart, blocked handshake и slow receiver — [[validation/PRODUCER_RECOVERY]]. Это host-расширение 0.6.0; C++ API, native fingerprint и проверенные RPM не изменены. Аппаратный backend, sensor clocks и интерактивный Blender остаются открытыми.
+`tools/producer.py` автоматически восстанавливает Unix/TCP camera connections с независимыми retry budgets, пропускает просроченные кадры и сохраняет JSON/Markdown отчёт, в том числе при SIGINT/SIGTERM. Проверка настоящего server restart, blocked handshake и slow receiver — [[validation/PRODUCER_RECOVERY]]. Это host-расширение 0.6.0; C++ API, native fingerprint и проверенные RPM не изменены. Аппаратный backend, sensor clocks и передача live кадров из driving preview остаются открытыми.
 
 
 ## Dense CPU-reference: выполненная часть исследования
 
 06.10.2026 добавлены `tools/reference.py` и `tools/compare_reference.py`: аналитические пересечения plane/bowl/dome-floor/cylinder/cube, независимый fisheye через atan2, билинейная выборка и три fusion-режима. Сохранены 30 offline случаев, coverage/weights/point maps, SHA-256 и иллюстрация. Десять новых CPU проверок и 13 CTest-групп проходят. [[engineering/RENDERING#Независимый аналитический CPU-эталон]], [[validation/ANALYTIC_REFERENCE]].
 
-Это закрывает подготовку плотного геометрического эталона в E-STITCH-01, но не полный CPU rasterizer автомобиля/сцены или quality benchmark. Следующий результат: независимые depth/visibility/metric markers, маска видимого кузова, количественное CPU/GPU сравнение на одинаковом кадре и отдельных validation scenes. Исторические native baselines/RPM относятся к сохранённым ревизиям; host-инструмент не добавляет критерии в native suite. Регистрация новой CTest-группы меняет CMakeLists, поэтому свежую сборку для нового platform baseline следует идентифицировать её собственным fingerprint.
+Это закрывает подготовку плотного геометрического эталона в E-STITCH-01, но не полный CPU rasterizer автомобиля/сцены или quality benchmark. Blender depth truth v1 теперь экспортируется и покрыта smoke-тестом; следующая работа — аналитическая проверка погрешности, semantic/visibility labels, body mask и количественное CPU/GPU сравнение на одинаковых кадрах и независимых validation scenes. Исторические native baselines/RPM относятся к сохранённым ревизиям; host-инструмент не добавляет критерии в native suite.
 
 
 ## Приоритетная архитектура 07.10.2026
 
-Зафиксирована целевая модель [[architecture/CLIENT_SERVER_MODEL]]: server-owned config, несколько сессий, per-session view/subscriptions, intermediate products, optional final output и подробные pipeline spans. Шесть PlantUML процессов задают ожидаемые тесты. GUI перенесён в `examples/sv-client`, начат touchscreen layout; `examples/svctl` предоставляет текущие команды через библиотеку без Qt. Installed consumer находится в `tests/fixtures/client-consumer`. `examples/sv-simulator` собирается как начальная Qt 6 control GUI, но live world и редактор камер/observations ещё не реализованы.
+Зафиксирована целевая модель [[architecture/CLIENT_SERVER_MODEL]]: server-owned config, несколько сессий, per-session view/subscriptions, intermediate products, optional final output и подробные pipeline spans. Это ещё не текущие capabilities. GUI перенесён в `examples/sv-client`, есть touch-oriented controls и server diagnostics; `svctl` предоставляет текущие операции без Qt. Installed consumer находится в `tests/fixtures/client-consumer`. `sv-simulator` — Qt 6 GUI с endpoint discovery, telemetry и keyboard-driven visual world; генерация live frames и calibration observations, а также редактор камер ещё не реализованы.
 
-Начальная локальная `ConfigStore` с атомарной записью и отдельным `state_revision` реализована и покрыта тестами; это ещё не полный публичный API конфигурации и не транзакционное применение всех параметров на границе кадра. Calibration jobs доступны через команды `calibrate`, `calibration_status`, `apply_calibration`. Для нового задания сервер требует отдельные training и validation наблюдения; статус возвращает RMSE и максимальную ошибку validation, а `apply_calibration` отклоняет результат при превышении временных порогов 3 px RMSE или 8 px max. Пороговые значения предварительные и требуют физической серии. Очередь имеет лимиты, но владение job клиентской сессией, отмена выполняющейся задачи, защита от конкурентных apply и rollback, если renderer не пересоздался после записи, остаются открытыми. Multi-client/control-only, per-session subscriptions/canvas и полная trace остаются следующими этапами. Сервер по-прежнему обслуживает одну сессию и выдаёт legacy final output. Полный чеклист находится в корневом TODO. Protobuf и C++20 не добавлены: решение и условия пересмотра описаны в контракте.
+`ConfigStore` атомарно хранит revisioned config; calibration jobs привязаны к control session, имеют validation gate, cancel/ownership, stale revision rejection и строят renderer до atomic persistence/apply. Пороговые значения 3 px RMSE / 8 px max предварительны и требуют физической серии. Это не typed ConfigService: общие read/update/validate/status API, frame-boundary transaction и idempotent retry остаются открытыми. Сервер односессионный, публикует legacy final output; multi-session, per-session subscriptions/intermediate products и полный trace плановые. Полный список — в корневом TODO. Protobuf/C++20 не добавлены; причины и условия пересмотра — [[architecture/DECISIONS]].
 
 Результаты первого этапа: 14/14 Release и 10/10 CPU ASan/UBSan, Qt 5 build/offscreen smoke, CLI Unix/TCP и installed consumer — [[validation/CLIENT_RESTRUCTURE]].
 

@@ -94,4 +94,4 @@ Replay отображает исходное время `s` в runtime: `t_relea
 
 ## Источники кадров в рабочем профиле 0.6.0
 
-Реализованы replay worker, четыре независимых виртуальных входа Unix/TCP и локальный OpenCV/V4L2 adapter. Нормативное описание полей `source`, producer handshake/type 10, границы времени и очередей: [[engineering/SOURCES]]. Команды Blender → producer → server → client: [[engineering/USAGE#Blender-запись через виртуальные камеры]]. Физическая приёмка камер/драйверов, UDP и интерактивное вождение остаются открытыми.
+Реализованы replay worker, четыре независимых виртуальных входа Unix/TCP и локальный OpenCV/V4L2 adapter. Нормативное описание полей `source`, producer handshake/type 10, границы времени и очередей: [[engineering/SOURCES]]. Команды Blender → producer → server → client: [[engineering/USAGE#Blender-запись через виртуальные камеры]]. Физическая приёмка камер/драйверов, UDP и подача live-кадров из визуального driving preview остаются открытыми.

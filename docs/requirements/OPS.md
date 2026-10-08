@@ -21,20 +21,9 @@
 | OPS-F-011 | MUST | Сервер воспроизводит готовый набор без simulator: play, pause, step и повтор с новым runtime mapping. | T-OPS-011: исходные timestamps сохранены, время исполнения актуально, PAUSED явно виден. | R5, R6 |
 | OPS-F-012 | MUST | Для целевого устройства сохраняются сборка, зависимости, пакетирование, установка и воспроизводимый полный запуск. | T-OPS-012: E-TARGET-01, паспорт Авроры и фактические команды; desktop CLI не считается инструкцией для устройства. | R5, R6 |
 
-## Проектный desktop CLI и его проверка
+## Реальные команды и будущая интеграция
 
-Следующие команды задают контракт будущей реализации. Сейчас это спецификация, а не проверенная инструкция запуска: исходники, binaries, configs, datasets и wrapper ещё должны быть добавлены на этапах MASTER_PLAN. Вместе с реализацией заменить этот статус результатом T-OPS-002 и указать реальные пути поставленного набора.
-
-```sh
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
-cmake --build build --parallel
-./build/sv-bench --config configs/reference.yaml --dataset data/control/manifest.json --output artifacts/experiments/math-01
-env -u DISPLAY -u WAYLAND_DISPLAY ./build/sv-server --config configs/reference.yaml --source replay --dataset data/control/manifest.json --headless-smoke-test
-./build/sv-server --config configs/reference.yaml --source replay --dataset data/control/manifest.json --ipc-dir /tmp/sv-local
-./build/sv-client --ipc-dir /tmp/sv-local
-```
-
-Последние два процесса запускаются в разных терминалах. Для producer-режима сервер запускается с `--source producer`, затем выполняется `./build/sv-simulator --dataset data/control/manifest.json --ipc-dir /tmp/sv-local --scenario baseline`. Будущий wrapper `./scripts/run-experiment --profile local-reference --experiment E-PERF-01 --output artifacts/experiments/perf-01` должен запускать нужные процессы, собирать события и завершать их; до реализации он не считается свидетельством приёмки.
+Рабочие команды сборки и запуска находятся в [[../engineering/USAGE]] и [[../engineering/BUILD]]. Клиенты сейчас подключаются к серверу через `sv-client-lib`; `sv-simulator` — Qt GUI для управления соединением/просмотра состояния и визуальный driving preview, но ещё не объединённый producer/experiment workbench. Требуемый общий wrapper запуска экспериментов, собирающий полный trace и отчёты, остаётся будущей работой; приведённые в прежней редакции вымышленные CLI-параметры удалены.
 
 ## Паспорт и артефакты
 

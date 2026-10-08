@@ -1,6 +1,6 @@
 # Требования к sv-configurator
 
-Offline-утилита рабочей станции для первоначальной и повторной калибровки. Применение параметров в сервере — отдельная операция между запусками. Методика: [[research/CALIBRATION]]. Формат: [[requirements/CONFIGURATION]].
+Требование охватывает offline-подготовку/отчёт и server-side применение проверенной калибровки. Сегодня есть offline OpenCV tools, а calibration job API сервера отдельно принимает training/held-out observations и атомарно применяет прошедший gate кандидат. Это ещё не общий runtime ConfigService: обычная смена source/surface/fusion требует правки серверного config и перезапуска. Методика: [[research/CALIBRATION]]. Формат: [[requirements/CONFIGURATION]].
 
 | ID | Приоритет | Условие и поведение | Приёмка | Задача |
 |---|---|---|---|---|

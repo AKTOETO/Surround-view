@@ -1,6 +1,6 @@
 # Подробный план реализации
 
-Единственный действующий план полного проекта. Стартовый чеклист находится в корневом `TODO.md`; содержание диссертации — [[planning/THESIS]]. Тема и обязательный результат: [[research/TOPIC]]. На 06.10.2026 рабочий Linux-профиль 0.6.0 содержит математическое ядро, GPU/replay, калибровочные инструменты, пять носителей/три fusion-режима, screening, Unix/TCP сервер и общую клиентскую библиотеку с GUI/headless consumers. Проверка каждого этапа и незакрытые условия — [[planning/AUDIT]]. Ни один полный целевой этап не объявляется завершённым по одному Linux smoke. Реальные данные, полный контракт, UDP/hardware sources и Аврора остаются открытыми. Свидетельства — [[prototype/STATUS]], [[research/PROJECTION_AND_STITCHING]], [[prototype/MEASUREMENTS]].
+Единственный действующий план полного проекта. Актуальные открытые задачи находятся в корневом `TODO.md`; содержание диссертации — [[planning/THESIS]]. Тема и обязательный результат: [[research/TOPIC]]. На 09.10.2026 Linux-профиль 0.6.x содержит математическое ядро, GPU/replay, калибровочные инструменты, пять носителей/три fusion-режима, screening, Unix/TCP сервер и `sv-client-lib` с GUI/headless consumers. Протокол реально реализованных операций отделён от целевой архитектуры. `sv-simulator` имеет Qt Quick 3D driving preview, пока не подключённый как live camera producer. Depth truth v1 экспортируется, но не прошёл валидацию на аналитических сценах. Проверка этапов — [[planning/AUDIT]]. Реальные данные, multi-session/config/subscription API, UDP, target SDK и Aurora acceptance остаются открытыми. Свидетельства — [[prototype/STATUS]], [[research/PROJECTION_AND_STITCHING]], [[prototype/MEASUREMENTS]].
 
 ## Зависимости и результаты
 
@@ -61,19 +61,18 @@
 
 ## Следующий этап: источники, удалённое управление и 3D-окружение
 
-Это требования пользователя от 05.10.2026, **план с частичной реализацией в 0.5.0**. Unix/TCP и клиентская библиотека реализованы; в 0.6.0 добавлены replay/socket FrameSource и producer записей. Hardware capture, интерактивный мир и UDP остаются планом. Рабочие команды сохраняются в [[engineering/USAGE]]; состояние кода — [[prototype/STATUS]].
+Это требования пользователя от 05.10.2026 с частичной реализацией в 0.6.x. В таблице ниже оставлены только незавершённые действия; выполненные Unix/TCP, library, FrameSource, producer-recording, V4L2 adapter и visual preview описаны в [[prototype/STATUS]] и [[engineering/SOURCES]]. Физический capture, two-host acceptance, live producer из driving preview и UDP остаются открытыми. Рабочие команды: [[engineering/USAGE]].
 
 | Порядок | Решение и граница | Что проверить |
 |---|---|---|
-| 1. Общий источник кадров | `FrameSource` для replay, OpenCV VideoCapture на устройстве сервера и сокета виртуальной камеры; выбор по camera ID в версионированном config | RGB/origin/resolution/calibration ID, bounded очередь, остановка, отсутствие блокирующего capture/decode в GL-потоке |
-| 2. Виртуальный producer | Отдельный канал каждой камеры с handshake, sequence, source/session IDs и описанием timestamps; кадры подаются в общий synchronizer | Фрагментация, неверные размеры, stale/skew, disconnect/reconnect и slow consumer; потеря одной камеры не останавливает остальные |
-| 3. Клиентская библиотека | Отдельная C++17 `sv-client-lib` без Qt/GPU; общий API подключения, команд, статусов и готовых кадров. Локальный Unix и TCP используют один контракт; `sv-client` обращается через Qt-адаптер библиотеки (реализовано в 0.5.0; two-host acceptance открыта) | [[requirements/CLIENT#Клиентская библиотека sv-client-lib (план)\|Контракт CLIB-F-001…010]]; один headless consumer проходит Unix/loopback, framing, reconnect, таймауты, backpressure и shutdown; установленный CMake-пакет используется вне checkout |
-| 4. Удалённый клиент и конфигуратор | Настраиваемые transport/host/ports для control и output video; тот же `sv-client` через `sv-client-lib` запускается локально либо на ноутбуке. Камеры `/dev/video*` открывает процесс на устройстве сервера | Общий API проверен между двумя машинами; согласование версии, bounded пакеты, command revision, подтверждение изменения, переподключение и независимость control от больших видеокадров |
-| 5. Полный 3D-источник | Сцена с дорогой, препятствиями и моделью автомобиля; управление движением. Четыре физические камеры закреплены на кузове, отдельная виртуальная камера наблюдает результат surround view | Общая шкала времени и поза ТС; разные optical centers, параллакс, occlusion, экспозиции; известные marker XYZ и независимая render-truth |
-| 6. Заполнение окружения | Базовая полусфера и плоский пол реализованы в `dome_floor_v1`; измерить ими coverage и стоимость. Затем расширить вывод для реалистичных не наблюдаемых направлений реального источника | Mesh/camera-inside checks в C++; GPU marker and rendered dome checks; дальнейшее исследование coverage, seam, pole, inside winding, extreme orbit и фактического camera FOV |
-| 7. Проверка и упаковка | Интеграционные сценарии источников/сети/симулятора, install/export клиентской библиотеки, воспроизводимые записи и обновлённый native профиль при изменении нагрузки | Новые baselines только после изменения source/config hash; source/RPM/install smoke, главы и инструкции обновляются в тех же коммитах |
+| 1. Физический источник | Проверить существующий OpenCV/V4L2 `FrameSource` на `/dev/video*` | Negotiated format/resolution, sensor timestamp, unplug/reconnect, timeout и ограниченное завершение для целевого драйвера |
+| 2. Двухмашинная работа | Проверить текущие TCP client/data endpoints между ноутбуком и целевым устройством | Часы/skew, полоса, потери, reconnect, slow client isolation, длительные RSS/thermal; localhost не считается приемкой |
+| 3. Общее удалённое управление | Реализовать typed ConfigService и client API поверх текущего SV01 | Revision-aware validate/update/status/apply, persistence errors, operation IDs, pending restart, TLS/access policy по необходимости |
+| 4. Управляемый 3D producer | Подключить visual driving preview к четырём camera producers | Синхронные перспективные кадры с реальных virtual camera poses, known timestamps/pose/depth/visibility truth, pause/reset/replay |
+| 5. Исследование оболочки/fusion | Сравнить реализованные dome-floor/bowl/cylinder/cube/plane и существующие hard/feather режимы | Depth/semantic truth, seam/ghosting/temporal metrics, graph-cut/multi-band, equal triangle/memory budget, честное coverage/fallback |
+| 6. Aurora acceptance | Проверить SDK dependencies, CPU/GPU RPM, Qt application lifecycle и native suite на target | Target ABI/validator/install/launch, camera/display/GPU support, timings и сопоставимый platform report |
 
-Выделение codec/библиотеки, Unix/TCP адаптеры, серверный профиль и перевод Qt `Bridge` выполнены в 0.5.0. Loopback, restart/reconnect и внешний installed consumer проверяются автоматически; отдельный ноутбук остаётся этапом приёмки. Эта работа не зависит от готовности 3D-мира. Будущий удалённый конфигуратор переиспользует клиентский API; для нынешнего Python offline-инструмента способ привязки к C++ определяется отдельно.
+Текущие SV01 operations и gaps перечислены в [[engineering/PROTOCOL_IMPLEMENTED]]; target config/subscription/process flows — в [[architecture/CLIENT_SERVER_MODEL]]. Не переносить completed Unix/TCP/library/client migration в TODO повторно. Все оставшиеся действия собраны в корневом [[../TODO]].
 
 Предварительная схема взаимодействия следующего этапа:
 
@@ -104,7 +103,7 @@ ClientLibrary --> Client : события + владелец буфера
 @enduml
 ```
 
-*Рисунок П.1 — Предлагаемое взаимодействие следующего этапа. `sv-client-lib` отделяет клиентский API от Unix/TCP; выбор аппаратных или виртуальных входов задаётся серверной конфигурацией. В 0.5.0 библиотека и Unix/TCP реализованы; в 0.6.0 replay/socket FrameSource реализован, аппаратный backend и интерактивный рендер остаются проектными.*
+*Рисунок П.1 — Целевая схема взаимодействия. `sv-client-lib` отделяет клиентский API от Unix/TCP; выбор аппаратных или виртуальных входов задаётся серверной конфигурацией. Библиотека и replay/socket FrameSource реализованы; V4L2 адаптер не проверен с физической камерой. Qt Quick 3D driving preview реализован отдельно, но пока не является camera producer.*
 
 Unix/TCP поля `connections` и пример портов описаны в [[engineering/CLIENT_LIBRARY]]; UDP-профиль ещё предстоит закрепить в [[requirements/PROTOCOL]] и [[requirements/CONFIGURATION]]; текущие Unix socket paths не являются TCP endpoints. Для управления через сеть предусмотреть явную настройку доступа; локальный режим по умолчанию привязывается к loopback. Не использовать время получения пакета как время экспозиции: при разных машинах сохранить clock domain и измеренный способ сопоставления часов.
 
@@ -112,54 +111,16 @@ Unix/TCP поля `connections` и пример портов описаны в [
 
 ### Материалы для 3D-стенда
 
-Процедурную сцену можно создать непосредственно в графическом коде; Blender MCP для этого не обязателен. Для детального автомобиля и реалистичного окружения нужны модель с известными размерами/осями, материалы/текстуры и зафиксированная лицензия/происхождение ассетов. 06.10.2026 создан procedural Blender-стенд: улица, упрощённый автомобиль, четыре разнесённых оптических центра и движение по заданной траектории. Offline export проверен через replay/IPC. Полноценная автомобильная CAD-модель, физика и управление остаются открытыми.
+Процедурная Blender-сцена содержит улицу, упрощённый автомобиль, четыре разнесённых оптических центра и scripted motion; offline export проверен через replay/IPC. В laptop GUI также есть отдельный процедурный визуальный мир с машиной и keyboard steering/follow camera. Это не физическая CAD-модель, не Blender simulation и пока не источник четырёх кадров для сервера. Полноценные vehicle dynamics/asset fidelity и связанный live producer остаются открытыми.
 
-Blender MCP подключён и проверен (5.2.2 LTS / protocol 13). Скрипты, параметры мира и исходный `.blend` в `assets/scenes/metric-street/` хранятся обычным Git; входные серии остаются в `artifacts/`. Git LFS отменён по решению пользователя. Каталог и происхождение исходных материалов — [[engineering/ASSETS]]. Повторение: [[engineering/BLENDER]]; свидетельства: [[validation/BLENDER_SMOKE]]. Следующие шаги: depth/visibility truth, независимые validation scenes, интерактивная траектория и realtime producer после FrameSource.
+Blender MCP подключён и проверен (5.2.2 LTS / protocol 13). Скрипты, параметры мира и исходный `.blend` хранятся в обычном Git; входные серии остаются в `artifacts/`, Git LFS не используется. Каталог ассетов: [[engineering/ASSETS]]. Blender float-Z → radial-range depth truth v1 добавлена и smoke-проверена; повторение и границы: [[engineering/BLENDER]], [[validation/DEPTH_VISIBILITY_TRUTH]]. Далее: проверка глубины на аналитических сценах, object-ID/semantic visibility, независимые validation scenes и подключение driving preview как realtime producer.
 
 GTest разрешён для новых проверок. При его выборе использовать установленный `GTest` CMake package и явный `BuildRequires` целевого SDK; правило offline dependencies из [[engineering/BUILD]] сохраняется.
 
-## Выполненный шаг 0.4.0 и следующий приоритет
+## Текущий исследовательский backlog
 
-Реализованы `cylinder_floor_v1`, `cube_floor_v1`, shared containment, hard best-angle и angular-feather вместе с прежним edge-feather, coverage/weights и native орacles. [[engineering/RENDERING]] задаёт рабочий контракт, [[validation/SURFACE_SCREENING]] — 70 first-frame cases. Native suite расширена до 25 критериев и 10 workload. Эти результаты закрывают инженерный baseline оболочек/дешёвого fusion, но не quality acceptance E-STITCH-01.
+Подробные незакрытые пункты, сгруппированные по приоритету, собраны только в [[../TODO]]. Подтверждённые результаты, чтобы не превращать их в повторные задачи: аналитический carrier reference — [[validation/ANALYTIC_REFERENCE]], Blender depth truth smoke — [[validation/DEPTH_VISIBILITY_TRUTH]], E-CAL-MOUNT-01 — [[validation/MOUNT_CALIBRATION]], image-derived synthetic calibration — [[validation/IMAGE_CALIBRATION]], producer recovery — [[validation/PRODUCER_RECOVERY]]. Эти отчёты являются свидетельствами; их повторное выполнение не требуется, кроме расширений и независимых подтверждений, перечисленных в TODO.
 
-Следующий исследовательский шаг: metric markers, depth/visibility truth, photometric perturbations и видео; сравнение при общем resource budget, затем graph-cut/multi-band. Replay/socket FrameSource и bounded producer записей реализованы в 0.6.0 ([[engineering/SOURCES]]). Следующий инженерный шаг — аппаратный backend с cancellation и two-host acceptance. Оба Linux RPM 0.5.0 проверены; целевой SDK и аппаратный baseline остаются отдельными этапами. Общую редактуру диплома выполнить после реализации и приёмки этих функций.
+Серверный calibration-job workflow (held-out gate, session ownership/cancel, stale revision rejection и revision-checked atomic apply) описан в [[engineering/PROTOCOL_IMPLEMENTED]]. Он не равен общему ConfigService. Целевая схема multi-session/subscriptions/products дана в [[architecture/CLIENT_SERVER_MODEL]] и ещё не реализована.
 
-## Универсальная клиентская библиотека: уточнение 06.10.2026
-
-`sv-client-lib` предназначена для любых клиентов сервера. Перед расширением API составить каталог всех опубликованных операций/capabilities, результатов, событий и ошибок с примерами GUI/headless/configurator. Управление настройками, источниками и диагностикой включать по мере реализации серверных возможностей. Требования — CLIB-F-009/010.
-
-Unix/TCP реализовать первыми; UDP планировать отдельным datagram-профилем с проверкой потерь, перестановки, повторов, сборки кадров и подтверждения команд. Серверная конфигурация управляет разрешёнными listeners (CFG-F-012/SRV-F-013): Unix-only не открывает IP endpoints. Проверить отсутствие listeners, а не только отказ handshake. Числовые порты и окончательный формат полей определить при реализации; клиентские endpoints отделить от producer endpoints.
-
-## Закрытые инженерные пункты аудита 0.5.0
-
-Реализованы `sv-client-lib`/`sv-wire`, installed `sv::client`, GUI migration, Unix/TCP/combined listeners и Unix-only без IP sockets. Добавлены query state, paused reconnect frame, decode/mesh counters, step acceptance и manifest-driven replay intervals. Использование — [[engineering/CLIENT_LIBRARY]], проверка и оставшиеся пункты — [[planning/AUDIT]].
-
-## Закрытые инженерные пункты 0.6.0 и следующий шаг
-
-Выполнены replay `FrameSource` с отдельным decode worker, выбор replay/socket через config, четыре независимых Unix/TCP virtual-camera endpoints, per-camera bounded queues, pause barrier, provenance и producer проверенных записей. Native fixture пригоден для RPM без Python; host acceptance — [[validation/SOURCES_SMOKE]]. Source endpoints не смешиваются с client connections.
-
-Далее: server-side `/dev/video*` adapter с ограниченным shutdown, аппаратные timestamps и clock mapping; physical two-host test; интерактивный Blender render/управление; depth/visibility truth и quality-метрики. Наличие socket source не закрывает эти пункты и полный M5/M8/M9.
-
-## Host producer: восстановление после отказов
-
-Автоматический per-camera reconnect, retry/timeouts, fixed schedule с late-drop и JSON/Markdown report реализованы. Unix/TCP actual-server restart возвращает четыре READY-потока; stalled handshake/slow reader не останавливает соседние камеры. [[validation/PRODUCER_RECOVERY]] закрывает этот инженерный пункт M8. Длительные RSS/thermal runs, physical two-host capture clocks и аппаратный backend остаются отдельными условиями. C++ payload/fingerprint не менялся; новые native baselines из-за host-утилиты не требуются.
-
-
-## Dense CPU-reference: выполненная часть исследования
-
-06.10.2026 добавлены `tools/reference.py` и `tools/compare_reference.py`: аналитические пересечения plane/bowl/dome-floor/cylinder/cube, независимый fisheye через atan2, билинейная выборка и три fusion-режима. Сохранены 30 offline случаев, coverage/weights/point maps, SHA-256 и иллюстрация. Десять новых CPU проверок и 13 CTest-групп проходят. [[engineering/RENDERING#Независимый аналитический CPU-эталон]], [[validation/ANALYTIC_REFERENCE]].
-
-Это закрывает подготовку плотного геометрического эталона в E-STITCH-01, но не полный CPU rasterizer автомобиля/сцены или quality benchmark. Следующий результат: независимые depth/visibility/metric markers, маска видимого кузова, количественное CPU/GPU сравнение на одинаковом кадре и отдельных validation scenes. Исторические native baselines/RPM относятся к сохранённым ревизиям; host-инструмент не добавляет критерии в native suite. Регистрация новой CTest-группы меняет CMakeLists, поэтому свежую сборку для нового platform baseline следует идентифицировать её собственным fingerprint.
-
-
-## Приоритетная архитектура 07.10.2026
-
-Зафиксирована целевая модель [[architecture/CLIENT_SERVER_MODEL]]: server-owned config, несколько сессий, per-session view/subscriptions, intermediate products, optional final output и подробные pipeline spans. Шесть PlantUML процессов задают ожидаемые тесты. GUI перенесён в `examples/sv-client`, начат touchscreen layout; `examples/svctl` предоставляет текущие команды через библиотеку без Qt. Installed consumer находится в `tests/fixtures/client-consumer`. `examples/sv-simulator` собирается как начальная Qt 6 control GUI, но live world и редактор камер/observations ещё не реализованы.
-
-Config persistence API, multi-client/control-only, subscriptions/canvas и trace — следующий этап, а не возможности текущего сервера. Он по-прежнему имеет одну сессию и legacy final output. Полный чеклист нового этапа находится в корневом TODO; он имеет приоритет над прежними предложениями прямого редактирования server config клиентами. Protobuf и C++20 не добавлены: решение и условия пересмотра описаны в новом контракте.
-
-## Этап E-CAL-MOUNT-01, 07.10.2026
-
-Закрыта первая воспроизводимая серия: world recipe/seed, монтаж yaw/pitch/slide, reusable OpenCV extrinsics solver, GTest и сравнение четырёх pipeline с raw metrics, counts и изображениями. Основание — [[validation/MOUNT_CALIBRATION]]. Следующий приоритет диплома: image-based наблюдения/visibility и systematic comparison с одинаковыми предпосылками; серверная calibration job с независимым quality gate и server-owned применением конфигурации. Затем amplitude/parameter sweeps, joint calibration и GUI редактор правил. Подробные чекбоксы — корневой TODO; имеющийся offline harness не закрывает server API.
-
-07.10.2026 adapter пройден на первом Blender RGB наборе: 16/16 видов, 54 угла на held-out виде, nominal held-out RMSE 12.95–21.48 px и 0.133–0.146 px после fit. Это synthetic proof с truth-порядком углов, exact intrinsics и board poses; самостоятельное исследование detector, физические poses и runtime-server API ещё отсутствуют. Протокол: [[validation/IMAGE_CALIBRATION]], план продолжения: [[research/IMAGE_CALIBRATION]].
+После завершения основных quality/platform опытов обновить выводы и выполнить общую редактуру глав [[diploma/README]]. Отчёт аудита текущих расхождений: [[planning/AUDIT]].

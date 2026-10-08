@@ -14,7 +14,7 @@
 
 Цель — клиент и рабочий конвейер на устройстве с ОС Аврора. Первый проверочный профиль — локальный replay на Linux. Точное размещение сервера на целевом устройстве, доступ к EGL/GPU и зависимости подтверждаются по [[architecture/DECISIONS]]. Работа рендера только на мощном ПК не считается переносом на Аврору.
 
-`sv-client` — единое имя клиента; прежнее `sv-ui` заменено. `sv-configurator` выполняет offline-калибровку на рабочей станции, формирует отчёт и проверенную конфигурацию. Сервер применяет её между запусками. Конфигуратор не входит в покадровый GPU-путь.
+`sv-client` — единое имя клиента; прежнее `sv-ui` заменено. Offline calibration tools на рабочей станции формируют observations/candidate и отчёт. Отдельный server calibration-job workflow уже умеет gate и атомарно применяет проверенную позу камеры; общего API изменения source/surface/fusion пока нет, эти настройки читаются из server config при старте. Ни offline tools, ни calibration fitting не входят в покадровый GPU-путь.
 
 Текущий код выделяет GPU в `sv-render`, OpenCV — в `sv-vision`, проверки — в `sv-validation`; использует прямую fragment-проекцию и QQuickImageProvider. В 0.6.0 decoding PPM/PNG/JPEG выполняется в replay source worker; альтернативный socket source имеет свой Asio worker. Trace пока выполняется в render-потоке; UV/LUT и общий worker pool ниже планируются. Контракт источников: [[engineering/SOURCES]]. VideoCapture пока отдельный recorder. Фактическое исполнение — [[diploma/03_PROTOTYPE_IMPLEMENTATION]], сборка/RPM — [[engineering/BUILD]] и [[engineering/AURORA]].
 
@@ -28,7 +28,7 @@
 | `sv-client-lib` | C++17 API соединения с локальным/удалённым `sv-server`: Unix/TCP, handshake, команды/ACK, готовые кадры, состояния, таймауты и reconnect; без Qt и GPU |
 | `sv-client` | Qt выбранной версии, Qt Quick (QML), QML-модули, проверенные для данного профиля; Qt-адаптер `sv-client-lib`, показ готового изображения, жесты, статусы и собственные события представления |
 | `sv-configurator` | Первоначальная и повторная калибровка, проверка качества, экспорт версии параметров; алгоритмы — [[research/CALIBRATION]] |
-| `sv-simulator` | Лёгкий producer известного набора, сценарий времени и неисправностей; полный 3D-мир — расширение |
+| `sv-simulator` | Qt 6 laptop GUI: подключение/diagnostics и визуальный Qt Quick 3D driving preview; отдельно Python tools создают известные наборы и producer recordings. Preview ещё не отправляет live camera frames |
 
 
 
@@ -57,7 +57,7 @@
 | Render thread | Единственный владелец EGL/OpenGL-контекста ядра и состояния виртуальной камеры; не ждёт сеть, файл или UI бесконечно |
 | Выход/trace | Копирование опубликованных CPU-слотов, неблокирующая запись событий; переполнение учитывается |
 | UI event loop | QML, жесты, статус; сетевое чтение вынесено из этого потока |
-| Qt Quick scene graph | Создание/обновление/освобождение текстуры отображения в потоке рендера Qt Quick [[references/DEVELOPMENT#S47\|S47]] |
+| Qt Quick scene graph | Создание/обновление/освобождение текстуры отображения в потоке рендера Qt Quick [[references/DEVELOPMENT#S47|S47]] |
 
 Таблица выше и следующий lifecycle задают целевую архитектуру. В рабочем профиле 0.6.0 входы уже вынесены в source worker, но выход имеет один ожидающий release, trace синхронный и команды не объединяются. Точные текущие ограничения — [[engineering/SOURCES]] и [[engineering/CLIENT_LIBRARY]].
 
@@ -118,7 +118,7 @@ actor "Оператор" as Operator
 actor "Исследователь" as Researcher
 rectangle "Один Linux-узел: local-reference" {
   database "Запись + manifest\nКалибровка и конфигурация" as Data
-  component "sv-simulator\nЛёгкий producer + fault injection" as Producer
+  component "sv-simulator Qt 6\nconnection / diagnostics / visual driving preview" as Producer
   component "sv-server\nFrameSource + сведение времени\nsv-core: GPU + виртуальная камера" as Server
   component "sv-client\nQt целевой версии, Qt Quick (QML)\nЖесты, изображение, статусы" as UI
   component "sv-bench\nТо же sv-core без UI" as Bench
@@ -231,7 +231,7 @@ end note
 @enduml
 ```
 
-*Рисунок А.1 — Проектные границы компонентов после выделения клиентской библиотеки. Unix и TCP скрыты за общим API; `sv-client-lib` и удалённый профиль ещё не реализованы.*
+*Рисунок А.1 — Проектные границы компонентов после выделения клиентской библиотеки. `sv-client-lib` и Unix/TCP localhost paths реализованы; remote two-host acceptance, multi-session server, typed ConfigService и subscription/product APIs ещё не реализованы.*
 
 ## Кадр и команда
 

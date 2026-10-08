@@ -109,7 +109,7 @@ artifacts/install/bin/sv-platform-test \
 
 ## Клиентские примеры и GTest
 
-GUI находится в `examples/sv-client`, Qt-free CLI — в `examples/svctl`; он собирается и при `SV_CLIENT=OFF`. `examples/sv-simulator` пока содержит контракт будущего Qt 6 laptop GUI. Installed consumer находится в `tests/fixtures/client-consumer`. Сборка `svctl` не требует Qt; оба RPM spec включают CLI, но новую ревизию пакетов ещё надо квалифицировать отдельно от исторических 0.6.0 payload.
+GUI находится в `examples/sv-client`, Qt-free CLI — в `examples/svctl`; он собирается и при `SV_CLIENT=OFF`. `examples/sv-simulator` — Qt 6 laptop GUI с Unix/TCP discovery, diagnostics и optional Qt Quick 3D visual driving preview. Installed consumer находится в `tests/fixtures/client-consumer`. Сборка `svctl` не требует Qt; изменённую документацию/host-only revision не считать новой RPM acceptance без отдельной package verification.
 
 ```sh
 cmake -S . -B build -DSV_GTEST_TESTS=ON

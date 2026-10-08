@@ -192,7 +192,7 @@ end note
 
 ## Выполненная подготовка данных 06.10.2026
 
-Создан объёмный Blender-источник с разнесёнными optical centers и заданным движением: [[engineering/BLENDER]], [[validation/BLENDER_SMOKE]]. Установлены pose truth и replay compatibility; dense depth/visibility, количественные seam/ghosting metrics и сравнительные результаты вариантов ещё отсутствуют. Растяжение вертикальных объектов и двоение в перекрытиях уже наблюдаются на действующем dome-floor baseline.
+Создан объёмный Blender-источник с разнесёнными optical centers и заданным движением: [[engineering/BLENDER]], [[validation/BLENDER_SMOKE]]. Установлены pose truth и replay compatibility; depth truth v1 экспортируется отдельно и прошёл smoke-проверку ([[validation/DEPTH_VISIBILITY_TRUTH]]). Ещё нужны аналитическая проверка ошибки depth, object-ID/semantic visibility и отдельные validation scenes; количественные seam/ghosting metrics и сравнительные результаты вариантов не получены. Растяжение вертикальных объектов и двоение в перекрытиях наблюдаются на dome-floor baseline.
 
 
 ## Dense carrier reference: следующий выполненный шаг

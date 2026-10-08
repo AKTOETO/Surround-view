@@ -67,7 +67,7 @@ Output --> Sessions : адресная выдача / события
 @enduml
 ```
 
-*Рисунок КС.1 — Целевая ответственность компонентов. Новые ConfigService, multi-session registry, scheduler/subscriptions и live world требуют реализации. На Linux уже существуют renderer, источники replay/socket, client library и GUI; запуск на Авроре не подтверждён.*
+*Рисунок КС.1 — Целевая ответственность компонентов. Новые ConfigService, multi-session registry, scheduler/subscriptions и live-world camera producer требуют реализации. На Linux уже существуют renderer, replay/socket sources, client library, GUI и отдельный визуальный driving preview; preview ещё не подключён как источник кадров. Запуск на Авроре не подтверждён.*
 
 ## 2. Сессия, capabilities и несколько клиентов
 

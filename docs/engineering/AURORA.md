@@ -1,6 +1,6 @@
 # Aurora SDK, RPM и запуск проверки на устройстве
 
-Проверка источников: 05.10.2026, актуальные просмотренные страницы — ОС Аврора 5.2.1. Фактические SDK, выпуск устройства и hardware пока **не предоставлены**. Здесь подготовлен путь переноса версии 0.6.0; native RPM на Linux проверяет упаковку, но не подтверждает ABI, зависимости и установку Авроры. GPU-профиль включает купол/цилиндр/куб с полом, fusion и native render-oracles. CPU/GPU Linux RPM 0.6.0, native source fixture и development consumers проверены ([[validation/SOURCES_SMOKE]]); целевая сборка SDK остаётся открытой. Свидетельства: [[validation/CLIENT_SMOKE]]. Полный список Linux-команд — [[engineering/BUILD]], критерии и данные — [[engineering/PLATFORM_TEST]].
+Проверка источников: 09.10.2026, повторно просмотрены актуальные страницы ОС Аврора 5.2.1. Фактические SDK, выпуск устройства и hardware пока **не предоставлены**. Здесь подготовлен путь переноса версии 0.6.0; native RPM на Linux проверяет упаковку, но не подтверждает ABI, зависимости и установку Авроры. GPU-профиль включает купол/цилиндр/куб с полом, fusion и native render-oracles. CPU/GPU Linux RPM 0.6.0, native source fixture и development consumers проверены ([[validation/SOURCES_SMOKE]]); целевая сборка SDK остаётся открытой. Свидетельства: [[validation/CLIENT_SMOKE]]. Полный список Linux-команд — [[engineering/BUILD]], критерии и данные — [[engineering/PLATFORM_TEST]].
 
 ## Два RPM-профиля
 

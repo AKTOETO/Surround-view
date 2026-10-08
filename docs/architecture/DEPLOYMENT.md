@@ -16,7 +16,7 @@ skinparam ranksep 45
 node "Рабочая станция / проверенный стенд\nArch Linux, x86_64\nAMD Ryzen 9 9950X, 16 ядер\nNVIDIA GeForce RTX 5070 Ti, 16 GB VRAM" as PC {
   package "Подготовка данных / отдельные offline-запуски" {
     component "Blender + tools/blender/\nпроцедурная улица, автомобиль,\nrig четырёх камер, scripted motion" as Blender
-    component "sv-simulator\ntools/simulator.py\nаналитические изображения и XYZ" as Simulator
+    component "tools/simulator.py\nаналитические изображения и XYZ\noffline data generator" as SimulatorData
     component "sv-scene\nфотографическая panorama demo" as Scene
     component "sv-capture\nOpenCV VideoCapture recorder\n4 видеофайла; /dev/video* — требует приёмки" as Capture
     component "sv-configurator\ntools/configurator.py\noffline подготовка / диагностика" as Configurator
@@ -43,6 +43,7 @@ node "Рабочая станция / проверенный стенд\nArch Li
   }
 
   component "sv-client-probe\nпример внешнего C++ клиента\nиспользует sv-client-lib" as Probe
+  component "sv-simulator Qt 6\nserver connection / state / timings\nvisual driving preview (не camera producer)" as SimulatorGUI
   component "Python tools/ipc.py\nтестовый клиент протокола\nне обёртка над sv-client-lib" as PythonIPC
 
   package "Исследование и проверка / отдельные запуски" {
@@ -67,7 +68,7 @@ node "Рабочая станция / проверенный стенд\nArch Li
 Assets --> Blender
 Assets --> Scene
 Blender --> Dataset : offline export / conversion
-Simulator --> Dataset
+SimulatorData --> Dataset
 Scene --> Dataset
 Capture --> Dataset : запись, не live backend сервера
 Configurator --> Dataset : config / отчёт
@@ -86,6 +87,7 @@ Transport ..> ServerWire : codec
 UI <--> Library : команды / события / кадры
 Library ..> ClientWire : codec
 Library <--> Transport : Unix ИЛИ TCP loopback\nраздельные control/data каналы
+SimulatorGUI <--> Library : независимый client session
 Probe ..> Library : тот же API / отдельный процесс
 PythonIPC <--> Transport : интеграционные проверки
 Dataset --> Bench
@@ -111,8 +113,9 @@ note bottom of Transport
   UDP не реализован; TLS/auth отсутствуют.
 end note
 note bottom of Blender
-  Виртуальные камеры сейчас экспортируют запись.
-  Интерактивного вождения / live Blender producer пока нет.
+  Blender export формирует offline recording.
+  Отдельный sv-simulator preview управляем визуально,
+  но пока не подключён к четырём camera producers.
 end note
 @enduml
 ```
@@ -131,6 +134,7 @@ skinparam wrapWidth 230
 node "Ноутбук оператора\nLinux — поддержанный host-профиль\nконкретный ноутбук / two-host запуск не проверены" as Laptop {
   component "sv-client\nQt Quick desktop UI" as RemoteClient #DDEEFF
   component "sv-client-lib + sv-wire\nUnix / TCP API реализован" as RemoteLib #DDEEFF
+  component "sv-simulator\nQt 6 connection / diagnostics GUI\nQt Quick 3D visual driving preview" as LaptopSimulator #DDEEFF
   component "Blender offline export\n+ tools/producer.py\nвиртуальные камеры из записи" as RemoteProducer #DDEEFF
   component "Offline configurator / calibration\nPython tools + sv-calibrate" as RemoteConfig #DDEEFF
   component "Будущий runtime configurator\nчерез расширенный sv-client-lib API" as FutureConfig #EEEEEE
@@ -154,6 +158,12 @@ node "Среда Aurora SDK на host Linux\nцелевая toolchain / сист
 }
 
 RemoteClient <--> RemoteLib
+LaptopSimulator <--> RemoteLib : текущие команды / telemetry
+LaptopSimulator ..> RemoteProducer : связь с preview и live-frame producer
+note on link
+  пунктир — планируемая интеграция;
+  preview пока не управляет producer
+end note
 RemoteLib <--> TargetTransport : планируемый two-host TCP\ncontrol/data; порты из config
 RemoteProducer --> TargetSources : планируемый two-host TCP\nчетыре RGB8 camera endpoints
 RemoteConfig --> Package : config / calibration resources

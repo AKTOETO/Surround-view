@@ -98,7 +98,7 @@ python3 tools/client.py --ipc-dir /tmp/sv-blender \
   --preset front --output artifacts/blender-client-capture
 ```
 
-После подготовки записи Blender можно закрыть: сервер и клиент работают с экспортированными кадрами. Движение автомобиля воспроизводится из записи; интерактивное вождение в Blender и live-передача кадров пока не реализованы.
+После подготовки записи Blender можно закрыть: сервер и клиент работают с экспортированными кадрами. Для интерактивного визуального вождения откройте вкладку World в `sv-simulator`; Qt Quick 3D preview управляется клавиатурой. Эта сцена пока изолирована от `sv-server`: она не формирует синхронные live-кадры или calibration observations. Blender-запись по-прежнему поступает в сервер как replay либо через четыре producer endpoints.
 
 ## Выбор поверхности и fusion
 
@@ -389,7 +389,7 @@ build/svctl --unix /tmp/sv-blender resume
 build/svctl --tcp 127.0.0.1 53101 53102 orbit 0.1 0
 ```
 
-Вывод — JSON ACK; exit 0 accepted, 2 arguments, 3 connection/timeout, 4 rejected. По умолчанию общий deadline 5000 ms; `--timeout-ms` задаётся перед командой. Сейчас GUI надо закрыть перед запуском CLI: сервер ещё односессионный. CLI открывает legacy data channel и освобождает кадры; calibration job commands доступны через generic command path, а config/subscriptions/diagnostic API остаются в плане. Библиотека не повторяет CLI мутацию после потери соединения. `sv-simulator` уже собирается как начальный Qt GUI, но полноценный мир и редактор камер/наблюдений ещё не реализованы.
+Вывод — JSON ACK; exit 0 accepted, 2 arguments, 3 connection/timeout, 4 rejected. По умолчанию общий deadline 5000 ms; `--timeout-ms` задаётся перед командой. GUI следует закрыть перед запуском CLI: сервер пока односессионный. CLI открывает legacy data channel и освобождает кадры; calibration job commands доступны через generic command path. Typed runtime config/subscription APIs и полный покадровый trace остаются в плане. Библиотека не повторяет CLI мутацию после потери соединения. `sv-simulator` поддерживает Qt 6 GUI и визуальную driving scene, но live camera production и редактор наблюдений ещё не реализованы.
 
 ## Мир с погрешностями крепления и сравнение калибровки
 
