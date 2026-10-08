@@ -114,7 +114,7 @@ python3 docs/diploma/plot_blender.py \
 
 ## Следующие этапы
 
-1. Semantic labels и независимые метрические маркеры; отдельные сцены подбора и оценки. Radial-range conversion проверена аналитическими фронтальной/наклонной плоскостями; нужны sphere/cube EXR raster tests, occlusion boundaries и object-ID.
+1. Semantic labels и независимые метрические маркеры; отдельные сцены подбора и оценки. Radial-range conversion проверена аналитическими плоскостями, 3D-примитивами (сфера, куб) и силуэтными разрывами глубины; ground/raised markers и discrete semantics реализованы.
 2. Измерить ошибки разметки и вертикальных объектов, швы/ghosting и temporal stability; выполнить подтверждающую серию carriers/fusion по [[research/PROJECTION_AND_STITCHING]]. Первый 30-case depth-visibility screening описан в [[validation/STITCH_VISIBILITY]].
 3. Связать driving preview из `sv-simulator` с четырьмя live producers по существующим `FrameSource`/socket-input контрактам; сохранять синхронные pose/time/depth truth.
 4. Добавить реалистичную модель автомобиля и материалы с фиксированной лицензией; текущий мир процедурный.

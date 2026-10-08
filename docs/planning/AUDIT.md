@@ -8,7 +8,7 @@
 |---|---|---|
 | Математика, GPU и четыре камеры | Независимые CPU-модели, OpenCV projection/calibration tools, GLES renderer, plane/bowl/dome-floor/cylinder/cube, hard/edge/angular fusion, карты покрытия и веса; доступны RTX/Mesa baselines | Сравнение качества с единым depth/visibility oracle, одинаковые бюджеты и независимые validation scenes |
 | Blender стенд | Процедурный мир с автомобилем, разнесёнными центрами камер, заданными позами/траекторией; replay/socket producer; Qt Quick 3D driving preview | Preview только визуальный: он не отправляет 4 синхронных live-кадра и не создаёт calibration observations. Нет physics/полноценной модели автомобиля |
-| Depth truth | Blender float-Z OpenEXR → radial-range NPY; независимая аналитическая проверка фронтальной/наклонной плоскости и face-size convergence; [[validation/DEPTH_VISIBILITY_TRUTH]] | Sphere/cube EXR raster validation, semantic/object IDs, body visibility и несколько validation scenes |
+| Depth truth | Blender float-Z OpenEXR → radial-range NPY; независимая аналитическая проверка плоскостей, 3D-примитивов (сфера, куб) и разрывов силуэта; discrete semantics и ground/raised markers; [[validation/DEPTH_VISIBILITY_TRUTH]] | Сравнение качества сшивки E-STITCH-01, multi-band/graph-cut, маска кузова и validation на последовательностях |
 | Слияние и поверхности | Burger pipeline/geometry source review, зафиксированный E-STITCH protocol, 70-case renderer screening и 30-case depth-visibility screening; [[research/PROJECTION_AND_STITCHING]], [[validation/STITCH_VISIBILITY]] | Image-based seam/ghosting/temporal quality, photometric stress series, graph-cut/multi-band, равный triangle/memory budget и holdout scenes |
 | Калибровка | Synthetic XYZ/OpenCV solver, mount-error и board-survey sweeps, Blender image-derived шахматная доска, server calibration job с held-out gate, ownership/cancel и revision-checked save | Реальные measured observations, широкий обзор методов, расширенные nuisance sweeps и физическая настройка порогов 3/8 px |
 | Сервер и библиотека | SV01 описан; `sv-client-lib` Unix/TCP; сервер хранит config и безопасно применяет calibration; `sv-client`, `svctl`, `sv-simulator` используют library | Серверный runtime config API типизирован не полностью; accept/render path односессионный; нет полноценной multi-session, subscriptions и optional-final path |
@@ -20,7 +20,7 @@
 ## Последние проверки
 
 - GUI/simulator изменения: сборка Qt targets, `qmllint`, offscreen world smoke; полный CTest прошёл 22/22 для той ревизии.
-- Depth truth / visibility: `python3 tests/test_blender_fixture.py` — 12/12; `ctest --test-dir build -R blender_fixture --output-on-failure` — 1/1. Analytic-plane validation и 30-case depth-visibility output — [[validation/DEPTH_VISIBILITY_TRUTH]], [[validation/STITCH_VISIBILITY]].
+- Depth truth / visibility: `python3 tests/test_blender_fixture.py` — 16/16; `ctest --test-dir build -R blender_fixture --output-on-failure` — 1/1. Analytic-plane, 3D primitives (sphere, cube, silhouettes), semantic conversion и 30-case depth-visibility output — [[validation/DEPTH_VISIBILITY_TRUTH]], [[validation/STITCH_VISIBILITY]].
 - Blender smoke capture: один синтетический кадр, 20 OpenEXR depth faces (4 камеры × 5 направлений), четыре fisheye NPY карты. Это проверка экспортной цепочки и формата, не точности depth и не качества fusion.
 - Состояние source tree: `master` опережает `origin/master`; commits локальные и не являются подтверждением target/Aurora acceptance.
 

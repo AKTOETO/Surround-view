@@ -16,6 +16,25 @@ from scenario import perturb, validate
 from convert import bilinear, convert, convert_camera, linear_rgb, srgb8
 from depth_truth import _sample_depth, convert_camera_depth
 from validate_depth_plane import evaluate as evaluate_depth_plane
+from validate_depth_primitives import (
+    evaluate_primitive as evaluate_depth_primitive,
+    ray_sphere_intersect,
+    ray_box_intersect,
+)
+from semantics import (
+    SEMANTIC_CLASSES,
+    colorize_semantics,
+    convert_camera_semantics,
+    evaluate_semantic_oracle,
+)
+from markers import markers_ground_truth, GROUND_MARKERS, RAISED_OBSTACLES
+from scenario import (
+    SCENARIO_PRESETS,
+    scenario_preset,
+    get_split,
+    TRAIN_SEEDS,
+    HOLDOUT_SEEDS,
+)
 from compare_visibility import evaluate as evaluate_visibility, project as project_visibility
 
 
@@ -171,6 +190,85 @@ class BlenderFixtureTests(unittest.TestCase):
         self.assertAlmostEqual(
             metrics['weighted_contribution_fraction']['depth_has_no_return'], 1.)
         self.assertEqual(diagnostic.shape, (54, 96, 3))
+
+    def test_depth_truth_matches_analytic_sphere_and_cube_primitives(self):
+        sphere_scene = [{"kind": "sphere", "center": [0.0, 0.0, 3.0], "radius": 0.8}]
+        coarse_sphere = evaluate_depth_primitive(32, sphere_scene, "sphere_3m")
+        fine_sphere = evaluate_depth_primitive(256, sphere_scene, "sphere_3m")
+        self.assertEqual(fine_sphere["expected_hit_rays"], coarse_sphere["expected_hit_rays"])
+        self.assertLess(fine_sphere["interior_surface_error_m"]["p95_m"],
+                        coarse_sphere["interior_surface_error_m"]["p95_m"] * 0.15)
+        self.assertLess(fine_sphere["overall_error_m"]["p50_m"], 0.001)
+
+        cube_scene = [{
+            "kind": "box",
+            "center": [-0.5, 0.3, 6.0],
+            "half_extents": [0.6, 0.6, 1.0],
+            "rotation": [
+                [np.cos(np.pi / 6), 0, np.sin(np.pi / 6)],
+                [0, 1, 0],
+                [-np.sin(np.pi / 6), 0, np.cos(np.pi / 6)],
+            ],
+        }]
+        fine_cube = evaluate_depth_primitive(256, cube_scene, "tilted_cube")
+        self.assertLess(fine_cube["overall_error_m"]["p95_m"], 0.01)
+        self.assertEqual(fine_cube["step_discontinuity_false_negative_rays"], 0)
+
+        discontinuous_scene = [
+            {"kind": "sphere", "center": [-0.3, 0.2, 2.5], "radius": 0.5},
+            {"kind": "plane", "normal": [0.0, 0.0, 1.0], "offset_m": 10.0},
+        ]
+        disc = evaluate_depth_primitive(128, discontinuous_scene, "disc")
+        self.assertEqual(disc["step_discontinuity_false_negative_rays"], 0)
+        self.assertEqual(disc["step_discontinuity_false_positive_rays"], 0)
+
+    def test_discrete_semantic_label_conversion_and_oracle(self):
+        objects = [
+            {"kind": "box", "center": [0.0, 0.0, 4.0], "half_extents": [0.75, 0.75, 0.75], "semantic_id": 6},
+            {"kind": "sphere", "center": [1.0, 0.0, 3.0], "radius": 0.5, "semantic_id": 5},
+            {"kind": "plane", "normal": [0.0, 0.0, 1.0], "offset_m": 10.0, "semantic_id": 1},
+        ]
+        fine = evaluate_semantic_oracle(128, objects)
+        self.assertGreater(fine["overall_pixel_accuracy"], 0.999)
+        self.assertGreater(fine["per_class"]["ground_drivable"]["iou"], 0.99)
+        self.assertGreater(fine["per_class"]["vertical_obstacle"]["iou"], 0.98)
+
+        # Colorization test
+        labels = np.array([[0, 1], [4, 6]], dtype=np.int32)
+        rgb = colorize_semantics(labels)
+        self.assertEqual(rgb.shape, (2, 2, 3))
+        np.testing.assert_array_equal(rgb[0, 0], SEMANTIC_CLASSES[0]["color"])
+        np.testing.assert_array_equal(rgb[1, 0], SEMANTIC_CLASSES[4]["color"])
+
+    def test_ground_and_raised_markers_geometry(self):
+        gt = markers_ground_truth()
+        self.assertGreaterEqual(len(gt["ground_markers"]), 8)
+        self.assertGreaterEqual(len(gt["raised_obstacles"]), 5)
+        for m in gt["ground_markers"]:
+            self.assertEqual(m["world_xyz_m"][2], 0.0)
+            self.assertEqual(m["vehicle_xyz_m"][2], 0.0)
+
+        # Transformed pose check
+        pose = np.eye(4)
+        pose[0, 3] = 10.0  # Vehicle moved forward 10m
+        gt_shifted = markers_ground_truth(pose)
+        first_marker = gt_shifted["ground_markers"][0]
+        self.assertAlmostEqual(first_marker["vehicle_xyz_m"][0],
+                               first_marker["world_xyz_m"][0] - 10.0)
+
+    def test_scenario_presets_and_train_holdout_split(self):
+        self.assertEqual(len(TRAIN_SEEDS), 8)
+        self.assertEqual(len(HOLDOUT_SEEDS), 4)
+
+        for preset_id in ("S0", "S1", "S2", "S3", "S4", "S5"):
+            recipe_train = scenario_preset(preset_id, seed=3)
+            self.assertEqual(recipe_train["split"], "train")
+            self.assertEqual(get_split(3), "train")
+            self.assertEqual(recipe_train["preset_id"], SCENARIO_PRESETS[preset_id]["id"])
+
+            recipe_holdout = scenario_preset(preset_id, seed=9)
+            self.assertEqual(recipe_holdout["split"], "holdout")
+            self.assertEqual(get_split(9), "holdout")
 
     def test_manifest_hashes_and_failure(self):
         with tempfile.TemporaryDirectory() as temporary:
