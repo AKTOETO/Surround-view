@@ -52,9 +52,8 @@ SimulatorBridge::SimulatorBridge(sv::client::Endpoint endpoint, SimulatorFramePr
     else
     {
         beginConnection(std::move(endpoint), timeoutMs_, reconnectMs_, maxRetries_,
-                        endpoint.transport == sv::client::Endpoint::Transport::Unix
-                            ? unixDirectory_
-                            : tcpHost_);
+                        endpoint.transport == sv::client::Endpoint::Transport::Unix ? unixDirectory_
+                                                                                    : tcpHost_);
     }
 }
 
@@ -114,6 +113,14 @@ void SimulatorBridge::consume(sv::client::Event event)
                     calibrationStatus_ += QString(" (RMSE: %1 px)")
                                               .arg(h.at("training_rmse_px").as_double(), 0, 'f', 3);
                 }
+                if (h.contains("validation_rmse_px"))
+                {
+                    calibrationStatus_ +=
+                        QString(" · validation: %1 px · max: %2 px · %3")
+                            .arg(h.at("validation_rmse_px").as_double(), 0, 'f', 3)
+                            .arg(h.at("validation_max_error_px").as_double(), 0, 'f', 3)
+                            .arg(h.at("quality_accepted").as_bool() ? "принята" : "отклонена");
+                }
             }
             else
             {
@@ -143,23 +150,24 @@ void SimulatorBridge::consume(sv::client::Event event)
               (h.at("paused").as_bool() ? " · Пауза" : "") +
               QString(" · рендеринг %1 мс").arg(h.at("render_readback_ms").as_double(), 0, 'f', 2);
     const auto gpu = h.at("pipeline_spans_ms").as_object().at("gpu_draw");
-    pipelineInfo_ = QString("Источник: %1 · fusion: %2 · view: %3\n"
-                            "server receive → render: %4 мс · render wall: %5 мс · GPU draw: %6")
-                        .arg(QString::fromStdString(std::string(h.at("source_type").as_string())))
-                        .arg(QString::fromStdString(std::string(h.at("fusion_mode").as_string())))
-                        .arg(QString::fromStdString(std::string(h.at("diagnostic_view").as_string())))
-                        .arg(h.at("server_receive_to_render_ms").as_double(), 0, 'f', 2)
-                        .arg(h.at("render_readback_ms").as_double(), 0, 'f', 2)
-                        .arg(gpu.is_double() ? QString::number(gpu.as_double(), 'f', 2) + " мс"
-                                             : QString("нет GPU timer"));
+    pipelineInfo_ =
+        QString("Источник: %1 · fusion: %2 · view: %3\n"
+                "server receive → render: %4 мс · render wall: %5 мс · GPU draw: %6")
+            .arg(QString::fromStdString(std::string(h.at("source_type").as_string())))
+            .arg(QString::fromStdString(std::string(h.at("fusion_mode").as_string())))
+            .arg(QString::fromStdString(std::string(h.at("diagnostic_view").as_string())))
+            .arg(h.at("server_receive_to_render_ms").as_double(), 0, 'f', 2)
+            .arg(h.at("render_readback_ms").as_double(), 0, 'f', 2)
+            .arg(gpu.is_double() ? QString::number(gpu.as_double(), 'f', 2) + " мс"
+                                 : QString("нет GPU timer"));
 
     QStringList cameras;
     for (const auto &input : h.at("inputs").as_array())
     {
         const auto &item = input.as_object();
         const auto id = item.at("camera_id").as_int64();
-        const auto calibration = QString::fromStdString(
-            std::string(item.at("calibration_id").as_string()));
+        const auto calibration =
+            QString::fromStdString(std::string(item.at("calibration_id").as_string()));
         cameras << QString("Камера %1: %2 · %3")
                        .arg(id)
                        .arg(item.at("used").as_bool() ? "кадр использован" : "нет кадра")
@@ -178,11 +186,11 @@ void SimulatorBridge::consume(sv::client::Event event)
     emit frameReceived();
 }
 
-void SimulatorBridge::beginConnection(sv::client::Endpoint endpoint, int timeout,
-                                      int reconnect, int retries, const QString &label)
+void SimulatorBridge::beginConnection(sv::client::Endpoint endpoint, int timeout, int reconnect,
+                                      int retries, const QString &label)
 {
-    if (timeout < 1 || timeout > 60000 || reconnect < 1 || reconnect > 60000 ||
-        retries < 0 || retries > 1000)
+    if (timeout < 1 || timeout > 60000 || reconnect < 1 || reconnect > 60000 || retries < 0 ||
+        retries > 1000)
     {
         status_ = "Проверьте timeout, интервал reconnect и число попыток";
         emit changed();
@@ -257,8 +265,7 @@ void SimulatorBridge::beginConnection(sv::client::Endpoint endpoint, int timeout
     }
 }
 
-void SimulatorBridge::connectUnix(const QString &directory, int timeout,
-                                  int reconnect, int retries)
+void SimulatorBridge::connectUnix(const QString &directory, int timeout, int reconnect, int retries)
 {
     discovery_candidates_.clear();
     unixDirectory_ = QDir::cleanPath(directory.trimmed());
@@ -276,12 +283,12 @@ void SimulatorBridge::connectUnix(const QString &directory, int timeout,
     beginConnection(std::move(endpoint), timeout, reconnect, retries, unixDirectory_);
 }
 
-void SimulatorBridge::connectTcp(const QString &host, int controlPort, int dataPort,
-                                int timeout, int reconnect, int retries)
+void SimulatorBridge::connectTcp(const QString &host, int controlPort, int dataPort, int timeout,
+                                 int reconnect, int retries)
 {
     discovery_candidates_.clear();
-    if (host.trimmed().isEmpty() || controlPort < 1 || controlPort > 65535 ||
-        dataPort < 1 || dataPort > 65535 || controlPort == dataPort)
+    if (host.trimmed().isEmpty() || controlPort < 1 || controlPort > 65535 || dataPort < 1 ||
+        dataPort > 65535 || controlPort == dataPort)
     {
         status_ = "Укажите host и два разных порта 1..65535";
         emit changed();
@@ -427,9 +434,8 @@ void SimulatorBridge::action(const QString &type)
 
 void SimulatorBridge::submitCalibration(int, const QString &)
 {
-    calibrationStatus_ =
-        "Калибровка не запущена: GUI пока не передаёт измеренные observations. "
-        "Фиктивные точки не используются.";
+    calibrationStatus_ = "Калибровка не запущена: GUI пока не передаёт измеренные observations. "
+                         "Фиктивные точки не используются.";
     emit changed();
 }
 

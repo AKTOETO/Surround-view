@@ -1,9 +1,9 @@
 #include "sv/calibration_job.hpp"
 #include "sv/config_store.hpp"
+#include "sv/pipeline_spans.hpp"
 #include "sv/protocol.hpp"
 #include "sv/renderer.hpp"
 #include "sv/server_session.hpp"
-#include "sv/pipeline_spans.hpp"
 #include "sv/source.hpp"
 #include "sv/vision.hpp"
 #include <atomic>
@@ -33,7 +33,8 @@ struct Command
 
 class ServerIO
 {
-public:
+  public:
+
     asio::io_context io;
     asio::local::stream_protocol::acceptor control, data;
     asio::ip::tcp::acceptor tcp_control, tcp_data;
@@ -345,9 +346,9 @@ ServerIO::ServerIO(const sv::Connections &n, const std::string &source_type,
     : control(io), data(io), tcp_control(io), tcp_data(io), signals(io, SIGINT, SIGTERM),
       directory(n.unix_directory)
 {
-    capabilities = {source_type, "orbit",  "zoom",  "preset", "pause",
-                    "resume",    "state",  "copied_rgba", "calibrate",
-                    "calibration_status", "apply_calibration"};
+    capabilities = {source_type,        "orbit", "zoom",        "preset",    "pause",
+                    "resume",           "state", "copied_rgba", "calibrate", "calibration_status",
+                    "apply_calibration"};
     if (source_type == "replay")
     {
         capabilities.push_back("step");
@@ -842,18 +843,53 @@ int main(int argc, char **argv)
                         }
                         const auto &pts_arr = m.header.at("points").as_array();
                         const auto &pix_arr = m.header.at("pixels").as_array();
-                        if (pts_arr.size() != pix_arr.size() || pts_arr.size() < 6)
+                        if (!m.header.contains("validation_points") ||
+                            !m.header.contains("validation_pixels"))
                         {
-                            throw std::runtime_error("at least 6 corresponding points required");
+                            throw std::runtime_error(
+                                "independent validation correspondences required");
+                        }
+                        const auto &validation_pts_arr =
+                            m.header.at("validation_points").as_array();
+                        const auto &validation_pix_arr =
+                            m.header.at("validation_pixels").as_array();
+                        if (pts_arr.size() != pix_arr.size() || pts_arr.size() < 6 ||
+                            validation_pts_arr.size() != validation_pix_arr.size() ||
+                            validation_pts_arr.size() < 6)
+                        {
+                            throw std::runtime_error(
+                                "at least 6 training and validation pairs required");
                         }
                         std::vector<sv::Vec3> points;
                         std::vector<sv::Pixel> pixels;
+                        std::vector<sv::Vec3> validation_points;
+                        std::vector<sv::Pixel> validation_pixels;
                         for (size_t i = 0; i < pts_arr.size(); ++i)
                         {
                             const auto &pt = pts_arr[i].as_array();
                             const auto &px = pix_arr[i].as_array();
-                            points.push_back({pt[0].as_double(), pt[1].as_double(), pt[2].as_double()});
+                            if (pt.size() != 3 || px.size() != 2)
+                            {
+                                throw std::runtime_error(
+                                    "invalid training correspondence dimensions");
+                            }
+                            points.push_back(
+                                {pt[0].as_double(), pt[1].as_double(), pt[2].as_double()});
                             pixels.push_back({px[0].as_double(), px[1].as_double(), true});
+                        }
+                        for (size_t i = 0; i < validation_pts_arr.size(); ++i)
+                        {
+                            const auto &pt = validation_pts_arr[i].as_array();
+                            const auto &px = validation_pix_arr[i].as_array();
+                            if (pt.size() != 3 || px.size() != 2)
+                            {
+                                throw std::runtime_error(
+                                    "invalid validation correspondence dimensions");
+                            }
+                            validation_points.push_back(
+                                {pt[0].as_double(), pt[1].as_double(), pt[2].as_double()});
+                            validation_pixels.push_back(
+                                {px[0].as_double(), px[1].as_double(), true});
                         }
                         sv::ExtrinsicOptions opts;
                         if (m.header.contains("method"))
@@ -861,7 +897,8 @@ int main(int argc, char **argv)
                             opts.method = std::string(m.header.at("method").as_string());
                         }
                         std::string calib_job_id = calib_jobs.submit_job(
-                            cam_id, config_store.active()->cameras[cam_id], points, pixels, opts);
+                            cam_id, config_store.active()->cameras[cam_id], points, pixels,
+                            validation_points, validation_pixels, opts);
                         extra_res["job_id"] = calib_job_id;
                     }
                     else if (type == "calibration_status")
@@ -879,8 +916,14 @@ int main(int argc, char **argv)
                             extra_res["job_state"] = sv::to_string(job_opt->state);
                             if (job_opt->state == sv::JobState::Completed)
                             {
-                                extra_res["training_rmse_px"] = job_opt->calibration.training_rmse_px;
-                                extra_res["inliers"] = static_cast<int64_t>(job_opt->calibration.inliers);
+                                extra_res["training_rmse_px"] =
+                                    job_opt->calibration.training_rmse_px;
+                                extra_res["validation_rmse_px"] = job_opt->validation_rmse_px;
+                                extra_res["validation_max_error_px"] =
+                                    job_opt->validation_max_error_px;
+                                extra_res["quality_accepted"] = job_opt->quality_accepted;
+                                extra_res["inliers"] =
+                                    static_cast<int64_t>(job_opt->calibration.inliers);
                             }
                             else if (job_opt->state == sv::JobState::Failed)
                             {
@@ -990,10 +1033,10 @@ int main(int argc, char **argv)
                 uint64_t oldest = done;
                 for (int k = 0; k < 4; k++)
                 {
-                    boost::json::object input{{"camera_id", k},
-                                              {"used", bool(last_set.frames[k])},
-                                              {"calibration_id",
-                                               config_store.active()->cameras[k].calibration_id}};
+                    boost::json::object input{
+                        {"camera_id", k},
+                        {"used", bool(last_set.frames[k])},
+                        {"calibration_id", config_store.active()->cameras[k].calibration_id}};
                     if (last_set.frames[k])
                     {
                         input["sequence_id"] = std::to_string(last_set.frames[k]->sequence);
@@ -1044,7 +1087,8 @@ int main(int argc, char **argv)
                      {"render_complete_timestamp_ns", std::to_string(done)},
                      {"render_readback_ms", render_wall_ms},
                      {"server_receive_to_render_ms", ft.total_pipeline_ms},
-                     {"previous_frames_median_server_receive_to_render_ms", span_tracker.median_total_latency_ms()},
+                     {"previous_frames_median_server_receive_to_render_ms",
+                      span_tracker.median_total_latency_ms()},
                      {"pipeline_spans_ms", ft.to_json().at("spans_ms")},
                      {"source_type", config_store.active()->source.type},
                      {"timestamp_basis", "server_delivery"},
@@ -1061,7 +1105,8 @@ int main(int argc, char **argv)
                 const bool published = network.publish(std::move(output));
                 ft.publish_enqueue_ms = static_cast<double>(sv::now_ns() - publish_start) / 1e6;
                 span_tracker.record_frame(ft);
-                record({{"event", "pipeline_span"}, {"frame_id", std::to_string(frame_id)},
+                record({{"event", "pipeline_span"},
+                        {"frame_id", std::to_string(frame_id)},
                         {"telemetry", ft.to_json()}});
                 if (published)
                 {
@@ -1080,7 +1125,8 @@ int main(int argc, char **argv)
                             {"upload_count", std::to_string(renderer->uploads())},
                             {"render_readback_ms", render_wall_ms},
                             {"server_receive_to_render_ms", ft.total_pipeline_ms},
-                            {"server_receive_to_render_median_ms", span_tracker.median_total_latency_ms()}});
+                            {"server_receive_to_render_median_ms",
+                             span_tracker.median_total_latency_ms()}});
                     dirty = false;
                     last_render = done;
                 }

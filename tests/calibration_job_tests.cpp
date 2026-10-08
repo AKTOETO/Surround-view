@@ -1,10 +1,10 @@
 #include "sv/calibration_job.hpp"
 #include "sv/config_store.hpp"
 #include "sv/vision.hpp"
+#include <chrono>
 #include <cmath>
 #include <filesystem>
 #include <fstream>
-#include <chrono>
 #include <iostream>
 #include <stdexcept>
 #include <thread>
@@ -39,18 +39,23 @@ int main()
     const double c = std::cos(.05), s = std::sin(.05);
     initial.T = {c, 0, s, .1, 0, 1, 0, -.04, -s, 0, c, .07, 0, 0, 0, 1};
 
-    std::vector<sv::Vec3> points;
+    std::vector<sv::Vec3> all_points;
     for (int i = 0; i < 120; ++i)
     {
-        points.push_back({(i % 10 - 4.5) * .3, (i / 10 - 5.5) * .2, 4.0 + (i % 7) * .4});
+        all_points.push_back({(i % 10 - 4.5) * .3, (i / 10 - 5.5) * .2, 4.0 + (i % 7) * .4});
     }
-    std::vector<sv::Pixel> pixels = sv::project_opencv(truth, points);
+    std::vector<sv::Pixel> all_pixels = sv::project_opencv(truth, all_points);
+    std::vector<sv::Vec3> points(all_points.begin(), all_points.begin() + 90);
+    std::vector<sv::Pixel> pixels(all_pixels.begin(), all_pixels.begin() + 90);
+    std::vector<sv::Vec3> validation_points(all_points.begin() + 90, all_points.end());
+    std::vector<sv::Pixel> validation_pixels(all_pixels.begin() + 90, all_pixels.end());
 
     sv::ExtrinsicOptions options;
     options.method = "iterative";
 
     sv::CalibrationJobManager manager;
-    std::string job_id = manager.submit_job(0, initial, points, pixels, options);
+    std::string job_id = manager.submit_job(0, initial, points, pixels, validation_points,
+                                            validation_pixels, options);
     check(!job_id.empty(), "job id assigned");
 
     int retry = 0;
@@ -68,15 +73,19 @@ int main()
         retry++;
     }
 
-    check(res.state == sv::JobState::Completed,
-          ("job did not complete: state=" + sv::to_string(res.state) +
-           " error=" + res.error_message).c_str());
+    check(
+        res.state == sv::JobState::Completed,
+        ("job did not complete: state=" + sv::to_string(res.state) + " error=" + res.error_message)
+            .c_str());
     check(res.calibration.training_rmse_px < 1.0, "training reprojection error bounded");
+    check(res.quality_accepted, "independent validation quality gate accepts accurate fit");
+    check(res.validation_rmse_px < 1.0, "held-out reprojection error bounded");
 
     auto cfg = sv::load_config(SV_TEST_CONFIG_PATH);
-    const auto persisted_path = std::filesystem::temp_directory_path() /
-        ("sv-calibration-job-" + std::to_string(
-            std::chrono::steady_clock::now().time_since_epoch().count()) + ".json");
+    const auto persisted_path =
+        std::filesystem::temp_directory_path() /
+        ("sv-calibration-job-" +
+         std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()) + ".json");
     sv::ConfigStore store(cfg, persisted_path);
 
     std::string err;
@@ -94,6 +103,33 @@ int main()
     check(persisted.cameras[0].calibration_id == initial.calibration_id,
           "persisted calibration id matches solver result");
     std::filesystem::remove(persisted_path);
+
+    auto corrupted_validation = validation_pixels;
+    for (auto &pixel : corrupted_validation)
+    {
+        pixel.u += 20.0;
+    }
+    const auto rejected_id = manager.submit_job(0, initial, points, pixels, validation_points,
+                                                corrupted_validation, options);
+    retry = 0;
+    while (retry < 50)
+    {
+        const auto current = manager.get_job(rejected_id);
+        check(current.has_value(), "rejected job retained");
+        res = *current;
+        if (res.state == sv::JobState::Completed || res.state == sv::JobState::Failed)
+        {
+            break;
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        ++retry;
+    }
+    check(res.state == sv::JobState::Completed, "poor held-out fit reports metrics");
+    check(!res.quality_accepted, "quality gate rejects poor held-out fit");
+    check(res.validation_rmse_px > 3.0, "poor validation RMSE reported");
+    check(!manager.config_for_job(rejected_id, cfg, err),
+          "quality-rejected calibration cannot apply");
+    check(err == "calibration_quality_gate_failed", "quality-gate failure is explicit");
 
     std::cout << "All CalibrationJobManager tests passed successfully.\n";
     return 0;
