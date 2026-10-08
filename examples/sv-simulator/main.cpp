@@ -25,6 +25,7 @@ int main(int argc, char **argv)
     sv::client::Endpoint endpoint;
     bool explicit_endpoint = false;
     bool smoke = false;
+    bool world_smoke = false;
 
     try
     {
@@ -51,13 +52,19 @@ int main(int argc, char **argv)
             }
             else if (arg == "--help")
             {
-                std::cout << "Usage: sv-simulator [--unix DIR | --tcp HOST CONTROL_PORT DATA_PORT]\n"
-                             "Without an endpoint, local IPC discovery starts automatically.\n";
+                std::cout
+                    << "Usage: sv-simulator [--unix DIR | --tcp HOST CONTROL_PORT DATA_PORT]\n"
+                       "Without an endpoint, local IPC discovery starts automatically.\n"
+                       "--world-smoke loads the optional Qt Quick 3D driving scene.\n";
                 return 0;
             }
             else if (arg == "--smoke")
             {
                 smoke = true;
+            }
+            else if (arg == "--world-smoke")
+            {
+                world_smoke = true;
             }
             else
             {
@@ -74,6 +81,11 @@ int main(int argc, char **argv)
     {
         endpoint.transport = sv::client::Endpoint::Transport::Unix;
         endpoint.directory.clear();
+    }
+    if (world_smoke && SV_SIMULATOR_QUICK3D_AVAILABLE == 0)
+    {
+        std::cerr << "sv-simulator: this build has no Qt Quick 3D support\n";
+        return 2;
     }
 
     auto *provider = new SimulatorFrameProvider();
@@ -94,6 +106,13 @@ int main(int argc, char **argv)
     QQmlApplicationEngine engine;
     engine.addImageProvider(QStringLiteral("frames"), provider);
     engine.rootContext()->setContextProperty(QStringLiteral("bridge"), &bridge);
+    engine.rootContext()->setContextProperty(QStringLiteral("driveWorldAvailable"),
+                                             SV_SIMULATOR_QUICK3D_AVAILABLE != 0);
+    engine.rootContext()->setContextProperty(QStringLiteral("startDrivingWorld"), world_smoke);
+    if (world_smoke)
+    {
+        QTimer::singleShot(3000, &app, &QCoreApplication::quit);
+    }
 
     const QUrl url(QStringLiteral("qrc:/main.qml"));
     QObject::connect(

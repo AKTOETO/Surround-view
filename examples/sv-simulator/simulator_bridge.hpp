@@ -10,6 +10,7 @@
 #include <QStringList>
 #include <atomic>
 #include <cstdint>
+#include <map>
 #include <memory>
 
 class SimulatorFrameProvider : public QQuickImageProvider
@@ -67,6 +68,7 @@ public:
     Q_INVOKABLE void action(const QString &type);
     Q_INVOKABLE void submitCalibration(int cameraId, const QString &method);
     Q_INVOKABLE void checkCalibrationStatus(const QString &jobId);
+    Q_INVOKABLE void cancelCalibration(const QString &jobId);
     Q_INVOKABLE void applyCalibration(const QString &jobId);
     Q_INVOKABLE void connectUnix(const QString &directory, int timeoutMs,
                                  int reconnectMs, int maxRetries);
@@ -111,4 +113,5 @@ private:
     QString sourceInfo_ = "Источник и камеры появятся после первого кадра";
 
     QString lastCalibJobId_;
+    std::map<uint64_t, QString> calibration_commands_;
 };

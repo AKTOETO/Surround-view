@@ -93,6 +93,25 @@ void SimulatorBridge::consume(sv::client::Event event)
 
     if (m.type == 21 && h.at("accepted").as_bool())
     {
+        uint64_t command_id = 0;
+        if (h.contains("command_id"))
+        {
+            command_id = sv::parse_decimal_u64(std::string_view(
+                h.at("command_id").as_string().data(), h.at("command_id").as_string().size()));
+        }
+        auto calibration_command = calibration_commands_.find(command_id);
+        if (calibration_command != calibration_commands_.end())
+        {
+            if (calibration_command->second == "cancel_calibration")
+            {
+                calibrationStatus_ = "Сервер подтвердил запрос отмены калибровочной задачи";
+            }
+            else if (calibration_command->second == "apply_calibration")
+            {
+                calibrationStatus_ = "Сервер применил калибровку и сохранил новую конфигурацию";
+            }
+            calibration_commands_.erase(calibration_command);
+        }
         serverInfo_ =
             QString("Азимут: %1 рад · Высота: %2 рад\nРасстояние: %3 м\nРевизия состояния: %4")
                 .arg(h.at("azimuth_rad").as_double(), 0, 'f', 2)
@@ -132,6 +151,19 @@ void SimulatorBridge::consume(sv::client::Event event)
     }
     if (m.type == 21 && !h.at("accepted").as_bool())
     {
+        if (h.contains("command_id"))
+        {
+            const auto command_id = sv::parse_decimal_u64(std::string_view(
+                h.at("command_id").as_string().data(), h.at("command_id").as_string().size()));
+            auto calibration_command = calibration_commands_.find(command_id);
+            if (calibration_command != calibration_commands_.end())
+            {
+                calibrationStatus_ =
+                    "Команда калибровки отклонена: " +
+                    QString::fromStdString(std::string(h.at("reason").as_string()));
+                calibration_commands_.erase(calibration_command);
+            }
+        }
         status_ =
             "Команда отклонена: " + QString::fromStdString(std::string(h.at("reason").as_string()));
         emit changed();
@@ -403,7 +435,16 @@ void SimulatorBridge::command(const QString &type, boost::json::object parameter
     try
     {
         parameters["ui_event_timestamp_ns"] = std::to_string(monotonic());
-        client_->command(type.toStdString(), std::move(parameters));
+        const auto command_id = client_->command(type.toStdString(), std::move(parameters));
+        if (type == "calibration_status" || type == "cancel_calibration" ||
+            type == "apply_calibration")
+        {
+            calibration_commands_[command_id] = type;
+            while (calibration_commands_.size() > 64)
+            {
+                calibration_commands_.erase(calibration_commands_.begin());
+            }
+        }
     }
     catch (const std::exception &e)
     {
@@ -449,6 +490,20 @@ void SimulatorBridge::checkCalibrationStatus(const QString &jobId)
         return;
     }
     command("calibration_status", {{"job_id", targetId.toStdString()}});
+}
+
+void SimulatorBridge::cancelCalibration(const QString &jobId)
+{
+    QString targetId = jobId.isEmpty() ? lastCalibJobId_ : jobId;
+    if (targetId.isEmpty())
+    {
+        calibrationStatus_ = "Нет активных калибровочных задач";
+        emit changed();
+        return;
+    }
+    calibrationStatus_ = QString("Отправлен запрос отмены задачи %1").arg(targetId);
+    emit changed();
+    command("cancel_calibration", {{"job_id", targetId.toStdString()}});
 }
 
 void SimulatorBridge::applyCalibration(const QString &jobId)

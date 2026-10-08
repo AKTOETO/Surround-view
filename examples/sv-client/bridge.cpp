@@ -94,6 +94,28 @@ void Bridge::consume(sv::client::Event event)
     status_ = QString::fromStdString(std::string(h.at("health").as_string())) +
               (h.at("paused").as_bool() ? " · Пауза" : "") +
               QString(" · обработка %1 мс").arg(h.at("render_readback_ms").as_double(), 0, 'f', 2);
+    const auto gpu = h.at("pipeline_spans_ms").as_object().at("gpu_draw");
+    pipelineInfo_ = QString("Сервер: receive → render %1 мс · render wall %2 мс · GPU draw %3")
+                        .arg(h.at("server_receive_to_render_ms").as_double(), 0, 'f', 2)
+                        .arg(h.at("render_readback_ms").as_double(), 0, 'f', 2)
+                        .arg(gpu.is_double() ? QString::number(gpu.as_double(), 'f', 2) + " мс"
+                                             : QString("нет GPU timer"));
+    QStringList cameras;
+    for (const auto &input : h.at("inputs").as_array())
+    {
+        const auto &item = input.as_object();
+        cameras << QString("Камера %1: %2 · calibration %3")
+                       .arg(item.at("camera_id").as_int64())
+                       .arg(item.at("used").as_bool() ? "кадр использован" : "нет кадра")
+                       .arg(QString::fromStdString(
+                           std::string(item.at("calibration_id").as_string())));
+    }
+    sourceInfo_ = QString("Источник: %1 · fusion: %2 · view: %3 · config revision: %4\n%5")
+                      .arg(QString::fromStdString(std::string(h.at("source_type").as_string())))
+                      .arg(QString::fromStdString(std::string(h.at("fusion_mode").as_string())))
+                      .arg(QString::fromStdString(std::string(h.at("diagnostic_view").as_string())))
+                      .arg(QString::fromStdString(std::string(h.at("state_revision").as_string())))
+                      .arg(cameras.join('\n'));
     client_->release(h);
     emit changed();
     std::cout << "{\"event\":\"ui_receive\",\"frame_id\":\"" << frame.toStdString()

@@ -10,6 +10,7 @@ Window {
     visible: true
     title: "sv-simulator — 3D Surround View Simulator & Control Center"
     color: "#141820"
+    property bool showDriveWorld: startDrivingWorld
 
     // Top Header Bar
     Rectangle {
@@ -62,11 +63,12 @@ Window {
             fillMode: Image.PreserveAspectFit
             cache: false
             source: bridge.frameUrl
+            visible: !window.showDriveWorld
         }
 
         Text {
             anchors.centerIn: parent
-            visible: frameImage.source.toString() === ""
+            visible: !window.showDriveWorld && frameImage.source.toString() === ""
             text: "Ожидание видеоданных с сервера..."
             color: "#4a5568"
             font.pixelSize: 18
@@ -81,6 +83,7 @@ Window {
             property real deltaY: 0
 
             anchors.fill: parent
+            visible: !window.showDriveWorld
             onPressed: {
                 lastX = mouse.x;
                 lastY = mouse.y;
@@ -107,6 +110,14 @@ Window {
                     }
                 }
             }
+        }
+
+        Loader {
+            anchors.fill: parent
+            active: window.showDriveWorld
+            visible: active
+            source: driveWorldAvailable ? "qrc:/DriveWorld.qml" : ""
+            onLoaded: item.forceActiveFocus()
         }
     }
 
@@ -231,6 +242,25 @@ Window {
                 color: "#8e9bb0"
                 font.bold: true
                 font.pixelSize: 12
+            }
+
+            Rectangle {
+                width: parent.width
+                height: 42
+                radius: 6
+                color: driveWorldMouse.pressed ? "#176b68" : "#155451"
+                visible: driveWorldAvailable
+                Text {
+                    anchors.centerIn: parent
+                    text: window.showDriveWorld ? "Вернуться к изображению сервера" : "Открыть 3D-мир и управлять машиной"
+                    color: "white"
+                    font.pixelSize: 13
+                }
+                MouseArea {
+                    id: driveWorldMouse
+                    anchors.fill: parent
+                    onClicked: window.showDriveWorld = !window.showDriveWorld
+                }
             }
 
             Row {
@@ -394,6 +424,14 @@ Window {
                     border.color: "#384358"; border.width: 1
                     Text { anchors.centerIn: parent; text: "Статус"; color: "#e2e8f0"; font.pixelSize: 12 }
                     MouseArea { id: c2Mouse; anchors.fill: parent; hoverEnabled: true; onClicked: bridge.checkCalibrationStatus(calibrationJobId.text) }
+                }
+
+                Rectangle {
+                    width: 98; height: 38; radius: 6
+                    color: cCancelMouse.containsMouse ? "#543333" : "#3a292d"
+                    border.color: "#384358"; border.width: 1
+                    Text { anchors.centerIn: parent; text: "Отменить"; color: "#e2e8f0"; font.pixelSize: 12 }
+                    MouseArea { id: cCancelMouse; anchors.fill: parent; hoverEnabled: true; onClicked: bridge.cancelCalibration(calibrationJobId.text) }
                 }
 
                 Rectangle {

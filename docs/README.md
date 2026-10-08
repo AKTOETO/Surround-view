@@ -10,7 +10,7 @@
 4. [[requirements/SYSTEM|Обязательные функции и приоритеты]].
 5. [[planning/ROADMAP|План реализации]] и [[planning/THESIS|Структура текста диссертации]]; [[diploma/README|подготовленные главы]].
 6. [[research/PROJECTION_AND_STITCHING|Обзор слияния четырёх камер и поверхностей]], [[research/CALIBRATION|Калибровка и диагностика]], [[research/EXPERIMENTS|Эксперименты]], [[validation/ACCEPTANCE|Приёмка и паспорт стенда]].
-7. [[engineering/SOURCES|Источники кадров и виртуальные камеры]], [[engineering/BUILD|Сборка]], [[engineering/USAGE|работа с кодом]], [[engineering/AURORA|RPM/SDK]], [[engineering/PLATFORM_TEST|переносимые проверки]], [[engineering/SCENE|фотографическая сцена]], [[engineering/BLENDER|объёмная улица и экспорт камер]], [[engineering/ASSETS|ассеты и восстановление мира]].
+7. [[engineering/SOURCES|Источники кадров и виртуальные камеры]], [[engineering/BUILD|Сборка]], [[engineering/USAGE|работа с кодом]], [[engineering/PROTOCOL_IMPLEMENTED|реализованный протокол SV01]], [[engineering/AURORA|RPM/SDK]], [[engineering/PLATFORM_TEST|переносимые проверки]], [[engineering/SCENE|фотографическая сцена]], [[engineering/BLENDER|объёмная улица и экспорт камер]], [[engineering/ASSETS|ассеты и восстановление мира]].
 8. [[prototype/STATUS|Что реализовано]], [[prototype/MEASUREMENTS|исторические результаты]], [[validation/baselines/PC_RTX|native RTX]], [[validation/baselines/PC_MESA|native Mesa]], [[validation/BLENDER_SMOKE|Blender→server проверка]] и [[validation/IMAGE_CALIBRATION|image-derived калибровка]].
 
 ## Структура и ответственность
@@ -74,6 +74,8 @@ Unix/TCP и API библиотеки: [[engineering/CLIENT_LIBRARY]]. Сверк
 Компоненты, устройства и ОС — две PlantUML-диаграммы: [[architecture/DEPLOYMENT]].
 
 Новая модель сервера и трёх клиентов, config transactions, products и timings: [[architecture/CLIENT_SERVER_MODEL]].
+
+Wire-контракт текущей реализации, калибровочные jobs и пробелы протокола: [[engineering/PROTOCOL_IMPLEMENTED]]. Управление автомобилем в ноутбучной 3D-сцене: [sv-simulator README](../examples/sv-simulator/README.md).
 
 Проверка переноса GUI, Qt-free CLI и GTest: [[validation/CLIENT_RESTRUCTURE]].
 

@@ -171,16 +171,77 @@ Window {
         visible: window.showServerInfo
         anchors.centerIn: parent
         width: parent.width - 100
-        height: 220
+        height: parent.height - 180
         radius: 12
         color: "#203247"
-        Text {
+        Flickable {
             anchors.fill: parent
-            anchors.margins: 28
-            color: "#eef4fb"
-            font.pixelSize: 22
-            wrapMode: Text.WordWrap
-            text: "Состояние сервера\n" + backend.serverInfo + "\n" + backend.status
+            anchors.margins: 24
+            contentWidth: width
+            contentHeight: details.height
+            clip: true
+            Column {
+                id: details
+                width: parent.width
+                spacing: 18
+                Text {
+                    text: "СОСТОЯНИЕ СЕРВЕРА"
+                    color: "#8ec8f0"
+                    font.pixelSize: 18
+                    font.bold: true
+                }
+                Text {
+                    width: parent.width
+                    text: backend.serverInfo + "\n" + backend.status
+                    color: "#eef4fb"
+                    font.pixelSize: 20
+                    wrapMode: Text.WordWrap
+                }
+                Text {
+                    width: parent.width
+                    text: "ПРОИЗВОДИТЕЛЬНОСТЬ\n" + backend.pipelineInfo
+                    color: "#c8d7e6"
+                    font.pixelSize: 17
+                    wrapMode: Text.WordWrap
+                }
+                Text {
+                    width: parent.width
+                    text: "КАМЕРЫ И КОНФИГУРАЦИЯ\n" + backend.sourceInfo
+                    color: "#c8d7e6"
+                    font.pixelSize: 17
+                    wrapMode: Text.WordWrap
+                }
+                Row {
+                    spacing: 14
+                    Repeater {
+                        model: [{label: "Пауза", command: "pause"},
+                                {label: "Продолжить", command: "resume"},
+                                {label: "Закрыть", command: "close"}]
+                        Rectangle {
+                            width: 190
+                            height: 64
+                            radius: 8
+                            color: controlMouse.pressed ? "#315275" : "#2a4058"
+                            Text {
+                                anchors.centerIn: parent
+                                text: modelData.label
+                                color: "#ffffff"
+                                font.pixelSize: 18
+                            }
+                            MouseArea {
+                                id: controlMouse
+                                anchors.fill: parent
+                                onClicked: {
+                                    if (modelData.command === "close")
+                                        window.showServerInfo = false;
+                                    else
+                                        backend.action(modelData.command);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 

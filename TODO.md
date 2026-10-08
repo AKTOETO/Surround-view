@@ -1,6 +1,6 @@
 # Начало проекта
 
-Состояние на 07.10.2026. Выполненные пункты относятся к Linux-профилю 0.6.0; полный результат на Авроре и реальные камеры остаются открытыми. Начат обзор способов слияния и mesh-носителей; первый screening пяти носителей и трёх fusion-режимов выполнен; качество швов ещё не измерено. E-CAL-MOUNT-01 и первый Blender image-derived study завершены; первичный survey-error sensitivity sweep также выполнен. Добавлены начальные server calibration jobs и локальный V4L2 adapter, но калибровка ещё не является транзакционным quality-gated применением, а физическая camera source не проверена на устройстве. Подробности: [план реализации](docs/planning/ROADMAP.md), [границы прототипа](docs/prototype/STATUS.md), [карта документации](docs/README.md).
+Состояние на 09.10.2026. Выполненные пункты относятся к Linux-профилю 0.6.x; полный результат на Авроре и реальные камеры остаются открытыми. Начат обзор способов слияния и mesh-носителей; первый screening пяти носителей и трёх fusion-режимов выполнен; качество швов ещё не измерено. E-CAL-MOUNT-01, Blender image-derived study и первичный survey-error sensitivity sweep завершены в указанных синтетических границах. Серверная калибровка имеет held-out quality gate, job ownership/cancellation, проверку базовой revision и подготовку renderer до атомарного сохранения; пороги качества предварительны. Локальный V4L2 adapter добавлен, физическая camera source не проверена на устройстве. Подробности: [план реализации](docs/planning/ROADMAP.md), [границы прототипа](docs/prototype/STATUS.md), [карта документации](docs/README.md).
 
 ## Уже полученный результат
 
@@ -132,13 +132,18 @@
 - [x] Перенести существующий GUI в `examples/sv-client/`; installed consumer — в `tests/fixtures/client-consumer/`; сохранить binary/API и offline сборку.
 - [x] Создать `examples/svctl/`: Boost/STL без Qt, существующие команды через `sv-client-lib`, JSON ACK, deadline/exit codes, отсутствие прямой записи config.
 - [x] Начать touchscreen UI: крупные кнопки ракурсов/масштаба, single-touch orbit и панель state; убрать инженерные replay-команды с главного экрана.
+- [x] Добавить подробную панель состояния в автомобильный `sv-client`: server/view/config revision, source/fusion, по каждой камере статус/calibration ID, processing/GPU timings и replay pause/resume. Она показывает фактические capabilities сервера; полноценное изменение глобальной config ждёт typed API.
+- [ ] После появления typed ConfigService расширить автомобильный интерфейс безопасными часто используемыми server settings и статусом `pending_restart`; не показывать команды, которые сервер не реализует.
 - [ ] Завершить Qt 5 automotive client под Аврору: платформенный lifecycle/UI integration, DPI и физические touch targets, жесты, информационная вкладка, проверка реального экрана.
 - [x] Подготовить Aurora `.desktop` для `sv-client`, иконку и включить оба файла в GUI RPM payload по официальным требованиям.
 - [ ] Проверить `.desktop`, icon payload и RPM через целевой Aurora `rpm-validator`; запуск на устройстве остаётся открытым.
 - [x] Создать начальную оболочку Qt laptop GUI `examples/sv-simulator/`: сборка, Unix/TCP connection, базовые команды и отображение кадров.
 - [x] Добавить в laptop GUI редактируемые Unix/TCP endpoints, timeout/reconnect options, сохранение настроек и ограниченный поиск локальных IPC каталогов по `SV_IPC_DIR`, `$XDG_RUNTIME_DIR` и документированным defaults; показывать источник, камеры и доступные pipeline timings.
+- [x] Добавить optional Qt Quick 3D driving preview в `sv-simulator`: процедурная улица, видимый автомобиль/4 camera markers, keyboard drive/steering и following view. Это пока визуальная сцена, не producer видеокадров.
 - [ ] Добавить типизированные серверные API чтения/изменения конфигурации, прежде чем показывать переключатели fusion, source, mesh или output в GUI. Сейчас доступны только команды ракурса, replay control, calibration job status/apply и чтение frame metadata.
-- [ ] Довести `sv-simulator` до инженерного инструмента: world/camera editing, управляемое движение, valid calibration observations и полноценные эксперименты. Текущая кнопка калибровки отключена, пока GUI не собирает реальные observations.
+- [ ] Развить driving preview до управляемого test world: управление с клавиатуры и gamepad, pause/reset/replayable trajectory, редактор pose errors и переключение видов виртуальных камер.
+- [ ] Сгенерировать четыре синхронизированных кадра с соответствующих точек обзора автомобиля, передавать их producer protocol в `sv-server`, сохранять timestamps и независимую pose/depth/visibility truth. Пока 3D preview не является источником кадров и не создаёт calibration observations.
+- [ ] Добавить world/camera editing, valid calibration observations и запуск воспроизводимых экспериментов через общие application services. Текущая кнопка запуска калибровки остаётся отключённой, пока GUI не собирает реальные observations.
 
 ### Сервер, конфигурация и библиотека
 
@@ -153,6 +158,7 @@
 - [x] Добавлять каждую новую серверную операцию одновременно в `svctl`; CLI покрывает операции управления, подстроек и асинхронной калибровки (`calibration-status`, `apply-calibration`).
 - [ ] Перевести offline configurator на черновики/экспорт и server API для применения; никакой клиент не изменяет серверный файл напрямую.
 - [x] Оценить Protobuf: на первом этапе оставить SV01/Boost.JSON, зафиксировать причины и условия пересмотра; не добавлять protoc/runtime без обоснованной потребности и SDK-проверки.
+- [x] Зафиксировать фактический wire-протокол отдельным документом: framing, message types, command fields, session handshake, calibration state transitions, ownership/revision guarantees и gaps; добавить sequence diagrams. [[engineering/PROTOCOL_IMPLEMENTED]].
 
 ### Управление продуктами и измерения pipeline
 
@@ -190,7 +196,7 @@
 - [x] Реализовать image-derived соответствия: native OpenCV chessboard detector для снимков четырёх камер, измеренная поза доски в координатах ТС, ручной контроль неоднозначного порядка углов, annotated outputs и provenance. Подробности: [[engineering/USAGE#OpenCV: внешняя калибровка по изображениям]].
 - [x] Добавить начальный асинхронный `CalibrationJobManager` и команды `calibrate`, `calibration_status`, `apply_calibration`.
 - [x] Добавить атомарный revision-checked ConfigStore commit: калибровка отклоняется, если config успела измениться между snapshot и persistence; stale jobs блокируются до подготовки renderer.
-- [ ] Завершить безопасное применение калибровки: перейти на typed ConfigService и применять config на границе кадра; jobs хранят стартовую revision; session ownership, cancel command и отмена при отключении control-клиента работают. OpenCV-вызов отменяется кооперативно по завершении solver. Renderer строится до persistence/swap. Held-out gate имеет предварительные пределы 3 px RMSE / 8 px max, которые нужно подобрать на физических данных и оформить версионированной policy.
+- [x] Реализовать безопасное применение калибровки в текущем single-session сервере: job хранит стартовую revision; session ownership, cancel и отмена при отключении control-клиента; stale revision отвергается; held-out gate проверяется; renderer строится до revision-checked atomic persistence и swap. OpenCV-вызов отменяется кооперативно по завершении solver. [[engineering/PROTOCOL_IMPLEMENTED]], [[validation/CLIENT_SMOKE]]. Открыто: typed ConfigService, commit на границе frame-set и физическая настройка предварительных порогов 3 px RMSE / 8 px max.
 - [ ] Сделать обзор семейств калибровки с источниками и матрицей применимости: intrinsics (pinhole/Brown, fisheye/Kannala–Brandt и альтернативные omnidirectional models), extrinsics (PnP/IPPE/SQPnP, robust estimation/refinement), joint/multi-camera calibration и overlap/photometric approaches. Не объявлять четыре PnP варианта сравнением всех существующих механизмов.
 - [x] Провести первый image-derived proof E-CAL-IMG-01: Blender RGB шахматной доски → native OpenCV corners → metric correspondences → fit на трёх позах и отдельная held-out проверка на четвёртой; 16/16 видов обнаружены. Результаты, рисунок, hashes и ограничения: [[validation/IMAGE_CALIBRATION]], исследовательское описание: [[research/IMAGE_CALIBRATION]]. Это только синтетический начальный опыт, не проверка реальных камер.
 - [ ] Расширить image-based исследование: coded/asymmetric targets (ChArUco/AprilTag-подобные), ground/raised и planar/nonplanar точки, board-pose survey error, качество detector, pose diversity, occlusion/visibility, blur/glare и несколько независимых validation scenes. Затем повторить на физически измеренных снимках; не считать E-CAL-IMG-01 достаточной приёмкой точности.

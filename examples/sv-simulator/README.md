@@ -1,6 +1,6 @@
 # sv-simulator
 
-`sv-simulator` is a Qt 6 desktop client for connecting to `sv-server` through `sv-client-lib`. The current GUI provides connection settings, local Unix IPC discovery, remote TCP connection, the server commands currently supported by the protocol, and read-only frame/source timing diagnostics. The larger world editor and runtime server configuration API remain future work; this application does not yet simulate vehicle motion or generate calibration observations.
+`sv-simulator` is a Qt 6 desktop client for connecting to `sv-server` through `sv-client-lib`. The current GUI provides connection settings, local Unix IPC discovery, remote TCP connection, the server commands currently supported by the protocol, and read-only frame/source timing diagnostics. When Qt Quick 3D is installed, the GUI also provides a procedural street preview with a drivable vehicle and four visible camera markers. This first driving scene is a visualization only: it does not yet render synchronized camera images or send them to `sv-server`, and it does not generate calibration observations. The world editor, camera-error controls and runtime server configuration API remain future work.
 
 ## Connection setup
 
@@ -26,6 +26,8 @@ build/examples/sv-simulator/sv-simulator --tcp 192.168.1.20 53101 53102
 
 For an automated connection/frame smoke run, add `--smoke`; the process exits successfully after receiving a frame and exits with status 1 if no frame arrives within ten seconds.
 
+For a local Qt Quick 3D import/render smoke, run `QT_QPA_PLATFORM=offscreen build/examples/sv-simulator/sv-simulator --world-smoke`. It loads the driving scene and exits after three seconds; a real display/GPU run is still required to qualify interactive performance.
+
 The connection panel allows editing the Unix directory or TCP host/ports. Timeout, reconnect interval, and retry count configure the client library. These are client transport options; they do not rewrite the server config. Endpoint values are saved with Qt `QSettings`.
 
 ## Available server controls
@@ -34,9 +36,10 @@ The connection panel allows editing the Unix directory or TCP host/ports. Timeou
 - Replay pause, resume, and step. `step` is rejected by live camera/socket sources.
 - Frame metadata: source type, fusion/view identifiers, config revision, and which camera inputs were selected.
 - Coarse pipeline timing fields supplied by the server. GPU draw time is shown only when a supported timer query produced a value; the reported intervals overlap and must not be summed.
-- Calibration status/application for a job ID created by another client, such as `svctl`. The GUI does not fabricate observations, so starting a calibration job is disabled until it has a real observation workflow.
+- Calibration status, cancellation, and application for a job ID. The GUI does not fabricate observations, so starting a calibration job is disabled until it has a real observation workflow. Running native OpenCV solver cancellation is cooperative and takes effect after the solver returns.
+- Optional Qt Quick 3D street preview: drive with `W/S` or arrow keys and steer with `A/D` or arrow keys. The scene has an elevated chase view, a road, generated building blocks and four camera markers on the car. Press `Esc` to leave driving mode. The preview is not a camera stream producer.
 
-The current server protocol does not expose arbitrary config read/update, source switching, fusion selection, output subscriptions, or multi-client session management. Those controls should be added when the server implements their typed APIs, rather than writing the server's config file directly from this GUI.
+The current server protocol does not expose arbitrary config read/update, source switching, fusion selection, output subscriptions, or multi-client session management. Those controls should be added when the server implements their typed APIs, rather than writing the server's config file directly from this GUI. The implemented framing, command fields, ownership, calibration lifecycle and known gaps are documented in [[engineering/PROTOCOL_IMPLEMENTED]].
 
 ## Verification limits
 
