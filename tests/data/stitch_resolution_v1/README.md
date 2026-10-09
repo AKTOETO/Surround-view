@@ -28,3 +28,7 @@ Object IDs и visibility не учитывают прозрачность/сгл
 Параметры мира/исходный `.blend` находятся в `assets/scenes/metric-street`.
 Численный опыт повторяется без Blender. Протокол/команды:
 `docs/validation/STITCH_RESOLUTION_VISIBILITY.md`.
+
+## Convergence extension 512
+
+Каталог `512/` добавлен 10.10.2026 как контроль 256→512. Та же структура и decoded direct RGB/object/visibility truth, дополнительный размер ~1.9 MB. Команда: `python3 tools/research/stitch_resolution.py --sizes 256 512 --output artifacts/convergence-repeat`. Результат — `docs/validation/STITCH_CONVERGENCE_ROBUSTNESS.md`.

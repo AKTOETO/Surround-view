@@ -1,0 +1,1113 @@
+{
+  "schema_version": 1,
+  "origin": "blender_metric_street_v1",
+  "blender_version": "5.2.2 LTS",
+  "engine": "BLENDER_EEVEE",
+  "view_transform": "Standard",
+  "face_size": 512,
+  "fps": 30,
+  "config": {
+    "schema_version": 1,
+    "profile_id": "blender-street-v1",
+    "units": {
+      "length": "m",
+      "angle": "rad",
+      "time": "ns"
+    },
+    "vehicle": {
+      "length_m": 4.6,
+      "width_m": 1.8,
+      "mask_margin_m": 0.1
+    },
+    "cameras": [
+      {
+        "id": 0,
+        "name": "front",
+        "calibration_id": "blender-rig-front-v1",
+        "resolution": {
+          "width": 400,
+          "height": 400
+        },
+        "projection": {
+          "model": "opencv_fisheye",
+          "fx": 128.0,
+          "fy": 128.0,
+          "cx": 199.5,
+          "cy": 199.5,
+          "alpha": 0.0,
+          "k": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "theta_max_rad": 1.48,
+          "z_epsilon_m": 1e-06
+        },
+        "T_camera_from_vehicle": [
+          [
+            0.0,
+            -1.0,
+            0.0,
+            0.0
+          ],
+          [
+            -0.20791169081775934,
+            -0.0,
+            -0.9781476007338057,
+            1.322097050953647
+          ],
+          [
+            0.9781476007338057,
+            0.0,
+            -0.20791169081775934,
+            -2.131703400536686
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        ]
+      },
+      {
+        "id": 1,
+        "name": "right",
+        "calibration_id": "blender-rig-right-v1",
+        "resolution": {
+          "width": 400,
+          "height": 400
+        },
+        "projection": {
+          "model": "opencv_fisheye",
+          "fx": 128.0,
+          "fy": 128.0,
+          "cx": 199.5,
+          "cy": 199.5,
+          "alpha": 0.0,
+          "k": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "theta_max_rad": 1.48,
+          "z_epsilon_m": 1e-06
+        },
+        "T_camera_from_vehicle": [
+          [
+            -1.0,
+            -6.123233995736766e-17,
+            0.0,
+            0.3499999999999999
+          ],
+          [
+            -1.2730919333264157e-17,
+            0.20791169081775934,
+            -0.9781476007338057,
+            1.3242281727213978
+          ],
+          [
+            5.989426641661592e-17,
+            -0.9781476007338057,
+            -0.20791169081775934,
+            -0.843101267091296
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        ]
+      },
+      {
+        "id": 2,
+        "name": "rear",
+        "calibration_id": "blender-rig-rear-v1",
+        "resolution": {
+          "width": 400,
+          "height": 400
+        },
+        "projection": {
+          "model": "opencv_fisheye",
+          "fx": 128.0,
+          "fy": 128.0,
+          "cx": 199.5,
+          "cy": 199.5,
+          "alpha": 0.0,
+          "k": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "theta_max_rad": 1.48,
+          "z_epsilon_m": 1e-06
+        },
+        "T_camera_from_vehicle": [
+          [
+            1.2246467991473532e-16,
+            1.0,
+            -0.0,
+            2.8901664459877536e-16
+          ],
+          [
+            0.20791169081775934,
+            -2.5461838666528314e-17,
+            -0.9781476007338057,
+            1.322097050953647
+          ],
+          [
+            -0.9781476007338057,
+            1.1978853283323184e-16,
+            -0.20791169081775934,
+            -2.131703400536686
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        ]
+      },
+      {
+        "id": 3,
+        "name": "left",
+        "calibration_id": "blender-rig-left-v1",
+        "resolution": {
+          "width": 400,
+          "height": 400
+        },
+        "projection": {
+          "model": "opencv_fisheye",
+          "fx": 128.0,
+          "fy": 128.0,
+          "cx": 199.5,
+          "cy": 199.5,
+          "alpha": 0.0,
+          "k": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "theta_max_rad": 1.48,
+          "z_epsilon_m": 1e-06
+        },
+        "T_camera_from_vehicle": [
+          [
+            1.0,
+            -6.123233995736766e-17,
+            0.0,
+            -0.3499999999999999
+          ],
+          [
+            -1.2730919333264157e-17,
+            -0.20791169081775934,
+            -0.9781476007338057,
+            1.3242281727213978
+          ],
+          [
+            5.989426641661592e-17,
+            0.9781476007338057,
+            -0.20791169081775934,
+            -0.843101267091296
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        ]
+      }
+    ],
+    "surface": {
+      "type": "dome_floor_v1",
+      "dome_radius_m": 12.0,
+      "dome_latitude_cells": 64,
+      "dome_longitude_cells": 128,
+      "floor_radial_cells": 32
+    },
+    "virtual_camera": {
+      "azimuth_rad": 0.8,
+      "elevation_rad": 1.0,
+      "distance_m": 8.5,
+      "fov_y_rad": 1.0,
+      "clip_m": [
+        0.1,
+        100.0
+      ]
+    },
+    "output": {
+      "width": 320,
+      "height": 180
+    },
+    "runtime": {
+      "input_queue_per_camera": 3,
+      "skew_window_ms": 10.0,
+      "max_input_age_ms": 100.0
+    }
+  },
+  "frames": [
+    {
+      "scenario_timestamp_ns": "0",
+      "T_world_from_vehicle": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "cameras": [
+        {
+          "id": 0,
+          "faces": {
+            "px": "frame0000_cam0_px.png",
+            "nx": "frame0000_cam0_nx.png",
+            "py": "frame0000_cam0_py.png",
+            "ny": "frame0000_cam0_ny.png",
+            "pz": "frame0000_cam0_pz.png"
+          },
+          "T_world_from_camera": [
+            [
+              0.0,
+              -0.20791169081775934,
+              0.9781476007338056,
+              2.36
+            ],
+            [
+              -1.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              -0.9781476007338057,
+              -0.20791169081775934,
+              0.8500000000000001
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "id": 1,
+          "faces": {
+            "px": "frame0000_cam1_px.png",
+            "nx": "frame0000_cam1_nx.png",
+            "py": "frame0000_cam1_py.png",
+            "ny": "frame0000_cam1_ny.png",
+            "pz": "frame0000_cam1_pz.png"
+          },
+          "T_world_from_camera": [
+            [
+              -1.0,
+              -1.2730919333264157e-17,
+              5.989426641661591e-17,
+              0.35
+            ],
+            [
+              -6.123233995736766e-17,
+              0.20791169081775934,
+              -0.9781476007338056,
+              -1.1
+            ],
+            [
+              0.0,
+              -0.9781476007338057,
+              -0.20791169081775934,
+              1.12
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "id": 2,
+          "faces": {
+            "px": "frame0000_cam2_px.png",
+            "nx": "frame0000_cam2_nx.png",
+            "py": "frame0000_cam2_py.png",
+            "ny": "frame0000_cam2_ny.png",
+            "pz": "frame0000_cam2_pz.png"
+          },
+          "T_world_from_camera": [
+            [
+              1.2246467991473532e-16,
+              0.20791169081775934,
+              -0.9781476007338056,
+              -2.36
+            ],
+            [
+              1.0,
+              -2.5461838666528317e-17,
+              1.1978853283323184e-16,
+              4.0059342843254506e-32
+            ],
+            [
+              0.0,
+              -0.9781476007338057,
+              -0.20791169081775934,
+              0.8500000000000001
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "id": 3,
+          "faces": {
+            "px": "frame0000_cam3_px.png",
+            "nx": "frame0000_cam3_nx.png",
+            "py": "frame0000_cam3_py.png",
+            "ny": "frame0000_cam3_ny.png",
+            "pz": "frame0000_cam3_pz.png"
+          },
+          "T_world_from_camera": [
+            [
+              1.0,
+              -1.2730919333264157e-17,
+              5.989426641661591e-17,
+              0.35
+            ],
+            [
+              -6.123233995736766e-17,
+              -0.20791169081775934,
+              0.9781476007338056,
+              1.1
+            ],
+            [
+              0.0,
+              -0.9781476007338057,
+              -0.20791169081775934,
+              1.12
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "scenario_timestamp_ns": "200000000",
+      "T_world_from_vehicle": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.4
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "cameras": [
+        {
+          "id": 0,
+          "faces": {
+            "px": "frame0001_cam0_px.png",
+            "nx": "frame0001_cam0_nx.png",
+            "py": "frame0001_cam0_py.png",
+            "ny": "frame0001_cam0_ny.png",
+            "pz": "frame0001_cam0_pz.png"
+          },
+          "T_world_from_camera": [
+            [
+              0.0,
+              -0.20791169081775934,
+              0.9781476007338056,
+              2.76
+            ],
+            [
+              -1.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              -0.9781476007338057,
+              -0.20791169081775934,
+              0.8500000000000001
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "id": 1,
+          "faces": {
+            "px": "frame0001_cam1_px.png",
+            "nx": "frame0001_cam1_nx.png",
+            "py": "frame0001_cam1_py.png",
+            "ny": "frame0001_cam1_ny.png",
+            "pz": "frame0001_cam1_pz.png"
+          },
+          "T_world_from_camera": [
+            [
+              -1.0,
+              -1.2730919333264157e-17,
+              5.989426641661591e-17,
+              0.75
+            ],
+            [
+              -6.123233995736766e-17,
+              0.20791169081775934,
+              -0.9781476007338056,
+              -1.1
+            ],
+            [
+              0.0,
+              -0.9781476007338057,
+              -0.20791169081775934,
+              1.12
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "id": 2,
+          "faces": {
+            "px": "frame0001_cam2_px.png",
+            "nx": "frame0001_cam2_nx.png",
+            "py": "frame0001_cam2_py.png",
+            "ny": "frame0001_cam2_ny.png",
+            "pz": "frame0001_cam2_pz.png"
+          },
+          "T_world_from_camera": [
+            [
+              1.2246467991473532e-16,
+              0.20791169081775934,
+              -0.9781476007338056,
+              -1.96
+            ],
+            [
+              1.0,
+              -2.5461838666528317e-17,
+              1.1978853283323184e-16,
+              4.0059342843254506e-32
+            ],
+            [
+              0.0,
+              -0.9781476007338057,
+              -0.20791169081775934,
+              0.8500000000000001
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "id": 3,
+          "faces": {
+            "px": "frame0001_cam3_px.png",
+            "nx": "frame0001_cam3_nx.png",
+            "py": "frame0001_cam3_py.png",
+            "ny": "frame0001_cam3_ny.png",
+            "pz": "frame0001_cam3_pz.png"
+          },
+          "T_world_from_camera": [
+            [
+              1.0,
+              -1.2730919333264157e-17,
+              5.989426641661591e-17,
+              0.75
+            ],
+            [
+              -6.123233995736766e-17,
+              -0.20791169081775934,
+              0.9781476007338056,
+              1.1
+            ],
+            [
+              0.0,
+              -0.9781476007338057,
+              -0.20791169081775934,
+              1.12
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "scenario_timestamp_ns": "400000000",
+      "T_world_from_vehicle": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.8
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "cameras": [
+        {
+          "id": 0,
+          "faces": {
+            "px": "frame0002_cam0_px.png",
+            "nx": "frame0002_cam0_nx.png",
+            "py": "frame0002_cam0_py.png",
+            "ny": "frame0002_cam0_ny.png",
+            "pz": "frame0002_cam0_pz.png"
+          },
+          "T_world_from_camera": [
+            [
+              0.0,
+              -0.20791169081775934,
+              0.9781476007338056,
+              3.16
+            ],
+            [
+              -1.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            [
+              0.0,
+              -0.9781476007338057,
+              -0.20791169081775934,
+              0.8500000000000001
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "id": 1,
+          "faces": {
+            "px": "frame0002_cam1_px.png",
+            "nx": "frame0002_cam1_nx.png",
+            "py": "frame0002_cam1_py.png",
+            "ny": "frame0002_cam1_ny.png",
+            "pz": "frame0002_cam1_pz.png"
+          },
+          "T_world_from_camera": [
+            [
+              -1.0,
+              -1.2730919333264157e-17,
+              5.989426641661591e-17,
+              1.15
+            ],
+            [
+              -6.123233995736766e-17,
+              0.20791169081775934,
+              -0.9781476007338056,
+              -1.1
+            ],
+            [
+              0.0,
+              -0.9781476007338057,
+              -0.20791169081775934,
+              1.12
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "id": 2,
+          "faces": {
+            "px": "frame0002_cam2_px.png",
+            "nx": "frame0002_cam2_nx.png",
+            "py": "frame0002_cam2_py.png",
+            "ny": "frame0002_cam2_ny.png",
+            "pz": "frame0002_cam2_pz.png"
+          },
+          "T_world_from_camera": [
+            [
+              1.2246467991473532e-16,
+              0.20791169081775934,
+              -0.9781476007338056,
+              -1.5599999999999998
+            ],
+            [
+              1.0,
+              -2.5461838666528317e-17,
+              1.1978853283323184e-16,
+              4.0059342843254506e-32
+            ],
+            [
+              0.0,
+              -0.9781476007338057,
+              -0.20791169081775934,
+              0.8500000000000001
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "id": 3,
+          "faces": {
+            "px": "frame0002_cam3_px.png",
+            "nx": "frame0002_cam3_nx.png",
+            "py": "frame0002_cam3_py.png",
+            "ny": "frame0002_cam3_ny.png",
+            "pz": "frame0002_cam3_pz.png"
+          },
+          "T_world_from_camera": [
+            [
+              1.0,
+              -1.2730919333264157e-17,
+              5.989426641661591e-17,
+              1.15
+            ],
+            [
+              -6.123233995736766e-17,
+              -0.20791169081775934,
+              0.9781476007338056,
+              1.1
+            ],
+            [
+              0.0,
+              -0.9781476007338057,
+              -0.20791169081775934,
+              1.12
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        }
+      ]
+    }
+  ],
+  "optics_check": {
+    "points": 72,
+    "max_error_px": 3.500387496452451e-05,
+    "threshold_px": 0.001
+  },
+  "scenario_recipe": null,
+  "calibration_board": null,
+  "mount_offsets": [],
+  "nominal_config": {
+    "schema_version": 1,
+    "profile_id": "blender-street-v1",
+    "units": {
+      "length": "m",
+      "angle": "rad",
+      "time": "ns"
+    },
+    "vehicle": {
+      "length_m": 4.6,
+      "width_m": 1.8,
+      "mask_margin_m": 0.1
+    },
+    "cameras": [
+      {
+        "id": 0,
+        "name": "front",
+        "calibration_id": "blender-rig-front-v1",
+        "resolution": {
+          "width": 400,
+          "height": 400
+        },
+        "projection": {
+          "model": "opencv_fisheye",
+          "fx": 128.0,
+          "fy": 128.0,
+          "cx": 199.5,
+          "cy": 199.5,
+          "alpha": 0.0,
+          "k": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "theta_max_rad": 1.48,
+          "z_epsilon_m": 1e-06
+        },
+        "T_camera_from_vehicle": [
+          [
+            0.0,
+            -1.0,
+            0.0,
+            0.0
+          ],
+          [
+            -0.20791169081775934,
+            -0.0,
+            -0.9781476007338057,
+            1.322097050953647
+          ],
+          [
+            0.9781476007338057,
+            0.0,
+            -0.20791169081775934,
+            -2.131703400536686
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        ]
+      },
+      {
+        "id": 1,
+        "name": "right",
+        "calibration_id": "blender-rig-right-v1",
+        "resolution": {
+          "width": 400,
+          "height": 400
+        },
+        "projection": {
+          "model": "opencv_fisheye",
+          "fx": 128.0,
+          "fy": 128.0,
+          "cx": 199.5,
+          "cy": 199.5,
+          "alpha": 0.0,
+          "k": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "theta_max_rad": 1.48,
+          "z_epsilon_m": 1e-06
+        },
+        "T_camera_from_vehicle": [
+          [
+            -1.0,
+            -6.123233995736766e-17,
+            0.0,
+            0.3499999999999999
+          ],
+          [
+            -1.2730919333264157e-17,
+            0.20791169081775934,
+            -0.9781476007338057,
+            1.3242281727213978
+          ],
+          [
+            5.989426641661592e-17,
+            -0.9781476007338057,
+            -0.20791169081775934,
+            -0.843101267091296
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        ]
+      },
+      {
+        "id": 2,
+        "name": "rear",
+        "calibration_id": "blender-rig-rear-v1",
+        "resolution": {
+          "width": 400,
+          "height": 400
+        },
+        "projection": {
+          "model": "opencv_fisheye",
+          "fx": 128.0,
+          "fy": 128.0,
+          "cx": 199.5,
+          "cy": 199.5,
+          "alpha": 0.0,
+          "k": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "theta_max_rad": 1.48,
+          "z_epsilon_m": 1e-06
+        },
+        "T_camera_from_vehicle": [
+          [
+            1.2246467991473532e-16,
+            1.0,
+            -0.0,
+            2.8901664459877536e-16
+          ],
+          [
+            0.20791169081775934,
+            -2.5461838666528314e-17,
+            -0.9781476007338057,
+            1.322097050953647
+          ],
+          [
+            -0.9781476007338057,
+            1.1978853283323184e-16,
+            -0.20791169081775934,
+            -2.131703400536686
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        ]
+      },
+      {
+        "id": 3,
+        "name": "left",
+        "calibration_id": "blender-rig-left-v1",
+        "resolution": {
+          "width": 400,
+          "height": 400
+        },
+        "projection": {
+          "model": "opencv_fisheye",
+          "fx": 128.0,
+          "fy": 128.0,
+          "cx": 199.5,
+          "cy": 199.5,
+          "alpha": 0.0,
+          "k": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "theta_max_rad": 1.48,
+          "z_epsilon_m": 1e-06
+        },
+        "T_camera_from_vehicle": [
+          [
+            1.0,
+            -6.123233995736766e-17,
+            0.0,
+            -0.3499999999999999
+          ],
+          [
+            -1.2730919333264157e-17,
+            -0.20791169081775934,
+            -0.9781476007338057,
+            1.3242281727213978
+          ],
+          [
+            5.989426641661592e-17,
+            0.9781476007338057,
+            -0.20791169081775934,
+            -0.843101267091296
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        ]
+      }
+    ],
+    "surface": {
+      "type": "dome_floor_v1",
+      "dome_radius_m": 12.0,
+      "dome_latitude_cells": 64,
+      "dome_longitude_cells": 128,
+      "floor_radial_cells": 32
+    },
+    "virtual_camera": {
+      "azimuth_rad": 0.8,
+      "elevation_rad": 1.0,
+      "distance_m": 8.5,
+      "fov_y_rad": 1.0,
+      "clip_m": [
+        0.1,
+        100.0
+      ]
+    },
+    "output": {
+      "width": 320,
+      "height": 180
+    },
+    "runtime": {
+      "input_queue_per_camera": 3,
+      "skew_window_ms": 10.0,
+      "max_input_age_ms": 100.0
+    }
+  },
+  "depth_truth": null,
+  "limitations": [
+    "procedural geometry, no real vehicle CAD",
+    "scripted translation, no vehicle physics",
+    "offline render; no sensor noise, rolling shutter or exposure skew",
+    "depth/semantic truth not exported"
+  ],
+  "script_sha256": {
+    "scene.py": "c2f2156fa5ebbd72e9421d754e11f2e0a54de0d034621e8118b86b683c1f929a",
+    "rig.py": "a31f63c433a031ca8a0c8e8645b075f0496c465a8511241389a6d9cd92c38d25",
+    "scenario.py": "95bc1030556376626f00fc416a248c180a183f701ea740151185eb3ed7d2130b",
+    "board_targets.py": "8336a7a051d3a3bbaae55c6b01a89d07995fa51b40fed53d9ecaa7ab145ed5c7",
+    "depth.py": "adc038733709a5d52e00ee08839aba768d50ecf0d1992cbba8d03dc04bc07f24"
+  },
+  "sha256": {
+    "frame0000_cam0_nx.png": "3aace7428a418ff3a65ec61884c269d9c2562f9fadea7c3b1814a031a2a11a3a",
+    "frame0000_cam0_ny.png": "bfbd45258cc51c254f42e857bca7d80a4b46736ad8d20d2acc32ebf1c959367b",
+    "frame0000_cam0_px.png": "7f12257d10efdbad36b1cb3e718dfee00ddabfd7d2733d04f15475e656864916",
+    "frame0000_cam0_py.png": "9493c3200bdad40aad839e6ed04f363f91e70e6952c68fa30bfaf5c4fcf9f188",
+    "frame0000_cam0_pz.png": "17fcf1d3a7fa20fed4f3e72fb14425515325dda5169ced77cb124754a2b84717",
+    "frame0000_cam1_nx.png": "59ccab5bc46b5c693dd09f32a3fc728eb6f4130152943f59a74b599557bfa031",
+    "frame0000_cam1_ny.png": "4506f8eccf822c72c4df87321f471c257c2282ae6219571e2b0ec19337b147ed",
+    "frame0000_cam1_px.png": "6e36e67141a06c248fbc9fffe06fe72f7b3f6c0cc8f3da38e109aaef392bab73",
+    "frame0000_cam1_py.png": "6445686725187aba6f3b2dc46b8931765fee5c76073019304aa2e007668e4c7f",
+    "frame0000_cam1_pz.png": "0efb6c05eb821ce800b1e118a5081d240840c3704046d448e6802116b196c66d",
+    "frame0000_cam2_nx.png": "4cc11be0456d3300107a3a2dccaf93506361df6f904ed3a16d9e24c17b7666d3",
+    "frame0000_cam2_ny.png": "77098bf1751e84c0da74b00b015a8fb1f007a01076b66b91db899f0589bcc23c",
+    "frame0000_cam2_px.png": "05ab12daa62972ad33ef262d406d1e32169aab45eb5c8e5d2c920865aad35f3e",
+    "frame0000_cam2_py.png": "60d73c898c2ce6ef2b69ced6afbc78e61883811b0bf49ba5066e1b046d4059de",
+    "frame0000_cam2_pz.png": "87ec91d2a6bbfa74f8ca389381e457f3e7aa97f9f7dfaa8448060cdef7bb5daa",
+    "frame0000_cam3_nx.png": "3784b3772527f533f68b82bcf35e189eb98473707dbb2c685750335eb51cacbc",
+    "frame0000_cam3_ny.png": "851eba7d067393982eceec6ed4c879d5eef27a6e937b1c460ba84dad58952665",
+    "frame0000_cam3_px.png": "5739ccf7072711972533aeadc6065fe590685725b04d3da3c2bca9f8cb2f5377",
+    "frame0000_cam3_py.png": "4da2cf8ea6c5f4002d8d16bf8fca8b4e843078cde8163cfdcc53565d9bcdde66",
+    "frame0000_cam3_pz.png": "8714fab954066e27e7e7809e36001bafb7cfcddeea9dc64e48fb642203fc3806",
+    "frame0001_cam0_nx.png": "5b166a89cd7e055eac3d7023b77ce6c7f6fda94c671cd4d8e5def74016661ba4",
+    "frame0001_cam0_ny.png": "7de24ae79e4aa317b4cb6210b45bd26b0da345f9ff8024d4979d5b36b707f40c",
+    "frame0001_cam0_px.png": "79617f0466a2b1d4ca59cab3e28c2847ab4fc89cea9a9e7a44df259e1769bb63",
+    "frame0001_cam0_py.png": "3b594fc246ad8943d772d877ca3794ed62f7b4ff8e8bacacbab0886d2cf82a18",
+    "frame0001_cam0_pz.png": "cdceabcc1c726ee12b5cdf2afa007f15ab38c35bf831fa797334d2096ba7f9a7",
+    "frame0001_cam1_nx.png": "32bc30b5733fc62f124cdd908c2475ff36af7019dbccb0b2d52bf9efe8ac8555",
+    "frame0001_cam1_ny.png": "a19260a64971a27820eec973e9a5a7c6dddeff56ddc3b3c2123f1bc278bf3136",
+    "frame0001_cam1_px.png": "650a777f372c578f2ab9cd92e0898746498e32a0c949c7078b1cdb365714c547",
+    "frame0001_cam1_py.png": "aa00e8cc2b516a94b60ead9984d28afd95d0704f79bdf12c2050d1952c94484d",
+    "frame0001_cam1_pz.png": "804e13f10b93c008cb10e4ed377eee0b2382318c677b21873dc159ab7b3bc8df",
+    "frame0001_cam2_nx.png": "cf96c95837f5cc2256594899fc3888b0d8287530816ebdc91999c038830e3a69",
+    "frame0001_cam2_ny.png": "997cb5e9c3725e2ab976e7ad6f722e307fcd0aa9797e6711f704289ac9ea1ffd",
+    "frame0001_cam2_px.png": "a0d6b5a30fc0d830f89c5504ebe6af93a41d783df361be503fdc9e8d8af16560",
+    "frame0001_cam2_py.png": "6ede59b5e2c6e6de3aa01b6987128f2ee5ebd0bd9918ddc156041fabd0c23f81",
+    "frame0001_cam2_pz.png": "b80ea216e9df24882f09d32d9aa7d019224d9ca9871c7b124f41f74c7e36f1b0",
+    "frame0001_cam3_nx.png": "08e258de7533aed1d19809d273ef1a211872ce4693da3e20c88daade7224b994",
+    "frame0001_cam3_ny.png": "86e2d6a71187ca79ee9bcc62f14f2dbfe1d86cc3fef7c1fdeb68951737746249",
+    "frame0001_cam3_px.png": "effb67487d24fd1e89994c9379ec5791161ec33cce4ed0f7227383d2396f0e46",
+    "frame0001_cam3_py.png": "0b7fe8d582d38bd313d52376e8269162c4afb6f7b26883523e70f1c6e5a9da18",
+    "frame0001_cam3_pz.png": "945fba87ee321b9124912b9b11481de3781c092b08d7cdbe245fb65cde5607eb",
+    "frame0002_cam0_nx.png": "a784b8fa6e5ea2728aeb655076386341e49ac2fb70f5e0b14d991c4e2c42cd03",
+    "frame0002_cam0_ny.png": "6def7ec945300f63c7c584b40a54bc603da8313b4cda003d8fab0faab0b79356",
+    "frame0002_cam0_px.png": "6baabd439a9ae88d7953c6720efe8661c4a0244a5b810d62b162eb8fb4b46bcc",
+    "frame0002_cam0_py.png": "5b9c1df130c715e720eb11f0ffc000b2177d7318a5d41994d6054d7fe48ede1d",
+    "frame0002_cam0_pz.png": "ceebc72ed63751e945d3c66826c04f3e04491f1b101c618fe6115ece6b17fbe9",
+    "frame0002_cam1_nx.png": "ee5c4ba2761914061fd1c980a6b90ead198cdb7b58bcb16bb2a3df7497fded1b",
+    "frame0002_cam1_ny.png": "fd764a2009d2e8d6b6f1d9fbcb69ad6e6078640c7ce0610cffae64ad599e2ff2",
+    "frame0002_cam1_px.png": "379eb1ef5ea6a5a2c5c5820fb9d7d4771ab332cc43b5b68e34a256d4edf3f13b",
+    "frame0002_cam1_py.png": "fd3e3f7018a9e8f2d5180f7768fbc72ca1dc1c6878e06b59b0117e882fb4d689",
+    "frame0002_cam1_pz.png": "98127f51545ea1e3c88cb68449c5ae14f8757b0778e351cad761d535387cecfc",
+    "frame0002_cam2_nx.png": "a68f461bd9bddf4aa2c7fc8bceba38a10cf3f5b5c63dea1173e341fbdd3d5714",
+    "frame0002_cam2_ny.png": "8b1af704711b0a1ecabc821f249cdbfd8fe132eaf8149fdb6f1a73d014782ab5",
+    "frame0002_cam2_px.png": "fba4d60f3729d1957e2ff3bd5e05e760de8ce150aba0f9c9abb64d469df9f4a4",
+    "frame0002_cam2_py.png": "becaaeeca95137acb840c57148c2ea661d84c87cae21e503dd54870fcf78b685",
+    "frame0002_cam2_pz.png": "9bfc79b858bc252fa865514a2a935ce2d7f768abe0c436e6a679c63e39d755ce",
+    "frame0002_cam3_nx.png": "81b76c866da7941af8b8727d0d8ad2f5a96df3d1c0f20eb51820e80f92670d37",
+    "frame0002_cam3_ny.png": "c7d9d7b4bed97dabd57281ffcb4499ae98e8a495008dfb542c8dc8afafa30f03",
+    "frame0002_cam3_px.png": "ea86dcba037d454274d0d7dbcc72158132f9e451640a118d0f921ea62cc7bab7",
+    "frame0002_cam3_py.png": "b206f46312288d6693c722a1faed17ddc4f6656784048e56d7b41d45ac89ad9c",
+    "frame0002_cam3_pz.png": "4da287bdbbd9a991d311586f75cc8035cc5e80fd4e195bb670b92c11450fcab3",
+    "overview.png": "d9ef65cff356eaa8c6cd01e92be337acfe70d42c1635a95239191dafda9fca62"
+  }
+}

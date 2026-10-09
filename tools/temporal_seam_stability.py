@@ -189,8 +189,8 @@ def load_sequence(dataset, capture, visibility_policy='ignore'):
     return cfg, images, reference, masks, stamps, poses
 
 
-def run_temporal_analysis(dataset, capture, output, visibility_policy='ignore'):
-    cfg, images, truths, masks, stamps, poses = load_sequence(dataset, capture, visibility_policy)
+def evaluate_sequence(cfg, images, truths, masks, stamps, poses, output):
+    """Evaluate already validated arrays, including explicit camera perturbations."""
     output = Path(output)
     output.mkdir(parents=True, exist_ok=False)
     results = {}
@@ -214,6 +214,13 @@ def run_temporal_analysis(dataset, capture, output, visibility_policy='ignore'):
                 'edges': independent_edge_error(rgb, target, roi)})
             Image.fromarray(rendered[index]['rgb']).save(output/f'{mode}_{index:04d}.png')
         results[mode] = result
+    return results
+
+
+def run_temporal_analysis(dataset, capture, output, visibility_policy='ignore'):
+    cfg, images, truths, masks, stamps, poses = load_sequence(dataset, capture, visibility_policy)
+    results = evaluate_sequence(cfg, images, truths, masks, stamps, poses, output)
+    output = Path(output)
     inputs = {'dataset': str(Path(dataset).resolve()), 'capture': str(Path(capture).resolve())}
     hashes = {str(Path(root)/name): hashlib.sha256((Path(root)/name).read_bytes()).hexdigest()
               for root, names in ((dataset, ('config.json', 'manifest.json', 'ground_truth.json')),
