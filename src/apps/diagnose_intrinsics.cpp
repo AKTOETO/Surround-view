@@ -101,7 +101,7 @@ int diagnose_intrinsics_command(int argc, char **argv)
     }
     const std::string origin(data.at("observation_origin").as_string());
     if (origin != "analytic_truth" && origin != "analytic_truth_float32" &&
-        origin != "detected_raster")
+        origin != "detected_raster" && origin != "controlled_perturbation")
     {
         throw std::invalid_argument("unknown diagnostic observation origin");
     }
