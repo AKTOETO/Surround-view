@@ -131,6 +131,11 @@ def calibrate(cfg, observations, max_validation_px=1.):
 
 
 if __name__=='__main__':
+    if len(sys.argv) > 1 and sys.argv[1] == 'compare-sensitivity':
+        import runpy
+        sys.argv.pop(1)
+        runpy.run_module('calibration.sensitivity_study', run_name='__main__')
+        raise SystemExit(0)
     if len(sys.argv) > 1 and sys.argv[1] == 'diagnose-capture':
         import runpy
         sys.argv.pop(1)
