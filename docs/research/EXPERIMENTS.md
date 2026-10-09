@@ -108,3 +108,7 @@ GPU execution time измерять асинхронными timer queries, CPU 
 ## E-CAL-sensitivity-01 — 10.10.2026
 
 [[validation/CALIBRATION_SENSITIVITY]]: equal-RMS shift_x/radial/tangential/3 seeded random fields; 12 exact baselines +432 perturbed fits. Все 444 diagnostic exports успешны; 216 pair responses, invalid floor count=0. Signed input h=0.2 px может дать actual floor p95≈0.165 м при exact pose-fitted residual<0.06 px. Outputs не прошли gate: gate в серии не исполняется. Protocol [[CALIBRATION_SENSITIVITY_PROTOCOL]] зафиксирован до outcomes; parent scenes уже reviewed/exploratory.
+
+## E-CAL-information-01 — совместная наблюдаемость и uncertainty — 10.10.2026
+
+[[validation/JOINT_CALIBRATION_INFORMATION]]: заранее заданные 12 matched cases (equidistant order 2/4 и `kb_nonzero` order4, два seeds, два front profiles) рассчитаны для exact/detected UV, итого 24 сходящихся joint fits. Полные Jacobian имеют rank 78/78 или 80/80; order4 median condition number ≈1.9× выше order2 при фиксированном scaling. Локальные iid, detector-RMS и 12-view cluster uncertainty расходятся. Переанализ существующих synthetic scenes; не independent evidence и не physical camera uncertainty. Открыты component/pose attribution, robust-fit/noise ablations и физические captures. Frozen protocol [[CALIBRATION_JOINT_INFORMATION_PROTOCOL]].

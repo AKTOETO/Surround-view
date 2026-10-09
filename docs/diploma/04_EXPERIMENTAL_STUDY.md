@@ -1119,11 +1119,54 @@ Shift_x — analytic control: matched модель поглощает общий
 
 Все reports, signed estimates, 216 responses, hashes и полная таблица h=0.05: [[validation/CALIBRATION_SENSITIVITY]]. Иллюстрации строит `plot_calibration_sensitivity.py` рядом с главой. 7 новых regression tests и все 11 выбранных CTest suites проходят.
 
+## 4.36 Полный совместный Jacobian и условная неопределённость
+
+Шесть направленных полей предыдущего опыта измеряли конечный отклик только вдоль выбранных возмущений; они не давали полного ранга наблюдений и не отделяли корреляцию intrinsics с неизвестными позами шаблона. Для следующего шага E-CAL-information-01 построен полный Jacobian одной совместной задачи: камера и 12 board poses являются неизвестными одновременно. Протокол зафиксирован в [[research/CALIBRATION_JOINT_INFORMATION_PROTOCOL]] до вычисления этой серии. Это повторный анализ E-CAL-capture-01/E-CAL-diagnostic-01, поэтому он exploratory и не является новой holdout-выборкой.
+
+Сопоставлены 12 matched cases: equidistant KB polynomial order 2 и 4, а также `kb_nonzero` order 4; в каждом по два pose seeds и профиля `small_front`/`large_front`. Каждый case анализируется по точным синтетическим углам и по углам, обнаруженным OpenCV на растровом шаблоне. Таким образом, выполнено 24 joint fits. В каждом наборе 12 board views, 54 точки на доску и 1296 скалярных координатных residuals. Intrinsics имеют 6 параметров для order 2 и 8 для order 4; ещё 72 параметра описывают 12 отдельных поз.
+
+Пусть вектор наблюдений $y$ состоит из $(u,v)$ координат каждого угла, а модель $f(\theta)$ использует общие $f_x,f_y,c_x,c_y,k_i$ и отдельную позу $(R_g,t_g)$ для доски $g$. В точке найденного минимума вычисляется полный якобиан
+
+$$J_{ij}=\frac{\partial f_i(\theta)}{\partial\theta_j},\qquad r=y-f(\hat\theta).$$
+
+Каждый блок residual зависит от общих intrinsics и только от pose своей доски, поэтому конечные разности используют разреженную структуру. Для анализа выполняется SVD нормированного Jacobian $J=U\Sigma V^T$; малые singular values показывают направления совместного изменения камеры и board poses, которые слабо различаются в этих наблюдениях. Чтобы не смешивать физические единицы, increments были масштабированы как $df_x/300$, $df_y/295$, $dc_x/640$, $dc_y/480$, $dk_i/1$; pose rotation задана в радианах, translation — в метрах. Condition number ниже относится именно к этому выбранному масштабированию.
+
+| KB polynomial | Наблюдения | Размер Jacobian | Медиана cond(J) | Диапазон | Ранг |
+|---|---|---:|---:|---:|---:|
+| order 2 | exact | 1296×78 | 2918.5 | 1874.3–4805.3 | 78/78 |
+| order 2 | OpenCV detected | 1296×78 | 2934.6 | 1873.4–4804.2 | 78/78 |
+| order 4 | exact | 1296×80 | 5611.8 | 3804.5–7760.3 | 80/80 |
+| order 4 | OpenCV detected | 1296×80 | 5590.5 | 3824.2–7578.3 | 80/80 |
+
+В проверенных позах полный ранг достигнут при машинном и практическом относительном пороге $10^{-10}$. Медианный condition number у order 4 примерно в 1.9 раза больше, чем у order 2, то есть добавленные коэффициенты в этих данных слабее отделимы от остальных параметров. При этом спектры exact/detected близки: размер локального Jacobian характеризует геометрию параметризации около решения, а не ошибку локализации сам по себе. Ни полный ранг, ни его значение не гарантируют точности вне выбранных synthetic poses.
+
+![Спектр полного Jacobian](figures/experiments/joint_calibration_singular_spectrum.png)
+
+*Рисунок 4.40 — Медианный normalized singular spectrum совместных intrinsics и 12 nuisance poses; закрашена межквартильная область по matched cases. Отдельные панели имеют разное число столбцов, а все singular values зависят от объявленных parameter scales.*
+
+Для локальной ковариации использовано приближение
+
+$$\widehat{\mathrm{Cov}}(\hat\theta)=\hat\sigma^2(J^TJ)^{-1}.$$
+
+Сначала $\hat\sigma^2=RSS/(m-p)$ оценивает общую дисперсию scalar residuals и предполагает их независимость с одинаковой дисперсией. Во второй оценке covariance масштабируется не fit residual, а известным detector RMS относительно synthetic truth: $\sigma_{det}=\sqrt{\mathrm{mean}((u_{det}-u_{true})^2+(v_{det}-v_{true})^2)/2}$. Это проверяет влияние заданного масштаба шумовой модели, но не объявляет detector errors iid. В третьей оценке углы группируются по одной доске: $A(\sum_g s_gs_g^T)A$, где $A=(J^TJ)^{-1}$, $s_g=J_g^Tr_g$; добавлена поправка на конечное число 12 кластеров. Локальные стандартные ошибки представлены только для intrinsics, после преобразования параметров в пиксели/коэффициенты.
+
+Для detector RMS получен диапазон 0.093–0.197 px. При `small_front` медианная локальная ошибка $f_x$ по detector-scaled iid covariance равна 1.54 px/order2 и 1.55 px/order4; для `large_front` — 0.70 и 0.75 px. Кластерная оценка для тех же групп составляет соответственно 1.69, 1.18, 1.48 и 1.06 px. Эти оценки расходятся и между моделями, и между предположениями о шуме. Более широкий front-профиль в этой серии снижал медианную iid неопределённость, но cluster estimate не всегда повторял это улучшение. Поэтому вывод о точности зависит не только от RMS детектора и одного residual summary, но и от независимой экспериментальной единицы/структуры корреляции.
+
+![Сравнение локальных оценок неопределённости intrinsics](figures/experiments/joint_calibration_intrinsic_uncertainty.png)
+
+*Рисунок 4.41 — Медиана и межквартильный диапазон локальных standard errors $f_x,f_y,c_x,c_y$ на detector observations. Синий — covariance при заданном detector RMS и iid предположении; оранжевый — view-cluster sandwich по 12 синтетическим доскам.*
+
+Exact truth даёт максимальное отклонение восстановленных $f_x,f_y,c_x,c_y$ 6.7×10⁻⁹, а residual-based sigma практически нулевая. Это численный пол идеальной synthetic генерации, а не измерение uncertainty физической камеры. На detector observations fixed-pose held-out corner RMSE имел медиану 0.985 px для `small_front` и 0.834 px для `large_front`; median floor RMSE составил 0.0385 и 0.0131 м. Внутри 12 synthetic cases покрытие улучшалось в среднем, но разброс между seed/family заметен, а независимых сцен здесь нет.
+
+Оценки являются локальным линейным приближением у найденного nonlinear least-squares минимума. Они не включают неточность размера и плоскостности target, неточность автомобиля/extrinsics, nonradial optics, temporal/exposure effects, selection bias detector и физическую корреляционную модель ошибок. При 12 досках cluster sandwich — диагностика, не гарантия покрытия. Теория least-squares требует явных residual/error assumptions; см. [SciPy `least_squares`](https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.least_squares.html), [NIST nonlinear least-squares reference data](https://www.itl.nist.gov/div898/strd/nls/data/LINKS/c-kirby2.shtml) и [обсуждение residual/error assumptions NIST](https://www.itl.nist.gov/div898/handbook/pmd/section1/pmd142.htm). Результат не используется как production threshold и не обновляет server config.
+
+Полная таблица по 12 cases, все intrinsic covariance/correlation matrices, четыре weakest modes, validation metrics, hashes и команды приведены в [[validation/JOINT_CALIBRATION_INFORMATION]]. Реализация и проверки находятся в `tools/calibration/joint_information.py`, `tools/calibration/information_study.py`, `tests/test_joint_information.py`; следующий этап — signed component/pose attribution, robust fit и raster blur/noise ablations, nonradial/extrinsic stress, физические targets и independent validation split. Эти результаты закрывают только пункт full Jacobian/spectrum и предварительной conditional uncertainty из TODO.
+
 ## Предварительные выводы по четвёртой главе
 
 1. **Экспериментальная инфраструктура сшивки:** реализованы offline-варианты fusion и carrier matrix; исправленные binary graph-cut и output proxies проверены на fixtures, добавлен парный 3-frame Blender clip (§4.25). Качество методов на holdout scenes и object-correspondence ghost truth пока не подтверждено.
 2. **Scene Truth/GPU checks:** получены числа на конкретном синтетическом fixture и CPU/GPU sample. Они характеризуют только этот тест и не заменяют испытания реальной сцены/камер.
-3. **Калибровочное ядро:** реализованы синтетические эксперименты Joint Bundle Adjustment и server calibration gate. Сопоставление моделей и пороги требуют независимых данных; историческая jitter-модель не оценивает detector, новые image-based серии выполняют OpenCV на синтетических PNG (§4.29, §4.31–4.35); peripheral views уменьшают часть ошибок экстраполяции, но ни angular coverage, ни конкретная комбинация размера/наклона не гарантируют точной реконструкции плоскости.
+3. **Калибровочное ядро:** реализованы синтетические эксперименты Joint Bundle Adjustment и server calibration gate. Сопоставление моделей и пороги требуют независимых данных; историческая jitter-модель не оценивает detector, новые image-based серии выполняют OpenCV на синтетических PNG (§4.29, §4.31–4.36). Full joint Jacobian имеет полный ранг на 12 selected cases; order 4 имеет худшую обусловленность, а локальная uncertainty зависит от принятой covariance model. Peripheral views уменьшают часть ошибок экстраполяции, но ни angular coverage, ни конкретная комбинация размера/наклона не гарантируют точной реконструкции плоскости.
 
 Таким образом, перечислены достигнутые этапы реализации и проверок на синтетике; качество сшивки, перенос на физическую оптику и физическая обоснованность Quality Gate остаются открытыми.
 

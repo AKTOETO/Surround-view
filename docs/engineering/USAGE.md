@@ -500,3 +500,16 @@ ctest --test-dir build -R 'calibration_sensitivity|intrinsic_diagnostics|vision_
 Если parent отсутствует, восстановите capture/diagnostic из предыдущих разделов. Для нового parent передайте соответствующий capture `summary.json` через `--capture-summary`: его hash должен совпадать с parent diagnostic metadata. Output новый. Требуются NumPy/SciPy/Pillow/Matplotlib и C++ OpenCV binary, без Python cv2/Blender. Исторические hashes требуют соответствующего numerical core/toolchain. Во время запуска не изменяйте source/binary/parent datasets.
 
 По умолчанию объявленная matched-model серия создаёт 444 diagnostic reports и 216 signed pair responses. Artificial UV имеют origin `controlled_perturbation`, не помечаются как detector/analytic observations. Gate/конфиг не меняются. Величина h — global RMS длины 2D input error; gains имеют единицы px/px или м/px и не являются condition number или actual per-fit error. Протокол: [[research/CALIBRATION_SENSITIVITY_PROTOCOL]], результаты: [[validation/CALIBRATION_SENSITIVITY]].
+
+## Совместный Jacobian и неопределённость калибровки
+
+Воспроизвести заранее заданные 12 matched cases (24 joint fits) из frozen capture/diagnostic datasets:
+
+```bash
+python3 tools/configurator.py compare-information --output artifacts/calibration-joint-information-repeat
+MPLCONFIGDIR=/tmp/sv-mpl python3 docs/diploma/plot_joint_information.py --results artifacts/calibration-joint-information-repeat
+python3 tests/test_joint_information.py
+ctest --test-dir build -R 'joint_calibration_information|intrinsic_diagnostics|calibration_sensitivity' --output-on-failure
+```
+
+Нужны Python NumPy/SciPy/Matplotlib; solver запускается из sparse finite-difference least squares. `--output` должен указывать на новую папку. Summary хранит каждый полный singular spectrum, weakest right modes, conditional covariance/correlation, validation controls и SHA-256 Jacobian/input/source hashes. Входы из `artifacts/calibration-diagnostic-v2` и capture baseline не изменяются; ни production calibration gate, ни server config не задействованы. Exact-truth residual sigma является численным полом синтетической генерации. Detector-RMS covariance предполагает iid scaling и не доказывает iid detector error; cluster sandwich имеет только 12 synthetic views. Не использовать эти local standard errors как target-platform confidence limits или порог допуска. Теория/результаты/границы: [[research/CALIBRATION_JOINT_INFORMATION_PROTOCOL]], [[validation/JOINT_CALIBRATION_INFORMATION]].
