@@ -1,5 +1,6 @@
 #include "board_observations.hpp"
 #include "calibrate_extrinsics.hpp"
+#include "diagnose_intrinsics.hpp"
 #include "sv/report.hpp"
 #include "sv/vision.hpp"
 #include <cmath>
@@ -59,9 +60,14 @@ int main(int argc, char **argv)
         if (argc < 2)
         {
             throw std::runtime_error(
-                "usage: sv-calibrate detect|intrinsics|extrinsics|board-observations [options]");
+                "usage: sv-calibrate "
+                "detect|intrinsics|extrinsics|board-observations|diagnose-intrinsics [options]");
         }
         const std::string mode = argv[1];
+        if (mode == "diagnose-intrinsics")
+        {
+            return diagnose_intrinsics_command(argc, argv);
+        }
         if (mode == "extrinsics")
         {
             return calibrate_extrinsics_command(argc, argv);
