@@ -424,3 +424,9 @@ build/sv-calibrate intrinsics --dataset artifacts/calibration-raster-repeat/2402
 ```
 
 `--distortion-order` принимает строго `2` или `4`, default `4`. Профиль `2` фиксирует k3/k4=0 при оценивании k1/k2; p95 gate и monotonicity checks сохраняются. Ошибка не приводит к автоматическому fallback или ослаблению проверок. Выбор порядка требует собственных validation данных. Полный протокол, ограничения и фактические отказы: [[validation/RASTER_CALIBRATION]]. Python cv2 не требуется, используется production C++ OpenCV бинарный файл.
+
+## Provenance для серверной calibration job
+
+Асинхронная SV01 команда `calibrate` требует `provenance.dataset_id`, массивы `training.observation_ids/frame_ids` и `validation.observation_ids/frame_ids` той же длины/порядка, что XYZ/UV. Frame IDs двух split не должны пересекаться; для разных углов одного снимка frame ID одинаковый, observation IDs разные. Не назначайте новые frame IDs crop/augmentation одного исходного снимка. Exact копии соответствий отклоняются даже с новыми labels. При отсутствии metadata сервер возвращает `calibration_provenance_required`; это намеренное ужесточение calibration контракта, capability `calibration_provenance_v1` объявляется в handshake.
+
+Форма JSON, причины отказа и audit в status: [[engineering/PROTOCOL_IMPLEMENTED]], тесты и пределы гарантии: [[validation/CALIBRATION_PROVENANCE]]. Offline CLI `sv-calibrate intrinsics/extrinsics` этим wire изменением не затронут. Generic command API `sv-client-lib` передаёт metadata как JSON; typed calibration service остаётся дальнейшей задачей.

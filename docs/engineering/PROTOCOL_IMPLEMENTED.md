@@ -76,11 +76,37 @@ end note
   "points": [[1.0, 0.2, 0.1], [2.0, -0.4, 0.2]],
   "pixels": [[413.2, 250.1], [382.0, 214.4]],
   "validation_points": [[1.5, 0.1, 0.4], [3.0, 0.7, 0.2]],
-  "validation_pixels": [[400.0, 230.0], [355.0, 190.0]]
+  "validation_pixels": [[400.0, 230.0], [355.0, 190.0]],
+  "provenance": {
+    "dataset_id": "survey-2026-10-10",
+    "training": {
+      "observation_ids": ["front-f0001-c00", "front-f0001-c01"],
+      "frame_ids": ["front-f0001", "front-f0001"]
+    },
+    "validation": {
+      "observation_ids": ["front-f0020-c00", "front-f0020-c01"],
+      "frame_ids": ["front-f0020", "front-f0020"]
+    }
+  }
 }
 ```
 
-Фактически сервер требует не менее шести train и шести независимых validation соответствий; координаты точек имеют три конечные метрические компоненты, пиксели — две. Пример выше показывает только форму и намеренно не является исполняемым минимумом. Источник, единицы, независимое измерение, detector, hashes observations и распределение поз остаются обязанностью вызывающего инструмента. GUI не должен генерировать псевдоизмерения.
+Фактически сервер требует 6..10000 train и validation соответствий и обязательный `provenance`; координаты точек имеют три конечные метрические компоненты, пиксели — две. Пример выше показывает только форму и намеренно не является исполняемым минимумом. Источник, единицы, независимое измерение, detector, hashes observations и распределение поз остаются обязанностью вызывающего инструмента. GUI не должен генерировать псевдоизмерения.
+
+С 10.10.2026 handshake объявляет capability `calibration_provenance_v1`. Старые calibration requests без provenance отклоняются с `calibration_provenance_required`; транспорт SV01 и остальные команды сохраняют формат. Ограничение 10000 — лимит менеджера; фактический SV01 header limit 64 KiB дополнительно ограничивает размер wire запроса. Для каждого split `observation_ids` и `frame_ids` идут в том же порядке, что XYZ/UV, с той же длиной. IDs — 1..128 ASCII символов `[A-Za-z0-9._:/-]`, непрозрачные токены, не пути к серверным файлам. `dataset_id` обозначает набор; observation ID уникален во всём запросе. Несколько углов одного кадра имеют разные observation IDs и одинаковый frame ID. Исходный frame ID должен сохраняться при crop/augmentation/re-detection, иначе клиент скрывает пересечение данных.
+
+До выделения job ID/queue сервер проверяет:
+
+- размеры metadata, конечность XYZ/UV и valid pixels;
+- уникальность observation IDs внутри и между split;
+- отсутствие общих frame IDs между train/validation;
+- отсутствие точных копий `(X,Y,Z,u,v)` внутри и между split независимо от IDs.
+
+Одна физическая XYZ точка в разных кадрах с различными UV допустима. Погрешность сравнения exact-content равна нулю; signed zero считается одинаковым. Near duplicates или произвольно изменённые labels не распознаются этой проверкой. Присланные клиентом IDs не аутентифицируют снимки и не доказывают статистическую независимость.
+
+ACK принятой calibration job и `calibration_status` возвращают `validation_policy="client_declared_frames_and_exact_content_disjoint"`. Status дополнительно содержит `dataset_id`, `training_observations`, `validation_observations`, `training_frames`, `validation_frames` во всех состояниях job. В job сохраняется компактная сводка, а не исходные metadata arrays; оригинальный dataset/request клиент должен архивировать сам. Пороговые gate значения 3/8 px остаются предварительными.
+
+Явные причины reject: `calibration_provenance_required`, `calibration_provenance_size_mismatch`, `calibration_provenance_invalid_id`, `calibration_duplicate_observation_id`, `calibration_train_validation_frame_overlap`, `calibration_duplicate_correspondence`, `calibration_invalid_correspondence`, `calibration_nonfinite_correspondence`. Некорректные JSON типы/отсутствующие вложенные поля также отклоняются, но текст исключения JSON parser не является стабильным error code. Проверки и пределы: [[validation/CALIBRATION_PROVENANCE]].
 
 ```plantuml
 @startuml
@@ -93,8 +119,13 @@ participant "ConfigStore + Renderer" as R
 U -> A : запустить calibrate с train и held-out observations
 A -> L : command(calibrate, data)
 L -> S : type 20
-S -> J : submit(owner_session, base_revision)
-S --> A : type 21 accepted + job_id
+S -> J : validate IDs / frame split / exact content
+alt malformed or overlapping observations
+  J --> S : reject before enqueue
+  S --> A : type 21 accepted=false + reason
+else disjoint declared inputs
+  S -> J : submit(owner_session, base_revision)
+S --> A : type 21 accepted + job_id + validation_policy
 loop пока job выполняется
   A -> L : calibration_status(job_id)
   L -> S : type 20
@@ -113,8 +144,11 @@ else оператор применяет результат
   R --> S : commit либо reject; старое состояние при ошибке
   S --> A : type 21 applied/reject + state_revision
 end
+end
 @enduml
 ```
+
+*Рисунок — Calibration workflow: reject до enqueue, status и отдельное применение только для созданной job.*
 
 ## Метаданные и гарантии
 

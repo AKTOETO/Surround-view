@@ -104,3 +104,7 @@ stop
 ## Image-based проверка вместо jitter-модели — 10.10.2026
 
 [[validation/RASTER_CALIBRATION]] выполняет production OpenCV detector/solver на 96 raster images и сравнивает two/four-coefficient fisheye fits. Исторический `real_data_calibration_evaluation.py` теперь возвращает явные false detector/solver flags и unvalidated threshold status. `num_trials` удалён, поскольку раньше игнорировался. PNG experiment обнаружил немонотонные fits и focal errors около 2.5% при принятом p95<1 px. Отдельная board pose на validation не заменяет метрический контроль intrinsics/монтажа; multi-family optics, physical observations и false accept/reject остаются открытыми.
+
+## Проверка разделения данных на сервере
+
+[[validation/CALIBRATION_PROVENANCE]]: calibration job требует dataset/observation/frame IDs. Server-side validator исключает duplicate observation IDs, frame overlap и точные XYZ/UV copies до solver. Status сохраняет compact split audit. Эти проверки уменьшают очевидную утечку training в validation, но не аутентифицируют labels и не исключают зависимость соседних кадров. Требуются registry с content hashes, группировка по acquisition/scene/clip и заранее заданный split. Нельзя выдавать client-declared disjoint frames за доказанную независимую выборку.

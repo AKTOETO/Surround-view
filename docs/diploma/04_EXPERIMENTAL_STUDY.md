@@ -868,6 +868,42 @@ $$I_i'=\mathrm{sRGB}\bigl(\mathrm{clip}(2^{EV_i}\,\mathrm{sRGB}^{-1}(I_i),0,1)\b
 
 Серия проверяет реально выполняемый image→detector→solver путь и диагностируемые отказы. Это синтетические изображения одной optical family, не физические снимки и не независимая подтверждающая выборка. Требуются outer-angle coverage, другие optical families, метрические параметры монтажа и false-accept/false-reject протокол. Числа, hashes, параметры, stderr и reproducibility: [[validation/RASTER_CALIBRATION]].
 
+## 4.30 Контроль утечки обучающих наблюдений в серверную validation
+
+Даже настоящий detector/solver не обеспечивает достоверную проверку, если клиент повторно передаёт training observations как validation. Исправлен серверный контракт: обязательны dataset ID, уникальные observation IDs и исходные frame IDs каждого соответствия. Проверка выполняется до enqueue/выделения job ID и доступна также при прямом C++ вызове менеджера.
+
+| Случай | Прежнее поведение входного контракта | Текущая проверка |
+|---|---|---|
+| Один ID в train/validation | IDs отсутствовали | Reject до enqueue |
+| Разные углы одного кадра распределены между split | Происхождение не проверялось | Reject по общему frame ID |
+| Точная копия XYZ/UV под новыми IDs | Могла попасть в обе выборки | Reject по содержимому |
+| Одна XYZ точка в разных кадрах с разными UV | Допустима | Остаётся допустимой |
+| Новые labels и немного изменённые координаты | Происхождение не проверялось | Гарантии нет: требуется registry/hash/group split |
+
+```plantuml
+@startuml
+start
+:Client: XYZ/UV + dataset / observation / frame IDs;
+:Server: dimensions, finite values, metadata IDs;
+if (Duplicate observation / frame overlap / exact copy?) then (yes)
+  :Reject, no job ID or config change;
+  stop
+else (no)
+  :Enqueue with compact split audit;
+  :Fit train, evaluate declared validation;
+  :Report policy + metrics + frame counts;
+endif
+:Apply only after ownership / quality / revision checks;
+stop
+@enduml
+```
+
+*Рисунок 4.28 — Проверка входного split перед калибровкой. Отсутствие точной копии не означает независимость исходных измерений.*
+
+11 GTest tests проверяют валидные и некорректные наборы, включая переименованную копию, пересечение frame IDs и non-finite coordinates. Unix SV01 integration выполняет четыре отрицательных запроса, затем успешный job/status цикл. Все четыре отказа происходят до создания job; следующий корректный запрос получает первый job ID. Existing manager tests дополнительно проверяют сохранение audit при completion и прежние ownership/gate/revision/cancellation свойства.
+
+Wire status объявляет policy `client_declared_frames_and_exact_content_disjoint`, не «доказанно независимые данные». Сервер пока не хранит verified raw capture registry, не проверяет client labels по изображениям и не исключает корреляцию соседних кадров. Эти ограничения остаются частью требований к подтверждающей серии. Новый обязательный metadata контракт обнаруживается по capability `calibration_provenance_v1`; старые requests без provenance отклоняются. Подробности и воспроизведение — [[validation/CALIBRATION_PROVENANCE]].
+
 ## Предварительные выводы по четвёртой главе
 
 1. **Экспериментальная инфраструктура сшивки:** реализованы offline-варианты fusion и carrier matrix; исправленные binary graph-cut и output proxies проверены на fixtures, добавлен парный 3-frame Blender clip (§4.25). Качество методов на holdout scenes и object-correspondence ghost truth пока не подтверждено.
