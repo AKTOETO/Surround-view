@@ -1,4 +1,5 @@
 """Independent inverse-ray checkerboard rasterizer: synthetic images, no corner jitter."""
+from functools import lru_cache
 import numpy as np
 from scipy.ndimage import gaussian_filter
 from scipy.spatial.transform import Rotation
@@ -14,30 +15,42 @@ def poses(seed, count=16):
              rng.uniform([-.28, -.22, .8], [.28, .22, 1.35])) for _ in range(count)]
 
 
-def corners(rotation, translation):
+def corners(rotation, translation, optics=None):
     x, y = np.meshgrid(np.arange(9)*.08-.32, np.arange(6)*.08-.2)
     points = np.stack([x.ravel(), y.ravel(), np.zeros(54)], axis=-1)
     points = points @ rotation.T + translation
     radius = np.linalg.norm(points[:, :2], axis=1)
     theta = np.arctan2(radius, points[:, 2])
-    scale = np.divide(theta, radius, out=np.ones_like(radius), where=radius > 1e-14)
+    distorted = theta if optics is None else optics.radius(theta)
+    scale = np.divide(distorted, radius, out=np.ones_like(radius), where=radius > 1e-14)
     return points[:, :2]*scale[:, None]*[K[0,0], K[1,1]]+[K[0,2], K[1,2]]
 
 
-def image(rotation, translation, blur=0., noise=0., seed=0, supersampling=2):
-    """Equidistant optics, plane intersection, box pixel integration, then blur/noise."""
-    if supersampling not in (1, 2, 4) or blur < 0 or noise < 0:
-        raise ValueError('unsupported raster/perturbation parameters')
+@lru_cache(maxsize=8)
+def optical_rays(optics, supersampling):
     w, h = SIZE
     yy, xx = np.mgrid[:h*supersampling, :w*supersampling]
     x = ((xx+.5)/supersampling-.5-K[0,2])/K[0,0]
     y = ((yy+.5)/supersampling-.5-K[1,2])/K[1,1]
-    theta = np.hypot(x,y)
-    scale = np.divide(np.sin(theta), theta, out=np.ones_like(theta), where=theta > 1e-14)
-    rays = np.stack([x*scale, y*scale, np.cos(theta)], axis=-1)
+    radius = np.hypot(x,y)
+    theta = radius if optics is None else optics.inverse(radius)
+    # x/y are distorted radius coordinates; direction needs their unit azimuth.
+    azimuth_scale = np.divide(np.sin(theta),radius,out=np.ones_like(radius),where=radius>1e-14)
+    rays = np.stack([x*azimuth_scale,y*azimuth_scale,np.cos(theta)],axis=-1)
+    rays.flags.writeable = False
+    return rays
+
+
+
+def image(rotation, translation, blur=0., noise=0., seed=0, supersampling=2, optics=None):
+    """Inverse optical rays, plane intersection, box integration, blur/noise."""
+    if supersampling not in (1, 2, 4) or blur < 0 or noise < 0:
+        raise ValueError("unsupported raster/perturbation parameters")
+    w,h = SIZE
+    rays = optical_rays(optics,supersampling)
     normal = rotation[:,2]
     denominator = rays @ normal
-    distance = np.divide(translation @ normal, denominator, out=np.full_like(theta, -1.),
+    distance = np.divide(translation @ normal, denominator, out=np.full(rays.shape[:2], -1.),
                          where=np.abs(denominator) > 1e-12)
     local = (rays*distance[...,None]-translation) @ rotation
     # Inner intersections are grid coordinates (0..8, 0..5); include an outer square border.
