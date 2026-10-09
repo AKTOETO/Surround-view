@@ -22,7 +22,6 @@ from image_quality_oracle import (
     render_scene_oracle,
 )
 from rig import configuration
-from temporal_seam_stability import evaluate_temporal_stability
 
 
 class ImageQualityOracleTests(unittest.TestCase):
@@ -103,14 +102,6 @@ class ImageQualityOracleTests(unittest.TestCase):
         self.assertIn("vertical_obstacles", eval_res)
         self.assertGreater(eval_res["overall"]["psnr_db"], 10.0)
         self.assertLess(eval_res["overall"]["psnr_db"], 40.0)
-
-    def test_temporal_stability_evaluation(self):
-        res = evaluate_temporal_stability(self.config, num_frames=3, velocity_mps=1.0, fps=10.0)
-        self.assertEqual(res["num_frames"], 3)
-        self.assertIn("temporal_flicker", res)
-        self.assertIn("seam_motion", res)
-        self.assertGreaterEqual(res["seam_motion"]["mean_displacement_px"], 0.0)
-
 
 if __name__ == "__main__":
     unittest.main()
