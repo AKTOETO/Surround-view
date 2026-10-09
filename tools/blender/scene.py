@@ -241,13 +241,14 @@ def check_optics(scene):
 
 
 def capture(scene, output, frames=2, face_size=256, start_frame=0, calibration_boards=False,
-            depth_truth=False):
+            depth_truth=False, frame_step=1):
     """Render all optical centers at exactly the same scenario pose per row.
 
     Write completion metadata only after every requested image was saved.
     Existing output directories are rejected to avoid mixing datasets.
     """
-    if not 1 <= frames <= 300 or not 32 <= face_size <= 2048 or start_frame < 0:
+    if (not 1 <= frames <= 300 or not 32 <= face_size <= 2048 or start_frame < 0
+            or not isinstance(frame_step, int) or frame_step < 1):
         raise ValueError("frames=1..300, face_size=32..2048, start_frame>=0 required")
     output = Path(output).resolve()
     optics_check = check_optics(scene)
@@ -274,7 +275,7 @@ def capture(scene, output, frames=2, face_size=256, start_frame=0, calibration_b
     depth_state = depth_tools.attach_depth_output(scene, depth_dir) if depth_truth else None
     rows = []
     for index in range(frames):
-        frame = start_frame + index
+        frame = start_frame + index * frame_step
         pose = vehicle_pose(frame)
         ego.matrix_world = Matrix(pose.tolist())
         scene.frame_set(frame + 1)
