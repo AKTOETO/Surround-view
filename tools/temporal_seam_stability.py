@@ -54,7 +54,7 @@ def evaluate_temporal_stability(frames, truths, weights, validity, masks, timest
     This metric cannot alone distinguish ghost trails, seam jumps and geometry error.
     RGB must be finite floats in [0,1]; masks define common non-ego object interiors.
     """
-    frames, truths = np.asarray(frames), np.asarray(truths)
+    frames, truths = np.asarray(frames, float), np.asarray(truths, float)
     masks = np.asarray(masks, bool)
     n = len(frames)
     if (n < 2 or frames.shape != truths.shape or frames.ndim != 4
@@ -114,11 +114,27 @@ def _verified(root, name, hashes):
     return path
 
 
-def load_sequence(dataset, capture):
+def visibility_mask(bits, policy):
+    """Independent scene-point visibility, separate from carrier projection validity."""
+    bits = np.asarray(bits)
+    if bits.dtype != np.uint8 or np.any(bits > 15):
+        raise ValueError('visibility must be uint8 camera bits 0..15')
+    if policy == 'any':
+        return bits != 0
+    if policy == 'all':
+        return bits == 15
+    if policy == 'ignore':
+        return np.ones(bits.shape, bool)
+    raise ValueError('visibility policy must be ignore, any or all')
+
+
+def load_sequence(dataset, capture, visibility_policy='ignore'):
     dataset, capture = Path(dataset).resolve(), Path(capture).resolve()
     cfg = json.loads((dataset/'config.json').read_text())
     manifest = json.loads((dataset/'manifest.json').read_text())
     truth = json.loads((capture/'paired_truth.json').read_text())
+    if visibility_policy not in ('ignore', 'any', 'all'):
+        raise ValueError('visibility policy must be ignore, any or all')
     if truth['config'] != cfg:
         raise ValueError('paired truth configuration does not match camera dataset')
     capture_digest = hashlib.sha256((capture/'capture.json').read_bytes()).hexdigest()
@@ -159,14 +175,22 @@ def load_sequence(dataset, capture):
         # Remove ego, background and two pixels on both sides of every object boundary.
         boundary = (ndi.maximum_filter(labels, size=3) != ndi.minimum_filter(labels, size=3))
         roi = (labels != 0) & ~np.isin(labels, truth['ego_object_ids'])
-        masks.append(roi & ~ndi.binary_dilation(boundary, iterations=2))
+        roi &= ~ndi.binary_dilation(boundary, iterations=2)
+        if visibility_policy != 'ignore':
+            if 'visibility' not in target:
+                raise ValueError('requested visibility policy requires independent camera visibility truth')
+            bits = np.load(_verified(capture, target['visibility'], truth['sha256']), allow_pickle=False)
+            if bits.shape != labels.shape:
+                raise ValueError('visibility dimensions mismatch')
+            roi &= visibility_mask(bits, visibility_policy)
+        masks.append(roi)
         stamps.append(target['scenario_timestamp_ns'])
         poses.append(target['T_world_from_vehicle'])
     return cfg, images, reference, masks, stamps, poses
 
 
-def run_temporal_analysis(dataset, capture, output):
-    cfg, images, truths, masks, stamps, poses = load_sequence(dataset, capture)
+def run_temporal_analysis(dataset, capture, output, visibility_policy='ignore'):
+    cfg, images, truths, masks, stamps, poses = load_sequence(dataset, capture, visibility_policy)
     output = Path(output)
     output.mkdir(parents=True, exist_ok=False)
     results = {}
@@ -197,7 +221,7 @@ def run_temporal_analysis(dataset, capture, output):
               for name in names}
     code_hashes = {name: hashlib.sha256(Path(__file__).with_name(name).read_bytes()).hexdigest()
                    for name in ('temporal_seam_stability.py', 'reference.py', 'fusion.py', 'stitch_metrics.py')}
-    report = {'schema_version': 2, 'inputs': inputs, 'input_sha256': hashes,
+    report = {'schema_version': 2, 'inputs': inputs, 'visibility_policy': visibility_policy, 'input_sha256': hashes,
               'code_sha256': code_hashes, 'results': results}
     (output/'temporal_stability.json').write_text(json.dumps(report, indent=2, allow_nan=False)+'\n')
     return report
@@ -208,5 +232,7 @@ if __name__ == '__main__':
     parser.add_argument('--dataset', required=True)
     parser.add_argument('--capture', required=True)
     parser.add_argument('--output', required=True)
+    parser.add_argument('--visibility-policy', choices=('ignore', 'any', 'all'), default='ignore',
+                        help='require independent ray-cast visibility in any/all source cameras')
     args = parser.parse_args()
-    run_temporal_analysis(args.dataset, args.capture, args.output)
+    run_temporal_analysis(args.dataset, args.capture, args.output, args.visibility_policy)
