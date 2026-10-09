@@ -131,6 +131,11 @@ def calibrate(cfg, observations, max_validation_px=1.):
 
 
 if __name__=='__main__':
+    if len(sys.argv) > 1 and sys.argv[1] == 'compare-coverage':
+        import runpy
+        sys.argv.pop(1)
+        runpy.run_module('calibration.coverage_study', run_name='__main__')
+        raise SystemExit(0)
     if len(sys.argv) > 1 and sys.argv[1] == 'compare-optics':
         import runpy
         sys.argv.pop(1)
