@@ -1,0 +1,10 @@
+{
+  "study_id": "stitch-validation-v1",
+  "purpose": "exploratory near-obstacle scene variants; fixed true nominal mounts",
+  "capture": {"frames": 3, "face_size": 256, "frame_step": 6, "width": 320, "height": 180},
+  "scenarios": [
+    {"schema_version": 1, "seed": 12, "split": "validation", "world": {"building_height_m": [5, 9], "building_spacing_m": 9, "near_obstacle_jitter_m": 0.8}, "mounts": {"yaw_deg": 0, "pitch_deg": 0, "along_body_m": 0}},
+    {"schema_version": 1, "seed": 13, "split": "validation", "world": {"building_height_m": [5, 9], "building_spacing_m": 9, "near_obstacle_jitter_m": 0.8}, "mounts": {"yaw_deg": 0, "pitch_deg": 0, "along_body_m": 0}},
+    {"schema_version": 1, "seed": 14, "split": "validation", "world": {"building_height_m": [5, 9], "building_spacing_m": 9, "near_obstacle_jitter_m": 0.8}, "mounts": {"yaw_deg": 0, "pitch_deg": 0, "along_body_m": 0}}
+  ]
+}

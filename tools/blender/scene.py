@@ -24,7 +24,7 @@ from mathutils import Matrix, Vector
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from rig import FACES, configuration, face_basis, vehicle_pose
-from scenario import load as load_scenario, validate as validate_scenario, perturb
+from scenario import load as load_scenario, validate as validate_scenario, perturb, near_obstacle_positions
 import board_targets
 import depth as depth_tools
 
@@ -183,7 +183,8 @@ def build_scene(recipe=None):
             box(scene, "streetlight head", (x+2,side*6.5,5), (.7,.6,.14),mats['white'])
     car(scene,"parked red",(6,4.4,0),mats['red'],mats)
     car(scene,"parked gray",(-9,-4.4,0),mats['gray'],mats)
-    for x,y in ((3.2,2.3),(-3.8,-2.),(5.,-1.2)):
+    positions = near_obstacle_positions(recipe)
+    for x,y in positions:
         box(scene,"bollard base",(x,y,.04),(.4,.4,.08),mats['rubber'])
         cylinder(scene,"yellow bollard",(x,y,.5),.11,1.,mats['yellow'])
     ego = car(scene,"Ego",(0,0,0),mats['blue'],mats)
@@ -197,6 +198,7 @@ def build_scene(recipe=None):
     scene['sv_nominal_config'] = json.dumps(nominal)
     scene['sv_recipe'] = json.dumps(recipe)
     scene['sv_mount_offsets'] = json.dumps(offsets)
+    scene['sv_near_obstacles'] = json.dumps(positions)
     camera = bpy.data.cameras.new("SV capture optics")
     enum_value(camera,'type','PERSP')
     enum_value(camera,'sensor_fit','HORIZONTAL')
@@ -344,6 +346,7 @@ def capture(scene, output, frames=2, face_size=256, start_frame=0, calibration_b
                                       'square_size_m':board_targets.SQUARE_SIZE_M}
                                      if calibration_boards else None),
                 'mount_offsets':json.loads(scene.get('sv_mount_offsets', '[]')),
+                'near_obstacles':json.loads(scene.get('sv_near_obstacles', 'null')),
                 'nominal_config':nominal_cfg,
                 'depth_truth':({'schema_version':1,
                                 'encoding':'OpenEXR float32 camera-Z in metres; 1e10 means no hit',

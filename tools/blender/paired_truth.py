@@ -187,3 +187,31 @@ def capture_paired(scene, output, frames=3, face_size=64, frame_step=6, width=32
         else:
             scene['sv_config'] = saved_config
         bpy.context.view_layer.update()
+
+
+def capture_study(plan_path, output):
+    """Build isolated scene variants from a saved plan; restore the active user scene."""
+    from scene import build_scene
+    from scenario import validate
+    plan_path, output = Path(plan_path), Path(output)
+    plan = json.loads(plan_path.read_text())
+    recipes = [validate(recipe) for recipe in plan['scenarios']]
+    if len({r['seed'] for r in recipes}) != len(recipes):
+        raise ValueError('unique scene seeds required')
+    output.mkdir(parents=True, exist_ok=False)
+    original = bpy.context.window.scene
+    captures = []
+    try:
+        for recipe in recipes:
+            variant = build_scene(recipe)
+            bpy.context.window.scene = variant
+            directory = output/f"seed{recipe['seed']}-capture"
+            capture_paired(variant, directory, **plan['capture'])
+            captures.append({'seed': recipe['seed'], 'scene': variant.name,
+                             'capture_sha256': hashlib.sha256((directory/'capture.json').read_bytes()).hexdigest()})
+    finally:
+        bpy.context.window.scene = original
+    (output/'study_capture.json').write_text(json.dumps({
+        'plan_sha256': hashlib.sha256(plan_path.read_bytes()).hexdigest(),
+        'captures': captures}, indent=2)+'\n')
+    return str(output)

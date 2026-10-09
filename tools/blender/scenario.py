@@ -84,7 +84,7 @@ def validate(recipe):
     if split is not None and split not in ('train', 'holdout', 'validation'):
         raise ValueError('split must be train, holdout or validation')
     world = result.setdefault('world', {})
-    if set(world) - {'building_height_m', 'building_spacing_m'}:
+    if set(world) - {'building_height_m', 'building_spacing_m', 'near_obstacle_jitter_m'}:
         raise ValueError('unknown world rule')
     heights = world.setdefault('building_height_m', [5., 9.])
     if len(heights) != 2 or not np.isfinite(heights).all() or not 3 <= heights[0] <= heights[1] <= 20:
@@ -92,6 +92,9 @@ def validate(recipe):
     spacing = world.setdefault('building_spacing_m', 9.)
     if not np.isfinite(spacing) or not 8 <= spacing <= 15:
         raise ValueError('building spacing must be 8..15 m')
+    jitter = world.setdefault('near_obstacle_jitter_m', 0.)
+    if not np.isfinite(jitter) or not 0 <= jitter <= .8:
+        raise ValueError('near obstacle jitter must be 0..0.8 m')
     mounts = result.setdefault('mounts', {})
     if set(mounts) - {'yaw_deg', 'pitch_deg', 'along_body_m', 'overrides'}:
         raise ValueError('unknown mount rule')
@@ -110,6 +113,17 @@ def validate(recipe):
             if not np.isfinite(value) or abs(value) > maximum:
                 raise ValueError('invalid override: '+key)
     return result
+
+
+def near_obstacle_positions(recipe=None):
+    """Separate deterministic random stream: changing building counts cannot move poles."""
+    positions = np.array([[3.2, 2.3], [-3.8, -2.], [5., -1.2]])
+    if recipe is None:
+        return positions.tolist()
+    recipe = validate(recipe)
+    jitter = recipe['world']['near_obstacle_jitter_m']
+    rng = np.random.default_rng(np.random.SeedSequence([recipe['seed'], 1701]))
+    return (positions+rng.uniform(-jitter, jitter, positions.shape)).tolist()
 
 
 def load(path):

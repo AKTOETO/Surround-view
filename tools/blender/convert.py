@@ -123,6 +123,7 @@ def convert(source, output, image_format='ppm'):
     truth['optics_check'] = metadata.get('optics_check')
     truth['scenario_recipe'] = metadata.get('scenario_recipe')
     truth['mount_offsets'] = metadata.get('mount_offsets', [])
+    truth['near_obstacles'] = metadata.get('near_obstacles')
     truth['true_config'] = cfg
     if depth_rows:
         if len(depth_rows) != len(rows):
