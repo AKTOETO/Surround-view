@@ -6,7 +6,8 @@ namespace sv
 {
 IntrinsicCalibration calibrate_intrinsics(const std::vector<std::vector<cv::Point3d>> &objects,
                                           const std::vector<std::vector<cv::Point2d>> &pixels,
-                                          cv::Size image_size, double theta_max)
+                                          cv::Size image_size, double theta_max,
+                                          FisheyeDistortionOrder order)
 {
     if (objects.size() < 6 || objects.size() != pixels.size() || image_size.area() <= 0 ||
         !std::isfinite(theta_max) || theta_max <= 0 || theta_max >= pi / 2)
@@ -20,14 +21,21 @@ IntrinsicCalibration calibrate_intrinsics(const std::vector<std::vector<cv::Poin
             throw std::invalid_argument("invalid calibration correspondences");
         }
     }
+    if (order != FisheyeDistortionOrder::Two && order != FisheyeDistortionOrder::Four)
+    {
+        throw std::invalid_argument("distortion order must be 2 or 4");
+    }
+    const int order_flags = order == FisheyeDistortionOrder::Two
+                                ? cv::fisheye::CALIB_FIX_K3 | cv::fisheye::CALIB_FIX_K4
+                                : 0;
     cv::Matx33d K = cv::Matx33d::eye();
     cv::Vec4d distortion{};
     std::vector<cv::Vec3d> rotations, translations;
-    double rms =
-        cv::fisheye::calibrate(objects, pixels, image_size, K, distortion, rotations, translations,
-                               cv::fisheye::CALIB_RECOMPUTE_EXTRINSIC |
-                                   cv::fisheye::CALIB_CHECK_COND | cv::fisheye::CALIB_FIX_SKEW,
-                               {cv::TermCriteria::COUNT | cv::TermCriteria::EPS, 100, 1e-10});
+    double rms = cv::fisheye::calibrate(
+        objects, pixels, image_size, K, distortion, rotations, translations,
+        cv::fisheye::CALIB_RECOMPUTE_EXTRINSIC | cv::fisheye::CALIB_CHECK_COND |
+            cv::fisheye::CALIB_FIX_SKEW | order_flags,
+        {cv::TermCriteria::COUNT | cv::TermCriteria::EPS, 100, 1e-10});
     if (!std::isfinite(rms) || K(0, 0) <= 0 || K(1, 1) <= 0 || !cv::checkRange(K) ||
         !cv::checkRange(distortion))
     {

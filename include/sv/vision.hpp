@@ -18,9 +18,16 @@ struct IntrinsicCalibration
     double training_rmse_px = 0;
 };
 
-IntrinsicCalibration calibrate_intrinsics(const std::vector<std::vector<cv::Point3d>> &objects,
-                                          const std::vector<std::vector<cv::Point2d>> &pixels,
-                                          cv::Size image_size, double theta_max = 1.45);
+enum class FisheyeDistortionOrder
+{
+    Two = 2,
+    Four = 4
+};
+
+IntrinsicCalibration calibrate_intrinsics(
+    const std::vector<std::vector<cv::Point3d>> &objects,
+    const std::vector<std::vector<cv::Point2d>> &pixels, cv::Size image_size,
+    double theta_max = 1.45, FisheyeDistortionOrder order = FisheyeDistortionOrder::Four);
 std::vector<double> intrinsic_validation_errors(const IntrinsicCalibration &calibration,
                                                 const std::vector<cv::Point3d> &objects,
                                                 const std::vector<cv::Point2d> &pixels);

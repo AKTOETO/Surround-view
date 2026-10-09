@@ -71,9 +71,9 @@ int main(int argc, char **argv)
             return board_observations_command(argc, argv);
         }
         std::map<std::string, std::string> options;
-        const std::set<std::string> allowed{"--image",       "--dataset", "--output",
-                                            "--columns",     "--rows",    "--square-size-m",
-                                            "--max-error-px"};
+        const std::set<std::string> allowed{
+            "--image", "--dataset",       "--output",       "--columns",
+            "--rows",  "--square-size-m", "--max-error-px", "--distortion-order"};
         for (int i = 2; i < argc; i += 2)
         {
             if (!allowed.count(argv[i]) || i + 1 == argc ||
@@ -202,8 +202,17 @@ int main(int argc, char **argv)
             double theta_max = dataset.if_contains("theta_max_rad")
                                    ? boost::json::value_to<double>(dataset.at("theta_max_rad"))
                                    : 1.45;
-            auto calibration =
-                sv::calibrate_intrinsics(training_objects, training_pixels, image_size, theta_max);
+            const auto order_text =
+                options.count("--distortion-order") ? options.at("--distortion-order") : "4";
+            if (order_text != "2" && order_text != "4")
+            {
+                throw std::runtime_error("distortion order must be 2 or 4");
+            }
+            const auto order = order_text == "2" ? sv::FisheyeDistortionOrder::Two
+                                                 : sv::FisheyeDistortionOrder::Four;
+            auto calibration = sv::calibrate_intrinsics(training_objects, training_pixels,
+                                                        image_size, theta_max, order);
+            report["distortion_order"] = order_text == "2" ? 2 : 4;
             std::vector<double> errors;
             for (const auto &view : validation_pixels)
             {

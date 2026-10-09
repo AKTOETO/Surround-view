@@ -43,6 +43,19 @@ class VisionToolsTest(unittest.TestCase):
             report = json.loads((root / "calibrated" / "report.json").read_text())
             self.assertEqual(report["status"], "accepted")
             self.assertLess(report["validation_error_px"]["p95"], 1)
+            reduced = subprocess.run(
+                [CALIBRATOR, "intrinsics", "--dataset", str(dataset), "--output", str(root / "reduced"),
+                 "--distortion-order", "2"], capture_output=True, text=True)
+            self.assertEqual(reduced.returncode, 0, reduced.stderr)
+            reduced_model = json.loads((root / "reduced" / "intrinsics.json").read_text())
+            self.assertEqual(reduced_model["k"][2:], [0., 0.])
+            self.assertEqual(json.loads((root / "reduced" / "report.json").read_text())["distortion_order"], 2)
+            invalid_order = subprocess.run(
+                [CALIBRATOR, "intrinsics", "--dataset", str(dataset), "--output", str(root / "bad-order"),
+                 "--distortion-order", "2garbage"], capture_output=True, text=True)
+            self.assertNotEqual(invalid_order.returncode, 0)
+            self.assertIn("distortion order must be 2 or 4", invalid_order.stderr)
+            self.assertFalse((root / "bad-order" / "intrinsics.json").exists())
             description = json.loads(dataset.read_text())
             description["validation"][0] = description["train"][0]
             dataset.write_text(json.dumps(description))
