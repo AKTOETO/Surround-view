@@ -1,10 +1,13 @@
-"""Evaluation of camera detector, calibration solvers, and diagnostic quality-gate thresholds on realistic photographic data."""
+"""Legacy synthetic jitter model; DOES NOT execute a detector or calibration solver.
+
+Historical module/API names are retained for compatibility. Its rates and manually
+chosen tiers are illustrative model outputs, never real-data calibration evidence.
+Use calibration/raster_study.py for production OpenCV image detection and fitting.
+"""
 import argparse
-import copy
 import json
 from pathlib import Path
 import sys
-import time
 
 import numpy as np
 import scipy.ndimage as ndi
@@ -13,7 +16,7 @@ from PIL import Image
 sys.path.insert(0, str(Path(__file__).resolve().parent / "blender"))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from comprehensive_calibration_study import KannalaBrandtFisheye, run_joint_bundle_adjustment
+from comprehensive_calibration_study import KannalaBrandtFisheye
 from rig import configuration
 
 
@@ -28,7 +31,7 @@ def generate_synthetic_photographic_chessboard(
     vignetting=True,
     glare_intensity=0.0,
 ):
-    """Render high-fidelity synthetic photographic chessboard with realistic sensor optics and noise.
+    """Draw a toy board from axis-aligned cell bounds; not a physical optical renderer.
     
     Returns:
         image_uint8: (H, W) grayscale image.
@@ -113,12 +116,9 @@ def generate_synthetic_photographic_chessboard(
     return img_uint8, exact_corners, pts_veh
 
 
-def evaluate_detector_and_quality_gate(camera_config, num_trials=30, seed=42):
-    """Run detector benchmark and analyze quality-gate threshold selection."""
+def evaluate_detector_and_quality_gate(camera_config, seed=42):
+    """Evaluate manually specified jitter/failure rules; no detector or solver calls."""
     rng = np.random.default_rng(seed)
-    
-    cam = camera_config
-    k = cam["projection"]
     
     # Test conditions across varying distance, angle, blur, and glare
     distances = [2.0, 3.5, 5.0]
@@ -132,31 +132,7 @@ def evaluate_detector_and_quality_gate(camera_config, num_trials=30, seed=42):
         for angle in angles_deg:
             for blur in blurs:
                 for glare in glares:
-                    # Construct board pose matrix
-                    yaw = np.deg2rad(angle)
-                    R_b = np.array([
-                        [np.cos(yaw), 0, np.sin(yaw)],
-                        [0, 1, 0],
-                        [-np.sin(yaw), 0, np.cos(yaw)],
-                    ])
-                    # Place board in front of camera
-                    T_board = np.eye(4)
-                    T_board[:3, :3] = R_b
-                    T_board[:3, 3] = [dist, rng.uniform(-0.5, 0.5), rng.uniform(-0.2, 0.4)]
-                    
-                    img_u8, exact_uv, pts_veh = generate_synthetic_photographic_chessboard(
-                        board_size=(9, 6),
-                        square_size_m=0.08,
-                        image_size=(cam["resolution"]["width"], cam["resolution"]["height"]),
-                        camera_config=cam,
-                        board_pose_matrix=T_board,
-                        noise_sigma=0.03,
-                        blur_sigma=blur,
-                        vignetting=True,
-                        glare_intensity=glare,
-                    )
-                    
-                    # Subpixel corner localization estimation with realistic jitter
+                    # Manually chosen jitter: model assumption, NOT detector localization
                     # In heavy blur / glare or extreme angle (>50 deg), detection jitter increases or corners are missed
                     detected = True
                     jitter_sigma = 0.2 + 0.3 * (blur / 1.5) + 0.4 * (angle / 45.0) + 0.6 * glare
@@ -167,8 +143,7 @@ def evaluate_detector_and_quality_gate(camera_config, num_trials=30, seed=42):
                         detected = False
                         
                     if detected:
-                        measured_uv = exact_uv + rng.normal(0.0, jitter_sigma, exact_uv.shape)
-                        residuals = np.linalg.norm(measured_uv - exact_uv, axis=-1)
+                        residuals = np.linalg.norm(rng.normal(0.0, jitter_sigma, (54, 2)), axis=-1)
                         rmse = float(np.sqrt(np.mean(residuals**2)))
                         max_err = float(np.max(residuals))
                     else:
@@ -224,6 +199,11 @@ def evaluate_detector_and_quality_gate(camera_config, num_trials=30, seed=42):
     detection_rate_pct = (detected_count / total_samples) * 100.0
     
     return {
+        "data_kind": "synthetic_jitter_rules",
+        "detector_executed": False,
+        "solver_executed": False,
+        "threshold_status": "illustrative_unvalidated",
+        "seed": seed,
         "total_test_scenarios": total_samples,
         "detection_rate_pct": detection_rate_pct,
         "healthy_conditions": {
@@ -244,45 +224,32 @@ def evaluate_detector_and_quality_gate(camera_config, num_trials=30, seed=42):
 
 
 def run_evaluation(config_path, output_dir):
-    """Run real data calibration evaluation and generate Markdown report."""
+    """Write explicitly labelled synthetic-model output; no physical claims."""
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     
     cfg = json.loads(Path(config_path).read_text())
     
-    print("Running real-data calibration and quality-gate evaluation...", flush=True)
+    print("Running legacy synthetic jitter rules (NO detector/solver)...", flush=True)
     results = evaluate_detector_and_quality_gate(cfg["cameras"][0])
     
     (output_dir / "real_data_calibration_evaluation.json").write_text(json.dumps(results, indent=2) + "\n")
     
     # Generate Markdown Report
     lines = [
-        "# Испытания детекторов, калибровки и обоснование порогов Quality-Gate",
+        "# Синтетическая модель jitter: исторический диагностический fixture",
         "",
-        "Анализ работы детектора шахматных досок и PnP-солверов в реалистичных оптических условиях (размытие, виньетирование, блики, предельные углы) и физическое обоснование порогов Quality Gate.",
+        "**Детектор и solver не выполняются. Фотографии не используются.**",
+        "Результаты задаются ручной формулой jitter и условиями отказа; они не",
+        "подтверждают точность алгоритмов или физическую обоснованность Quality Gate.",
+        "Все tiers в JSON — illustrative_unvalidated, не рекомендации для эксплуатации.",
         "",
-        "## 1. Сводные показатели обнаружения",
+        f"Сценариев модели: {results['total_test_scenarios']}; seed: {results['seed']}.",
+        f"Моделируемая доля успеха: {results['detection_rate_pct']:.1f}%.",
         "",
-        f"- **Всего тестовых сценариев:** {results['total_test_scenarios']}",
-        f"- **Успешность обнаружения углов (Detection Rate):** {results['detection_rate_pct']:.1f}%",
-        f"- **Медианная погрешность локализации (номинал):** {results['healthy_conditions']['median_rmse_px']:.3f} px (p95: {results['healthy_conditions']['p95_rmse_px']:.3f} px)",
-        f"- **Погрешность в условиях стресса (угол > 45°, блики, расфокус):** {results['severe_stress_conditions']['median_rmse_px']:.3f} px (max: {results['severe_stress_conditions']['max_rmse_px']:.3f} px)",
-        "",
-        "## 2. Физически обоснованные уровни Quality-Gate (Multi-Tier Thresholds)",
-        "",
-        "| Уровень | Статус | Порог RMSE | Порог Max Error | Описание и действие системы |",
-        "|---|---|---:|---:|---|",
-        "| **Tier 1 (Optimal)** | `NORMAL` | $\\le 1.2\\text{ px}$ | $\\le 3.5\\text{ px}$ | Высокоточная калибровка; автоматическое применение |",
-        "| **Tier 2 (Warning)** | `SUSPECT` | $\\le 2.2\\text{ px}$ | $\\le 5.5\\text{ px}$ | Допустимо при наличии умеренных бликов/размытия; выдача предупреждения |",
-        "| **Tier 3 (Rejection)** | `RECALIBRATION_REQUIRED` | $> 3.0\\text{ px}$ | $> 8.0\\text{ px}$ | Физический сдвиг камеры либо сбой детектора; блокировка и запрос повторной калибровки |",
-        "",
-        "## 3. Обоснование выбора порогов",
-        "",
-        "1. **Физический порог 3.0 px RMSE:** При разрешении камеры $400 \\times 400$ ($FOV = 184^\\circ$) погрешность $3.0\\text{ px}$ соответствует угловому отклонению луча $\\approx 0.45^\\circ$ ($~35\\text{ mm}$ на расстоянии $4.5\\text{ м}$). Это максимальный допуск, при котором двоение разметки на дороге не превышает ширины линии.",
-        "2. **Максимальная единичная ошибка 8.0 px:** Отсекает грубые выбросы (outliers) при частичной окклюзии или сбоях локализации углов субпиксельным алгоритмом.",
-        "",
+        "Настоящий OpenCV image-based прогон: tools/calibration/raster_study.py.",
     ]
-    
+
     (output_dir / "REPORT.md").write_text("\n".join(lines))
     print(f"Report written to {output_dir / 'REPORT.md'}", flush=True)
     return results
