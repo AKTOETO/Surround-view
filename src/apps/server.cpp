@@ -363,6 +363,7 @@ ServerIO::ServerIO(const sv::Connections &n, const std::string &source_type,
                     "state",
                     "copied_rgba",
                     "calibrate",
+                    "calibration_provenance_v1",
                     "calibration_status",
                     "apply_calibration",
                     "cancel_calibration"};
@@ -909,6 +910,12 @@ int main(int argc, char **argv)
                             validation_pixels.push_back(
                                 {px[0].as_double(), px[1].as_double(), true});
                         }
+                        if (!m.header.contains("provenance"))
+                        {
+                            throw std::runtime_error("calibration_provenance_required");
+                        }
+                        const auto provenance =
+                            sv::parse_calibration_provenance(m.header.at("provenance"));
                         sv::ExtrinsicOptions opts;
                         if (m.header.contains("method"))
                         {
@@ -918,8 +925,9 @@ int main(int argc, char **argv)
                         std::string calib_job_id = calib_jobs.submit_job(
                             origin->bound_session_id, base_config_revision, cam_id,
                             active_config->cameras[cam_id], points, pixels, validation_points,
-                            validation_pixels, opts);
+                            validation_pixels, opts, provenance);
                         extra_res["job_id"] = calib_job_id;
+                        extra_res["validation_policy"] = sv::calibration_validation_policy;
                     }
                     else if (type == "calibration_status")
                     {
@@ -936,6 +944,13 @@ int main(int argc, char **argv)
                             extra_res["base_config_revision"] =
                                 std::to_string(job_opt->base_config_revision);
                             extra_res["job_state"] = sv::to_string(job_opt->state);
+                            const auto &audit = job_opt->split_audit;
+                            extra_res["validation_policy"] = sv::calibration_validation_policy;
+                            extra_res["dataset_id"] = audit.dataset_id;
+                            extra_res["training_observations"] = audit.training_observations;
+                            extra_res["validation_observations"] = audit.validation_observations;
+                            extra_res["training_frames"] = audit.training_frames;
+                            extra_res["validation_frames"] = audit.validation_frames;
                             if (job_opt->state == sv::JobState::Completed)
                             {
                                 extra_res["training_rmse_px"] =
