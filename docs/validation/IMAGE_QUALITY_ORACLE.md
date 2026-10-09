@@ -1,6 +1,6 @@
 # Image-Quality Oracle, Vehicle Body Mask, and GPU Readback Validation
 
-Date: 09.10.2026. Status: A simplified analytic Scene Truth Oracle and vehicle-body mask exist; GPU readback has a CPU comparison. The temporal tool is only a synthetic texture-shift smoke test: its computed vehicle pose is unused and seam masks come from static geometry weights, so its reported zero displacement is not evidence of dynamic seam stability. The legacy E-STITCH seam/ghost metrics were incorrect; v2 now computes output-based proxies, but they still lack independent object/edge truth and do not close image-quality validation. Results: [[E_STITCH_01_V2]], audit and remaining acceptance work: [[planning/AUDIT]], [[../TODO]].
+Date: 10.10.2026. Status: A simplified analytic Scene Truth Oracle and vehicle-body mask exist; GPU readback has a CPU comparison. The old synthetic temporal test has been replaced with matched Blender captures and known-answer controls; see [[PAIRED_STITCH_TEMPORAL]]. One short clip validates the measurement workflow, not temporal quality across scenes. The legacy E-STITCH seam/ghost metrics were incorrect; v2 now computes output-based proxies, but they still lack independent object/edge truth and do not close image-quality validation. Results: [[E_STITCH_01_V2]], audit and remaining acceptance work: [[planning/AUDIT]], [[../TODO]].
 
 ## 1. Аналитический oracle прототипа и ограничение Scene Truth
 
@@ -53,23 +53,15 @@ python3 tools/validate_gpu_readback.py \
 
 ---
 
-## 4. Временная стабильность шва и мерцание (`tools/temporal_seam_stability.py`)
+## 4. Парная временная проверка
+
+Старый sine-shift тест и его нулевые centroid shifts удалены: рассчитанная поза автомобиля в нём не применялась. Текущий инструмент принимает фактические последовательности и matched direct Blender RGB/object-ID truth. Команды, новые числа и ограничения: [[PAIRED_STITCH_TEMPORAL]]. Аналитический `render_scene_oracle()` выше сохранён для отдельных synthetic tests; он по-прежнему не является эталоном Blender street.
 
 ```sh
 python3 tools/temporal_seam_stability.py \
-  --config artifacts/blender-depth-truth-dataset-fixed/config.json \
-  --output artifacts/temporal-stability-v1
+  --dataset tests/data/paired_street_v1 \
+  --capture tests/data/paired_street_v1 \
+  --output artifacts/paired-temporal-repeat
 ```
 
-Скрипт выдаёт следующую таблицу на искусственно сдвигаемой текстуре (10 кадров, заданные 2.0 м/с и 30 fps):
-
-| Стратегия Fusion | Смещение шва (mean px) | Смещение шва (p95 px) | Temporal Flicker (Var) |
-|---|---:|---:|---:|
-| `hard_best_angle` | 0.000 | 0.000 | 0.008336 |
-| `edge_feather` | 0.000 | 0.000 | 0.006913 |
-| `angular_feather` | 0.000 | 0.000 | 0.007617 |
-| `graph_cut_seam` | 0.000 | 0.000 | 0.008337 |
-| `multi_band` | 0.000 | 0.000 | 0.006962 |
-
-- Эти значения не оценивают движение камеры или сцены: `T_veh` в коде вычисляется, но не используется, а seam mask получается из статических validity/weight maps. Нулевой сдвиг обусловлен конструкцией теста и не подтверждает временную стабильность fusion.
-- Flicker отражает только изменение искусственной синусоидальной текстуры. Сравнение методов по этому числу не подтверждено; нужны реальные последовательные рендеры rig/scene и seam truth: [[../TODO]].
+В трёхкадровой серии машина действительно перемещается на 0.4 м за переход. Graph-cut boundary symmetric distance — 0.09161 / 0.04814 px. Feather weights остаются неподвижными в vehicle-fixed view, но RGB меняется. Измерение residual change вычитает совпадающий прямой вид сцены; без optical flow оно включает изменение геометрической/окклюзионной ошибки и не считается чистым flicker. Independent RGB extra edges не являются object-level ghost rate. Нужны holdout clips, matched visibility, динамические объекты и фотометрические возмущения.

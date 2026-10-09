@@ -124,3 +124,7 @@ sha256sum assets/demo/urban_street_01_1k.hdr \
 - `assets/scenes/mount-errors/street.blend` — отдельный авторский мир Blender 5.2.2 LTS, 327 объектов, около 2.3 MB, без внешних текстур/моделей; SHA-256 `8acb78ff1f8953f3c6ac03e501b5faf54ee8cd0850b5b27776c19a4748facbc9`. Включает actual/nominal config и sampled offsets в свойствах scene. Сохранён обычным Git, без LFS; прежний metric-street сохранён.
 
 Мир восстановим из `tools/blender/{scene,rig,scenario}.py` и рецепта. Exact `.blend` hash зависит от Blender serialization и не обязан повториться при реконструкции; параметры/геометрия воспроизводятся при той же версии генератора. Capture RGB, synthetic observations, fitted candidates и GLES previews — производные опытов в `artifacts`, не новые исходные assets. Их избранные подписанные иллюстрации и скрипт входят в диплом. Команды — [[engineering/BLENDER]], методика — [[research/MOUNT_CALIBRATION]].
+
+## Компактный парный исследовательский fixture
+
+`tests/data/paired_street_v1` (~1.4 MB): авторские procedural Blender RGB и object-ID карты, сохранённые как входы воспроизводимого опыта. Это generated validation fixture, а не внешний художественный asset; исходный мир остаётся в `assets/scenes/metric-street`. Описание происхождения/файлов — `tests/data/paired_street_v1/README.md`, методика — [[validation/PAIRED_STITCH_TEMPORAL]]. Raw captures и snapshots не включены в Git; компактные рисунки диплома создаёт `docs/diploma/plot_paired_stitch.py`.

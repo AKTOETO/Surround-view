@@ -22,7 +22,7 @@
 - GUI/simulator изменения: сборка Qt targets, `qmllint`, offscreen world smoke; полный CTest прошёл 22/22 для той ревизии.
 - Depth truth / visibility: `python3 tests/test_blender_fixture.py` — 16/16; `ctest --test-dir build -R blender_fixture --output-on-failure` — 1/1. Analytic-plane, 3D primitives (sphere, cube, silhouettes), semantic conversion, 30-case depth-visibility screen и corrected 84-case E-STITCH-01 matrix — [[validation/DEPTH_VISIBILITY_TRUTH]], [[validation/STITCH_VISIBILITY]], [[validation/E_STITCH_01_V2]].
 - Blender smoke capture: один синтетический кадр, 20 OpenEXR depth faces (4 камеры × 5 направлений), четыре fisheye NPY карты. Это проверка экспортной цепочки и формата, не точности depth и не качества fusion.
-- Состояние source tree на момент аудируемого диапазона: `master` опережал `origin/master` на пять пользовательских commits. Затем добавлен audit commit `547b7a6`; новые исследовательские изменения ещё находятся в рабочем дереве. Ни эти commits, ни host tests не являются подтверждением target/Aurora acceptance.
+- Состояние source tree на момент аудируемого диапазона: `master` опережал `origin/master` на пять пользовательских commits. Затем добавлен audit commit `547b7a6`; исправления первой 84-case matrix зафиксированы в `6528bd7`. Ни эти commits, ни host tests не являются подтверждением target/Aurora acceptance.
 
 ## Аудит коммитов `ee1bcc5e..HEAD` (09.10.2026)
 
@@ -55,3 +55,7 @@
 - Целевой Aurora package/runtime workflow: [[../engineering/AURORA]].
 
 Задача считается завершённой только при совпадении реализации с документированным критерием и наличии воспроизводимого свидетельства. Условные требования будущей архитектуры в `architecture/CLIENT_SERVER_MODEL.md` не означают, что они уже реализованы.
+
+### Парный multi-frame truth, 10.10.2026
+
+Старый temporal sine-shift генератор заменён проверяемым входом с реальным перемещением камер и exact-scene direct Blender RGB. Компактный fixture, object-ID ROI, residual-change/weight-boundary metrics и негативные контроли: [[validation/PAIRED_STITCH_TEMPORAL]]. Причина исходной temporal ошибки устранена; критерий качества остаётся открытым: один короткий клип не заменяет holdout scenes, динамические объекты/экспозицию, matched visibility и object-level ghost truth.

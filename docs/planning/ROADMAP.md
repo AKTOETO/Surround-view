@@ -10,7 +10,7 @@
 | M2 — данные и контракты | M1 | Координаты, четыре камеры, шаблон, запись/manifest, схема конфигурации и временная шкала | Контрольные точки проверены независимо; полная конфигурация читается; известны источник и права на данные |
 | M3 — CPU-математика и калибровка | M2 | Прямая fisheye-проекция, матрицы, валидность, plane/bowl/dome-floor; первая offline-калибровка | E-MATH-01 и E-CALIB-01; отчёт обучающей/отложенной репроекции; экспорт параметров |
 | M4 — одна камера на GPU | M1, M3 | EGL/FBO, текстура, проекция, виртуальная камера, асинхронное измерение GPU | GPU соответствует независимому CPU; ограниченная смена ракурса использует прежние ресурсы |
-| M5 — четырёхкамерный baseline | M4 | FileFrameSource, подбор наборов, маски, нормализованный blending и replay | Plane/bowl/dome-floor доступны в runtime; offline E-STITCH-01 matrix существует, но её seam/ghost выводы и варианты, названные graph-cut, требуют исправления и повторной валидации |
+| M5 — четырёхкамерный baseline | M4 | FileFrameSource, подбор наборов, маски, нормализованный blending и replay | Plane/bowl/dome-floor доступны в runtime; исправленная offline E-STITCH-01 matrix и парный 3-frame Blender fixture существуют; quality confirmation на holdout scenes и object-correspondence ghost truth остаётся открытой |
 | M6 — контроль смещения | M3, M5 | Сервисная проверка; исследование перекрытий, порогов и неопределённости; повторная калибровка | E-DRIFT-01/E-RECOVERY-01; чувствительность, ложные тревоги, камеры-кандидаты, восстановление |
 | M7 — сервер, клиентская библиотека и UI | M5 | `sv-client-lib` с общим API локального/удалённого подключения; `sv-client` через библиотеку, bounded IPC/TCP, QML, orbit/zoom/preset, calibration/health status | Один клиентский API проходит Unix/loopback/две машины; полный trace, 500 команд на паузе; измерен первый представленный кадр принятой ревизии |
 | M8 — воспроизводимость и отказы | M6, M7 | Producer, skew/drops/disconnect, перегрузка, reconnect, clocks, shutdown | E-ROBUST-01; ограниченные ресурсы, различимые состояния, повтор опыта |
@@ -124,3 +124,7 @@ GTest разрешён для новых проверок. При его выб�
 Серверный calibration-job workflow (held-out gate, session ownership/cancel, stale revision rejection и revision-checked atomic apply) описан в [[engineering/PROTOCOL_IMPLEMENTED]]. Он не равен общему ConfigService. Целевая схема multi-session/subscriptions/products дана в [[architecture/CLIENT_SERVER_MODEL]] и ещё не реализована.
 
 После завершения основных quality/platform опытов обновить выводы и выполнить общую редактуру глав [[diploma/README]]. Отчёт аудита текущих расхождений: [[planning/AUDIT]].
+
+## Парная Blender-проверка 10.10.2026
+
+[[validation/PAIRED_STITCH_TEMPORAL]]: новый multi-frame fixture содержит фактическое движение rig, matched direct RGB и ray-cast object IDs. Старый sine-shift temporal test заменён; измеряются residual change, реальные границы argmax-weight labels и independent RGB extra edges, undefined ROI/seams возвращают null. Это smoke методики на одном 3-frame clip (5 Hz sampling), не завершение M10. Следующая серия: ≥256px cube faces, независимые scene/mount seeds, длинные клипы/повороты, динамические объекты, экспозиция, matching visibility и object-correspondence ghost trails; только затем повторяемые бюджеты/тайминги и выводы диплома.

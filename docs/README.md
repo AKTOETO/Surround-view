@@ -80,3 +80,5 @@ Wire-контракт текущей реализации, калибровоч�
 Проверка переноса GUI, Qt-free CLI и GTest: [[validation/CLIENT_RESTRUCTURE]].
 
 Ошибки крепления и калибровка: [[research/MOUNT_CALIBRATION]] → [[validation/MOUNT_CALIBRATION]] → [[diploma/04_EXPERIMENTAL_STUDY#4.17 Восстановление положения камер при ошибках монтажа]]. Извлечение наблюдений из изображений: [[research/IMAGE_CALIBRATION]] → [[validation/IMAGE_CALIBRATION]] → [[diploma/04_EXPERIMENTAL_STUDY#4.18 Внешняя калибровка по рендеренным изображениям]]. Восстановление мира и правила — [[engineering/BLENDER]], происхождение файлов — [[engineering/ASSETS]].
+
+Парная динамическая проверка сшивки (10.10.2026): [[validation/PAIRED_STITCH_TEMPORAL]] — один воспроизводимый клип с движущимся rig и matched Blender truth, ограничения и следующие опыты.

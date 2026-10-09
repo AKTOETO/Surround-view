@@ -296,3 +296,7 @@ Coverage считать отдельно как (1) проекционная val
 
 Историческая ghost metric вычисляла source-source edge disagreement и не использовала fused edge map, поэтому её значения были одинаковы для разных fusion modes. Текущий output-based proxy требует обе source edges и обе fused responses, но нуждается в проверке на независимых object-ID/edge annotations. Сводка нового прогона находится в [[validation/E_STITCH_01_V2]], прежний результат сохранён в [[validation/STITCH_VISIBILITY]]; независимое подтверждение остаётся открытым по [[../TODO]].
 
+
+## Парная динамическая методика
+
+Проверка от 10.10.2026: [[validation/PAIRED_STITCH_TEMPORAL]]. Вместо сдвига синусоиды получены четыре камеры движущегося rig и direct virtual RGB того же мира. Object IDs маскируют кузов/границы, independent RGB edges отделяют часть scene structure от лишних output edges. Residual change и argmax-weight boundary distance имеют known-answer tests; это ещё не object-level ghost detection и не holdout ranking. Геометрические веса могут не двигаться при изменении RGB, поэтому нулевое seam displacement не принимается за доказательство temporal quality.

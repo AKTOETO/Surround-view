@@ -169,3 +169,7 @@ python3 tools/configurator.py calibrate-images --dataset artifacts/board-data \
 ```
 
 На проверенном Blender MCP получены 16 кадров, все с 54/54 углами; три позы на камеру используются для fit, четвёртая — только для валидации. Итог: [[validation/IMAGE_CALIBRATION]], постановка исследования: [[research/IMAGE_CALIBRATION]]. Физическая точность, ошибки измерения поз доски, частичное обнаружение и окклюзия пока не проверялись. Если `blender` недоступен как CLI, можно выполнить scene builder/capture через подключённый Blender MCP; генератор не меняет исходную пользовательскую сцену.
+
+## Парный direct-view truth и движение rig
+
+`tools/blender/paired_truth.py::capture_paired` использует активную сцену, делает synchronous capture с `frame_step` на 30-Hz timeline, затем повторяет те же позы для прямого вида виртуальной камеры и ray-cast object IDs. Проекция проверяется независимо через Blender projector. Параметры, ограничения ray casts и команды запуска: [[validation/PAIRED_STITCH_TEMPORAL]]. Входы численного smoke сохранены в `tests/data/paired_street_v1`; новый захват не нужен для повторного расчёта. Первый run — 3 кадра, step 6, то есть 5-Hz sampling. Для качественного исследования увеличить cube-face resolution и длину/разнообразие сцены.
