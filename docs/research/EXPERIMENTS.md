@@ -100,3 +100,7 @@ GPU execution time измерять асинхронными timer queries, CPU 
 ## E-CAL-capture-01 — 10.10.2026
 
 [[validation/CALIBRATION_CAPTURE_FACTORS]]: 4 radial families × 2 seeds × 4 distance/tilt profiles × order2/4 × два gate =128 attempts. 384/384 PNG распознаны, 64/64 модели проходят оба gate; full residual p95<0.325 px, floor p95 до 0.155 м. Center directions одинаковы между профилями, corner angular occupancy меняется. Все парные эффекты представлены отдельно; universal capture prescription не получен. Протокол: [[CALIBRATION_CAPTURE_PROTOCOL]].
+
+## E-CAL-diagnostic-01 — 10.10.2026
+
+[[validation/INTRINSIC_DIAGNOSTICS]]: 64 parent cases × exact/float32/detected train UV, общие exact validation UV и known-geometry controls. 192 successful diagnostic exports, replay delta≤6.3×10⁻¹³. На matched subset max floor p95 exact≈1.15×10⁻¹¹ м, float32≈1.06×10⁻⁵ м, detected≈0.1369 м. Это diagnostic replay существующих сцен, не новое confirmatory evidence; source/parent hashes и signed localization записаны.

@@ -1001,11 +1001,83 @@ $$\Delta_A(B)=e(A_{large},B)-e(A_{small},B).$$
 
 Полный отчёт, 64-case таблица и hashes: [[validation/CALIBRATION_CAPTURE_FACTORS]]. Иллюстрации воспроизводит `plot_calibration_capture.py` рядом с главой. 6 новых regression tests и все 9 выбранных CTest suites проходят. Сценарий также проверяет неизменность experiment source/binary hashes в течение выполнения.
 
+## 4.34 Отделение ошибок локализации от идеального-input поведения solver
+
+Предыдущий factorial experiment не объяснял, почему меньшая ошибка детектора или крупная доска иногда давали худшую реконструкцию плоскости. E-CAL-diagnostic-01 сохраняет все 64 исходных family/seed/profile/order cases и меняет только train coordinates: exact double truth, та же truth после float32→double и реальные сохранённые detector UV. Протокол [[research/INTRINSIC_DIAGNOSTIC_PROTOCOL]] зафиксирован до новых fit runs коммитом `b2cdcc0`. Исходные captures уже просмотрены, поэтому это exploratory mechanism ablation.
+
+Добавлен C++ режим `sv-calibrate diagnose-intrinsics`, который вызывает то же production `sv::calibrate_intrinsics`. Flags, order, stopping criteria и monotonicity domain сохраняются. Результат имеет статус `diagnostic_only`, пишет embedded estimate в `diagnostics.json` и не экспортирует deployable `intrinsics.json`. Acceptance gate и серверный конфиг не изменяются. Это позволяет использовать аналитические observations для исследования, не выдавая их за физическую калибровку.
+
+Во всех трёх input variants сохраняются 12 train views, 12 validation poses и одинаковые **exact validation UV**. Validation residual всё ещё подбирает board pose; known-ray/floor и fixed-pose errors измеряются отдельно без fitting. Truth indexing разворачивается при 180° неоднозначности сетки, detected ordering сохраняется исходным. Это выравнивание использует известную синтетическую геометрию; физические board IDs оно не определяет.
+
+Серия содержит 192 successful diagnostic fits. Все 64 detected-input estimates воспроизводят прежний production fit: maximum parameter difference 6.2528×10⁻¹³ при заранее заданном replay tolerance 1e-7. Поэтому изменение validation с detected на exact UV не повлияло на train estimates. Отказавших fits и invalid floor points в этой серии нет. Successful diagnostic fit не означает прохождение Quality Gate.
+
+Для каждого view рассчитана не только норма localization error, но и её signed структура:
+
+$$\delta_i=u_i^{det}-u_i^{true},\quad b=\frac1N\sum_i\delta_i,\quad
+\delta_{r,i}=\delta_i^T a_i,\quad\delta_{t,i}=\delta_i^T(-a_{iy},a_{ix}),$$
+
+где $a_i$ — единичный вектор от истинного principal point к true corner. На optical axis radial/tangential components неопределены и учитываются отдельным count, UV/norm остаются определёнными. Ошибки получены при rasterization, pixel integration, quantization и настоящем SB detector, а не добавлением искусственного jitter к идеальным UV.
+
+![Поля ошибки локализации](figures/experiments/intrinsic_diagnostic_localization.png)
+
+*Рисунок 4.35 — Верх: crop исходных kb_nonzero/7101 PNG, true corners и detected−true vectors, увеличенные в 20 раз. Низ: per-view localization RMSE и норма signed mean bias для всех families/seeds; это описательные распределения, не независимые статистические trials.*
+
+Модели разделены по заранее определяемому математическому соответствию. Matched subset: equidistant/order2/4 и kb_nonzero/order4, всего 24 cases. Approximation subset: kb_nonzero/order2, equisolid и stereographic при обоих orders, всего 40 cases. Последним exact observations не гарантируют нулевой ошибки: выбранный конечный полином лишь приближает generative function.
+
+| Subset | Train input | Max case outer p95, px | Max case floor p95, m |
+|---|---|---:|---:|
+| matched | exact | 7.98×10⁻¹¹ | 1.15×10⁻¹¹ |
+| matched | float32 exact | 1.48×10⁻⁴ | 1.06×10⁻⁵ |
+| matched | detected | 3.9001 | 0.1369 |
+| approximation | exact | 0.3604 | 0.02275 |
+| approximation | detected | 3.4966 | 0.1551 |
+
+Числа — максимум отдельных case p95, а не p95 всех объединённых точек. Near-zero exact errors отражают численный предел идеальной synthetic geometry, не физическую точность камеры. UV float32 control показывает, что одно округление координат не объясняет прежние ошибки matched cases. Замена exact UV результатами raster/detector цепочки при том же solver воспроизводит значительные ошибки. Это не исключает чувствительность solver к направленным perturbations и не оценивает condition number.
+
+![Контроли exact, float32 и detected](figures/experiments/intrinsic_diagnostic_controls.png)
+
+*Рисунок 4.36 — Max case p95 по 2 seeds×4 capture profiles отдельно для каждой family/order/origin. Шкала логарифмическая; результаты approximation families не смешаны с matched subset при интерпретации источников ошибки.*
+
+Пример kb_nonzero/7101/order4 уточняет контрпример §4.33. При exact inputs small_front и large_front восстанавливаются почти точно. После UV float32 floor p95 составляет примерно 6.0×10⁻⁶ и 7.0×10⁻⁶ м. При detected inputs — 0.0241 и 0.1369 м. При этом exact-validation pose-fitted p95 уменьшается с 0.0841 до 0.0273 px. Низкий residual после подбора позы снова скрывает неточность известной физической геометрии.
+
+Уменьшение scalar localization RMSE само по себе недостаточно: median per-view RMSE front profiles падает примерно 0.2917→0.0976 px, но отдельные floor errors могут расти. Поле ошибок и связь K/k/poses требуют отдельного анализа. Разность двух p95 не является аддитивной декомпозицией ошибок. Эта серия отделяет ideal-input model/solver behaviour от совокупной ошибки raster/detector observations; причины усиления отдельных signed components пока не установлены.
+
+```plantuml
+@startuml
+start
+:Load parent capture and verify hashes;
+:Preserve detector ordering;
+:Align synthetic truth indexing;
+fork
+  :Exact double train UV;
+fork again
+  :Exact UV through float32;
+fork again
+  :Recorded detected train UV;
+end fork
+:Same C++ calibration core, order 2/4;
+if (Solver / monotonicity succeeds?) then (yes)
+  :Diagnostic estimate only;
+  :Same exact validation UV, pose-fitted residual;
+  :Known-ray / known-plane / fixed-pose errors;
+  :Compare detected fit with parent production fit;
+else (no)
+  :Record failure; no zero replacement;
+endif
+:Frozen report, no acceptance or config apply;
+stop
+@enduml
+```
+
+*Рисунок 4.37 — Диагностический workflow: изменяются training observations, а ядро и контрольная геометрия фиксированы. Три ветви описывают варианты опыта, не утверждают параллельное выполнение CLI.*
+
+Следующий этап — normalized sensitivity/conditioning и controlled systematic/random perturbations, затем paired raster blur/noise, nonradial/extrinsic/road-height errors. Для итогового заключения всё ещё нужны physical requirements и измеренные снимки. Полные 192 estimates и парная 64-case таблица: [[validation/INTRINSIC_DIAGNOSTICS]]. Рисунки воспроизводит `plot_intrinsic_diagnostics.py` рядом с главой. 6 новых diagnostic tests и все 10 выбранных CTest suites проходят.
+
 ## Предварительные выводы по четвёртой главе
 
 1. **Экспериментальная инфраструктура сшивки:** реализованы offline-варианты fusion и carrier matrix; исправленные binary graph-cut и output proxies проверены на fixtures, добавлен парный 3-frame Blender clip (§4.25). Качество методов на holdout scenes и object-correspondence ghost truth пока не подтверждено.
 2. **Scene Truth/GPU checks:** получены числа на конкретном синтетическом fixture и CPU/GPU sample. Они характеризуют только этот тест и не заменяют испытания реальной сцены/камер.
-3. **Калибровочное ядро:** реализованы синтетические эксперименты Joint Bundle Adjustment и server calibration gate. Сопоставление моделей и пороги требуют независимых данных; историческая jitter-модель не оценивает detector, новые image-based серии выполняют OpenCV на синтетических PNG (§4.29, §4.31–4.33); peripheral views уменьшают часть ошибок экстраполяции, но ни angular coverage, ни конкретная комбинация размера/наклона не гарантируют точной реконструкции плоскости.
+3. **Калибровочное ядро:** реализованы синтетические эксперименты Joint Bundle Adjustment и server calibration gate. Сопоставление моделей и пороги требуют независимых данных; историческая jitter-модель не оценивает detector, новые image-based серии выполняют OpenCV на синтетических PNG (§4.29, §4.31–4.34); peripheral views уменьшают часть ошибок экстраполяции, но ни angular coverage, ни конкретная комбинация размера/наклона не гарантируют точной реконструкции плоскости.
 
 Таким образом, перечислены достигнутые этапы реализации и проверок на синтетике; качество сшивки, перенос на физическую оптику и физическая обоснованность Quality Gate остаются открытыми.
 

@@ -120,3 +120,7 @@ stop
 ## Distance × tilt: начальная factorial ablation
 
 [[validation/CALIBRATION_CAPTURE_FACTORS]]: одинаковые center directions и validation, 12 train views, size/tilt geometry 2×2, 384 PNG и 128 attempts. Все gate accepted, но outer/floor эффекты разнонаправлены. Протокол [[CALIBRATION_CAPTURE_PROTOCOL]] зафиксирован до main outcomes. Теперь нужны detector-bias/solver-conditioning диагностика, paired blur/noise и nonradial/extrinsic trials; полное 2D coverage ещё не обеспечено.
+
+## Exact-input replay и signed localization
+
+[[validation/INTRINSIC_DIAGNOSTICS]]: 192 diagnostic fits при неизменном C++ core, 64 detected-input estimates воспроизводят production. Matched optical models восстанавливаются почти точно по exact UV; float32 control на порядки меньше observed errors. Approximation models оставляют ненулевую ошибку даже при exact UV. Signed raster/detector error fields сохранены; normalized conditioning/controlled perturbations ещё предстоят. Новый diagnose-intrinsics не выполняет acceptance и не меняет production gate. Протокол: [[INTRINSIC_DIAGNOSTIC_PROTOCOL]].

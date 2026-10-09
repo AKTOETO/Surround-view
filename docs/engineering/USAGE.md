@@ -462,3 +462,26 @@ ctest --test-dir build -R 'calibration_capture_factors|calibration_coverage|opti
 ```
 
 Требуются Python NumPy/SciPy/Pillow/Matplotlib и собранный C++ OpenCV calibrator. `--binary` задаёт другой путь к `sv-calibrate`. Output новый; по умолчанию создаются 384 PNG/128 fit attempts, source/binary hashes контролируются до/после запуска. Во время серии не изменяйте перечисленные в summary исходники и binary: в этом случае сценарий откажется выпускать summary. Серверный конфиг не изменяется. Протокол: [[research/CALIBRATION_CAPTURE_PROTOCOL]], результаты/ограничения: [[validation/CALIBRATION_CAPTURE_FACTORS]].
+
+## Диагностика intrinsics: точные углы против detector
+
+При наличии исходного capture:
+
+```sh
+cmake --build build --target sv-calibrate -j 4
+python3 tools/configurator.py diagnose-capture --input artifacts/calibration-capture-v1 --output artifacts/calibration-diagnostic-repeat
+MPLCONFIGDIR=/tmp/sv-mpl python3 docs/diploma/plot_intrinsic_diagnostics.py --results artifacts/calibration-diagnostic-repeat --input artifacts/calibration-capture-v1
+ctest --test-dir build -R 'intrinsic_diagnostics|vision_tools|optical_models' --output-on-failure
+```
+
+Если capture отсутствует, сначала выполните `compare-capture` из предыдущего раздела и передайте его output через `--input`. Нужны source PNG, detections и summary, созданные этим сценарием. Проверяются hashes и неизменность numerical core; 64 source cases становятся 192 exact/float32/detected fits. Во время запуска не изменяйте исходники/binary/parent inputs. Python cv2/Blender не нужны, остальные Python зависимости прежние. Output должен быть новым.
+
+Отдельный запуск C++ diagnostic на JSON, созданном сценарием:
+
+```sh
+build/sv-calibrate diagnose-intrinsics --dataset artifacts/calibration-diagnostic-repeat/kb_nonzero-7101/small_front-analytic_truth.json --output artifacts/manual-intrinsic-diagnostic --distortion-order 4
+```
+
+Вход: `schema_version=1`, `purpose=intrinsic_solver_diagnostic`, `observation_origin=analytic_truth|analytic_truth_float32|detected_raster`, `resolution={width,height}`, `board={columns,rows,square_size_m}`, `theta_max_rad`, массивы `train` и `validation`. Каждый view содержит `id` и `uv_px` — массив пар координат в row-major board order. Требуются 6..200 train и 3..200 validation views, уникальные непустые IDs во всём dataset, columns/rows=3..31, resolution axes=1..16384, finite UV внутри кадра, положительный размер клетки и 0<theta_max<π/2. Максимальный input — 8 MiB. Origin/IDs заявлены вызывающей стороной и не подтверждают физическое происхождение данных.
+
+Команда пишет **только `diagnostics.json`**, содержащий `diagnostic_only`, residual и embedded estimate. Она не выполняет acceptance gate, не пишет `intrinsics.json`, не применяет конфиг. `--max-error-px` здесь не допускается. Exit 0 означает завершённую диагностику, а не принятую калибровку; solver/validation/input errors дают exit 1. Production `intrinsics` сохраняет прежний detector/gate workflow. Протокол и результаты: [[research/INTRINSIC_DIAGNOSTIC_PROTOCOL]], [[validation/INTRINSIC_DIAGNOSTICS]].
