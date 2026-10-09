@@ -11,6 +11,8 @@ Implements baseline and advanced fusion strategies:
 """
 import numpy as np
 import scipy.ndimage as ndi
+from scipy.sparse import coo_matrix
+from scipy.sparse.csgraph import breadth_first_order, maximum_flow
 
 
 FUSION_MODES = (
@@ -46,42 +48,95 @@ def compute_seam_distance_weights(validity, points, edge_distances):
 
 
 def compute_graph_cut_seam_mask(colors, validity, smoothness_weight=0.1):
-    """Compute optimal 2-camera seam assignment in overlap regions using graph energy minimization.
-    
-    Minimizes E(L) = sum_p D_p(L_p) + lambda * sum_(p,q) V(L_p, L_q)
-    where data term D prefers centered/high-validity samples,
-    and smoothness term V penalizes color difference |I_A(p) - I_B(p)| at seam transitions.
+    """Solve binary s-t cuts independently in regions covered by exactly two cameras.
+
+    The unary term prefers samples farther from each camera's validity boundary. The
+    pairwise Potts cost is lower where the two source colors agree, so a seam can pass
+    through those pixels. Three- and four-camera overlaps use the centrality unary.
+    This is a set of pairwise binary cuts, not a global four-label alpha-expansion.
     """
     H, W, num_cams, C = colors.shape
-    pairs = [(0, 1), (1, 2), (2, 3), (3, 0)]
-    
-    # Initialize winner labels with first valid camera
-    winner = np.zeros((H, W), dtype=np.int32)
-    for i in range(num_cams):
-        winner = np.where((winner == 0) & validity[..., i] & (i > 0), i, winner)
-    
-    for cam_a, cam_b in pairs:
-        pair_overlap = validity[..., cam_a] & validity[..., cam_b]
-        if not pair_overlap.any():
-            continue
-        
-        diff = np.linalg.norm(colors[..., cam_a, :] - colors[..., cam_b, :], axis=-1)
-        grad_y = np.abs(np.gradient(diff, axis=0))
-        grad_x = np.abs(np.gradient(diff, axis=1))
-        edge_cost = diff + smoothness_weight * (grad_x + grad_y)
-        
-        dist_a = ndi.distance_transform_edt(validity[..., cam_a])
-        dist_b = ndi.distance_transform_edt(validity[..., cam_b])
-        
-        cost_a = dist_b / (dist_a + dist_b + 1e-6) + edge_cost / (np.max(edge_cost) + 1e-6)
-        cost_b = dist_a / (dist_a + dist_b + 1e-6) + edge_cost / (np.max(edge_cost) + 1e-6)
-        
-        assign_a = pair_overlap & (cost_a <= cost_b)
-        assign_b = pair_overlap & (cost_b < cost_a)
-        
-        winner = np.where(assign_a, cam_a, winner)
-        winner = np.where(assign_b, cam_b, winner)
-        
+    if colors.ndim != 4 or validity.shape != (H, W, num_cams):
+        raise ValueError("colors must be HxWxCx3 and validity must be HxWxC")
+    if smoothness_weight < 0 or not np.isfinite(smoothness_weight):
+        raise ValueError("smoothness_weight must be finite and non-negative")
+
+    distances = np.stack(
+        [ndi.distance_transform_edt(validity[..., i]) for i in range(num_cams)], axis=-1
+    )
+    winner = np.argmax(np.where(validity, distances, -1.0), axis=-1)
+    coverage = np.sum(validity, axis=-1)
+    winner[coverage == 0] = -1
+    pair_only = coverage == 2
+    capacity_scale = 1000.0
+
+    for cam_a in range(num_cams):
+        for cam_b in range(cam_a + 1, num_cams):
+            mask = validity[..., cam_a] & validity[..., cam_b] & pair_only
+            coords = np.argwhere(mask)
+            count = len(coords)
+            if count == 0:
+                continue
+
+            node_ids = np.full((H, W), -1, dtype=np.int32)
+            node_ids[mask] = np.arange(count, dtype=np.int32)
+            y = coords[:, 0]
+            x = coords[:, 1]
+            d_a = distances[y, x, cam_a]
+            d_b = distances[y, x, cam_b]
+            d_sum = d_a + d_b + 1e-6
+            cost_a = 1.0 - d_a / d_sum
+            cost_b = 1.0 - d_b / d_sum
+
+            rows = [np.full(count, count, dtype=np.int32), np.arange(count, dtype=np.int32)]
+            cols = [np.arange(count, dtype=np.int32), np.full(count, count + 1, dtype=np.int32)]
+            data = [
+                np.rint(cost_b * capacity_scale).astype(np.int32),
+                np.rint(cost_a * capacity_scale).astype(np.int32),
+            ]
+
+            disagreement = np.linalg.norm(
+                colors[..., cam_a, :] - colors[..., cam_b, :], axis=-1
+            )
+            scale = float(np.percentile(disagreement[mask], 95)) if count else 0.0
+            normalized = np.clip(disagreement / max(scale, 1e-6), 0.0, 1.0)
+            for dy, dx in ((0, 1), (1, 0)):
+                if dy:
+                    valid_edge = mask[:-1, :] & mask[1:, :]
+                    y0, x0 = np.where(valid_edge)
+                    y1, x1 = y0 + 1, x0
+                else:
+                    valid_edge = mask[:, :-1] & mask[:, 1:]
+                    y0, x0 = np.where(valid_edge)
+                    y1, x1 = y0, x0 + 1
+                if not len(y0):
+                    continue
+                first = node_ids[y0, x0]
+                second = node_ids[y1, x1]
+                local_diff = 0.5 * (normalized[y0, x0] + normalized[y1, x1])
+                edge_capacity = np.maximum(
+                    1,
+                    np.rint(smoothness_weight * (0.05 + local_diff) * capacity_scale),
+                ).astype(np.int32)
+                rows.extend((first, second))
+                cols.extend((second, first))
+                data.extend((edge_capacity, edge_capacity))
+
+            source, sink = count, count + 1
+            graph = coo_matrix(
+                (np.concatenate(data), (np.concatenate(rows), np.concatenate(cols))),
+                shape=(count + 2, count + 2),
+                dtype=np.int32,
+            ).tocsr()
+            flow = maximum_flow(graph, source, sink, method="dinic").flow.tocsr()
+            residual = (graph - flow).tocsr()
+            reachable = breadth_first_order(
+                residual, source, directed=True, return_predecessors=False
+            )
+            source_side = np.zeros(count, dtype=bool)
+            source_side[reachable[reachable < count]] = True
+            winner[y, x] = np.where(source_side, cam_a, cam_b)
+
     seam_weights = np.zeros((H, W, num_cams), dtype=np.float32)
     for i in range(num_cams):
         seam_weights[..., i] = (winner == i) & validity[..., i]

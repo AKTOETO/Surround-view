@@ -1,6 +1,6 @@
 # Image-Quality Oracle, Vehicle Body Mask, and GPU Readback Validation
 
-Date: 09.10.2026. Status: A simplified analytic Scene Truth Oracle and vehicle-body mask exist; GPU readback has a CPU comparison. The temporal tool is only a synthetic texture-shift smoke test: its computed vehicle pose is unused and seam masks come from static geometry weights, so its reported zero displacement is not evidence of dynamic seam stability. E-STITCH seam/ghost metrics also need correction; audit details and remaining acceptance work: [[planning/AUDIT]], [[../TODO]].
+Date: 09.10.2026. Status: A simplified analytic Scene Truth Oracle and vehicle-body mask exist; GPU readback has a CPU comparison. The temporal tool is only a synthetic texture-shift smoke test: its computed vehicle pose is unused and seam masks come from static geometry weights, so its reported zero displacement is not evidence of dynamic seam stability. The legacy E-STITCH seam/ghost metrics were incorrect; v2 now computes output-based proxies, but they still lack independent object/edge truth and do not close image-quality validation. Results: [[E_STITCH_01_V2]], audit and remaining acceptance work: [[planning/AUDIT]], [[../TODO]].
 
 ## 1. Аналитический oracle прототипа и ограничение Scene Truth
 

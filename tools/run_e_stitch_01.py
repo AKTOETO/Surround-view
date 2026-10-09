@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Execute the full E-STITCH-01 experimental matrix.
+"""Execute the exploratory E-STITCH-01 carrier/fusion matrix.
 
 Compares 6 carriers (plane, bowl, dome+floor, cylinder+floor, cube, burger-like)
 x 2 virtual views (oblique, low)
@@ -11,6 +11,7 @@ import copy
 import hashlib
 import json
 from pathlib import Path
+import re
 import time
 
 import numpy as np
@@ -73,6 +74,108 @@ VIEWS = {
     "oblique": {"azimuth_rad": 0.8, "elevation_rad": 1.0, "distance_m": 8.5},
     "low": {"azimuth_rad": 0.8, "elevation_rad": 0.35, "distance_m": 8.5},
 }
+
+
+def sha256_file(path):
+    digest = hashlib.sha256()
+    with Path(path).open("rb") as source:
+        for block in iter(lambda: source.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+
+def _camera_id_from_path(path):
+    match = re.search(r"camera(\d+)", Path(path).name)
+    if not match:
+        raise ValueError(f"dataset path does not identify a camera: {path}")
+    return int(match.group(1))
+
+
+def load_experiment_inputs(config_path, dataset_dir):
+    """Load a complete, checksum-verified synchronous RGB/depth frame set."""
+    config_path = Path(config_path)
+    dataset_dir = Path(dataset_dir)
+    cfg = json.loads(config_path.read_text())
+    manifest_path = dataset_dir / "manifest.json"
+    manifest = json.loads(manifest_path.read_text())
+    if manifest.get("schema_version") != 1 or not manifest.get("frames"):
+        raise ValueError("dataset manifest must use schema_version 1 and contain a frame")
+
+    cameras = sorted(cfg.get("cameras", []), key=lambda camera: camera["id"])
+    camera_ids = [camera["id"] for camera in cameras]
+    frame = manifest["frames"][0]
+    frame_paths = frame.get("paths", [])
+    if len(frame_paths) != len(cameras) or len(set(camera_ids)) != len(camera_ids):
+        raise ValueError("RGB frame count must match unique configured camera IDs")
+    offsets = frame.get("offset_ns", [0] * len(frame_paths))
+    if len(offsets) != len(frame_paths) or any(offset != 0 for offset in offsets):
+        raise ValueError("E-STITCH-01 requires a synchronized camera frame")
+    path_ids = [_camera_id_from_path(path) for path in frame_paths]
+    if path_ids != camera_ids:
+        raise ValueError(f"RGB camera order {path_ids} does not match config IDs {camera_ids}")
+    calibration_ids = manifest.get("calibration_ids")
+    configured_calibrations = [camera.get("calibration_id") for camera in cameras]
+    if calibration_ids != configured_calibrations:
+        raise ValueError("manifest calibration IDs do not match configured cameras")
+
+    images = []
+    for camera, relative_path in zip(cameras, frame_paths):
+        image_path = dataset_dir / relative_path
+        expected_hash = manifest.get("sha256", {}).get(relative_path)
+        if not expected_hash or sha256_file(image_path) != expected_hash:
+            raise ValueError(f"RGB checksum missing or invalid: {relative_path}")
+        image = np.asarray(Image.open(image_path).convert("RGB"), dtype=float)
+        resolution = camera.get("resolution", {})
+        expected_shape = (resolution.get("height"), resolution.get("width"))
+        if image.shape[:2] != expected_shape:
+            raise ValueError(
+                f"RGB dimensions for camera {camera['id']} are {image.shape[:2]}, "
+                f"expected {expected_shape}"
+            )
+        images.append(image)
+
+    truth_path = dataset_dir / "ground_truth.json"
+    if not truth_path.is_file():
+        raise ValueError("E-STITCH-01 requires radial-depth ground truth")
+    truth = json.loads(truth_path.read_text())
+    truth_frames = truth.get("depth_truth", {}).get("frames", [])
+    if not truth_frames:
+        raise ValueError("ground_truth.json does not contain a depth frame")
+    depth_files = truth_frames[0].get("files", [])
+    if len(depth_files) != len(cameras):
+        raise ValueError("depth frame count must match configured camera IDs")
+    if [_camera_id_from_path(path) for path in depth_files] != camera_ids:
+        raise ValueError("depth camera order does not match configured camera IDs")
+
+    depth_maps = []
+    depth_hashes = truth["depth_truth"].get("sha256", {})
+    for camera, relative_path in zip(cameras, depth_files):
+        depth_path = dataset_dir / relative_path
+        expected_hash = depth_hashes.get(relative_path)
+        if not expected_hash or sha256_file(depth_path) != expected_hash:
+            raise ValueError(f"depth checksum missing or invalid: {relative_path}")
+        depth = np.load(depth_path, allow_pickle=False)
+        resolution = camera.get("resolution", {})
+        expected_shape = (resolution.get("height"), resolution.get("width"))
+        if depth.shape[:2] != expected_shape:
+            raise ValueError(
+                f"depth dimensions for camera {camera['id']} are {depth.shape[:2]}, "
+                f"expected {expected_shape}"
+            )
+        if not np.issubdtype(depth.dtype, np.floating):
+            raise ValueError(f"depth map must use floating-point radial metres: {relative_path}")
+        depth_maps.append(depth)
+
+    provenance = {
+        "config_sha256": sha256_file(config_path),
+        "manifest_sha256": sha256_file(manifest_path),
+        "ground_truth_sha256": sha256_file(truth_path),
+        "implementation_sha256": {
+            name: sha256_file(Path(__file__).with_name(name))
+            for name in ("run_e_stitch_01.py", "fusion.py", "stitch_metrics.py", "reference.py")
+        },
+    }
+    return cfg, images, depth_maps, provenance
 
 
 def evaluate_case(config, images, depth_maps, surface_name, view_name, mode):
@@ -169,28 +272,8 @@ def run_experiment(config_path, dataset_dir, output_dir):
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     
-    cfg = json.loads(Path(config_path).read_text())
     dataset_dir = Path(dataset_dir)
-    
-    manifest = json.loads((dataset_dir / "manifest.json").read_text())
-    frame_paths = manifest["frames"][0]["paths"]
-    
-    images = []
-    for p in frame_paths:
-        img_path = dataset_dir / p
-        images.append(np.asarray(Image.open(img_path).convert("RGB"), dtype=float))
-        
-    truth_path = dataset_dir / "ground_truth.json"
-    depth_maps = []
-    if truth_path.exists():
-        truth = json.loads(truth_path.read_text())
-        depth_frame = truth["depth_truth"]["frames"][0]
-        for depth_file in depth_frame["files"]:
-            depth_p = dataset_dir / depth_file
-            depth_maps.append(np.load(depth_p, allow_pickle=False))
-    else:
-        for i in range(4):
-            depth_maps.append(np.full((400, 400), np.nan, dtype=np.float32))
+    cfg, images, depth_maps, provenance = load_experiment_inputs(config_path, dataset_dir)
             
     rows = []
     cases_total = len(CARRIERS) * len(VIEWS) * len(FUSION_MODES)
@@ -217,6 +300,7 @@ def run_experiment(config_path, dataset_dir, output_dir):
         "experiment_id": "E-STITCH-01",
         "timestamp_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "dataset": str(dataset_dir),
+        "provenance": provenance,
         "cases_count": len(rows),
         "results": rows,
     }
@@ -225,12 +309,15 @@ def run_experiment(config_path, dataset_dir, output_dir):
     
     # Generate Markdown Report
     lines = [
-        "# Подтверждающая серия E-STITCH-01: Сравнительное исследование сшивки и геометрии",
+        "# Exploratory matrix E-STITCH-01: варианты сшивки и геометрии",
         "",
-        "Сравнение 6 поверхностей-носителей × 2 виртуальных ракурса × 7 стратегий слияния (84 случая).",
+        "Одна статическая capture × 6 carriers × 2 virtual views × 7 fusion variants (84 cases).",
+        "Это exploratory screen, а не независимая подтверждающая серия; для выводов нужны holdout scenes/seeds.",
+        "`fusion_ms` измеряет только последовательные Python/NumPy/SciPy операции на CPU, не GPU pipeline.",
+        "Ghost fraction — source-disagreement proxy, зависящий от fused output; он ещё должен быть сопоставлен с object-ID truth.",
         "",
-        "| Носитель | Ракурс | Стратегия Fusion | Seam ΔE (p95) | Gradient Disc. | Ghost Frac % | Exact Depth Cov % (0.05m) | Consistent Weight % | Fusion ms |",
-        "|---|---|---|---:|---:|---:|---:|---:|---:|",
+        "| Носитель | Ракурс | Стратегия Fusion | Seam pixels | Seam CIE76 p95 | L-gradient jump | Fused ghost proxy % | Exact Depth Cov % | Consistent Weight % | Python CPU ms |",
+        "|---|---|---|---:|---:|---:|---:|---:|---:|---:|",
     ]
     
     for r in rows:
@@ -241,17 +328,18 @@ def run_experiment(config_path, dataset_dir, output_dir):
         weight_frac = r["depth_consistency"]["0.05"]["depth_consistent_weight_fraction"] * 100.0
         t_fus = r["timing_ms"]["fusion_ms"]
         lines.append(
-            f"| `{r['carrier']}` | `{r['view']}` | `{r['mode']}` | {seam_p95:.2f} | {grad_disc:.2f} | "
+            f"| `{r['carrier']}` | `{r['view']}` | `{r['mode']}` | {r['seam']['seam_pixels']} | "
+            f"{seam_p95:.2f} | {grad_disc:.2f} | "
             f"{ghost_pct:.2f}% | {depth_cov:.2f}% | {weight_frac:.2f}% | {t_fus:.2f} |"
         )
         
     lines.extend([
         "",
-        "## Ключевые выводы серии E-STITCH-01",
+        "## Границы вывода",
         "",
-        "1. **Graph-Cut Seam и Multi-Band:** Комбинация `graph_cut_multi_band` обеспечивает наименьший цветовой скачок на шве (минимальный $\\Delta E$) и сглаживает фотометрические различия, при этом `graph_cut_seam` минимизирует количество двоений контуров (ghosting fraction) в зоне перекрытия.",
-        "2. **Геометрия носителей:** `burger_like` и `dome_floor` обеспечивают 100% обзорную оболочку без угловых сингулярностей; `plane` и `bowl` имеют наивысшую depth-consistent точность на дорожном полотне ($z=0$), но испытывают геометрический параллакс на вертикальных объектах.",
-        "3. **Вычислительный бюджет:** direct `edge_feather` и `angular_feather` выполняются за $<1.5\\text{ ms}$, тогда как `multi_band` и `graph_cut` требуют $5–15\\text{ ms}$, что укладывается в бюджет кадра 30 fps (33.3 ms).",
+        "Варианты fusion здесь исполняются на CPU в offline reference, а не в GLES shader. Seam CIE76 — шаг между соседними output pixels на границе argmax-weight labels. Ghost proxy показывает только сохранение обоих разнесённых source contours в fused image; он не заменяет независимую semantic/object truth.",
+        "",
+        "Эта матрица не является независимым повтором: все 84 случая используют один capture. Нельзя по ней объявлять лучший carrier/fusion или target-device frame rate.",
         "",
     ])
     
@@ -262,8 +350,8 @@ def run_experiment(config_path, dataset_dir, output_dir):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--config", default="artifacts/blender-depth-truth-dataset-fixed/config.json")
-    parser.add_argument("--dataset", default="artifacts/blender-depth-truth-dataset-fixed")
-    parser.add_argument("--output", default="artifacts/e-stitch-01-v1")
+    parser.add_argument("--config", default="tests/data/e_stitch_01_v1/config.json")
+    parser.add_argument("--dataset", default="tests/data/e_stitch_01_v1")
+    parser.add_argument("--output", default="artifacts/e-stitch-01-v2")
     args = parser.parse_args()
     run_experiment(args.config, args.dataset, args.output)

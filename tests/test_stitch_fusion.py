@@ -83,12 +83,32 @@ class StitchFusionTests(unittest.TestCase):
             has_cov = np.sum(self.validity, axis=-1) > 0
             np.testing.assert_allclose(weight_sum[has_cov], 1.0, atol=1e-5)
 
-    def test_graph_cut_minimizes_boundary_cost(self):
+    def test_graph_cut_produces_binary_valid_labels(self):
         weights = compute_graph_cut_seam_mask(self.colors, self.validity)
         self.assertEqual(weights.shape, (self.H, self.W, 4))
-        # Hard binary choice per pixel
         has_cov = np.sum(self.validity, axis=-1) > 0
         self.assertTrue(np.all(np.isin(weights[has_cov], [0.0, 1.0])))
+        np.testing.assert_allclose(np.sum(weights[has_cov], axis=-1), 1.0)
+
+    def test_graph_cut_places_seam_in_low_source_disagreement_corridor(self):
+        height, width = 32, 48
+        validity = np.zeros((height, width, 2), dtype=bool)
+        validity[:, :, 0] = np.arange(width)[None, :] <= 31
+        validity[:, :, 1] = np.arange(width)[None, :] >= 10
+        colors = np.zeros((height, width, 2, 3), dtype=np.float32)
+        colors[:, :, 1, :] = 0.8
+        colors[:, 22:24, 1, :] = 0.01
+
+        weights = compute_graph_cut_seam_mask(colors, validity)
+        labels = np.argmax(weights, axis=-1)
+        seam_x = []
+        for y in range(4, height - 4):
+            row = labels[y, 10:32]
+            transitions = np.flatnonzero(row[1:] != row[:-1])
+            seam_x.extend((transitions + 10).tolist())
+
+        self.assertEqual(len(seam_x), height - 8)
+        self.assertLessEqual(abs(float(np.mean(seam_x)) - 22.5), 2.0)
 
     def test_burger_like_carrier_intersection(self):
         burger_surface = {
@@ -122,6 +142,41 @@ class StitchFusionTests(unittest.TestCase):
         ghost_m = compute_ghost_contours(fused, self.colors, self.validity)
         self.assertIn("ghost_fraction_of_overlap", ghost_m)
         self.assertIn("overlap_pixels", ghost_m)
+
+    def test_seam_metric_measures_output_color_step_at_label_boundary(self):
+        height, width = 40, 64
+        validity = np.ones((height, width, 2), dtype=bool)
+        weights = np.zeros((height, width, 2), dtype=np.float32)
+        weights[:, :32, 0] = 1.0
+        weights[:, 32:, 1] = 1.0
+        fused = np.zeros((height, width, 3), dtype=np.uint8)
+        fused[:, 32:, :] = 255
+
+        metrics = compute_seam_metrics(fused, weights, validity)
+
+        self.assertEqual(metrics["seam_pixels"], height)
+        self.assertGreater(metrics["p95_delta_e"], 90.0)
+
+    def test_ghost_metric_requires_both_separated_edges_in_fused_output(self):
+        height, width = 40, 64
+        camera_a = np.zeros((height, width, 3), dtype=np.float32)
+        camera_b = np.zeros_like(camera_a)
+        camera_a[:, 30:, :] = 1.0
+        camera_b[:, 34:, :] = 1.0
+        camera_samples = np.stack([camera_a, camera_b], axis=2)
+        validity = np.ones((height, width, 2), dtype=bool)
+
+        blended = np.rint(127.5 * (camera_a + camera_b)).astype(np.uint8)
+        single_source = np.rint(255.0 * camera_a).astype(np.uint8)
+        blended_metrics = compute_ghost_contours(blended, camera_samples, validity)
+        single_metrics = compute_ghost_contours(single_source, camera_samples, validity)
+
+        self.assertGreater(blended_metrics["ghost_pixel_count"], 0)
+        self.assertEqual(single_metrics["ghost_pixel_count"], 0)
+        self.assertGreater(
+            blended_metrics["ghost_fraction_of_overlap"],
+            single_metrics["ghost_fraction_of_overlap"],
+        )
 
 
 if __name__ == "__main__":

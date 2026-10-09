@@ -11,8 +11,16 @@ def rgb_to_gray(rgb):
 
 
 def rgb_to_lab(rgb):
-    """Convert linear RGB to approximate CIELAB space."""
-    r, g, b = rgb[..., 0], rgb[..., 1], rgb[..., 2]
+    """Convert sRGB samples to CIE L*a*b* (D65), using the CIE76 Euclidean delta."""
+    srgb = np.asarray(rgb, dtype=np.float32)
+    if srgb.max(initial=0.0) > 1.0:
+        srgb = srgb / 255.0
+    linear = np.where(
+        srgb <= 0.04045,
+        srgb / 12.92,
+        ((srgb + 0.055) / 1.055) ** 2.4,
+    )
+    r, g, b = linear[..., 0], linear[..., 1], linear[..., 2]
     x = 0.412453 * r + 0.357580 * g + 0.180423 * b
     y = 0.212671 * r + 0.715160 * g + 0.072169 * b
     z = 0.019334 * r + 0.119193 * g + 0.950227 * b
@@ -38,22 +46,54 @@ def simple_edge_detection(gray, threshold=0.1):
 
 
 def compute_seam_metrics(fused_rgb, weights, validity):
-    """Measure color discontinuity (delta E) and gradient jump across seam boundaries."""
-    img = fused_rgb.astype(np.float32)
-    if img.max() > 1.0:
-        img /= 255.0
-        
+    """Measure CIE76 color step and luminance-gradient jump across label boundaries."""
+    img = np.asarray(fused_rgb)
     H, W, num_cams = weights.shape
+    if img.shape != (H, W, 3) or validity.shape != (H, W, num_cams):
+        raise ValueError("fused image, weights, and validity dimensions do not match")
+
     overlap = np.sum(validity, axis=-1) > 1
-    
-    seam_mask = np.zeros((H, W), dtype=bool)
-    for i in range(num_cams):
-        w_grad_x = np.abs(ndi.sobel(weights[..., i], axis=1))
-        w_grad_y = np.abs(ndi.sobel(weights[..., i], axis=0))
-        w_grad = np.hypot(w_grad_x, w_grad_y)
-        seam_mask |= (w_grad > 0.1) & overlap
-        
-    if not seam_mask.any():
+    has_weight = np.sum(weights, axis=-1) > 1e-6
+    labels = np.argmax(weights, axis=-1)
+    lab = rgb_to_lab(img)
+    boundaries = []
+    gradient_jumps = []
+
+    horizontal = (
+        overlap[:, :-1]
+        & overlap[:, 1:]
+        & has_weight[:, :-1]
+        & has_weight[:, 1:]
+        & (labels[:, :-1] != labels[:, 1:])
+    )
+    if horizontal.any():
+        delta = np.linalg.norm(lab[:, :-1] - lab[:, 1:], axis=-1)
+        boundaries.append(delta[horizontal])
+        if W >= 4:
+            inner = horizontal[:, 1:-1]
+            if inner.any():
+                left_gradient = lab[:, 1:-2, 0] - lab[:, :-3, 0]
+                right_gradient = lab[:, 3:, 0] - lab[:, 2:-1, 0]
+                gradient_jumps.append(np.abs(right_gradient - left_gradient)[inner])
+
+    vertical = (
+        overlap[:-1, :]
+        & overlap[1:, :]
+        & has_weight[:-1, :]
+        & has_weight[1:, :]
+        & (labels[:-1, :] != labels[1:, :])
+    )
+    if vertical.any():
+        delta = np.linalg.norm(lab[:-1, :] - lab[1:, :], axis=-1)
+        boundaries.append(delta[vertical])
+        if H >= 4:
+            inner = vertical[1:-1, :]
+            if inner.any():
+                upper_gradient = lab[1:-2, :, 0] - lab[:-3, :, 0]
+                lower_gradient = lab[3:, :, 0] - lab[2:-1, :, 0]
+                gradient_jumps.append(np.abs(lower_gradient - upper_gradient)[inner])
+
+    if not boundaries:
         return {
             "seam_pixels": 0,
             "mean_delta_e": 0.0,
@@ -61,33 +101,33 @@ def compute_seam_metrics(fused_rgb, weights, validity):
             "max_delta_e": 0.0,
             "gradient_discontinuity": 0.0,
         }
-        
-    lab = rgb_to_lab(img)
-    lab_grad_x = ndi.sobel(lab, axis=1)
-    lab_grad_y = ndi.sobel(lab, axis=0)
-    lab_grad_mag = np.sqrt(np.sum(lab_grad_x**2 + lab_grad_y**2, axis=-1))
-    
-    seam_deltas = lab_grad_mag[seam_mask]
-    
-    gray = rgb_to_gray(img)
-    laplacian = np.abs(ndi.laplace(gray))
-    seam_laplacian = laplacian[seam_mask]
-    
+
+    seam_deltas = np.concatenate(boundaries)
+    jumps = np.concatenate(gradient_jumps) if gradient_jumps else np.zeros(0, dtype=float)
     return {
-        "seam_pixels": int(seam_mask.sum()),
+        "seam_pixels": int(seam_deltas.size),
         "mean_delta_e": float(np.mean(seam_deltas)),
         "p95_delta_e": float(np.percentile(seam_deltas, 95)),
         "max_delta_e": float(np.max(seam_deltas)),
-        "gradient_discontinuity": float(np.mean(seam_laplacian)),
+        "gradient_discontinuity": float(np.mean(jumps)) if jumps.size else 0.0,
     }
 
 
 def compute_ghost_contours(fused_rgb, individual_rgb_samples, validity, overlap_corridor_px=20):
-    """Detect secondary duplicate edge responses (ghosting) in camera overlap zones."""
-    img = fused_rgb.astype(np.float32)
-    if img.max() > 1.0:
+    """Detect separated source contours that both survive in the fused output.
+
+    This is a source-disagreement proxy, not an object-ID ground-truth metric. A pair
+    contributes only when its two separated source edges are both present in the output.
+    """
+    img = np.asarray(fused_rgb, dtype=np.float32)
+    if img.max(initial=0.0) > 1.0:
         img /= 255.0
-        
+    samples = np.asarray(individual_rgb_samples, dtype=np.float32)
+    if samples.shape[:2] != img.shape[:2] or samples.shape[-1] != 3:
+        raise ValueError("camera samples must have shape HxWxCx3 matching fused image")
+    if validity.shape != samples.shape[:3]:
+        raise ValueError("validity must have shape HxWxC matching camera samples")
+
     gray_fused = rgb_to_gray(img)
     overlap = np.sum(validity, axis=-1) > 1
     overlap_pixels = int(overlap.sum())
@@ -97,27 +137,33 @@ def compute_ghost_contours(fused_rgb, individual_rgb_samples, validity, overlap_
         
     edges_fused = simple_edge_detection(gray_fused, threshold=0.08) & overlap
     dist_from_edges = ndi.distance_transform_edt(~edges_fused)
-    
-    ghost_pixels = 0
+    camera_edges = [
+        simple_edge_detection(rgb_to_gray(samples[..., i, :]), threshold=0.08)
+        for i in range(samples.shape[2])
+    ]
+    ghost_mask = np.zeros(overlap.shape, dtype=bool)
     ghost_offsets = []
     
-    for i in range(4):
-        for j in range(i + 1, 4):
+    for i in range(samples.shape[2]):
+        for j in range(i + 1, samples.shape[2]):
             pair_mask = validity[..., i] & validity[..., j]
             if not pair_mask.any():
                 continue
-            cam_i_gray = rgb_to_gray(individual_rgb_samples[..., i, :])
-            cam_j_gray = rgb_to_gray(individual_rgb_samples[..., j, :])
-            
-            edge_i = simple_edge_detection(cam_i_gray, threshold=0.08) & pair_mask
-            edge_j = simple_edge_detection(cam_j_gray, threshold=0.08) & pair_mask
-            
+
+            edge_i = camera_edges[i] & pair_mask
+            edge_j = camera_edges[j] & pair_mask
             dist_i = ndi.distance_transform_edt(~edge_i)
-            secondary = edge_j & (dist_i >= 2.0) & (dist_i <= overlap_corridor_px) & pair_mask
-            if secondary.any():
-                ghost_pixels += int(secondary.sum())
-                ghost_offsets.extend(dist_i[secondary].tolist())
-                
+            dist_j = ndi.distance_transform_edt(~edge_j)
+            candidate_i = edge_i & (dist_j >= 2.0) & (dist_j <= overlap_corridor_px)
+            candidate_j = edge_j & (dist_i >= 2.0) & (dist_i <= overlap_corridor_px)
+            retained_i = candidate_i & (dist_from_edges <= 1.5)
+            retained_j = candidate_j & (dist_from_edges <= 1.5)
+            if retained_i.any() and retained_j.any():
+                ghost_mask |= retained_i | retained_j
+                ghost_offsets.extend(dist_j[retained_i].tolist())
+                ghost_offsets.extend(dist_i[retained_j].tolist())
+
+    ghost_pixels = int(ghost_mask.sum())
     ghost_frac = float(ghost_pixels / max(overlap_pixels, 1))
     mean_offset = float(np.mean(ghost_offsets)) if ghost_offsets else 0.0
     

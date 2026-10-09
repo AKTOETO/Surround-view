@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "origin": "blender_metric_street_v1",
+  "calibration_ids": [
+    "blender-rig-front-v1",
+    "blender-rig-right-v1",
+    "blender-rig-rear-v1",
+    "blender-rig-left-v1"
+  ],
+  "frames": [
+    {
+      "scenario_timestamp_ns": "0",
+      "paths": [
+        "camera0_0000.ppm",
+        "camera1_0000.ppm",
+        "camera2_0000.ppm",
+        "camera3_0000.ppm"
+      ],
+      "offset_ns": [
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  ],
+  "sha256": {
+    "camera0_0000.ppm": "ae562c4c2708178301e6a6cb4178884f5e2b92dfbf3370b37877ba452fb71ed2",
+    "camera1_0000.ppm": "b385dd81da3e48667430bbad4d50cbbb31d7d42227ce3f217ca9a9d74ed76e78",
+    "camera2_0000.ppm": "37eb7e1644aab2703cc74f37f685025aaf5e805aba81f79fc678e3fbfadd1f32",
+    "camera3_0000.ppm": "af7f26ceb0ffabf1b839fb830cf41786e753e3154a6b002e310f9b179160ef7b"
+  }
+}

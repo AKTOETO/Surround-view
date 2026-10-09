@@ -1,6 +1,6 @@
 # Исследование сшивки четырёх камер и геометрии отображения
 
-Статус на 09.10.2026: **обзор Burger и протокол E-STITCH-01 зафиксированы; offline-код содержит 7 вариантов fusion и 6 carriers, а скрипт сформировал 84 строки на одной статической Blender-сцене. Это лишь exploratory run, не подтверждающее сравнение качества. Повторный аудит выявил, что вариант `graph_cut_seam` — пиксельная distance-эвристика, seam-оценка считает Sobel-gradient, а ghost-score не анализирует fused edges. Числа и выводы ниже не считать рейтингом и не переносить в итоговые выводы до исправления метода/метрик и повторения на holdout сценах.** Реальное runtime ядро содержит меньше вариантов; см. [[engineering/RENDERING]]. Общие обозначения — [[architecture/MATHEMATICS]], план — [[planning/ROADMAP]], каталог опытов — [[research/EXPERIMENTS]], список исправлений — [[../TODO]].
+Статус на 09.10.2026: **обзор Burger и протокол E-STITCH-01 зафиксированы; offline-код содержит 7 fusion-вариантов и 6 carriers. Аудит выявил, что прежний `graph_cut_seam` был pixel heuristic, seam score — Sobel magnitude, ghost score не использовал fused edges; эти ошибки исправлены, добавлены known-answer tests, а 84-case matrix пересчитана на checksum-verified fixture. Новая серия остаётся exploratory: одна статическая Blender-сцена; CIE76 и ghost показатели пока output/source proxies, без независимой object truth. Binary s-t cuts выполняются только на overlap ровно двух камер, в трёх/четырёх camera overlap остаётся centrality fallback. Global multi-label, exact scene oracle, independent holdout и temporal clips открыты.** Результаты нового прогона: [[validation/E_STITCH_01_V2]], исторические числа: [[validation/STITCH_VISIBILITY]]. Реальное runtime ядро содержит меньше вариантов; см. [[engineering/RENDERING]]. Общие обозначения — [[architecture/MATHEMATICS]], план — [[planning/ROADMAP]], каталог опытов — [[research/EXPERIMENTS]], список исправлений — [[../TODO]].
 
 ## 1. Исследовательский вопрос
 
@@ -255,9 +255,9 @@ Coverage считать отдельно как (1) проекционная val
 
 В low view у купола проекционная coverage составляет 99.94%, но точная depth-visible coverage — 16.20%; доля fusion weight, выборка которой совпадает с 3D-точкой, — 13.18% для edge-feather и 14.05% для hard-best-angle. Для plane те же значения 99.91%, 24.31%, 19.81% и 21.17%; для bowl — 99.92%, 21.96%, 17.89% и 18.93%. Sensitivity check для dome/plane при absolute tolerance 0.02/0.05/0.10 м сохраняет тот же порядок, но exact-depth coverage купола меняется от 11.12% до 27.12%, плоскости — от 16.59% до 40.94%. Значит, даже порядок кандидатов выглядит устойчивым только в пределах одного кадра/набора, а абсолютные числа чувствительны к порогу. Это показывает, что `valid projection coverage` нельзя читать как физическую видимость. Малые различия hard/feather в одном кадре не достаточны для выбора способа сшивки. Это visibility proxy, а не visual seam/ghosting ranking; carriers имеют разный ROI, и все оценки относятся к одному синтетическому кадру.
 
-## 11. Exploratory output матрицы E-STITCH-01 — не подтверждающие выводы
+## 11. Исторический exploratory output матрицы E-STITCH-01 — не подтверждающие выводы
 
-Скрипт `tools/run_e_stitch_01.py` сформировал 84 конфигурации:
+Старая версия скрипта `tools/run_e_stitch_01.py` сформировала 84 конфигурации; hashes входов и реализации зафиксированы в [[validation/STITCH_VISIBILITY]]. Код метрик/fusion был изменён после этого прогона, так что приведённые числа не относятся к текущему исходному тексту:
 - **6 носителей:** `plane`, `bowl`, `dome_floor`, `cylinder_floor`, `cube_floor`, `burger_like`.
 - **2 виртуальных ракурса:** `oblique` ($\theta_{el}=1.0\text{ rad}$) и `low` ($\theta_{el}=0.35\text{ rad}$).
 - **7 стратегий fusion:** `hard_best_angle`, `edge_feather`, `angular_feather`, `seam_distance_feather`, `graph_cut_seam`, `multi_band`, `graph_cut_multi_band`.
@@ -290,9 +290,9 @@ Coverage считать отдельно как (1) проекционная val
 ### 11.1 Статус гипотез
 
 1. **H1 — стоимость и двоение простых feather-вариантов:** не подтверждена этой матрицей как вывод о runtime/GPU. Python CPU wall нельзя сравнивать с GPU timing; двоение должно измеряться по независимой object/edge truth, а не по расхождению входных источников.
-2. **H2 — graph-cut:** не проверена. `compute_graph_cut_seam_mask` не решает graph-cut задачу: добавляемый к обеим меткам `edge_cost` сокращается в сравнении, фактический выбор следует distance transform.
-3. **H3 — multi-band и фотометрический шов:** не подтверждена текущей метрикой. Код имеет Laplacian-pyramid blend, но `gradient_discontinuity` сейчас среднее Laplacian вокруг маски seam, а `seam ΔE` — величина Sobel-градиента Lab, не поперечный цветовой скачок на границе.
+2. **H2 — graph-cut:** новая 84-case matrix пересчитана, но не подтверждает преимущество метода. Бинарные cuts применяются только к exactly-two-camera overlap; нужен отдельный тест выбранных seams/pairwise energy в реальных данных и global policy для областей трёх/четырёх камер.
+3. **H3 — multi-band и фотометрический шов:** новый код измеряет CIE76 output color difference на соседних пикселях через argmax-weight boundary и luminance-gradient jump. На текущем наборе медианный p95 CIE76 для `graph_cut_seam` равен 29.46, для `edge_feather` — 1.02; это не доказательство худшего качества graph-cut, потому что метрика не отделяет scene edges от seam discontinuity и не имеет независимой truth. Сопоставить output proxies с object/edge annotations.
 4. **H4 — carrier quality:** geometric projection/coverage наблюдается на выбранном fixture; заявление о 100% сфере или превосходстве для дорожной зоны не следует из этой матрицы без фиксированного ROI, равного mesh-budget и независимых сцен.
 
-Также ghost metric вычисляет источник-источник edge disagreement, а рассчитанную edge map готового fused image не использует; поэтому её значение одинаково для разных fusion modes и не показывает, что алгоритм удалил дубль. Сырые числа и процедура сохранены в [[validation/STITCH_VISIBILITY]]; критерии исправления — [[../TODO]].
+Историческая ghost metric вычисляла source-source edge disagreement и не использовала fused edge map, поэтому её значения были одинаковы для разных fusion modes. Текущий output-based proxy требует обе source edges и обе fused responses, но нуждается в проверке на независимых object-ID/edge annotations. Сводка нового прогона находится в [[validation/E_STITCH_01_V2]], прежний результат сохранён в [[validation/STITCH_VISIBILITY]]; независимое подтверждение остаётся открытым по [[../TODO]].
 
