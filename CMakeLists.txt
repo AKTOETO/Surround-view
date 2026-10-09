@@ -208,6 +208,7 @@ add_executable(sv-core-tests tests/core_tests.cpp)
       add_test(NAME vision_tools COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_vision_tools.py
         $<TARGET_FILE:sv-calibrate> $<TARGET_FILE:sv-vision-fixture> $<TARGET_FILE:sv-capture>)
       add_test(NAME optical_models COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_optical_models.py)
+      add_test(NAME calibration_coverage COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_calibration_coverage.py $<TARGET_FILE:sv-calibrate>)
       add_test(NAME raster_calibration COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_raster_calibration.py $<TARGET_FILE:sv-calibrate>)
       add_test(NAME independent_math COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_math.py $<TARGET_FILE:sv-project> ${CMAKE_CURRENT_SOURCE_DIR}/configs/synthetic.json)
       add_test(NAME calibration COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_calibration.py)
