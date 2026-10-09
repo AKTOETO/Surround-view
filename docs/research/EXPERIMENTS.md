@@ -84,3 +84,7 @@ GPU execution time измерять асинхронными timer queries, CPU 
 ## Coded-object diagnostic screen — 10.10.2026
 
 [[validation/OBJECT_STITCH]]: общий object identity на четырёх source-camera ID maps и независимом direct truth, RGB-only target metrics, 84 carrier/fusion/frame cases. Known-answer clean/double/missing/displaced/merged controls подтверждают применимость и ограничение счётчиков копий. Два warmup/семь CPU render repeats опубликованы с raw samples. Это exploratory тест кодированной мишени, не natural-object ghost detector и не подтверждающий рейтинг; этапы 1, 5, 6 остаются частично открытыми.
+
+## E-CAL-raster-01 — 10.10.2026
+
+[[validation/RASTER_CALIBRATION]]: 2 pose seeds × 3 blur/noise conditions × 16 PNG, production OpenCV detector/calibrator, order=2/4 ablation. Отказы включены, localization сравнивается с forward geometric truth, intrinsics проверяются на 4 held-out views после fit 12 train views. Истинная optical family equidistant; не выдавать этот опыт за physical calibration validation.

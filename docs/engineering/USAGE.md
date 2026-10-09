@@ -414,3 +414,13 @@ python3 tools/configurator.py compare-mounts --dataset artifacts/blender-mount-v
 ```
 
 Output directory должен быть новым. Numeric experiment работает без Blender, если dataset уже экспортирован; `--render` требует EGL/GLES. Полный observation schema, методы и ограничения — [[research/MOUNT_CALIBRATION]], результаты — [[validation/MOUNT_CALIBRATION]]. Сервер принимает `calibrate` через generic `svctl command`/library API: передаются JSON-массивы `points`, `pixels`, `validation_points`, `validation_pixels` и `camera_id`; каждая точка XYZ, каждый пиксель UV. Validation observations должны быть отложены до подгонки. Затем опрашивают `calibration_status` по `job_id`; `cancel_calibration` отменяет job, `apply_calibration` применяет его только после quality gate. Jobs привязаны к session ID, сохраняют стартовую revision config и отменяются при закрытии control-соединения; применение устаревшего job отклоняется, новая calibration получает новый ID. Текущий OpenCV вызов не прерывается, его результат после отмены отбрасывается. Применение блокируется при validation RMSE >3 px или максимуме >8 px. Пороги временные, API пока не типизирован и не проверен на физических камерах.
+
+## Растровое исследование detector/calibrator и ограничение порядка модели
+
+```sh
+cmake --build build --target sv-calibrate -j 4
+python3 tools/calibration/raster_study.py --output artifacts/calibration-raster-repeat --seeds 2401 2402
+build/sv-calibrate intrinsics --dataset artifacts/calibration-raster-repeat/2402-clean/dataset.json --output artifacts/intrinsics-order2 --distortion-order 2
+```
+
+`--distortion-order` принимает строго `2` или `4`, default `4`. Профиль `2` фиксирует k3/k4=0 при оценивании k1/k2; p95 gate и monotonicity checks сохраняются. Ошибка не приводит к автоматическому fallback или ослаблению проверок. Выбор порядка требует собственных validation данных. Полный протокол, ограничения и фактические отказы: [[validation/RASTER_CALIBRATION]]. Python cv2 не требуется, используется production C++ OpenCV бинарный файл.

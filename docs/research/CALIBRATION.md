@@ -100,3 +100,7 @@ stop
 - E-RECOVERY-01: показатели до смещения, после смещения и после повторной калибровки на одной независимой проверочной сцене.
 
 Источники: [[references/VISION|OpenCV, Zhang, Kannala–Brandt, TI и исследования extrinsic-калибровки]].
+
+## Image-based проверка вместо jitter-модели — 10.10.2026
+
+[[validation/RASTER_CALIBRATION]] выполняет production OpenCV detector/solver на 96 raster images и сравнивает two/four-coefficient fisheye fits. Исторический `real_data_calibration_evaluation.py` теперь возвращает явные false detector/solver flags и unvalidated threshold status. `num_trials` удалён, поскольку раньше игнорировался. PNG experiment обнаружил немонотонные fits и focal errors около 2.5% при принятом p95<1 px. Отдельная board pose на validation не заменяет метрический контроль intrinsics/монтажа; multi-family optics, physical observations и false accept/reject остаются открытыми.

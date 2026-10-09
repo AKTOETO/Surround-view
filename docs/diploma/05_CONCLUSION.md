@@ -24,7 +24,7 @@ updated: 2026-10-09
 | Задача | Достигнутый результат | Статус |
 |---|---|---|
 | R1: анализ и теория | Главы 1–2, математические модели проекции, обзор Burger model | Выполнено |
-| R2: модели дисторсии и калибровка | Synthetic KB/RadTan/Omni fits, Joint Bundle Adjustment, PnP, server gate | Частично: реальные detector observations и пороги не проверены |
+| R2: модели дисторсии и калибровка | Synthetic KB/RadTan/Omni fits, Joint Bundle Adjustment, PnP, server gate | Частично: production detector/solver проверены на синтетических PNG (§4.29); physical observations/пороги не подтверждены |
 | R3: 3D-носители и слияние камер | 6 offline carriers, 7 fusion labels, 84 конфигурации | Частично: seam/ghost ranking невалиден, holdout quality series не выполнена |
 | R4: контроль смещения и оракул | Scene Truth prototype, body mask, temporal script | Частично: temporal rig motion не проверен; drift diagnostics не завершена |
 | R5: архитектура и интеграция | Linux C++17 ядро, EGL Surfaceless, сервер, `sv-client-lib` | Частично: multi-session, полноценный ConfigService и Aurora acceptance открыты |
