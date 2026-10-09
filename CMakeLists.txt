@@ -81,7 +81,8 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/svClientConfig.cmake ${CMAKE_CURRENT_B
 add_library(sv-core STATIC src/core/math.cpp src/core/config.cpp src/core/frame.cpp)
 target_include_directories(sv-core PUBLIC include "${CMAKE_CURRENT_BINARY_DIR}/generated")
 target_link_libraries(sv-core PUBLIC sv-wire glm::glm OpenSSL::Crypto)
-add_library(sv-vision STATIC src/vision/camera.cpp src/vision/calibration.cpp src/vision/extrinsics.cpp)
+add_library(sv-vision STATIC src/vision/camera.cpp src/vision/calibration.cpp src/vision/extrinsics.cpp
+  src/vision/calibration_observations.cpp)
 target_include_directories(sv-vision SYSTEM PUBLIC ${OpenCV_INCLUDE_DIRS})
 target_include_directories(sv-vision SYSTEM PUBLIC ${SV_OPENCV_INCLUDE_DIRS})
 target_link_libraries(sv-vision PUBLIC sv-core ${SV_OPENCV_LIBRARIES})
@@ -258,6 +259,9 @@ install(FILES packaging/licenses/OpenCV-Apache-2.0.txt packaging/licenses/GLM-co
 
 if(BUILD_TESTING AND SV_GTEST_TESTS)
   find_package(GTest CONFIG REQUIRED)
+  add_executable(sv-calibration-observation-tests tests/calibration_observations.cpp)
+  target_link_libraries(sv-calibration-observation-tests PRIVATE sv-vision GTest::gtest_main)
+  add_test(NAME calibration_observations COMMAND sv-calibration-observation-tests)
   add_executable(sv-config-store-tests tests/config_store_tests.cpp)
   target_link_libraries(sv-config-store-tests PRIVATE sv-core GTest::gtest_main)
   target_compile_definitions(sv-config-store-tests PRIVATE

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "sv/calibration_observations.hpp"
 #include "sv/config_store.hpp"
 #include "sv/extrinsics.hpp"
 #include "sv/vision.hpp"
@@ -51,6 +52,7 @@ inline std::string to_string(JobState state)
 struct CalibrationJobResult
 {
     std::string job_id;
+    CalibrationSplitAudit split_audit;
     uint64_t base_config_revision = 0;
     int camera_id = 0;
     JobState state = JobState::Pending;
@@ -93,7 +95,7 @@ class CalibrationJobManager
                            const std::vector<Vec3> &points, const std::vector<Pixel> &pixels,
                            const std::vector<Vec3> &validation_points,
                            const std::vector<Pixel> &validation_pixels,
-                           const ExtrinsicOptions &options)
+                           const ExtrinsicOptions &options, const CalibrationProvenance &provenance)
     {
         if (owner_session_id.empty() || camera_id < 0 || camera_id >= 4 ||
             points.size() != pixels.size() || points.size() < 6 ||
@@ -103,6 +105,8 @@ class CalibrationJobManager
         {
             throw std::invalid_argument("calibration job input size/camera ID invalid");
         }
+        const auto audit = validate_calibration_observations(points, pixels, validation_points,
+                                                             validation_pixels, provenance);
         std::lock_guard<std::mutex> lock(mutex_);
         if (queue_.size() >= max_queued_jobs)
         {
@@ -141,6 +145,7 @@ class CalibrationJobManager
         task.validation_pixels = validation_pixels;
         task.options = options;
 
+        task.result.split_audit = audit;
         task.result.job_id = job_id;
         task.result.camera_id = camera_id;
         task.result.state = JobState::Pending;
@@ -337,6 +342,7 @@ class CalibrationJobManager
 
             auto start_time = std::chrono::steady_clock::now();
             CalibrationJobResult res;
+            res.split_audit = task.result.split_audit;
             res.job_id = job_id;
             res.base_config_revision = task.result.base_config_revision;
             res.camera_id = task.camera_id;

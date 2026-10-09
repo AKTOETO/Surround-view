@@ -55,10 +55,18 @@ int main()
     sv::ExtrinsicOptions options;
     options.method = "iterative";
 
+    sv::CalibrationProvenance provenance;
+    provenance.dataset_id = "synthetic-calibration-job-v1";
+    for (size_t i = 0; i < all_points.size(); ++i)
+    {
+        auto &split = i < points.size() ? provenance.training : provenance.validation;
+        split.observation_ids.push_back("observation-" + std::to_string(i));
+        split.frame_ids.push_back(i < points.size() ? "training-frame" : "validation-frame");
+    }
     sv::CalibrationJobManager manager;
     const std::string owner = "session-owner-a";
     std::string job_id = manager.submit_job(owner, 0, 0, initial, points, pixels, validation_points,
-                                            validation_pixels, options);
+                                            validation_pixels, options, provenance);
     check(!job_id.empty(), "job id assigned");
 
     int retry = 0;
@@ -81,6 +89,12 @@ int main()
         ("job did not complete: state=" + sv::to_string(res.state) + " error=" + res.error_message)
             .c_str());
     check(res.calibration.training_rmse_px < 1.0, "training reprojection error bounded");
+    check(res.split_audit.dataset_id == provenance.dataset_id, "job retains dataset identity");
+    check(res.split_audit.training_observations == 90 &&
+              res.split_audit.validation_observations == 30,
+          "job retains split sizes");
+    check(res.split_audit.training_frames == 1 && res.split_audit.validation_frames == 1,
+          "job retains declared distinct frame counts");
     check(res.quality_accepted, "independent validation quality gate accepts accurate fit");
     check(res.validation_rmse_px < 1.0, "held-out reprojection error bounded");
     check(!manager.get_job(job_id, "session-owner-b").has_value(),
@@ -89,8 +103,9 @@ int main()
           "another session cannot cancel calibration job");
     auto cfg = sv::load_config(SV_TEST_CONFIG_PATH);
     std::string err;
-    const auto stale_id = manager.submit_job(owner, 0, 0, initial, points, pixels,
-                                             validation_points, validation_pixels, options);
+    const auto stale_id =
+        manager.submit_job(owner, 0, 0, initial, points, pixels, validation_points,
+                           validation_pixels, options, provenance);
     retry = 0;
     while (retry++ < 50)
     {
@@ -133,8 +148,9 @@ int main()
     {
         pixel.u += 20.0;
     }
-    const auto rejected_id = manager.submit_job(owner, store.revision(), 0, initial, points, pixels,
-                                                validation_points, corrupted_validation, options);
+    const auto rejected_id =
+        manager.submit_job(owner, store.revision(), 0, initial, points, pixels, validation_points,
+                           corrupted_validation, options, provenance);
     retry = 0;
     while (retry < 50)
     {
@@ -172,8 +188,9 @@ int main()
             lock.unlock();
             return sv::calibrate_extrinsics(camera, job_points, job_pixels, job_options);
         });
-    const auto running_id = cancellable_manager.submit_job(
-        owner, 0, 0, initial, points, pixels, validation_points, validation_pixels, options);
+    const auto running_id =
+        cancellable_manager.submit_job(owner, 0, 0, initial, points, pixels, validation_points,
+                                       validation_pixels, options, provenance);
     {
         std::unique_lock<std::mutex> lock(calibration_mutex);
         calibration_cv.wait(lock, [&] { return started_count >= 1; });
@@ -197,8 +214,9 @@ int main()
     check(cancellable_manager.get_job(running_id, owner)->state == sv::JobState::Cancelled,
           "cancelled running job cannot complete");
 
-    const auto disconnected_id = cancellable_manager.submit_job(
-        owner, 0, 0, initial, points, pixels, validation_points, validation_pixels, options);
+    const auto disconnected_id =
+        cancellable_manager.submit_job(owner, 0, 0, initial, points, pixels, validation_points,
+                                       validation_pixels, options, provenance);
     {
         std::unique_lock<std::mutex> lock(calibration_mutex);
         calibration_cv.wait(lock, [&] { return started_count >= 2; });
