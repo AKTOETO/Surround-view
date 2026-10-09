@@ -1,0 +1,39 @@
+{
+  "scenario": {
+    "schema_version": 1,
+    "seed": 15,
+    "split": "validation",
+    "mounts": {
+      "yaw_deg": 0,
+      "pitch_deg": 0,
+      "along_body_m": 0
+    }
+  },
+  "target": {
+    "center_m": [
+      2.7,
+      1.6,
+      0.8
+    ],
+    "size_m": [
+      0.35,
+      0.35,
+      1.6
+    ],
+    "linear_rgb": [
+      1,
+      0,
+      1
+    ],
+    "chroma_threshold": 0.15,
+    "min_component_pixels": 8
+  },
+  "capture": {
+    "frames": 2,
+    "face_size": 256,
+    "frame_step": 6,
+    "width": 320,
+    "height": 180,
+    "source_ids": true
+  }
+}

@@ -44,3 +44,37 @@ def run(scene):
         bpy.data.objects.remove(helper, do_unlink=True)
         bpy.data.meshes.remove(mesh)
         bpy.context.view_layer.update()
+
+
+def run_source_capture(scene, output):
+    """Small two-frame regression for camera-object shadowing and state restore."""
+    import json
+    from paired_truth import capture_paired
+    original = scene.get('sv_config')
+    cfg = json.loads(original) if original else configuration()
+    for camera in cfg['cameras']:
+        camera['resolution'] = {'width':16,'height':16}
+        for axis in ('fx','fy'):
+            camera['projection'][axis] *= .04
+        for axis in ('cx','cy'):
+            camera['projection'][axis] = (camera['projection'][axis]+.5)*.04-.5
+    camera_object = scene.camera
+    saved_matrix = np.asarray(camera_object.matrix_world).copy()
+    scene['sv_config'] = json.dumps(cfg)
+    try:
+        capture_paired(scene, output, frames=2, face_size=32, width=16, height=16, source_ids=True)
+        metadata = json.loads((Path(output)/'paired_truth.json').read_text())
+        assert len(metadata['frames']) == 2
+        for row in metadata['frames']:
+            assert len(row['source_objects']) == 4
+            for name in row['source_objects']:
+                labels = np.load(Path(output)/name, allow_pickle=False)
+                assert labels.shape == (16,16) and labels.dtype == np.uint16
+        assert scene.camera == camera_object
+        np.testing.assert_allclose(np.asarray(scene.camera.matrix_world), saved_matrix)
+        return {'frames':2,'source_maps':8,'camera_state_restored':True}
+    finally:
+        if original is None:
+            del scene['sv_config']
+        else:
+            scene['sv_config'] = original

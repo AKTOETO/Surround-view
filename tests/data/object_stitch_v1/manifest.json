@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "origin": "blender_metric_street_v1",
+  "calibration_ids": [
+    "blender-rig-front-v1",
+    "blender-rig-right-v1",
+    "blender-rig-rear-v1",
+    "blender-rig-left-v1"
+  ],
+  "frames": [
+    {
+      "scenario_timestamp_ns": "0",
+      "paths": [
+        "camera0_0000.png",
+        "camera1_0000.png",
+        "camera2_0000.png",
+        "camera3_0000.png"
+      ],
+      "offset_ns": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "scenario_timestamp_ns": "200000000",
+      "paths": [
+        "camera0_0001.png",
+        "camera1_0001.png",
+        "camera2_0001.png",
+        "camera3_0001.png"
+      ],
+      "offset_ns": [
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  ],
+  "sha256": {
+    "camera0_0000.png": "58419a55040c099c0a5b8ac4bf2ace895ddb6e02e54e27b4ae43914928c87573",
+    "camera1_0000.png": "0063cc0185cb2877133d18f42d2c7d2ab81bce3bd50b9bbff78a744c3dd4ef0e",
+    "camera2_0000.png": "d7a706c5f8f5e6746232b48c9151e09b9ed83fa9890d5dfe51bf3e4f67159e06",
+    "camera3_0000.png": "8044d56bd7060d133d53b9e5621d7f9e5a9ee558b5e6ea5a9d53135bbd257a32",
+    "camera0_0001.png": "d3c77d6c75d181491d0c961e72e0a6305a5290161cead9837e273c5410e4f27f",
+    "camera1_0001.png": "e02e7ebb1b9ebdbc211e435ba9a72f9acd6d2d4aab85a97ece8eb386465f1046",
+    "camera2_0001.png": "5f05d1ea153eb949956ab63727f15a19f9ad6e4d9f1c74cdc2fad256dcb27ac2",
+    "camera3_0001.png": "daf40de5762ab4d1e657c3a353b8859a4c81d97c6430fb1a43bb6e375c012971"
+  }
+}
