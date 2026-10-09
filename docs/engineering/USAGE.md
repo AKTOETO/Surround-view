@@ -440,3 +440,14 @@ ctest --test-dir build -R 'optical_models|raster_calibration|vision_tools' --out
 ```
 
 Требуются собранный `build/sv-calibrate` и Python NumPy/SciPy/Pillow/Matplotlib. Python cv2/Blender не требуются. Output должен быть новым. Сценарий создаёт сами растровые изображения четырёх optical families, сохраняет detector/fit failures и сравнивает экспортированные модели на известной геометрии без pose fitting. Протокол и пределы выводов: [[validation/OPTICAL_FAMILY_CALIBRATION]].
+
+## Парное сравнение центральных и периферийных калибровочных кадров
+
+```sh
+cmake --build build --target sv-calibrate -j 4
+python3 tools/configurator.py compare-coverage --output artifacts/calibration-coverage-repeat --seeds 4101 4102
+MPLCONFIGDIR=/tmp/sv-mpl python3 docs/diploma/plot_calibration_coverage.py --results artifacts/calibration-coverage-repeat
+ctest --test-dir build -R 'calibration_coverage|optical_models|raster_calibration' --output-on-failure
+```
+
+Output должен быть новым. Используются NumPy/SciPy/Pillow/Matplotlib и production OpenCV C++ binary, Python cv2/Blender не нужны. Параметр `--binary` позволяет указать другой собранный `sv-calibrate`. По умолчанию создаются 256 PNG, 64 fit/gate attempts и summary с hashes. Central/wide получают одинаковое число train views, одинаковые контрольные лучи/плоскость и общую validation. Gate сохраняет свой порог; результаты автоматически не применяются к конфигу сервера. Ограничения scale/tilt/coverage и полная таблица: [[validation/CALIBRATION_COVERAGE]].

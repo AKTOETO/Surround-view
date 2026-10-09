@@ -92,3 +92,7 @@ GPU execution time измерять асинхронными timer queries, CPU 
 ## E-CAL-optics-01 — 10.10.2026
 
 [[validation/OPTICAL_FAMILY_CALIBRATION]] расширяет E-CAL-raster-01 четырьмя radial optical families и новыми seeds 3101/3102. 256 PNG, 32 fits, 17 exported models, все detector/monotonicity отказы сохранены. Fixed-pose и known-floor ошибки измерены без подбора позы; выявлено ограничение принятого p95 gate при angular extrapolation. Все seeds exploratory, тест не является confirmatory holdout.
+
+## E-CAL-coverage-01 — 10.10.2026
+
+[[validation/CALIBRATION_COVERAGE]]: equal-budget 12 central vs 4 central + 8 peripheral train views, общие validation/ray/floor точки, 4 families × 2 seeds × order2/4. 256 PNG обнаружены, 64 fit/gate attempts, central gate accepted 32/32, full 31/32. Outer p95 order4 улучшается 8/8, floor p95 5/8. Следующая ablation должна отделить board scale/tilt от angular occupancy; текущие данные exploratory.

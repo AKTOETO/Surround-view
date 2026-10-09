@@ -112,3 +112,7 @@ stop
 ## Optical families и независимая геометрия — 10.10.2026
 
 [[validation/OPTICAL_FAMILY_CALIBRATION]]: четыре генеративных radial optical families, реальные detector/solver, fixed-pose board/ray и known-floor metric validation. На central-board обучении order=4 может пройти monotonicity/reprojection gate и иметь peripheral p95 около 71.6 px. Два solver profiles остаются KB polynomial, поэтому это не сравнительная реализация всех существующих calibration methods. Требуются полное рабочее angular coverage, нерадиальные/монтажные ошибки, физические требования и отдельный false accept/reject протокол.
+
+## Периферийные наблюдения: частичное расширение покрытия
+
+[[validation/CALIBRATION_COVERAGE]] сравнивает central/wide при одинаковых 12 train views и общей контрольной геометрии. Расширение peripheral coverage уменьшает outer-ray p95 order4 во всех 8 cases, но floor p95 только в 5; full validation gate принимает 31/32 модели. Нужны полное 2D coverage, отдельные scale/tilt ablations и физические требования. Это не закрывает весь calibration study и не обосновывает новый residual threshold.
