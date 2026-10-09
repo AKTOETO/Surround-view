@@ -1,15 +1,19 @@
 # Image-Quality Oracle, Vehicle Body Mask, and GPU Readback Validation
 
-Date: 09.10.2026. Status: Independent Scene Truth Oracle implemented; vehicle body 3D self-occlusion and footprint mask modeled; GPU readback validated against CPU reference and scene truth; temporal seam stability benchmarked across dynamic trajectories.
+Date: 09.10.2026. Status: A simplified analytic Scene Truth Oracle and vehicle-body mask exist; GPU readback has a CPU comparison. The temporal tool is only a synthetic texture-shift smoke test: its computed vehicle pose is unused and seam masks come from static geometry weights, so its reported zero displacement is not evidence of dynamic seam stability. E-STITCH seam/ghost metrics also need correction; audit details and remaining acceptance work: [[planning/AUDIT]], [[../TODO]].
 
-## 1. Независимый оракул качества изображения (Scene Truth Oracle)
+## 1. Аналитический oracle прототипа и ограничение Scene Truth
 
-Инструмент `tools/image_quality_oracle.py` выполняет прямое аналитическое трассирование лучей из виртуальной камеры наблюдателя $V$ на истинную 3D-геометрию сцены:
+Инструмент `tools/image_quality_oracle.py` выполняет прямое аналитическое трассирование лучей из виртуальной камеры наблюдателя $V$ на геометрию упрощённой сцены, заданной в коде:
 - Дорожное полотно $Z=0$ с осевой/боковой разметкой и шахматными калибровочными мишенями;
 - Приподнятые 3D-препятствия (цилиндрические болларды $h=1.0\text{ м}$, припаркованные автомобили);
 - 3D-модель кузова эго-автомобиля (шасси, кабина, боковые зеркала).
 
-### Сравнение сшитого кругового изображения с истинной сценой
+### Исходная попытка сравнения с Blender street capture
+
+**Эти PSNR/SSIM/MAE числа не являются валидной Scene Truth оценкой.** `render_scene_oracle()` задаёт упрощённую аналитическую дорогу и собственную разметку (например, центр и боковые линии), тогда как RGB кадры взяты из Blender street scene с иной геометрией и расположением разметки. Поэтому oracle RGB и физически снятые для этого fixture RGB не описывают идентичную сцену/материал. Повторить оценку можно только после общей параметризации/экспорта exact geometry, pose, object IDs и materials; иначе оставить этот результат как smoke работы метрик и не трактовать его как качество восстановления.
+
+### Сравнение сшитого кругового изображения с текущим analytic fixture
 
 ```sh
 python3 tools/validate_gpu_readback.py \
@@ -22,10 +26,10 @@ python3 tools/validate_gpu_readback.py \
 | Область | PSNR, dB | SSIM | MAE | Пиксели ROI | Интерпретация |
 |---|---:|---:|---:|---:|---|
 | **Overall (без кузова)** | 15.00 | 0.8473 | 0.1163 | 483 946 | Общая согласованность круговой панорамы |
-| **Дорожное полотно (Ground)** | 15.05 | 0.8497 | 0.1154 | 481 004 | Высокая точность геометрии на плоскости $Z=0$ |
-| **Препятствия (Vertical)** | 10.08 | 0.4576 | 0.2652 | 2 942 | Физическое радиальное растяжение и параллакс |
+| **Дорожное полотно (Ground)** | 15.05 | 0.8497 | 0.1154 | 481 004 | Сравнение ground ROI в analytic fixture; RGB ground truth не согласован с Blender улицей |
+| **Препятствия (Vertical)** | 10.08 | 0.4576 | 0.2652 | 2 942 | Аналитическая модель препятствий; не физическая оценка параллакса |
 
-**Вывод:** На дорожном полотне проекция на носитель точно восстанавливает геометрию (SSIM $\approx 0.85$). На вертикальных препятствиях (столбиках, бортах машин) SSIM падает до $0.46$, что количественно подтверждает фундаментальное ограничение 2D/3D surface projection без индивидуальной реконструкции высоты объектов (эффект растяжения по лучам).
+**Ограниченный результат:** В этой упрощённой аналитической сцене ground ROI даёт SSIM $\approx 0.85$, а ROI вертикальных препятствий — около $0.46$. Это полезная проверка конкретного fixture, но не универсальная мера качества на реальной сцене: цвета/геометрия oracle синтетические, а test matrix ограничена.
 
 ---
 
@@ -57,7 +61,7 @@ python3 tools/temporal_seam_stability.py \
   --output artifacts/temporal-stability-v1
 ```
 
-Оценка выполнена на 10-кадровой траектории движения со скоростью $2.0\text{ м/с}$ (30 fps):
+Скрипт выдаёт следующую таблицу на искусственно сдвигаемой текстуре (10 кадров, заданные 2.0 м/с и 30 fps):
 
 | Стратегия Fusion | Смещение шва (mean px) | Смещение шва (p95 px) | Temporal Flicker (Var) |
 |---|---:|---:|---:|
@@ -67,5 +71,5 @@ python3 tools/temporal_seam_stability.py \
 | `graph_cut_seam` | 0.000 | 0.000 | 0.008337 |
 | `multi_band` | 0.000 | 0.000 | 0.006962 |
 
-- **Стабильность:** Статические геометрические границы `edge_feather` и `angular_feather` не испытывают случайных пространственных скачков шва ($\Delta s = 0.00\text{ px}$).
-- **Фотометрическое мерцание:** `multi_band` и `edge_feather` минимизируют дисперсию яркости на статичном фоне ($\text{Var} \le 0.0069$).
+- Эти значения не оценивают движение камеры или сцены: `T_veh` в коде вычисляется, но не используется, а seam mask получается из статических validity/weight maps. Нулевой сдвиг обусловлен конструкцией теста и не подтверждает временную стабильность fusion.
+- Flicker отражает только изменение искусственной синусоидальной текстуры. Сравнение методов по этому числу не подтверждено; нужны реальные последовательные рендеры rig/scene и seam truth: [[../TODO]].

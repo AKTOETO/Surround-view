@@ -1,6 +1,6 @@
 # E-STITCH-01: depth-based carrier visibility screening and fusion series
 
-Date: 09.10.2026. Scope: static Blender scene/frame, six analytic carriers (including parameterized Burger model), two output views, seven fusion strategies (84 evaluated cases). This provides a reproducible **geometric visibility and seam-quality evaluation matrix**. Full question, literature review and confirmation protocol: [[research/PROJECTION_AND_STITCHING]].
+Date: 09.10.2026. Scope: one static Blender scene/frame, six analytic carriers (including parameterized Burger model), two output views, seven offline fusion labels (84 generated cases). This is a reproducible **exploratory projection/depth-visibility screen**. A commit audit found that the stored seam and ghost scores do not measure their stated quantities, and `graph_cut_seam` is not a graph-cut optimizer. Preserve the raw outputs for debugging, but do not cite their seam/ghost rankings or conclusions as confirmed evidence until the method is fixed and rerun. See [[planning/AUDIT]] and [[../TODO]]. Full question and protocol: [[research/PROJECTION_AND_STITCHING]].
 
 ## Reproduction and provenance
 
@@ -52,9 +52,6 @@ Implementation hashes: `compare_visibility.py` `9c79b1708212a0a23972dd98a042c951
 
 ## Интерпретация
 
-1. **Видимость против покрытия:** Проекционное покрытие близко к 100%, однако реальная согласованность 3D-точек с картой глубины составляет 16.3%–24.5%. Это подтверждает, что валидность проекции не эквивалентна физической видимости объекта в камере.
-2. **Сравнение алгоритмов слияния:**
-   - `edge_feather` и `angular_feather` вычислительно эффективны, но сохраняют двоение контуров в перекрытиях.
-   - `graph_cut_seam` устраняет локальное раздвоение контуров, выбирая однозначный источник.
-   - `multi_band` и `graph_cut_multi_band` минимизируют градиентный скачок на границе (Gradient Discontinuity $\to 0.00$), устраняя фотометрический шов.
-3. **Форма носителя:** Плоскость (`plane`) и чаша (`bowl`) дают максимальную точность на дорожном полотне $z=0$, но искажают вертикальные препятствия. Купол (`dome_floor`) и параметрическая форма `burger_like` создают непрерывную обзорную сферу без разрывов горизонта.
+1. **Видимость против покрытия:** В этом fixture проекционное покрытие близко к 100%, тогда как согласованность carrier points с radial depth ниже. Это иллюстрирует различие между попаданием проекции в изображение и совпадением точки с первым depth return. Абсолютные значения чувствительны к depth tolerance и capture face-size; они не являются общей оценкой качества поверхности.
+2. **Fusion ranking:** По этим данным вывод не делается. Seam/ghost колонки имеют дефекты определения метрик, а graph-cut label не соответствует graph-cut оптимизации. Повторить расчёт после исправления, прежде чем сравнивать методы.
+3. **Форма носителя:** Данная таблица сама по себе не ранжирует carrier geometry. Сравнение требует общей ROI, независимой оценки и равного mesh/memory budget; параметры разных carrier могут давать разные coverage и distortion.

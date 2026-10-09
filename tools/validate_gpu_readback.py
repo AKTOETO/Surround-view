@@ -102,11 +102,11 @@ def run_gpu_readback_comparison(config_path, dataset_dir, binary_path, output_di
     
     # Markdown Report
     lines = [
-        "# Независимый Image-Quality Oracle и валидация GPU Readback",
+        "# Аналитический oracle-прототип и валидация GPU Readback",
         "",
-        "Сравнение сшитого кругового изображения с прямым аналитическим рендером 3D-сцены (Scene Oracle) и CPU reference.",
+        "Сравнение GPU и CPU renderer paths; analytic scene score относится только к описанному в коде fixture и требует согласования со входной Blender-сценой.",
         "",
-        "### Метрики качества сшивки относительно Scene Truth",
+        "### Exploratory image score относительно analytic fixture (не pixel-ground-truth оценка)",
         "",
         "| Область | PSNR, dB | SSIM | MAE | Пиксели ROI |",
         "|---|---:|---:|---:|---:|",
