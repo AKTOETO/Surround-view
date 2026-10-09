@@ -108,3 +108,7 @@ stop
 ## Проверка разделения данных на сервере
 
 [[validation/CALIBRATION_PROVENANCE]]: calibration job требует dataset/observation/frame IDs. Server-side validator исключает duplicate observation IDs, frame overlap и точные XYZ/UV copies до solver. Status сохраняет compact split audit. Эти проверки уменьшают очевидную утечку training в validation, но не аутентифицируют labels и не исключают зависимость соседних кадров. Требуются registry с content hashes, группировка по acquisition/scene/clip и заранее заданный split. Нельзя выдавать client-declared disjoint frames за доказанную независимую выборку.
+
+## Optical families и независимая геометрия — 10.10.2026
+
+[[validation/OPTICAL_FAMILY_CALIBRATION]]: четыре генеративных radial optical families, реальные detector/solver, fixed-pose board/ray и known-floor metric validation. На central-board обучении order=4 может пройти monotonicity/reprojection gate и иметь peripheral p95 около 71.6 px. Два solver profiles остаются KB polynomial, поэтому это не сравнительная реализация всех существующих calibration methods. Требуются полное рабочее angular coverage, нерадиальные/монтажные ошибки, физические требования и отдельный false accept/reject протокол.

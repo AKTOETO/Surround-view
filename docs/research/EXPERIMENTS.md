@@ -88,3 +88,7 @@ GPU execution time измерять асинхронными timer queries, CPU 
 ## E-CAL-raster-01 — 10.10.2026
 
 [[validation/RASTER_CALIBRATION]]: 2 pose seeds × 3 blur/noise conditions × 16 PNG, production OpenCV detector/calibrator, order=2/4 ablation. Отказы включены, localization сравнивается с forward geometric truth, intrinsics проверяются на 4 held-out views после fit 12 train views. Истинная optical family equidistant; не выдавать этот опыт за physical calibration validation.
+
+## E-CAL-optics-01 — 10.10.2026
+
+[[validation/OPTICAL_FAMILY_CALIBRATION]] расширяет E-CAL-raster-01 четырьмя radial optical families и новыми seeds 3101/3102. 256 PNG, 32 fits, 17 exported models, все detector/monotonicity отказы сохранены. Fixed-pose и known-floor ошибки измерены без подбора позы; выявлено ограничение принятого p95 gate при angular extrapolation. Все seeds exploratory, тест не является confirmatory holdout.

@@ -430,3 +430,13 @@ build/sv-calibrate intrinsics --dataset artifacts/calibration-raster-repeat/2402
 Асинхронная SV01 команда `calibrate` требует `provenance.dataset_id`, массивы `training.observation_ids/frame_ids` и `validation.observation_ids/frame_ids` той же длины/порядка, что XYZ/UV. Frame IDs двух split не должны пересекаться; для разных углов одного снимка frame ID одинаковый, observation IDs разные. Не назначайте новые frame IDs crop/augmentation одного исходного снимка. Exact копии соответствий отклоняются даже с новыми labels. При отсутствии metadata сервер возвращает `calibration_provenance_required`; это намеренное ужесточение calibration контракта, capability `calibration_provenance_v1` объявляется в handshake.
 
 Форма JSON, причины отказа и audit в status: [[engineering/PROTOCOL_IMPLEMENTED]], тесты и пределы гарантии: [[validation/CALIBRATION_PROVENANCE]]. Offline CLI `sv-calibrate intrinsics/extrinsics` этим wire изменением не затронут. Generic command API `sv-client-lib` передаёт metadata как JSON; typed calibration service остаётся дальнейшей задачей.
+
+## Optical-family исследование и метрическая проверка
+
+```sh
+python3 tools/configurator.py compare-optics --output artifacts/calibration-optics-repeat --seeds 3101 3102
+MPLCONFIGDIR=/tmp/sv-mpl python3 docs/diploma/plot_optics_calibration.py --results artifacts/calibration-optics-repeat
+ctest --test-dir build -R 'optical_models|raster_calibration|vision_tools' --output-on-failure
+```
+
+Требуются собранный `build/sv-calibrate` и Python NumPy/SciPy/Pillow/Matplotlib. Python cv2/Blender не требуются. Output должен быть новым. Сценарий создаёт сами растровые изображения четырёх optical families, сохраняет detector/fit failures и сравнивает экспортированные модели на известной геометрии без pose fitting. Протокол и пределы выводов: [[validation/OPTICAL_FAMILY_CALIBRATION]].

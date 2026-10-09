@@ -904,6 +904,32 @@ stop
 
 Wire status объявляет policy `client_declared_frames_and_exact_content_disjoint`, не «доказанно независимые данные». Сервер пока не хранит verified raw capture registry, не проверяет client labels по изображениям и не исключает корреляцию соседних кадров. Эти ограничения остаются частью требований к подтверждающей серии. Новый обязательный metadata контракт обнаруживается по capability `calibration_provenance_v1`; старые requests без provenance отклоняются. Подробности и воспроизведение — [[validation/CALIBRATION_PROVENANCE]].
 
+## 4.31 Семейства оптики и ошибка при фиксированной геометрии
+
+Продолжение §4.29 использует четыре генеративные модели нормированного радиуса: equidistant $\theta$, equisolid $2\sin(\theta/2)$, stereographic $2\tan(\theta/2)$ и KB-полином с k=(0.12,0.025,−0.01,0.003). Первые три проекции и нечётное полиномиальное приближение описаны у [Kannala–Brandt](https://users.aalto.fi/~kannalj1/calibration/Kannala_Brandt_calibration.pdf); ненулевые коэффициенты выбраны для синтетического опыта. Изменяются реальные входные PNG через inverse-ray renderer, а не только эталонные координаты углов.
+
+Seeds 3101/3102, по 12 train + 4 validation views, clean/blur_noise, итого 256 PNG и 32 fits. Production OpenCV detector распознал 250/256 изображений. Экспортированы 17 моделей; 12 attempts остановлены из-за отсутствующей обязательной доски, 3 — из-за немонотонности. Оба fitter profiles остаются OpenCV fisheye polynomial order=2/4; исследование не сравнивает отдельные production реализации Brown/Scaramuzza/KB.
+
+![Растры разных optical families](figures/experiments/calibration_optics_rasters.png)
+
+*Рисунок 4.29 — Одна истинная поза доски при четырёх optical families; все изображения подаются настоящему детектору.*
+
+Углы validation досок достигают только θ=0.5564/0.6485 rad, тогда как declared model domain — 1 rad. Дополнительно оцениваются: проекция физических углов при фиксированной истинной board pose; независимые контрольные лучи central/middle/outer zones; обратная проекция true UV на известную плоскость Y=1.2 м. Положение камеры и плоскости точно заданы, pose fitting отсутствует. Ошибка плоскости измеряется в метрах.
+
+| Case | Order | CLI validation p95, px | Outer ray p95, px | Floor p95, m |
+|---|---:|---:|---:|---:|
+| equidistant / 3102 / clean | 2 | 0.2667 | 4.0057 | 0.0861 |
+| equidistant / 3102 / clean | 4 | 0.2666 | 71.6226 | 0.1130 |
+| equidistant / 3101 / blur_noise | 2 | 0.4507 | 5.0561 | 0.2870 |
+
+![Residual и ошибки известной геометрии](figures/experiments/calibration_optics_metric.png)
+
+*Рисунок 4.30 — Сравнение accepted моделей: residual при подбираемой позе доски и независимые ошибки известного луча/плоскости. Отказавшие модели учитываются в отчёте, не заменяются нулевыми точками.*
+
+Низкий residual и монотонность не гарантируют точной проекции вне области наблюдений. Контрпример order=4 с outer p95≈71.6 px показывает недостаточность текущего gate для заявленного полного domain. Ошибка floor p95≈0.287 м при accepted модели дополнительно демонстрирует, почему pixel residual нельзя автоматически переводить в физическую приёмку. Более простой order=2 помогает в части случаев, но не объявляется универсально лучшим; результат зависит от модели и angular coverage.
+
+Эксперимент использует synthetic radial models и точно известную геометрию. Неровности дороги, ошибки extrinsics, децентровка, физические снимки и критерии false accept/reject не проверены. Следующая серия должна расширить angular coverage и заранее задать физические требования. Все численные значения, отказы и hashes — [[validation/OPTICAL_FAMILY_CALIBRATION]]; иллюстрации воспроизводит `plot_optics_calibration.py`, расположенный рядом с главой.
+
 ## Предварительные выводы по четвёртой главе
 
 1. **Экспериментальная инфраструктура сшивки:** реализованы offline-варианты fusion и carrier matrix; исправленные binary graph-cut и output proxies проверены на fixtures, добавлен парный 3-frame Blender clip (§4.25). Качество методов на holdout scenes и object-correspondence ghost truth пока не подтверждено.
