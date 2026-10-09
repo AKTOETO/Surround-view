@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "origin": "blender_metric_street_v1",
+  "calibration_ids": [
+    "blender-rig-front-v1",
+    "blender-rig-right-v1",
+    "blender-rig-rear-v1",
+    "blender-rig-left-v1"
+  ],
+  "frames": [
+    {
+      "scenario_timestamp_ns": "0",
+      "paths": [
+        "camera0_0000.png",
+        "camera1_0000.png",
+        "camera2_0000.png",
+        "camera3_0000.png"
+      ],
+      "offset_ns": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "scenario_timestamp_ns": "200000000",
+      "paths": [
+        "camera0_0001.png",
+        "camera1_0001.png",
+        "camera2_0001.png",
+        "camera3_0001.png"
+      ],
+      "offset_ns": [
+        0,
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "scenario_timestamp_ns": "400000000",
+      "paths": [
+        "camera0_0002.png",
+        "camera1_0002.png",
+        "camera2_0002.png",
+        "camera3_0002.png"
+      ],
+      "offset_ns": [
+        0,
+        0,
+        0,
+        0
+      ]
+    }
+  ],
+  "sha256": {
+    "camera0_0000.png": "be0428b421e25d4070e3607485b3c7b47b5b6f1ac93682c3d31985edcdba20c2",
+    "camera1_0000.png": "5e6e0cd785854620ef36551eb0e1d6137047fd67d79cf580a34a1dd0addd02c7",
+    "camera2_0000.png": "605669edcaf6e819fa29251c04cc94a8362d63d4af1bccf264d88da3597897f9",
+    "camera3_0000.png": "f00b11e421a1918ae7bfd60b5a9017c664bd27720cb530fcb9fd435208811e44",
+    "camera0_0001.png": "7652616022cb641720e6c7de7c47ad187b535d0f3f298d3376f37899f28e9b8d",
+    "camera1_0001.png": "551da92211dae37b4e963180e667573f221cc41f0a7fceef285087fb791c02a1",
+    "camera2_0001.png": "957e836f6095620aa6ab5c75fcbe9e72df884aa0d23fe5c865a30227843b094e",
+    "camera3_0001.png": "02b3deae486885e5c4603c6f19938bf38e5842281a473b36a9cf7d0f4b9f79d7",
+    "camera0_0002.png": "82a4a820cbcbb57793e45e25fd150bc146ce55b1020ff1a28c078b036e214aa1",
+    "camera1_0002.png": "6ec2ed3341674d283cc7e922f2a66649699dfccc716dc7c79fcd574e66e9e6da",
+    "camera2_0002.png": "867680cf949fe48e03ada3b7ed7fd286ec48ebb25823ecabc28256254ffc6291",
+    "camera3_0002.png": "afdaca208fd08adaa96a2fd43e87b519b05bf7224e02b1d3236cf948d50d7b49"
+  }
+}

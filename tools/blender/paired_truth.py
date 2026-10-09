@@ -15,6 +15,7 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from rig import configuration, vehicle_pose
 from scene import capture
+from visibility import visible_camera_bits
 
 
 def virtual_pose(config):
@@ -36,7 +37,7 @@ def virtual_pose(config):
     return matrix
 
 
-def object_truth(scene, pose, config, object_ids):
+def object_truth(scene, pose, config, object_ids, vehicle_transform):
     """Nearest visible opaque mesh per pixel center, with perspective clipping.
 
     Unlike RGB, ray_cast has no antialiasing/transparency; boundary pixels therefore
@@ -47,7 +48,28 @@ def object_truth(scene, pose, config, object_ids):
     near, far = config['virtual_camera']['clip_m']
     dependency = bpy.context.evaluated_depsgraph_get()
     labels = np.zeros((h, w), np.uint16)
+    visibility = np.zeros((h, w), np.uint8)
     origin = Vector(pose[:3, 3])
+    def opaque_hit(start, direction, distance):
+        # Scene.ray_cast includes viewport helpers that hide_render excludes from RGB.
+        # Skip their entry/exit intersections instead of treating them as occluders.
+        start = Vector(start)
+        direction = Vector(direction)
+        for _ in range(64):
+            result = scene.ray_cast(dependency, start, direction, distance=float(distance))
+            if not result[0] or not result[4].original.hide_render:
+                return result
+            advance = (result[1]-start).length + 1e-4
+            start += direction * advance
+            distance -= advance
+            if distance <= 0:
+                return (False, None, None, None, None, None)
+        raise RuntimeError('too many hidden-helper intersections in visibility ray')
+
+    def cast(start, direction, distance):
+        found, location, *_ = opaque_hit(start, direction, distance)
+        return np.asarray(location) if found else None
+
     for y in range(h):
         for x in range(w):
             local = np.array([(2*(x+.5)/w-1)*tangent*w/h,
@@ -56,11 +78,12 @@ def object_truth(scene, pose, config, object_ids):
             length = np.linalg.norm(direction)
             direction /= length
             start = origin + Vector(direction * near * length)
-            hit, _, _, _, obj, _ = scene.ray_cast(
-                dependency, start, Vector(direction), distance=(far-near)*length)
+            hit, location, _, _, obj, _ = opaque_hit(start, direction, (far-near)*length)
             if hit:
                 labels[y, x] = object_ids[obj.original.name]
-    return labels
+                visibility[y, x] = visible_camera_bits(
+                    np.asarray(location), vehicle_transform, config['cameras'], cast)
+    return labels, visibility
 
 
 def capture_paired(scene, output, frames=3, face_size=64, frame_step=6, width=320, height=180):
@@ -75,7 +98,8 @@ def capture_paired(scene, output, frames=3, face_size=64, frame_step=6, width=32
         'resolution_x', 'resolution_y', 'resolution_percentage', 'filepath',
         'pixel_aspect_x', 'pixel_aspect_y')}
     saved_camera = {key: getattr(camera.data, key) for key in (
-        'lens', 'sensor_fit', 'sensor_height', 'clip_start', 'clip_end')}
+        'lens', 'sensor_fit', 'sensor_width', 'sensor_height', 'clip_start', 'clip_end')}
+    saved_image = {key: getattr(render.image_settings, key) for key in ('file_format', 'color_mode')}
     saved_matrix, saved_ego = camera.matrix_world.copy(), ego.matrix_world.copy()
     saved_frame = scene.frame_current
     saved_config = scene.get('sv_config')
@@ -85,6 +109,9 @@ def capture_paired(scene, output, frames=3, face_size=64, frame_step=6, width=32
     try:
         render.resolution_percentage = 100
         render.pixel_aspect_x = render.pixel_aspect_y = 1.
+        camera.data.sensor_fit, camera.data.sensor_width = 'HORIZONTAL', 36.
+        camera.data.clip_start, camera.data.clip_end = .025, 200.
+        render.image_settings.file_format, render.image_settings.color_mode = 'PNG', 'RGB'
         capture(scene, output, frames=frames, face_size=face_size, frame_step=frame_step)
         names = sorted(obj.name for obj in scene.objects if obj.type == 'MESH')
         if len(names) >= 65535:
@@ -122,17 +149,24 @@ def capture_paired(scene, output, frames=3, face_size=64, frame_step=6, width=32
             rgb_name, labels_name = f'virtual_{index:04d}.png', f'objects_{index:04d}.npy'
             render.filepath = str(output / rgb_name)
             bpy.ops.render.render(write_still=True, scene=scene.name)
-            labels = object_truth(scene, view_pose, cfg, ids)
+            labels, visibility = object_truth(scene, view_pose, cfg, ids, pose)
             np.save(output / labels_name, labels, allow_pickle=False)
+            visibility_name = f'visibility_{index:04d}.npy'
+            np.save(output / visibility_name, visibility, allow_pickle=False)
             rows.append({'scenario_timestamp_ns': str(round(frame*1e9/30)),
                          'T_world_from_vehicle': pose.tolist(), 'rgb': rgb_name,
-                         'objects': labels_name})
-        files = [row[key] for row in rows for key in ('rgb', 'objects')]
-        metadata = {'schema_version': 1, 'frames': rows, 'objects': ids,
+                         'objects': labels_name, 'visibility': visibility_name})
+        files = [row[key] for row in rows for key in ('rgb', 'objects', 'visibility')]
+        metadata = {'schema_version': 2, 'frames': rows, 'objects': ids,
+                    'source_visibility': {'encoding': 'uint8 bit i = visible from camera i',
+                                          'tolerance_m': .02,
+                                          'ignored_render_helpers': sorted(o.name for o in scene.objects if o.hide_render),
+                                          'meaning': 'nearest opaque ray hit at direct-view scene point'},
                     'ego_object_ids': ego_ids, 'config': cfg,
                     'virtual_projection_max_error_px': max(projection_errors),
                     'capture_sha256': hashlib.sha256((output/'capture.json').read_bytes()).hexdigest(),
                     'script_sha256': hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+                    'visibility_script_sha256': hashlib.sha256(Path(__file__).with_name('visibility.py').read_bytes()).hexdigest(),
                     'sha256': {name: hashlib.sha256((output/name).read_bytes()).hexdigest() for name in files},
                     'limitations': ['synthetic scene, scripted straight drive, no sensor noise',
                                     'object ray casts ignore alpha and antialiasing; exclude boundaries',
@@ -146,6 +180,8 @@ def capture_paired(scene, output, frames=3, face_size=64, frame_step=6, width=32
             setattr(render, key, value)
         for key, value in saved_camera.items():
             setattr(camera.data, key, value)
+        for key, value in saved_image.items():
+            setattr(render.image_settings, key, value)
         if saved_config is None:
             del scene['sv_config']
         else:

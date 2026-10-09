@@ -293,6 +293,16 @@ class BlenderFixtureTests(unittest.TestCase):
             self.assertEqual(manifest['calibration_ids'],[c['calibration_id'] for c in cfg['cameras']])
             for path,expected in manifest['sha256'].items():
                 self.assertEqual(hashlib.sha256((output/path).read_bytes()).hexdigest(),expected)
+            png_output = Path(temporary)/'png-replay'
+            png_manifest = json.loads(convert(source, png_output, 'png').read_text())
+            for ppm_name, png_name in zip(manifest['frames'][0]['paths'], png_manifest['frames'][0]['paths']):
+                self.assertTrue(png_name.endswith('.png'))
+                with Image.open(output/ppm_name) as ppm, Image.open(png_output/png_name) as png:
+                    np.testing.assert_array_equal(np.asarray(ppm), np.asarray(png))
+                self.assertEqual(hashlib.sha256((png_output/png_name).read_bytes()).hexdigest(),
+                                 png_manifest['sha256'][png_name])
+            with self.assertRaisesRegex(ValueError, 'image format'):
+                convert(source, Path(temporary)/'invalid-format', 'jpeg')
             with self.assertRaises(FileExistsError):
                 convert(source,output)
             (source/'face.png').write_bytes(b'corrupt')

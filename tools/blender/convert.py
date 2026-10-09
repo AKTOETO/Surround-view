@@ -58,7 +58,9 @@ def convert_camera(cam, faces, size):
     return srgb8(result)
 
 
-def convert(source, output):
+def convert(source, output, image_format='ppm'):
+    if image_format not in ('ppm', 'png'):
+        raise ValueError('image format must be ppm or png')
     source, output = Path(source).resolve(), Path(output).resolve()
     metadata = json.loads((source / 'capture.json').read_text())
     if metadata['schema_version'] != 1 or not metadata['frames']:
@@ -85,9 +87,13 @@ def convert(source, output):
                 with Image.open(source / filename) as image:
                     faces[face] = np.array(image.convert('RGB'))
             image = convert_camera(cam, faces, metadata['face_size'])
-            filename = f"camera{cam['id']}_{index:04d}.ppm"
-            encoded = f'P6\n{image.shape[1]} {image.shape[0]}\n255\n'.encode() + image.tobytes()
-            (output / filename).write_bytes(encoded)
+            filename = f"camera{cam['id']}_{index:04d}.{image_format}"
+            if image_format == 'ppm':
+                encoded = f'P6\n{image.shape[1]} {image.shape[0]}\n255\n'.encode() + image.tobytes()
+                (output / filename).write_bytes(encoded)
+            else:
+                Image.fromarray(image).save(output / filename)
+                encoded = (output / filename).read_bytes()
             hashes[filename] = hashlib.sha256(encoded).hexdigest()
             paths.append(filename)
             if 'depth_faces' in capture:
@@ -162,5 +168,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--capture',type=Path,required=True)
     parser.add_argument('--output',type=Path,required=True)
+    parser.add_argument('--image-format', choices=('ppm', 'png'), default='ppm')
     args = parser.parse_args()
-    print(convert(args.capture,args.output))
+    print(convert(args.capture,args.output,args.image_format))

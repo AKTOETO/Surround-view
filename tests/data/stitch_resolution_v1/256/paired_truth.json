@@ -1,0 +1,701 @@
+{
+  "schema_version": 2,
+  "frames": [
+    {
+      "scenario_timestamp_ns": "0",
+      "T_world_from_vehicle": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "rgb": "virtual_0000.png",
+      "objects": "objects_0000.npy",
+      "visibility": "visibility_0000.npy"
+    },
+    {
+      "scenario_timestamp_ns": "200000000",
+      "T_world_from_vehicle": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.4
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "rgb": "virtual_0001.png",
+      "objects": "objects_0001.npy",
+      "visibility": "visibility_0001.npy"
+    },
+    {
+      "scenario_timestamp_ns": "400000000",
+      "T_world_from_vehicle": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.8
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "rgb": "virtual_0002.png",
+      "objects": "objects_0002.npy",
+      "visibility": "visibility_0002.npy"
+    }
+  ],
+  "objects": {
+    "SV bollard base": 1,
+    "SV bollard base.001": 2,
+    "SV bollard base.002": 3,
+    "SV building": 4,
+    "SV building.001": 5,
+    "SV building.002": 6,
+    "SV building.003": 7,
+    "SV building.004": 8,
+    "SV building.005": 9,
+    "SV building.006": 10,
+    "SV building.007": 11,
+    "SV building.008": 12,
+    "SV building.009": 13,
+    "SV building.010": 14,
+    "SV building.011": 15,
+    "SV building.012": 16,
+    "SV building.013": 17,
+    "SV building.014": 18,
+    "SV building.015": 19,
+    "SV cabin glass": 20,
+    "SV cabin glass.001": 21,
+    "SV cabin glass.002": 22,
+    "SV camera front": 23,
+    "SV camera left": 24,
+    "SV camera rear": 25,
+    "SV camera right": 26,
+    "SV center dash": 27,
+    "SV center dash.001": 28,
+    "SV center dash.002": 29,
+    "SV center dash.003": 30,
+    "SV center dash.004": 31,
+    "SV center dash.005": 32,
+    "SV center dash.006": 33,
+    "SV center dash.007": 34,
+    "SV center dash.008": 35,
+    "SV center dash.009": 36,
+    "SV center dash.010": 37,
+    "SV center dash.011": 38,
+    "SV center dash.012": 39,
+    "SV center dash.013": 40,
+    "SV center dash.014": 41,
+    "SV center dash.015": 42,
+    "SV chassis": 43,
+    "SV chassis.001": 44,
+    "SV chassis.002": 45,
+    "SV crosswalk": 46,
+    "SV crosswalk.001": 47,
+    "SV crosswalk.002": 48,
+    "SV crosswalk.003": 49,
+    "SV crosswalk.004": 50,
+    "SV curb": 51,
+    "SV curb.001": 52,
+    "SV front grille": 53,
+    "SV front grille.001": 54,
+    "SV front grille.002": 55,
+    "SV ground": 56,
+    "SV lamp": 57,
+    "SV lamp.001": 58,
+    "SV lamp.002": 59,
+    "SV lamp.003": 60,
+    "SV lamp.004": 61,
+    "SV lamp.005": 62,
+    "SV lamp.006": 63,
+    "SV lamp.007": 64,
+    "SV lamp.008": 65,
+    "SV lamp.009": 66,
+    "SV lamp.010": 67,
+    "SV lamp.011": 68,
+    "SV mirror": 69,
+    "SV mirror.001": 70,
+    "SV mirror.002": 71,
+    "SV mirror.003": 72,
+    "SV mirror.004": 73,
+    "SV mirror.005": 74,
+    "SV parking bay": 75,
+    "SV parking bay.001": 76,
+    "SV parking bay.002": 77,
+    "SV parking bay.003": 78,
+    "SV parking bay.004": 79,
+    "SV parking bay.005": 80,
+    "SV parking bay.006": 81,
+    "SV parking bay.007": 82,
+    "SV rim": 83,
+    "SV rim.001": 84,
+    "SV rim.002": 85,
+    "SV rim.003": 86,
+    "SV rim.004": 87,
+    "SV rim.005": 88,
+    "SV rim.006": 89,
+    "SV rim.007": 90,
+    "SV rim.008": 91,
+    "SV rim.009": 92,
+    "SV rim.010": 93,
+    "SV rim.011": 94,
+    "SV road": 95,
+    "SV roof": 96,
+    "SV roof.001": 97,
+    "SV roof.002": 98,
+    "SV shop awning": 99,
+    "SV shop awning.001": 100,
+    "SV shop awning.002": 101,
+    "SV shop awning.003": 102,
+    "SV shop awning.004": 103,
+    "SV shop awning.005": 104,
+    "SV shop awning.006": 105,
+    "SV shop awning.007": 106,
+    "SV shop awning.008": 107,
+    "SV shop awning.009": 108,
+    "SV shop awning.010": 109,
+    "SV shop awning.011": 110,
+    "SV shop awning.012": 111,
+    "SV shop awning.013": 112,
+    "SV shop awning.014": 113,
+    "SV shop awning.015": 114,
+    "SV sidewalk": 115,
+    "SV sidewalk.001": 116,
+    "SV streetlight": 117,
+    "SV streetlight head": 118,
+    "SV streetlight head.001": 119,
+    "SV streetlight head.002": 120,
+    "SV streetlight head.003": 121,
+    "SV streetlight head.004": 122,
+    "SV streetlight head.005": 123,
+    "SV streetlight head.006": 124,
+    "SV streetlight head.007": 125,
+    "SV streetlight.001": 126,
+    "SV streetlight.002": 127,
+    "SV streetlight.003": 128,
+    "SV streetlight.004": 129,
+    "SV streetlight.005": 130,
+    "SV streetlight.006": 131,
+    "SV streetlight.007": 132,
+    "SV tire": 133,
+    "SV tire.001": 134,
+    "SV tire.002": 135,
+    "SV tire.003": 136,
+    "SV tire.004": 137,
+    "SV tire.005": 138,
+    "SV tire.006": 139,
+    "SV tire.007": 140,
+    "SV tire.008": 141,
+    "SV tire.009": 142,
+    "SV tire.010": 143,
+    "SV tire.011": 144,
+    "SV tree crown": 145,
+    "SV tree crown.001": 146,
+    "SV tree crown.002": 147,
+    "SV tree crown.003": 148,
+    "SV tree crown.004": 149,
+    "SV tree crown.005": 150,
+    "SV tree crown.006": 151,
+    "SV tree crown.007": 152,
+    "SV tree trunk": 153,
+    "SV tree trunk.001": 154,
+    "SV tree trunk.002": 155,
+    "SV tree trunk.003": 156,
+    "SV tree trunk.004": 157,
+    "SV tree trunk.005": 158,
+    "SV tree trunk.006": 159,
+    "SV tree trunk.007": 160,
+    "SV window": 161,
+    "SV window pillar": 162,
+    "SV window pillar.001": 163,
+    "SV window pillar.002": 164,
+    "SV window pillar.003": 165,
+    "SV window pillar.004": 166,
+    "SV window pillar.005": 167,
+    "SV window.001": 168,
+    "SV window.002": 169,
+    "SV window.003": 170,
+    "SV window.004": 171,
+    "SV window.005": 172,
+    "SV window.006": 173,
+    "SV window.007": 174,
+    "SV window.008": 175,
+    "SV window.009": 176,
+    "SV window.010": 177,
+    "SV window.011": 178,
+    "SV window.012": 179,
+    "SV window.013": 180,
+    "SV window.014": 181,
+    "SV window.015": 182,
+    "SV window.016": 183,
+    "SV window.017": 184,
+    "SV window.018": 185,
+    "SV window.019": 186,
+    "SV window.020": 187,
+    "SV window.021": 188,
+    "SV window.022": 189,
+    "SV window.023": 190,
+    "SV window.024": 191,
+    "SV window.025": 192,
+    "SV window.026": 193,
+    "SV window.027": 194,
+    "SV window.028": 195,
+    "SV window.029": 196,
+    "SV window.030": 197,
+    "SV window.031": 198,
+    "SV window.032": 199,
+    "SV window.033": 200,
+    "SV window.034": 201,
+    "SV window.035": 202,
+    "SV window.036": 203,
+    "SV window.037": 204,
+    "SV window.038": 205,
+    "SV window.039": 206,
+    "SV window.040": 207,
+    "SV window.041": 208,
+    "SV window.042": 209,
+    "SV window.043": 210,
+    "SV window.044": 211,
+    "SV window.045": 212,
+    "SV window.046": 213,
+    "SV window.047": 214,
+    "SV window.048": 215,
+    "SV window.049": 216,
+    "SV window.050": 217,
+    "SV window.051": 218,
+    "SV window.052": 219,
+    "SV window.053": 220,
+    "SV window.054": 221,
+    "SV window.055": 222,
+    "SV window.056": 223,
+    "SV window.057": 224,
+    "SV window.058": 225,
+    "SV window.059": 226,
+    "SV window.060": 227,
+    "SV window.061": 228,
+    "SV window.062": 229,
+    "SV window.063": 230,
+    "SV window.064": 231,
+    "SV window.065": 232,
+    "SV window.066": 233,
+    "SV window.067": 234,
+    "SV window.068": 235,
+    "SV window.069": 236,
+    "SV window.070": 237,
+    "SV window.071": 238,
+    "SV window.072": 239,
+    "SV window.073": 240,
+    "SV window.074": 241,
+    "SV window.075": 242,
+    "SV window.076": 243,
+    "SV window.077": 244,
+    "SV window.078": 245,
+    "SV window.079": 246,
+    "SV window.080": 247,
+    "SV window.081": 248,
+    "SV window.082": 249,
+    "SV window.083": 250,
+    "SV window.084": 251,
+    "SV window.085": 252,
+    "SV window.086": 253,
+    "SV window.087": 254,
+    "SV window.088": 255,
+    "SV window.089": 256,
+    "SV window.090": 257,
+    "SV window.091": 258,
+    "SV window.092": 259,
+    "SV window.093": 260,
+    "SV window.094": 261,
+    "SV window.095": 262,
+    "SV window.096": 263,
+    "SV window.097": 264,
+    "SV window.098": 265,
+    "SV window.099": 266,
+    "SV window.100": 267,
+    "SV window.101": 268,
+    "SV window.102": 269,
+    "SV window.103": 270,
+    "SV window.104": 271,
+    "SV window.105": 272,
+    "SV window.106": 273,
+    "SV window.107": 274,
+    "SV window.108": 275,
+    "SV window.109": 276,
+    "SV window.110": 277,
+    "SV window.111": 278,
+    "SV window.112": 279,
+    "SV window.113": 280,
+    "SV window.114": 281,
+    "SV window.115": 282,
+    "SV window.116": 283,
+    "SV window.117": 284,
+    "SV window.118": 285,
+    "SV window.119": 286,
+    "SV window.120": 287,
+    "SV window.121": 288,
+    "SV window.122": 289,
+    "SV window.123": 290,
+    "SV window.124": 291,
+    "SV window.125": 292,
+    "SV yellow bollard": 293,
+    "SV yellow bollard.001": 294,
+    "SV yellow bollard.002": 295
+  },
+  "source_visibility": {
+    "encoding": "uint8 bit i = visible from camera i",
+    "tolerance_m": 0.02,
+    "ignored_render_helpers": [
+      "SV camera front",
+      "SV camera left",
+      "SV camera rear",
+      "SV camera right"
+    ],
+    "meaning": "nearest opaque ray hit at direct-view scene point"
+  },
+  "ego_object_ids": [
+    22,
+    23,
+    24,
+    25,
+    26,
+    45,
+    55,
+    65,
+    66,
+    67,
+    68,
+    73,
+    74,
+    91,
+    92,
+    93,
+    94,
+    98,
+    141,
+    142,
+    143,
+    144,
+    166,
+    167
+  ],
+  "config": {
+    "schema_version": 1,
+    "profile_id": "blender-street-v1",
+    "units": {
+      "length": "m",
+      "angle": "rad",
+      "time": "ns"
+    },
+    "vehicle": {
+      "length_m": 4.6,
+      "width_m": 1.8,
+      "mask_margin_m": 0.1
+    },
+    "cameras": [
+      {
+        "id": 0,
+        "name": "front",
+        "calibration_id": "blender-rig-front-v1",
+        "resolution": {
+          "width": 400,
+          "height": 400
+        },
+        "projection": {
+          "model": "opencv_fisheye",
+          "fx": 128.0,
+          "fy": 128.0,
+          "cx": 199.5,
+          "cy": 199.5,
+          "alpha": 0.0,
+          "k": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "theta_max_rad": 1.48,
+          "z_epsilon_m": 1e-06
+        },
+        "T_camera_from_vehicle": [
+          [
+            0.0,
+            -1.0,
+            0.0,
+            0.0
+          ],
+          [
+            -0.20791169081775934,
+            -0.0,
+            -0.9781476007338057,
+            1.322097050953647
+          ],
+          [
+            0.9781476007338057,
+            0.0,
+            -0.20791169081775934,
+            -2.131703400536686
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        ]
+      },
+      {
+        "id": 1,
+        "name": "right",
+        "calibration_id": "blender-rig-right-v1",
+        "resolution": {
+          "width": 400,
+          "height": 400
+        },
+        "projection": {
+          "model": "opencv_fisheye",
+          "fx": 128.0,
+          "fy": 128.0,
+          "cx": 199.5,
+          "cy": 199.5,
+          "alpha": 0.0,
+          "k": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "theta_max_rad": 1.48,
+          "z_epsilon_m": 1e-06
+        },
+        "T_camera_from_vehicle": [
+          [
+            -1.0,
+            -6.123233995736766e-17,
+            0.0,
+            0.3499999999999999
+          ],
+          [
+            -1.2730919333264157e-17,
+            0.20791169081775934,
+            -0.9781476007338057,
+            1.3242281727213978
+          ],
+          [
+            5.989426641661592e-17,
+            -0.9781476007338057,
+            -0.20791169081775934,
+            -0.843101267091296
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        ]
+      },
+      {
+        "id": 2,
+        "name": "rear",
+        "calibration_id": "blender-rig-rear-v1",
+        "resolution": {
+          "width": 400,
+          "height": 400
+        },
+        "projection": {
+          "model": "opencv_fisheye",
+          "fx": 128.0,
+          "fy": 128.0,
+          "cx": 199.5,
+          "cy": 199.5,
+          "alpha": 0.0,
+          "k": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "theta_max_rad": 1.48,
+          "z_epsilon_m": 1e-06
+        },
+        "T_camera_from_vehicle": [
+          [
+            1.2246467991473532e-16,
+            1.0,
+            -0.0,
+            2.8901664459877536e-16
+          ],
+          [
+            0.20791169081775934,
+            -2.5461838666528314e-17,
+            -0.9781476007338057,
+            1.322097050953647
+          ],
+          [
+            -0.9781476007338057,
+            1.1978853283323184e-16,
+            -0.20791169081775934,
+            -2.131703400536686
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        ]
+      },
+      {
+        "id": 3,
+        "name": "left",
+        "calibration_id": "blender-rig-left-v1",
+        "resolution": {
+          "width": 400,
+          "height": 400
+        },
+        "projection": {
+          "model": "opencv_fisheye",
+          "fx": 128.0,
+          "fy": 128.0,
+          "cx": 199.5,
+          "cy": 199.5,
+          "alpha": 0.0,
+          "k": [
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "theta_max_rad": 1.48,
+          "z_epsilon_m": 1e-06
+        },
+        "T_camera_from_vehicle": [
+          [
+            1.0,
+            -6.123233995736766e-17,
+            0.0,
+            -0.3499999999999999
+          ],
+          [
+            -1.2730919333264157e-17,
+            -0.20791169081775934,
+            -0.9781476007338057,
+            1.3242281727213978
+          ],
+          [
+            5.989426641661592e-17,
+            0.9781476007338057,
+            -0.20791169081775934,
+            -0.843101267091296
+          ],
+          [
+            0.0,
+            0.0,
+            0.0,
+            1.0
+          ]
+        ]
+      }
+    ],
+    "surface": {
+      "type": "dome_floor_v1",
+      "dome_radius_m": 12.0,
+      "dome_latitude_cells": 64,
+      "dome_longitude_cells": 128,
+      "floor_radial_cells": 32
+    },
+    "virtual_camera": {
+      "azimuth_rad": 0.8,
+      "elevation_rad": 1.0,
+      "distance_m": 8.5,
+      "fov_y_rad": 1.0,
+      "clip_m": [
+        0.1,
+        100.0
+      ]
+    },
+    "output": {
+      "width": 320,
+      "height": 180
+    },
+    "runtime": {
+      "input_queue_per_camera": 3,
+      "skew_window_ms": 10.0,
+      "max_input_age_ms": 100.0
+    }
+  },
+  "virtual_projection_max_error_px": 0.0001138017084835503,
+  "capture_sha256": "612435facfbe7878b2567406158453a5f8f8db61f44c120558040912e74e6a50",
+  "script_sha256": "7bfe89e32f45ef0a940961ada878850d2c5c7e2269f987d05e72876fa98dc181",
+  "visibility_script_sha256": "466a5cada22d26bfc249125d189018afafdb349a6dd99a71b448995011350fa6",
+  "sha256": {
+    "virtual_0000.png": "dadc0bba5d0508f27ae11afe6c258d06d325f02a9ef53bc7d0aaf996617384b9",
+    "objects_0000.npy": "181fd642fa79a4e77c336edfaf01c527e0b8ca697bc1033c68fe01f8373ef3ca",
+    "visibility_0000.npy": "39c713ab3a4eaeb7fd65b30cb28ece57a02d29ee4170038cb21a9acc59f098ab",
+    "virtual_0001.png": "256e34f62059a1bad3d4d0b9e9400f22670933aa43c9ae77fd414ad1c86d8562",
+    "objects_0001.npy": "8f197e81c4e63b1be04bb7d8de9f1b930ccfe2cd2ba6d36ff25c42e2631ab789",
+    "visibility_0001.npy": "5034bc3dac0eb1a9c3630a1ba0f29fb5c0bd9c5abd42abbb793e3d2c17e1fc01",
+    "virtual_0002.png": "24526315a224d43f421140a3f22c2690551dbfea9e39109d111bc4d3b3a514ee",
+    "objects_0002.npy": "de56491b2fe8678a4e23a8787be93713199612e392c224e7089b5fec3df80fcc",
+    "visibility_0002.npy": "56ae3b7816db8be6abeff513b1a3004c7bfa287d24a022c125b1d3230335d88a"
+  },
+  "limitations": [
+    "synthetic scene, scripted straight drive, no sensor noise",
+    "object ray casts ignore alpha and antialiasing; exclude boundaries",
+    "RGB reference includes geometry hidden from input cameras"
+  ]
+}
