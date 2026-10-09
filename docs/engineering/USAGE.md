@@ -451,3 +451,14 @@ ctest --test-dir build -R 'calibration_coverage|optical_models|raster_calibratio
 ```
 
 Output должен быть новым. Используются NumPy/SciPy/Pillow/Matplotlib и production OpenCV C++ binary, Python cv2/Blender не нужны. Параметр `--binary` позволяет указать другой собранный `sv-calibrate`. По умолчанию создаются 256 PNG, 64 fit/gate attempts и summary с hashes. Central/wide получают одинаковое число train views, одинаковые контрольные лучи/плоскость и общую validation. Gate сохраняет свой порог; результаты автоматически не применяются к конфигу сервера. Ограничения scale/tilt/coverage и полная таблица: [[validation/CALIBRATION_COVERAGE]].
+
+## Парный factorial distance × tilt для калибровки
+
+```sh
+cmake --build build --target sv-calibrate -j 4
+python3 tools/configurator.py compare-capture --output artifacts/calibration-capture-repeat --seeds 7101 7102
+MPLCONFIGDIR=/tmp/sv-mpl python3 docs/diploma/plot_calibration_capture.py --results artifacts/calibration-capture-repeat
+ctest --test-dir build -R 'calibration_capture_factors|calibration_coverage|optical_models' --output-on-failure
+```
+
+Требуются Python NumPy/SciPy/Pillow/Matplotlib и собранный C++ OpenCV calibrator. `--binary` задаёт другой путь к `sv-calibrate`. Output новый; по умолчанию создаются 384 PNG/128 fit attempts, source/binary hashes контролируются до/после запуска. Во время серии не изменяйте перечисленные в summary исходники и binary: в этом случае сценарий откажется выпускать summary. Серверный конфиг не изменяется. Протокол: [[research/CALIBRATION_CAPTURE_PROTOCOL]], результаты/ограничения: [[validation/CALIBRATION_CAPTURE_FACTORS]].

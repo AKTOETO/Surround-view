@@ -96,3 +96,7 @@ GPU execution time измерять асинхронными timer queries, CPU 
 ## E-CAL-coverage-01 — 10.10.2026
 
 [[validation/CALIBRATION_COVERAGE]]: equal-budget 12 central vs 4 central + 8 peripheral train views, общие validation/ray/floor точки, 4 families × 2 seeds × order2/4. 256 PNG обнаружены, 64 fit/gate attempts, central gate accepted 32/32, full 31/32. Outer p95 order4 улучшается 8/8, floor p95 5/8. Следующая ablation должна отделить board scale/tilt от angular occupancy; текущие данные exploratory.
+
+## E-CAL-capture-01 — 10.10.2026
+
+[[validation/CALIBRATION_CAPTURE_FACTORS]]: 4 radial families × 2 seeds × 4 distance/tilt profiles × order2/4 × два gate =128 attempts. 384/384 PNG распознаны, 64/64 модели проходят оба gate; full residual p95<0.325 px, floor p95 до 0.155 м. Center directions одинаковы между профилями, corner angular occupancy меняется. Все парные эффекты представлены отдельно; universal capture prescription не получен. Протокол: [[CALIBRATION_CAPTURE_PROTOCOL]].

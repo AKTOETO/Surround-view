@@ -964,11 +964,48 @@ $$e_{ray}(\theta,\varphi)=\|\hat\pi(d(\theta,\varphi))-\pi_{true}(d(\theta,\varp
 
 Следующий опыт должен разделить coverage, board scale и tilt diversity, затем включить нерадиальные и монтажные ошибки. Процедурный известный мир обеспечивает проверяемую геометрию, но не заменяет физические измерения. Полная таблица, hashes, отказы и воспроизведение: [[validation/CALIBRATION_COVERAGE]]. Рисунки строит `plot_calibration_coverage.py`, расположенный рядом с главой. 6 новых regression tests и все 8 выбранных calibration suites проходят.
 
+## 4.33 Разделение факторов расстояния и наклона доски
+
+Опыт §4.32 одновременно менял угловое положение, масштаб и ориентацию доски. Для частичного разделения этих факторов подготовлен factorial E-CAL-capture-01. Протокол [[research/CALIBRATION_CAPTURE_PROTOCOL]] зафиксирован коммитом `28422a9` до результатов основной серии; геометрические диапазоны выбраны после clipping check. Это exploratory follow-up, не окончательная подтверждающая выборка.
+
+Во всех профилях одинаковы четыре центральных train views и направления центров восьми периферийных досок. Два фактора задаются независимо: distance=3.2/2.0 м и local tilt=0/±0.35 rad вокруг двух осей. Направления центров θ=0.65/0.8 rad, азимуты и roll одинаковы между профилями одного seed. При наклоне фактическое отклонение нормали от center ray равно
+
+$$\alpha=\arccos(\cos\beta_x\cos\beta_y),\qquad |\beta_x|=|\beta_y|=0.35\;\Rightarrow\;\alpha\approx0.490\text{ rad}.$$
+
+Distance сохраняет rotation и меняет размер изображения, tilt сохраняет center direction и меняет foreshortening. При этом angular occupancy отдельных corners не сохраняется. Max train θ возрастает примерно с 0.917 до 0.989 rad при увеличении доски. Поэтому опыт разделяет заданные геометрические факторы, но не является чистым image-resize или полностью постоянным angular coverage.
+
+![Факторная матрица входных растров](figures/experiments/calibration_capture_views.png)
+
+*Рисунок 4.33 — Одна peripheral center direction, четыре сочетания distance/tilt. На примере kb_nonzero/7101 median размера projected cell edge растёт примерно с 8.8 до 14.1 px для front profile; подпись tilt указывает фактический normal-to-ray angle.*
+
+Использованы четыре генеративные radial optical families и новые seeds 7101/7102. Все варианты имеют по 12 train views и общую validation: 4 центральных + 8 новых периферийных досок, distance=2.6 м, local tilt=±0.175 rad. По optical families оцениваются те же OpenCV polynomial order=2/4, а не четыре различных solver. Все 384 уникальных PNG распознаны, выполнены 128 CLI attempts. Central и full gate экспортировали по 64/64 модели. Intrinsics из двух gate вызовов совпадают точно во всех 64 парах. Full residual p95=0.2602–0.3250 px, threshold=1 px сохранён. Все inner train/validation corners находятся при θ<1 rad.
+
+Known-ray и known-floor метрики используют прежние общие контрольные точки. Fixed-pose board metric теперь включает все 12 validation poses, то есть 648 corners; его область отличается от прежней серии с четырьмя центральными досками. Validation pose при измерении этой метрики не подбирается, invalid floor points=0. Для фактора A описательная парная разность задаётся при фиксированном втором факторе B:
+
+$$\Delta_A(B)=e(A_{large},B)-e(A_{small},B).$$
+
+Отрицательное значение означает уменьшение выбранной ошибки данного case; это не самостоятельная оценка вероятности улучшения на реальных камерах. При order=4 увеличение фронтальной доски уменьшает outer p95 в 4/8 cases и floor p95 в 5/8. Для tilted profile увеличение доски улучшает показатели соответственно в 5/8 и 3/8. Добавление tilt на small board улучшает outer p95 лишь в 1/8, floor p95 в 5/8; на large board — в 4/8 и 3/8. Таким образом, эффект зависит от метрики, seed и optical family.
+
+| Case, order=4 | Изменение | Outer p95, px | Floor p95, m | Full residual p95, px |
+|---|---|---:|---:|---:|
+| kb_nonzero / 7101 | small_front → large_front | 1.4843 → 1.1951 | 0.0241 → 0.1369 | 0.2830 → 0.2743 |
+| equidistant / 7102 | large_front → large_tilt | 0.2685 → 3.4625 | 0.0125 → 0.0780 | 0.2775 → 0.2762 |
+
+![Парные метрики factorial experiment](figures/experiments/calibration_capture_metrics.png)
+
+*Рисунок 4.34 — Известные outer-ray и floor p95 для четырёх capture profiles, отдельно order=2/4, family и seed. Все 64 модели представлены; коррелированные corners не используются как независимые trials.*
+
+Первый пример показывает расхождение эффекта по двум метрикам: более крупная доска улучшает внешнюю проекцию, но ухудшает реконструкцию плоскости. Второй показывает, что выбранный pattern наклонов не гарантирует улучшения, хотя pose-fitted residual немного снижается. Максимальный floor p95 всей серии ≈0.1551 м, fixed-pose p95≈3.8634 px при accepted full residual<0.325 px. Без физического acceptance requirement эти числа не являются false-accept rates.
+
+Причину каждой ошибки нельзя уверенно отнести к detector или solver: conditioning, uncertainty и направленный localization bias пока не разделены. Следующие этапы — такая диагностика, paired blur/noise, нерадиальные/монтажные и ground-height ошибки. Вывод серии ограничен: одинакового количества кадров, заданных peripheral directions, крупной доски и малого residual недостаточно для гарантии физической точности. Универсальная рекомендация по distance/tilt не получена.
+
+Полный отчёт, 64-case таблица и hashes: [[validation/CALIBRATION_CAPTURE_FACTORS]]. Иллюстрации воспроизводит `plot_calibration_capture.py` рядом с главой. 6 новых regression tests и все 9 выбранных CTest suites проходят. Сценарий также проверяет неизменность experiment source/binary hashes в течение выполнения.
+
 ## Предварительные выводы по четвёртой главе
 
 1. **Экспериментальная инфраструктура сшивки:** реализованы offline-варианты fusion и carrier matrix; исправленные binary graph-cut и output proxies проверены на fixtures, добавлен парный 3-frame Blender clip (§4.25). Качество методов на holdout scenes и object-correspondence ghost truth пока не подтверждено.
 2. **Scene Truth/GPU checks:** получены числа на конкретном синтетическом fixture и CPU/GPU sample. Они характеризуют только этот тест и не заменяют испытания реальной сцены/камер.
-3. **Калибровочное ядро:** реализованы синтетические эксперименты Joint Bundle Adjustment и server calibration gate. Сопоставление моделей и пороги требуют независимых данных; историческая jitter-модель не оценивает detector, новые image-based серии выполняют OpenCV на синтетических PNG (§4.29, §4.31–4.32); peripheral views уменьшают часть ошибок экстраполяции, но не гарантируют точной реконструкции плоскости.
+3. **Калибровочное ядро:** реализованы синтетические эксперименты Joint Bundle Adjustment и server calibration gate. Сопоставление моделей и пороги требуют независимых данных; историческая jitter-модель не оценивает detector, новые image-based серии выполняют OpenCV на синтетических PNG (§4.29, §4.31–4.33); peripheral views уменьшают часть ошибок экстраполяции, но ни angular coverage, ни конкретная комбинация размера/наклона не гарантируют точной реконструкции плоскости.
 
 Таким образом, перечислены достигнутые этапы реализации и проверок на синтетике; качество сшивки, перенос на физическую оптику и физическая обоснованность Quality Gate остаются открытыми.
 

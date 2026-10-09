@@ -116,3 +116,7 @@ stop
 ## Периферийные наблюдения: частичное расширение покрытия
 
 [[validation/CALIBRATION_COVERAGE]] сравнивает central/wide при одинаковых 12 train views и общей контрольной геометрии. Расширение peripheral coverage уменьшает outer-ray p95 order4 во всех 8 cases, но floor p95 только в 5; full validation gate принимает 31/32 модели. Нужны полное 2D coverage, отдельные scale/tilt ablations и физические требования. Это не закрывает весь calibration study и не обосновывает новый residual threshold.
+
+## Distance × tilt: начальная factorial ablation
+
+[[validation/CALIBRATION_CAPTURE_FACTORS]]: одинаковые center directions и validation, 12 train views, size/tilt geometry 2×2, 384 PNG и 128 attempts. Все gate accepted, но outer/floor эффекты разнонаправлены. Протокол [[CALIBRATION_CAPTURE_PROTOCOL]] зафиксирован до main outcomes. Теперь нужны detector-bias/solver-conditioning диагностика, paired blur/noise и nonradial/extrinsic trials; полное 2D coverage ещё не обеспечено.
