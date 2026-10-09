@@ -65,3 +65,7 @@ python3 tools/temporal_seam_stability.py \
 ```
 
 В трёхкадровой серии машина действительно перемещается на 0.4 м за переход. Graph-cut boundary symmetric distance — 0.09161 / 0.04814 px. Feather weights остаются неподвижными в vehicle-fixed view, но RGB меняется. Измерение residual change вычитает совпадающий прямой вид сцены; без optical flow оно включает изменение геометрической/окклюзионной ошибки и не считается чистым flicker. Independent RGB extra edges не являются object-level ghost rate. Нужны holdout clips, matched visibility, динамические объекты и фотометрические возмущения.
+
+## 5. Source visibility и контроль разрешения
+
+Продолжение: [[STITCH_RESOLUTION_VISIBILITY]]. Paired schema 2 исключает hide-render helper meshes из ray casts, экспортирует camera-visibility bits для прямых scene points и позволяет any-camera ROI. В первой paired schema 1 эти helpers могли влиять на object-ID карты; её результаты сохраняются как исторический smoke. Числа текущей серии с исправленными картами нельзя напрямую сравнивать со старым ROI.

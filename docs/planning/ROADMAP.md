@@ -128,3 +128,7 @@ GTest разрешён для новых проверок. При его выб�
 ## Парная Blender-проверка 10.10.2026
 
 [[validation/PAIRED_STITCH_TEMPORAL]]: новый multi-frame fixture содержит фактическое движение rig, matched direct RGB и ray-cast object IDs. Старый sine-shift temporal test заменён; измеряются residual change, реальные границы argmax-weight labels и independent RGB extra edges, undefined ROI/seams возвращают null. Это smoke методики на одном 3-frame clip (5 Hz sampling), не завершение M10. Следующая серия: ≥256px cube faces, независимые scene/mount seeds, длинные клипы/повороты, динамические объекты, экспозиция, matching visibility и object-correspondence ghost trails; только затем повторяемые бюджеты/тайминги и выводы диплома.
+
+## Контроль разрешения и source visibility, 10.10.2026
+
+[[validation/STITCH_RESOLUTION_VISIBILITY]]: при совпадающих decoded direct RGB и object/visibility truth выполнено сравнение 64/256 cube faces и ignore/any-camera ROI, по семи fusion-вариантам. Исправлена ложная окклюзия от hide-render mesh-моделей камер; Blender regression проходит. Это закрывает начальный sampling/visibility smoke, но не M10: нужны 256→512 convergence, независимые scene/mount seeds и длинные клипы, photometric/dynamic trials, object-correspondence ghost trails, equal budgets/repeated timing.

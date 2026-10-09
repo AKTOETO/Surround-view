@@ -300,3 +300,7 @@ Coverage считать отдельно как (1) проекционная val
 ## Парная динамическая методика
 
 Проверка от 10.10.2026: [[validation/PAIRED_STITCH_TEMPORAL]]. Вместо сдвига синусоиды получены четыре камеры движущегося rig и direct virtual RGB того же мира. Object IDs маскируют кузов/границы, independent RGB edges отделяют часть scene structure от лишних output edges. Residual change и argmax-weight boundary distance имеют known-answer tests; это ещё не object-level ghost detection и не holdout ranking. Геометрические веса могут не двигаться при изменении RGB, поэтому нулевое seam displacement не принимается за доказательство temporal quality.
+
+### Разрешение источника как отдельный фактор
+
+[[validation/STITCH_RESOLUTION_VISIBILITY]] отделяет влияние исходных cube faces (64/256 px) от выбора fusion: fisheye output 400×400 и direct truth фиксированы. Image metrics на первой низкодетальной серии нельзя трактовать как чистый эффект fusion. Independent source visibility проверяет ближайшую непрозрачную геометрию на луче к точке direct truth; carrier validity означает лишь допустимость семплирования носителя. Эти маски отвечают на разные вопросы. Any-camera visibility исключает недоступные из всех камер точки, но не исправляет геометрическое соответствие или выбор source при blending.

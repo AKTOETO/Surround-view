@@ -76,3 +76,5 @@ GPU execution time измерять асинхронными timer queries, CPU 
 ## Связанные источники
 
 [[references/README|Единый каталог литературы и документации]].
+
+Парный sampling/visibility контроль E-STITCH-01: [[validation/STITCH_RESOLUTION_VISIBILITY]] — 2 resolutions × 2 ROI policies × 7 fusion modes × 3 frames. Direct RGB/object/visibility truth идентичны между условиями. Один клип, не independent replication; timings не измеряются.

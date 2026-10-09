@@ -59,3 +59,7 @@
 ### Парный multi-frame truth, 10.10.2026
 
 Старый temporal sine-shift генератор заменён проверяемым входом с реальным перемещением камер и exact-scene direct Blender RGB. Компактный fixture, object-ID ROI, residual-change/weight-boundary metrics и негативные контроли: [[validation/PAIRED_STITCH_TEMPORAL]]. Причина исходной temporal ошибки устранена; критерий качества остаётся открытым: один короткий клип не заменяет holdout scenes, динамические объекты/экспозицию, matched visibility и object-level ghost truth.
+
+### Истинная source visibility и sampling ablation
+
+[[validation/STITCH_RESOLUTION_VISIBILITY]] фиксирует сравнение 64/256 исходных кубических граней с идентичными decoded direct RGB/object/visibility truth. Найден и исправлен дефект ray casts: скрытые для RGB модели камер заслоняли геометрию в truth. Blender negative control различает visible/hidden helper; текущие object-ID ROI не приравнивать к историческим картам первой paired серии. Source visibility теперь измеряется отдельно от carrier validity, но object-correspondence ghost rate и independent multi-scene confirmation остаются открытыми.
