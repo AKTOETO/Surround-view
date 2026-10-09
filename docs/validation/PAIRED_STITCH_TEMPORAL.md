@@ -119,8 +119,7 @@ Capture -> Convert : capture manifest + hashes
 Convert -> Fusion : four synchronous fisheye frames
 Fusion -> Metrics : final RGB + weights + validity
 Capture -> Metrics : direct RGB + IDs + pose/time
-Metrics -> Metrics : verify provenance; exclude ego/boundaries
-residual change + boundary distance + extra edges
+Metrics -> Metrics : verify provenance;\n exclude ego/boundaries residual change\n + boundary distance + extra edges
 @enduml
 ```
 

@@ -63,3 +63,5 @@
 ### Истинная source visibility и sampling ablation
 
 [[validation/STITCH_RESOLUTION_VISIBILITY]] фиксирует сравнение 64/256 исходных кубических граней с идентичными decoded direct RGB/object/visibility truth. Найден и исправлен дефект ray casts: скрытые для RGB модели камер заслоняли геометрию в truth. Blender negative control различает visible/hidden helper; текущие object-ID ROI не приравнивать к историческим картам первой paired серии. Source visibility теперь измеряется отдельно от carrier validity, но object-correspondence ghost rate и independent multi-scene confirmation остаются открытыми.
+
+Convergence 256→512 и три scene variants с nominal/static-bias/front-jump exposure выполнены: [[validation/STITCH_CONVERGENCE_ROBUSTNESS]]. Исправлен недостаток вариативности генератора: прежние seeds оставляли ближайшие столбики неподвижными. Результаты не закрывают object-correspondence metrics, real detector/calibration, dynamic clips и target acceptance; критерии перечислены в [[ROADMAP#Критерии готовности исследовательского заключения]].

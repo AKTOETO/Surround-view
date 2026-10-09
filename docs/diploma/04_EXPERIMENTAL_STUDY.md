@@ -766,6 +766,54 @@ Any-camera ROI содержит 44263 / 44355 / 44368 pixels и исключае
 
 Полная таблица четырёх условий, provenance и команды: [[validation/STITCH_RESOLUTION_VISIBILITY]]. Численные результаты воспроизводятся из checked-in fixture без Blender; рисунки строит расположенный рядом с главой `plot_stitch_resolution.py`. Следующие условия исследования: convergence 256→512, independent scene/mount seeds, повороты, динамические объекты и экспозиционные возмущения, object-correspondence ghost trails, согласованные resource budgets и повторяемые GPU/target timings.
 
+## 4.27 Sampling convergence и camera-exposure stress
+
+Следующий этап исследования проверяет, насколько прежние результаты обусловлены разрешением входа, а также устойчивы ли они к изменению camera gain. Протокол, все таблицы и hashes: [[validation/STITCH_CONVERGENCE_ROBUSTNESS]].
+
+### Проверка 256→512
+
+Для того же трёхкадрового клипа получены исходные cube faces 512×512. Fisheye output 400×400, direct view 320×180 и все параметры сцены/рига сохранены. Decoded direct RGB, object-ID и visibility truth побитно совпадают с условием 256. Для `edge_feather` средняя MAE изменилась с 0.036170 до 0.036034 (−0.374%), residual change — с 0.005858 до 0.005786 (−1.228%). У нескольких hard/cut-вариантов MAE немного выросла.
+
+![Convergence 256/512](figures/experiments/stitch_convergence_metrics.png)
+
+*Рисунок 4.22 — Средние метрики на одном и том же any-camera ROI при 256/512 source faces; один клип, без независимых повторов.*
+
+Это наблюдаемое насыщение данного ракурса/output resolution; критерий остановки до опыта не был зарегистрирован. Поэтому 256 принято как рабочий компромисс следующей exploratory серии, а не как универсально достаточное разрешение. При изменении ракурса, output size, текстур и мелких объектов convergence необходимо проверить повторно.
+
+### Вариативность сцены и экспозиции
+
+Прежние seeds меняли здания, но сохраняли одинаковыми ближайшие столбики. Генератор дополнен `near_obstacle_jitter_m=0.8`: три столбика с основаниями получают детерминированные XY-смещения, независимые от random stream зданий. План `assets/scenarios/stitch-validation-v1.json` фиксирует seeds 12, 13, 14, три позы x=0/0.4/0.8 м и faces 256. Actual positions и provenance сохранены. Это три варианта одной улицы, не разные типы среды и не нетронутый финальный holdout. Mount parameters пока истинные и номинальные.
+
+Рассмотрены `nominal`, постоянное расхождение камер `static_bias` с EV=(+0.5,−0.5,+0.25,−0.25) и скачки передней камеры `front_jump` с EV=(+0.5,−0.5,+0.5) во времени. Camera gain применяется в линейном RGB:
+
+$$I_i'=\mathrm{sRGB}\bigl(\mathrm{clip}(2^{EV_i}\,\mathrm{sRGB}^{-1}(I_i),0,1)\bigr).$$
+
+После encoding выполняется RGB8 quantization. Прямой эталон остаётся в nominal exposure; compensation и sensor noise не применяются. Следовательно, ошибка включает расхождение с выбранным фотометрическим output target и не является чистой оценкой геометрии. Получено 3 варианта × 3 условия × 7 fusion modes × 3 кадра = 189 final-frame evaluations.
+
+| Layout seed | Condition | Feather mean MAE | Feather mean residual change |
+|---:|---|---:|---:|
+| 12 | nominal | 0.036665 | 0.005970 |
+| 12 | static_bias | 0.052432 | 0.006559 |
+| 12 | front_jump | 0.044659 | 0.030255 |
+| 13 | nominal | 0.034667 | 0.003417 |
+| 13 | static_bias | 0.050737 | 0.003750 |
+| 13 | front_jump | 0.042466 | 0.027674 |
+| 14 | nominal | 0.032800 | 0.006336 |
+| 14 | static_bias | 0.050279 | 0.006965 |
+| 14 | front_jump | 0.040985 | 0.030422 |
+
+![Сцены и exposure stress](figures/experiments/stitch_robustness_views.png)
+
+*Рисунок 4.23 — Три варианта расположения ближайших препятствий: direct RGB, nominal feather и feather при −0.5 EV передней камеры, t=0.2 s.*
+
+![Метрики exposure stress](figures/experiments/stitch_robustness_metrics.png)
+
+*Рисунок 4.24 — Mean по трём layout variants и min/max whiskers. Это диапазон наблюдений, не доверительный интервал; соседние кадры не считаются независимыми trials.*
+
+На этих вариантах `front_jump` увеличивает feather residual change примерно в 4.8–8.1 раза относительно nominal. Геометрически неподвижный seam/weight map не обеспечивает устойчивого RGB при скачках camera gain. Требуется отдельная ablation компенсации экспозиции. Это ограниченный вывод о чувствительности прототипа; он не устанавливает глобально лучший fusion, не измеряет object-level ghost trails и не подтверждает target-device качество.
+
+Для окончательного исследовательского заключения остаются независимые object-correspondence metrics, разные типы сцен, mount/calibration perturbations с реальным detector/solver, длинные динамические клипы, равные carrier budgets, repeated CPU/GPU timings и закрытая подтверждающая выборка. Физические камеры и Аврора требуют внешнего стенда. Exit criteria приведены в [[planning/ROADMAP#Критерии готовности исследовательского заключения]]. Рисунки воспроизводят расположенные рядом с главой `plot_stitch_resolution.py` и `plot_stitch_robustness.py`.
+
 ## Предварительные выводы по четвёртой главе
 
 1. **Экспериментальная инфраструктура сшивки:** реализованы offline-варианты fusion и carrier matrix; исправленные binary graph-cut и output proxies проверены на fixtures, добавлен парный 3-frame Blender clip (§4.25). Качество методов на holdout scenes и object-correspondence ghost truth пока не подтверждено.

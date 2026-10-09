@@ -78,3 +78,5 @@ GPU execution time измерять асинхронными timer queries, CPU 
 [[references/README|Единый каталог литературы и документации]].
 
 Парный sampling/visibility контроль E-STITCH-01: [[validation/STITCH_RESOLUTION_VISIBILITY]] — 2 resolutions × 2 ROI policies × 7 fusion modes × 3 frames. Direct RGB/object/visibility truth идентичны между условиями. Один клип, не independent replication; timings не измеряются.
+
+[[validation/STITCH_CONVERGENCE_ROBUSTNESS]]: convergence 256→512 при одинаковом truth и 189 frame evaluations на трёх near-obstacle layouts × трёх digital EV условиях. Это exploratory варианты одной улицы, не untouched holdout и не timing trials. Phase gates: [[planning/ROADMAP#Критерии готовности исследовательского заключения]].

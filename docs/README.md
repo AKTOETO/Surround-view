@@ -84,3 +84,5 @@ Wire-контракт текущей реализации, калибровоч�
 Парная динамическая проверка сшивки (10.10.2026): [[validation/PAIRED_STITCH_TEMPORAL]] — один воспроизводимый клип с движущимся rig и matched Blender truth, ограничения и следующие опыты.
 
 Контроль входного разрешения и видимости: [[validation/STITCH_RESOLUTION_VISIBILITY]] — парные 64/256 capture, исправление скрытых camera helpers и ROI ablation.
+
+Convergence 256→512 и три варианта улицы с EV stress: [[validation/STITCH_CONVERGENCE_ROBUSTNESS]]. Условия готовности итоговых выводов: [[planning/ROADMAP#Критерии готовности исследовательского заключения]].
