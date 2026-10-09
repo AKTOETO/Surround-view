@@ -482,6 +482,21 @@ ctest --test-dir build -R 'intrinsic_diagnostics|vision_tools|optical_models' --
 build/sv-calibrate diagnose-intrinsics --dataset artifacts/calibration-diagnostic-repeat/kb_nonzero-7101/small_front-analytic_truth.json --output artifacts/manual-intrinsic-diagnostic --distortion-order 4
 ```
 
-Вход: `schema_version=1`, `purpose=intrinsic_solver_diagnostic`, `observation_origin=analytic_truth|analytic_truth_float32|detected_raster`, `resolution={width,height}`, `board={columns,rows,square_size_m}`, `theta_max_rad`, массивы `train` и `validation`. Каждый view содержит `id` и `uv_px` — массив пар координат в row-major board order. Требуются 6..200 train и 3..200 validation views, уникальные непустые IDs во всём dataset, columns/rows=3..31, resolution axes=1..16384, finite UV внутри кадра, положительный размер клетки и 0<theta_max<π/2. Максимальный input — 8 MiB. Origin/IDs заявлены вызывающей стороной и не подтверждают физическое происхождение данных.
+Вход: `schema_version=1`, `purpose=intrinsic_solver_diagnostic`, `observation_origin=analytic_truth|analytic_truth_float32|detected_raster|controlled_perturbation`, `resolution={width,height}`, `board={columns,rows,square_size_m}`, `theta_max_rad`, массивы `train` и `validation`. Каждый view содержит `id` и `uv_px` — массив пар координат в row-major board order. Требуются 6..200 train и 3..200 validation views, уникальные непустые IDs во всём dataset, columns/rows=3..31, resolution axes=1..16384, finite UV внутри кадра, положительный размер клетки и 0<theta_max<π/2. Максимальный input — 8 MiB. Origin/IDs заявлены вызывающей стороной и не подтверждают физическое происхождение данных.
 
 Команда пишет **только `diagnostics.json`**, содержащий `diagnostic_only`, residual и embedded estimate. Она не выполняет acceptance gate, не пишет `intrinsics.json`, не применяет конфиг. `--max-error-px` здесь не допускается. Exit 0 означает завершённую диагностику, а не принятую калибровку; solver/validation/input errors дают exit 1. Production `intrinsics` сохраняет прежний detector/gate workflow. Протокол и результаты: [[research/INTRINSIC_DIAGNOSTIC_PROTOCOL]], [[validation/INTRINSIC_DIAGNOSTICS]].
+
+## Направленная чувствительность к equal-RMS ошибкам углов
+
+При наличии parent diagnostic datasets:
+
+```sh
+cmake --build build --target sv-calibrate -j 4
+python3 tools/configurator.py compare-sensitivity --input artifacts/calibration-diagnostic-v2 --capture-summary docs/validation/baselines/calibration_capture_v1.json --output artifacts/calibration-sensitivity-repeat
+MPLCONFIGDIR=/tmp/sv-mpl python3 docs/diploma/plot_calibration_sensitivity.py --results artifacts/calibration-sensitivity-repeat --input artifacts/calibration-diagnostic-v2
+ctest --test-dir build -R 'calibration_sensitivity|intrinsic_diagnostics|vision_tools' --output-on-failure
+```
+
+Если parent отсутствует, восстановите capture/diagnostic из предыдущих разделов. Для нового parent передайте соответствующий capture `summary.json` через `--capture-summary`: его hash должен совпадать с parent diagnostic metadata. Output новый. Требуются NumPy/SciPy/Pillow/Matplotlib и C++ OpenCV binary, без Python cv2/Blender. Исторические hashes требуют соответствующего numerical core/toolchain. Во время запуска не изменяйте source/binary/parent datasets.
+
+По умолчанию объявленная matched-model серия создаёт 444 diagnostic reports и 216 signed pair responses. Artificial UV имеют origin `controlled_perturbation`, не помечаются как detector/analytic observations. Gate/конфиг не меняются. Величина h — global RMS длины 2D input error; gains имеют единицы px/px или м/px и не являются condition number или actual per-fit error. Протокол: [[research/CALIBRATION_SENSITIVITY_PROTOCOL]], результаты: [[validation/CALIBRATION_SENSITIVITY]].

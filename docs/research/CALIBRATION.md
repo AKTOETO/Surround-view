@@ -124,3 +124,7 @@ stop
 ## Exact-input replay и signed localization
 
 [[validation/INTRINSIC_DIAGNOSTICS]]: 192 diagnostic fits при неизменном C++ core, 64 detected-input estimates воспроизводят production. Matched optical models восстанавливаются почти точно по exact UV; float32 control на порядки меньше observed errors. Approximation models оставляют ненулевую ошибку даже при exact UV. Signed raster/detector error fields сохранены; normalized conditioning/controlled perturbations ещё предстоят. Новый diagnose-intrinsics не выполняет acceptance и не меняет production gate. Протокол: [[INTRINSIC_DIAGNOSTIC_PROTOCOL]].
+
+## Equal-RMS directional sensitivity
+
+[[validation/CALIBRATION_SENSITIVITY]]: 12 matched base cases, 444 diagnostic fits, 216 ±h pairs, 6 direction fields и h=0.025/0.05/0.2 px. Input RMS одинаков, отклик rays/floor различается; shift_x control даёт ожидаемый gain≈1. Между двумя малыми amplitudes max gain change<0.6%; при h=0.2 нелинейность заметнее. Это начальный directional response, не full Jacobian condition number или uncertainty. Полный spectrum, targeted component/pose analysis, robust fit и raster/physical trials остаются открытыми. Протокол: [[CALIBRATION_SENSITIVITY_PROTOCOL]].

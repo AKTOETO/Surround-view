@@ -1073,11 +1073,57 @@ stop
 
 Следующий этап — normalized sensitivity/conditioning и controlled systematic/random perturbations, затем paired raster blur/noise, nonradial/extrinsic/road-height errors. Для итогового заключения всё ещё нужны physical requirements и измеренные снимки. Полные 192 estimates и парная 64-case таблица: [[validation/INTRINSIC_DIAGNOSTICS]]. Рисунки воспроизводит `plot_intrinsic_diagnostics.py` рядом с главой. 6 новых diagnostic tests и все 10 выбранных CTest suites проходят.
 
+## 4.35 Направленная чувствительность к равным по RMS ошибкам углов
+
+E-CAL-diagnostic-01 показал различие между exact-input и detected-input калибровкой, но не разделял направления ошибок наблюдений. Следующая серия E-CAL-sensitivity-01 использует matched models: equidistant/order2/4 и kb_nonzero/order4, seeds 7101/7102, profiles small_front/large_front. Это 12 base cases с прежними 12 train и 12 exact validation views. Approximation families и tilted profiles заранее исключены из области данной серии. Протокол [[research/CALIBRATION_SENSITIVITY_PROTOCOL]] зафиксирован коммитом `371352c` до fit outcomes; геометрии уже просмотрены, поэтому серия exploratory.
+
+В training coordinates вводятся шесть полей: единый shift_x, radial, tangential и три random Gaussian fields с seeds 1021/1022/1023. Random fields центрированы отдельно внутри каждого view, затем нормированы по всем 648 train corners. Для каждого поля сохраняются directions при всех amplitudes/signs:
+
+$$\frac1{648}\sum_{v,i}\|D_{vi}\|^2=1,\qquad u_{vi}^{\pm}=u_{vi}^{true}\pm hD_{vi},\qquad h\in\{0.025,0.05,0.2\}\text{ px}.$$
+
+h — RMS длины двумерной ошибки, не стандартное отклонение каждой координаты. Это coordinate perturbations, а не новые raster blur/noise или измеренные ошибки физического detector. Все inputs имеют явный `controlled_perturbation` origin. Новая метка поддерживается диагностическим CLI; production gate и конфиг сервера не изменяются.
+
+![Поля контролируемых возмущений](figures/experiments/calibration_sensitivity_fields.png)
+
+*Рисунок 4.38 — Шесть equal-RMS направлений на одном peripheral view. Векторы показаны в условном увеличенном масштабе ×8; actual train displacements равны ±hD при h≤0.2 px. Random patterns фиксированы по seeds и не заменяются при плохом результате.*
+
+Выполнены 12 exact refits и 432 perturbed fits, то есть **444 diagnostic runs и 216 signed pairs**. Все завершились; failures и invalid floor points отсутствуют. Exact baselines воспроизведены с max parameter delta=0. Acceptance gate не выполняется; successful fit не равен принятой калибровке.
+
+Отклик вычисляется на прежних true outer rays и точках известной плоскости Y=1.2 м, без подбора их физической геометрии:
+
+$$G_r(h)=p95_j\frac{\|\hat u_j(+h)-\hat u_j(-h)\|}{2h},\qquad
+G_f(h)=p95_j\frac{\|\hat X_j(+h)-\hat X_j(-h)\|}{2h}.$$
+
+$G_r$ имеет единицы output px/input px, $G_f$ — м/input px. Это finite directional response, не ошибка отдельной модели относительно truth и не full Jacobian condition number. Шесть направлений не образуют полный basis 1296 UV coordinates. Дополнительно сохраняются even response и signed parameter derivatives; нормирование коэффициентов задано явно и не используется как рейтинг качества.
+
+Shift_x — analytic control: matched модель поглощает общий сдвиг изменением cx. Получено $G_r\approx1$ во всех cases/amplitudes с численной ошибкой <2×10⁻¹¹. Floor response остаётся около 0.02637–0.02687 м/px, поскольку true UV контрольной плоскости не сдвигаются вместе с обучающими observations.
+
+| Direction при h=0.05 px | Pairs | Outer gain min–max, px/px | Floor gain min–max, m/px |
+|---|---:|---:|---:|
+| shift_x | 12 | ≈1–1 | 0.02637–0.02687 |
+| radial | 12 | 0.80924–3.82358 | 0.03834–0.20422 |
+| tangential | 12 | 1.81702–6.62719 | 0.16585–0.50516 |
+| random, 3 fields | 36 | 1.68207–13.71607 | 0.04812–0.82016 |
+
+Это min/max отдельных case p95, не pooled quantiles и не доверительные интервалы. Random fields в этой серии иногда возбуждают более сильный отклик, но из трёх реализаций нельзя заключить, что случайная ошибка всегда опаснее систематической. Аналогично коэффициенты порядка 4 не объявляются универсально лучше или хуже order2.
+
+![Карта направленного отклика](figures/experiments/calibration_sensitivity_gains.png)
+
+*Рисунок 4.39 — Все 72 pairs при h=0.05 px, одинаковом input RMS и общих true controls. Левая и правая карты имеют разные единицы и диапазоны; число в ячейке — finite response p95, а не actual error данного fitted model.*
+
+Сопоставление h=0.025 и 0.05 даёт maximum relative change response p95 0.3163% для outer и 0.5328% для floor. Это поддерживает локальную интерпретацию отклика в проверенном малом диапазоне, но не доказывает математический предел h→0. При переходе 0.05→0.2 px maximum change растёт до 4.8109% и 11.6460%; строго линейную модель на весь этот диапазон применять нельзя.
+
+Для equidistant/7102/small_front/order4/random1021 при h=0.2 px **actual** floor p95 равна 0.16274 м для +h и 0.16498 м для −h. Exact-validation residual с отдельно подобранной board pose составляет лишь 0.05023/0.05954 px. Это очередной synthetic counterexample достаточности scalar residual при matched optical family и идеально известных extrinsics. Gate в данной серии не запускался; false-accept rate не рассчитывается.
+
+Результат уточняет вывод §4.34: величина localization RMSE не описывает направление ошибки и её перенос через coupled K/k/poses. Но finite directional screen не заменяет full Jacobian/spectrum, uncertainty analysis или physical requirements. Дальнейшие работы — такие оценки, robust-fit ablation без oracle filtering, paired raster blur/noise, nonradial/extrinsic/ground-height perturbations и физические снимки.
+
+Все reports, signed estimates, 216 responses, hashes и полная таблица h=0.05: [[validation/CALIBRATION_SENSITIVITY]]. Иллюстрации строит `plot_calibration_sensitivity.py` рядом с главой. 7 новых regression tests и все 11 выбранных CTest suites проходят.
+
 ## Предварительные выводы по четвёртой главе
 
 1. **Экспериментальная инфраструктура сшивки:** реализованы offline-варианты fusion и carrier matrix; исправленные binary graph-cut и output proxies проверены на fixtures, добавлен парный 3-frame Blender clip (§4.25). Качество методов на holdout scenes и object-correspondence ghost truth пока не подтверждено.
 2. **Scene Truth/GPU checks:** получены числа на конкретном синтетическом fixture и CPU/GPU sample. Они характеризуют только этот тест и не заменяют испытания реальной сцены/камер.
-3. **Калибровочное ядро:** реализованы синтетические эксперименты Joint Bundle Adjustment и server calibration gate. Сопоставление моделей и пороги требуют независимых данных; историческая jitter-модель не оценивает detector, новые image-based серии выполняют OpenCV на синтетических PNG (§4.29, §4.31–4.34); peripheral views уменьшают часть ошибок экстраполяции, но ни angular coverage, ни конкретная комбинация размера/наклона не гарантируют точной реконструкции плоскости.
+3. **Калибровочное ядро:** реализованы синтетические эксперименты Joint Bundle Adjustment и server calibration gate. Сопоставление моделей и пороги требуют независимых данных; историческая jitter-модель не оценивает detector, новые image-based серии выполняют OpenCV на синтетических PNG (§4.29, §4.31–4.35); peripheral views уменьшают часть ошибок экстраполяции, но ни angular coverage, ни конкретная комбинация размера/наклона не гарантируют точной реконструкции плоскости.
 
 Таким образом, перечислены достигнутые этапы реализации и проверок на синтетике; качество сшивки, перенос на физическую оптику и физическая обоснованность Quality Gate остаются открытыми.
 

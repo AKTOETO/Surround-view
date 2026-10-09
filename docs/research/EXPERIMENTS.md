@@ -104,3 +104,7 @@ GPU execution time измерять асинхронными timer queries, CPU 
 ## E-CAL-diagnostic-01 — 10.10.2026
 
 [[validation/INTRINSIC_DIAGNOSTICS]]: 64 parent cases × exact/float32/detected train UV, общие exact validation UV и known-geometry controls. 192 successful diagnostic exports, replay delta≤6.3×10⁻¹³. На matched subset max floor p95 exact≈1.15×10⁻¹¹ м, float32≈1.06×10⁻⁵ м, detected≈0.1369 м. Это diagnostic replay существующих сцен, не новое confirmatory evidence; source/parent hashes и signed localization записаны.
+
+## E-CAL-sensitivity-01 — 10.10.2026
+
+[[validation/CALIBRATION_SENSITIVITY]]: equal-RMS shift_x/radial/tangential/3 seeded random fields; 12 exact baselines +432 perturbed fits. Все 444 diagnostic exports успешны; 216 pair responses, invalid floor count=0. Signed input h=0.2 px может дать actual floor p95≈0.165 м при exact pose-fitted residual<0.06 px. Outputs не прошли gate: gate в серии не исполняется. Protocol [[CALIBRATION_SENSITIVITY_PROTOCOL]] зафиксирован до outcomes; parent scenes уже reviewed/exploratory.
