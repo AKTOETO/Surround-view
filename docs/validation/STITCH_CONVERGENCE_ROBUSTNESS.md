@@ -1,6 +1,6 @@
 # E-STITCH-01: сходимость sampling и устойчивость к экспозиции
 
-> Примечание реализации 10.10.2026: pyramid-результаты этой серии предшествуют validity_zero_extension_v2. Они исторические; перед итоговым сравнением требуется повторный прогон. Новый 84-case пересчёт и границы raster parity: [[validation/NATIVE_FUSION]]. Непирамидальные методы в статическом 84-case regression не изменились, но это не заменяет пересчёт данной серии.
+> Пересчёт 10.10.2026 для validity_zero_extension_v2 выполнен на прежних входах; quality tables и рисунки обновлены. Raw reports, RGB8 changes и ограничения: [[STITCH_MASK_FOLLOWUP]]. Это регрессия, не независимая подтверждающая выборка.
 
 Дата: 10.10.2026. Продолжение [[STITCH_RESOLUTION_VISIBILITY]]. Выполнены convergence screen 256→512 и exploratory серия на трёх вариантах ближайших препятствий. Общий выбор carrier/fusion и полноценная приёмка остаются открытыми.
 
@@ -15,7 +15,7 @@
 | `angular_feather` | 0.037796 | 0.037814 | +0.048 | 0.007686 | 0.007632 |
 | `seam_distance_feather` | 0.037184 | 0.037161 | -0.062 | 0.007268 | 0.007207 |
 | `graph_cut_seam` | 0.038471 | 0.038520 | +0.128 | 0.008174 | 0.008097 |
-| `multi_band` | 0.036573 | 0.036434 | -0.379 | 0.006024 | 0.005951 |
+| `multi_band` | 0.036589 | 0.036450 | -0.380 | 0.006024 | 0.005950 |
 | `graph_cut_multi_band` | 0.038570 | 0.038616 | +0.120 | 0.008099 | 0.008019 |
 
 Для `edge_feather` MAE уменьшилась на 0.374%, residual change — на 1.228%; для нескольких hard/cut вариантов MAE немного выросла. Это наблюдаемое насыщение **данного ракурса и разрешения output**, а не математическое доказательство сходимости. Критерий остановки не был зарегистрирован до опыта, поэтому 256 выбирается как рабочий компромисс для следующего exploratory screen, без утверждения, что его достаточно для всех сцен.
@@ -58,63 +58,63 @@
 | 12 | `nominal` | `angular_feather` | 0.036863 | 0.006937 |
 | 12 | `nominal` | `seam_distance_feather` | 0.036403 | 0.006459 |
 | 12 | `nominal` | `graph_cut_seam` | 0.037716 | 0.008018 |
-| 12 | `nominal` | `multi_band` | 0.036993 | 0.006039 |
+| 12 | `nominal` | `multi_band` | 0.037009 | 0.006039 |
 | 12 | `nominal` | `graph_cut_multi_band` | 0.037808 | 0.007939 |
 | 12 | `static_bias` | `hard_best_angle` | 0.061052 | 0.008811 |
 | 12 | `static_bias` | `edge_feather` | 0.052432 | 0.006559 |
 | 12 | `static_bias` | `angular_feather` | 0.056587 | 0.007749 |
 | 12 | `static_bias` | `seam_distance_feather` | 0.054969 | 0.007228 |
 | 12 | `static_bias` | `graph_cut_seam` | 0.061064 | 0.008743 |
-| 12 | `static_bias` | `multi_band` | 0.052012 | 0.006619 |
+| 12 | `static_bias` | `multi_band` | 0.052029 | 0.006618 |
 | 12 | `static_bias` | `graph_cut_multi_band` | 0.059024 | 0.008779 |
 | 12 | `front_jump` | `hard_best_angle` | 0.047011 | 0.032004 |
 | 12 | `front_jump` | `edge_feather` | 0.044659 | 0.030255 |
 | 12 | `front_jump` | `angular_feather` | 0.045535 | 0.030671 |
 | 12 | `front_jump` | `seam_distance_feather` | 0.044867 | 0.030190 |
 | 12 | `front_jump` | `graph_cut_seam` | 0.046987 | 0.031812 |
-| 12 | `front_jump` | `multi_band` | 0.044718 | 0.030010 |
-| 12 | `front_jump` | `graph_cut_multi_band` | 0.046659 | 0.031501 |
+| 12 | `front_jump` | `multi_band` | 0.044731 | 0.030012 |
+| 12 | `front_jump` | `graph_cut_multi_band` | 0.046660 | 0.031501 |
 | 13 | `nominal` | `hard_best_angle` | 0.035998 | 0.004518 |
 | 13 | `nominal` | `edge_feather` | 0.034667 | 0.003417 |
 | 13 | `nominal` | `angular_feather` | 0.035664 | 0.004410 |
 | 13 | `nominal` | `seam_distance_feather` | 0.035282 | 0.004265 |
 | 13 | `nominal` | `graph_cut_seam` | 0.036043 | 0.004519 |
-| 13 | `nominal` | `multi_band` | 0.035151 | 0.003548 |
+| 13 | `nominal` | `multi_band` | 0.035169 | 0.003549 |
 | 13 | `nominal` | `graph_cut_multi_band` | 0.036278 | 0.004556 |
 | 13 | `static_bias` | `hard_best_angle` | 0.059975 | 0.004814 |
 | 13 | `static_bias` | `edge_feather` | 0.050737 | 0.003750 |
 | 13 | `static_bias` | `angular_feather` | 0.055720 | 0.004721 |
 | 13 | `static_bias` | `seam_distance_feather` | 0.054033 | 0.004581 |
 | 13 | `static_bias` | `graph_cut_seam` | 0.060028 | 0.004815 |
-| 13 | `static_bias` | `multi_band` | 0.050367 | 0.003898 |
+| 13 | `static_bias` | `multi_band` | 0.050387 | 0.003898 |
 | 13 | `static_bias` | `graph_cut_multi_band` | 0.058018 | 0.004911 |
 | 13 | `front_jump` | `hard_best_angle` | 0.045150 | 0.028147 |
 | 13 | `front_jump` | `edge_feather` | 0.042466 | 0.027674 |
 | 13 | `front_jump` | `angular_feather` | 0.044170 | 0.027738 |
 | 13 | `front_jump` | `seam_distance_feather` | 0.043532 | 0.027673 |
 | 13 | `front_jump` | `graph_cut_seam` | 0.045194 | 0.028146 |
-| 13 | `front_jump` | `multi_band` | 0.042612 | 0.027619 |
+| 13 | `front_jump` | `multi_band` | 0.042626 | 0.027619 |
 | 13 | `front_jump` | `graph_cut_multi_band` | 0.044994 | 0.027852 |
 | 14 | `nominal` | `hard_best_angle` | 0.033698 | 0.007756 |
 | 14 | `nominal` | `edge_feather` | 0.032800 | 0.006336 |
 | 14 | `nominal` | `angular_feather` | 0.033452 | 0.007723 |
 | 14 | `nominal` | `seam_distance_feather` | 0.033204 | 0.007545 |
 | 14 | `nominal` | `graph_cut_seam` | 0.033964 | 0.008039 |
-| 14 | `nominal` | `multi_band` | 0.033178 | 0.006644 |
+| 14 | `nominal` | `multi_band` | 0.033194 | 0.006642 |
 | 14 | `nominal` | `graph_cut_multi_band` | 0.034358 | 0.008522 |
 | 14 | `static_bias` | `hard_best_angle` | 0.058849 | 0.008337 |
 | 14 | `static_bias` | `edge_feather` | 0.050279 | 0.006965 |
 | 14 | `static_bias` | `angular_feather` | 0.054572 | 0.008236 |
 | 14 | `static_bias` | `seam_distance_feather` | 0.052950 | 0.008092 |
 | 14 | `static_bias` | `graph_cut_seam` | 0.059080 | 0.008605 |
-| 14 | `static_bias` | `multi_band` | 0.049833 | 0.007328 |
+| 14 | `static_bias` | `multi_band` | 0.049855 | 0.007327 |
 | 14 | `static_bias` | `graph_cut_multi_band` | 0.057322 | 0.008988 |
 | 14 | `front_jump` | `hard_best_angle` | 0.042989 | 0.031781 |
 | 14 | `front_jump` | `edge_feather` | 0.040985 | 0.030422 |
 | 14 | `front_jump` | `angular_feather` | 0.042098 | 0.030788 |
 | 14 | `front_jump` | `seam_distance_feather` | 0.041670 | 0.030712 |
 | 14 | `front_jump` | `graph_cut_seam` | 0.043245 | 0.032004 |
-| 14 | `front_jump` | `multi_band` | 0.041056 | 0.030391 |
+| 14 | `front_jump` | `multi_band` | 0.041066 | 0.030389 |
 | 14 | `front_jump` | `graph_cut_multi_band` | 0.043153 | 0.031759 |
 
 ### Допустимый вывод этой серии

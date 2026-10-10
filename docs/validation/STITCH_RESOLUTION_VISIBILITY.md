@@ -1,6 +1,6 @@
 # E-STITCH-01: разрешение входов и независимая видимость
 
-> Примечание реализации 10.10.2026: pyramid-результаты этой серии предшествуют validity_zero_extension_v2. Они исторические; перед итоговым сравнением требуется повторный прогон. Новый 84-case пересчёт и границы raster parity: [[validation/NATIVE_FUSION]]. Непирамидальные методы в статическом 84-case regression не изменились, но это не заменяет пересчёт данной серии.
+> Пересчёт 10.10.2026 для validity_zero_extension_v2 выполнен на прежних входах; quality tables и рисунки обновлены. Raw reports, RGB8 changes и ограничения: [[STITCH_MASK_FOLLOWUP]]. Это регрессия, не независимая подтверждающая выборка.
 
 Дата: 10.10.2026. Статус: paired ablation на одном синтетическом 3-frame clip. Это продолжение [[PAIRED_STITCH_TEMPORAL]], не закрытие quality confirmation.
 
@@ -45,29 +45,29 @@ RGB MAE, residual change и independent extra-edge fraction определены
 | 64 | ignore | `angular_feather` | 0.040738 | 0.009229 | 67.177 |
 | 64 | ignore | `seam_distance_feather` | 0.040264 | 0.008859 | 66.601 |
 | 64 | ignore | `graph_cut_seam` | 0.041267 | 0.009739 | 68.554 |
-| 64 | ignore | `multi_band` | 0.040028 | 0.007657 | 70.876 |
-| 64 | ignore | `graph_cut_multi_band` | 0.041351 | 0.009663 | 67.482 |
+| 64 | ignore | `multi_band` | 0.040039 | 0.007656 | 70.861 |
+| 64 | ignore | `graph_cut_multi_band` | 0.041351 | 0.009663 | 67.480 |
 | 64 | any | `hard_best_angle` | 0.040837 | 0.009715 | 69.351 |
 | 64 | any | `edge_feather` | 0.039235 | 0.007458 | 69.630 |
 | 64 | any | `angular_feather` | 0.040302 | 0.009133 | 67.336 |
 | 64 | any | `seam_distance_feather` | 0.039827 | 0.008762 | 66.759 |
 | 64 | any | `graph_cut_seam` | 0.040834 | 0.009647 | 68.712 |
-| 64 | any | `multi_band` | 0.039606 | 0.007578 | 71.003 |
-| 64 | any | `graph_cut_multi_band` | 0.040918 | 0.009570 | 67.639 |
+| 64 | any | `multi_band` | 0.039617 | 0.007576 | 70.988 |
+| 64 | any | `graph_cut_multi_band` | 0.040918 | 0.009570 | 67.637 |
 | 256 | ignore | `hard_best_angle` | 0.039284 | 0.008451 | 50.918 |
 | 256 | ignore | `edge_feather` | 0.036833 | 0.005939 | 55.129 |
 | 256 | ignore | `angular_feather` | 0.038554 | 0.007786 | 49.196 |
 | 256 | ignore | `seam_distance_feather` | 0.037935 | 0.007371 | 49.375 |
 | 256 | ignore | `graph_cut_seam` | 0.039236 | 0.008272 | 51.136 |
-| 256 | ignore | `multi_band` | 0.037250 | 0.006124 | 57.523 |
-| 256 | ignore | `graph_cut_multi_band` | 0.039334 | 0.008198 | 49.671 |
+| 256 | ignore | `multi_band` | 0.037266 | 0.006124 | 57.571 |
+| 256 | ignore | `graph_cut_multi_band` | 0.039334 | 0.008197 | 49.689 |
 | 256 | any | `hard_best_angle` | 0.038520 | 0.008354 | 50.726 |
 | 256 | any | `edge_feather` | 0.036170 | 0.005858 | 54.942 |
 | 256 | any | `angular_feather` | 0.037796 | 0.007686 | 48.979 |
 | 256 | any | `seam_distance_feather` | 0.037184 | 0.007268 | 49.159 |
 | 256 | any | `graph_cut_seam` | 0.038471 | 0.008174 | 50.946 |
-| 256 | any | `multi_band` | 0.036573 | 0.006024 | 57.378 |
-| 256 | any | `graph_cut_multi_band` | 0.038570 | 0.008099 | 49.459 |
+| 256 | any | `multi_band` | 0.036589 | 0.006024 | 57.426 |
+| 256 | any | `graph_cut_multi_band` | 0.038570 | 0.008099 | 49.477 |
 
 На any-visibility ROI для `edge_feather` RGB MAE снизилась с 0.039235 до 0.036170 (около 7.8%), residual change — с 0.007458 до 0.005858 (около 21.5%). Extra-edge fraction снизилась с 69.630% до 54.942%, на 14.688 процентного пункта. Это результат изменения разрешения **при фиксированном методе**, а не доказательство преимущества feather над graph-cut.
 
