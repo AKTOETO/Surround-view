@@ -13,12 +13,45 @@ sys.path[:0] = [str(ROOT/'tools'), str(ROOT/'tools/research'), str(ROOT/'tools/b
 from object_metrics import measure_target, measure_target_support, projected_object_ids, target_mask
 from object_stitch import interleaved_orders, load_objects
 from diagnostic_motion import frame_positions, position_for_capture, validate_captured_positions
+from server_boundary import quality as server_quality, timestamp as server_timestamp
 
 
 class ObjectMetricTests(unittest.TestCase):
     def setUp(self):
         self.truth = np.zeros((32,48), bool)
         self.truth[8:24,8:12] = True
+
+    def test_server_quality_known_rgb_errors_and_joined_copy(self):
+        roi = np.ones(self.truth.shape, bool)
+        rgb = np.full((*self.truth.shape,3), .2)
+        rgb[self.truth] = [1,0,1]
+        exact = server_quality(rgb,rgb,roi,self.truth,.15,8)
+        self.assertEqual(exact['linear_mae'],0)
+        self.assertEqual(exact['srgb_mae'],0)
+        self.assertEqual(exact['target']['iou'],1)
+        self.assertEqual(exact['target']['false_positive_pixels'],0)
+        copied = rgb.copy()
+        copied[8:24,12:16] = [1,0,1]
+        joined = server_quality(copied,rgb,roi,self.truth,.15,8)
+        self.assertEqual(joined['target']['components'],1)
+        self.assertEqual(joined['target']['false_positive_pixels'],64)
+        self.assertEqual(joined['target']['iou'],.5)
+        white, black = np.ones_like(rgb),np.zeros_like(rgb)
+        error = server_quality(black,white,roi,self.truth,.15,8)
+        self.assertEqual(error['linear_mae'],1)
+        self.assertEqual(error['linear_channel_error_p95'],1)
+        with self.assertRaises(ValueError):
+            server_quality(rgb,rgb,np.zeros_like(roi),self.truth,.15,8)
+
+    def test_server_timestamp_requires_synchronized_ordered_inputs(self):
+        inputs = [dict(camera_id=c,used=True,source_timestamp_ns='200',source_clock_domain='scenario') for c in range(4)]
+        self.assertEqual(server_timestamp({'inputs':inputs}),'200')
+        inputs[3]['source_timestamp_ns'] = '100'
+        with self.assertRaises(ValueError):
+            server_timestamp({'inputs':inputs})
+        inputs[3]['source_timestamp_ns'] = '200'
+        with self.assertRaises(ValueError):
+            server_timestamp({'inputs':list(reversed(inputs))})
 
     def test_interleaved_timing_schedule_is_complete_reproducible_and_varied(self):
         keys = [f'case-{index}' for index in range(24)]

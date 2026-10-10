@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "frames": 9,
+  "capture_frames": true,
+  "warmup": 2,
+  "repeats": 7,
+  "seed": 20261011,
+  "variants": [
+    {
+      "mode": "multi_band",
+      "pyramid_boundary": "zero"
+    },
+    {
+      "mode": "multi_band",
+      "pyramid_boundary": "normalized"
+    },
+    {
+      "mode": "graph_cut_multi_band",
+      "pyramid_boundary": "zero"
+    },
+    {
+      "mode": "graph_cut_multi_band",
+      "pyramid_boundary": "normalized"
+    }
+  ]
+}
