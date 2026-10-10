@@ -1,3 +1,4 @@
+#include "sv/build_info.hpp"
 #include "sv/calibration_job.hpp"
 #include "sv/config_store.hpp"
 #include "sv/fusion_runtime.hpp"
@@ -697,6 +698,7 @@ int main(int argc, char **argv)
                                     {"fusion_mode", config_store.active()->fusion.mode},
                                     {"diagnostic_view", config_store.active()->fusion.diagnostic},
                                     {"config_revision", std::to_string(config_store.revision())},
+                                    {"source_type", config_store.active()->source.type},
                                     {"fusion", sv::fusion_settings(config_store.active()->fusion)}};
             for (auto &kv : extra)
             {
@@ -811,7 +813,13 @@ int main(int argc, char **argv)
                     }
                     else if (type == "fusion_catalog")
                     {
-                        extra_res["fusion_catalog"] = sv::fusion_catalog();
+                        auto catalog = sv::fusion_catalog();
+                        catalog["backend"] = "opengl_es3";
+                        catalog["gl_renderer"] = renderer->device();
+                        catalog["gl_vendor"] = renderer->vendor();
+                        catalog["source_revision"] = sv::source_revision;
+                        catalog["source_fingerprint"] = sv::source_fingerprint;
+                        extra_res["fusion_catalog"] = std::move(catalog);
                     }
                     else if (type == "configure_fusion")
                     {

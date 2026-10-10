@@ -1,7 +1,10 @@
 #include "options.hpp"
+#include "scenario.hpp"
 #include <chrono>
 #include <condition_variable>
 #include <deque>
+#include <filesystem>
+#include <fstream>
 #include <iostream>
 #include <mutex>
 #include <stdexcept>
@@ -10,6 +13,48 @@ namespace sv::ctl
 {
 int execute(const Options &options)
 {
+    if (options.request.operation == "research")
+    {
+        const auto &parameters = options.request.parameters;
+        std::ifstream input(std::string(parameters.at("scenario_path").as_string()));
+        if (!input)
+        {
+            throw std::runtime_error("cannot open scenario");
+        }
+        const auto scenario = research::parse_scenario(boost::json::parse(input));
+        // Validate output access before changing the server; do not overwrite scenario input.
+        const auto scenario_path = std::filesystem::weakly_canonical(
+            std::string(parameters.at("scenario_path").as_string()));
+        const auto report_path = std::filesystem::weakly_canonical(
+            std::string(parameters.at("report_path").as_string()));
+        if (scenario_path == report_path ||
+            (std::filesystem::exists(report_path) &&
+             std::filesystem::equivalent(scenario_path, report_path)))
+        {
+            throw std::runtime_error("report must not overwrite scenario");
+        }
+        std::ofstream output(report_path);
+        if (!output)
+        {
+            throw std::runtime_error("cannot open research report");
+        }
+        client::Options connection;
+        connection.endpoint = options.endpoint;
+        connection.timeout_ms = options.timeout_ms;
+        const auto report = research::run(scenario, connection);
+        output << boost::json::serialize(report) << '\n';
+        output.flush();
+        if (!output)
+        {
+            throw std::runtime_error("research report write failed");
+        }
+        std::cout << boost::json::serialize(
+                         boost::json::object{{"success", report.at("success")},
+                                             {"report_path", report_path.string()},
+                                             {"restored", report.at("restored")}})
+                  << '\n';
+        return report.at("success").as_bool() ? 0 : 4;
+    }
     std::mutex mutex;
     std::condition_variable changed;
     std::deque<client::Event> events;

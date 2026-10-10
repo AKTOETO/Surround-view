@@ -103,6 +103,53 @@ class ClientTransportTests(unittest.TestCase):
                     self.assertEqual(cli.returncode, code, cli.stderr)
                     reply = json.loads(cli.stdout)
                     self.assertEqual(reply['accepted'], code == 0)
+                # Exercise the shared C++ research runner through the actual client library.
+                scenario = directory / 'scenario.json'
+                report_path = directory / 'research-report.json'
+                scenario.write_text(json.dumps(dict(schema_version=1, warmup=1, repeats=2,
+                    seed=17, variants=[dict(mode=mode) for mode in
+                        ['edge_feather', 'hard_best_angle', 'angular_feather']])))
+                time.sleep(.08)
+                research = subprocess.run([str(BUILD / 'svctl'), *endpoint,
+                    'research', str(scenario), str(report_path)],
+                    text=True, capture_output=True, timeout=10)
+                self.assertEqual(research.returncode, 0, research.stderr + research.stdout)
+                report = json.loads(report_path.read_text())
+                self.assertTrue(report['success'])
+                self.assertTrue(report['restored'])
+                self.assertEqual(len(report['scenario_sha256']), 64)
+                self.assertEqual(len(report['catalog']['source_fingerprint']), 64)
+                self.assertEqual(len(report['samples']), 9)
+                self.assertEqual(len(report['summaries']), 3)
+                for summary in report['summaries']:
+                    timing = summary['timings']['render_wall']
+                    self.assertEqual(timing['count'], 2)
+                    self.assertGreaterEqual(timing['p95_ms'], timing['p50_ms'])
+                self.assertEqual(report['baseline_rgba_sha256'], report['restored_rgba_sha256'])
+                self.assertEqual(sum(not s['warmup'] for s in report['samples']), 6)
+                baseline = report['baseline']
+                for sample in report['samples']:
+                    self.assertEqual(sample['metadata']['inputs'], baseline['inputs'])
+                    self.assertEqual(sample['metadata']['frame_set_id'], baseline['frame_set_id'])
+                    self.assertEqual(sample['metadata']['upload_count'], baseline['upload_count'])
+                for variant in range(3):
+                    hashes = {s['rgba_sha256'] for s in report['samples'] if s['variant'] == variant}
+                    self.assertEqual(len(hashes), 1, 'identical paused inputs must reproduce RGB')
+                self.assertEqual(report['restored_frame']['fusion'], report['initial_state']['fusion'])
+                for block in range(3):
+                    self.assertEqual({s['variant'] for s in report['samples'] if s['block'] == block},
+                                     {0, 1, 2})
+                # Native GTest coverage is optional (SV_GTEST_TESTS); CLI checks above always run.
+                if (BUILD / 'sv-research-scenario-tests').exists():
+                    test_endpoint = ({'directory': str(ipc)} if profile == 'unix' else
+                        dict(host='127.0.0.1', control_port=ctl, data_port=data))
+                    env = os.environ.copy()
+                    env['SV_RESEARCH_TEST_ENDPOINT'] = json.dumps(test_endpoint)
+                    time.sleep(.08)
+                    interrupted = subprocess.run([str(BUILD / 'sv-research-scenario-tests'),
+                        '--gtest_filter=ResearchScenarioIntegration.*'], env=env,
+                        text=True, capture_output=True, timeout=10)
+                    self.assertEqual(interrupted.returncode, 0, interrupted.stdout + interrupted.stderr)
                 self.assertEqual(config.read_bytes(), config_before)
                 if qt and (BUILD / 'sv-client').exists():
                     time.sleep(.1)

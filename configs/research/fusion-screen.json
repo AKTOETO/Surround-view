@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "seed": 20261010,
+  "warmup": 2,
+  "repeats": 7,
+  "variants": [
+    {"mode": "edge_feather", "diagnostic": "color", "edge_width_px": 24, "angle_power": 2},
+    {"mode": "hard_best_angle", "diagnostic": "color", "edge_width_px": 24, "angle_power": 2},
+    {"mode": "angular_feather", "diagnostic": "color", "edge_width_px": 24, "angle_power": 2}
+  ]
+}

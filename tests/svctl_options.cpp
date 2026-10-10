@@ -70,3 +70,13 @@ TEST(SvctlOptions, InvalidArgumentsNeverReachNetwork)
         EXPECT_ANY_THROW(sv::ctl::parse(arguments));
     }
 }
+
+TEST(SvctlOptions, ResearchScenarioAndReportPaths)
+{
+    const auto options = sv::ctl::parse({"research", "scenario.json", "report.json"});
+    EXPECT_EQ(options.request.operation, "research");
+    EXPECT_EQ(options.request.parameters.at("scenario_path").as_string(), "scenario.json");
+    EXPECT_EQ(options.request.parameters.at("report_path").as_string(), "report.json");
+    EXPECT_ANY_THROW(sv::ctl::parse({"research", "scenario.json"}));
+    EXPECT_ANY_THROW(sv::ctl::parse({"research", "scenario.json", "report.json", "extra"}));
+}
