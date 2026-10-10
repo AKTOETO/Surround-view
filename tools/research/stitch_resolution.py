@@ -9,6 +9,7 @@ import numpy as np
 from PIL import Image
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from fusion import FUSION_IMPLEMENTATION
 from temporal_seam_stability import load_sequence, run_temporal_analysis
 
 
@@ -60,7 +61,8 @@ def run_study(fixture, output, sizes=(64, 256)):
         for policy in ('ignore', 'any'):
             results[str(size)][policy] = run_temporal_analysis(
                 root, root, output/f'{size}-{policy}', visibility_policy=policy)
-    summary = {'schema_version': 1, 'experiment': 'E-STITCH-01-resolution-visibility',
+    summary = {'schema_version': 1, 'fusion_implementation': FUSION_IMPLEMENTATION,
+               'experiment': 'E-STITCH-01-resolution-visibility',
                'pairing': pairing, 'face_sizes': list(sizes), 'results': results,
                'runner_sha256': hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
                'limitations': ['one scene, three frames, no independent trials',

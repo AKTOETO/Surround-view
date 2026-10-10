@@ -14,7 +14,7 @@ from PIL import Image
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]/'blender'))
-from fusion import FUSION_MODES
+from fusion import FUSION_IMPLEMENTATION, FUSION_MODES
 from object_metrics import measure_target, measure_target_support, projected_object_ids, target_mask
 from reference import render
 from run_e_stitch_01 import CARRIERS
@@ -151,7 +151,8 @@ def run_study(fixture, output, warmup=2, repeats=7, order_seed=20261010, capture
         Path(__file__).resolve().parents[1]/'blender/diagnostic_motion.py',
         Path(__file__).resolve().parents[1]/'blender/paired_truth.py',
         Path(__file__).resolve().parents[1]/'blender/scene.py')}
-    report = {'schema_version':1,'experiment':'E-STITCH-object-motion-01', 'target_id':object_id,
+    report = {'schema_version':1,'fusion_implementation': FUSION_IMPLEMENTATION,
+              'experiment':'E-STITCH-object-motion-01', 'target_id':object_id,
               'protocol_sha256':hashlib.sha256(support_protocol.read_bytes()).hexdigest(),
               'motion_protocol_sha256':hashlib.sha256(motion_protocol.read_bytes()).hexdigest(),
               'motion_plan_sha256':hashlib.sha256(motion_plan.read_bytes()).hexdigest(),

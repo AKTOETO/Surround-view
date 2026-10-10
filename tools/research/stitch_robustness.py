@@ -9,6 +9,7 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]/'blender'))
+from fusion import FUSION_IMPLEMENTATION
 from temporal_seam_stability import evaluate_sequence, load_sequence
 from scenario import validate, near_obstacle_positions
 from rig import vehicle_pose
@@ -103,7 +104,8 @@ def run_study(plan_path, inputs, output):
     code = {name: hashlib.sha256((Path(__file__).resolve().parents[1]/name).read_bytes()).hexdigest()
             for name in names}
     code['stitch_robustness.py'] = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
-    report = {'schema_version': 1, 'experiment': 'E-STITCH-01-scene-exposure',
+    report = {'schema_version': 1, 'fusion_implementation': FUSION_IMPLEMENTATION,
+               'experiment': 'E-STITCH-01-scene-exposure',
               'plan_sha256': hashlib.sha256(plan_path.read_bytes()).hexdigest(),
               'inputs_sha256': provenance, 'code_sha256': code, 'results': results,
               'limitations': ['three nearby layout variants of one street, not three street types',

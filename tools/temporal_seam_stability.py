@@ -9,7 +9,7 @@ import numpy as np
 from PIL import Image
 from scipy import ndimage as ndi
 
-from fusion import FUSION_MODES
+from fusion import FUSION_IMPLEMENTATION, FUSION_MODES
 from reference import render
 from stitch_metrics import rgb_to_gray, simple_edge_detection
 
@@ -229,6 +229,7 @@ def run_temporal_analysis(dataset, capture, output, visibility_policy='ignore'):
     code_hashes = {name: hashlib.sha256(Path(__file__).with_name(name).read_bytes()).hexdigest()
                    for name in ('temporal_seam_stability.py', 'reference.py', 'fusion.py', 'stitch_metrics.py')}
     report = {'schema_version': 2, 'inputs': inputs, 'visibility_policy': visibility_policy, 'input_sha256': hashes,
+              'fusion_implementation': FUSION_IMPLEMENTATION,
               'code_sha256': code_hashes, 'results': results}
     (output/'temporal_stability.json').write_text(json.dumps(report, indent=2, allow_nan=False)+'\n')
     return report
