@@ -1,5 +1,6 @@
 #pragma once
 
+#include "runtime_settings.hpp"
 #include "sv/client.hpp"
 #include <QElapsedTimer>
 #include <QImage>
@@ -18,7 +19,8 @@ class SimulatorFrameProvider : public QQuickImageProvider
     QMutex mutex_;
     QImage image_;
 
-public:
+  public:
+
     SimulatorFrameProvider() : QQuickImageProvider(QQuickImageProvider::Image)
     {
     }
@@ -44,23 +46,80 @@ class SimulatorBridge : public QObject
     Q_PROPERTY(QString pipelineInfo READ pipelineInfo NOTIFY changed)
     Q_PROPERTY(QString sourceInfo READ sourceInfo NOTIFY changed)
 
-public:
+  public:
+
     SimulatorBridge(sv::client::Endpoint endpoint, SimulatorFrameProvider *provider);
     ~SimulatorBridge() override;
 
-    QString frameUrl() const { return url_; }
-    QString status() const { return status_; }
-    QString serverInfo() const { return serverInfo_; }
-    QString calibrationStatus() const { return calibrationStatus_; }
-    QString unixDirectory() const { return unixDirectory_; }
-    QString tcpHost() const { return tcpHost_; }
-    int controlPort() const { return controlPort_; }
-    int dataPort() const { return dataPort_; }
-    int timeoutMs() const { return timeoutMs_; }
-    int reconnectMs() const { return reconnectMs_; }
-    int maxRetries() const { return maxRetries_; }
-    QString pipelineInfo() const { return pipelineInfo_; }
-    QString sourceInfo() const { return sourceInfo_; }
+    QString frameUrl() const
+    {
+        return url_;
+    }
+
+    QString status() const
+    {
+        return status_;
+    }
+
+    QString serverInfo() const
+    {
+        return serverInfo_;
+    }
+
+    QString calibrationStatus() const
+    {
+        return calibrationStatus_;
+    }
+
+    QString unixDirectory() const
+    {
+        return unixDirectory_;
+    }
+
+    QString tcpHost() const
+    {
+        return tcpHost_;
+    }
+
+    int controlPort() const
+    {
+        return controlPort_;
+    }
+
+    int dataPort() const
+    {
+        return dataPort_;
+    }
+
+    int timeoutMs() const
+    {
+        return timeoutMs_;
+    }
+
+    int reconnectMs() const
+    {
+        return reconnectMs_;
+    }
+
+    int maxRetries() const
+    {
+        return maxRetries_;
+    }
+
+    QString pipelineInfo() const
+    {
+        return pipelineInfo_;
+    }
+
+    QString sourceInfo() const
+    {
+        return sourceInfo_;
+    }
+
+    RuntimeSettings *runtimeSettings()
+    {
+        return &runtime_settings_;
+    }
 
     Q_INVOKABLE void preset(const QString &name);
     Q_INVOKABLE void orbit(double az, double elevation);
@@ -70,25 +129,27 @@ public:
     Q_INVOKABLE void checkCalibrationStatus(const QString &jobId);
     Q_INVOKABLE void cancelCalibration(const QString &jobId);
     Q_INVOKABLE void applyCalibration(const QString &jobId);
-    Q_INVOKABLE void connectUnix(const QString &directory, int timeoutMs,
-                                 int reconnectMs, int maxRetries);
-    Q_INVOKABLE void connectTcp(const QString &host, int controlPort, int dataPort,
-                                int timeoutMs, int reconnectMs, int maxRetries);
+    Q_INVOKABLE void connectUnix(const QString &directory, int timeoutMs, int reconnectMs,
+                                 int maxRetries);
+    Q_INVOKABLE void connectTcp(const QString &host, int controlPort, int dataPort, int timeoutMs,
+                                int reconnectMs, int maxRetries);
     Q_INVOKABLE void discoverLocal(int timeoutMs, int reconnectMs);
     Q_INVOKABLE void disconnectFromServer();
 
-signals:
+  signals:
     void changed();
     void frameReceived();
 
-private:
+  private:
+
     void consume(sv::client::Event event);
     void command(const QString &type, boost::json::object parameters = {});
-    void beginConnection(sv::client::Endpoint endpoint, int timeoutMs,
-                         int reconnectMs, int maxRetries, const QString &label);
+    void beginConnection(sv::client::Endpoint endpoint, int timeoutMs, int reconnectMs,
+                         int maxRetries, const QString &label);
     void tryNextDiscoveryCandidate();
 
     std::shared_ptr<sv::client::Client> client_;
+    RuntimeSettings runtime_settings_;
     QString url_;
     QString status_ = "Соединение с сервером…";
     QString serverInfo_ = "Ожидание ответа сервера";

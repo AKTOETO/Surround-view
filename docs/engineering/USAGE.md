@@ -631,3 +631,20 @@ Probe читает только первый manifest frame, используе�
 python3 tools/run_e_stitch_01.py --config tests/data/e_stitch_01_v1/config.json --dataset tests/data/e_stitch_01_v1 --output artifacts/e-stitch-01-mask-v2
 python3 docs/diploma/plot_e_stitch.py --summary artifacts/e-stitch-01-mask-v2/e_stitch_01_summary.json --output docs/diploma/figures/experiments/e_stitch_mask_v2.png
 ```
+
+### Настройка алгоритмов из GUI без Python
+
+```sh
+cmake --build build --target sv-server sv-simulator
+build/sv-server --config configs/synthetic.json --manifest artifacts/blender-street/manifest.json --ipc-dir /tmp/sv-prototype
+# В другом терминале (endpoint берётся из server config):
+build/examples/sv-simulator/sv-simulator --unix /tmp/sv-prototype
+```
+
+В примере используется заранее подготовленный Blender fixture `artifacts/blender-street/manifest.json` (подготовка описана выше); runtime сервера и GUI не запускает Blender/Python. Можно подключиться к уже работающему серверу с другим источником.
+
+В панели «Алгоритмы и геометрия сервера» нажмите «Загрузить текущий снимок» для `fusion` или `surface`. Редактируйте полный JSON и нажмите «Применить». Каталог ниже показывает семь методов сшивки, diagnostics, пределы параметров и поддерживаемые носители. Для плоскости используется `rectangular_bowl_v1` с `corner_height_m=0`; при смене типа нужны поля выбранного носителя по [[engineering/RENDERING]]. Сервер проверяет допустимость виртуальной камеры внутри нового носителя. Hybrid методы ограничены 262144 выходными пикселями.
+
+Применение идёт через `sv-client-lib`, без Python и доступа клиента к конфигурационному файлу. Ответ сервера содержит действительный снимок и ревизию; черновик сохраняется до явной загрузки. После успешного изменения перед следующей правкой снова загрузите снимок. При `stale_config_revision` перечитайте состояние и перенесите нужную правку вручную; автоматического повторения с новой ревизией нет. При переподключении черновики сбрасываются.
+
+Изменения временные, но последующее persistent `apply_calibration` вне experiment lease сохраняет весь активный snapshot. Сначала восстановите исходные настройки. GUI редактор не захватывает experiment lease и не заменяет защищённый сценарный runner. GUI сценариев, общий ConfigService и постоянное сохранение через отдельную команду ещё не реализованы. Перед запуском `svctl` отключите GUI: сервер пока односессионный.

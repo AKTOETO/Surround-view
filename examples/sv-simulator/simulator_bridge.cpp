@@ -72,6 +72,7 @@ void SimulatorBridge::consume(sv::client::Event event)
         status_ = QString::fromStdString(event.detail);
         if (event.detail == "ready")
         {
+            runtime_settings_.refresh();
             discovery_candidates_.clear();
             status_ = "Подключено к серверу";
             if (active_unix_endpoint_)
@@ -85,11 +86,20 @@ void SimulatorBridge::consume(sv::client::Event event)
             tryNextDiscoveryCandidate();
             return;
         }
+        else if (event.kind == sv::client::Event::Kind::State)
+        {
+            runtime_settings_.attach(client_);
+        }
         emit changed();
         return;
     }
     const auto &m = *event.message;
     const auto &h = m.header;
+
+    if (m.type == 21)
+    {
+        runtime_settings_.consume(h);
+    }
 
     if (m.type == 21 && h.at("accepted").as_bool())
     {
@@ -236,6 +246,8 @@ void SimulatorBridge::beginConnection(sv::client::Endpoint endpoint, int timeout
         client_.reset();
     }
     pending_events_ = 0;
+    calibration_commands_.clear();
+    runtime_settings_.attach({});
     status_ = "Подключение: " + label;
     timeoutMs_ = timeout;
     reconnectMs_ = reconnect;
@@ -289,6 +301,7 @@ void SimulatorBridge::beginConnection(sv::client::Endpoint endpoint, int timeout
     {
         client_ = std::make_shared<sv::client::Client>(options, std::move(deliver));
         *client_ref = client_;
+        runtime_settings_.attach(client_);
     }
     catch (const std::exception &error)
     {
@@ -358,6 +371,7 @@ void SimulatorBridge::discoverLocal(int timeout, int reconnect)
     }
     pending_events_ = 0;
     discovery_candidates_.clear();
+    runtime_settings_.attach({});
     discovery_index_ = 0;
     discovery_timeout_ms_ = timeout;
     discovery_reconnect_ms_ = reconnect;
@@ -413,6 +427,7 @@ void SimulatorBridge::tryNextDiscoveryCandidate()
 
 void SimulatorBridge::disconnectFromServer()
 {
+    runtime_settings_.attach({});
     ++connection_generation_;
     discovery_candidates_.clear();
     if (client_)

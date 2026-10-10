@@ -23,6 +23,8 @@ add_executable(sv-simulator
     ipc_discovery.hpp
     simulator_bridge.cpp
     simulator_bridge.hpp
+    runtime_settings.cpp
+    runtime_settings.hpp
     simulator.qrc
 )
 

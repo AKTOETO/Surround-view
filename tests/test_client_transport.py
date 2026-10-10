@@ -183,6 +183,14 @@ class ClientTransportTests(unittest.TestCase):
                          *simulator_endpoint, '--smoke'],
                         text=True, capture_output=True, env=env, timeout=12)
                     self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                    runtime_test = BUILD / 'sv-simulator-runtime-tests'
+                    if runtime_test.exists():
+                        config_before = config.read_bytes()
+                        result = subprocess.run([str(runtime_test), *endpoint],
+                            text=True, capture_output=True, timeout=25)
+                        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                        self.assertEqual(config.read_bytes(), config_before,
+                                         'runtime GUI settings persisted server config')
             finally:
                 server.terminate()
                 _, err = server.communicate(timeout=5)

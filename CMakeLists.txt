@@ -296,6 +296,12 @@ if(BUILD_TESTING AND SV_GTEST_TESTS)
     target_link_libraries(sv-simulator-discovery-tests PRIVATE
       Qt${QT_VERSION_MAJOR}::Core GTest::gtest_main)
     add_test(NAME simulator_ipc_discovery COMMAND sv-simulator-discovery-tests)
+    add_executable(sv-simulator-runtime-tests tests/simulator_runtime_tests.cpp
+      examples/sv-simulator/runtime_settings.cpp examples/sv-simulator/runtime_settings.hpp)
+    set_target_properties(sv-simulator-runtime-tests PROPERTIES AUTOMOC ON)
+    target_include_directories(sv-simulator-runtime-tests PRIVATE examples/sv-simulator)
+    target_link_libraries(sv-simulator-runtime-tests PRIVATE
+      sv-client-lib Qt${QT_VERSION_MAJOR}::Core GTest::gtest)
   endif()
   add_executable(sv-experiment-lease-tests tests/experiment_lease_tests.cpp)
   target_link_libraries(sv-experiment-lease-tests PRIVATE sv-core GTest::gtest_main)

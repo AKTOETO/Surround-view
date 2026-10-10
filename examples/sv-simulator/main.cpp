@@ -106,6 +106,8 @@ int main(int argc, char **argv)
     QQmlApplicationEngine engine;
     engine.addImageProvider(QStringLiteral("frames"), provider);
     engine.rootContext()->setContextProperty(QStringLiteral("bridge"), &bridge);
+    engine.rootContext()->setContextProperty(QStringLiteral("runtimeSettings"),
+                                             bridge.runtimeSettings());
     engine.rootContext()->setContextProperty(QStringLiteral("driveWorldAvailable"),
                                              SV_SIMULATOR_QUICK3D_AVAILABLE != 0);
     engine.rootContext()->setContextProperty(QStringLiteral("startDrivingWorld"), world_smoke);

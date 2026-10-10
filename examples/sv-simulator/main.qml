@@ -383,6 +383,8 @@ Window {
 
             Rectangle { width: parent.width; height: 1; color: "#2d3748" }
 
+            RuntimePanel { width: parent.width }
+
             Text {
                 text: "СЕРВЕРНАЯ КАЛИБРОВКА"
                 color: "#8e9bb0"
