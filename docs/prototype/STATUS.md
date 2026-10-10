@@ -4,6 +4,8 @@
 
 ## Реализовано и проверено
 
+Дополнение 11.10.2026: Client::release проверяет размер сообщения до post/queue budget, сервер отклоняет release с непустым binary payload закрытием data connection. Проверены synchronous reject, доступность правильного release при насыщении command queue и живой control после malformed data packet: [[validation/CLIENT_SMOKE]].
+
 Дополнение 11.10.2026: parser калибровочных команд принимает конечные XYZ/UV в integer/double представлении, camera_id проверяет до сужения типа. Устранён воспроизведённый дефект выбора другой камеры по большому ID. Native boundary tests и два эквивалентных wire calibration requests проверены; полная регрессия 50/50: [[validation/CALIBRATION_PROVENANCE]].
 
 Текущий SV01 описан каталогом 18 команд и 11 сценариев с условиями отказа и пятью диаграммами: [[engineering/PROTOCOL_SCENARIOS]]. Исправлен wire order конкурентных command callers в библиотеке; новый тест восьми отправителей/256 команд и полная регрессия 49/49 прошли: [[validation/CLIENT_SMOKE]]. Это не поддержка нескольких клиентских сессий сервером.

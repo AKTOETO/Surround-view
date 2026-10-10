@@ -106,6 +106,8 @@ Consumer использует `find_package(svClient CONFIG REQUIRED)` и `targe
 
 ## Освобождение кадров при насыщении очереди команд
 
+`release(frame_header)` проверяет строковые поля и размер SV01 metadata синхронно, до счётчика очереди и post. Oversized token/header дают invalid_argument в вызывающем потоке независимо от ready state; rejected submission не занимает release budget. Это соответствует предварительной size validation команд и предотвращает необработанное исключение encode в network worker. На wire type 22 всегда имеет пустой payload.
+
 `command` и `release` имеют независимые bounded submission counters; каждый лимит равен `Options::command_capacity`. Поэтому уже заполненная очередь команд не препятствует постановке RELEASE. Это резерв ёмкости, не приоритет исполнения и не отмена лимитов: заполненная собственная очередь release по-прежнему выдаёт synchronous exception. Data/control write queues также ограничены. Не повторять release произвольно; вызывается один раз для потреблённого кадра. Старый session отбрасывается перед отправкой, shutdown contract не меняется.
 
 GTest/CTest `client_release_budget` с TCP mock проверяет случай capacity=1: worker временно удерживается в frame callback, первая команда заполняет очередь, следующая отклоняется, RELEASE ставится независимо и доставляется на data socket. Повторный RELEASE при занятом release budget отклоняется. До исправления тест воспроизводил `release submission queue full` на первом освобождении. Mock не моделирует реальный server deadline 250 ms или длительную сетевую перегрузку.

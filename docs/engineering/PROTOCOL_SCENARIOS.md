@@ -194,6 +194,8 @@ end
 
 Release посылается один раз после копирования/получения собственного безопасного владения данными. Output token не является GL handle. Пока слот занят, новый кадр этому stream не публикуется. Несовпадающий frame/token не освобождает слот; release старой session библиотека отбрасывает. Очередь release имеет собственный лимит, поэтому насыщение command submission само по себе не отнимает её ёмкость. Насыщение самой release queue всё ещё является ошибкой.
 
+Release содержит только metadata, без binary body. Непустой payload закрывает серверный data connection без отдельного ACK, включая случай правильного token. Control остаётся жив; штатная библиотека воспринимает data EOF как потерю своей сессии (С09). На стороне API oversized metadata отклоняются до post и до расходования release submission budget, даже до ready. Вызывающий код получает synchronous exception; worker не должен обнаруживать эту ошибку впервые при send.
+
 ## С09. Ошибка, потерянный ACK и reconnect
 
 Транспортная ошибка, malformed response, handshake/partial-message/command deadline переводят библиотеку в disconnected: оба канала закрываются, session/token очищаются. Каждая ожидающая ACK команда получает локальное Error `session_lost` с command ID; затем выдаются причина сбоя и State(disconnected). Это локальные события type 3, не отдельные серверные wire сообщения.

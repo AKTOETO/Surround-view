@@ -18,7 +18,7 @@
 | 11 | Сервер → клиент по data: финальный RGBA8 кадр и provenance/timing metadata |
 | 20 | Клиент → сервер по control: команда с монотонным в рамках сессии `command_id`, `type` и параметрами |
 | 21 | Сервер → клиент по control: ACK/reject с `accepted`, `reason`, `state_revision` и результатом операции |
-| 22 | Клиент → сервер по data: release с `session_id`, `frame_id`, `buffer_token` |
+| 22 | Клиент → сервер по data: release с `session_id`, `frame_id`, `buffer_token`; binary payload обязан быть пустым |
 
 ## Переключение fusion во время работы: fusion_runtime_v1
 
@@ -103,6 +103,8 @@ end note
 ```
 
 Если release теряется или задерживается, библиотека/клиент не получает второй кадр в этом stream; по deadline сервер закрывает соединение. Отправлять release нужно после копирования данных в собственный буфер. Client callback работает на worker thread; UI обязан передать событие в свой executor и не блокировать остановку клиента внутри callback.
+
+Release с непустым binary payload отклоняется закрытием data connection, даже при совпадающем token. Он не обрабатывается как успешный release; слот возвращается при cleanup закрытого канала, дальнейшие кадры по нему не выдаются. Control connection при этом остаётся доступен; библиотека при data EOF завершает оба своих канала и следует обычной reconnect policy. Ошибочный release не имеет отдельного ACK. Перед постановкой release библиотека синхронно проверяет типы трёх строковых полей и SV01 size limit; oversized metadata дают exception у вызывающего кода, не занимая release queue.
 
 ## Команды
 

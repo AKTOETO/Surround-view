@@ -4,6 +4,14 @@
 
 ## Результаты
 
+### Дополнение 11.10.2026: проверка release до очереди и на сервере
+
+Исправлены две ошибки frame-release пути. Публичный Client::release проверял типы полей, но не ограничение размера до post: на активном соединении oversized metadata могли вызвать необработанное исключение encode в network worker. Теперь encode validation выполняется синхронно до расходования release submission budget. Native GTest до исправления воспроизвёл отсутствие требуемого exception до ready; после исправления проверяется также активная сессия с насыщенной command queue: oversized release отклоняется, правильный release сразу занимает доступный собственный слот и доставляется серверу.
+
+Сервер прежде принимал type 22 с произвольным binary body и правильным token. Новый integration case до исправления получил следующий кадр вместо закрытия data connection. Теперь payload обязан быть пустым; ошибочное сообщение закрывает data, не выполняя перехода release. Control state request после data EOF всё ещё принимается, процесс сервера жив. Для штатной библиотеки такой EOF запускает её обычное завершение обоих каналов/reconnect; это не новый wire error или ACK.
+
+Проверки: два GTest cases в `client_release_budget`, malformed release в `replay_ipc`. Полная сборка сервера/библиотеки/GUI успешна; `ctest --test-dir build --output-on-failure -j4` — **50/50**, 25.97 s. Это проверки SV01/очередей, не длительный two-host overload или финальная оценка производительности.
+
 ### Дополнение 10.10.2026: порядок конкурентных команд
 
 В `sv-client-lib` исправлена гонка между выдачей command ID и post в Asio worker. Atomic increment сам по себе не сохранял wire order: native TCP regression из восьми потоков воспроизвёл начало `3,4,5,1,2` и rejects `duplicate_or_out_of_order`. Участок allocation/encode/post теперь сериализован mutex; release использует прежнюю независимую очередь. Wrap uint64 запрещён guard-ом, прямой exhaustion test пока отсутствует.
