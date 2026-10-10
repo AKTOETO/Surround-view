@@ -56,6 +56,93 @@ class IntegrationTests(unittest.TestCase):
             self.assertFalse((ipc/'data.sock').exists())
 
 
+    def test_runtime_fusion_on_identical_paused_inputs(self):
+        with tempfile.TemporaryDirectory(prefix='sv-fusion-runtime-') as td:
+            directory = Path(td)
+            cfg = json.loads(CONFIG.read_text())
+            config = directory/'server.json'
+            config.write_text(json.dumps(cfg))
+            original_bytes = config.read_bytes()
+            manifest = generate(directory/'fixture', cfg, 8)
+            ipc = directory/'ipc'
+            server = subprocess.Popen([str(BUILD/'sv-server'), '--config', str(config),
+                '--manifest', str(manifest), '--ipc-dir', str(ipc),
+                '--trace', str(directory/'trace.jsonl')], stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE, text=True)
+            client = None
+            try:
+                deadline = time.monotonic()+8
+                while not (ipc/'data.sock').exists():
+                    if server.poll() is not None:
+                        raise RuntimeError(server.communicate()[1])
+                    if time.monotonic()>deadline:
+                        raise TimeoutError('startup')
+                    time.sleep(.02)
+                client = Client(ipc)
+                client.frame()
+                paused = client.command('pause')
+                self.assertTrue(paused['accepted'])
+
+                def after(ack):
+                    for _ in range(8):
+                        header, pixels = client.frame()
+                        if int(header['state_revision']) >= int(ack['state_revision']):
+                            return header, pixels
+                    self.fail('no frame for applied revision')
+
+                baseline, original_pixels = after(paused)
+                state = client.command('state')
+                original_fusion = state['fusion']
+                revision = state['config_revision']
+                catalog = client.command('fusion_catalog')
+                self.assertTrue(catalog['accepted'])
+                self.assertEqual(catalog['state_revision'], state['state_revision'])
+                self.assertEqual(set(catalog['fusion_catalog']['modes']),
+                    {'edge_feather', 'hard_best_angle', 'angular_feather'})
+                for mode in catalog['fusion_catalog']['modes']:
+                    settings = dict(mode=mode, diagnostic='weights',
+                                    edge_width_px=12., angle_power=4.)
+                    ack = client.command('configure_fusion',
+                        base_config_revision=revision, fusion=settings)
+                    self.assertTrue(ack['accepted'], ack)
+                    self.assertEqual(int(ack['config_revision']), int(revision)+1)
+                    revision = ack['config_revision']
+                    header, pixels = after(ack)
+                    self.assertEqual(header['config_revision'], revision)
+                    self.assertEqual(header['fusion'], settings)
+                    self.assertEqual(header['frame_set_id'], baseline['frame_set_id'])
+                    self.assertEqual(header['inputs'], baseline['inputs'])
+                    self.assertEqual(header['upload_count'], baseline['upload_count'])
+                    self.assertEqual(header['mesh_build_count'], baseline['mesh_build_count'])
+                    self.assertNotEqual(pixels, original_pixels)
+                before = client.command('state')
+                cases = [dict(base_config_revision='0', fusion=original_fusion),
+                         dict(base_config_revision=revision, fusion={'mode': 'missing'}),
+                         dict(base_config_revision=revision,
+                              fusion=dict(mode='edge_feather', angle_power=-1)),
+                         dict(base_config_revision=revision,
+                              fusion=dict(mode='edge_feather', unexpected=True))]
+                for parameters in cases:
+                    rejected = client.command('configure_fusion', **parameters)
+                    self.assertFalse(rejected['accepted'], rejected)
+                    self.assertEqual(rejected['config_revision'], revision)
+                    self.assertEqual(rejected['state_revision'], before['state_revision'])
+                    self.assertEqual(rejected['fusion'], before['fusion'])
+                restored = client.command('configure_fusion',
+                    base_config_revision=revision, fusion=original_fusion)
+                self.assertTrue(restored['accepted'])
+                header, pixels = after(restored)
+                self.assertEqual(pixels, original_pixels)
+                self.assertEqual(header['inputs'], baseline['inputs'])
+                self.assertEqual(config.read_bytes(), original_bytes)
+            finally:
+                if client:
+                    client.close()
+                server.terminate()
+                _, stderr = server.communicate(timeout=5)
+                if server.returncode not in [0, -15]:
+                    raise RuntimeError(stderr)
+
     def test_calibration_provenance_rejection_and_status(self):
         with tempfile.TemporaryDirectory(prefix='sv-calibration-protocol-') as td:
             directory = Path(td)

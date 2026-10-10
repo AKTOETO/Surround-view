@@ -78,3 +78,33 @@ TEST(ConfigStorePersistence, FailedReplacementKeepsActiveSnapshot)
     EXPECT_FALSE(std::filesystem::exists(path.string() + ".tmp"));
     std::filesystem::remove_all(directory);
 }
+
+TEST(ConfigStorePersistence, RuntimeUpdateIsValidatedRevisionCheckedAndDoesNotPersist)
+{
+    const auto directory = temporary_path("runtime");
+    std::filesystem::create_directories(directory);
+    const auto path = directory / "server.json";
+    const auto initial = sv::load_config(SV_TEST_CONFIG_PATH);
+    sv::write_json(path, initial.effective);
+    sv::ConfigStore store(initial, path);
+    auto effective = initial.effective;
+    effective.as_object()["fusion"] =
+        boost::json::object{{"mode", "angular_feather"}, {"angle_power", 4}};
+    std::string error;
+    ASSERT_TRUE(store.update_runtime_if_revision(effective, 0, error)) << error;
+    EXPECT_EQ(store.revision(), 1U);
+    EXPECT_EQ(store.active()->fusion.mode, "angular_feather");
+    EXPECT_EQ(store.active()->fusion.angle_power, 4);
+    EXPECT_EQ(store.persisted()->fusion.mode, initial.fusion.mode);
+    EXPECT_EQ(sv::load_config(path).fusion.mode, initial.fusion.mode);
+    EXPECT_FALSE(store.update_runtime_if_revision(initial.effective, 0, error));
+    EXPECT_EQ(error, "stale_config_revision");
+    effective.as_object().at("fusion").as_object()["angle_power"] = -1;
+    EXPECT_FALSE(store.update_runtime_if_revision(effective, 1, error));
+    EXPECT_EQ(store.revision(), 1U);
+    EXPECT_EQ(store.active()->fusion.angle_power, 4);
+    ASSERT_TRUE(store.update_runtime_if_revision(initial.effective, 1, error));
+    EXPECT_EQ(store.active()->fusion.mode, initial.fusion.mode);
+    EXPECT_EQ(store.revision(), 2U);
+    std::filesystem::remove_all(directory);
+}

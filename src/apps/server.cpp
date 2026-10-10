@@ -1,5 +1,6 @@
 #include "sv/calibration_job.hpp"
 #include "sv/config_store.hpp"
+#include "sv/fusion_runtime.hpp"
 #include "sv/pipeline_spans.hpp"
 #include "sv/protocol.hpp"
 #include "sv/renderer.hpp"
@@ -361,6 +362,7 @@ ServerIO::ServerIO(const sv::Connections &n, const std::string &source_type,
                     "pause",
                     "resume",
                     "state",
+                    "fusion_runtime_v1",
                     "copied_rgba",
                     "calibrate",
                     "calibration_provenance_v1",
@@ -693,7 +695,9 @@ int main(int argc, char **argv)
                                     {"elevation_rad", view.elevation},
                                     {"distance_m", view.distance},
                                     {"fusion_mode", config_store.active()->fusion.mode},
-                                    {"diagnostic_view", config_store.active()->fusion.diagnostic}};
+                                    {"diagnostic_view", config_store.active()->fusion.diagnostic},
+                                    {"config_revision", std::to_string(config_store.revision())},
+                                    {"fusion", sv::fusion_settings(config_store.active()->fusion)}};
             for (auto &kv : extra)
             {
                 hdr[kv.key()] = kv.value();
@@ -804,6 +808,28 @@ int main(int argc, char **argv)
                     };
                     if (type == "state")
                     {
+                    }
+                    else if (type == "fusion_catalog")
+                    {
+                        extra_res["fusion_catalog"] = sv::fusion_catalog();
+                    }
+                    else if (type == "configure_fusion")
+                    {
+                        const auto revision = sv::parse_decimal_u64(
+                            std::string(m.header.at("base_config_revision").as_string()));
+                        auto effective = config_store.active()->effective;
+                        // Full replacement avoids retaining parameters from a previous trial.
+                        effective.as_object()["fusion"] = m.header.at("fusion").as_object();
+                        auto prepared = sv::parse_config(effective).fusion;
+                        if (!config_store.update_runtime_if_revision(effective, revision, reason))
+                        {
+                            accepted = false;
+                        }
+                        else
+                        {
+                            renderer->set_fusion(std::move(prepared));
+                            reason = "ok";
+                        }
                     }
                     else if (type == "orbit")
                     {
@@ -1053,8 +1079,9 @@ int main(int argc, char **argv)
                         reason = "source_control_queue_full";
                     }
                 }
-                if (accepted && type != "state" && type != "calibrate" &&
-                    type != "calibration_status" && type != "apply_calibration")
+                if (accepted && type != "state" && type != "fusion_catalog" &&
+                    type != "calibrate" && type != "calibration_status" &&
+                    type != "apply_calibration")
                 {
                     view = candidate;
                     applied_command = sv::parse_decimal_u64(id);
@@ -1120,6 +1147,8 @@ int main(int argc, char **argv)
                     11,
                     {{"frame_id", std::to_string(frame_id)},
                      {"frame_set_id", std::to_string(sequence)},
+                     {"config_revision", std::to_string(config_store.revision())},
+                     {"fusion", sv::fusion_settings(config_store.active()->fusion)},
                      {"state_revision", std::to_string(state_revision)},
                      {"applied_command_id", std::to_string(applied_command)},
                      {"buffer_token", std::to_string(done) + ":" + std::to_string(frame_id)},

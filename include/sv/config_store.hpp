@@ -59,6 +59,31 @@ class ConfigStore : public IConfigStore
         return update_locked(new_config, error_reason);
     }
 
+    // Publish a validated experiment snapshot without changing the persisted config.
+    bool update_runtime_if_revision(const boost::json::value &effective, uint64_t expected_revision,
+                                    std::string &error_reason)
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        if (revision_.load() != expected_revision)
+        {
+            error_reason = "stale_config_revision";
+            return false;
+        }
+        try
+        {
+            auto updated = std::make_shared<Config>(parse_config(effective));
+            active_ = std::move(updated);
+            ++revision_;
+            error_reason.clear();
+            return true;
+        }
+        catch (const std::exception &error)
+        {
+            error_reason = error.what();
+            return false;
+        }
+    }
+
     void persist() override
     {
         std::lock_guard<std::mutex> lock(mutex_);

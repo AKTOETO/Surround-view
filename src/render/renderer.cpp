@@ -659,6 +659,11 @@ size_t Renderer::triangles() const
     return impl_->mesh.indices.size() / 3;
 }
 
+void Renderer::set_fusion(Fusion fusion) noexcept
+{
+    impl_->config.fusion = std::move(fusion);
+}
+
 RenderTiming Renderer::last_timing() const
 {
     return impl_->timing;

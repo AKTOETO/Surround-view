@@ -25,6 +25,12 @@ struct Options
     size_t command_capacity = 64;
 };
 
+struct FusionSettings
+{
+    std::string mode = "edge_feather", diagnostic = "color";
+    double edge_width_px = 24, angle_power = 2;
+};
+
 struct Event
 {
     // Callbacks run on the library worker; marshal GUI work to its own thread.
@@ -88,6 +94,22 @@ class Client
     uint64_t state()
     {
         return command("state");
+    }
+
+    uint64_t fusion_catalog()
+    {
+        return command("fusion_catalog");
+    }
+
+    // Temporary experiment configuration; only the server publishes its snapshot.
+    uint64_t configure_fusion(uint64_t base_config_revision, const FusionSettings &fusion)
+    {
+        return command("configure_fusion",
+                       {{"base_config_revision", std::to_string(base_config_revision)},
+                        {"fusion", boost::json::object{{"mode", fusion.mode},
+                                                       {"diagnostic", fusion.diagnostic},
+                                                       {"edge_width_px", fusion.edge_width_px},
+                                                       {"angle_power", fusion.angle_power}}}});
     }
 
     // Release a delivered frame after consuming/copying it; old-session releases are ignored.

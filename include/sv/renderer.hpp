@@ -23,6 +23,8 @@ class Renderer
     ~Renderer();
     Renderer(const Renderer &) = delete;
     Renderer &operator=(const Renderer &) = delete;
+    // Render-thread only; caller must validate and prepare settings before publishing.
+    void set_fusion(Fusion) noexcept;
     Image render(const FrameSet &, const View &);
     std::vector<Pixel> project_points(const Camera &, const std::vector<Vec3> &);
     std::string vendor() const;
