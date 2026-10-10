@@ -161,6 +161,11 @@ if __name__=='__main__':
         sys.argv.pop(1)
         runpy.run_module('calibration.information_study', run_name='__main__')
         raise SystemExit(0)
+    if len(sys.argv) > 1 and sys.argv[1] == 'compare-attribution':
+        import runpy
+        sys.argv.pop(1)
+        runpy.run_module('calibration.attribution_study', run_name='__main__')
+        raise SystemExit(0)
     if len(sys.argv) > 1 and sys.argv[1] == 'compare-mounts':
         from calibration.study import main
         main(sys.argv[2:])

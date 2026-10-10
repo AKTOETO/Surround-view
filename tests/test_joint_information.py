@@ -48,6 +48,15 @@ class JointInformationTests(unittest.TestCase):
         self.assertEqual(fit.estimate['k'][2:], [0., 0.])
         self.assertLess(fit.estimate['k'][0], 1e-5)
 
+    def test_joint_jacobian_attributes_uniform_uv_shift_to_principal_point(self):
+        fit = solve_joint(self.objects, self.observed, self.poses, self.estimate, 2)
+        shift = np.zeros((12, 54, 2))
+        shift[..., 0] = 1.
+        response = np.linalg.lstsq(fit.jacobian, shift.ravel(), rcond=None)[0]
+        self.assertAlmostEqual(response[2] * 640., 1., delta=1e-5)
+        self.assertLess(np.linalg.norm(np.delete(response[:6], 2)), 1e-5)
+        self.assertLess(np.linalg.norm(response[6:]), 1e-5)
+
 
 if __name__ == '__main__':
     unittest.main()
