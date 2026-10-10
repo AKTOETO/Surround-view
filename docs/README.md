@@ -87,3 +87,5 @@ Wire-контракт текущей реализации, калибровоч�
 Контроль входного разрешения и видимости: [[validation/STITCH_RESOLUTION_VISIBILITY]] — парные 64/256 capture, исправление скрытых camera helpers и ROI ablation.
 
 Convergence 256→512 и три варианта улицы с EV stress: [[validation/STITCH_CONVERGENCE_ROBUSTNESS]]. Условия готовности итоговых выводов: [[planning/ROADMAP#Критерии готовности исследовательского заключения]].
+
+Движущаяся coded-мишень, синхронные Blender camera/truth кадры, 378-case fusion screen и ограничения: [[validation/OBJECT_STITCH_MOTION]]; frozen setup: [[research/STITCH_MOVING_OBJECT_PROTOCOL]].
