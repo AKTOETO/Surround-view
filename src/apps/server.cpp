@@ -1,6 +1,8 @@
+#include "experiment_recovery.hpp"
 #include "sv/build_info.hpp"
 #include "sv/calibration_job.hpp"
 #include "sv/config_store.hpp"
+#include "sv/experiment_lease.hpp"
 #include "sv/fusion_runtime.hpp"
 #include "sv/pipeline_spans.hpp"
 #include "sv/protocol.hpp"
@@ -364,6 +366,7 @@ ServerIO::ServerIO(const sv::Connections &n, const std::string &source_type,
                     "resume",
                     "state",
                     "fusion_runtime_v1",
+                    "experiment_lease_v1",
                     "copied_rgba",
                     "calibrate",
                     "calibration_provenance_v1",
@@ -680,6 +683,8 @@ int main(int argc, char **argv)
         bool paused = false, dirty = true;
         sv::PipelineSpanTracker span_tracker;
         sv::FrameSet last_set;
+        sv::ExperimentLease experiment;
+        sv::ExperimentRecovery recovery;
         std::optional<Command> pending_source;
         std::deque<Command> pending_commands;
 
@@ -699,6 +704,7 @@ int main(int argc, char **argv)
                                     {"diagnostic_view", config_store.active()->fusion.diagnostic},
                                     {"config_revision", std::to_string(config_store.revision())},
                                     {"source_type", config_store.active()->source.type},
+                                    {"experiment_lease", experiment.status()},
                                     {"fusion", sv::fusion_settings(config_store.active()->fusion)}};
             for (auto &kv : extra)
             {
@@ -752,6 +758,14 @@ int main(int argc, char **argv)
                             {"camera_id", event.camera_id},
                             {"reason", event.reason}});
                 }
+                else if (recovery.handles(event))
+                {
+                    paused = event.paused;
+                    recovery.accept(experiment, event);
+                    ++state_revision;
+                    dirty = true;
+                    record({{"event", "experiment_restore"}, {"status", experiment.status()}});
+                }
                 else if (pending_source && event.request_id == source_request)
                 {
                     paused = event.paused;
@@ -768,6 +782,32 @@ int main(int argc, char **argv)
                     answer(*pending_source, true, "ok");
                     pending_source.reset();
                 }
+            }
+            if (experiment.state() == sv::ExperimentLease::State::Active &&
+                (experiment.expired(sv::now_ns()) ||
+                 !network.sessions.find_session(experiment.owner())))
+            {
+                recovery.start(experiment, sv::now_ns());
+                record({{"event", "experiment_restore_started"}, {"status", experiment.status()}});
+            }
+            const auto before_recovery = config_store.revision();
+            const auto before_recovery_state = experiment.state();
+            recovery.tick(experiment,
+                          {config_store, *renderer, *source, paused, source_request,
+                           pending_source.has_value()},
+                          sv::now_ns());
+            if (experiment.state() == sv::ExperimentLease::State::Failed && pending_source)
+            {
+                answer(*pending_source, false, "experiment_restore_failed");
+                pending_source
+                    .reset(); // Keep read-only status reachable after a hung source control.
+            }
+            if (before_recovery != config_store.revision() ||
+                before_recovery_state != experiment.state())
+            {
+                ++state_revision;
+                dirty = true;
+                record({{"event", "experiment_restore"}, {"status", experiment.status()}});
             }
             if (!pending_source && pending_commands.empty())
             {
@@ -808,7 +848,47 @@ int main(int argc, char **argv)
                         }
                         return x;
                     };
-                    if (type == "state")
+                    const auto *lease_value = m.header.if_contains("lease_id");
+                    const std::string lease_id =
+                        lease_value ? std::string(lease_value->as_string()) : "";
+                    if (!experiment.allows(type, origin->bound_session_id, lease_id, sv::now_ns()))
+                    {
+                        throw std::runtime_error("experiment_lease_conflict");
+                    }
+                    if (type == "experiment_acquire")
+                    {
+                        if (config_store.active()->source.type != "replay")
+                        {
+                            throw std::runtime_error("experiment_requires_replay");
+                        }
+                        const auto ttl = m.header.at("ttl_ms").to_number<uint64_t>();
+                        if (!m.header.at("ttl_ms").is_int64() && !m.header.at("ttl_ms").is_uint64())
+                        {
+                            throw std::runtime_error("experiment_ttl_integer_required");
+                        }
+                        accepted =
+                            experiment.acquire(origin->bound_session_id, config_store.active(),
+                                               paused, sv::now_ns(), ttl, reason);
+                        if (accepted)
+                        {
+                            reason = "ok";
+                            recovery.reset();
+                        }
+                    }
+                    else if (type == "experiment_renew")
+                    {
+                        accepted = experiment.renew(origin->bound_session_id, lease_id,
+                                                    sv::now_ns(), reason);
+                        if (accepted)
+                        {
+                            reason = "ok";
+                        }
+                    }
+                    else if (type == "experiment_release")
+                    {
+                        recovery.start(experiment, sv::now_ns());
+                    }
+                    else if (type == "state")
                     {
                     }
                     else if (type == "fusion_catalog")
@@ -1088,8 +1168,9 @@ int main(int argc, char **argv)
                     }
                 }
                 if (accepted && type != "state" && type != "fusion_catalog" &&
-                    type != "calibrate" && type != "calibration_status" &&
-                    type != "apply_calibration")
+                    type != "experiment_acquire" && type != "experiment_renew" &&
+                    type != "experiment_release" && type != "calibrate" &&
+                    type != "calibration_status" && type != "apply_calibration")
                 {
                     view = candidate;
                     applied_command = sv::parse_decimal_u64(id);
