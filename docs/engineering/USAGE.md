@@ -513,3 +513,16 @@ ctest --test-dir build -R 'joint_calibration_information|intrinsic_diagnostics|c
 ```
 
 Нужны Python NumPy/SciPy/Matplotlib; solver запускается из sparse finite-difference least squares. `--output` должен указывать на новую папку. Summary хранит каждый полный singular spectrum, weakest right modes, conditional covariance/correlation, validation controls и SHA-256 Jacobian/input/source hashes. Входы из `artifacts/calibration-diagnostic-v2` и capture baseline не изменяются; ни production calibration gate, ни server config не задействованы. Exact-truth residual sigma является численным полом синтетической генерации. Detector-RMS covariance предполагает iid scaling и не доказывает iid detector error; cluster sandwich имеет только 12 synthetic views. Не использовать эти local standard errors как target-platform confidence limits или порог допуска. Теория/результаты/границы: [[research/CALIBRATION_JOINT_INFORMATION_PROTOCOL]], [[validation/JOINT_CALIBRATION_INFORMATION]].
+
+## Совместный ответ intrinsics и поз досок
+
+Воспроизвести frozen component-attribution experience на сохранённых synthetic inputs:
+
+```bash
+python3 tools/configurator.py compare-attribution --output artifacts/calibration-attribution-repeat
+MPLCONFIGDIR=/tmp/sv-mpl python3 docs/diploma/plot_calibration_attribution.py --results artifacts/calibration-attribution-repeat
+python3 tests/test_joint_information.py
+ctest --test-dir build -R joint_calibration_information --output-on-failure
+```
+
+Выполняются 12 exact joint baselines и 144 signed refits на `h=0.05 px`. Summary хранит успех/отказ каждой стороны пары, `J+ d` response, fitted intrinsics, pose responses, costs и hashes. Нынешний solver достигает evaluation limit в части order4 refits; полная nonlinear сводка включает только пары с двумя успешными знаками. Это synthetic diagnostic без production gate. Протокол и текущие результаты: [[research/CALIBRATION_COMPONENT_ATTRIBUTION_PROTOCOL]], [[validation/CALIBRATION_COMPONENT_ATTRIBUTION]].

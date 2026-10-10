@@ -1162,11 +1162,48 @@ Exact truth даёт максимальное отклонение восста�
 
 Полная таблица по 12 cases, все intrinsic covariance/correlation matrices, четыре weakest modes, validation metrics, hashes и команды приведены в [[validation/JOINT_CALIBRATION_INFORMATION]]. Реализация и проверки находятся в `tools/calibration/joint_information.py`, `tools/calibration/information_study.py`, `tests/test_joint_information.py`; следующий этап — signed component/pose attribution, robust fit и raster blur/noise ablations, nonradial/extrinsic stress, физические targets и independent validation split. Эти результаты закрывают только пункт full Jacobian/spectrum и предварительной conditional uncertainty из TODO.
 
+## 4.37 Как направленные ошибки распределяются между камерой и позами шаблонов
+
+Полный Jacobian предыдущего подраздела позволяет разложить локальный response по общим параметрам камеры и nuisance poses. Здесь проверяется не только выходная ошибка, но и механизм поглощения заданного входного поля: изменяются ли $f_x,f_y,c_x,c_y,k_i$ или оптимизатор объясняет те же UV через другие позы отдельных досок. Для этого frozen protocol [[research/CALIBRATION_COMPONENT_ATTRIBUTION_PROTOCOL]] использует те же 12 matched cases, шесть детерминированных полей из E-CAL-sensitivity-01 и только primary amplitude $h=0.05$ px.
+
+Для каждого exact baseline совместно оцениваются камера и 12 board poses. Линеаризованный signed response вычисляется как решение задачи наименьших квадратов
+
+$$\Delta q_{lin}=\arg\min_z\|Jz-d\|_2^2=J^+d,$$
+
+где $d=hD$ — единичное по RMS поле UV displacement. Затем на паре наблюдений $uv_{true}±hD$ повторяется nonlinear joint fit. Сравниваются центральная signed derivative $(q(+h)-q(-h))/(2h)$ и even component, показывающий отклонение от симметричного линейного поведения при данном h. Внутренние и pose-координаты нормированы параметрическими scales предыдущего подраздела; доли квадратов ответов зависят от этого выбора и не являются физическими долями camera error.
+
+| Направление поля | Order | Linear share intrinsics | Nonlinear share intrinsics* | Полные пары |
+|---|---:|---:|---:|---:|
+| x shift | 2 | 1.000 | 1.000 | 4/4 |
+| x shift | 4 | 1.000 | 1.000 | 8/8 |
+| radial | 2 | 0.060 | 0.060 | 4/4 |
+| radial | 4 | 0.996 | 0.996 | 4/8 |
+| tangential | 2 | 0.019 | 0.018 | 4/4 |
+| tangential | 4 | 0.081 | 0.086 | 4/8 |
+| random fields | 2 | 0.011 | 0.011 | 12/12 |
+| random fields | 4 | 0.107 | 0.132 | 11/24 |
+
+*Медиана nonlinear ответа только для пар, где и positive, и negative fits завершили работу с успешным статусом; incomplete pairs не подменяются нулём.*
+
+![Разделение ответа камеры и nuisance poses](figures/experiments/calibration_component_attribution.png)
+
+*Рисунок 4.42 — Нормированная доля квадратов ответа intrinsics для полного-Jacobian прогноза и успешных нелинейных signed pairs. `n` на графике показывает число included pairs. Random поля включают три фиксированных seed; они не дают вероятностного распределения ошибок.*
+
+Изменение общего x координат почти полностью эквивалентно изменению $c_x$: ответ равен 1.0 px/px с максимальной относительной L2-разностью linear/nonlinear response 0.0023%; nuisance poses почти не меняются. Для radial field механизм зависит от порядка модели: order 2 в основном объясняет его переоценкой board poses, а order 4 — параметрами камеры. Для tangential и random fields основную часть ответа поглощают poses, причём их физический RMS изменения на h=0.05 px зависит от профиля/модели. Поэтому один общий corner RMS не показывает, какой параметр будет смещён.
+
+Результат nonlinear части пока ограничен сходимостью. Из 144 individual fits успешны 110; 34 достигли лимита 750 evaluations, все относятся к order 4. Из 72 direction pairs 21 неполная, 18 таких пар относятся к `small_front`. Все failure statuses и последние итерации сохранены. У них residual RMS 0.0041–0.0348 px, но малый остаток не компенсирует неуспешный solver status. Поэтому linear attribution представлена для всех 72 pairs; nonlinear component conclusions относятся лишь к успешному подмножеству, особенно слабому для order4/small_front. Линейный прогноз и успешные fits близки в норме параметрического response: median relative L2 mismatch составляет 0.18–0.59% для order2 полей, 0.21–2.49% для успешных не-random order4 pairs и 3.45% для successful random/order4 pairs. Максимум среди успешных random/order4 — 7.16%.
+
+![Отклонение joint fit от полного-Jacobian прогноза](figures/experiments/calibration_component_linearization_error.png)
+
+*Рисунок 4.43 — Relative L2 mismatch между нелинейной central difference и $J^+D$, только для complete pairs. Недостающие пары отражены в предыдущем рисунке меньшим n и в отчёте перечислены поимённо.*
+
+Это exploratory переанализ прежних synthetic scenes. Среди открытых задач — объяснить/исправить order4 convergence, затем повторить замороженные pairs, проверить signed attribution на новых captures, robust/noise conditions и физических target geometry. Данные не включают повторное raster/detector обнаружение или автомобильные extrinsic perturbations и не применяются к server gate. Полная детализация и ограничения: [[validation/CALIBRATION_COMPONENT_ATTRIBUTION]]. Реализованный linear known-answer shift control добавлен в `tests/test_joint_information.py`.
+
 ## Предварительные выводы по четвёртой главе
 
 1. **Экспериментальная инфраструктура сшивки:** реализованы offline-варианты fusion и carrier matrix; исправленные binary graph-cut и output proxies проверены на fixtures, добавлен парный 3-frame Blender clip (§4.25). Качество методов на holdout scenes и object-correspondence ghost truth пока не подтверждено.
 2. **Scene Truth/GPU checks:** получены числа на конкретном синтетическом fixture и CPU/GPU sample. Они характеризуют только этот тест и не заменяют испытания реальной сцены/камер.
-3. **Калибровочное ядро:** реализованы синтетические эксперименты Joint Bundle Adjustment и server calibration gate. Сопоставление моделей и пороги требуют независимых данных; историческая jitter-модель не оценивает detector, новые image-based серии выполняют OpenCV на синтетических PNG (§4.29, §4.31–4.36). Full joint Jacobian имеет полный ранг на 12 selected cases; order 4 имеет худшую обусловленность, а локальная uncertainty зависит от принятой covariance model. Peripheral views уменьшают часть ошибок экстраполяции, но ни angular coverage, ни конкретная комбинация размера/наклона не гарантируют точной реконструкции плоскости.
+3. **Калибровочное ядро:** реализованы синтетические эксперименты Joint Bundle Adjustment и server calibration gate. Сопоставление моделей и пороги требуют независимых данных; историческая jitter-модель не оценивает detector, новые image-based серии выполняют OpenCV на синтетических PNG (§4.29, §4.31–4.37). Full joint Jacobian имеет полный ранг на 12 selected cases; order 4 имеет худшую обусловленность, а локальная uncertainty зависит от принятой covariance model. Направленные UV errors по-разному делятся между intrinsics и позами, но часть order4 joint-refits не сошлась и требует доработки. Peripheral views уменьшают часть ошибок экстраполяции, но ни angular coverage, ни конкретная комбинация размера/наклона не гарантируют точной реконструкции плоскости.
 
 Таким образом, перечислены достигнутые этапы реализации и проверок на синтетике; качество сшивки, перенос на физическую оптику и физическая обоснованность Quality Gate остаются открытыми.
 

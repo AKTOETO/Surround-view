@@ -127,8 +127,12 @@ stop
 
 ## Equal-RMS directional sensitivity
 
-[[validation/CALIBRATION_SENSITIVITY]]: 12 matched base cases, 444 diagnostic fits, 216 ±h pairs, 6 direction fields и h=0.025/0.05/0.2 px. Input RMS одинаков, отклик rays/floor различается; shift_x control даёт ожидаемый gain≈1. Между двумя малыми amplitudes max gain change<0.6%; при h=0.2 нелинейность заметнее. Это directional response; полный joint spectrum и conditional uncertainty теперь приведены в [[validation/JOINT_CALIBRATION_INFORMATION]]. Targeted component/pose analysis, robust fit и raster/physical trials остаются открытыми. Протокол: [[CALIBRATION_SENSITIVITY_PROTOCOL]].
+[[validation/CALIBRATION_SENSITIVITY]]: 12 matched base cases, 444 diagnostic fits, 216 ±h pairs, 6 direction fields и h=0.025/0.05/0.2 px. Input RMS одинаков, отклик rays/floor различается; shift_x control даёт ожидаемый gain≈1. Между двумя малыми amplitudes max gain change<0.6%; при h=0.2 нелинейность заметнее. Это directional response; полный joint spectrum/conditional uncertainty и initial component/pose attribution теперь в [[validation/JOINT_CALIBRATION_INFORMATION]] и [[validation/CALIBRATION_COMPONENT_ATTRIBUTION]]. Order4 joint-refits имеют convergence gap; robust fit и raster/physical trials остаются открытыми. Протокол: [[CALIBRATION_SENSITIVITY_PROTOCOL]].
 
 ## Полный joint Jacobian
 
 [[validation/JOINT_CALIBRATION_INFORMATION]]: 12 matched cases, 24 fits, все сошлись с полным рангом по 78/80 параметрам. Оптимизируются общие intrinsics и 12 nuisance poses; для order4 median normalized condition number примерно в 1.9 раза выше order2. Условные iid, detector-RMS и 12-view cluster covariance различаются, поэтому их нельзя трактовать как physical confidence limits. Independent captures, physical target geometry, robust/noise and nonradial/extrinsic trials остаются необходимыми. Protocol: [[CALIBRATION_JOINT_INFORMATION_PROTOCOL]].
+
+## Signed attribution между camera и board poses
+
+[[validation/CALIBRATION_COMPONENT_ATTRIBUTION]] сравнивает полный-Jacobian $J^+d$ и nonlinear pairs ±0.05 px. Контроль `shift_x` полностью отображается в $c_x$. При order2 radial field преимущественно объясняется board poses, тогда как для order4 linearized response преимущественно intrinsics; tangential/random directions в основном меняют poses. Условия order4 ограничены: сошлось только 110/144 refits, 34 имеют max-evaluation status. Не использовать nonlinear shares order4 как законченный вывод, пока convergence не повторена. Замороженный protocol: [[CALIBRATION_COMPONENT_ATTRIBUTION_PROTOCOL]].
