@@ -149,7 +149,7 @@ int main(int argc, char **argv)
             check(!sv::safe_view(parsed.surface, outside), "view outside wall rejected");
         }
         check(config.fusion.mode == "edge_feather" && config.fusion.edge_width_px == 24 &&
-                  config.fusion.diagnostic == "color",
+                  config.fusion.diagnostic == "color" && config.fusion.pyramid_boundary == "zero",
               "legacy fusion defaults preserved");
         for (const char *mode : {"edge_feather", "angular_feather", "hard_best_angle"})
         {
@@ -161,6 +161,7 @@ int main(int argc, char **argv)
                   boost::json::object{{"mode", mode}, {"edge_width_px", 0}},
                   boost::json::object{{"mode", mode}, {"angle_power", 33}},
                   boost::json::object{{"mode", mode}, {"diagnostic", "invalid"}},
+                  boost::json::object{{"mode", mode}, {"pyramid_boundary", "unknown"}},
                   boost::json::object{{"mode", mode}, {"extra", true}}})
             {
                 value.as_object()["fusion"] = invalid;

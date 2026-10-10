@@ -65,11 +65,15 @@ TEST(SimulatorRuntime, AppliesRejectsAndRestoresThroughClientLibrary)
     const auto initial_revision = settings.revision();
     auto fusion = boost::json::parse(original.toStdString()).as_object();
     fusion["diagnostic"] = "weights";
+    fusion["mode"] = "multi_band";
+    fusion["pyramid_boundary"] = "normalized";
     settings.applyFusion(QString::fromStdString(boost::json::serialize(fusion)), initial_revision);
     ASSERT_TRUE(settings.pending());
     ASSERT_TRUE(wait_until([&] { return !settings.pending(); }));
     EXPECT_NE(settings.revision(), initial_revision);
     EXPECT_EQ(boost::json::parse(settings.fusionJson().toStdString()).at("diagnostic"), "weights");
+    EXPECT_EQ(boost::json::parse(settings.fusionJson().toStdString()).at("pyramid_boundary"),
+              "normalized");
     const auto updated_revision = settings.revision();
 
     settings.applyFusion(original, initial_revision);

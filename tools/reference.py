@@ -191,6 +191,7 @@ def render(config, images):
         angle_power=fusion_cfg.get('angle_power', 2.0),
         num_pyramid_levels=fusion_cfg.get('pyramid_levels', fusion_cfg.get('num_pyramid_levels', 4)),
         smoothness_weight=fusion_cfg.get('smoothness_weight', .1),
+        pyramid_boundary=fusion_cfg.get('pyramid_boundary', 'zero'),
     )
     
     coverage = np.sum(validity, axis=-1).astype(np.uint8)

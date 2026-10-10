@@ -49,31 +49,69 @@ cv::Mat resize_linear(const cv::Mat &image, cv::Size target)
 
 namespace
 {
+cv::Mat downsample(const cv::Mat &image)
+{
+    const auto blurred = gaussian(image, 1);
+    cv::Mat down((blurred.rows + 1) / 2, (blurred.cols + 1) / 2, blurred.type());
+    for (int y = 0; y < down.rows; ++y)
+    {
+        for (int x = 0; x < down.cols; ++x)
+        {
+            for (int c = 0; c < blurred.channels(); ++c)
+            {
+                down.ptr<float>(y)[x * blurred.channels() + c] =
+                    blurred.ptr<float>(2 * y)[2 * x * blurred.channels() + c];
+            }
+        }
+    }
+    return down;
+}
+
 std::vector<cv::Mat> pyramid(const cv::Mat &image, unsigned levels)
 {
     std::vector<cv::Mat> result{image};
     while (result.size() < levels && result.back().rows >= 4 && result.back().cols >= 4)
     {
-        const auto blurred = gaussian(result.back(), 1);
-        cv::Mat down((blurred.rows + 1) / 2, (blurred.cols + 1) / 2, blurred.type());
-        for (int y = 0; y < down.rows; ++y)
+        result.push_back(downsample(result.back()));
+    }
+    return result;
+}
+
+std::vector<cv::Mat> normalized_pyramid(const cv::Mat &image, const cv::Mat &validity,
+                                        unsigned levels)
+{
+    std::vector<cv::Mat> result{image};
+    cv::Mat support;
+    cv::Mat(validity != 0).convertTo(support, CV_32F, 1.0 / 255);
+    while (result.size() < levels && result.back().rows >= 4 && result.back().cols >= 4)
+    {
+        cv::Mat mass = result.back().clone();
+        for (int y = 0; y < mass.rows; ++y)
         {
-            for (int x = 0; x < down.cols; ++x)
+            for (int x = 0; x < mass.cols; ++x)
             {
-                for (int c = 0; c < blurred.channels(); ++c)
-                {
-                    down.ptr<float>(y)[x * blurred.channels() + c] =
-                        blurred.ptr<float>(2 * y)[2 * x * blurred.channels() + c];
-                }
+                mass.at<cv::Vec3f>(y, x) *= support.at<float>(y, x);
             }
         }
-        result.push_back(down);
+        auto next = downsample(mass);
+        support = downsample(support);
+        for (int y = 0; y < next.rows; ++y)
+        {
+            for (int x = 0; x < next.cols; ++x)
+            {
+                const float value = support.at<float>(y, x);
+                next.at<cv::Vec3f>(y, x) =
+                    value > 1e-12f ? next.at<cv::Vec3f>(y, x) / value : cv::Vec3f{};
+            }
+        }
+        result.push_back(next);
     }
     return result;
 }
 } // namespace
 
-cv::Mat multiband(const FusionSamples &samples, const cv::Mat &weights, unsigned levels)
+cv::Mat multiband(const FusionSamples &samples, const cv::Mat &weights, unsigned levels,
+                  const std::string &boundary)
 {
     std::array<std::vector<cv::Mat>, 4> colors, masks;
     std::vector<cv::Mat> planes;
@@ -82,7 +120,9 @@ cv::Mat multiband(const FusionSamples &samples, const cv::Mat &weights, unsigned
     {
         auto observed = samples.colors[c].clone();
         observed.setTo(0, samples.validity[c] == 0);
-        colors[c] = pyramid(observed, levels);
+        colors[c] = boundary == "normalized"
+                        ? normalized_pyramid(observed, samples.validity[c], levels)
+                        : pyramid(observed, levels);
         masks[c] = pyramid(planes[c], colors[c].size());
         for (size_t level = 0; level + 1 < colors[c].size(); ++level)
         {

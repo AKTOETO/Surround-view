@@ -105,7 +105,7 @@ class IntegrationTests(unittest.TestCase):
                 for mode in catalog['fusion_catalog']['modes']:
                     settings = dict(mode=mode, diagnostic='weights',
                                     edge_width_px=12., angle_power=4.,
-                                    pyramid_levels=4, smoothness_weight=.1)
+                                    pyramid_levels=4, smoothness_weight=.1, pyramid_boundary="zero")
                     ack = client.command('configure_fusion',
                         base_config_revision=revision, fusion=settings)
                     self.assertTrue(ack['accepted'], ack)

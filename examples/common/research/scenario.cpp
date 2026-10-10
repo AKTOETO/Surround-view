@@ -74,7 +74,7 @@ Scenario parse_scenario(const boost::json::value &value)
     {
         const auto &fields = variant.as_object();
         keys(fields, {"mode", "diagnostic", "edge_width_px", "angle_power", "pyramid_levels",
-                      "smoothness_weight", "surface"});
+                      "smoothness_weight", "pyramid_boundary", "surface"});
         client::FusionSettings fusion;
         fusion.mode = std::string(fields.at("mode").as_string());
         if (fusion.mode != "edge_feather" && fusion.mode != "hard_best_angle" &&
@@ -113,6 +113,14 @@ Scenario parse_scenario(const boost::json::value &value)
             {
                 throw std::invalid_argument("scenario smoothness out of range");
             }
+        }
+        if (auto v = fields.if_contains("pyramid_boundary"))
+        {
+            fusion.pyramid_boundary = std::string(v->as_string());
+        }
+        if (fusion.pyramid_boundary != "zero" && fusion.pyramid_boundary != "normalized")
+        {
+            throw std::invalid_argument("unsupported pyramid boundary");
         }
         Variant parsed_variant{std::move(fusion), std::nullopt};
         if (auto v = fields.if_contains("surface"))

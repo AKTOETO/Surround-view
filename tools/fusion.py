@@ -224,7 +224,23 @@ def reconstruct_laplacian_pyramid(laplacian_pyramid):
     return current
 
 
-def multi_band_blend(colors, weights, validity, num_levels=4):
+def build_normalized_pyramid(image, validity, num_levels):
+    """Filter observed color mass and support independently at each scale."""
+    current = image.astype(np.float32)
+    support = validity.astype(np.float32)
+    result = [current]
+    for _ in range(num_levels - 1):
+        if min(current.shape[:2]) < 4:
+            break
+        mass = downsample_2x(current * support[..., None])
+        support = downsample_2x(support)
+        current = np.divide(mass, support[..., None], out=np.zeros_like(mass),
+                            where=support[..., None] > 1e-12)
+        result.append(current)
+    return result
+
+
+def multi_band_blend(colors, weights, validity, num_levels=4, boundary="zero"):
     """Perform Laplacian pyramid multi-band frequency blending across cameras."""
     H, W, num_cams, C = colors.shape
     
@@ -237,7 +253,12 @@ def multi_band_blend(colors, weights, validity, num_levels=4):
         cam_color = np.where(validity[..., i, None], colors[..., i, :], 0)
         cam_weight = weights[..., i:i+1]
         
-        g_color = build_gaussian_pyramid(cam_color, num_levels)
+        if boundary == "normalized":
+            g_color = build_normalized_pyramid(cam_color, validity[..., i], num_levels)
+        elif boundary == "zero":
+            g_color = build_gaussian_pyramid(cam_color, num_levels)
+        else:
+            raise ValueError("unknown pyramid boundary")
         l_color = build_laplacian_pyramid(g_color)
         g_weight = build_gaussian_pyramid(cam_weight, len(g_color))
         
@@ -267,7 +288,7 @@ def multi_band_blend(colors, weights, validity, num_levels=4):
 
 def fuse_samples(colors, validity, thetas, edge_distances, points, mode="edge_feather",
                  edge_width_px=24.0, angle_power=2.0, num_pyramid_levels=4,
-                 smoothness_weight=0.1):
+                 smoothness_weight=0.1, pyramid_boundary="zero"):
     """Unified entry point for all 7 surround-view fusion strategies."""
     H, W, num_cams, C = colors.shape
     
@@ -306,7 +327,7 @@ def fuse_samples(colors, validity, thetas, edge_distances, points, mode="edge_fe
         raw_weights = np.clip(edge_distances / max(edge_width_px, 1e-3), 0.0, 1.0) * validity
         total = np.sum(raw_weights, axis=-1, keepdims=True)
         norm_weights = np.divide(raw_weights, total, out=np.zeros_like(raw_weights), where=total > 1e-6)
-        blended = multi_band_blend(colors, norm_weights, validity, num_levels=num_pyramid_levels)
+        blended = multi_band_blend(colors, norm_weights, validity, num_levels=num_pyramid_levels, boundary=pyramid_boundary)
         
     elif mode == "graph_cut_multi_band":
         norm_weights = compute_graph_cut_seam_mask(colors, validity, smoothness_weight)
@@ -315,7 +336,7 @@ def fuse_samples(colors, validity, thetas, edge_distances, points, mode="edge_fe
             soft_weights[..., i] = ndi.gaussian_filter(norm_weights[..., i], sigma=2.0) * validity[..., i]
         total = np.sum(soft_weights, axis=-1, keepdims=True)
         soft_weights = np.divide(soft_weights, total, out=np.zeros_like(soft_weights), where=total > 1e-6)
-        blended = multi_band_blend(colors, soft_weights, validity, num_levels=num_pyramid_levels)
+        blended = multi_band_blend(colors, soft_weights, validity, num_levels=num_pyramid_levels, boundary=pyramid_boundary)
         
     else:
         raise ValueError(f"unknown fusion mode: {mode}; choices: {FUSION_MODES}")

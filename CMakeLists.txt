@@ -281,6 +281,11 @@ install(FILES packaging/licenses/OpenCV-Apache-2.0.txt packaging/licenses/GLM-co
 
 if(BUILD_TESTING AND SV_GTEST_TESTS)
   find_package(GTest CONFIG REQUIRED)
+  if(SV_GPU)
+    add_executable(sv-fusion-boundary-tests tests/fusion_boundary_tests.cpp)
+    target_link_libraries(sv-fusion-boundary-tests PRIVATE sv-fusion GTest::gtest_main)
+    add_test(NAME fusion_boundary COMMAND sv-fusion-boundary-tests)
+  endif()
   add_executable(sv-client-release-tests tests/client_release_tests.cpp)
   target_link_libraries(sv-client-release-tests PRIVATE sv-client-lib GTest::gtest_main)
   add_test(NAME client_release_budget COMMAND sv-client-release-tests)

@@ -30,6 +30,7 @@ struct FusionSettings
     std::string mode = "edge_feather", diagnostic = "color";
     double edge_width_px = 24, angle_power = 2, smoothness_weight = .1;
     unsigned pyramid_levels = 4;
+    std::string pyramid_boundary = "zero";
 };
 
 struct Event
@@ -106,16 +107,21 @@ class Client
     uint64_t configure_fusion(uint64_t base_config_revision, const FusionSettings &fusion,
                               std::string lease_id = {})
     {
-        return command(
-            "configure_fusion",
-            {{"base_config_revision", std::to_string(base_config_revision)},
-             {"lease_id", std::move(lease_id)},
-             {"fusion", boost::json::object{{"mode", fusion.mode},
-                                            {"diagnostic", fusion.diagnostic},
-                                            {"edge_width_px", fusion.edge_width_px},
-                                            {"angle_power", fusion.angle_power},
-                                            {"smoothness_weight", fusion.smoothness_weight},
-                                            {"pyramid_levels", fusion.pyramid_levels}}}});
+        boost::json::object fields{{"mode", fusion.mode},
+                                   {"diagnostic", fusion.diagnostic},
+                                   {"edge_width_px", fusion.edge_width_px},
+                                   {"angle_power", fusion.angle_power},
+                                   {"smoothness_weight", fusion.smoothness_weight},
+                                   {"pyramid_levels", fusion.pyramid_levels}};
+        // Omit the historical default for compatibility with older servers.
+        if (fusion.pyramid_boundary != "zero")
+        {
+            fields["pyramid_boundary"] = fusion.pyramid_boundary;
+        }
+        return command("configure_fusion",
+                       {{"base_config_revision", std::to_string(base_config_revision)},
+                        {"lease_id", std::move(lease_id)},
+                        {"fusion", std::move(fields)}});
     }
 
     uint64_t surface_catalog()

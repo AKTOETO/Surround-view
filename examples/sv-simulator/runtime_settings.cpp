@@ -119,10 +119,11 @@ void RuntimeSettings::apply(const QString &json, const QString &baseRevision, bo
         const auto object = boost::json::parse(json.toStdString()).as_object();
         if (fusion)
         {
-            // No defaults or silent truncation: send exactly the six displayed fields.
-            if (object.size() != 6)
+            // Accept the historical six-field snapshot and the optional boundary policy.
+            if (object.size() != 6 && !(object.size() == 7 && object.contains("pyramid_boundary")))
             {
-                throw std::runtime_error("fusion_requires_exactly_six_fields");
+                throw std::runtime_error(
+                    "fusion_requires_six_fields_and_optional_pyramid_boundary");
             }
             sv::client::FusionSettings settings;
             settings.mode = std::string(object.at("mode").as_string());
@@ -139,6 +140,10 @@ void RuntimeSettings::apply(const QString &json, const QString &baseRevision, bo
                 throw std::runtime_error("pyramid_levels_must_be_unsigned_integer");
             }
             settings.pyramid_levels = boost::json::value_to<unsigned>(levels);
+            if (auto value = object.if_contains("pyramid_boundary"))
+            {
+                settings.pyramid_boundary = std::string(value->as_string());
+            }
             pending_id_ = client->configure_fusion(revision, settings);
         }
         else

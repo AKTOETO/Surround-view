@@ -10,6 +10,7 @@ struct Fusion
     std::string mode = "edge_feather", diagnostic = "color";
     double edge_width_px = 24, angle_power = 2, smoothness_weight = .1;
     unsigned pyramid_levels = 4;
+    std::string pyramid_boundary = "zero";
 };
 
 struct Connections

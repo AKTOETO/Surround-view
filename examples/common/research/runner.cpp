@@ -34,7 +34,8 @@ boost::json::object settings(const client::FusionSettings &fusion)
             {"edge_width_px", fusion.edge_width_px},
             {"angle_power", fusion.angle_power},
             {"pyramid_levels", fusion.pyramid_levels},
-            {"smoothness_weight", fusion.smoothness_weight}};
+            {"smoothness_weight", fusion.smoothness_weight},
+            {"pyramid_boundary", fusion.pyramid_boundary}};
 }
 
 boost::json::object accepted(Connection &connection, std::string operation,

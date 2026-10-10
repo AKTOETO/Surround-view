@@ -40,6 +40,10 @@ int main()
         settings.mode = std::string(input.at("mode").as_string());
         settings.pyramid_levels = input.at("levels").to_number<unsigned>();
         settings.smoothness_weight = input.at("smoothness").to_number<double>();
+        if (auto v = input.if_contains("boundary"))
+        {
+            settings.pyramid_boundary = std::string(v->as_string());
+        }
         const auto result = sv::fuse_research(samples, settings);
         boost::json::array color, weights;
         for (int y = 0; y < height; ++y)

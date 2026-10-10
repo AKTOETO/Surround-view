@@ -13,18 +13,18 @@ PROBE = sys.argv[1]
 
 
 class NativeFusionParity(unittest.TestCase):
-    def compare(self, colors, validity, edges, mode, levels=4, smoothness=.1):
+    def compare(self, colors, validity, edges, mode, levels=4, smoothness=.1, boundary="zero"):
         h, w = validity.shape[:2]
         request = dict(width=w, height=h, colors=colors.reshape(-1).tolist(),
                        validity=validity.reshape(-1).tolist(), edges=edges.reshape(-1).tolist(),
-                       mode=mode, levels=levels, smoothness=smoothness)
+                       mode=mode, levels=levels, smoothness=smoothness, boundary=boundary)
         run = subprocess.run([PROBE], input=json.dumps(request), text=True,
                              capture_output=True, timeout=20)
         self.assertEqual(run.returncode, 0, run.stderr)
         result = json.loads(run.stdout)
         expected, weights = fuse_samples(colors, validity, np.zeros_like(edges), edges * 24,
             np.zeros((h, w, 3)), mode=mode, num_pyramid_levels=levels,
-            smoothness_weight=smoothness)
+            smoothness_weight=smoothness, pyramid_boundary=boundary)
         actual = np.array(result['color']).reshape(h, w, 3)
         actual_weights = np.array(result['weights']).reshape(h, w, 4)
         np.testing.assert_allclose(actual_weights, weights, atol=2e-6, rtol=2e-6)
@@ -57,6 +57,18 @@ class NativeFusionParity(unittest.TestCase):
         validity[:] = True
         for mode in ['seam_distance_feather', 'graph_cut_seam', 'multi_band', 'graph_cut_multi_band']:
             self.compare(colors, validity, edges, mode)
+
+    def test_normalized_random_masks_and_empty_camera(self):
+        rng = np.random.default_rng(104)
+        for h, w in [(3, 3), (9, 13), (16, 20)]:
+            colors = rng.random((h, w, 4, 3)).astype(np.float32)
+            validity = rng.random((h, w, 4)) > .5
+            validity[..., 3] = False
+            validity[0, 0] = False
+            edges = rng.random((h, w, 4)).astype(np.float32)
+            for mode in ('multi_band', 'graph_cut_multi_band'):
+                for levels in (1, 4, 8):
+                    self.compare(colors, validity, edges, mode, levels, boundary='normalized')
 
     def test_unobserved_rgb_cannot_change_pyramid_output(self):
         rng = np.random.default_rng(42)

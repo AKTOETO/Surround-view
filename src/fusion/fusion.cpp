@@ -9,7 +9,8 @@ FusionResult fuse_research(const FusionSamples &samples, const Fusion &settings)
     const auto size = samples.colors[0].size();
     if (size.empty() || size.area() > 262144 || settings.pyramid_levels < 1 ||
         settings.pyramid_levels > 8 || !std::isfinite(settings.smoothness_weight) ||
-        settings.smoothness_weight < 0 || settings.smoothness_weight > 100)
+        settings.smoothness_weight < 0 || settings.smoothness_weight > 100 ||
+        (settings.pyramid_boundary != "zero" && settings.pyramid_boundary != "normalized"))
     {
         throw std::invalid_argument("research fusion budget/parameters");
     }
@@ -95,7 +96,8 @@ FusionResult fuse_research(const FusionSamples &samples, const Fusion &settings)
     cv::Mat color;
     if (band)
     {
-        color = fusion_detail::multiband(samples, blend_weights, settings.pyramid_levels);
+        color = fusion_detail::multiband(samples, blend_weights, settings.pyramid_levels,
+                                         settings.pyramid_boundary);
     }
     else
     {

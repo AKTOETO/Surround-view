@@ -16,12 +16,13 @@ inline boost::json::object fusion_settings(const Fusion &fusion)
             {"edge_width_px", fusion.edge_width_px},
             {"angle_power", fusion.angle_power},
             {"smoothness_weight", fusion.smoothness_weight},
-            {"pyramid_levels", fusion.pyramid_levels}};
+            {"pyramid_levels", fusion.pyramid_levels},
+            {"pyramid_boundary", fusion.pyramid_boundary}};
 }
 
 inline boost::json::object fusion_catalog()
 {
-    return {{"version", 2},
+    return {{"version", 3},
             {"modes", boost::json::array{"edge_feather", "hard_best_angle", "angular_feather",
                                          "seam_distance_feather", "graph_cut_seam", "multi_band",
                                          "graph_cut_multi_band"}},
@@ -30,6 +31,8 @@ inline boost::json::object fusion_catalog()
             {"angle_power", boost::json::object{{"exclusive_min", 0}, {"max", 32}}},
             {"smoothness_weight", boost::json::object{{"min", 0}, {"max", 100}}},
             {"pyramid_levels", boost::json::object{{"min", 1}, {"max", 8}}},
+            {"pyramid_boundary", boost::json::array{"zero", "normalized"}},
+            {"normalized_pyramid_implementation", "normalized_support_v1"},
             {"research_backend", "gles_projection_cpu_fusion_v1"},
             {"research_fusion_implementation", "validity_zero_extension_v2"},
             {"research_pixel_limit", 262144},

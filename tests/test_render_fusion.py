@@ -54,7 +54,8 @@ class RenderFusionParity(unittest.TestCase):
             edges.append(np.fromfile(str(prefix)+'-edge.f32', endian).reshape(h, w))
         colors, validity, edges = (np.stack(a, axis=2) for a in [colors, validity, edges])
         fused, weights = fuse_samples(colors, validity, np.zeros_like(edges), edges*24,
-            np.zeros((h, w, 3)), mode=case['mode'], num_pyramid_levels=3, smoothness_weight=.7)
+            np.zeros((h, w, 3)), mode=case['mode'], num_pyramid_levels=3, smoothness_weight=.7,
+            pyramid_boundary=case["boundary"])
         rgb = np.where(fused <= .0031308, 12.92*fused,
                        1.055*np.maximum(fused, 0)**(1/2.4)-.055)
         if case['diagnostic'] == 'weights':
@@ -119,10 +120,12 @@ class RenderFusionParity(unittest.TestCase):
             self.assertTrue(client.command('pause')['accepted'])
             for case in cases:
                 state = client.command('state')
-                fusion = dict(cfg['fusion'], mode=case['mode'], diagnostic=case['diagnostic'])
+                fusion = dict(cfg['fusion'], mode=case['mode'], diagnostic=case['diagnostic'],
+                              pyramid_boundary=case['boundary'])
                 ack = client.command('configure_fusion', base_config_revision=state['config_revision'],
                                      fusion=fusion)
                 self.assertTrue(ack['accepted'], ack)
+                self.assertEqual(ack['fusion']['pyramid_boundary'], case['boundary'])
                 for _ in range(8):
                     header, rgba = client.frame()
                     if header['state_revision'] == ack['state_revision']:
@@ -152,7 +155,7 @@ class RenderFusionParity(unittest.TestCase):
                                      text=True, capture_output=True, timeout=20)
                 self.assertEqual(run.returncode, 0, run.stderr)
                 index = json.loads((output/'index.json').read_text())
-                self.assertEqual(len(index['cases']), 12)
+                self.assertEqual(len(index['cases']), 18)
                 for case in index['cases']:
                     with self.subTest(carrier=i, **case):
                         samples = self.reconstructed(output/case['directory'], index, cfg, case)
