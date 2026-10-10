@@ -128,3 +128,7 @@ GPU execution time измерять асинхронными timer queries, CPU 
 ## E-STITCH-object-support-01 — 10.10.2026
 
 [[validation/OBJECT_STITCH]] расширяет тот же 84-case fixture метрикой $s(p)=\sum_i w_i(p)1[id_i(p)=target]$. Она измеряет взвешенное source-camera object-ID присутствие вне прямой Blender truth и фиксированные threshold masks; known-answer tests покрывают точный, удвоенный, пустой support и соединённую копию. Во всех случаях RGB classifier не находит дополнительных компонентов, при этом median outside-support fraction находится в диапазоне 0.521–0.847 по fusion mode. Это provenance diagnostic, не видимая ghost segmentation; особенно для multi-band веса не представляют фактическую цветовую смесь. Один synthetic target/view не поддерживает ranking. Frozen protocol: [[STITCH_OBJECT_SUPPORT_PROTOCOL]].
+
+## E-STITCH-object-motion-01 — capture plan prepared
+
+[[validation/OBJECT_STITCH_MOTION]] и [[STITCH_MOVING_OBJECT_PROTOCOL]] задают 9 synchronized timestamps moving-target capture и 378 carrier/fusion/frame cases. Добавлена генерация per-frame target position и проверка её фиксации в paired truth; loader теперь умеет читать camera dataset и Blender truth из разных каталогов. Исследовательский Blender MCP не подключился и локальный Blender executable отсутствует, поэтому capture/metrics ещё не запускались; никаких motion outcomes не заявляется.
