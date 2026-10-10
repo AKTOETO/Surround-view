@@ -5,6 +5,7 @@ import sys
 import unittest
 
 import numpy as np
+from scipy import ndimage as ndi
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools" / "blender"))
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "tools"))
@@ -109,6 +110,83 @@ class StitchFusionTests(unittest.TestCase):
 
         self.assertEqual(len(seam_x), height - 8)
         self.assertLessEqual(abs(float(np.mean(seam_x)) - 22.5), 2.0)
+
+    def test_binary_graph_cut_matches_exhaustive_small_problem_minimum_energy(self):
+        """The cut must minimize the documented integer Potts energy on a small overlap."""
+        height, width = 4, 5
+        validity = np.zeros((height, width, 2), dtype=bool)
+        validity[:, :4, 0] = True
+        validity[:, 1:, 1] = True
+        colors = np.random.default_rng(813).random(
+            (height, width, 2, 3), dtype=np.float32
+        )
+        smoothness = 0.1
+        mask = validity[..., 0] & validity[..., 1]
+        coords = np.argwhere(mask)
+        node_at = np.full((height, width), -1, dtype=np.int32)
+        node_at[mask] = np.arange(len(coords))
+
+        distances = np.stack(
+            [ndi.distance_transform_edt(validity[..., i]) for i in range(2)], axis=-1
+        )
+        local_distances = distances[mask]
+        distance_sum = local_distances.sum(axis=-1) + 1e-6
+        unary = np.stack([
+            np.rint((1.0 - local_distances[:, i] / distance_sum) * 1000).astype(int)
+            for i in range(2)
+        ], axis=-1)
+
+        disagreement = np.linalg.norm(colors[..., 0, :] - colors[..., 1, :], axis=-1)
+        scale = float(np.percentile(disagreement[mask], 95))
+        normalized = np.clip(disagreement / max(scale, 1e-6), 0.0, 1.0)
+        edges = []
+        for y, x in coords:
+            for dy, dx in ((0, 1), (1, 0)):
+                yy, xx = y + dy, x + dx
+                if yy >= height or xx >= width or not mask[yy, xx]:
+                    continue
+                a, b = int(node_at[y, x]), int(node_at[yy, xx])
+                difference = 0.5 * (normalized[y, x] + normalized[yy, xx])
+                capacity = max(1, int(np.rint(smoothness * (0.05 + difference) * 1000)))
+                edges.append((a, b, capacity))
+
+        def energy(labels):
+            return int(sum(unary[node, label] for node, label in enumerate(labels))
+                       + sum(capacity for a, b, capacity in edges if labels[a] != labels[b]))
+
+        selected = np.argmax(compute_graph_cut_seam_mask(
+            colors, validity, smoothness_weight=smoothness
+        ), axis=-1)[mask]
+        exhaustive_minimum = min(
+            energy(labels) for labels in np.ndindex(*(2,) * len(coords))
+        )
+        self.assertEqual(energy(selected), exhaustive_minimum)
+
+    def test_three_and_four_camera_overlap_use_centrality_fallback(self):
+        """3+/camera pixels use centrality labels; no multi-label cut is implied."""
+        height = width = 11
+        for camera_count in (3, 4):
+            validity = np.zeros((height, width, camera_count), dtype=bool)
+            validity[1:10, 1:8, 0] = True
+            validity[1:10, 3:10, 1] = True
+            validity[2:9, 2:9, 2] = True
+            if camera_count == 4:
+                validity[1:10, 1:10, 3] = True
+            colors = np.random.default_rng(camera_count).random(
+                (height, width, camera_count, 3), dtype=np.float32
+            )
+
+            distances = np.stack([
+                ndi.distance_transform_edt(validity[..., i])
+                for i in range(camera_count)
+            ], axis=-1)
+            centrality_winner = np.argmax(np.where(validity, distances, -1.0), axis=-1)
+            fallback = validity.sum(axis=-1) >= 3
+            labels = np.argmax(compute_graph_cut_seam_mask(colors, validity), axis=-1)
+
+            self.assertTrue(fallback.any())
+            np.testing.assert_array_equal(labels[fallback], centrality_winner[fallback])
+            self.assertEqual(int(centrality_winner[5, 5]), camera_count - 1)
 
     def test_burger_like_carrier_intersection(self):
         burger_surface = {
