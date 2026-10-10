@@ -1,5 +1,6 @@
 """Actual server + native library consumers: listener policy and transport parity."""
 import json
+import hashlib
 import os
 from pathlib import Path
 import socket
@@ -148,6 +149,37 @@ class ClientTransportTests(unittest.TestCase):
                 for block in range(3):
                     self.assertEqual({s['variant'] for s in report['samples'] if s['block'] == block},
                                      set(range(7)))
+                sequence_path = directory / 'sequence.json'
+                sequence_report = directory / 'sequence-report.json'
+                sequence_path.write_text(json.dumps(dict(schema_version=1, frames=3,
+                    capture_frames=True, warmup=0, repeats=2, seed=31,
+                    variants=[dict(mode='multi_band',pyramid_boundary=p) for p in ('zero','normalized')])))
+                time.sleep(.08)
+                sequence = subprocess.run([str(BUILD / 'svctl'), *endpoint, '--timeout-ms', '3000',
+                    'research', str(sequence_path), str(sequence_report)],
+                    text=True, capture_output=True, timeout=20)
+                self.assertEqual(sequence.returncode,0,sequence.stderr+sequence.stdout)
+                sequence_data = json.loads(sequence_report.read_text())
+                self.assertTrue(sequence_data['restored'])
+                self.assertFalse(sequence_data['cursor_restored'])
+                self.assertEqual(sequence_data['restore_scope'],'fusion_surface_pause_only')
+                self.assertEqual(len(sequence_data['frame_baselines']),3)
+                self.assertEqual(len(sequence_data['samples']),12)
+                self.assertEqual(len({b['metadata']['frame_set_id'] for b in sequence_data['frame_baselines']}),3)
+                self.assertEqual(sequence_data['last_baseline_rgba_sha256'],sequence_data['restored_rgba_sha256'])
+                for sample in sequence_data['samples']:
+                    baseline = sequence_data['frame_baselines'][sample['frame_index']]['metadata']
+                    self.assertEqual(sample['metadata']['inputs'],baseline['inputs'])
+                    pixels = (directory/sample['rgba_file']).read_bytes()
+                    self.assertEqual(hashlib.sha256(pixels).hexdigest(),sample['rgba_sha256'])
+                    self.assertEqual(len(pixels),160*96*4)
+                # A repeated invocation must not truncate its previous report/captures.
+                before = sequence_report.read_bytes()
+                repeated = subprocess.run([str(BUILD / 'svctl'), *endpoint,
+                    'research', str(sequence_path), str(sequence_report)],
+                    text=True,capture_output=True,timeout=5)
+                self.assertNotEqual(repeated.returncode,0)
+                self.assertEqual(sequence_report.read_bytes(),before)
                 # Native GTest coverage is optional (SV_GTEST_TESTS); CLI checks above always run.
                 if (BUILD / 'sv-research-scenario-tests').exists():
                     test_endpoint = ({'directory': str(ipc)} if profile == 'unix' else

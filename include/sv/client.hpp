@@ -89,9 +89,11 @@ class Client
         return command("resume", {{"lease_id", std::move(lease_id)}});
     }
 
-    uint64_t step()
+    uint64_t step(std::string lease_id = {})
     {
-        return command("step");
+        return command("step", lease_id.empty()
+                                   ? boost::json::object{}
+                                   : boost::json::object{{"lease_id", std::move(lease_id)}});
     }
 
     uint64_t state()

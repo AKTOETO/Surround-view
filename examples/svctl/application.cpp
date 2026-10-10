@@ -33,15 +33,40 @@ int execute(const Options &options)
         {
             throw std::runtime_error("report must not overwrite scenario");
         }
+        client::Options connection;
+        connection.endpoint = options.endpoint;
+        connection.timeout_ms = options.timeout_ms;
+        std::function<std::string(const research::Sample &)> capture;
+        if (scenario.capture_frames)
+        {
+            const auto directory =
+                report_path.parent_path() / (report_path.filename().string() + ".frames");
+            if (!std::filesystem::create_directory(directory))
+            {
+                throw std::runtime_error("research capture directory already exists");
+            }
+            capture = [directory](const research::Sample &sample)
+            {
+                const auto name = "frame-" + std::to_string(sample.frame_index) + "-variant-" +
+                                  std::to_string(sample.variant) + "-block-" +
+                                  std::to_string(sample.block) + ".rgba";
+                std::ofstream frame(directory / name, std::ios::binary);
+                frame.write(reinterpret_cast<const char *>(sample.frame->payload.data()),
+                            sample.frame->payload.size());
+                frame.close();
+                if (!frame)
+                {
+                    throw std::runtime_error("research frame capture failed");
+                }
+                return (directory.filename() / name).generic_string();
+            };
+        }
         std::ofstream output(report_path);
         if (!output)
         {
             throw std::runtime_error("cannot open research report");
         }
-        client::Options connection;
-        connection.endpoint = options.endpoint;
-        connection.timeout_ms = options.timeout_ms;
-        const auto report = research::run(scenario, connection);
+        const auto report = research::run(scenario, connection, nullptr, {}, std::move(capture));
         output << boost::json::serialize(report) << '\n';
         output.flush();
         if (!output)

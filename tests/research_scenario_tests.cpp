@@ -12,6 +12,8 @@ TEST(ResearchScenario, DefaultsAndExplicitProfiles)
     ASSERT_EQ(scenario.variants.size(), 1U);
     EXPECT_EQ(scenario.repeats, 3U);
     EXPECT_EQ(scenario.warmup, 2U);
+    EXPECT_EQ(scenario.frames, 1U);
+    EXPECT_FALSE(scenario.capture_frames);
     EXPECT_EQ(scenario.variants[0].fusion.diagnostic, "color");
     EXPECT_DOUBLE_EQ(scenario.variants[0].fusion.angle_power, 4);
 }
@@ -24,6 +26,10 @@ TEST(ResearchScenario, RejectsUnsupportedAndUnboundedScenariosBeforeConnection)
           R"({"schema_version":1,"repeats":0,"variants":[{"mode":"edge_feather"}]})",
           R"({"schema_version":1,"repeats":1.5,"variants":[{"mode":"edge_feather"}]})",
           R"({"schema_version":1,"warmup":101,"variants":[{"mode":"edge_feather"}]})",
+          R"({"schema_version":1,"frames":0,"variants":[{"mode":"edge_feather"}]})",
+          R"({"schema_version":1,"frames":257,"variants":[{"mode":"edge_feather"}]})",
+          R"({"schema_version":1,"frames":1.5,"variants":[{"mode":"edge_feather"}]})",
+          R"({"schema_version":1,"capture_frames":1,"variants":[{"mode":"edge_feather"}]})",
           R"({"schema_version":1,"command":"shell","variants":[{"mode":"edge_feather"}]})",
           R"({"schema_version":1,"variants":[{"mode":"unknown"}]})",
           R"({"schema_version":1,"variants":[{"mode":"edge_feather","diagnostic":"unknown"}]})",
@@ -43,6 +49,21 @@ TEST(ResearchScenario, RejectsUnsupportedAndUnboundedScenariosBeforeConnection)
     }
     EXPECT_ANY_THROW(sv::research::parse_scenario(
         boost::json::object{{"schema_version", 1}, {"repeats", 1000}, {"variants", variants}}));
+}
+
+TEST(ResearchScenario, SequenceBudgetAndCaptureConsumer)
+{
+    const auto scenario = sv::research::parse_scenario(boost::json::parse(
+        R"({"schema_version":1,"frames":3,"capture_frames":true,"variants":[{"mode":"multi_band"}]})"));
+    EXPECT_EQ(scenario.frames, 3U);
+    EXPECT_TRUE(scenario.capture_frames);
+    const auto report = sv::research::run(scenario, {});
+    EXPECT_FALSE(report.at("restore_required").as_bool());
+    EXPECT_EQ(report.at("error"), "capture_frames requires a capture consumer");
+    EXPECT_THROW(
+        sv::research::parse_scenario(boost::json::parse(
+            R"({"schema_version":1,"frames":256,"repeats":40,"warmup":0,"variants":[{"mode":"multi_band"}]})")),
+        std::invalid_argument);
 }
 
 TEST(ResearchScenario, NativeFusionAndOptionalCarrierArePreserved)
@@ -115,4 +136,29 @@ TEST(ResearchScenarioIntegration, CancellationAndCallbackFailureRestoreBaseline)
         // Give the single-session server time to observe orderly disconnect.
         std::this_thread::sleep_for(std::chrono::milliseconds(80));
     }
+    auto sequence = scenario;
+    sequence.frames = 2;
+    std::atomic_bool cancel{false};
+    const auto partial =
+        sv::research::run(sequence, options, &cancel,
+                          [&](unsigned done, unsigned)
+                          {
+                              cancel =
+                                  done == 7; // First sample after advancing to the second frame.
+                          });
+    EXPECT_FALSE(partial.at("success").as_bool());
+    EXPECT_TRUE(partial.at("restored").as_bool()) << boost::json::serialize(partial);
+    EXPECT_EQ(partial.at("frame_baselines").as_array().size(), 2U);
+    EXPECT_EQ(partial.at("samples").as_array().size(), 7U);
+    EXPECT_EQ(partial.at("last_baseline_rgba_sha256"), partial.at("restored_rgba_sha256"));
+    EXPECT_FALSE(partial.at("cursor_restored").as_bool());
+    std::this_thread::sleep_for(std::chrono::milliseconds(80));
+    sequence.capture_frames = true;
+    const auto failed_capture = sv::research::run(sequence, options, nullptr, {},
+                                                  [](const sv::research::Sample &) -> std::string
+                                                  { throw std::runtime_error("capture failure"); });
+    EXPECT_FALSE(failed_capture.at("success").as_bool());
+    EXPECT_TRUE(failed_capture.at("restored").as_bool()) << boost::json::serialize(failed_capture);
+    EXPECT_EQ(failed_capture.at("error"), "capture failure");
+    std::this_thread::sleep_for(std::chrono::milliseconds(80));
 }

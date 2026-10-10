@@ -64,6 +64,69 @@ class IntegrationTests(unittest.TestCase):
             self.assertFalse((ipc/'data.sock').exists())
 
 
+    def test_native_research_prepares_stale_paused_input(self):
+        with tempfile.TemporaryDirectory(prefix='sv-research-stale-') as td:
+            directory = Path(td)
+            cfg = json.loads(CONFIG.read_text())
+            cfg['output'].update(width=160, height=96)
+            config = directory/'config.json'
+            config.write_text(json.dumps(cfg))
+            manifest = generate(directory/'fixture', cfg, 4)
+            recording = json.loads(manifest.read_text())
+            for index, row in enumerate(recording['frames']):
+                row['scenario_timestamp_ns'] = str(index * 2000000000)
+            manifest.write_text(json.dumps(recording))
+            ipc = directory/'ipc'
+            server = subprocess.Popen([str(BUILD/'sv-server'), '--config', str(config),
+                '--manifest', str(manifest), '--ipc-dir', str(ipc),
+                '--trace', str(directory/'trace.jsonl')], stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE, text=True)
+            client = None
+            try:
+                deadline = time.monotonic()+8
+                while not (ipc/'data.sock').exists():
+                    if server.poll() is not None:
+                        raise RuntimeError(server.communicate()[1])
+                    if time.monotonic()>deadline:
+                        raise TimeoutError('startup')
+                    time.sleep(.02)
+                client = Client(ipc)
+                while client.frame()[0]['health'] == 'READY':
+                    if time.monotonic()>deadline:
+                        self.fail('expected stale input between replay frames')
+                paused = client.command('pause')
+                while True:
+                    before = client.frame()[0]
+                    if int(before['state_revision']) >= int(paused['state_revision']):
+                        break
+                self.assertNotEqual(before['health'], 'READY')
+                client.close(); client = None
+                time.sleep(.08)
+                scenario = directory/'scenario.json'
+                scenario.write_text(json.dumps(dict(schema_version=1, warmup=0, repeats=1, frames=2,
+                    variants=[dict(mode='multi_band')])))
+                report = directory/'report.json'
+                result = subprocess.run([str(BUILD/'svctl'), '--unix', str(ipc),
+                    'research', str(scenario), str(report)], capture_output=True,
+                    text=True, timeout=15)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                data = json.loads(report.read_text())
+                self.assertEqual(data['ready_preparation'], 'step')
+                self.assertTrue(data['success'])
+                self.assertTrue(data['restored'])
+                self.assertFalse(data['cursor_restored'])
+                self.assertEqual(len(data['frame_baselines']), 2)
+                self.assertTrue(all(b['metadata']['health'] == 'READY'
+                                    for b in data['frame_baselines']))
+                self.assertEqual(data['last_baseline_rgba_sha256'], data['restored_rgba_sha256'])
+            finally:
+                if client:
+                    client.close()
+                server.terminate()
+                _, err = server.communicate(timeout=5)
+                self.assertEqual(server.returncode, 0, err)
+
+
     def test_runtime_fusion_on_identical_paused_inputs(self):
         with tempfile.TemporaryDirectory(prefix='sv-fusion-runtime-') as td:
             directory = Path(td)

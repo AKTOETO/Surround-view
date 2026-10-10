@@ -46,12 +46,21 @@ double positive(const boost::json::value &value, double high)
 Scenario parse_scenario(const boost::json::value &value)
 {
     const auto &object = value.as_object();
-    keys(object, {"schema_version", "variants", "repeats", "warmup", "seed"});
+    keys(object,
+         {"schema_version", "variants", "repeats", "warmup", "seed", "frames", "capture_frames"});
     if (integer(object.at("schema_version"), 1, 1) != 1)
     {
         throw std::invalid_argument("scenario schema version");
     }
     Scenario result;
+    if (auto v = object.if_contains("frames"))
+    {
+        result.frames = integer(*v, 1, 256);
+    }
+    if (auto v = object.if_contains("capture_frames"))
+    {
+        result.capture_frames = v->as_bool();
+    }
     if (auto v = object.if_contains("repeats"))
     {
         result.repeats = integer(*v, 1, 1000);
@@ -66,7 +75,7 @@ Scenario parse_scenario(const boost::json::value &value)
     }
     const auto &variants = object.at("variants").as_array();
     if (variants.empty() || variants.size() > 32 ||
-        variants.size() * (result.repeats + result.warmup) > 10000)
+        variants.size() * (result.repeats + result.warmup) * result.frames > 10000)
     {
         throw std::invalid_argument("scenario trial budget exceeded");
     }

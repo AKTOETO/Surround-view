@@ -15,6 +15,9 @@ TEST(ExperimentLease, OwnershipDeadlineRenewalAndBaseline)
     EXPECT_FALSE(lease.allows("configure_fusion", "other", id, 100));
     EXPECT_FALSE(lease.allows("configure_fusion", "owner", "bad", 100));
     EXPECT_TRUE(lease.allows("configure_fusion", "owner", id, 100));
+    EXPECT_TRUE(lease.allows("step", "owner", id, 100));
+    EXPECT_FALSE(lease.allows("step", "other", id, 100));
+    EXPECT_FALSE(lease.allows("step", "owner", "", 100));
     EXPECT_FALSE(lease.allows("apply_calibration", "owner", id, 100));
     EXPECT_FALSE(lease.allows("orbit", "owner", id, 100));
     EXPECT_TRUE(lease.allows("state", "other", "", 100));
@@ -23,6 +26,7 @@ TEST(ExperimentLease, OwnershipDeadlineRenewalAndBaseline)
     EXPECT_TRUE(lease.expired(250000200));
     EXPECT_FALSE(lease.renew("owner", id, 250000200, error));
     EXPECT_FALSE(lease.allows("pause", "owner", id, 250000200));
+    EXPECT_FALSE(lease.allows("step", "owner", id, 250000200));
     lease.start_restore();
     EXPECT_FALSE(lease.allows("configure_fusion", "owner", id, 201));
     lease.complete();

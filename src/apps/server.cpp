@@ -380,6 +380,7 @@ ServerIO::ServerIO(const sv::Connections &n, const std::string &source_type,
     if (source_type == "replay")
     {
         capabilities.push_back("step");
+        capabilities.push_back("experiment_step_v1");
     }
     try
     {

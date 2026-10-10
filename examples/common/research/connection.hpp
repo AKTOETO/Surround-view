@@ -15,6 +15,7 @@ class Connection
     explicit Connection(client::Options);
     boost::json::object request(std::string, boost::json::object = {});
     std::shared_ptr<const Message> frame(const std::string &state_revision);
+    bool supports(std::string_view capability) const;
 
   private:
 
@@ -28,6 +29,7 @@ class Connection
     std::deque<std::shared_ptr<const Message>> frames_;
     unsigned timeout_ms_;
     bool overflow_ = false;
+    boost::json::array capabilities_;
     // Must be destroyed before callback state above.
     client::Client client_;
 };

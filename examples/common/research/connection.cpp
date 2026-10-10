@@ -22,6 +22,10 @@ Connection::Connection(client::Options options)
     while (true)
     {
         auto event = next(deadline);
+        if (event.message && event.message->type == 2)
+        {
+            capabilities_ = event.message->header.at("capabilities").as_array();
+        }
         if (event.kind == client::Event::Kind::State && event.detail == "ready")
         {
             break;
@@ -31,6 +35,18 @@ Connection::Connection(client::Options options)
             retain_frame(event.message);
         }
     }
+}
+
+bool Connection::supports(std::string_view capability) const
+{
+    for (const auto &value : capabilities_)
+    {
+        if (value.is_string() && value.as_string() == capability)
+        {
+            return true;
+        }
+    }
+    return false;
 }
 
 void Connection::enqueue(client::Event event)

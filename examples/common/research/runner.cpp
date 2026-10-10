@@ -54,7 +54,8 @@ std::string text(const boost::json::object &object, const char *key)
     return std::string(object.at(key).as_string());
 }
 
-boost::json::array summaries(const boost::json::array &samples, size_t variant_count)
+boost::json::array summaries(const boost::json::array &samples, size_t variant_count,
+                             std::optional<unsigned> frame_index = {})
 {
     boost::json::array result;
     for (size_t variant = 0; variant < variant_count; ++variant)
@@ -68,7 +69,8 @@ boost::json::array summaries(const boost::json::array &samples, size_t variant_c
             {
                 const auto &sample = value.as_object();
                 if (sample.at("warmup").as_bool() ||
-                    sample.at("variant").to_number<size_t>() != variant)
+                    sample.at("variant").to_number<size_t>() != variant ||
+                    (frame_index && sample.at("frame_index").to_number<unsigned>() != *frame_index))
                 {
                     continue;
                 }
@@ -99,7 +101,8 @@ boost::json::array summaries(const boost::json::array &samples, size_t variant_c
 
 boost::json::object run(const Scenario &scenario, const client::Options &options,
                         const std::atomic_bool *cancel,
-                        std::function<void(unsigned, unsigned)> progress)
+                        std::function<void(unsigned, unsigned)> progress,
+                        std::function<std::string(const Sample &)> capture)
 {
     boost::json::array variants;
     for (const auto &variant : scenario.variants)
@@ -115,24 +118,30 @@ boost::json::object run(const Scenario &scenario, const client::Options &options
                                     {"variants", variants},
                                     {"repeats", scenario.repeats},
                                     {"warmup", scenario.warmup},
-                                    {"seed", scenario.seed}};
+                                    {"seed", scenario.seed},
+                                    {"frames", scenario.frames},
+                                    {"capture_frames", scenario.capture_frames}};
     // Also validate callers that construct Scenario directly (e.g. future GUI).
     (void)parse_scenario(description);
     const auto serialized = boost::json::serialize(description);
-    boost::json::object report{{"schema_version", 1},
-                               {"scenario", description},
-                               {"scenario_sha256", hash(serialized.data(), serialized.size())},
-                               {"experiment", "paused_frame_fusion_screen"},
-                               {"success", false},
-                               {"restore_required", false},
-                               {"restored", false},
-                               {"samples", boost::json::array{}},
-                               {"limitation",
-                                "One paused frame set; no independent quality truth, "
-                                "temporal reset, sustained FPS, or durable progress checkpoints"}};
+    boost::json::object report{
+        {"schema_version", 1},
+        {"scenario", description},
+        {"scenario_sha256", hash(serialized.data(), serialized.size())},
+        {"experiment",
+         scenario.frames == 1 ? "paused_frame_fusion_screen" : "paused_sequence_fusion_screen"},
+        {"success", false},
+        {"restore_required", false},
+        {"restored", false},
+        {"samples", boost::json::array{}},
+        {"frame_baselines", boost::json::array{}},
+        {"restore_scope", "fusion_surface_pause_only"},
+        {"cursor_restored", false},
+        {"limitation", "Sequential paused frame sets; no independent quality truth, "
+                       "cursor/history reset, sustained FPS, or durable progress checkpoints"}};
     std::unique_ptr<Connection> connection;
     boost::json::object original;
-    std::string revision, lease_id;
+    std::string revision, lease_id, restore_reference;
     auto check_cancel = [&]
     {
         if (cancel && cancel->load())
@@ -143,7 +152,17 @@ boost::json::object run(const Scenario &scenario, const client::Options &options
     try
     {
         check_cancel();
+        if (scenario.capture_frames && !capture)
+        {
+            throw std::runtime_error("capture_frames requires a capture consumer");
+        }
         connection = std::make_unique<Connection>(options);
+        const bool lease_step = connection->supports("experiment_step_v1");
+        report["lease_step_supported"] = lease_step;
+        if (scenario.frames > 1 && !lease_step)
+        {
+            throw std::runtime_error("server lacks experiment_step_v1");
+        }
         const auto catalog = accepted(*connection, "fusion_catalog");
         report["catalog"] = catalog.at("fusion_catalog");
         original = accepted(*connection, "state");
@@ -158,7 +177,14 @@ boost::json::object run(const Scenario &scenario, const client::Options &options
         revision = text(acquired, "config_revision");
         report["restore_required"] = true;
         const auto paused = accepted(*connection, "pause", {{"lease_id", lease_id}});
-        const auto baseline = connection->frame(text(paused, "state_revision"));
+        auto baseline = connection->frame(text(paused, "state_revision"));
+        report["ready_preparation"] = "paused_current";
+        if (baseline->header.at("health") != "READY" && lease_step)
+        {
+            const auto stepped = accepted(*connection, "step", {{"lease_id", lease_id}});
+            baseline = connection->frame(text(stepped, "state_revision"));
+            report["ready_preparation"] = "step";
+        }
         if (baseline->header.at("health") != "READY" ||
             baseline->header.at("source_type") != "replay")
         {
@@ -168,67 +194,116 @@ boost::json::object run(const Scenario &scenario, const client::Options &options
         report["baseline_rgba_sha256"] = hash(baseline->payload.data(), baseline->payload.size());
         std::mt19937 random(scenario.seed);
         unsigned completed = 0;
-        const unsigned total = scenario.variants.size() * (scenario.warmup + scenario.repeats);
-        // Warmup blocks are also complete blocks; every measurement re-applies its profile.
-        for (unsigned block = 0; block < scenario.warmup + scenario.repeats; ++block)
+        const unsigned total =
+            scenario.variants.size() * (scenario.warmup + scenario.repeats) * scenario.frames;
+        for (unsigned frame_index = 0; frame_index < scenario.frames; ++frame_index)
         {
-            std::vector<size_t> order(scenario.variants.size());
-            std::iota(order.begin(), order.end(), 0);
-            std::shuffle(order.begin(), order.end(), random);
-            for (const auto index : order)
+            if (frame_index)
             {
                 check_cancel();
                 accepted(*connection, "experiment_renew", {{"lease_id", lease_id}});
-                const auto &variant = scenario.variants[index];
-                if (variant.surface)
+                const auto state = accepted(*connection, "state");
+                if (state.at("surface") != original.at("surface"))
                 {
                     const auto surface_ack = accepted(*connection, "configure_surface",
                                                       {{"base_config_revision", revision},
-                                                       {"surface", *variant.surface},
+                                                       {"surface", original.at("surface")},
                                                        {"lease_id", lease_id}});
                     revision = text(surface_ack, "config_revision");
                 }
-                else
+                const auto fusion_ack = accepted(*connection, "configure_fusion",
+                                                 {{"base_config_revision", revision},
+                                                  {"fusion", original.at("fusion")},
+                                                  {"lease_id", lease_id}});
+                revision = text(fusion_ack, "config_revision");
+                const auto stepped = accepted(*connection, "step", {{"lease_id", lease_id}});
+                auto next = connection->frame(text(stepped, "state_revision"));
+                if (next->header.at("health") != "READY" ||
+                    next->header.at("source_type") != "replay" ||
+                    next->header.at("frame_set_id") == baseline->header.at("frame_set_id") ||
+                    next->header.at("fusion") != original.at("fusion") ||
+                    next->header.at("surface") != original.at("surface"))
                 {
-                    // An omitted surface means the baseline, not the previous variant's carrier.
-                    const auto state = accepted(*connection, "state");
-                    if (state.at("surface") != original.at("surface"))
+                    throw std::runtime_error("sequence step provenance mismatch");
+                }
+                baseline = std::move(next);
+            }
+            restore_reference = hash(baseline->payload.data(), baseline->payload.size());
+            report["last_baseline_rgba_sha256"] = restore_reference;
+            report.at("frame_baselines")
+                .as_array()
+                .push_back(boost::json::object{{"frame_index", frame_index},
+                                               {"metadata", baseline->header},
+                                               {"rgba_sha256", restore_reference}});
+            // Warmup blocks are also complete blocks; every measurement re-applies its profile.
+            for (unsigned block = 0; block < scenario.warmup + scenario.repeats; ++block)
+            {
+                std::vector<size_t> order(scenario.variants.size());
+                std::iota(order.begin(), order.end(), 0);
+                std::shuffle(order.begin(), order.end(), random);
+                for (const auto index : order)
+                {
+                    check_cancel();
+                    accepted(*connection, "experiment_renew", {{"lease_id", lease_id}});
+                    const auto &variant = scenario.variants[index];
+                    if (variant.surface)
                     {
                         const auto surface_ack = accepted(*connection, "configure_surface",
                                                           {{"base_config_revision", revision},
-                                                           {"surface", original.at("surface")},
+                                                           {"surface", *variant.surface},
                                                            {"lease_id", lease_id}});
                         revision = text(surface_ack, "config_revision");
                     }
-                }
-                const auto fusion = settings(variant.fusion);
-                auto ack = accepted(*connection, "configure_fusion",
-                                    {{"base_config_revision", revision},
-                                     {"fusion", fusion},
-                                     {"lease_id", lease_id}});
-                revision = text(ack, "config_revision");
-                auto frame = connection->frame(text(ack, "state_revision"));
-                if (text(frame->header, "config_revision") != revision ||
-                    frame->header.at("fusion") != fusion ||
-                    frame->header.at("surface") != (variant.surface
-                                                        ? boost::json::value(*variant.surface)
-                                                        : original.at("surface")) ||
-                    frame->header.at("inputs") != baseline->header.at("inputs") ||
-                    frame->header.at("frame_set_id") != baseline->header.at("frame_set_id") ||
-                    frame->header.at("health") != "READY")
-                {
-                    throw std::runtime_error("trial provenance mismatch");
-                }
-                report.at("samples").as_array().push_back(boost::json::object{
-                    {"variant", index},
-                    {"block", block},
-                    {"warmup", block < scenario.warmup},
-                    {"metadata", frame->header},
-                    {"rgba_sha256", hash(frame->payload.data(), frame->payload.size())}});
-                ++completed;
-                if (progress)
-                {
-                    progress(completed, total);
+                    else
+                    {
+                        // An omitted surface means the baseline, not the previous variant's
+                        // carrier.
+                        const auto state = accepted(*connection, "state");
+                        if (state.at("surface") != original.at("surface"))
+                        {
+                            const auto surface_ack = accepted(*connection, "configure_surface",
+                                                              {{"base_config_revision", revision},
+                                                               {"surface", original.at("surface")},
+                                                               {"lease_id", lease_id}});
+                            revision = text(surface_ack, "config_revision");
+                        }
+                    }
+                    const auto fusion = settings(variant.fusion);
+                    auto ack = accepted(*connection, "configure_fusion",
+                                        {{"base_config_revision", revision},
+                                         {"fusion", fusion},
+                                         {"lease_id", lease_id}});
+                    revision = text(ack, "config_revision");
+                    auto frame = connection->frame(text(ack, "state_revision"));
+                    if (text(frame->header, "config_revision") != revision ||
+                        frame->header.at("fusion") != fusion ||
+                        frame->header.at("surface") != (variant.surface
+                                                            ? boost::json::value(*variant.surface)
+                                                            : original.at("surface")) ||
+                        frame->header.at("inputs") != baseline->header.at("inputs") ||
+                        frame->header.at("frame_set_id") != baseline->header.at("frame_set_id") ||
+                        frame->header.at("health") != "READY")
+                    {
+                        throw std::runtime_error("trial provenance mismatch");
+                    }
+                    boost::json::object sample{
+                        {"frame_index", frame_index},
+                        {"variant", index},
+                        {"block", block},
+                        {"warmup", block < scenario.warmup},
+                        {"metadata", frame->header},
+                        {"rgba_sha256", hash(frame->payload.data(), frame->payload.size())}};
+                    if (scenario.capture_frames && !sample.at("warmup").as_bool())
+                    {
+                        sample["rgba_file"] = capture(
+                            {frame_index, static_cast<unsigned>(index), block, false, frame});
+                    }
+                    report.at("samples").as_array().push_back(std::move(sample));
+                    ++completed;
+                    if (progress)
+                    {
+                        progress(completed, total);
+                    }
                 }
             }
         }
@@ -261,8 +336,8 @@ boost::json::object run(const Scenario &scenario, const client::Options &options
             report["restored_frame"] = frame->header;
             report["restored_rgba_sha256"] = hash(frame->payload.data(), frame->payload.size());
             if (frame->header.at("fusion") != original.at("fusion") ||
-                (report.contains("baseline_rgba_sha256") &&
-                 report.at("restored_rgba_sha256") != report.at("baseline_rgba_sha256")))
+                (!restore_reference.empty() &&
+                 text(report, "restored_rgba_sha256") != restore_reference))
             {
                 throw std::runtime_error("restore output mismatch");
             }
@@ -300,6 +375,15 @@ boost::json::object run(const Scenario &scenario, const client::Options &options
         }
     }
     report["summaries"] = summaries(report.at("samples").as_array(), scenario.variants.size());
+    boost::json::array frame_summaries;
+    for (unsigned index = 0; index < report.at("frame_baselines").as_array().size(); ++index)
+    {
+        frame_summaries.push_back(
+            boost::json::object{{"frame_index", index},
+                                {"variants", summaries(report.at("samples").as_array(),
+                                                       scenario.variants.size(), index)}});
+    }
+    report["frame_summaries"] = std::move(frame_summaries);
     report["percentile_definition"] = "nearest rank; warmup excluded; per-frame timings, not FPS";
     return report;
 }
