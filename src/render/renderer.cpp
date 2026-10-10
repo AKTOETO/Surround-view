@@ -1,6 +1,7 @@
 #include "sv/renderer.hpp"
 #include "sv/fusion.hpp"
 #include "sv/fusion_runtime.hpp"
+#include "sv/render_inspection.hpp"
 #include "sv/shaders.hpp"
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
@@ -437,8 +438,12 @@ Renderer::Renderer(const Config &c) : impl_(std::make_unique<Impl>())
 
 Renderer::~Renderer() = default;
 
-Image Renderer::render(const FrameSet &set, const View &view)
+Image Renderer::render(const FrameSet &set, const View &view, RenderInspection *inspection)
 {
+    if (inspection)
+    {
+        *inspection = {};
+    }
     auto &i = *impl_;
     auto &c = i.config;
     i.timing = {};
@@ -626,6 +631,12 @@ Image Renderer::render(const FrameSet &set, const View &view)
             ego = read();
         }
         check("research layer readback");
+        if (inspection)
+        {
+            inspection->samples = samples;
+            inspection->fallback_rgba = out;
+            inspection->ego_rgba = ego;
+        }
         i.timing.layer_readback_cpu_ms = (now_ns() - layer_start) / 1e6;
         const auto fusion_start = now_ns();
         const auto fused = fuse_research(samples, c.fusion);

@@ -4,6 +4,8 @@
 
 namespace sv
 {
+struct RenderInspection;
+
 struct RenderTiming
 {
     double fusion_cpu_ms = 0, layer_readback_cpu_ms = 0;
@@ -27,7 +29,7 @@ class Renderer
     // Render-thread only; caller must validate and prepare settings before publishing.
     void set_fusion(Fusion) noexcept;
     void set_surface(Surface); // Prepare mesh buffers before committing; render-thread only.
-    Image render(const FrameSet &, const View &);
+    Image render(const FrameSet &, const View &, RenderInspection *inspection = nullptr);
     std::vector<Pixel> project_points(const Camera &, const std::vector<Vec3> &);
     std::string vendor() const;
     std::string device() const;
