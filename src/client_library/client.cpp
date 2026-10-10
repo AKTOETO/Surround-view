@@ -24,6 +24,7 @@ struct Client::Impl
     std::atomic<bool> stopped{false};
     std::atomic<uint64_t> next_id{0};
     std::atomic<size_t> submitted{0};
+    std::atomic<size_t> releases_submitted{0};
 
     struct Channel
     {
@@ -501,15 +502,15 @@ void Client::release(const boost::json::object &frame)
     {
         entry.value().as_string();
     }
-    if (i.submitted.fetch_add(1) >= i.options.command_capacity)
+    if (i.releases_submitted.fetch_add(1) >= i.options.command_capacity)
     {
-        --i.submitted;
+        --i.releases_submitted;
         throw std::runtime_error("release submission queue full");
     }
     asio::post(i.io,
                [&i, h = std::move(h)]
                {
-                   --i.submitted;
+                   --i.releases_submitted;
                    if (i.ready && h.at("session_id").as_string() == i.session)
                    {
                        i.send(i.data, {22, h, {}});

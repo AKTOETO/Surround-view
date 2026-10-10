@@ -25,6 +25,7 @@ class FrameProvider : public QQuickImageProvider
 
 class Bridge : public QObject
 {
+    friend struct ClientBridgeTestAccess;
     Q_OBJECT
     Q_PROPERTY(QString frameUrl READ frameUrl NOTIFY changed)
     Q_PROPERTY(QString status READ status NOTIFY changed)

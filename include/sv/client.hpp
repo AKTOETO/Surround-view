@@ -149,6 +149,7 @@ class Client
     }
 
     // Release a delivered frame after consuming/copying it; old-session releases are ignored.
+    // Uses an independent bounded submission budget, so queued commands cannot starve release.
     void release(const boost::json::object &frame);
     // Blocking shutdown; call from the owning thread, never from a callback.
     void stop();

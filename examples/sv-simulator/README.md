@@ -47,3 +47,9 @@ The current server protocol does not expose arbitrary config read/update, source
 The GUI and visual driving preview have been compiled/smoke-tested on Linux. Remote two-host operation, Aurora, physical cameras, and using the driving preview as a live camera producer have not been accepted. Read [[engineering/CLIENT_LIBRARY]], [[engineering/USAGE]], and [[architecture/CLIENT_SERVER_MODEL]] for the current protocol boundary.
 
 Runtime command errors reported locally by the client library also end the pending operation. They are displayed as an unconfirmed request, not as a server rejection; mutations are never retried automatically. A lost session can have an unknown mutation outcome. Frame queue limits do not discard command acknowledgements or connection lifecycle events. The separate C++ regression is available as `ctest --test-dir build -R simulator_runtime_errors --output-on-failure`.
+
+Explicit command-line endpoints also populate the connection panel. Invalid timeout/endpoint input is checked before stopping the current connection or saving replacement settings. Unix discovery skips directories longer than the transport's 80 UTF-8 byte limit and continues to later candidates; the last successful Unix directory is saved after the ready handshake. TCP preferences are stored when a valid connection attempt starts.
+
+On session loss, discovery/replacement, or explicit disconnect, cached images, frame metrics, runtime snapshots, calibration command tracking and the implicit last calibration job ID are cleared. A job from an old session must be selected explicitly and remains subject to server ownership checks. Client transport failures for tracked calibration commands are shown as unconfirmed outcomes.
+
+Frame image URLs include both session ID and frame ID, preventing cache/load identity collisions when a new session reuses frame numbers. The touchscreen client also ignores late image-ready notifications for a URL that is no longer current.

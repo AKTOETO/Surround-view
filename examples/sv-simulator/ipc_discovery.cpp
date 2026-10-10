@@ -8,7 +8,10 @@ QStringList discover_local_ipc_candidates(const QStringList &candidate_directori
     for (const auto &candidate : candidate_directories)
     {
         const auto normalized = QDir::cleanPath(candidate);
-        if (!QDir::isAbsolutePath(normalized) || result.contains(normalized))
+        // Match sv-client-lib's Unix directory limit (UTF-8 bytes), otherwise
+        // discovery can stop at a candidate the transport will never accept.
+        if (!QDir::isAbsolutePath(normalized) || normalized.toStdString().size() > 80 ||
+            result.contains(normalized))
         {
             continue;
         }

@@ -4,6 +4,7 @@
 #include <QProcessEnvironment>
 #include <QSettings>
 #include <QStandardPaths>
+#include <QUrl>
 #include <chrono>
 #include <iostream>
 #include <mutex>
@@ -52,9 +53,10 @@ SimulatorBridge::SimulatorBridge(sv::client::Endpoint endpoint, SimulatorFramePr
     }
     else
     {
-        beginConnection(std::move(endpoint), timeoutMs_, reconnectMs_, maxRetries_,
-                        endpoint.transport == sv::client::Endpoint::Transport::Unix ? unixDirectory_
-                                                                                    : tcpHost_);
+        const auto label = endpoint.transport == sv::client::Endpoint::Transport::Unix
+                               ? QString::fromStdString(endpoint.directory)
+                               : QString::fromStdString(endpoint.host);
+        beginConnection(std::move(endpoint), timeoutMs_, reconnectMs_, maxRetries_, label);
     }
 }
 
@@ -73,6 +75,13 @@ void SimulatorBridge::consume(sv::client::Event event)
         if (event.kind == sv::client::Event::Kind::Error && event.message)
         {
             runtime_settings_.commandFailed(event.message->header, event.detail);
+            const auto *id = event.message->header.if_contains("command_id");
+            if (id &&
+                calibration_commands_.erase(sv::parse_decimal_u64(std::string(id->as_string()))))
+            {
+                calibrationStatus_ =
+                    "Запрос калибровки не подтверждён: " + QString::fromStdString(event.detail);
+            }
         }
         status_ = QString::fromStdString(event.detail);
         if (event.detail == "ready")
@@ -93,6 +102,7 @@ void SimulatorBridge::consume(sv::client::Event event)
         }
         else if (event.kind == sv::client::Event::Kind::State)
         {
+            resetSessionState();
             runtime_settings_.attach(client_);
         }
         emit changed();
@@ -191,7 +201,8 @@ void SimulatorBridge::consume(sv::client::Event event)
     const int height = static_cast<int>(h.at("height").as_int64());
     provider_->setImage(QImage(m.payload.data(), w, height, w * 4, QImage::Format_RGBA8888).copy());
     auto frame = QString::fromStdString(std::string(h.at("frame_id").as_string()));
-    url_ = "image://frames/" + frame;
+    const auto session = QString::fromStdString(std::string(h.at("session_id").as_string()));
+    url_ = "image://frames/" + QString::fromLatin1(QUrl::toPercentEncoding(session)) + "/" + frame;
 
     status_ = QString::fromStdString(std::string(h.at("health").as_string())) +
               (h.at("paused").as_bool() ? " · Пауза" : "") +
@@ -233,6 +244,18 @@ void SimulatorBridge::consume(sv::client::Event event)
     emit frameReceived();
 }
 
+void SimulatorBridge::resetSessionState()
+{
+    lastCalibJobId_.clear();
+    calibration_commands_.clear();
+    calibrationStatus_ = "Нет калибровочной задачи в текущей сессии";
+    serverInfo_ = "Ожидание состояния текущей сессии";
+    pipelineInfo_ = "Нет данных о задержках текущей сессии";
+    sourceInfo_ = "Источник и камеры появятся после первого кадра текущей сессии";
+    url_.clear();
+    provider_->setImage({});
+}
+
 void SimulatorBridge::beginConnection(sv::client::Endpoint endpoint, int timeout, int reconnect,
                                       int retries, const QString &label)
 {
@@ -240,6 +263,16 @@ void SimulatorBridge::beginConnection(sv::client::Endpoint endpoint, int timeout
         retries > 1000)
     {
         status_ = "Проверьте timeout, интервал reconnect и число попыток";
+        emit changed();
+        return;
+    }
+    const bool unixEndpoint = endpoint.transport == sv::client::Endpoint::Transport::Unix;
+    if ((unixEndpoint && (endpoint.directory.empty() || endpoint.directory.size() > 80 ||
+                          !QDir::isAbsolutePath(QString::fromStdString(endpoint.directory)))) ||
+        (!unixEndpoint && (endpoint.host.empty() || !endpoint.control_port || !endpoint.data_port ||
+                           endpoint.control_port == endpoint.data_port)))
+    {
+        status_ = "Недопустимый endpoint; текущее соединение сохранено";
         emit changed();
         return;
     }
@@ -251,13 +284,26 @@ void SimulatorBridge::beginConnection(sv::client::Endpoint endpoint, int timeout
         client_.reset();
     }
     pending_frames_ = 0;
-    calibration_commands_.clear();
+    resetSessionState();
     runtime_settings_.attach({});
     status_ = "Подключение: " + label;
     timeoutMs_ = timeout;
     reconnectMs_ = reconnect;
     maxRetries_ = retries;
     QSettings settings("MAI", "surround-view-simulator");
+    if (unixEndpoint)
+    {
+        unixDirectory_ = QString::fromStdString(endpoint.directory);
+    }
+    else
+    {
+        tcpHost_ = QString::fromStdString(endpoint.host);
+        controlPort_ = endpoint.control_port;
+        dataPort_ = endpoint.data_port;
+        settings.setValue("connection/tcp_host", tcpHost_);
+        settings.setValue("connection/control_port", controlPort_);
+        settings.setValue("connection/data_port", dataPort_);
+    }
     settings.setValue("connection/timeout_ms", timeoutMs_);
     settings.setValue("connection/reconnect_ms", reconnectMs_);
     settings.setValue("connection/max_retries", maxRetries_);
@@ -330,19 +376,17 @@ void SimulatorBridge::beginConnection(sv::client::Endpoint endpoint, int timeout
 void SimulatorBridge::connectUnix(const QString &directory, int timeout, int reconnect, int retries)
 {
     discovery_candidates_.clear();
-    unixDirectory_ = QDir::cleanPath(directory.trimmed());
-    if (!QDir::isAbsolutePath(unixDirectory_))
+    const auto path = QDir::cleanPath(directory.trimmed());
+    if (!QDir::isAbsolutePath(path))
     {
         status_ = "Путь Unix socket должен быть абсолютным";
         emit changed();
         return;
     }
-    QSettings settings("MAI", "surround-view-simulator");
-    settings.setValue("connection/unix_directory", unixDirectory_);
     sv::client::Endpoint endpoint;
     endpoint.transport = sv::client::Endpoint::Transport::Unix;
-    endpoint.directory = unixDirectory_.toStdString();
-    beginConnection(std::move(endpoint), timeout, reconnect, retries, unixDirectory_);
+    endpoint.directory = path.toStdString();
+    beginConnection(std::move(endpoint), timeout, reconnect, retries, path);
 }
 
 void SimulatorBridge::connectTcp(const QString &host, int controlPort, int dataPort, int timeout,
@@ -356,20 +400,13 @@ void SimulatorBridge::connectTcp(const QString &host, int controlPort, int dataP
         emit changed();
         return;
     }
-    tcpHost_ = host.trimmed();
-    controlPort_ = controlPort;
-    dataPort_ = dataPort;
-    QSettings settings("MAI", "surround-view-simulator");
-    settings.setValue("connection/tcp_host", tcpHost_);
-    settings.setValue("connection/control_port", controlPort_);
-    settings.setValue("connection/data_port", dataPort_);
     sv::client::Endpoint endpoint;
     endpoint.transport = sv::client::Endpoint::Transport::Tcp;
-    endpoint.host = tcpHost_.toStdString();
-    endpoint.control_port = static_cast<uint16_t>(controlPort_);
-    endpoint.data_port = static_cast<uint16_t>(dataPort_);
+    endpoint.host = host.trimmed().toStdString();
+    endpoint.control_port = static_cast<uint16_t>(controlPort);
+    endpoint.data_port = static_cast<uint16_t>(dataPort);
     beginConnection(std::move(endpoint), timeout, reconnect, retries,
-                    QString("%1:%2/%3").arg(tcpHost_).arg(controlPort_).arg(dataPort_));
+                    QString("%1:%2/%3").arg(host.trimmed()).arg(controlPort).arg(dataPort));
 }
 
 void SimulatorBridge::discoverLocal(int timeout, int reconnect)
@@ -388,6 +425,7 @@ void SimulatorBridge::discoverLocal(int timeout, int reconnect)
     }
     pending_frames_ = 0;
     discovery_candidates_.clear();
+    resetSessionState();
     runtime_settings_.attach({});
     discovery_index_ = 0;
     discovery_timeout_ms_ = timeout;
@@ -444,6 +482,7 @@ void SimulatorBridge::tryNextDiscoveryCandidate()
 
 void SimulatorBridge::disconnectFromServer()
 {
+    resetSessionState();
     runtime_settings_.attach({});
     ++connection_generation_;
     discovery_candidates_.clear();

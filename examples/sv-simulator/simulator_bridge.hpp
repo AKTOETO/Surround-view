@@ -31,6 +31,7 @@ class SimulatorFrameProvider : public QQuickImageProvider
 
 class SimulatorBridge : public QObject
 {
+    friend struct SimulatorBridgeTestAccess;
     Q_OBJECT
     Q_PROPERTY(QString frameUrl READ frameUrl NOTIFY changed)
     Q_PROPERTY(QString status READ status NOTIFY changed)
@@ -147,6 +148,7 @@ class SimulatorBridge : public QObject
     void beginConnection(sv::client::Endpoint endpoint, int timeoutMs, int reconnectMs,
                          int maxRetries, const QString &label);
     void tryNextDiscoveryCandidate();
+    void resetSessionState();
 
     std::shared_ptr<sv::client::Client> client_;
     RuntimeSettings runtime_settings_;

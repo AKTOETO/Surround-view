@@ -1,4 +1,5 @@
 #include "bridge.hpp"
+#include <QUrl>
 #include <chrono>
 #include <iostream>
 #include <mutex>
@@ -82,6 +83,16 @@ void Bridge::consume(sv::client::Event event)
 {
     if (event.kind != sv::client::Event::Kind::Message)
     {
+        if (event.kind == sv::client::Event::Kind::State && event.detail != "ready")
+        {
+            url_.clear();
+            readyFrame_.clear();
+            lastPresented_.clear();
+            serverInfo_ = "Ожидание состояния текущей сессии";
+            pipelineInfo_ = "Ожидание первого кадра текущей сессии";
+            sourceInfo_ = "Нет данных об источниках текущей сессии";
+            provider_->setImage({});
+        }
         status_ = QString::fromStdString(event.detail);
         emit changed();
         return;
@@ -111,7 +122,8 @@ void Bridge::consume(sv::client::Event event)
     const int w = h.at("width").as_int64(), height = h.at("height").as_int64();
     provider_->setImage(QImage(m.payload.data(), w, height, w * 4, QImage::Format_RGBA8888).copy());
     auto frame = QString::fromStdString(std::string(h.at("frame_id").as_string()));
-    url_ = "image://frames/" + frame;
+    const auto session = QString::fromStdString(std::string(h.at("session_id").as_string()));
+    url_ = "image://frames/" + QString::fromLatin1(QUrl::toPercentEncoding(session)) + "/" + frame;
     // Server monotonic timestamps cannot be subtracted from a remote client's clock.
     status_ = QString::fromStdString(std::string(h.at("health").as_string())) +
               (h.at("paused").as_bool() ? " · Пауза" : "") +
@@ -180,7 +192,10 @@ void Bridge::action(QString type)
 
 void Bridge::imageReady(QString url)
 {
-    readyFrame_ = url.section('/', -1);
+    if (url == url_)
+    {
+        readyFrame_ = url.section('/', -1);
+    }
 }
 
 void Bridge::presented()

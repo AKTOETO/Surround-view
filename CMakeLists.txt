@@ -281,6 +281,10 @@ install(FILES packaging/licenses/OpenCV-Apache-2.0.txt packaging/licenses/GLM-co
 
 if(BUILD_TESTING AND SV_GTEST_TESTS)
   find_package(GTest CONFIG REQUIRED)
+  add_executable(sv-client-release-tests tests/client_release_tests.cpp)
+  target_link_libraries(sv-client-release-tests PRIVATE sv-client-lib GTest::gtest_main)
+  add_test(NAME client_release_budget COMMAND sv-client-release-tests)
+  set_tests_properties(client_release_budget PROPERTIES TIMEOUT 15)
   add_executable(sv-calibration-observation-tests tests/calibration_observations.cpp)
   target_link_libraries(sv-calibration-observation-tests PRIVATE sv-vision GTest::gtest_main)
   add_test(NAME calibration_observations COMMAND sv-calibration-observation-tests)
@@ -303,6 +307,16 @@ if(BUILD_TESTING AND SV_GTEST_TESTS)
     target_link_libraries(sv-simulator-runtime-tests PRIVATE
       sv-client-lib Qt${QT_VERSION_MAJOR}::Core GTest::gtest)
     add_test(NAME simulator_runtime_errors COMMAND sv-simulator-runtime-tests --unit)
+    add_executable(sv-simulator-session-tests tests/simulator_session_tests.cpp
+      examples/sv-client/bridge.cpp examples/sv-client/bridge.hpp
+      examples/sv-simulator/simulator_bridge.cpp examples/sv-simulator/simulator_bridge.hpp
+      examples/sv-simulator/runtime_settings.cpp examples/sv-simulator/runtime_settings.hpp
+      examples/sv-simulator/ipc_discovery.cpp)
+    set_target_properties(sv-simulator-session-tests PROPERTIES AUTOMOC ON)
+    target_include_directories(sv-simulator-session-tests PRIVATE examples/sv-simulator examples/sv-client)
+    target_link_libraries(sv-simulator-session-tests PRIVATE sv-client-lib
+      Qt${QT_VERSION_MAJOR}::Core Qt${QT_VERSION_MAJOR}::Gui Qt${QT_VERSION_MAJOR}::Quick GTest::gtest)
+    add_test(NAME simulator_session_state COMMAND sv-simulator-session-tests)
   endif()
   add_executable(sv-experiment-lease-tests tests/experiment_lease_tests.cpp)
   target_link_libraries(sv-experiment-lease-tests PRIVATE sv-core GTest::gtest_main)

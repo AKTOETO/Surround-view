@@ -27,9 +27,9 @@ TEST(SimulatorDiscovery, KeepsExistingAbsoluteCandidatesInOrderAndDeduplicates)
     create_endpoint_files(first);
     create_endpoint_files(second);
 
-    const auto candidates = discover_local_ipc_candidates(
-        {first, first, QStringLiteral("relative/path"),
-         QDir(temporary.path()).filePath("missing"), second});
+    const auto candidates =
+        discover_local_ipc_candidates({first, first, QStringLiteral("relative/path"),
+                                       QDir(temporary.path()).filePath("missing"), second});
     EXPECT_EQ(candidates, (QStringList{first, second}));
 }
 
@@ -44,4 +44,17 @@ TEST(SimulatorDiscovery, RequiresBothProtocolSockets)
     control.close();
 
     EXPECT_TRUE(discover_local_ipc_candidates({only_control}).isEmpty());
+}
+
+TEST(SimulatorDiscovery, SkipsUnconnectableLongUtf8PathsAndContinues)
+{
+    QTemporaryDir temporary;
+    ASSERT_TRUE(temporary.isValid());
+    const auto tooLong = QDir(temporary.path()).filePath(QString(81, 'x'));
+    const auto tooManyBytes = QDir(temporary.path()).filePath(QString(40, QChar(0x044f)));
+    const auto valid = QDir(temporary.path()).filePath("valid");
+    create_endpoint_files(tooLong);
+    create_endpoint_files(tooManyBytes);
+    create_endpoint_files(valid);
+    EXPECT_EQ(discover_local_ipc_candidates({tooLong, tooManyBytes, valid}), QStringList{valid});
 }
