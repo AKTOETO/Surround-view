@@ -2,7 +2,7 @@
 aliases: [Заключение диссертации]
 tags: [diploma, conclusion]
 status: preliminary
-updated: 2026-10-09
+updated: 2026-10-10
 ---
 
 # Заключение диссертационного исследования
@@ -26,7 +26,7 @@ updated: 2026-10-09
 | R1: анализ и теория | Главы 1–2, математические модели проекции, обзор Burger model | Выполнено |
 | R2: модели дисторсии и калибровка | Synthetic KB/RadTan/Omni fits, Joint Bundle Adjustment, PnP, server gate | Частично: production detector/solver проверены на синтетических PNG (§4.29); physical observations/пороги не подтверждены |
 | R3: 3D-носители и слияние камер | 6 offline carriers, 7 fusion labels, 84 конфигурации | Частично: seam/ghost ranking невалиден, holdout quality series не выполнена |
-| R4: контроль смещения и оракул | Scene Truth prototype, body mask, temporal script | Частично: temporal rig motion не проверен; drift diagnostics не завершена |
+| R4: контроль смещения и оракул | Scene Truth prototype, body mask, temporal script | Частично: парный 3-frame rig-motion опыт проверен; длинные клипы, object correspondence и drift diagnostics не завершены |
 | R5: архитектура и интеграция | Linux C++17 ядро, EGL Surfaceless, сервер, `sv-client-lib` | Частично: multi-session, полноценный ConfigService и Aurora acceptance открыты |
 | R6: доказательные испытания | CTest, GPU readback, synthetic sweeps | Частично: pass-ы покрывают кодовые проверки, не целевое качество/физические условия |
 
@@ -35,3 +35,5 @@ updated: 2026-10-09
 *Рисунок 5.1 — Трассировка исследовательских задач к результатам работы.*
 
 Полученные компоненты задают основу для дальнейшего исследования и интеграции. Окончательные выводы можно формулировать после исправления экспериментов, получения независимых/физических данных и проверки на целевой ОС. Источники и текущие материалы приведены в [[diploma/01_THEORETICAL_FOUNDATIONS]], [[diploma/02_REQUIREMENTS_AND_METHODS]], [[diploma/03_PROTOTYPE_IMPLEMENTATION]] и [[diploma/04_EXPERIMENTAL_STUDY]].
+
+Повторные resolution/exposure/object серии для `validity_zero_extension_v2` приведены в §4.43 и [[validation/STITCH_MASK_FOLLOWUP]]. Они устраняют долг пересчёта после исправления масок, но используют прежние входы и не заменяют независимый holdout, физические наблюдения или проверку на Авроре.

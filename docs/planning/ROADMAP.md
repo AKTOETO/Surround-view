@@ -160,7 +160,7 @@ GTest разрешён для новых проверок. При его выб�
 
 Уточнение native/offline parity 10.10.2026: выполнены полный hybrid composition oracle (60 случаев), analytic plane sampling и 12 actual SV01 frames; исправлены pyramid_levels/smoothness forwarding и влияние invalid RGB на pyramid. 84-case screen пересчитан (`validity_zero_extension_v2`); исторические tables отдельно помечены. Это регрессионная проверка, не новая независимая quality выборка: [[validation/NATIVE_FUSION]]. Следующие исследования: long clips/holdout, mask conventions/mesh approximation, равные бюджеты и multilabel alternatives.
 
-Tracked трёхкадровый paired temporal опыт повторён после mask fix; его таблица и hashes актуализированы. Остальные object/robustness/resolution pyramid series требуют повторения; прежние результаты сохранены с явной исторической пометкой.
+Tracked трёхкадровый paired temporal опыт повторён после mask fix; его таблица и hashes актуализированы. Object/robustness/resolution/convergence и moving-target серии также повторены: 819 строк условий, 585 побитно совпавших непирамидальных RGB outputs, tracked raw reports и график изменений — [[validation/STITCH_MASK_FOLLOWUP]]. Старые object timing tables остаются историческими; новые concurrent timings не принимаются как performance comparison. Долг пересчёта закрыт, независимая quality confirmation и исследование границ масок остаются открытыми.
 
 ## Продуктовые workflows без Python
 
