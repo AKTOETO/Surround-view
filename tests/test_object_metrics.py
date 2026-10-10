@@ -11,13 +11,24 @@ import numpy as np
 ROOT = Path(__file__).resolve().parents[1]
 sys.path[:0] = [str(ROOT/'tools'), str(ROOT/'tools/research')]
 from object_metrics import measure_target, projected_object_ids, target_mask
-from object_stitch import load_objects
+from object_stitch import interleaved_orders, load_objects
 
 
 class ObjectMetricTests(unittest.TestCase):
     def setUp(self):
         self.truth = np.zeros((32,48), bool)
         self.truth[8:24,8:12] = True
+
+    def test_interleaved_timing_schedule_is_complete_reproducible_and_varied(self):
+        keys = [f'case-{index}' for index in range(24)]
+        first = interleaved_orders(keys, 7, seed=20261010)
+        second = interleaved_orders(keys, 7, seed=20261010)
+        self.assertEqual(first, second)
+        self.assertEqual(len(first), 7)
+        self.assertTrue(all(len(order) == len(keys) and set(order) == set(keys) for order in first))
+        self.assertGreater(len({tuple(order) for order in first}), 1)
+        with self.assertRaises(ValueError):
+            interleaved_orders(keys + [keys[0]], 3)
 
     def test_clean_rgb(self):
         rgb = np.full((32,48,3), .3)
