@@ -1,16 +1,17 @@
 # E-STITCH-01 v2: пересчитанная exploratory matrix
 
-Дата прогона: 2026-10-09T20:13:20Z. Статус: **матрица пересчитана после аудита, но исследование качества не закрыто**. Это одна синтетическая статическая Blender-сцена × 6 carriers × 2 virtual views × 7 fusion modes (84 случая), не независимая подтверждающая серия.
+Исходный прогон: 2026-10-09T20:13:20Z. После изменения fallback для равной centrality матрица повторно выполнена 10.10.2026 (84 случая). Статус: **матрица пересчитана после аудита, но исследование качества не закрыто**. Таблица ниже содержит повторный прогон; quality metrics совпали с исходной матрицей, а CPU времена изменились из-за нагрузки/частоты. Это одна синтетическая статическая Blender-сцена × 6 carriers × 2 virtual views × 7 fusion modes (84 случая), не независимая подтверждающая серия.
 
 ## Воспроизводимость и вычислительная среда
 
 Входы хранятся в `tests/data/e_stitch_01_v1`: четыре RGB PPM 400×400, четыре radial-depth NPY float32 400×400, manifest, ground truth и calibration config. Runner проверяет SHA-256 файлов, соответствие порядка camera IDs и calibration IDs, разрешения RGB/depth и синхронность кадров. Исходная сцена и происхождение описаны в [[engineering/ASSETS]] и `assets/scenes/metric-street/provenance.json`.
 
 ```sh
-python3 tools/run_e_stitch_01.py
+python3 tools/run_e_stitch_01.py --config tests/data/e_stitch_01_v1/config.json \
+  --dataset tests/data/e_stitch_01_v1 --output artifacts/e-stitch-01-tie-v1
 ```
 
-Команда использует tracked fixture и пишет previews/JSON/markdown в игнорируемую `artifacts/e-stitch-01-v2/`.
+Команда использует tracked fixture и пишет previews/JSON/markdown в игнорируемую `artifacts/e-stitch-01-tie-v1/`.
 
 Среда: Linux 7.2.6-arch2-1, x86_64; AMD Ryzen 9 9950X (16 ядер / 32 потока); Python 3.14.7, NumPy 2.5.3, SciPy 1.18.1. Использовался offline Python/NumPy/SciPy CPU path. Каждый carrier/view/mode исполнен один раз, без прогрева и повторов. Время зависит от нагрузки/частот; GLES/GPU renderer, synchronization/readback, target Aurora device и full frame pipeline не измерялись.
 
@@ -19,7 +20,7 @@ SHA-256 config: `cdf90d578d165f63734678a0709e9bc3a71199e13ba7095771bd351e4d1a9bc
 | Реализация | SHA-256 |
 |---|---|
 | `tools/run_e_stitch_01.py` | `576f755611f05cf16fecadf9143faf9741cce4348c9f35ff738b90b1fba5550d` |
-| `tools/fusion.py` | `8b547e30d7da630063afbc4034b23e924341b97bfbd318c38c5aa9186a6498b9` |
+| `tools/fusion.py` | `170b7493b5c971e8dd10071d4a0f4f4ed543d9ad034857b37db5105962d13426` |
 | `tools/stitch_metrics.py` | `de8d287f1f7b098d526f8677f5e96c59a77bf6f48dd7bde7c36ef250bcef1814` |
 | `tools/reference.py` | `68f9bdc75bb72b615a0def04d85ed3c2beabeacecc54bc9a667c05a917384840` |
 
@@ -27,15 +28,15 @@ SHA-256 config: `cdf90d578d165f63734678a0709e9bc3a71199e13ba7095771bd351e4d1a9bc
 
 | Fusion mode | Seam pixels | p95 CIE76 output step | L-gradient jump | Ghost source proxy | Python CPU fusion ms |
 |---|---:|---:|---:|---:|---:|
-| `angular_feather` | 1041 | 1.601 | 0.2329 | 1.7852% | 58.42 |
-| `edge_feather` | 1329 | 1.022 | 0.2493 | 1.6265% | 42.65 |
-| `graph_cut_multi_band` | 1036 | 2.339 | 0.2766 | 1.8503% | 543.41 |
-| `graph_cut_seam` | 1036 | 29.461 | 0.3484 | 1.8381% | 243.15 |
-| `hard_best_angle` | 1041 | 20.317 | 0.4090 | 1.8440% | 54.55 |
-| `multi_band` | 1329 | 1.019 | 0.2429 | 1.6701% | 317.19 |
-| `seam_distance_feather` | 1224 | 1.769 | 0.2398 | 1.5520% | 80.80 |
+| `angular_feather` | 1041 | 1.601 | 0.2329 | 1.7852% | 58.50 |
+| `edge_feather` | 1329 | 1.022 | 0.2493 | 1.6265% | 43.20 |
+| `graph_cut_multi_band` | 1036 | 2.339 | 0.2766 | 1.8503% | 552.90 |
+| `graph_cut_seam` | 1036 | 29.461 | 0.3484 | 1.8381% | 261.13 |
+| `hard_best_angle` | 1041 | 20.317 | 0.4090 | 1.8440% | 55.75 |
+| `multi_band` | 1329 | 1.019 | 0.2429 | 1.6701% | 324.39 |
+| `seam_distance_feather` | 1224 | 1.769 | 0.2398 | 1.5520% | 81.86 |
 
-Каждая строка агрегирует 12 условий из одного capture; это описательная сводка, **не статистически независимые повторы и не рейтинг**. Поддержка seam score отличается по режимам, поэтому в отчёте каждой строки указано число измеренных seam pixels. Более высокий seam proxy у `graph_cut_seam` не доказывает худшее качество: метрика считает цветовой шаг на границе весовых labels и не отделяет scene-edge от шва, а в 3–4 camera overlap бинарный cut не используется. Медиана offline fusion time у graph-cut на этом хосте около 243 ms, что сигнализирует о стоимости текущего reference path, но не предсказывает GPU/runtime time.
+Каждая строка агрегирует 12 условий из одного capture; это описательная сводка, **не статистически независимые повторы и не рейтинг**. Поддержка seam score отличается по режимам, поэтому в отчёте каждой строки указано число измеренных seam pixels. Более высокий seam proxy у `graph_cut_seam` не доказывает худшее качество: метрика считает цветовой шаг на границе весовых labels и не отделяет scene-edge от шва, а в 3–4 camera overlap бинарный cut не используется. Медиана offline fusion time у graph-cut на этом хосте около 261 ms, что сигнализирует о стоимости текущего reference path, но не предсказывает GPU/runtime time.
 
 ## Пределы вывода и следующие проверки
 
@@ -50,7 +51,7 @@ SHA-256 config: `cdf90d578d165f63734678a0709e9bc3a71199e13ba7095771bd351e4d1a9bc
 
 Добавлены known-answer проверки в `tests/test_stitch_fusion.py`. Для небольшого overlap 4×5 с 12 переменными выбранная реализация binary s-t cut сравнивается с полным перебором всех $2^{12}=4096$ разметок по той же целочисленной unary + Potts pairwise energy; энергия найденного разреза совпадает с глобальным минимумом этого тестового графа. Это проверяет направление terminal capacities и стоимость pairwise edges на малом примере, но не доказывает качество самой energy модели на реальных объектах.
 
-Для областей с тремя и четырьмя видимыми камерами тест отдельно сравнивает результат с правилом максимального расстояния до границы validity. В них реализация не решает joint multi-label energy: pairwise cut действует только при coverage ровно 2. Если centrality одинаковая, `argmax` выбирает камеру с меньшим индексом; это создаёт зависимость от нумерации и остаётся открытой проблемой для 3–4-way overlap. Нужны permutation-инвариантный tie handling и сравнительная проверка global multi-label метода (например, alpha-expansion) на синтетических графах с известным минимумом до включения в исследовательскую матрицу.
+Для областей с тремя и четырьмя видимыми камерами тест отдельно проверяет maximum-centrality fallback. Pairwise cut действует только при coverage ровно 2; в 3+ overlaps global energy не строится. Равные centrality теперь дают равные веса между кандидатами вместо предпочтения lowest camera index; перестановочный тест проверяет этот случай. Это устраняет зависимость точного tie от порядка камер, но не заменяет global multi-label optimization. Следующим шагом остаётся сравнительная проверка alpha-expansion или другой схемы на синтетических графах с известным минимумом до включения в исследовательскую матрицу.
 
 Подробная таблица всех 84 случаев следует ниже. Исторические v1 результаты и ранее неверные значения сохранены отдельно в [[validation/STITCH_VISIBILITY]]. Актуальные задачи: [[../TODO]], исследовательский протокол: [[research/PROJECTION_AND_STITCHING]].
 

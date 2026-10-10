@@ -1,4 +1,5 @@
 """Plot E-STITCH-01 experimental results for Chapter 4 of the diploma thesis."""
+import argparse
 import json
 from pathlib import Path
 import matplotlib.pyplot as plt
@@ -28,10 +29,10 @@ def plot_e_stitch_results(summary_json_path, output_fig_path):
     width = 0.35
     ax1.bar(x - width/2, dome_seam, width, label="Купол (Dome)", color="#2b5c8f")
     ax1.bar(x + width/2, plane_seam, width, label="Плоскость (Plane)", color="#d95f02")
-    ax1.set_title(r"1. Скачок цвета на шве $\Delta E$ ($p_{95}$)", fontsize=12, fontweight="bold")
+    ax1.set_title(r"1. CIE76 across fused-label boundary ($p_{95}$)", fontsize=12, fontweight="bold")
     ax1.set_xticks(x)
     ax1.set_xticklabels(mode_labels, rotation=35, ha="right", fontsize=9)
-    ax1.set_ylabel(r"$\Delta E$ в пространстве Lab", fontsize=10)
+    ax1.set_ylabel(r"CIE76, Lab", fontsize=10)
     ax1.legend(loc="upper right")
     ax1.grid(axis="y", linestyle="--", alpha=0.6)
     
@@ -67,12 +68,10 @@ def plot_e_stitch_results(summary_json_path, output_fig_path):
     ax4 = axes[1, 1]
     timings = [r["timing_ms"]["fusion_ms"] for r in low_rows if r["carrier"] == "dome_floor"]
     ax4.bar(x, timings, color="#4575b4", width=0.5)
-    ax4.axhline(33.3, color="red", linestyle="--", label="Лимит 30 FPS (33.3 ms)")
     ax4.set_title("4. Вычислительное время слияния (CPU)", fontsize=12, fontweight="bold")
     ax4.set_xticks(x)
     ax4.set_xticklabels(mode_labels, rotation=35, ha="right", fontsize=9)
     ax4.set_ylabel("Время расчета fusion, мс", fontsize=10)
-    ax4.legend(loc="upper left")
     ax4.grid(axis="y", linestyle="--", alpha=0.6)
     
     output_fig_path = Path(output_fig_path)
@@ -83,7 +82,13 @@ def plot_e_stitch_results(summary_json_path, output_fig_path):
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--summary", type=Path,
+                        default=Path("artifacts/e-stitch-01-tie-v1/e_stitch_01_summary.json"))
+    parser.add_argument("--output", type=Path,
+                        default=Path("docs/diploma/figures/experiments/e_stitch_01_comparison.png"))
+    args = parser.parse_args()
     plot_e_stitch_results(
-        "artifacts/e-stitch-01-v1/e_stitch_01_summary.json",
-        "docs/diploma/figures/experiments/e_stitch_01_comparison.png"
+        args.summary,
+        args.output,
     )
