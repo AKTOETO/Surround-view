@@ -24,12 +24,14 @@ Handshake объявляет `fusion_runtime_v1`. Это первый реали
 
 | Команда / поле | Контракт |
 |---|---|
-| `fusion_catalog` | Read-only ACK с `fusion_catalog`: version=1, modes, diagnostics, пределы параметров, temporary persistence, backend/GL device и server source revision/fingerprint |
+| `fusion_catalog` | Read-only ACK с `fusion_catalog`: version=2, modes, diagnostics, пределы параметров, temporary persistence, backend/GL device и server source revision/fingerprint |
 | `configure_fusion` | Обязательные `base_config_revision` (decimal string) и `fusion` (object); полностью заменяет fusion-секцию, пропущенные необязательные поля получают defaults |
-| `fusion.mode` | `edge_feather`, `hard_best_angle`, `angular_feather` |
+| `fusion.mode` | `edge_feather`, `hard_best_angle`, `angular_feather`, `seam_distance_feather`, `graph_cut_seam`, `multi_band`, `graph_cut_multi_band` |
 | `fusion.diagnostic` | `color` (default), `coverage`, `weights` |
 | `fusion.edge_width_px` | Число (0,4096], default 24 |
 | `fusion.angle_power` | Число (0,32], default 2 |
+| `fusion.pyramid_levels` | Целое 1..8, default 4; pyramid blend |
+| `fusion.smoothness_weight` | Число [0,100], default 0.1; pairwise cut |
 | ACK / `state` | `config_revision` и полный `fusion` вместе с существующими state fields |
 | type 11 frame | `config_revision` и полный фактический `fusion`; `state_revision` позволяет отфильтровать ранее поставленные в очередь кадры |
 
@@ -37,13 +39,21 @@ Handshake объявляет `fusion_runtime_v1`. Это первый реали
 
 Команда выполняется на render thread между render calls: полный проверенный snapshot и uniform settings становятся активными до следующего render. Входной frame set при паузе сохраняется; новый результат может использовать тот же набор камер с новой config revision. ACK подтверждает применение, но уже отправленные/очередные старые кадры не отзываются. Переключение не делает `frame_set_id` новым и не является полноценным seek/reset истории.
 
-`configure_fusion` не записывает файл конфигурации; restore выполняется отправкой ранее прочитанного полного fusion с текущей revision. Для сессий с `experiment_lease_v1` автоматический restore fusion/pause реализован ниже; вне lease его нет. Идемпотентные operation IDs и отдельный save API ещё отсутствуют. Существующий `apply_calibration` сохраняет полный актуальный snapshot, поэтому при его использовании временный fusion также попадёт в файл: до общего ConfigService восстановить baseline перед persistent calibration apply. Внутри активного lease `apply_calibration` отклоняется до persistence, поэтому сценарный runner не сохраняет временный fusion через эту команду.
+`configure_fusion` не записывает файл конфигурации; restore выполняется отправкой ранее прочитанного полного fusion с текущей revision. Для сессий с `experiment_lease_v1` автоматический restore fusion/surface/pause реализован ниже; вне lease его нет. Идемпотентные operation IDs и отдельный save API ещё отсутствуют. Существующий `apply_calibration` сохраняет полный актуальный snapshot, поэтому при его использовании временные fusion/surface также попадут в файл: до общего ConfigService восстановить fusion/surface baseline перед persistent calibration apply. Внутри активного lease `apply_calibration` отклоняется до persistence, поэтому сценарный runner не сохраняет временный fusion через эту команду.
 
-Исследовательские graph-cut/multiband режимы пока остаются offline и не объявляются каталогом. Следующий этап — расширять набор серверных реализаций с parity tests, сохраняя runtime-вариативность на целевой платформе: [[architecture/RESEARCH_RUNTIME]].
+Handshake дополнительно объявляет `research_fusion_v1`: четыре новых режима выполняют GLES-проекцию четырёх слоёв и native CPU fusion (OpenCV + Boost.Graph), не Python. Выход ограничен 262144 пикселями; превышение отклоняется при config validation. Каталог содержит `research_backend`, `research_pixel_limit`, `graph_cut_scope`. Три прежних режима остаются одним GPU-проходом.
+
+Frame содержит `fusion_backend`, `gpu_timer_status`, `surface`, `mesh_triangles`. В `pipeline_spans_ms` добавлены `layer_readback_cpu` (четыре GPU draw/readback, преобразование слоёв и ego overlay) и `fusion_cpu` (native fusion и композиция). Это wall durations на сервере; первая включает ожидание GPU. `render_wall` включает весь renderer, вложенные spans нельзя суммировать с ним. Для гибридного пути `gpu_draw=null`, status=`hybrid_total_not_measured`: старый timer query не измеряет полный гибридный pipeline. Формат слоёв и проверка эталона: [[validation/NATIVE_FUSION]].
+
+## Геометрия во время работы: runtime_surface_v1
+
+`surface_catalog` возвращает четыре config type и описание плоского варианта. `configure_surface` принимает `base_config_revision` (decimal string), полный объект `surface` в формате [[engineering/RENDERING]], optional `lease_id`. Подготовка mesh/GPU buffers предшествует публикации snapshot; при ошибке или stale revision активная геометрия и revisions сохраняются. Текущая view должна удовлетворять `safe_view`, иначе `view_clearance`. Применение выполняется между render calls, увеличивает `mesh_build_count`, не переотправляет камеры. ACK/state/frame содержат фактическую surface.
+
+API библиотеки: `surface_catalog()` и `configure_surface(base_revision, boost::json::object, optional_lease_id)`. Это temporary apply, файл не записывается. Повтор идентичной surface также готовит сетку заново; idempotent operations пока нет. Plane задаётся `rectangular_bowl_v1` с `corner_height_m=0`. Parameterized burger-like остаётся offline; куб здесь геометрический носитель, не cubemap. Общего ConfigService для этих операций не требуется.
 
 ## Ограниченный эксперимент: experiment_lease_v1
 
-Handshake объявляет `experiment_lease_v1`. Lease привязан к control session, доступен только для replay и сохраняет исходные fusion/pause. Он не является general transaction для всего ConfigService и не сохраняет playback cursor, source images или temporal history.
+Handshake объявляет `experiment_lease_v1`. Lease привязан к control session, доступен только для replay и сохраняет исходные fusion/surface/pause. Он не является general transaction для всего ConfigService и не сохраняет playback cursor, source images или temporal history.
 
 | Команда | Параметры и результат |
 |---|---|
@@ -52,15 +62,15 @@ Handshake объявляет `experiment_lease_v1`. Lease привязан к co
 | `experiment_release` | `lease_id`: тот же владелец; ACK означает переход в restoring, а не завершение |
 | `state` / ACK | `experiment_lease`: state=`idle/active/restoring/failed`, lease_id, deadline_monotonic_ns, error; deadline не является временем клиента |
 
-Во время active владелец передаёт `lease_id` в `configure_fusion`, `pause`, `resume` и lease commands. Другие мутации (orbit/zoom/preset/step, calibration start/apply/cancel) блокируются; read-only state/catalog/calibration_status доступны. Команды без token, с чужим/старым ID или после истечения TTL возвращают `experiment_lease_conflict` без изменений. После завершения старый ID не становится обычной mutation без lease. Существующие команды без lease работают по-прежнему в idle.
+Во время active владелец передаёт `lease_id` в `configure_fusion`, `configure_surface`, `pause`, `resume` и lease commands. Другие мутации (orbit/zoom/preset/step, calibration start/apply/cancel) блокируются; read-only state/catalog/calibration_status доступны. Команды без token, с чужим/старым ID или после истечения TTL возвращают `experiment_lease_conflict` без изменений. После завершения старый ID не становится обычной mutation без lease. Существующие команды без lease работают по-прежнему в idle.
 
-`sv-client-lib` предоставляет `acquire_experiment(ttl_ms)`, `renew_experiment(id)`, `release_experiment(id)`, optional lease ID у configure_fusion/pause/resume. Runner приобретает lease на 30000 ms и продлевает перед каждым trial и cleanup. Долгий progress callback/ожидание дольше TTL может прервать эксперимент.
+`sv-client-lib` предоставляет `acquire_experiment(ttl_ms)`, `renew_experiment(id)`, `release_experiment(id)`, optional lease ID у configure_fusion/surface/pause/resume. Runner приобретает lease на 30000 ms и продлевает перед каждым trial и cleanup. Долгий progress callback/ожидание дольше TTL может прервать эксперимент.
 
-Истечение срока или удаление control session запускает recovery на render thread: проверенный fusion публикуется новым config snapshot, uniform settings обновляются между render calls, затем source получает асинхронный pause/resume при необходимости. Пока restoring, новые мутации отклоняются. На успешном source ACK состояние становится idle; статус idle означает завершённую координацию конфигурации и источника. Recovery не пишет файл. Source request не исполнился за 5 s либо восстановление завершилось ошибкой — failed; мутации остаются заблокированы до перезапуска. Поздний source ACK не снимает failed. Ошибки/переходы записываются в trace как experiment_restore events.
+Истечение срока или удаление control session запускает recovery на render thread: проверенные fusion и surface публикуются новым config snapshot, uniform settings обновляются между render calls, затем source получает асинхронный pause/resume при необходимости. Пока restoring, новые мутации отклоняются. На успешном source ACK состояние становится idle; статус idle означает завершённую координацию конфигурации и источника. Recovery не пишет файл. Source request не исполнился за 5 s либо восстановление завершилось ошибкой — failed; мутации остаются заблокированы до перезапуска. Поздний source ACK не снимает failed. Ошибки/переходы записываются в trace как experiment_restore events.
 
-Watchdog кооперативный, проверяется server loop; блокировка GPU/драйвера или авария самого сервера не дают гарантии жёсткого срока восстановления. Потеря только data channel при живом control не считается удалением владельца: без renew восстановление произойдёт по TTL. Восстанавливаются fusion/pause, но не номер кадра или исходное изображение после проигрывания записи.
+Watchdog кооперативный, проверяется server loop; блокировка GPU/драйвера или авария самого сервера не дают гарантии жёсткого срока восстановления. Потеря только data channel при живом control не считается удалением владельца: без renew восстановление произойдёт по TTL. Восстанавливаются fusion/surface/pause, но не номер кадра или исходное изображение после проигрывания записи.
 
-При release/cleanup клиент опрашивает state до idle/failed, проверяет восстановленные fusion/pause и сохраняет final_state. Lost-ACK idempotence и checkpoint recovery ещё не реализованы: при сомнении не переигрывать мутации автоматически; использовать state/trace и серверный watchdog.
+При release/cleanup клиент опрашивает state до idle/failed, проверяет восстановленные fusion/surface/pause и сохраняет final_state. Lost-ACK idempotence и checkpoint recovery ещё не реализованы: при сомнении не переигрывать мутации автоматически; использовать state/trace и серверный watchdog.
 
 ## Порядок открытия сессии и доставки кадра
 

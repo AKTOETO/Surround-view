@@ -574,12 +574,35 @@ build/svctl --unix /tmp/sv-runtime-screen research configs/research/fusion-scree
 
 Для удалённого сервера заменить endpoint на `--tcp HOST CONTROL_PORT DATA_PORT`. Scenario/report находятся у клиента; камеры/manifest для replay находятся у сервера. Не передавать один путь для scenario и report. Exit 0 означает успешную серию и восстановление; exit 4 — failed/interrupted report, exit 3 — ошибка ввода/соединения/записи отчёта. При failed report проверить `restore_error`; при невозможности восстановления восстановить настройки вручную или перезапустить сервер с исходным конфигом.
 
-Сценарий содержит `schema_version=1`, `seed`, `warmup` (0..100), `repeats` (1..1000), список `variants` (1..32) с fusion settings. Общий бюджет — не более 10000 кадров. Warmup задаёт число полных прогревочных блоков; каждый блок содержит все варианты в перемешанном порядке. Пример выполняет 2 прогревочных и 7 измерительных блоков для трёх режимов, всего 27 кадров. Порядок воспроизводим в той же реализации стандартной библиотеки; фактический порядок всегда записан в samples, переносимость `std::shuffle` между STL не обещается.
+Сценарий содержит `schema_version=1`, `seed`, `warmup` (0..100), `repeats` (1..1000), список `variants` (1..32) с fusion settings. Общий бюджет — не более 10000 кадров. Warmup задаёт число полных прогревочных блоков; каждый блок содержит все варианты в перемешанном порядке. Пример выполняет 2 прогревочных и 7 измерительных блоков для семи режимов, всего 63 кадра. Порядок воспроизводим в той же реализации стандартной библиотеки; фактический порядок всегда записан в samples, переносимость `std::shuffle` между STL не обещается.
 
-Runner сохраняет исходные fusion/pause, останавливает replay на текущем READY frame set, для каждого варианта применяет весь fusion и ждёт соответствующую state revision. Сверяются input IDs, frame-set ID и настройки. Отчёт включает исходное состояние, actual catalog/backend/server fingerprint, нормализованный scenario SHA-256, raw metadata/RGBA SHA-256 каждого кадра и p50/p95 стадий без warmup (nearest-rank percentile). После серии восстанавливаются fusion, исходный RGB и pause/resume. Повторный replay не запускается: сравнение относится к текущему остановленному набору.
+Runner сохраняет исходные fusion/surface/pause, останавливает replay на текущем READY frame set, для каждого варианта применяет весь fusion и ждёт соответствующую state revision. Сверяются input IDs, frame-set ID и настройки. Отчёт включает исходное состояние, actual catalog/backend/server fingerprint, нормализованный scenario SHA-256, raw metadata/RGBA SHA-256 каждого кадра и p50/p95 стадий без warmup (nearest-rank percentile). После серии восстанавливаются fusion, surface, исходный RGB и pause/resume. Повторный replay не запускается: сравнение относится к текущему остановленному набору.
 
 Это **screen механизма управления и warm-render стоимости**, а не финальное исследование качества/FPS: нет independent truth, dataset content registry, seek/reset истории или нового кадра на каждый sample. Задержка очереди/control и 16 ms limiter не включаются в `render_wall`; отсутствие захвата/decode/upload делает результаты несопоставимыми с sustained pipeline throughput. Прогрев чередующихся вариантов не измеряет cold-cache стоимость. Нужны последующие live/replay-sequence сценарии и независимые сцены.
 
 Runner теперь требует `experiment_lease_v1`: получает lease на 30 s и продлевает перед каждым trial и cleanup. При cancel через C++ service либо исключении callback выполняются restore RGB и release; затем runner ждёт server state idle и проверяет fusion/pause. В report добавлены lease_id и final_state. Persistent calibration apply блокируется сервером во время lease.
 
 Если CLI завершился через Ctrl+C/kill или control закрылся, сервер запускает восстановление fusion/pause; при потере сети без немедленного EOF срабатывает TTL. Клиентский JSON report после kill может остаться пустым — durable checkpoint ещё нет; результат recovery проверять новым `svctl state` и server trace. Пока restoring/failed сервер отвергает мутации; failed требует перезапуска. Recovery source ограничен 5 s при работающем server loop, но зависший GPU/драйвер невозможно прервать этим watchdog. Позиция replay и temporal history не восстанавливаются. Потеря только data при живом control обнаруживается для lease по отсутствию renew. Долгий callback не должен превышать TTL. Автоматические retries мутаций отключены.
+
+
+### Носители и дополнительные алгоритмы
+
+`fusion-screen.json` теперь содержит семь режимов, включая native distance/cut/multiband. Для гибридных методов output width × height должен быть ≤262144 (исходный synthetic 640×360 подходит). Если время CPU слишком велико, используйте отдельный config с меньшим output для всех сравниваемых методов; смешивать разрешения в одном рейтинге нельзя.
+
+```bash
+build/svctl --unix /tmp/sv-runtime-screen --timeout-ms 30000 research configs/research/carrier-screen.json artifacts/runtime-screen/carriers.json
+```
+
+Carrier screen выполняет пять вариантов с одним edge_feather: plane, bowl, dome+floor, cylinder+floor, cube+floor. Плотности сеток пока разные; это smoke механизма переключения, не итоговое сравнение качества при равных ресурсах. `variants[].surface` — optional полный объект config surface. Без него runner каждый раз возвращает исходную геометрию, включая после варианта с explicit surface. Вариант также принимает `pyramid_levels` и `smoothness_weight`.
+
+Ручное управление (подставьте актуальную decimal-string revision из state; между разными CLI соединениями lease не сохраняется):
+
+```bash
+build/svctl --unix /tmp/sv-runtime-screen command fusion_catalog
+build/svctl --unix /tmp/sv-runtime-screen command surface_catalog
+build/svctl --unix /tmp/sv-runtime-screen state
+build/svctl --unix /tmp/sv-runtime-screen command configure_fusion --params '{"base_config_revision":"0","fusion":{"mode":"graph_cut_multi_band","pyramid_levels":4,"smoothness_weight":0.1}}'
+build/svctl --unix /tmp/sv-runtime-screen command configure_surface --params '{"base_config_revision":"1","surface":{"type":"dome_floor_v1","dome_radius_m":14,"dome_latitude_cells":24,"dome_longitude_cells":64,"floor_radial_cells":16}}'
+```
+
+Эти команды temporary и не записывают файл. Вне lease автоматического rollback нет: сохраните исходные fusion/surface, верните их с текущей revision либо перезапустите сервер с исходным config. Для подтверждающего опыта используйте runner, проверяющий restore. Semantics, GPU/CPU timings и проверка эталона: [[engineering/PROTOCOL_IMPLEMENTED]], [[validation/NATIVE_FUSION]].

@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "seed": 20261010,
+  "warmup": 2,
+  "repeats": 7,
+  "variants": [
+    {
+      "mode": "edge_feather",
+      "surface": {
+        "type": "rectangular_bowl_v1",
+        "flat_half_length_m": 2.6,
+        "flat_half_width_m": 1.2,
+        "outer_half_length_m": 6.0,
+        "outer_half_width_m": 4.5,
+        "corner_height_m": 0,
+        "uniform_cells": [
+          32,
+          32
+        ]
+      }
+    },
+    {
+      "mode": "edge_feather",
+      "surface": {
+        "type": "rectangular_bowl_v1",
+        "flat_half_length_m": 2.6,
+        "flat_half_width_m": 1.2,
+        "outer_half_length_m": 6.0,
+        "outer_half_width_m": 4.5,
+        "corner_height_m": 1.5,
+        "uniform_cells": [
+          32,
+          32
+        ]
+      }
+    },
+    {
+      "mode": "edge_feather",
+      "surface": {
+        "type": "dome_floor_v1",
+        "dome_radius_m": 14,
+        "dome_latitude_cells": 24,
+        "dome_longitude_cells": 64,
+        "floor_radial_cells": 16
+      }
+    },
+    {
+      "mode": "edge_feather",
+      "surface": {
+        "type": "cylinder_floor_v1",
+        "radius_m": 14,
+        "height_m": 14,
+        "vertical_cells": 16,
+        "angular_cells": 64,
+        "floor_radial_cells": 16
+      }
+    },
+    {
+      "mode": "edge_feather",
+      "surface": {
+        "type": "cube_floor_v1",
+        "half_extent_m": 14,
+        "height_m": 14,
+        "face_cells": 16
+      }
+    }
+  ]
+}

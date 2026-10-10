@@ -1,0 +1,109 @@
+{
+  "kind": "engineering_smoke_not_quality_or_performance_acceptance",
+  "date": "2026-10-10",
+  "platform": "Linux-7.2.6-arch2-1-x86_64-with-glibc2.44",
+  "machine": "x86_64",
+  "binary_sha256": "ff3b0b073508cba3946febd1df0723ead5db2f5448e4e3cd4de92b2401a74134",
+  "manifest_sha256": "d91af117739c24ec52f173369692ad9793804ed1837fecd65f6751f5b7eb96bc",
+  "manifest": {
+    "schema_version": 1,
+    "origin": "blender_metric_street_v1",
+    "calibration_ids": [
+      "blender-rig-front-v1",
+      "blender-rig-right-v1",
+      "blender-rig-rear-v1",
+      "blender-rig-left-v1"
+    ],
+    "frames": [
+      {
+        "scenario_timestamp_ns": "0",
+        "paths": [
+          "camera0_0000.ppm",
+          "camera1_0000.ppm",
+          "camera2_0000.ppm",
+          "camera3_0000.ppm"
+        ],
+        "offset_ns": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "scenario_timestamp_ns": "33333333",
+        "paths": [
+          "camera0_0001.ppm",
+          "camera1_0001.ppm",
+          "camera2_0001.ppm",
+          "camera3_0001.ppm"
+        ],
+        "offset_ns": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "scenario_timestamp_ns": "66666667",
+        "paths": [
+          "camera0_0002.ppm",
+          "camera1_0002.ppm",
+          "camera2_0002.ppm",
+          "camera3_0002.ppm"
+        ],
+        "offset_ns": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "scenario_timestamp_ns": "100000000",
+        "paths": [
+          "camera0_0003.ppm",
+          "camera1_0003.ppm",
+          "camera2_0003.ppm",
+          "camera3_0003.ppm"
+        ],
+        "offset_ns": [
+          0,
+          0,
+          0,
+          0
+        ]
+      }
+    ],
+    "sha256": {
+      "camera0_0000.ppm": "d8de34841a6b89242c7958a643981c61a721303ef78ea9030d38088bee3b72ee",
+      "camera1_0000.ppm": "9f20a4287cbb3b371a8bad23c12ff45744d9c153955aa5605ff6ec043fc18ee0",
+      "camera2_0000.ppm": "b3f084ab0bdba742a8c3d42f928a41e3c8e68a902cda2491356a0d0c26628a29",
+      "camera3_0000.ppm": "cfd1e10c184f0eb6ccac6c8a372c81216908d0b115183ac69f74fa049531468b",
+      "camera0_0001.ppm": "576a5061c5ec331f04832aad2f728e1e8934ed806041a247a02cdcd84995a15e",
+      "camera1_0001.ppm": "205a808e818b2fe1ce6046c266b1e31e8dca3ff0b7fadd0b6238ebc80652304d",
+      "camera2_0001.ppm": "9f130f89847cb3ee4ac0a9f593f93f17b01c01bff401d9fa3f3cafddce29c4a3",
+      "camera3_0001.ppm": "1b5da4badf1c80f0cf84eeb91bcd6d755b88b0d27f2762ec2cabf341c27244bb",
+      "camera0_0002.ppm": "eb9f7de6d963df1a09c9ca013076ecd5fa2c913d801eccf1c3832205d3827683",
+      "camera1_0002.ppm": "7ceb26c9c279a8c8dfd89f53062d4a04a02c220a3aeb5ca305e0b246977880dd",
+      "camera2_0002.ppm": "2416703ea52fe7f2c95ebdb838d32909987dca0a25dd99b8ac67b1b14ff0ffe2",
+      "camera3_0002.ppm": "27a6e843c4609efe539c0732c272a95c8d49916f64656fcd8c82763a83de8280",
+      "camera0_0003.ppm": "583fe29b10520b3fd7064c2eb95dab64e7b39d2bfc2ede65a6c367ed15879dfa",
+      "camera1_0003.ppm": "6b1ac7547709e46f00d47e652871d093a85e520149916066a2fdd9c6a8c0f253",
+      "camera2_0003.ppm": "9e5cb74ac47919eccf71bfcef68689916251cc7efebbc6cd4da333f100379e82",
+      "camera3_0003.ppm": "2e5b0f39884f7b8c97d03de0756ff9a765394fb2f8bc7a9822019108e1e8ab7f"
+    }
+  },
+  "reports": {
+    "fusion-report.json": "2d3e38a6a541e0c85ce46217c4a2b8d622e238b4ac87052f9cbea85aa38225c4",
+    "carrier-report.json": "fa0ce7f66d0345b896b3735f4938caab66b009df7a4f421d3d1e0217a00db119"
+  },
+  "limitations": [
+    "one paused Blender frame per scenario; different scenarios can select different frames",
+    "320x180 output; no decode/upload per repeated trial; warm render only",
+    "source revision identifies parent HEAD; source_fingerprint identifies tested uncommitted sources",
+    "input images and trace remain in ignored artifacts/blender-street and artifacts/native-fusion-runtime",
+    "no CPU/thermal control; unequal carrier triangle budgets; not a quality ranking"
+  ]
+}
