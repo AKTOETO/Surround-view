@@ -141,7 +141,9 @@ def run_study(fixture, output, warmup=2, repeats=7, order_seed=20261010, capture
     }
     research_docs = Path(__file__).resolve().parents[2]/'docs/research'
     support_protocol = research_docs/'STITCH_OBJECT_SUPPORT_PROTOCOL.md'
+    motion_protocol = research_docs/'STITCH_MOVING_OBJECT_PROTOCOL.md'
     timing_protocol = research_docs/'STITCH_TIMING_PROTOCOL.md'
+    motion_plan = Path(__file__).resolve().parents[2]/'assets/scenarios/object-stitch-motion-v1.json'
     code = {p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in (
         Path(__file__), Path(__file__).resolve().parents[1]/'object_metrics.py',
         Path(__file__).resolve().parents[1]/'reference.py', Path(__file__).resolve().parents[1]/'fusion.py',
@@ -149,15 +151,17 @@ def run_study(fixture, output, warmup=2, repeats=7, order_seed=20261010, capture
         Path(__file__).resolve().parents[1]/'blender/diagnostic_motion.py',
         Path(__file__).resolve().parents[1]/'blender/paired_truth.py',
         Path(__file__).resolve().parents[1]/'blender/scene.py')}
-    report = {'schema_version':1,'experiment':'E-STITCH-object-support-01', 'target_id':object_id,
+    report = {'schema_version':1,'experiment':'E-STITCH-object-motion-01', 'target_id':object_id,
               'protocol_sha256':hashlib.sha256(support_protocol.read_bytes()).hexdigest(),
+              'motion_protocol_sha256':hashlib.sha256(motion_protocol.read_bytes()).hexdigest(),
+              'motion_plan_sha256':hashlib.sha256(motion_plan.read_bytes()).hexdigest(),
               'timing_protocol_sha256':hashlib.sha256(timing_protocol.read_bytes()).hexdigest(),
               'timing': {'warmup_per_case':warmup, 'repeats':repeats, 'order':'randomized complete blocks',
                          'order_seed':order_seed, 'case_keys':keys, 'block_orders':schedules,
                          'host':_host_metadata(),
                          'scope':'CPU reference.render only; excludes truth/metrics/file I/O; not GPU or server latency'},
               'classifier_control':controls, 'input_sha256':hashes,'code_sha256':code,'results':rows,
-              'limitations':['one coded emission cuboid, two frames, one rig/view',
+              'limitations':['one coded emission cuboid, one scripted path, one rig/view; adjacent timestamps are not independent samples',
                              'color classifier is not a natural-object recognizer',
                              'connected/overlapping copies may merge; counts do not capture every ghost',
                              'source IDs use ideal pixel-center opaque rays; RGB is filtered',
