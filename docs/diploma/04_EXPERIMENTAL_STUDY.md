@@ -1314,6 +1314,29 @@ Mean absolute RGB8 change характеризует расхождение ве
 
 Пересчёт устраняет несоответствие версии реализации опубликованным результатам, но не закрывает E-STITCH-01. Следующие условия: исследование border extension/normalized convolution, длинные независимые клипы и scene/mount seeds, natural-object correspondence и stale/history опыт, равные ресурсные бюджеты, многокадровый серверный runner и отдельные целевые performance trials.
 
+## 4.44 Контролируемый опыт: граница маски и сохранение постоянного цвета
+
+После пересчёта §4.43 выполнен отдельный native опыт: все наблюдаемые камеры имеют одинаковый линейный RGB (0.6, 0.3, 0.8), их validity различается, но объединение покрывает весь output. На таком входе граница масок не должна создавать яркостный контур. Принцип раздельного учёта сигнала и уверенности описан в [Knutsson, Westin, Normalized and differential convolution, CVPR 1993](https://ieeexplore.ieee.org/abstract/document/341081/); конкретная рекурсивная поддержка Gaussian pyramid реализована и проверена в данном проекте.
+
+Для normalized варианта на каждом уровне независимо фильтруются масса C*S и поддержка S, после decimation выполняется деление при S>1e-12. Полная формула, σ/reflect/decimation convention, исходные controls и raw reports: [[validation/PYRAMID_BOUNDARY]]. Пирамида весов и Laplacian blend не заменены другим seam solver.
+
+| Режим | Max abs linear RGB error, zero | Max abs linear RGB error, normalized |
+|---|---:|---:|
+| multi_band, 33×17, overlap x=11..21 | 0.148552 | 1.192093e-7 |
+| graph_cut_multi_band, те же входы | 0.038150 | 1.192093e-7 |
+
+Таблица показывает максимум по трём каналам; это ошибка относительно известного постоянного поля, а не прежняя RGB8 разница версий (§4.43). Across 72 controls (три размера × четыре mask layouts × два режима × requested levels 1/4/8) максимальная normalized ошибка — 1.788139e-7, GTest tolerance — 4e-5. Small images ограничивают фактическую глубину пирамиды; сочетания levels не являются независимыми trials.
+
+![Постоянный цвет на границе масок](figures/experiments/pyramid_boundary_v1.png)
+
+*Рисунок 4.44 — Native профиль красного канала и его линейная grayscale визуализация для zero и normalized support. В baseline видны тёмный и светлый ореолы, normalized сохраняет известный цвет в данном контроле. Скрипт `plot_pyramid_boundary.py` находится рядом с главой, raw GTest JSON сохранён в validation baselines.*
+
+Проверено также отсутствие влияния invalid RGB, конечный нулевой результат при пустых входах и восстановление неconstant gradient одной полностью наблюдающей камеры. Независимый NumPy/SciPy oracle добавляет 18 random-mask/levels сочетаний; full RGBA oracle расширен до 90 случаев пяти carriers, 18 actual SV01 кадров побитно совпали с probe. Typed GUI apply/reject/restore проверен по Unix/TCP. Полная suite прошла 48/48 CTest entries.
+
+Четырёхвариантный `svctl research` screen выполнил 36 samples на одном paused frame set и восстановил fusion/surface/pause. Первый запуск на двухкадровом replay остановился с NO_INPUT и корректным restored=true: шаг кадров 200 ms превышал допустимый возраст 100 ms. Успешный запуск использовал первый исходный кадр без изменения RGB/calibration. Оба отчёта сохранены. Эти прогоны не оценивают временную устойчивость или FPS; reported GL device — AMD integrated radeonsi, не Аврора.
+
+Вывод ограничен проверенными инвариантами. Normalized support остаётся отдельным переключаемым кандидатом, default zero сохранён для сравнения. Перед выбором алгоритма нужны textured independent scenes, silhouettes/occlusions, exposure/noise, крупные отверстия масок, равные бюджеты и отдельный overhead/target опыт. Сохранение постоянного поля не доказывает отсутствия цветовых переносов либо лучшего качества естественных объектов.
+
 ## Предварительные выводы по четвёртой главе
 
 1. **Экспериментальная инфраструктура сшивки:** реализованы offline-варианты fusion и carrier matrix; исправленные binary graph-cut и output proxies проверены на fixtures, добавлены парный 3-frame Blender clip (§4.25), статический coded-object screen (§4.28) и девятикадровый moving-target screen (§4.39). Эти результаты уточняют failure modes в конкретных synthetic scenes; качество методов на holdout scenes и естественная object-correspondence ghost truth пока не подтверждены.

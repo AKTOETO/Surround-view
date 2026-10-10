@@ -24,13 +24,14 @@ Handshake объявляет `fusion_runtime_v1`. Это первый реали
 
 | Команда / поле | Контракт |
 |---|---|
-| `fusion_catalog` | Read-only ACK с `fusion_catalog`: version=2, modes, diagnostics, пределы параметров, temporary persistence, backend/GL device и server source revision/fingerprint |
+| `fusion_catalog` | Read-only ACK с `fusion_catalog`: version=3, modes, diagnostics, пределы параметров, temporary persistence, backend/GL device и server source revision/fingerprint |
 | `configure_fusion` | Обязательные `base_config_revision` (decimal string) и `fusion` (object); полностью заменяет fusion-секцию, пропущенные необязательные поля получают defaults |
 | `fusion.mode` | `edge_feather`, `hard_best_angle`, `angular_feather`, `seam_distance_feather`, `graph_cut_seam`, `multi_band`, `graph_cut_multi_band` |
 | `fusion.diagnostic` | `color` (default), `coverage`, `weights` |
 | `fusion.edge_width_px` | Число (0,4096], default 24 |
 | `fusion.angle_power` | Число (0,32], default 2 |
 | `fusion.pyramid_levels` | Целое 1..8, default 4; pyramid blend |
+| `fusion.pyramid_boundary` | `zero` (default) либо `normalized`; применяется только в двух pyramid-режимах, `normalized_support_v1` — экспериментальный вариант |
 | `fusion.smoothness_weight` | Число [0,100], default 0.1; pairwise cut |
 | ACK / `state` | `config_revision` и полный `fusion` вместе с существующими state fields |
 | type 11 frame | `config_revision` и полный фактический `fusion`; `state_revision` позволяет отфильтровать ранее поставленные в очередь кадры |
@@ -43,7 +44,7 @@ Handshake объявляет `fusion_runtime_v1`. Это первый реали
 
 Handshake дополнительно объявляет `research_fusion_v1`: четыре новых режима выполняют GLES-проекцию четырёх слоёв и native CPU fusion (OpenCV + Boost.Graph), не Python. Выход ограничен 262144 пикселями; превышение отклоняется при config validation. Каталог содержит `research_backend`, `research_pixel_limit`, `graph_cut_scope`, `research_fusion_implementation`. Три прежних режима остаются одним GPU-проходом.
 
-Frame содержит `fusion_backend`, `gpu_timer_status`, `surface`, `mesh_triangles`. В `pipeline_spans_ms` добавлены `layer_readback_cpu` (четыре GPU draw/readback, преобразование слоёв и ego overlay) и `fusion_cpu` (native fusion и композиция). Это wall durations на сервере; первая включает ожидание GPU. `render_wall` включает весь renderer, вложенные spans нельзя суммировать с ним. Для гибридного пути `gpu_draw=null`, status=`hybrid_total_not_measured`: старый timer query не измеряет полный гибридный pipeline. `research_fusion_implementation=validity_zero_extension_v2` фиксирует обнуление RGB вне validity перед pyramid filtering. Формат слоёв и проверка эталона: [[validation/NATIVE_FUSION]].
+Frame содержит `fusion_backend`, `gpu_timer_status`, `surface`, `mesh_triangles`. В `pipeline_spans_ms` добавлены `layer_readback_cpu` (четыре GPU draw/readback, преобразование слоёв и ego overlay) и `fusion_cpu` (native fusion и композиция). Это wall durations на сервере; первая включает ожидание GPU. `render_wall` включает весь renderer, вложенные spans нельзя суммировать с ним. Для гибридного пути `gpu_draw=null`, status=`hybrid_total_not_measured`: старый timer query не измеряет полный гибридный pipeline. `research_fusion_implementation=validity_zero_extension_v2` фиксирует обнуление RGB вне validity перед pyramid filtering. Каталог версии 3 дополнительно сообщает `pyramid_boundary` и `normalized_pyramid_implementation=normalized_support_v1`; выбор находится в фактическом fusion snapshot. Default zero сохраняет прежнюю численную реализацию. Проверки постоянного цвета, новых RGBA и wire cases: [[validation/PYRAMID_BOUNDARY]]. Формат слоёв и проверка эталона: [[validation/NATIVE_FUSION]].
 
 ## Геометрия во время работы: runtime_surface_v1
 

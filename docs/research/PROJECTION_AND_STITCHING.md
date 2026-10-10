@@ -306,3 +306,8 @@ Coverage считать отдельно как (1) проекционная val
 [[validation/STITCH_RESOLUTION_VISIBILITY]] отделяет влияние исходных cube faces (64/256 px) от выбора fusion: fisheye output 400×400 и direct truth фиксированы. Image metrics на первой низкодетальной серии нельзя трактовать как чистый эффект fusion. Independent source visibility проверяет ближайшую непрозрачную геометрию на луче к точке direct truth; carrier validity означает лишь допустимость семплирования носителя. Эти маски отвечают на разные вопросы. Any-camera visibility исключает недоступные из всех камер точки, но не исправляет геометрическое соответствие или выбор source при blending.
 
 Sampling saturation screen 256→512 и camera-gain sensitivity на трёх вариантах ближайших препятствий: [[validation/STITCH_CONVERGENCE_ROBUSTNESS]]. Влияние экспозиции наблюдается при статичных весах и требует отдельной compensation ablation; оно не доказывает superiority fusion или чистый temporal flicker.
+
+
+### Pyramid validity boundary как отдельный фактор
+
+После `validity_zero_extension_v2` прежние серии пересчитаны: [[validation/STITCH_MASK_FOLLOWUP]]. Затем production C++ constant-field controls выявили dark/bright halos в zero baseline и проверили отдельный normalized-support кандидат (§§3.27/4.44): [[validation/PYRAMID_BOUNDARY]]. Он доступен через runtime `pyramid_boundary`, library, GUI и C++ scenarios. Методический принцип signal/certainty: [[references/VISION#S74|S74]]. Default и обе ветви сохраняются для ablation; по 72 controls и paused screen нельзя выбрать метод для всех сцен. Следующий опыт должен фиксировать textured/occlusion/mask-hole/EV/noise условия и независимый truth, отдельно измерять overhead и не заменять holdout известными controls.

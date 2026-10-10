@@ -444,3 +444,8 @@ Fisheye camera model / OpenCV. – Текст : электронный // OpenCV
 ## S73
 
 **Fan Zhang, Feng Liu. Parallax-tolerant Image Stitching.** CVPR 2014, pp. 3262–3269. [CVF open-access record and paper](https://openaccess.thecvf.com/content_cvpr_2014/html/Zhang_Parallax-tolerant_Image_Stitching_2014_CVPR_paper.html). Проверено 09.10.2026: abstract, introduction and method. The paper states that seam cutting and blending alone cannot handle significant parallax; it adds local alignment/content-preserving warp and uses seam quality to select alignment. Supporting limit for [[research/PROJECTION_AND_STITCHING]]: a visually smooth seam is not proof of geometrically correct multi-camera reconstruction.
+
+
+## S74
+
+**Hans Knutsson, Carl-Fredrik Westin. Normalized and differential convolution.** Proceedings of IEEE Conference on Computer Vision and Pattern Recognition, 1993. DOI: 10.1109/CVPR.1993.341081. [Запись IEEE и abstract](https://ieeexplore.ieee.org/abstract/document/341081/). Проверены 10.10.2026 bibliographic record и abstract: разделение signal/certainty и нулевая certainty отсутствующих данных. Полный набор операторов статьи не воспроизводился. В проекте используется ограниченный scalar-support Gaussian pyramid вариант; его формулы, native controls и ограничения — [[validation/PYRAMID_BOUNDARY]], §§3.27/4.44 диплома. Constant-field тест не подтверждает качества естественных сцен.

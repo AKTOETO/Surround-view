@@ -737,3 +737,31 @@ end
 *Рисунок 3.26 — Проверка ACK перед завершением команды; повреждённый ответ не подтверждает и не отменяет серверное изменение.*
 
 Дополнительная граница ошибок реализована на GUI-потоке: прикладные поля кадра и диагностики могут быть некорректны даже при допустимом транспортном конверте. Исключение закрывает соединение и очищает изображение, метрики и частичный snapshot. Симулятор инвалидирует отложенные callbacks и позволяет подключиться явно; автомобильный пример блокирует последующие события и требует перезапуска. Полная автоматическая реконструкция GUI после такой ошибки не реализована. Числа JSON допускают целую и дробную запись: нулевой GPU timing должен отображаться как измерение, а не отсутствие timer. Native mock проверяет повреждённые ACK; C++ GTest проверяет оба Qt-адаптера на событийной границе. Эти проверки не заменяют испытаний на физическом экране и Авроре: [[validation/RESEARCH_RUNTIME]].
+
+
+### 3.27. Переключаемая поддержка границ pyramid fusion
+
+В native C++ fusion добавлен `pyramid_boundary=zero|normalized`. Default zero сохраняет прежние результаты; normalized отдельно фильтрует цветовую массу и поддержку, затем делит их на каждом уменьшенном уровне. Laplacian reconstruction и fusion weights сохранены. Начальная validity остаётся критерием наблюдаемости; нормализованный вариант не создаёт новых измерений камеры.
+
+```plantuml
+@startuml
+participant "GUI / svctl" as UI
+participant "sv-client-lib / C++ runner" as Lib
+participant "sv-server config validation" as Server
+participant "Renderer / native fusion" as Render
+UI -> Lib : выбрать normalized, base revision
+Lib -> Server : configure_fusion(pyramid_boundary=normalized)
+Server -> Server : проверить revision и допустимые поля
+Server -> Render : set_fusion между render calls
+Server --> Lib : ACK, config revision, фактическая policy
+Render -> Render : G*(C*S), G*S, decimation
+Render -> Render : Cnext = filtered mass / support
+Render -> Render : Laplacian blend / reconstruction
+Render --> Lib : RGBA + fusion snapshot / revision
+Lib --> UI : owning frame и диагностика
+@enduml
+```
+
+*Рисунок 3.27 — Управление исследовательским вариантом через серверный протокол. Файл конфигурации клиент не изменяет; настройка temporary. GPU projection и CPU fusion остаются прежними стадиями гибридного backend.*
+
+Каталог версии 3 сообщает варианты и identifier `normalized_support_v1`. Типизированная библиотека опускает default zero при отправке, сохраняя прежний формат запроса; normalized требует поддержки каталога. GUI принимает шесть базовых полей и optional policy, C++ scenario runner сохраняет её в manifest опыта. Проверки численных свойств, actual RGBA и wire, включая ограничения constant-field controls, приведены в [[validation/PYRAMID_BOUNDARY]].

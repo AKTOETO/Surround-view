@@ -33,7 +33,7 @@ The connection panel allows editing the Unix directory or TCP host/ports. Timeou
 ## Available server controls
 
 - View presets, orbit, and zoom.
-- Runtime fusion and carrier editing: load a server snapshot, edit its JSON, and apply against the captured config revision. The panel displays server catalogs, all six fusion fields and the full active surface object. Stale revisions and invalid settings are rejected by the server. ACK updates the displayed actual state; drafts are not overwritten by incoming frames or acknowledgements. Reconnect clears drafts. Updates are temporary, with no server config file access from the client.
+- Runtime fusion and carrier editing: load a server snapshot, edit its JSON, and apply against the captured config revision. The panel displays server catalogs, six base fusion fields plus optional pyramid_boundary and the full active surface object. Stale revisions and invalid settings are rejected by the server. ACK updates the displayed actual state; drafts are not overwritten by incoming frames or acknowledgements. Reconnect clears drafts. Updates are temporary, with no server config file access from the client.
 - Replay pause, resume, and step. `step` is rejected by live camera/socket sources.
 - Frame metadata: source type, fusion/view identifiers, config revision, and which camera inputs were selected.
 - Coarse pipeline timing fields supplied by the server. GPU draw time is shown only when a supported timer query produced a value; the reported intervals overlap and must not be summed.
@@ -55,3 +55,5 @@ On session loss, discovery/replacement, or explicit disconnect, cached images, f
 Frame image URLs include both session ID and frame ID, preventing cache/load identity collisions when a new session reuses frame numbers. The touchscreen client also ignores late image-ready notifications for a URL that is no longer current.
 
 Ошибки обработки прикладных полей сообщения перехватываются на GUI-потоке: соединение закрывается, частичный runtime snapshot, calibration job и изображение очищаются, прежние queued callbacks инвалидируются. Причина отображается в status; для продолжения подключитесь заново через панель подключения. Команды изменения не повторяются автоматически. Углы, расстояние, ошибки калибровки и timings принимают целые и дробные JSON числа. Регрессии: [[validation/RESEARCH_RUNTIME]].
+
+В fusion snapshot сервера добавлен `pyramid_boundary` (`zero`/`normalized`). Редактор принимает шесть базовых полей и optional седьмое; normalized переключает экспериментальную поддержку пирамиды в сервере. Default zero сохраняет прежние исследования. Контракт и ограничения: [[validation/PYRAMID_BOUNDARY]].

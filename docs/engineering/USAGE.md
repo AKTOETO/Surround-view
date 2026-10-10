@@ -648,3 +648,16 @@ build/examples/sv-simulator/sv-simulator --unix /tmp/sv-prototype
 Применение идёт через `sv-client-lib`, без Python и доступа клиента к конфигурационному файлу. Ответ сервера содержит действительный снимок и ревизию; черновик сохраняется до явной загрузки. После успешного изменения перед следующей правкой снова загрузите снимок. При `stale_config_revision` перечитайте состояние и перенесите нужную правку вручную; автоматического повторения с новой ревизией нет. При переподключении черновики сбрасываются.
 
 Изменения временные, но последующее persistent `apply_calibration` вне experiment lease сохраняет весь активный snapshot. Сначала восстановите исходные настройки. GUI редактор не захватывает experiment lease и не заменяет защищённый сценарный runner. GUI сценариев, общий ConfigService и постоянное сохранение через отдельную команду ещё не реализованы. Перед запуском `svctl` отключите GUI: сервер пока односессионный.
+
+
+### Исследование границ multiband
+
+Сервер поддерживает `fusion.pyramid_boundary=zero|normalized` для `multi_band` и `graph_cut_multi_band`. Default zero сохраняет старые исследования; normalized — отдельный вариант с нормализацией Gaussian color mass по validity support. Каталог версии 3 перечисляет варианты. Получите текущую revision через `state`; в примере ниже замените `0` фактическим `config_revision`:
+
+```sh
+build/svctl --unix /tmp/sv-runtime-screen state
+build/svctl --unix /tmp/sv-runtime-screen command configure_fusion --params '{"base_config_revision":"0","fusion":{"mode":"multi_band","pyramid_levels":4,"pyramid_boundary":"normalized"}}'
+build/svctl --unix /tmp/sv-runtime-screen research configs/research/pyramid-boundary-screen.json artifacts/pyramid-boundary-report.json
+```
+
+Apply полностью заменяет fusion snapshot, остальные optional поля получают defaults. Конфигурация временная. Тот же выбор доступен в JSON редакторе симулятора и `FusionSettings` клиентской библиотеки. Native сценарий сравнивает четыре варианта на одном READY paused frame set и восстанавливает исходные настройки; он не выполняет многокадровое quality исследование. При NO_INPUT runner завершает опыт с ошибкой и восстанавливает состояние; данные replay должны быть доступны до pause. Численные контролируемые опыты, отрицательный результат и ограничения: [[validation/PYRAMID_BOUNDARY]].
