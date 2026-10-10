@@ -6,6 +6,7 @@ from pathlib import Path
 import sys
 import tempfile
 import unittest
+from copy import deepcopy
 
 import numpy as np
 from PIL import Image
@@ -16,6 +17,23 @@ import simulator
 
 
 class ReferenceTests(unittest.TestCase):
+    def test_server_pyramid_parameter_and_legacy_alias(self):
+        cfg = simulator.config()
+        cfg['output'] = dict(width=31, height=23)
+        rng = np.random.default_rng(42)
+        images = [rng.integers(0, 256, (c['resolution']['height'], c['resolution']['width'], 3))
+                  for c in cfg['cameras']]
+        cfg['fusion'] = dict(mode='multi_band', pyramid_levels=1)
+        single = ref.render(cfg, images)['rgb']
+        cfg['fusion']['pyramid_levels'] = 4
+        multiple = ref.render(cfg, images)['rgb']
+        self.assertFalse(np.array_equal(single, multiple))
+        legacy = deepcopy(cfg)
+        legacy['fusion']['num_pyramid_levels'] = legacy['fusion'].pop('pyramid_levels')
+        np.testing.assert_array_equal(multiple, ref.render(legacy, images)['rgb'])
+        legacy['fusion']['pyramid_levels'] = 1
+        with self.assertRaisesRegex(ValueError, 'conflicting'):
+            ref.render(legacy, images)
     def test_stable_roots_and_linear_limit(self):
         roots = ref.roots(np.array([1., 0., 1., 1.]), [1e8, 2, 0, 0], [1, -6, 0, 1])
         np.testing.assert_allclose(np.sort(roots[:, 0]), [-1e8, -1e-8])

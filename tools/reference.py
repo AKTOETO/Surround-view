@@ -9,7 +9,7 @@ import time
 import numpy as np
 from PIL import Image
 
-from fusion import fuse_samples, FUSION_MODES
+from fusion import fuse_samples, FUSION_MODES, FUSION_IMPLEMENTATION
 
 
 def roots(a, b, c):
@@ -159,8 +159,11 @@ def render(config, images):
     eye, directions, depth = rays(config)
     near, far = config['virtual_camera']['clip_m']
     points, hit, distance = intersect(config['surface'], eye, directions, near, far, depth)
-    fusion_cfg = dict(mode='edge_feather', edge_width_px=24., angle_power=2., num_pyramid_levels=4)
+    fusion_cfg = dict(mode='edge_feather', edge_width_px=24., angle_power=2.)
     fusion_cfg.update(config.get('fusion', {}))
+    if ('pyramid_levels' in fusion_cfg and 'num_pyramid_levels' in fusion_cfg and
+            fusion_cfg['pyramid_levels'] != fusion_cfg['num_pyramid_levels']):
+        raise ValueError('conflicting pyramid_levels and legacy num_pyramid_levels')
     mode = fusion_cfg['mode']
     
     colors, validity, thetas, edges = [], [], [], []
@@ -186,7 +189,8 @@ def render(config, images):
         mode=mode,
         edge_width_px=fusion_cfg.get('edge_width_px', 24.0),
         angle_power=fusion_cfg.get('angle_power', 2.0),
-        num_pyramid_levels=fusion_cfg.get('num_pyramid_levels', 4),
+        num_pyramid_levels=fusion_cfg.get('pyramid_levels', fusion_cfg.get('num_pyramid_levels', 4)),
+        smoothness_weight=fusion_cfg.get('smoothness_weight', .1),
     )
     
     coverage = np.sum(validity, axis=-1).astype(np.uint8)
@@ -258,6 +262,9 @@ def run(config_path, manifest_path, output, frame=0):
                   config_sha256=hashlib.sha256(config_path.read_bytes()).hexdigest(),
                   manifest_sha256=hashlib.sha256(manifest_path.read_bytes()).hexdigest(),
                   implementation_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+                  fusion_implementation=FUSION_IMPLEMENTATION,
+                  fusion_implementation_sha256=hashlib.sha256(
+                      Path(__file__).with_name('fusion.py').read_bytes()).hexdigest(),
                   input_sha256=hashes, frame_index=frame,
                   scenario_timestamp_ns=manifest['frames'][frame]['scenario_timestamp_ns'],
                   surface=config['surface'], fusion=config.get('fusion', {'mode': 'edge_feather'}),

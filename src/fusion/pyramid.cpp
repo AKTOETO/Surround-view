@@ -80,7 +80,9 @@ cv::Mat multiband(const FusionSamples &samples, const cv::Mat &weights, unsigned
     cv::split(weights, planes);
     for (int c = 0; c < 4; ++c)
     {
-        colors[c] = pyramid(samples.colors[c], levels);
+        auto observed = samples.colors[c].clone();
+        observed.setTo(0, samples.validity[c] == 0);
+        colors[c] = pyramid(observed, levels);
         masks[c] = pyramid(planes[c], colors[c].size());
         for (size_t level = 0; level + 1 < colors[c].size(); ++level)
         {

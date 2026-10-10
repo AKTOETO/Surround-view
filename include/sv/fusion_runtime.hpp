@@ -31,6 +31,7 @@ inline boost::json::object fusion_catalog()
             {"smoothness_weight", boost::json::object{{"min", 0}, {"max", 100}}},
             {"pyramid_levels", boost::json::object{{"min", 1}, {"max", 8}}},
             {"research_backend", "gles_projection_cpu_fusion_v1"},
+            {"research_fusion_implementation", "validity_zero_extension_v2"},
             {"research_pixel_limit", 262144},
             {"graph_cut_scope", "independent_binary_pairs; centrality_ties_for_3plus"},
             {"apply", "between_render_calls"},

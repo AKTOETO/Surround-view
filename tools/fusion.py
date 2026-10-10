@@ -4,10 +4,10 @@ Implements baseline and advanced fusion strategies:
 1. Hard Best Angle (winner-takes-all based on optical ray angle).
 2. Edge Feather (linear ramp based on distance to image boundary).
 3. Angular Feather (edge distance weighted by directional cosine power).
-4. Seam Distance Feather (metric distance to Voronoi/geometric seam in overlap).
-5. Graph-Cut Seam (optimal minimal-energy seam line in camera overlap corridors).
+4. Seam Distance Feather (pixel-space EDT of each camera validity mask).
+5. Graph-Cut Seam (independent binary cuts in exactly-two-camera overlap).
 6. Multi-Band Blending (Laplacian/Gaussian pyramid frequency decomposition).
-7. Graph-Cut + Multi-Band (optimal seam partition with multi-band smooth blending).
+7. Graph-Cut + Multi-Band (binary cuts / centrality fallback and pyramid blending).
 """
 import numpy as np
 import scipy.ndimage as ndi
@@ -24,6 +24,7 @@ FUSION_MODES = (
     "multi_band",
     "graph_cut_multi_band",
 )
+FUSION_IMPLEMENTATION = "validity_zero_extension_v2"
 
 
 def compute_seam_distance_weights(validity, points, edge_distances):
@@ -231,7 +232,9 @@ def multi_band_blend(colors, weights, validity, num_levels=4):
     cam_weight_pyramids = []
     
     for i in range(num_cams):
-        cam_color = colors[..., i, :]
+        # Unobserved RGB is not evidence. Define zero extension before filtering,
+        # matching the projected layers used by the native server backend.
+        cam_color = np.where(validity[..., i, None], colors[..., i, :], 0)
         cam_weight = weights[..., i:i+1]
         
         g_color = build_gaussian_pyramid(cam_color, num_levels)
@@ -263,7 +266,8 @@ def multi_band_blend(colors, weights, validity, num_levels=4):
 
 
 def fuse_samples(colors, validity, thetas, edge_distances, points, mode="edge_feather",
-                 edge_width_px=24.0, angle_power=2.0, num_pyramid_levels=4):
+                 edge_width_px=24.0, angle_power=2.0, num_pyramid_levels=4,
+                 smoothness_weight=0.1):
     """Unified entry point for all 7 surround-view fusion strategies."""
     H, W, num_cams, C = colors.shape
     
@@ -295,7 +299,7 @@ def fuse_samples(colors, validity, thetas, edge_distances, points, mode="edge_fe
         blended = np.sum(colors * norm_weights[..., None], axis=-2)
         
     elif mode == "graph_cut_seam":
-        norm_weights = compute_graph_cut_seam_mask(colors, validity)
+        norm_weights = compute_graph_cut_seam_mask(colors, validity, smoothness_weight)
         blended = np.sum(colors * norm_weights[..., None], axis=-2)
         
     elif mode == "multi_band":
@@ -305,7 +309,7 @@ def fuse_samples(colors, validity, thetas, edge_distances, points, mode="edge_fe
         blended = multi_band_blend(colors, norm_weights, validity, num_levels=num_pyramid_levels)
         
     elif mode == "graph_cut_multi_band":
-        norm_weights = compute_graph_cut_seam_mask(colors, validity)
+        norm_weights = compute_graph_cut_seam_mask(colors, validity, smoothness_weight)
         soft_weights = np.zeros_like(norm_weights)
         for i in range(num_cams):
             soft_weights[..., i] = ndi.gaussian_filter(norm_weights[..., i], sigma=2.0) * validity[..., i]

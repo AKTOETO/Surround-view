@@ -8,7 +8,7 @@ import numpy as np
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'tools'))
-from fusion import fuse_samples, compute_graph_cut_seam_mask
+from fusion import fuse_samples
 PROBE = sys.argv[1]
 
 
@@ -23,10 +23,8 @@ class NativeFusionParity(unittest.TestCase):
         self.assertEqual(run.returncode, 0, run.stderr)
         result = json.loads(run.stdout)
         expected, weights = fuse_samples(colors, validity, np.zeros_like(edges), edges * 24,
-            np.zeros((h, w, 3)), mode=mode, num_pyramid_levels=levels)
-        if mode == 'graph_cut_seam' and smoothness != .1:
-            weights = compute_graph_cut_seam_mask(colors, validity, smoothness)
-            expected = np.sum(colors * weights[..., None], axis=-2)
+            np.zeros((h, w, 3)), mode=mode, num_pyramid_levels=levels,
+            smoothness_weight=smoothness)
         actual = np.array(result['color']).reshape(h, w, 3)
         actual_weights = np.array(result['weights']).reshape(h, w, 4)
         np.testing.assert_allclose(actual_weights, weights, atol=2e-6, rtol=2e-6)
@@ -55,9 +53,24 @@ class NativeFusionParity(unittest.TestCase):
         validity[:, 3:, 1] = True
         edges = np.ones((h, w, 4), np.float32)
         self.compare(colors, validity, edges, 'graph_cut_seam', smoothness=.7)
+        self.compare(colors, validity, edges, 'graph_cut_multi_band', smoothness=.7)
         validity[:] = True
         for mode in ['seam_distance_feather', 'graph_cut_seam', 'multi_band', 'graph_cut_multi_band']:
             self.compare(colors, validity, edges, mode)
+
+    def test_unobserved_rgb_cannot_change_pyramid_output(self):
+        rng = np.random.default_rng(42)
+        colors = rng.random((9, 13, 4, 3)).astype(np.float32)
+        validity = rng.random((9, 13, 4)) > .4
+        edges = np.ones((9, 13, 4), np.float32)
+        changed = colors.copy()
+        changed[~validity] = 1 - changed[~validity]
+        for mode in ['multi_band', 'graph_cut_multi_band']:
+            self.compare(colors, validity, edges, mode)
+            self.compare(changed, validity, edges, mode)
+            first = fuse_samples(colors, validity, edges*0, edges*24, edges[..., :3], mode=mode)[0]
+            second = fuse_samples(changed, validity, edges*0, edges*24, edges[..., :3], mode=mode)[0]
+            np.testing.assert_array_equal(first, second)
 
 
 if __name__ == '__main__':

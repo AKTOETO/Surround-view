@@ -298,6 +298,7 @@ def run_experiment(config_path, dataset_dir, output_dir):
     summary = {
         "schema_version": 1,
         "experiment_id": "E-STITCH-01",
+        "fusion_implementation": "validity_zero_extension_v2",
         "timestamp_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "dataset": str(dataset_dir),
         "provenance": provenance,
