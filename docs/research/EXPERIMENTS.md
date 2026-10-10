@@ -120,3 +120,7 @@ GPU execution time измерять асинхронными timer queries, CPU 
 ## E-CAL-attribution-solver-01 — 10.10.2026
 
 [[validation/CALIBRATION_COMPONENT_SOLVER]]: после отдельной фиксации ablation protocol dense SciPy LM пересчитал те же 144 signed refits; сошлись 144/144 за 3–6 evaluations, против 110/144 у sparse TRF/LSMR. На 51 общих complete pairs median difference intrinsic share 0.00010, max 0.0253. Все исходы и source hashes сохранены. Post-hoc synthetic solver-path study объясняет неполноту первого runner, но не является production solver comparison или physical evidence.
+
+## E-STITCH-coded-object-timing-02 — 10.10.2026
+
+[[validation/OBJECT_STITCH]]: повторён неизменённый 84-case coded-object workload, 2 warmups и 7 seeded randomized complete blocks. Каждый блок содержит все условия один раз; все семь permutations различны. Host, order, raw samples, fixture/source/protocol hashes сохранены. Это устраняет фиксированный порядок первого screen, но не выравнивает mesh/memory budget и не превращает один view/target или Python CPU время в GPU/server/Aurora performance evidence. Protocol: [[STITCH_TIMING_PROTOCOL]].

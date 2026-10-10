@@ -109,14 +109,30 @@ $$IoU=\frac{|P\cap T|}{|P\cup T|},\qquad recall=\frac{|P\cap T|}{|T|},\qquad pre
 
 Во всех 84 случаях избыток компонент и дополнительных строковых runs равен нулю. Форма и положение существенно ошибочны, но соединённый след остаётся одной компонентой. Это отрицательный результат для полноты счётчика копий; нужна геометрическая correspondence/instance оценка и отдельная temporal ghost-trail метрика. Видимый объект здесь не является плоской частью carrier. Пять carrier имеют общий центральный пол и близкие результаты: опыт не различает качество всей оболочки, mesh budgets не выровнены.
 
-На каждый случай выполнены 2 warmup и 7 timed повторов полного `reference.render`. Это Python CPU analytic renderer, без файлового I/O, метрик и ID анализа; не GPU, сервер или end-to-end latency. Порядок carrier/mode/frame фиксирован, фоновые нагрузки/температура не контролируются. Различия времени между одинаковыми центральными ROI нельзя считать доказательством скорости carrier. p95 при N=7 — описательная интерполяция; p99 не оценивается. Для этапа 6 ещё нужны чередование порядка, host metadata, длительные stage measurements и hardware/resource profiles.
+Первичный timing screen использовал 2 warmup и 7 повторов, но фиксированный carrier/mode/frame order; его timing нельзя считать сравнительным результатом. Новый follow-up ниже чередует полный набор условий и сохраняет host metadata.
+
+## Follow-up: randomized complete-block timing
+
+Заранее зафиксированный protocol [[../research/STITCH_TIMING_PROTOCOL]] повторил тот же 84-case workload: каждый блок содержит все 5 carriers × 7 fusion modes × 2 frames ровно один раз. Выполнено два warmup на случай и семь timed blocks с отдельной seeded-перестановкой; все семь порядков различны. Artifact: `artifacts/object-study-interleaved-v2/summary.json`, включая каждый порядок, raw time samples, protocol/source/input hashes и host metadata.
+
+| Fusion mode | Медиана case-level p50, ms | Диапазон case-level p50, ms | Pooled p95, ms |
+|---|---:|---:|---:|
+| `angular_feather` | 37.54 | 34.64–43.83 | 44.49 |
+| `edge_feather` | 35.89 | 32.68–42.39 | 43.15 |
+| `graph_cut_multi_band` | 88.27 | 82.24–94.33 | 95.81 |
+| `graph_cut_seam` | 56.04 | 50.09–62.51 | 62.91 |
+| `hard_best_angle` | 37.46 | 34.44–43.14 | 44.85 |
+| `multi_band` | 66.18 | 63.50–72.45 | 73.57 |
+| `seam_distance_feather` | 40.26 | 37.60–46.88 | 47.68 |
+
+Case-level summaries aggregate only two frames from one view; pooled p95 aggregates repeated host timings, not independent scenes. Host: Linux x86_64, Python 3.14.7, NumPy 2.5.3, 32 logical CPUs; thread environment variables were unset. Processor identification was unavailable. Background load, CPU frequency and temperature were uncontrolled. Thus this follow-up fixes order bias and improves reproducibility, but it still does not create a fair carrier ranking: mesh/memory budgets differ, the renderer is Python CPU reference code, and the fixture remains one coded target/view. Old fixed-order values and the new interleaved values must not be interpreted as a before/after speedup comparison.
 
 ## Воспроизведение
 
 Checked-in fixture `tests/data/object_stitch_v1` содержит исходные RGB и truth, без raw cube faces и `.blend`. Численный прогон не требует Blender:
 
 ```sh
-python3 tools/research/object_stitch.py --output artifacts/object-study-repeat --warmup 2 --repeats 7
+python3 tools/research/object_stitch.py --output artifacts/object-study-repeat --warmup 2 --repeats 7 --order-seed 20261010
 MPLCONFIGDIR=/tmp/sv-mpl python3 docs/diploma/plot_object_stitch.py --results artifacts/object-study-repeat
 ctest --test-dir build -R 'object_metrics|scene_visibility' --output-on-failure
 ```
@@ -148,7 +164,7 @@ Converter пишет RGB/manifest/config, а paired truth остаётся в к
 
 Blender regression `tests/blender/test_visibility.py:run_source_capture` отдельно проверяет двухкадровый source-ID export, восемь карт и восстановление камеры/сцены; smoke выполнен с картами 16×16. `run(scene)` проверяет пропуск скрытых helpers после выделения общего ray helper.
 
-Этапы 2–4 и 7 этим опытом не закрыты: реальные detector/solver, mount seeds, длинные повороты/dynamic scenes, compensation и заранее замороженный holdout остаются в [[../TODO]]. Natural-object segmentation, transparency и соответствие движущихся объектов также остаются открытыми.
+Этапы 2–4 и 7 этим опытом не закрыты: реальные detector/solver, mount seeds, длинные повороты/dynamic scenes, compensation и заранее замороженный holdout остаются в [[../TODO]]. Natural-object segmentation, transparency и соответствие движущихся объектов также остаются открытыми. Чередование порядка не устраняет требования равных mesh/memory budgets и GPU/целевого аппаратного профиля.
 
 ## Выполненные регрессионные проверки
 
