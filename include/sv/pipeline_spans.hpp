@@ -36,6 +36,7 @@ struct FrameTelemetry
     double pre_render_prepare_ms = 0.0;
     double render_wall_ms = 0.0;
     std::optional<double> gpu_draw_ms;
+    double fusion_cpu_ms = 0.0, layer_readback_cpu_ms = 0.0;
     double upload_cpu_ms = 0.0;
     double readback_copy_cpu_ms = 0.0;
     double publish_enqueue_ms = 0.0;
@@ -43,29 +44,29 @@ struct FrameTelemetry
 
     boost::json::object to_json() const
     {
-        boost::json::object spans{
-            {"source_poll", source_poll_ms},
-            {"pre_render_prepare", pre_render_prepare_ms},
-            {"render_wall", render_wall_ms},
-            {"gpu_draw", gpu_draw_ms ? boost::json::value(*gpu_draw_ms)
-                                      : boost::json::value(nullptr)},
-            {"upload_cpu", upload_cpu_ms},
-            {"readback_copy_cpu", readback_copy_cpu_ms},
-            {"publish_enqueue", publish_enqueue_ms}};
-        return {
-            {"frame_id", std::to_string(frame_id)},
-            {"sequence_id", std::to_string(sequence_id)},
-            {"config_revision", std::to_string(config_revision)},
-            {"timestamp_ns", std::to_string(timestamp_ns)},
-            {"spans_ms", std::move(spans)},
-            {"server_receive_to_render_ms", total_pipeline_ms}
-        };
+        boost::json::object spans{{"source_poll", source_poll_ms},
+                                  {"pre_render_prepare", pre_render_prepare_ms},
+                                  {"render_wall", render_wall_ms},
+                                  {"gpu_draw", gpu_draw_ms ? boost::json::value(*gpu_draw_ms)
+                                                           : boost::json::value(nullptr)},
+                                  {"fusion_cpu", fusion_cpu_ms},
+                                  {"layer_readback_cpu", layer_readback_cpu_ms},
+                                  {"upload_cpu", upload_cpu_ms},
+                                  {"readback_copy_cpu", readback_copy_cpu_ms},
+                                  {"publish_enqueue", publish_enqueue_ms}};
+        return {{"frame_id", std::to_string(frame_id)},
+                {"sequence_id", std::to_string(sequence_id)},
+                {"config_revision", std::to_string(config_revision)},
+                {"timestamp_ns", std::to_string(timestamp_ns)},
+                {"spans_ms", std::move(spans)},
+                {"server_receive_to_render_ms", total_pipeline_ms}};
     }
 };
 
 class PipelineSpanTracker
 {
-public:
+  public:
+
     explicit PipelineSpanTracker(size_t ring_capacity = 120)
         : capacity_(std::max<size_t>(1, ring_capacity))
     {
@@ -115,7 +116,8 @@ public:
         return history_.size();
     }
 
-private:
+  private:
+
     size_t capacity_;
     mutable std::mutex mutex_;
     std::deque<FrameTelemetry> history_;

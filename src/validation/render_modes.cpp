@@ -83,7 +83,9 @@ void qualify_fusion_modes(Config config)
         }
         all.frames[id] = sv::Frame{id, 0, 0, 0, image};
     }
-    for (const auto *mode : {"edge_feather", "angular_feather", "hard_best_angle"})
+    for (const auto *mode :
+         {"edge_feather", "angular_feather", "hard_best_angle", "seam_distance_feather",
+          "graph_cut_seam", "multi_band", "graph_cut_multi_band"})
     {
         config.fusion.mode = mode;
         config.fusion.diagnostic = "color";

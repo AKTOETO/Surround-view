@@ -198,10 +198,13 @@ Config parse_config(const boost::json::value &value)
     if (const auto *value = o.if_contains("fusion"))
     {
         const auto &fusion = value->as_object();
-        keys(fusion, {"mode"}, "fusion", {"diagnostic", "edge_width_px", "angle_power"});
+        keys(fusion, {"mode"}, "fusion",
+             {"diagnostic", "edge_width_px", "angle_power", "smoothness_weight", "pyramid_levels"});
         c.fusion.mode = str(fusion.at("mode"));
         require(c.fusion.mode == "edge_feather" || c.fusion.mode == "hard_best_angle" ||
-                    c.fusion.mode == "angular_feather",
+                    c.fusion.mode == "angular_feather" ||
+                    c.fusion.mode == "seam_distance_feather" || c.fusion.mode == "graph_cut_seam" ||
+                    c.fusion.mode == "multi_band" || c.fusion.mode == "graph_cut_multi_band",
                 "fusion.mode: unsupported mode");
         if (const auto *diagnostic = fusion.if_contains("diagnostic"))
         {
@@ -218,6 +221,16 @@ Config parse_config(const boost::json::value &value)
         {
             c.fusion.angle_power = num(*power);
         }
+        if (const auto *v = fusion.if_contains("smoothness_weight"))
+        {
+            c.fusion.smoothness_weight = num(*v);
+        }
+        if (const auto *v = fusion.if_contains("pyramid_levels"))
+        {
+            c.fusion.pyramid_levels = integer(*v, 1, 8);
+        }
+        require(c.fusion.smoothness_weight >= 0 && c.fusion.smoothness_weight <= 100,
+                "fusion.smoothness_weight: expected [0,100]");
         require(c.fusion.edge_width_px > 0 && c.fusion.edge_width_px <= 4096,
                 "fusion.edge_width_px: expected (0,4096]");
         require(c.fusion.angle_power > 0 && c.fusion.angle_power <= 32,
@@ -525,6 +538,13 @@ Config parse_config(const boost::json::value &value)
     else
     {
         throw std::invalid_argument("surface: unsupported type");
+    }
+    if (c.fusion.mode == "seam_distance_feather" || c.fusion.mode == "graph_cut_seam" ||
+        c.fusion.mode == "multi_band" || c.fusion.mode == "graph_cut_multi_band")
+    {
+        const auto &output = o.at("output").as_object();
+        require(num(output.at("width")) * num(output.at("height")) <= 262144,
+                "fusion: CPU research output budget is 262144 pixels");
     }
     const auto &view = o.at("virtual_camera").as_object();
     keys(view, {"azimuth_rad", "elevation_rad", "distance_m", "fov_y_rad", "clip_m"},

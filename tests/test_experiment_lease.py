@@ -83,6 +83,15 @@ class ExperimentWatchdogTests(unittest.TestCase):
         self.assertTrue(ack['accepted'], ack)
         self.matching_frame(ack)
 
+    def change_surface(self, lease):
+        state = self.client.command('state')
+        ack = self.client.command('configure_surface', lease_id=lease,
+            base_config_revision=state['config_revision'],
+            surface=dict(type='cube_floor_v1', half_extent_m=14, height_m=14, face_cells=8))
+        self.assertTrue(ack['accepted'], ack)
+        header, _ = self.matching_frame(ack)
+        self.assertEqual(header['surface'], ack['surface'])
+
     def test_expiry_restores_and_rejects_conflicting_commands(self):
         original = self.client.command('state')
         for ttl in [0, 249, 30001, 1.5]:
@@ -95,6 +104,7 @@ class ExperimentWatchdogTests(unittest.TestCase):
         self.assertTrue(paused['accepted'])
         self.matching_frame(paused)
         self.change_fusion(lease)
+        self.change_surface(lease)
         revision = self.client.command('state')['config_revision']
         for command, fields in [
             ('configure_fusion', dict(base_config_revision=revision, fusion=original['fusion'])),
@@ -111,6 +121,7 @@ class ExperimentWatchdogTests(unittest.TestCase):
         time.sleep(.6)
         restored = self.idle()
         self.assertEqual(restored['fusion'], original['fusion'])
+        self.assertEqual(restored['surface'], original['surface'])
         self.assertEqual(restored['paused'], original['paused'])
         stale = self.client.command('configure_fusion', lease_id=lease,
             base_config_revision=restored['config_revision'], fusion=original['fusion'])
@@ -130,12 +141,14 @@ class ExperimentWatchdogTests(unittest.TestCase):
         self.assertTrue(ack['accepted'])
         self.matching_frame(ack)
         self.change_fusion(lease)
+        self.change_surface(lease)
         self.client.close()
         self.client = None
         time.sleep(.12)
         self.client = Client(self.ipc)
         restored = self.idle()
         self.assertEqual(restored['fusion'], original['fusion'])
+        self.assertEqual(restored['surface'], original['surface'])
         self.assertEqual(restored['paused'], original['paused'])
         self.assertIsNone(self.server.poll())
         # A new session can start a new experiment after recovery.

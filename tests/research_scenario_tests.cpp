@@ -12,8 +12,8 @@ TEST(ResearchScenario, DefaultsAndExplicitProfiles)
     ASSERT_EQ(scenario.variants.size(), 1U);
     EXPECT_EQ(scenario.repeats, 3U);
     EXPECT_EQ(scenario.warmup, 2U);
-    EXPECT_EQ(scenario.variants[0].diagnostic, "color");
-    EXPECT_DOUBLE_EQ(scenario.variants[0].angle_power, 4);
+    EXPECT_EQ(scenario.variants[0].fusion.diagnostic, "color");
+    EXPECT_DOUBLE_EQ(scenario.variants[0].fusion.angle_power, 4);
 }
 
 TEST(ResearchScenario, RejectsUnsupportedAndUnboundedScenariosBeforeConnection)
@@ -29,6 +29,8 @@ TEST(ResearchScenario, RejectsUnsupportedAndUnboundedScenariosBeforeConnection)
           R"({"schema_version":1,"variants":[{"mode":"edge_feather","diagnostic":"unknown"}]})",
           R"({"schema_version":1,"variants":[{"mode":"edge_feather","angle_power":-1}]})",
           R"({"schema_version":1,"variants":[{"mode":"edge_feather","edge_width_px":4097}]})",
+          R"({"schema_version":1,"variants":[{"mode":"multi_band","pyramid_levels":9}]})",
+          R"({"schema_version":1,"variants":[{"mode":"graph_cut_seam","smoothness_weight":-1}]})",
           R"({"schema_version":1,"variants":[{"mode":"edge_feather","shader":"code"}]})"})
     {
         EXPECT_ANY_THROW(sv::research::parse_scenario(boost::json::parse(json))) << json;
@@ -40,6 +42,17 @@ TEST(ResearchScenario, RejectsUnsupportedAndUnboundedScenariosBeforeConnection)
     }
     EXPECT_ANY_THROW(sv::research::parse_scenario(
         boost::json::object{{"schema_version", 1}, {"repeats", 1000}, {"variants", variants}}));
+}
+
+TEST(ResearchScenario, NativeFusionAndOptionalCarrierArePreserved)
+{
+    const auto scenario = sv::research::parse_scenario(boost::json::parse(
+        R"({"schema_version":1,"variants":[{"mode":"graph_cut_multi_band","pyramid_levels":5,"smoothness_weight":0.7,"surface":{"type":"cube_floor_v1","half_extent_m":14,"height_m":14,"face_cells":8}},{"mode":"multi_band"}]})"));
+    EXPECT_EQ(scenario.variants[0].fusion.pyramid_levels, 5U);
+    EXPECT_DOUBLE_EQ(scenario.variants[0].fusion.smoothness_weight, .7);
+    ASSERT_TRUE(scenario.variants[0].surface);
+    EXPECT_EQ(scenario.variants[0].surface->at("type"), "cube_floor_v1");
+    EXPECT_FALSE(scenario.variants[1].surface);
 }
 
 TEST(ResearchScenario, CancelBeforeConnectingReturnsFailureWithoutRestore)

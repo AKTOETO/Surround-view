@@ -8,7 +8,8 @@ namespace sv
 struct Fusion
 {
     std::string mode = "edge_feather", diagnostic = "color";
-    double edge_width_px = 24, angle_power = 2;
+    double edge_width_px = 24, angle_power = 2, smoothness_weight = .1;
+    unsigned pyramid_levels = 4;
 };
 
 struct Connections
@@ -30,8 +31,8 @@ struct SourceConfig
     std::string type = "replay", manifest;
     unsigned message_timeout_ms = 2000;
     std::array<CameraEndpoint, 4> cameras;
-    std::array<std::string, 4> camera_devices = {
-        "/dev/video0", "/dev/video1", "/dev/video2", "/dev/video3"};
+    std::array<std::string, 4> camera_devices = {"/dev/video0", "/dev/video1", "/dev/video2",
+                                                 "/dev/video3"};
 };
 
 struct Config

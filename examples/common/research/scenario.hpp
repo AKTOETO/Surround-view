@@ -2,13 +2,20 @@
 #include "sv/client.hpp"
 #include <atomic>
 #include <functional>
+#include <optional>
 #include <vector>
 
 namespace sv::research
 {
+struct Variant
+{
+    client::FusionSettings fusion;
+    std::optional<boost::json::object> surface;
+};
+
 struct Scenario
 {
-    std::vector<client::FusionSettings> variants;
+    std::vector<Variant> variants;
     unsigned repeats = 3, warmup = 2, seed = 1;
 };
 

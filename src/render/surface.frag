@@ -11,6 +11,7 @@ uniform vec2 vehicle;
 uniform int surface_mode;
 uniform float dome_radius;
 uniform int fusion_mode, diagnostic_mode;
+uniform int sample_camera;
 uniform float edge_width_px, angle_power;
 
 vec3 camera_color(int i)
@@ -45,6 +46,7 @@ void main()
 {
     if (surface_mode == 0 && abs(world.x) <= vehicle.x && abs(world.y) <= vehicle.y)
     {
+        if (sample_camera >= 0) { color = vec4(0); return; }
         color = diagnostic_mode == 0 ? vec4(.2, .22, .24, 1) : vec4(1, 0, 1, 1);
         return;
     }
@@ -55,7 +57,7 @@ void main()
     vec3 selected = vec3(0), contributions = vec3(0);
     for (int i = 0; i < 4; i++)
     {
-        if (available[i] == 0)
+        if (available[i] == 0 || (sample_camera >= 0 && i != sample_camera))
         {
             continue;
         }
@@ -98,6 +100,12 @@ void main()
             x = texture(input3, uv).rgb;
         }
         float edge = min(min(px.x, px.y), min(sizes[i].x - 1.0 - px.x, sizes[i].y - 1.0 - px.y));
+        if (sample_camera >= 0)
+        {
+            // RGB8 sRGB samples; alpha=0 invalid, 1..255 packs valid edge weight.
+            color = vec4(x, (1.0 + 254.0 * clamp(edge / edge_width_px, 0.0, 1.0)) / 255.0);
+            return;
+        }
         float angle_weight = pow(max(cos(theta), 0.0), angle_power);
         if (fusion_mode == 1)
         {
@@ -119,6 +127,7 @@ void main()
         contributions += w * camera_color(i);
         total += w;
     }
+    if (sample_camera >= 0) { color = vec4(0); return; }
     if (diagnostic_mode == 1)
     {
         // Display source validity independently from blending weights and fallback.

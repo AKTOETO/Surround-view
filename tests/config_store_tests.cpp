@@ -108,3 +108,25 @@ TEST(ConfigStorePersistence, RuntimeUpdateIsValidatedRevisionCheckedAndDoesNotPe
     EXPECT_EQ(store.revision(), 2U);
     std::filesystem::remove_all(directory);
 }
+
+TEST(ConfigStorePersistence, FailedRuntimePreparationDoesNotPublishRevisionOrSnapshot)
+{
+    const auto initial = sv::load_config(SV_TEST_CONFIG_PATH);
+    sv::ConfigStore store(initial);
+    auto effective = initial.effective;
+    effective.as_object()["fusion"] = boost::json::object{{"mode", "multi_band"}};
+    std::string error;
+    bool prepared = false;
+    EXPECT_FALSE(
+        store.update_runtime_if_revision(effective, 0, error,
+                                         [&](const sv::Config &candidate)
+                                         {
+                                             prepared = true;
+                                             EXPECT_EQ(candidate.fusion.mode, "multi_band");
+                                             throw std::runtime_error("GPU allocation failed");
+                                         }));
+    EXPECT_TRUE(prepared);
+    EXPECT_EQ(error, "GPU allocation failed");
+    EXPECT_EQ(store.revision(), 0U);
+    EXPECT_EQ(store.active()->effective, initial.effective);
+}

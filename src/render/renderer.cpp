@@ -1,4 +1,6 @@
 #include "sv/renderer.hpp"
+#include "sv/fusion.hpp"
+#include "sv/fusion_runtime.hpp"
 #include "sv/shaders.hpp"
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
@@ -447,6 +449,7 @@ Image Renderer::render(const FrameSet &set, const View &view)
     glClearColor(.28f, .36f, .43f, 1);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glUseProgram(i.prog);
+    glUniform1i(glGetUniformLocation(i.prog, "sample_camera"), -1);
     matrix(i.prog, "mvp", view.mvp(double(c.width) / c.height));
     glUniform2f(glGetUniformLocation(i.prog, "vehicle"), c.vehicle_length / 2 + c.margin,
                 c.vehicle_width / 2 + c.margin);
@@ -503,27 +506,31 @@ Image Renderer::render(const FrameSet &set, const View &view)
     {
         i.begin_query(GL_TIME_ELAPSED_EXT, i.draw_query);
     }
-    const GLint region_location = glGetUniformLocation(i.prog, "surface_mode");
-    const GLint radius_location = glGetUniformLocation(i.prog, "dome_radius");
-    if (c.surface.type != "rectangular_bowl_v1")
+    auto draw_carrier = [&]
     {
-        glUniform1f(radius_location, c.surface.type == "dome_floor_v1"
-                                         ? c.surface.enclosure_radius
-                                         : c.surface.enclosure_height);
-        glUniform1i(region_location, 0);
-        glBindVertexArray(i.floor_vao);
-        glDrawElements(GL_TRIANGLES, i.floor_mesh.indices.size(), GL_UNSIGNED_INT, nullptr);
-        glUniform1i(region_location, 1);
-        glBindVertexArray(i.dome_vao);
-        glDrawElements(GL_TRIANGLES, i.dome_mesh.indices.size(), GL_UNSIGNED_INT, nullptr);
-    }
-    else
-    {
-        glUniform1f(radius_location, 1);
-        glUniform1i(region_location, 0);
-        glBindVertexArray(i.vao);
-        glDrawElements(GL_TRIANGLES, i.mesh.indices.size(), GL_UNSIGNED_INT, nullptr);
-    }
+        const GLint region_location = glGetUniformLocation(i.prog, "surface_mode");
+        const GLint radius_location = glGetUniformLocation(i.prog, "dome_radius");
+        if (c.surface.type != "rectangular_bowl_v1")
+        {
+            glUniform1f(radius_location, c.surface.type == "dome_floor_v1"
+                                             ? c.surface.enclosure_radius
+                                             : c.surface.enclosure_height);
+            glUniform1i(region_location, 0);
+            glBindVertexArray(i.floor_vao);
+            glDrawElements(GL_TRIANGLES, i.floor_mesh.indices.size(), GL_UNSIGNED_INT, nullptr);
+            glUniform1i(region_location, 1);
+            glBindVertexArray(i.dome_vao);
+            glDrawElements(GL_TRIANGLES, i.dome_mesh.indices.size(), GL_UNSIGNED_INT, nullptr);
+        }
+        else
+        {
+            glUniform1f(radius_location, 1);
+            glUniform1i(region_location, 0);
+            glBindVertexArray(i.vao);
+            glDrawElements(GL_TRIANGLES, i.mesh.indices.size(), GL_UNSIGNED_INT, nullptr);
+        }
+    };
+    draw_carrier();
     if (c.fusion.diagnostic == "color")
     {
         glUseProgram(i.vehicle_program);
@@ -564,6 +571,103 @@ Image Renderer::render(const FrameSet &set, const View &view)
             i.timing.gpu_draw_ms = ns / 1e6;
         }
         check("GPU timer query");
+    }
+    if (research_fusion(c.fusion.mode))
+    {
+        const auto layer_start = now_ns();
+        FusionSamples samples;
+        const cv::Size size(c.width, c.height);
+        auto read = [&]
+        {
+            cv::Mat bottom(size, CV_8UC4), top;
+            glReadPixels(0, 0, c.width, c.height, GL_RGBA, GL_UNSIGNED_BYTE, bottom.data);
+            cv::flip(bottom, top, 0);
+            return top;
+        };
+        glUseProgram(i.prog);
+        glClearColor(0, 0, 0, 0);
+        for (int camera = 0; camera < 4; ++camera)
+        {
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            glUniform1i(glGetUniformLocation(i.prog, "sample_camera"), camera);
+            draw_carrier();
+            const auto layer = read();
+            samples.colors[camera] = cv::Mat::zeros(size, CV_32FC3);
+            samples.validity[camera] = cv::Mat::zeros(size, CV_8UC1);
+            samples.edge_weights[camera] = cv::Mat::zeros(size, CV_32FC1);
+            for (int y = 0; y < c.height; ++y)
+            {
+                for (int x = 0; x < c.width; ++x)
+                {
+                    const auto pixel = layer.at<cv::Vec4b>(y, x);
+                    if (!pixel[3])
+                    {
+                        continue;
+                    }
+                    samples.validity[camera].at<uchar>(y, x) = 255;
+                    samples.edge_weights[camera].at<float>(y, x) = (pixel[3] - 1) / 254.f;
+                    auto &color = samples.colors[camera].at<cv::Vec3f>(y, x);
+                    for (int ch = 0; ch < 3; ++ch)
+                    {
+                        color[ch] = decode_srgb(pixel[ch] / 255.);
+                    }
+                }
+            }
+        }
+        cv::Mat ego;
+        if (c.fusion.diagnostic == "color")
+        {
+            // Keep carrier depth, clear only color: capture correctly occluded ego overlay.
+            glClear(GL_COLOR_BUFFER_BIT);
+            glUseProgram(i.vehicle_program);
+            matrix(i.vehicle_program, "mvp", view.mvp(double(c.width) / c.height));
+            glBindVertexArray(i.vehicle_vao);
+            glDrawArrays(GL_TRIANGLES, 0, i.vehicle_vertices);
+            ego = read();
+        }
+        check("research layer readback");
+        i.timing.layer_readback_cpu_ms = (now_ns() - layer_start) / 1e6;
+        const auto fusion_start = now_ns();
+        const auto fused = fuse_research(samples, c.fusion);
+        for (int y = 0; y < c.height; ++y)
+        {
+            for (int x = 0; x < c.width; ++x)
+            {
+                int coverage = 0;
+                for (int camera = 0; camera < 4; ++camera)
+                {
+                    coverage += samples.validity[camera].at<uchar>(y, x) != 0;
+                }
+                auto *pixel = out.pixels.data() + (size_t(y) * c.width + x) * 4;
+                if (coverage)
+                {
+                    auto rgb = fused.color.at<cv::Vec3f>(y, x);
+                    if (c.fusion.diagnostic == "weights")
+                    {
+                        const auto w = fused.weights.at<cv::Vec4f>(y, x);
+                        rgb = {w[0] + w[3], w[1] + w[3], w[2]};
+                    }
+                    else if (c.fusion.diagnostic == "coverage")
+                    {
+                        rgb = cv::Vec3f::all(coverage / 4.f);
+                    }
+                    for (int ch = 0; ch < 3; ++ch)
+                    {
+                        const auto value =
+                            c.fusion.diagnostic == "color" ? encode_srgb(rgb[ch]) : rgb[ch];
+                        pixel[ch] = static_cast<unsigned char>(
+                            std::lround(std::clamp(value, 0., 1.) * 255));
+                    }
+                }
+                if (!ego.empty() && ego.at<cv::Vec4b>(y, x)[3])
+                {
+                    std::copy_n(ego.at<cv::Vec4b>(y, x).val, 4, pixel);
+                }
+            }
+        }
+        i.timing.fusion_cpu_ms = (now_ns() - fusion_start) / 1e6;
+        i.timing.gpu_draw_ms.reset();
+        i.timing.gpu_timer_status = "hybrid_total_not_measured";
     }
     return out;
 }
@@ -657,6 +761,79 @@ size_t Renderer::triangles() const
         return (impl_->floor_mesh.indices.size() + impl_->dome_mesh.indices.size()) / 3;
     }
     return impl_->mesh.indices.size() / 3;
+}
+
+void Renderer::set_surface(Surface surface)
+{
+    auto &i = *impl_;
+
+    struct Buffers
+    {
+        Mesh floor, shell;
+        GLuint fv = 0, fb = 0, fe = 0, sv = 0, sb = 0, se = 0;
+
+        ~Buffers()
+        {
+            glDeleteBuffers(1, &fb);
+            glDeleteBuffers(1, &fe);
+            glDeleteVertexArrays(1, &fv);
+            glDeleteBuffers(1, &sb);
+            glDeleteBuffers(1, &se);
+            glDeleteVertexArrays(1, &sv);
+        }
+    } prepared;
+
+    if (surface.type == "rectangular_bowl_v1")
+    {
+        prepared.floor = make_mesh(surface);
+    }
+    else if (surface.type == "cube_floor_v1")
+    {
+        auto floor = surface;
+        floor.nx = floor.ny = surface.enclosure_cells;
+        prepared.floor = make_mesh(floor);
+        prepared.shell = make_box_shell(surface.enclosure_radius, surface.enclosure_height,
+                                        surface.enclosure_cells);
+    }
+    else
+    {
+        prepared.floor = make_floor_mesh(surface.enclosure_radius, surface.floor_radial_cells,
+                                         surface.dome_longitude_cells);
+        prepared.shell =
+            surface.type == "dome_floor_v1"
+                ? make_dome_mesh(surface.enclosure_radius, surface.dome_latitude_cells,
+                                 surface.dome_longitude_cells)
+                : make_cylinder_shell(surface.enclosure_radius, surface.enclosure_height,
+                                      surface.enclosure_cells, surface.dome_longitude_cells,
+                                      surface.floor_radial_cells);
+    }
+    upload_mesh(prepared.floor, prepared.fv, prepared.fb, prepared.fe);
+    if (!prepared.shell.indices.empty())
+    {
+        upload_mesh(prepared.shell, prepared.sv, prepared.sb, prepared.se);
+    }
+    check("prepare surface buffers");
+    // No fallible work after publication starts; destructor releases the old buffers.
+    if (surface.type == "rectangular_bowl_v1")
+    {
+        std::swap(i.mesh, prepared.floor);
+        std::swap(i.vao, prepared.fv);
+        std::swap(i.vbo, prepared.fb);
+        std::swap(i.ebo, prepared.fe);
+    }
+    else
+    {
+        std::swap(i.floor_mesh, prepared.floor);
+        std::swap(i.dome_mesh, prepared.shell);
+        std::swap(i.floor_vao, prepared.fv);
+        std::swap(i.floor_vbo, prepared.fb);
+        std::swap(i.floor_ebo, prepared.fe);
+        std::swap(i.dome_vao, prepared.sv);
+        std::swap(i.dome_vbo, prepared.sb);
+        std::swap(i.dome_ebo, prepared.se);
+    }
+    i.config.surface = std::move(surface);
+    ++i.mesh_build_count;
 }
 
 void Renderer::set_fusion(Fusion fusion) noexcept

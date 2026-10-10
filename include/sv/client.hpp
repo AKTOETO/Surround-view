@@ -28,7 +28,8 @@ struct Options
 struct FusionSettings
 {
     std::string mode = "edge_feather", diagnostic = "color";
-    double edge_width_px = 24, angle_power = 2;
+    double edge_width_px = 24, angle_power = 2, smoothness_weight = .1;
+    unsigned pyramid_levels = 4;
 };
 
 struct Event
@@ -105,13 +106,30 @@ class Client
     uint64_t configure_fusion(uint64_t base_config_revision, const FusionSettings &fusion,
                               std::string lease_id = {})
     {
-        return command("configure_fusion",
+        return command(
+            "configure_fusion",
+            {{"base_config_revision", std::to_string(base_config_revision)},
+             {"lease_id", std::move(lease_id)},
+             {"fusion", boost::json::object{{"mode", fusion.mode},
+                                            {"diagnostic", fusion.diagnostic},
+                                            {"edge_width_px", fusion.edge_width_px},
+                                            {"angle_power", fusion.angle_power},
+                                            {"smoothness_weight", fusion.smoothness_weight},
+                                            {"pyramid_levels", fusion.pyramid_levels}}}});
+    }
+
+    uint64_t surface_catalog()
+    {
+        return command("surface_catalog");
+    }
+
+    uint64_t configure_surface(uint64_t base_config_revision, boost::json::object surface,
+                               std::string lease_id = {})
+    {
+        return command("configure_surface",
                        {{"base_config_revision", std::to_string(base_config_revision)},
-                        {"lease_id", std::move(lease_id)},
-                        {"fusion", boost::json::object{{"mode", fusion.mode},
-                                                       {"diagnostic", fusion.diagnostic},
-                                                       {"edge_width_px", fusion.edge_width_px},
-                                                       {"angle_power", fusion.angle_power}}}});
+                        {"surface", std::move(surface)},
+                        {"lease_id", std::move(lease_id)}});
     }
 
     uint64_t acquire_experiment(unsigned ttl_ms = 5000)

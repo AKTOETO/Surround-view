@@ -123,7 +123,7 @@ class ExperimentLease
                 uint64_t now) const
     {
         if (operation == "state" || operation == "fusion_catalog" ||
-            operation == "calibration_status")
+            operation == "surface_catalog" || operation == "calibration_status")
         {
             return true;
         }
@@ -135,8 +135,9 @@ class ExperimentLease
         {
             return false;
         }
-        return operation == "configure_fusion" || operation == "pause" || operation == "resume" ||
-               operation == "experiment_renew" || operation == "experiment_release";
+        return operation == "configure_fusion" || operation == "configure_surface" ||
+               operation == "pause" || operation == "resume" || operation == "experiment_renew" ||
+               operation == "experiment_release";
     }
 
     boost::json::object status() const

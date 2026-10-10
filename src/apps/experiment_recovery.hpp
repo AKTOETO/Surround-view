@@ -78,14 +78,25 @@ class ExperimentRecovery
             {
                 auto effective = context.config.active()->effective;
                 effective.as_object()["fusion"] = fusion_settings(lease.baseline().fusion);
+                const auto baseline_surface = lease.baseline().effective.as_object().at("surface");
+                const bool changed_surface =
+                    effective.as_object().at("surface") != baseline_surface;
+                effective.as_object()["surface"] = baseline_surface;
                 auto fusion = parse_config(effective).fusion;
                 std::string error;
-                if (!context.config.update_runtime_if_revision(effective, context.config.revision(),
-                                                               error))
+                if (!context.config.update_runtime_if_revision(
+                        effective, context.config.revision(), error,
+                        [&](const Config &prepared)
+                        {
+                            if (changed_surface)
+                            {
+                                context.renderer.set_surface(prepared.surface);
+                            }
+                            context.renderer.set_fusion(std::move(fusion));
+                        }))
                 {
                     throw std::runtime_error(error);
                 }
-                context.renderer.set_fusion(std::move(fusion));
                 config_done_ = true;
             }
             if (!request_)

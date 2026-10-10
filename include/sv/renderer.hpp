@@ -6,6 +6,7 @@ namespace sv
 {
 struct RenderTiming
 {
+    double fusion_cpu_ms = 0, layer_readback_cpu_ms = 0;
     double upload_cpu_ms = 0;
     double readback_copy_cpu_ms = 0;
     std::optional<double> gpu_draw_ms;
@@ -25,6 +26,7 @@ class Renderer
     Renderer &operator=(const Renderer &) = delete;
     // Render-thread only; caller must validate and prepare settings before publishing.
     void set_fusion(Fusion) noexcept;
+    void set_surface(Surface); // Prepare mesh buffers before committing; render-thread only.
     Image render(const FrameSet &, const View &);
     std::vector<Pixel> project_points(const Camera &, const std::vector<Vec3> &);
     std::string vendor() const;

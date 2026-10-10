@@ -32,7 +32,9 @@ boost::json::object settings(const client::FusionSettings &fusion)
     return {{"mode", fusion.mode},
             {"diagnostic", fusion.diagnostic},
             {"edge_width_px", fusion.edge_width_px},
-            {"angle_power", fusion.angle_power}};
+            {"angle_power", fusion.angle_power},
+            {"pyramid_levels", fusion.pyramid_levels},
+            {"smoothness_weight", fusion.smoothness_weight}};
 }
 
 boost::json::object accepted(Connection &connection, std::string operation,
@@ -57,7 +59,8 @@ boost::json::array summaries(const boost::json::array &samples, size_t variant_c
     for (size_t variant = 0; variant < variant_count; ++variant)
     {
         boost::json::object metrics;
-        for (const auto *metric : {"render_wall", "gpu_draw", "upload_cpu", "readback_copy_cpu"})
+        for (const auto *metric : {"render_wall", "gpu_draw", "upload_cpu", "readback_copy_cpu",
+                                   "fusion_cpu", "layer_readback_cpu"})
         {
             std::vector<double> values;
             for (const auto &value : samples)
@@ -100,7 +103,12 @@ boost::json::object run(const Scenario &scenario, const client::Options &options
     boost::json::array variants;
     for (const auto &variant : scenario.variants)
     {
-        variants.push_back(settings(variant));
+        auto description = settings(variant.fusion);
+        if (variant.surface)
+        {
+            description["surface"] = *variant.surface;
+        }
+        variants.push_back(std::move(description));
     }
     boost::json::object description{{"schema_version", 1},
                                     {"variants", variants},
@@ -170,7 +178,29 @@ boost::json::object run(const Scenario &scenario, const client::Options &options
             {
                 check_cancel();
                 accepted(*connection, "experiment_renew", {{"lease_id", lease_id}});
-                const auto fusion = settings(scenario.variants[index]);
+                const auto &variant = scenario.variants[index];
+                if (variant.surface)
+                {
+                    const auto surface_ack = accepted(*connection, "configure_surface",
+                                                      {{"base_config_revision", revision},
+                                                       {"surface", *variant.surface},
+                                                       {"lease_id", lease_id}});
+                    revision = text(surface_ack, "config_revision");
+                }
+                else
+                {
+                    // An omitted surface means the baseline, not the previous variant's carrier.
+                    const auto state = accepted(*connection, "state");
+                    if (state.at("surface") != original.at("surface"))
+                    {
+                        const auto surface_ack = accepted(*connection, "configure_surface",
+                                                          {{"base_config_revision", revision},
+                                                           {"surface", original.at("surface")},
+                                                           {"lease_id", lease_id}});
+                        revision = text(surface_ack, "config_revision");
+                    }
+                }
+                const auto fusion = settings(variant.fusion);
                 auto ack = accepted(*connection, "configure_fusion",
                                     {{"base_config_revision", revision},
                                      {"fusion", fusion},
@@ -179,6 +209,9 @@ boost::json::object run(const Scenario &scenario, const client::Options &options
                 auto frame = connection->frame(text(ack, "state_revision"));
                 if (text(frame->header, "config_revision") != revision ||
                     frame->header.at("fusion") != fusion ||
+                    frame->header.at("surface") != (variant.surface
+                                                        ? boost::json::value(*variant.surface)
+                                                        : original.at("surface")) ||
                     frame->header.at("inputs") != baseline->header.at("inputs") ||
                     frame->header.at("frame_set_id") != baseline->header.at("frame_set_id") ||
                     frame->header.at("health") != "READY")
@@ -209,6 +242,15 @@ boost::json::object run(const Scenario &scenario, const client::Options &options
         try
         {
             accepted(*connection, "experiment_renew", {{"lease_id", lease_id}});
+            const auto state_before_restore = accepted(*connection, "state");
+            if (state_before_restore.at("surface") != original.at("surface"))
+            {
+                const auto surface_ack = accepted(*connection, "configure_surface",
+                                                  {{"base_config_revision", revision},
+                                                   {"surface", original.at("surface")},
+                                                   {"lease_id", lease_id}});
+                revision = text(surface_ack, "config_revision");
+            }
             // Revision check avoids overwriting an unexpected concurrent config change.
             const auto restored = accepted(*connection, "configure_fusion",
                                            {{"base_config_revision", revision},
@@ -233,6 +275,7 @@ boost::json::object run(const Scenario &scenario, const client::Options &options
                 if (status.at("state").as_string() == "idle")
                 {
                     if (state.at("fusion") != original.at("fusion") ||
+                        state.at("surface") != original.at("surface") ||
                         state.at("paused") != original.at("paused"))
                     {
                         throw std::runtime_error("lease restore state mismatch");

@@ -4,6 +4,7 @@
 #include <atomic>
 #include <filesystem>
 #include <fstream>
+#include <functional>
 #include <memory>
 #include <mutex>
 #include <stdexcept>
@@ -61,7 +62,8 @@ class ConfigStore : public IConfigStore
 
     // Publish a validated experiment snapshot without changing the persisted config.
     bool update_runtime_if_revision(const boost::json::value &effective, uint64_t expected_revision,
-                                    std::string &error_reason)
+                                    std::string &error_reason,
+                                    std::function<void(const Config &)> before_publish = {})
     {
         std::lock_guard<std::mutex> lock(mutex_);
         if (revision_.load() != expected_revision)
@@ -72,6 +74,10 @@ class ConfigStore : public IConfigStore
         try
         {
             auto updated = std::make_shared<Config>(parse_config(effective));
+            if (before_publish)
+            {
+                before_publish(*updated);
+            }
             active_ = std::move(updated);
             ++revision_;
             error_reason.clear();

@@ -366,6 +366,8 @@ ServerIO::ServerIO(const sv::Connections &n, const std::string &source_type,
                     "resume",
                     "state",
                     "fusion_runtime_v1",
+                    "research_fusion_v1",
+                    "runtime_surface_v1",
                     "experiment_lease_v1",
                     "copied_rgba",
                     "calibrate",
@@ -692,20 +694,22 @@ int main(int argc, char **argv)
                           boost::json::object extra = {})
         {
             const auto id = cmd.message.header.at("command_id");
-            boost::json::object hdr{{"command_id", id},
-                                    {"accepted", accepted},
-                                    {"reason", reason},
-                                    {"state_revision", std::to_string(state_revision)},
-                                    {"paused", paused},
-                                    {"azimuth_rad", view.azimuth},
-                                    {"elevation_rad", view.elevation},
-                                    {"distance_m", view.distance},
-                                    {"fusion_mode", config_store.active()->fusion.mode},
-                                    {"diagnostic_view", config_store.active()->fusion.diagnostic},
-                                    {"config_revision", std::to_string(config_store.revision())},
-                                    {"source_type", config_store.active()->source.type},
-                                    {"experiment_lease", experiment.status()},
-                                    {"fusion", sv::fusion_settings(config_store.active()->fusion)}};
+            boost::json::object hdr{
+                {"command_id", id},
+                {"accepted", accepted},
+                {"reason", reason},
+                {"state_revision", std::to_string(state_revision)},
+                {"paused", paused},
+                {"azimuth_rad", view.azimuth},
+                {"elevation_rad", view.elevation},
+                {"distance_m", view.distance},
+                {"fusion_mode", config_store.active()->fusion.mode},
+                {"diagnostic_view", config_store.active()->fusion.diagnostic},
+                {"config_revision", std::to_string(config_store.revision())},
+                {"source_type", config_store.active()->source.type},
+                {"experiment_lease", experiment.status()},
+                {"fusion", sv::fusion_settings(config_store.active()->fusion)},
+                {"surface", config_store.active()->effective.as_object().at("surface")}};
             for (auto &kv : extra)
             {
                 hdr[kv.key()] = kv.value();
@@ -900,6 +904,33 @@ int main(int argc, char **argv)
                         catalog["source_revision"] = sv::source_revision;
                         catalog["source_fingerprint"] = sv::source_fingerprint;
                         extra_res["fusion_catalog"] = std::move(catalog);
+                    }
+                    else if (type == "surface_catalog")
+                    {
+                        extra_res["surface_catalog"] = boost::json::object{
+                            {"types", boost::json::array{"rectangular_bowl_v1", "dome_floor_v1",
+                                                         "cylinder_floor_v1", "cube_floor_v1"}},
+                            {"plane", "rectangular_bowl_v1 with corner_height_m=0"},
+                            {"apply", "prepare buffers then publish between render calls"}};
+                    }
+                    else if (type == "configure_surface")
+                    {
+                        const auto revision = sv::parse_decimal_u64(
+                            std::string(m.header.at("base_config_revision").as_string()));
+                        auto effective = config_store.active()->effective;
+                        effective.as_object()["surface"] = m.header.at("surface").as_object();
+                        const auto parsed = sv::parse_config(effective);
+                        if (!sv::safe_view(parsed.surface, view))
+                        {
+                            throw std::runtime_error("view_clearance");
+                        }
+                        accepted = config_store.update_runtime_if_revision(
+                            effective, revision, reason, [&](const sv::Config &candidate_config)
+                            { renderer->set_surface(candidate_config.surface); });
+                        if (accepted)
+                        {
+                            reason = "ok";
+                        }
                     }
                     else if (type == "configure_fusion")
                     {
@@ -1168,9 +1199,10 @@ int main(int argc, char **argv)
                     }
                 }
                 if (accepted && type != "state" && type != "fusion_catalog" &&
-                    type != "experiment_acquire" && type != "experiment_renew" &&
-                    type != "experiment_release" && type != "calibrate" &&
-                    type != "calibration_status" && type != "apply_calibration")
+                    type != "surface_catalog" && type != "experiment_acquire" &&
+                    type != "experiment_renew" && type != "experiment_release" &&
+                    type != "calibrate" && type != "calibration_status" &&
+                    type != "apply_calibration")
                 {
                     view = candidate;
                     applied_command = sv::parse_decimal_u64(id);
@@ -1229,6 +1261,8 @@ int main(int argc, char **argv)
                 ft.pre_render_prepare_ms = static_cast<double>(start - poll_end) / 1e6;
                 ft.render_wall_ms = render_wall_ms;
                 ft.gpu_draw_ms = timing.gpu_draw_ms;
+                ft.fusion_cpu_ms = timing.fusion_cpu_ms;
+                ft.layer_readback_cpu_ms = timing.layer_readback_cpu_ms;
                 ft.upload_cpu_ms = timing.upload_cpu_ms;
                 ft.readback_copy_cpu_ms = timing.readback_copy_cpu_ms;
                 ft.total_pipeline_ms = static_cast<double>(done - oldest) / 1e6;
@@ -1238,6 +1272,11 @@ int main(int argc, char **argv)
                      {"frame_set_id", std::to_string(sequence)},
                      {"config_revision", std::to_string(config_store.revision())},
                      {"fusion", sv::fusion_settings(config_store.active()->fusion)},
+                     {"surface", config_store.active()->effective.as_object().at("surface")},
+                     {"fusion_backend", sv::research_fusion(config_store.active()->fusion.mode)
+                                            ? "gles_projection_cpu_fusion_v1"
+                                            : "gles_local_fusion_v1"},
+                     {"gpu_timer_status", timing.gpu_timer_status},
                      {"state_revision", std::to_string(state_revision)},
                      {"applied_command_id", std::to_string(applied_command)},
                      {"buffer_token", std::to_string(done) + ":" + std::to_string(frame_id)},
@@ -1267,6 +1306,7 @@ int main(int argc, char **argv)
                      {"source_dropped_batches", std::to_string(source_stats.dropped)},
                      {"source_queue_depth", source_stats.queued_batches},
                      {"mesh_build_count", std::to_string(renderer->mesh_builds())},
+                     {"mesh_triangles", renderer->triangles()},
                      {"upload_count", std::to_string(renderer->uploads())}},
                     std::move(image.pixels)};
 

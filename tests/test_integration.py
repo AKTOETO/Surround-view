@@ -60,6 +60,7 @@ class IntegrationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(prefix='sv-fusion-runtime-') as td:
             directory = Path(td)
             cfg = json.loads(CONFIG.read_text())
+            cfg['output'].update(width=160, height=96)
             config = directory/'server.json'
             config.write_text(json.dumps(cfg))
             original_bytes = config.read_bytes()
@@ -98,10 +99,13 @@ class IntegrationTests(unittest.TestCase):
                 self.assertTrue(catalog['accepted'])
                 self.assertEqual(catalog['state_revision'], state['state_revision'])
                 self.assertEqual(set(catalog['fusion_catalog']['modes']),
-                    {'edge_feather', 'hard_best_angle', 'angular_feather'})
+                    {'edge_feather', 'hard_best_angle', 'angular_feather',
+                     'seam_distance_feather', 'graph_cut_seam', 'multi_band',
+                     'graph_cut_multi_band'})
                 for mode in catalog['fusion_catalog']['modes']:
                     settings = dict(mode=mode, diagnostic='weights',
-                                    edge_width_px=12., angle_power=4.)
+                                    edge_width_px=12., angle_power=4.,
+                                    pyramid_levels=4, smoothness_weight=.1)
                     ack = client.command('configure_fusion',
                         base_config_revision=revision, fusion=settings)
                     self.assertTrue(ack['accepted'], ack)
@@ -134,6 +138,42 @@ class IntegrationTests(unittest.TestCase):
                 header, pixels = after(restored)
                 self.assertEqual(pixels, original_pixels)
                 self.assertEqual(header['inputs'], baseline['inputs'])
+                revision = restored['config_revision']
+                original_surface = state['surface']
+                flat = dict(original_surface, corner_height_m=0)
+                surfaces = [flat,
+                    dict(type='dome_floor_v1', dome_radius_m=14,
+                         dome_latitude_cells=16, dome_longitude_cells=32, floor_radial_cells=8),
+                    dict(type='cylinder_floor_v1', radius_m=14, height_m=14,
+                         vertical_cells=8, angular_cells=32, floor_radial_cells=8),
+                    dict(type='cube_floor_v1', half_extent_m=14, height_m=14, face_cells=8)]
+                self.assertTrue(client.command('surface_catalog')['accepted'])
+                builds = int(header['mesh_build_count'])
+                for surface in surfaces:
+                    ack = client.command('configure_surface', base_config_revision=revision,
+                                         surface=surface)
+                    self.assertTrue(ack['accepted'], ack)
+                    revision = ack['config_revision']
+                    header, pixels = after(ack)
+                    builds += 1
+                    self.assertEqual(int(header['mesh_build_count']), builds)
+                    self.assertEqual(header['surface'], surface)
+                    self.assertEqual(header['inputs'], baseline['inputs'])
+                    self.assertEqual(header['upload_count'], baseline['upload_count'])
+                    self.assertNotEqual(pixels, original_pixels)
+                before = client.command('state')
+                for rev, surface in [('0', original_surface), (revision, {'type': 'missing'}),
+                                     (revision, dict(surfaces[1], dome_radius_m=3))]:
+                    ack = client.command('configure_surface', base_config_revision=rev, surface=surface)
+                    self.assertFalse(ack['accepted'], ack)
+                    self.assertEqual(ack['surface'], before['surface'])
+                    self.assertEqual(ack['state_revision'], before['state_revision'])
+                    self.assertEqual(ack['config_revision'], revision)
+                ack = client.command('configure_surface', base_config_revision=revision,
+                                     surface=original_surface)
+                self.assertTrue(ack['accepted'], ack)
+                header, pixels = after(ack)
+                self.assertEqual(pixels, original_pixels)
                 self.assertEqual(config.read_bytes(), original_bytes)
             finally:
                 if client:
