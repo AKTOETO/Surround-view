@@ -1,3 +1,4 @@
+#include "command_parameters.hpp"
 #include "experiment_recovery.hpp"
 #include "sv/build_info.hpp"
 #include "sv/calibration_job.hpp"
@@ -842,16 +843,7 @@ int main(int argc, char **argv)
                     id = std::string(m.header.at("command_id").as_string());
                     type = std::string(m.header.at("type").as_string());
                     auto number = [&](const char *k)
-                    {
-                        auto &v = m.header.at(k);
-                        double x =
-                            v.is_double() ? v.as_double() : static_cast<double>(v.as_int64());
-                        if (!std::isfinite(x))
-                        {
-                            throw std::runtime_error("nonfinite command");
-                        }
-                        return x;
-                    };
+                    { return sv::command_parameters::finite_number(m.header.at(k)); };
                     const auto *lease_value = m.header.if_contains("lease_id");
                     const std::string lease_id =
                         lease_value ? std::string(lease_value->as_string()) : "";
@@ -1000,11 +992,8 @@ int main(int argc, char **argv)
                     }
                     else if (type == "calibrate")
                     {
-                        int cam_id = static_cast<int>(m.header.at("camera_id").as_int64());
-                        if (cam_id < 0 || cam_id >= 4)
-                        {
-                            throw std::runtime_error("camera_id must be 0..3");
-                        }
+                        const int cam_id =
+                            sv::command_parameters::camera_index(m.header.at("camera_id"));
                         const auto &pts_arr = m.header.at("points").as_array();
                         const auto &pix_arr = m.header.at("pixels").as_array();
                         if (!m.header.contains("validation_points") ||
@@ -1037,9 +1026,11 @@ int main(int argc, char **argv)
                                 throw std::runtime_error(
                                     "invalid training correspondence dimensions");
                             }
-                            points.push_back(
-                                {pt[0].as_double(), pt[1].as_double(), pt[2].as_double()});
-                            pixels.push_back({px[0].as_double(), px[1].as_double(), true});
+                            points.push_back({sv::command_parameters::finite_number(pt[0]),
+                                              sv::command_parameters::finite_number(pt[1]),
+                                              sv::command_parameters::finite_number(pt[2])});
+                            pixels.push_back({sv::command_parameters::finite_number(px[0]),
+                                              sv::command_parameters::finite_number(px[1]), true});
                         }
                         for (size_t i = 0; i < validation_pts_arr.size(); ++i)
                         {
@@ -1051,9 +1042,12 @@ int main(int argc, char **argv)
                                     "invalid validation correspondence dimensions");
                             }
                             validation_points.push_back(
-                                {pt[0].as_double(), pt[1].as_double(), pt[2].as_double()});
+                                {sv::command_parameters::finite_number(pt[0]),
+                                 sv::command_parameters::finite_number(pt[1]),
+                                 sv::command_parameters::finite_number(pt[2])});
                             validation_pixels.push_back(
-                                {px[0].as_double(), px[1].as_double(), true});
+                                {sv::command_parameters::finite_number(px[0]),
+                                 sv::command_parameters::finite_number(px[1]), true});
                         }
                         if (!m.header.contains("provenance"))
                         {

@@ -205,7 +205,7 @@ class IntegrationTests(unittest.TestCase):
                 client.frame()
                 camera = cfg['cameras'][0]
                 transform = np.asarray(camera['T_camera_from_vehicle'])
-                optical = np.array([[(i%6-2.5)*.2,(i//6-1.5)*.2,3.+.2*(i%5)] for i in range(24)])
+                optical = np.array([[(i%6-3)*.2,(i//6-1.5)*.2,3.+.2*(i%5)] for i in range(24)])
                 xyz = (optical-transform[:3,3]) @ transform[:3,:3]
                 uv = project(camera,xyz)
                 provenance = dict(dataset_id='protocol-synthetic-v1',
@@ -213,6 +213,10 @@ class IntegrationTests(unittest.TestCase):
                     validation=dict(observation_ids=[f'v-{i}' for i in range(12)],frame_ids=['validation-frame']*12))
                 valid = dict(camera_id=0,method='iterative',points=xyz[:12].tolist(),pixels=uv[:12].tolist(),
                     validation_points=xyz[12:].tolist(),validation_pixels=uv[12:].tolist(),provenance=provenance)
+                # Include integral pixel values as doubles in the baseline; the
+                # equivalent request below will encode these and XYZ zeros as ints.
+                valid['pixels'][0][0] = float(round(valid['pixels'][0][0]))
+                valid['validation_pixels'][0][1] = float(round(valid['validation_pixels'][0][1]))
                 cases = []
                 request = copy.deepcopy(valid)
                 del request['provenance']
@@ -233,6 +237,32 @@ class IntegrationTests(unittest.TestCase):
                     self.assertEqual(ack['reason'],reason)
                     self.assertNotIn('job_id',ack)
                     client.frame()
+                baseline = client.command('state')
+                for camera_id in (-1,4,2**32,2**32+1,2**63-1,2**64-1,True,0.0):
+                    with self.subTest(camera_id=camera_id):
+                        request = copy.deepcopy(valid)
+                        request['camera_id'] = camera_id
+                        rejected = client.command('calibrate',**request)
+                        self.assertFalse(rejected['accepted'],rejected)
+                        expected_reason = ('camera_id_integer_required'
+                                           if type(camera_id) in (bool,float) else 'camera_id_out_of_range')
+                        self.assertEqual(rejected['reason'],expected_reason)
+                        self.assertNotIn('job_id',rejected)
+                        self.assertEqual(rejected['state_revision'],baseline['state_revision'])
+                        self.assertEqual(rejected['config_revision'],baseline['config_revision'])
+                        client.frame()
+                for field,bad_value in (('points',True),('pixels','12.5'),
+                                        ('validation_points',None),('validation_pixels',[])):
+                    with self.subTest(field=field):
+                        request = copy.deepcopy(valid)
+                        request[field][0][0] = bad_value
+                        rejected = client.command('calibrate',**request)
+                        self.assertFalse(rejected['accepted'],rejected)
+                        self.assertEqual(rejected['reason'],'command_number_required')
+                        self.assertNotIn('job_id',rejected)
+                        self.assertEqual(rejected['state_revision'],baseline['state_revision'])
+                        self.assertEqual(rejected['config_revision'],baseline['config_revision'])
+                        client.frame()
                 ack = client.command('calibrate',**valid)
                 self.assertTrue(ack['accepted'],ack)
                 self.assertEqual(ack['job_id'],'calib-job-1')
@@ -254,6 +284,28 @@ class IntegrationTests(unittest.TestCase):
                 self.assertEqual(status['validation_frames'],1)
                 self.assertEqual(status['training_observations'],12)
                 self.assertEqual(status['validation_observations'],12)
+                mixed = copy.deepcopy(valid)
+                for field in ('points','pixels','validation_points','validation_pixels'):
+                    mixed[field] = [[int(value) if value.is_integer() else value for value in row]
+                                    for row in mixed[field]]
+                    self.assertTrue(any(type(value) is int for row in mixed[field] for value in row),field)
+                mixed_ack = client.command('calibrate',**mixed)
+                self.assertTrue(mixed_ack['accepted'],mixed_ack)
+                self.assertEqual(mixed_ack['job_id'],'calib-job-2')
+                deadline = time.monotonic()+5
+                while True:
+                    client.frame()
+                    mixed_status = client.command('calibration_status',job_id=mixed_ack['job_id'])
+                    self.assertTrue(mixed_status['accepted'],mixed_status)
+                    if mixed_status['job_state'] in ('completed','failed'):
+                        break
+                    if time.monotonic()>deadline:
+                        raise TimeoutError('mixed numeric calibration did not complete')
+                    time.sleep(.01)
+                self.assertEqual(mixed_status['job_state'],'completed',mixed_status)
+                self.assertTrue(mixed_status['quality_accepted'],mixed_status)
+                for field in ('training_rmse_px','validation_rmse_px','validation_max_error_px'):
+                    self.assertAlmostEqual(mixed_status[field],status[field],places=9)
             finally:
                 if client:
                     client.close()
