@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "seed": 20261010,
+  "warmup": 2,
+  "repeats": 7,
+  "variants": [
+    {
+      "mode": "multi_band",
+      "diagnostic": "color",
+      "pyramid_levels": 4,
+      "pyramid_boundary": "zero",
+      "smoothness_weight": 0.1
+    },
+    {
+      "mode": "multi_band",
+      "diagnostic": "color",
+      "pyramid_levels": 4,
+      "pyramid_boundary": "normalized",
+      "smoothness_weight": 0.1
+    },
+    {
+      "mode": "graph_cut_multi_band",
+      "diagnostic": "color",
+      "pyramid_levels": 4,
+      "pyramid_boundary": "zero",
+      "smoothness_weight": 0.1
+    },
+    {
+      "mode": "graph_cut_multi_band",
+      "diagnostic": "color",
+      "pyramid_levels": 4,
+      "pyramid_boundary": "normalized",
+      "smoothness_weight": 0.1
+    }
+  ]
+}
