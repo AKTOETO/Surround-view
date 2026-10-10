@@ -71,3 +71,15 @@ ctest --test-dir build -R 'simulator_runtime_errors|client_transports|client_lif
 ```
 
 Проверка 10.10.2026: полная сборка `cmake --build build -j4` успешна; `ctest --test-dir build --output-on-failure` — **45/45**, 58.05 s. Unix/TCP GUI/native adapter regression включён в client_transports; simulator_runtime_errors проверяет локальный отказ. Это Linux/loopback/offscreen результат, не подтверждение длительного overload, реального экрана или Авроры.
+
+### Release budget и сброс GUI сессии
+
+`client_release_budget` — новый C++ GTest на TCP mock: deterministic capacity=1, worker удержан в callback; command submission насыщен, RELEASE должен независимо дойти до data socket. Проверены отказ второй команды и отказ второго RELEASE при занятых соответствующих бюджетах. До исправления тест падал на первом RELEASE с `release submission queue full`; после разделения counters проходит. Callback намеренно блокируется только тестом, это не рекомендуемое поведение клиента. Политика и ограничения: [[engineering/CLIENT_LIBRARY]].
+
+`simulator_session_state` — C++ GTest для обоих Qt adapter: события вводятся на границе consume через test-only friend access. Проверяется очистка прежних job ID/изображения/metadata/runtime snapshot при session loss и disconnect, отсутствие implicit обращения к старой calibration job, заполнение UI явными Unix/TCP endpoint и сохранение текущего соединения/настроек при недопустимом вводе. Отдельный случай проверяет игнорирование позднего image-ready callback автомобильного клиента и различие config/state revisions. QSettings тестов изолированы во временной папке. Это unit boundary injection, а не reconnect с физическим GUI/удалённым устройством; wire/Qt offscreen path отдельно покрывается `client_transports`.
+
+Discovery GTest дополнен слишком длинными ASCII/UTF-8 путями: недопустимый кандидат не должен останавливать переход к следующему endpoint. В автомобильном клиенте и симуляторе кадр и диагностические поля очищаются при смене сессии. Симулятор также очищает implicit calibration job и command tracking; локальный Error завершает ожидание tracked calibration command без утверждения об отказе сервера.
+
+URL image provider теперь содержит session_id/frame_id; C++ GUI boundary test дополнен двумя сессиями с одинаковым frame_id=1. Поздний callback старого URL не создаёт present_submit, callback текущего — создаёт. Это проверка adapter bookkeeping, не измерение физического показа дисплея.
+
+Регрессия 10.10.2026: сборка успешна; полная suite прошла **47/47 CTest entries** (80.98 s). После последнего изменения session-qualified URL повторены затронутые `client_transports` и `simulator_session_state` — **2/2**, 22.63 s. Проверки относятся к Linux, TCP loopback/mock, GUI boundary injection и Qt offscreen; физическая Аврора/two-host/длительная перегрузка остаются открытыми.
