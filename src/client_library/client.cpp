@@ -518,6 +518,9 @@ void Client::release(const boost::json::object &frame)
     {
         entry.value().as_string();
     }
+    // Reject oversized metadata on the caller thread, before consuming queue
+    // capacity. send() must not discover a deterministic encode error in io.run().
+    (void)encode({22, h, {}});
     if (i.releases_submitted.fetch_add(1) >= i.options.command_capacity)
     {
         --i.releases_submitted;

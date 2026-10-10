@@ -268,7 +268,8 @@ struct Connection : std::enable_shared_from_this<Connection>
         }
         if (!is_control)
         {
-            if (m.type != 22 || m.header.at("session_id").as_string() != bound_session_id)
+            if (m.type != 22 || !m.payload.empty() ||
+                m.header.at("session_id").as_string() != bound_session_id)
             {
                 throw std::runtime_error("release required");
             }

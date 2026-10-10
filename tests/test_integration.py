@@ -43,6 +43,14 @@ class IntegrationTests(unittest.TestCase):
                 with self.assertRaises(EOFError):receive(client.data)
                 client.close();client=None;time.sleep(.05)
                 client=Client(ipc);self.assertTrue(client.command('resume')['accepted']);self.assertEqual(client.frame()[0]['health'],'READY')
+                # RELEASE has no binary body. A matching token cannot make a
+                # malformed message free the slot and deliver another frame.
+                client.command('preset',name='front')
+                kind,held,_=receive(client.data);self.assertEqual(kind,11)
+                client.data.sendall(pack(22,{k:held[k] for k in ('session_id','frame_id','buffer_token')},b'invalid-body'))
+                with self.assertRaises(EOFError):receive(client.data)
+                self.assertTrue(client.command('state')['accepted'],'bad data packet must not kill control')
+                self.assertIsNone(server.poll(),'bad release must not terminate server')
                 client.close();client=None
                 # Malformed stream must be rejected without terminating the server.
                 bad=socket.socket(socket.AF_UNIX);bad.settimeout(2);bad.connect(str(ipc/'control.sock'));bad.sendall(b'BAD!'+bytes(20));self.assertEqual(bad.recv(1),b'');bad.close();self.assertIsNone(server.poll())

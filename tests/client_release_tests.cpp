@@ -47,6 +47,20 @@ void send(Tcp::socket &socket, const sv::Message &message)
     asio::write(socket, asio::buffer(bytes));
 }
 
+TEST(ClientRelease, OversizedMetadataIsRejectedBeforeWorkerSubmission)
+{
+    sv::client::Options options;
+    options.endpoint.directory = "/tmp/sv-no-server-release-validation";
+    options.max_retries = 0;
+    sv::client::Client client(options, [](auto) {});
+    const boost::json::object oversized{{"session_id", "session"},
+                                        {"frame_id", "1"},
+                                        {"buffer_token", std::string(sv::max_header, 'x')}};
+    // Validation must not depend on ready state or available queue capacity.
+    EXPECT_THROW(client.release(oversized), std::invalid_argument);
+    client.stop();
+}
+
 TEST(ClientRelease, CommandSaturationDoesNotConsumeReleaseBudget)
 {
     asio::io_context io;
@@ -116,6 +130,9 @@ TEST(ClientRelease, CommandSaturationDoesNotConsumeReleaseBudget)
     }
     const auto id = client.state();
     EXPECT_THROW(client.state(), std::runtime_error);
+    auto oversized = frame;
+    oversized["buffer_token"] = std::string(sv::max_header, 'x');
+    EXPECT_THROW(client.release(oversized), std::invalid_argument);
     EXPECT_NO_THROW(client.release(frame));
     // The independent release queue is bounded too.
     EXPECT_THROW(client.release(frame), std::runtime_error);
