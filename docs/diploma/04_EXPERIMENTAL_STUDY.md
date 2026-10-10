@@ -1243,6 +1243,24 @@ $$E(L)=\sum_{p}D_p(L_p)+\sum_{(p,q)\in\mathcal{N}}V_{pq}\,[L_p\ne L_q],$$
 
 Отдельные 3- и 4-camera known-answer cases подтверждают fallback по maximum distance-transform centrality. Для точных равенств вес делится поровну между максимальными кандидатами; permutation test подтверждает, что tie не зависит от порядка камер. Повторный moving-target screen показал те же округлённые aggregate quality metrics после этого изменения. Joint multi-label Potts energy по-прежнему не строится и не оптимизируется. Следующий инженерный шаг — исследовать alpha-expansion или другую глобальную multi-label схему на малых графах с известным оптимумом. Binary cut нельзя описывать как global решение для 3–4-way overlap. Проверки и границы метода записаны в [[../validation/E_STITCH_01_V2]].
 
+## 4.41 Соответствие native серверных вариантов offline-эталону
+
+До подтверждающей серии выполнена инженерная сверка перенесённых алгоритмов. Проверочный executable получает одинаковые float RGB, validity и edge masks; Python независимо вычисляет результат существующим NumPy/SciPy path. Сопоставлены четыре режима на размерах 3×3, 9×13, 16×20 и levels 1/4, отдельно — двухкамерный corridor с smoothness 0.7 и полностью валидные маски. Всего 29 сравнений прошли с atol/rtol 2e-6 для весов и 4e-6 для linear RGB. Это допуски проверки, а не опубликованный максимум измеренной ошибки. Нечётные размеры проверяют фазу decimation и upsample, а full masks — специальное определение EDT эталона.
+
+| Уровень проверки | Результат | Что не доказано |
+|---|---|---|
+| Native core vs NumPy/SciPy | Четыре метода проходят численное сопоставление | Качество сшивки и совпадение полного GPU raster |
+| Renderer с аналитическими цветами | Семь режимов проходят RGB/weights/coverage oracle | Все текстуры, позы и границы оптики |
+| Работающий сервер | Пять носителей, семь методов, rejected/stale requests, неизменность inputs/uploads | Sustained FPS и физические камеры |
+| Unix/TCP runner | 21 sample, воспроизводимые hashes, baseline surface между вариантами, restore | Независимые сцены и многокадровые эффекты |
+| Lease recovery | Возврат fusion/surface/pause при expiry/disconnect | Авария GPU/самого сервера, восстановление cursor/history |
+
+*Таблица 4.41 — Границы свидетельств переноса алгоритмов в сервер.*
+
+Полная Linux-регрессия прошла: 43/43 CTest entries, 49.48 s. Применялись OpenCV 5.0.0 и GLM 1.0.3. Подготовка surface выполняется до публикации snapshot; тест с искусственным исключением проверяет сохранение revision и исходной конфигурации. Это подтверждает управляемость исследовательского сервера, а не завершение исследования сшивки.
+
+Новые методы работают после GLES-проекции в координатах конечного viewport. RGB слоёв квантован в sRGB8, edge weights — в 1/254; эти отличия не входят в float core parity. Для итогового сопоставления необходимы серверные изображения на независимых Blender truth/holdout, равные ресурсные бюджеты, несколько ракурсов и динамические клипы. Гибридный CPU backend сравнивается с тремя GPU local methods с отдельной маркировкой: вывод о скорости алгоритма нельзя отделить от исполнения без дополнительных опытов. Отчёт и команды воспроизведения: [[validation/NATIVE_FUSION]].
+
 ## Предварительные выводы по четвёртой главе
 
 1. **Экспериментальная инфраструктура сшивки:** реализованы offline-варианты fusion и carrier matrix; исправленные binary graph-cut и output proxies проверены на fixtures, добавлены парный 3-frame Blender clip (§4.25), статический coded-object screen (§4.28) и девятикадровый moving-target screen (§4.39). Эти результаты уточняют failure modes в конкретных synthetic scenes; качество методов на holdout scenes и естественная object-correspondence ghost truth пока не подтверждены.
@@ -1262,4 +1280,3 @@ $$E(L)=\sum_{p}D_p(L_p)+\sum_{(p,q)\in\mathcal{N}}V_{pq}\,[L_p\ne L_q],$$
 [S59]: https://developer.auroraos.ru/doc/sdk/tools/mb2
 [S60]: https://developer.auroraos.ru/doc/software_development/guidelines/rpm_requirements/spec_requirements
 [S68]: https://doi.org/10.1109/ICIP.2019.8803453
-

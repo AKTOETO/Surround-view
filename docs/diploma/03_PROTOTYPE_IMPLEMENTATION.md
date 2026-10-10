@@ -581,3 +581,44 @@ Failed --> [*] : требуется перезапуск
 Recovery выполняется на render thread между обработками кадров. Новый config snapshot возвращает fusion, затем при необходимости отправляется асинхронный source pause/resume. ACK release подтверждает лишь переход в restoring; клиент ждёт idle либо failed. Ошибка подготовки или source recovery сохраняется в status/trace, а мутации остаются заблокированными. Timeout recovery составляет 5 s при выполняющемся server loop; watchdog не прерывает зависший GPU/драйвер и не переживает аварию самого сервера. Истечение TTL использует серверные часы и не требует синхронизации с ноутбуком.
 
 Native tests проверяют deadlines/ownership/conflicts, интеграционные — expiry, disconnect, running/paused baseline, неизменность файла и новый lease после восстановления. Они не доказывают восстановление при half-open сети раньше TTL, ограниченность зависших физических драйверов или hard realtime. Восстанавливаются настройки и pause/resume, но не playback cursor, временная история и прежний RGB после движения записи. Durable checkpoint клиентского отчёта также остаётся открытым. Контракт и проверки: [[engineering/PROTOCOL_IMPLEMENTED]], [[validation/RESEARCH_RUNTIME]].
+
+## 3.22 Перенос исследуемых методов сшивки в сервер
+
+Для сравнения на целевой платформе недостаточно offline Python-реализаций: их стоимость включает другую проекцию, дискретизацию и среду исполнения. В исследовательский сервер добавлены native реализации distance feather, binary graph-cut, multiband и graph-cut/multiband. Вместе с тремя прежними GPU-вариантами каталог содержит семь режимов. Выбор выполняется командой `configure_fusion` между обработками кадров; Python сервером не запускается. Универсальный ConfigService для этого среза не требуется.
+
+Математическое основание многомасштабного слияния — Gaussian/Laplacian representation Burt–Adelson ([[references/VISION#S10|S10]]); выбор шва отделён от blending, как в пространстве вариантов [[references/VISION#S71|S71]]. Здесь используются собственные определения offline-эталона, а не вызов `cv::Stitcher`: известные fisheye intrinsics/extrinsics и геометрия носителя сохраняются. Выбор шва не исправляет параллакс, обусловленный неверной глубиной ([[references/VISION#S73|S73]]).
+
+Пусть $C_{i,l}$ — Laplacian уровень linear RGB камеры $i$, а $W_{i,l}$ — Gaussian уровень её маски. Смешанный уровень определяется как
+
+$$B_l(p)=\frac{\sum_i W_{i,l}(p)C_{i,l}(p)}{\sum_i W_{i,l}(p)},$$
+
+при ненулевой сумме весов; иначе используется ноль. Восстановление выполняется от грубого уровня к точному: $R_l=B_l+\operatorname{upsample}(R_{l+1})$. Параметр pyramid_levels ограничен 1..8; фактическое число уровней ограничивается размером изображения. В multiband исходная маска определяется краевым feather; в graph-cut/multiband сначала рассчитывается бинарный шов, затем маска сглаживается Gaussian sigma=2, ограничивается validity и нормируется. Binary энергия приведена в §4.40. В 3–4-way overlap остаётся centrality fallback, глобальная многометочная оптимизация не заявляется.
+
+```plantuml
+@startuml
+actor "Исследовательский клиент" as client
+participant "sv-client-lib" as lib
+participant "sv-server / render thread" as server
+participant "GLES projection" as gpu
+participant "Native fusion\nOpenCV / Boost.Graph" as cpu
+client -> lib : configure_fusion(revision, settings)
+lib -> server : SV01 command
+server -> server : validate, publish temporary snapshot
+server --> lib : ACK + revision/settings
+server -> gpu : тот же FrameSet, view, surface
+gpu --> server : четыре projected RGB/validity слоя
+server -> cpu : linear RGB, masks, parameters
+cpu --> server : fused RGB + weights
+server -> server : fallback / ego composition
+server --> lib : RGBA8 + backend/surface/timings
+lib --> client : кадр с подтверждённой revision
+@enduml
+```
+
+*Рисунок 3.22 — Реализованное переключение и выполнение четырёх дополнительных алгоритмов на сервере.*
+
+Новые методы используют гибридный путь: GLES проецирует камеры в конечный viewport, CPU выполняет EDT/cut/pyramids и композицию. Слои RGB8 добавляют квантизацию относительно float offline-эталона; edge weights упакованы в alpha с шагом 1/254. Поэтому численное соответствие ядра отдельно от соответствия полного raster pipeline. Дополнительные readbacks являются частью измеряемой стоимости, а три локальных GPU-метода остаются прежним одним проходом. Для CPU backend введён предел 262144 выходных пикселя, предотвращающий неограниченный рост графа и пирамид.
+
+Геометрия также меняется без перезапуска: `configure_surface` принимает plane/bowl, dome+floor, cylinder+floor или cube+floor. Сервер проверяет параметры и безопасность текущей view, готовит mesh/GPU buffers, затем публикует snapshot. Ошибка подготовки сохраняет активную конфигурацию. Камерные изображения повторно не загружаются; перестроение сетки учитывается отдельным счётчиком. Lease расширен до fusion/surface/pause; отсутствующая surface в варианте сценария означает исходный носитель, поэтому randomized порядок не переносит геометрию предыдущего варианта.
+
+В отчёт включены backend, surface, mesh_triangles и CPU spans. Для гибридного пути gpu_draw равен null: прежний query измерял лишь базовый draw и не характеризует четыре дополнительных прохода. Render wall включает весь renderer, а layer_readback включает ожидание GPU. Такой контракт позволяет сравнивать реализации, сохраняя различие между качеством алгоритма, стоимостью его backend и накладными расходами вывода. Проверки и ограничения: [[validation/NATIVE_FUSION]].
