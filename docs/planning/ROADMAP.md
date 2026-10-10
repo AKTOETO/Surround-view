@@ -4,6 +4,8 @@
 
 ## Управляемый runtime перед финальной исследовательской серией
 
+Первый срез `fusion_runtime_v1` реализован: три GPU fusion-режима и параметры переключаются между render calls, ACK/frames содержат revision/settings, тест проверяет одинаковые paused inputs и восстановление. Общий ConfigService/runner и перенос offline-кандидатов остаются открытыми. Исследовательский target build должен сохранять доступные альтернативы; сокращение до единственного алгоритма сейчас не является целью.
+
 Уточнение 10.10.2026: [[architecture/RESEARCH_RUNTIME]]. Минимальный server AlgorithmCatalog + typed ConfigService temporary apply/status/restore + общий headless ExperimentRunner через sv-client-lib становятся инфраструктурной зависимостью подтверждающих серверных опытов. Сначала переключаются текущие режимы на одних replay frames, затем кандидаты переносятся из offline после parity tests. GUI сценариев использует тот же runner. Общий multi-client, весь GUI и все алгоритмы не должны блокировать первый проверяемый end-to-end опыт. Independent truth, holdout и требования качества из исследовательских этапов сохраняются; сам runtime не закрывает их.
 
 Проверка готовности первого среза: два server algorithm profiles, один manifest, одинаковые input IDs, подтверждённая граница смены generation, reset/warmup, экспорт effective configs/timings и успешный restore после cancel/ошибки. Сценарные snapshots не переписывают постоянный конфиг без явного server-side save. Capability discovery не объявляет отсутствующие реализации.

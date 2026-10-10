@@ -469,3 +469,41 @@ JSON/Markdown отчёт содержит четыре camera records с чис�
 Для локальных камер сервер теперь выбирает `source.type=camera`, открывает четыре пути `/dev/video*` через OpenCV `VideoCapture`, приводит BGR/grayscale/BGRA к RGB8 и отбрасывает неожиданные разрешения. Метка времени ставится на host после получения кадра; она не является сенсорным timestamp. OpenCV скрывает детали backend устройства, а `read()` может блокироваться внутри драйвера, поэтому поведение остановки и повторного подключения ещё надо измерить с целевыми камерами [[references/DEVELOPMENT#S64|S64]]. Конфигурация `configs/v4l2-camera.json` содержит синтетические размеры и параметры калибровки и служит только примером формата.
 
 В trace и кадр-метаданные включены измеряемые coarse intervals: время опроса источника, подготовка до рендера, wall time рендера, nullable GPU draw query, CPU upload/readback-copy и enqueue результата. Значение `server_receive_to_render_ms` опирается на локальную шкалу доставки кадров. Эти интервалы частично перекрываются и их нельзя суммировать; раздельные decode, очередь, синхронизация, projection/fusion и клиентский present пока не измеряются. См. [[engineering/USAGE#Запуск сервера с локальными V4L2 камерами]] и [[engineering/CLIENT_LIBRARY]].
+
+
+## 3.19 Переключение исследуемых режимов на работающем сервере
+
+Для исследования важна возможность сравнивать альтернативы в том же серверном pipeline, который используется конечным клиентом. Поэтому исследовательская сборка сохраняет набор алгоритмов и их параметров; выбор единственной эксплуатационной конфигурации является результатом опытов, а не предварительным сокращением реализации.
+
+Первый реализованный контракт `fusion_runtime_v1` предоставляет каталог трёх GPU-режимов (`edge_feather`, `hard_best_angle`, `angular_feather`), переключение `color/coverage/weights`, ширины feather и степени углового веса. Клиентская библиотека предоставляет типизированные методы получения каталога и изменения настроек. Сервер проверяет параметры общей схемой конфигурации и сопоставляет `base_config_revision` с активной версией. Валидированный snapshot применяется между вызовами render; shader uniforms используют весь новый набор параметров. GPU-ресурсы и входные текстуры для этого не пересоздаются.
+
+```plantuml
+@startuml
+participant "Клиент через sv-client-lib" as C
+participant "sv-server / command loop" as S
+participant "ConfigStore" as K
+participant "Renderer / GPU" as R
+C -> S : fusion_catalog / state
+S --> C : modes, limits, fusion, config_revision
+C -> S : configure_fusion(base revision, full fusion)
+S -> S : parse_config: проверка кандидата
+S -> K : update_runtime_if_revision
+alt актуальная revision и валидные параметры
+  K --> S : новый temporary snapshot
+  S -> R : set_fusion между render calls
+  S --> C : accepted + revisions + settings
+  S -> R : render того же paused frame set
+  R --> C : RGBA через server data channel
+config_revision + settings + input IDs
+else ошибка или stale revision
+  K --> S : отказ без публикации
+  S --> C : rejected, прежнее состояние
+end
+@enduml
+```
+
+*Рисунок 3.19 — Реализованный порядок изменения fusion. Общий сценарный исполнитель и переключение остальных стадий пока не реализованы.*
+
+Интеграционная проверка останавливает replay, переключает каждый режим и сверяет идентичность входных frame IDs, отсутствие повторных upload/mesh rebuild, а также версию и параметры результата. После восстановления полного исходного fusion проверяется побайтовое совпадение RGB; дополнительно проверяются неизвестные поля, недопустимые параметры и stale revision. GTest проверяет валидацию и отсутствие записи temporary snapshot в файл. Эти проверки доказывают механизм управления, но не превосходство алгоритмов и не их целевую производительность.
+
+Настройки не сохраняются командой `configure_fusion`; они доступны до последующих изменений/завершения сервера. Существующее persistent применение калибровки сохраняет весь актуальный snapshot, поэтому в этой версии требуется восстановление baseline до него. Автоматический rollback при disconnect, lease, history reset, общий ConfigService и GUI сценариев остаются следующими этапами. Полный контракт: [[engineering/PROTOCOL_IMPLEMENTED]], план: [[architecture/RESEARCH_RUNTIME]].

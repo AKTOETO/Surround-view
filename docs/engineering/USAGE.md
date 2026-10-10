@@ -537,3 +537,19 @@ MPLCONFIGDIR=/tmp/sv-mpl python3 docs/diploma/plot_calibration_attribution.py \
 ```
 
 Без `--solver` используется sparse TRF/LSMR. Follow-up выбран после наблюдения failures и не является независимой solver comparison или production recommendation: [[validation/CALIBRATION_COMPONENT_SOLVER]].
+
+
+## Переключение серверного fusion без перезапуска
+
+На работающем сервере с capability `fusion_runtime_v1` через `svctl` (использует sv-client-lib):
+
+```bash
+build/svctl --unix /tmp/sv-prototype command fusion_catalog
+build/svctl --unix /tmp/sv-prototype state
+# Вставить фактическую config_revision из state вместо 0.
+build/svctl --unix /tmp/sv-prototype command configure_fusion --params '{"base_config_revision":"0","fusion":{"mode":"angular_feather","diagnostic":"weights","edge_width_px":24,"angle_power":4}}'
+```
+
+Для удалённого сервера заменить `--unix /tmp/sv-prototype` на `--tcp HOST CONTROL_PORT DATA_PORT` с endpoint из конфигурации сервера. Текущий сервер обслуживает одну сессию: перед отдельным CLI-клиентом отключить simulator/другой клиент. Для каждого следующего изменения использовать новую `config_revision`; сохранить исходный `fusion` для восстановления. Настройки временные, но persistent `apply_calibration` сохраняет весь текущий snapshot — сначала восстановить baseline. Подробности и ограничения: [[engineering/PROTOCOL_IMPLEMENTED#Переключение fusion во время работы: fusion_runtime_v1]].
+
+Для парного исследования сравнивать кадры с совпадающими input IDs при paused replay и с revision из ACK. Отдельные CLI-подключения сами по себе ещё не создают воспроизводимый сценарий и не сбрасывают временную историю.

@@ -1,6 +1,6 @@
 # Реализованный протокол SV01
 
-Срез реализации Linux 0.6.x. Это описание текущего wire-контракта, сверенное с `include/sv/protocol.hpp`, `src/core/protocol.cpp`, `src/apps/server.cpp` и `src/client_library/client.cpp`. Целевая расширенная архитектура и подписки описаны отдельно в [[architecture/CLIENT_SERVER_MODEL]] и пока не являются возможностями сервера.
+Срез реализации Linux 0.6.x. Это описание текущего wire-контракта, сверенное с `include/sv/protocol.hpp`, `src/core/protocol.cpp`, `src/apps/server.cpp` и `src/client_library/client.cpp`. Runtime fusion API `fusion_runtime_v1` описан ниже; общий ConfigService ещё не реализован. Целевая расширенная архитектура и подписки описаны отдельно в [[architecture/CLIENT_SERVER_MODEL]] и пока не являются возможностями сервера.
 
 ## Транспорт и кадрирование
 
@@ -17,6 +17,29 @@
 | 20 | Клиент → сервер по control: команда с монотонным в рамках сессии `command_id`, `type` и параметрами |
 | 21 | Сервер → клиент по control: ACK/reject с `accepted`, `reason`, `state_revision` и результатом операции |
 | 22 | Клиент → сервер по data: release с `session_id`, `frame_id`, `buffer_token` |
+
+## Переключение fusion во время работы: fusion_runtime_v1
+
+Handshake объявляет `fusion_runtime_v1`. Это первый реализованный срез исследовательского runtime, не общий ConfigService и не сценарный исполнитель. Сервер сохраняет все три текущих GPU-режима; для переключения не требуется перезапуск, повторный upload камер или rebuild сетки.
+
+| Команда / поле | Контракт |
+|---|---|
+| `fusion_catalog` | Read-only ACK с `fusion_catalog`: version=1, modes, diagnostics, пределы параметров и temporary persistence |
+| `configure_fusion` | Обязательные `base_config_revision` (decimal string) и `fusion` (object); полностью заменяет fusion-секцию, пропущенные необязательные поля получают defaults |
+| `fusion.mode` | `edge_feather`, `hard_best_angle`, `angular_feather` |
+| `fusion.diagnostic` | `color` (default), `coverage`, `weights` |
+| `fusion.edge_width_px` | Число (0,4096], default 24 |
+| `fusion.angle_power` | Число (0,32], default 2 |
+| ACK / `state` | `config_revision` и полный `fusion` вместе с существующими state fields |
+| type 11 frame | `config_revision` и полный фактический `fusion`; `state_revision` позволяет отфильтровать ранее поставленные в очередь кадры |
+
+`sv-client-lib` предоставляет `fusion_catalog()` и `configure_fusion(base_revision, FusionSettings)`. Неизвестные режимы, поля fusion, неконечные числа и параметры вне диапазона отклоняются общей config validation. Устаревшая revision отклоняется; rejected/read-only команды не меняют revisions. Запрос с корректными параметрами и старой revision возвращает `stale_config_revision`; ошибочный запрос может быть отклонён раньше при validation.
+
+Команда выполняется на render thread между render calls: полный проверенный snapshot и uniform settings становятся активными до следующего render. Входной frame set при паузе сохраняется; новый результат может использовать тот же набор камер с новой config revision. ACK подтверждает применение, но уже отправленные/очередные старые кадры не отзываются. Переключение не делает `frame_set_id` новым и не является полноценным seek/reset истории.
+
+`configure_fusion` не записывает файл конфигурации; restore выполняется отправкой ранее прочитанного полного fusion с текущей revision. Автоматический restore при disconnect, experiment lease, идемпотентные operation IDs и отдельный save API ещё отсутствуют. Существующий `apply_calibration` сохраняет полный актуальный snapshot, поэтому при его использовании временный fusion также попадёт в файл: до общего ConfigService восстановить baseline перед persistent calibration apply. Это ограничение не следует скрывать в автоматических сценариях.
+
+Исследовательские graph-cut/multiband режимы пока остаются offline и не объявляются каталогом. Следующий этап — расширять набор серверных реализаций с parity tests, сохраняя runtime-вариативность на целевой платформе: [[architecture/RESEARCH_RUNTIME]].
 
 ## Порядок открытия сессии и доставки кадра
 
