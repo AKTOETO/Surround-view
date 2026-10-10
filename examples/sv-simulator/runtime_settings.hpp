@@ -58,6 +58,7 @@ class RuntimeSettings : public QObject
 
     void attach(const std::shared_ptr<sv::client::Client> &client);
     void consume(const boost::json::object &header);
+    void commandFailed(const boost::json::object &header, const std::string &reason);
     Q_INVOKABLE void refresh();
     Q_INVOKABLE void applyFusion(const QString &json, const QString &baseRevision);
     Q_INVOKABLE void applySurface(const QString &json, const QString &baseRevision);

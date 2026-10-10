@@ -85,6 +85,18 @@ void RuntimeSettings::applyFusion(const QString &json, const QString &baseRevisi
     apply(json, baseRevision, true);
 }
 
+void RuntimeSettings::commandFailed(const boost::json::object &header, const std::string &reason)
+{
+    const auto *id = header.if_contains("command_id");
+    if (pending_id_ && id && sv::parse_decimal_u64(std::string(id->as_string())) == pending_id_)
+    {
+        pending_id_ = 0;
+        // Transport failure is not proof that the server did not apply a command.
+        status_ = "Запрос не подтверждён: " + QString::fromStdString(reason);
+        emit changed();
+    }
+}
+
 void RuntimeSettings::applySurface(const QString &json, const QString &baseRevision)
 {
     apply(json, baseRevision, false);

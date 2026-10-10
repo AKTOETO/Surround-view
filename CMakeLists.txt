@@ -302,6 +302,7 @@ if(BUILD_TESTING AND SV_GTEST_TESTS)
     target_include_directories(sv-simulator-runtime-tests PRIVATE examples/sv-simulator)
     target_link_libraries(sv-simulator-runtime-tests PRIVATE
       sv-client-lib Qt${QT_VERSION_MAJOR}::Core GTest::gtest)
+    add_test(NAME simulator_runtime_errors COMMAND sv-simulator-runtime-tests --unit)
   endif()
   add_executable(sv-experiment-lease-tests tests/experiment_lease_tests.cpp)
   target_link_libraries(sv-experiment-lease-tests PRIVATE sv-core GTest::gtest_main)

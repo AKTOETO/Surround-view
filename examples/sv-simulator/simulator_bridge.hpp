@@ -155,7 +155,7 @@ class SimulatorBridge : public QObject
     QString serverInfo_ = "Ожидание ответа сервера";
     QString calibrationStatus_ = "Калибровочные задачи не запускались";
     SimulatorFrameProvider *provider_;
-    std::atomic<unsigned> pending_events_{0};
+    std::atomic<unsigned> pending_frames_{0};
     std::atomic<uint64_t> connection_generation_{0};
     bool active_unix_endpoint_ = true;
     QStringList discovery_candidates_;

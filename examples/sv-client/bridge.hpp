@@ -31,13 +31,13 @@ class Bridge : public QObject
     Q_PROPERTY(QString serverInfo READ serverInfo NOTIFY changed)
     Q_PROPERTY(QString pipelineInfo READ pipelineInfo NOTIFY changed)
     Q_PROPERTY(QString sourceInfo READ sourceInfo NOTIFY changed)
-    std::unique_ptr<sv::client::Client> client_;
+    std::shared_ptr<sv::client::Client> client_;
     QString url_, status_ = "Соединение с сервером…", readyFrame_, lastPresented_;
     QString serverInfo_ = "Ожидание ответа state";
     QString pipelineInfo_ = "Ожидание первого кадра";
     QString sourceInfo_ = "Информация об источниках появится после получения кадра";
     FrameProvider *provider_;
-    std::atomic<unsigned> pending_events_{0};
+    std::atomic<unsigned> pending_frames_{0};
     void consume(sv::client::Event);
     void command(QString, boost::json::object = {});
 

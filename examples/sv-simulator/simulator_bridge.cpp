@@ -6,6 +6,7 @@
 #include <QStandardPaths>
 #include <chrono>
 #include <iostream>
+#include <mutex>
 
 namespace
 {
@@ -69,6 +70,10 @@ void SimulatorBridge::consume(sv::client::Event event)
 {
     if (event.kind != sv::client::Event::Kind::Message)
     {
+        if (event.kind == sv::client::Event::Kind::Error && event.message)
+        {
+            runtime_settings_.commandFailed(event.message->header, event.detail);
+        }
         status_ = QString::fromStdString(event.detail);
         if (event.detail == "ready")
         {
@@ -216,7 +221,7 @@ void SimulatorBridge::consume(sv::client::Event event)
                        .arg(calibration);
     }
     sourceInfo_ = QString("Ревизия конфигурации: %1 · размер кадра %2×%3\n%4")
-                      .arg(QString::fromStdString(std::string(h.at("state_revision").as_string())))
+                      .arg(QString::fromStdString(std::string(h.at("config_revision").as_string())))
                       .arg(w)
                       .arg(height)
                       .arg(cameras.join('\n'));
@@ -245,7 +250,7 @@ void SimulatorBridge::beginConnection(sv::client::Endpoint endpoint, int timeout
         client_->stop();
         client_.reset();
     }
-    pending_events_ = 0;
+    pending_frames_ = 0;
     calibration_commands_.clear();
     runtime_settings_.attach({});
     status_ = "Подключение: " + label;
@@ -266,32 +271,41 @@ void SimulatorBridge::beginConnection(sv::client::Endpoint endpoint, int timeout
     options.max_retries = static_cast<unsigned>(maxRetries_);
     const auto generation = connection_generation_.load();
     auto client_ref = std::make_shared<std::weak_ptr<sv::client::Client>>();
-    auto deliver = [this, generation, client_ref](sv::client::Event event)
+    auto reference_mutex = std::make_shared<std::mutex>();
+    auto deliver = [this, generation, client_ref, reference_mutex](sv::client::Event event)
     {
         if (generation != connection_generation_.load())
         {
             return;
         }
-        if (pending_events_.fetch_add(1) >= 128)
+        const bool frame = event.kind == sv::client::Event::Kind::Message && event.message &&
+                           event.message->type == 11;
+        // Only frames may be dropped. Losing an ACK/error/disconnect can leave a
+        // command pending forever or keep a snapshot from the previous session.
+        if (frame && pending_frames_.fetch_add(1) >= 128)
         {
-            if (event.kind == sv::client::Event::Kind::Message && event.message &&
-                event.message->type == 11)
+            --pending_frames_;
+            std::shared_ptr<sv::client::Client> client;
             {
-                if (const auto client = client_ref->lock())
-                {
-                    client->release(event.message->header);
-                }
+                std::lock_guard<std::mutex> lock(*reference_mutex);
+                client = client_ref->lock();
             }
-            --pending_events_;
+            if (client)
+            {
+                client->release(event.message->header);
+            }
             return;
         }
         QMetaObject::invokeMethod(
             this,
-            [this, generation, event = std::move(event)]() mutable
+            [this, generation, frame, event = std::move(event)]() mutable
             {
                 if (generation == connection_generation_.load())
                 {
-                    --pending_events_;
+                    if (frame)
+                    {
+                        --pending_frames_;
+                    }
                     consume(std::move(event));
                 }
             },
@@ -300,7 +314,10 @@ void SimulatorBridge::beginConnection(sv::client::Endpoint endpoint, int timeout
     try
     {
         client_ = std::make_shared<sv::client::Client>(options, std::move(deliver));
-        *client_ref = client_;
+        {
+            std::lock_guard<std::mutex> lock(*reference_mutex);
+            *client_ref = client_;
+        }
         runtime_settings_.attach(client_);
     }
     catch (const std::exception &error)
@@ -369,7 +386,7 @@ void SimulatorBridge::discoverLocal(int timeout, int reconnect)
         client_->stop();
         client_.reset();
     }
-    pending_events_ = 0;
+    pending_frames_ = 0;
     discovery_candidates_.clear();
     runtime_settings_.attach({});
     discovery_index_ = 0;
@@ -412,7 +429,7 @@ void SimulatorBridge::tryNextDiscoveryCandidate()
             client_->stop();
             client_.reset();
         }
-        pending_events_ = 0;
+        pending_frames_ = 0;
         status_ = "IPC сокеты найдены, но сервер не ответил; проверьте права и конфигурацию";
         emit changed();
         return;

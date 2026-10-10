@@ -1,6 +1,7 @@
 #include "bridge.hpp"
 #include <chrono>
 #include <iostream>
+#include <mutex>
 
 namespace
 {
@@ -32,23 +33,44 @@ Bridge::Bridge(sv::client::Endpoint endpoint, FrameProvider *p) : provider_(p)
 {
     sv::client::Options options;
     options.endpoint = std::move(endpoint);
-    auto deliver = [this](sv::client::Event event)
+    auto client_ref = std::make_shared<std::weak_ptr<sv::client::Client>>();
+    auto reference_mutex = std::make_shared<std::mutex>();
+    auto deliver = [this, client_ref, reference_mutex](sv::client::Event event)
     {
-        if (pending_events_.fetch_add(1) >= 64)
+        const bool frame = event.kind == sv::client::Event::Kind::Message && event.message &&
+                           event.message->type == 11;
+        // Preserve control/lifecycle events even when the image queue is full.
+        if (frame && pending_frames_.fetch_add(1) >= 64)
         {
-            --pending_events_;
+            --pending_frames_;
+            std::shared_ptr<sv::client::Client> client;
+            {
+                std::lock_guard<std::mutex> lock(*reference_mutex);
+                client = client_ref->lock();
+            }
+            if (client)
+            {
+                client->release(event.message->header);
+            }
             return;
         }
         QMetaObject::invokeMethod(
             this,
-            [this, event = std::move(event)]() mutable
+            [this, frame, event = std::move(event)]() mutable
             {
-                --pending_events_;
+                if (frame)
+                {
+                    --pending_frames_;
+                }
                 consume(std::move(event));
             },
             Qt::QueuedConnection);
     };
-    client_ = std::make_unique<sv::client::Client>(options, std::move(deliver));
+    client_ = std::make_shared<sv::client::Client>(options, std::move(deliver));
+    {
+        std::lock_guard<std::mutex> lock(*reference_mutex);
+        *client_ref = client_;
+    }
 }
 
 Bridge::~Bridge()
@@ -114,7 +136,7 @@ void Bridge::consume(sv::client::Event event)
                       .arg(QString::fromStdString(std::string(h.at("source_type").as_string())))
                       .arg(QString::fromStdString(std::string(h.at("fusion_mode").as_string())))
                       .arg(QString::fromStdString(std::string(h.at("diagnostic_view").as_string())))
-                      .arg(QString::fromStdString(std::string(h.at("state_revision").as_string())))
+                      .arg(QString::fromStdString(std::string(h.at("config_revision").as_string())))
                       .arg(cameras.join('\n'));
     client_->release(h);
     emit changed();

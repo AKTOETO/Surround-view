@@ -1,6 +1,7 @@
 #include "runtime_settings.hpp"
 #include <QCoreApplication>
 #include <QElapsedTimer>
+#include <QTemporaryDir>
 #include <QThread>
 #include <gtest/gtest.h>
 
@@ -37,6 +38,10 @@ TEST(SimulatorRuntime, AppliesRejectsAndRestoresThroughClientLibrary)
                     if (event.kind == sv::client::Event::Kind::State && event.detail == "ready")
                     {
                         settings.refresh();
+                    }
+                    if (event.kind == sv::client::Event::Kind::Error && event.message)
+                    {
+                        settings.commandFailed(event.message->header, event.detail);
                     }
                     if (event.kind == sv::client::Event::Kind::Message)
                     {
@@ -114,12 +119,64 @@ TEST(SimulatorRuntime, AppliesRejectsAndRestoresThroughClientLibrary)
     EXPECT_FALSE(settings.ready());
     EXPECT_TRUE(settings.revision().isEmpty());
 }
+
+TEST(SimulatorRuntimeUnit, LocalCommandFailureEndsPendingAndDoesNotClaimServerRejection)
+{
+    QTemporaryDir directory;
+    ASSERT_TRUE(directory.isValid());
+    RuntimeSettings settings;
+    sv::client::Options options;
+    options.endpoint.directory = directory.path().toStdString();
+    options.max_retries = 0;
+    bool exhausted = false;
+    auto client = std::make_shared<sv::client::Client>(
+        options,
+        [&](sv::client::Event event)
+        {
+            QMetaObject::invokeMethod(
+                &settings,
+                [&, event = std::move(event)]
+                {
+                    if (event.kind == sv::client::Event::Kind::State &&
+                        event.detail == "retry_exhausted")
+                    {
+                        exhausted = true;
+                    }
+                    if (event.kind == sv::client::Event::Kind::Error && event.message)
+                    {
+                        settings.commandFailed(event.message->header, event.detail);
+                    }
+                },
+                Qt::QueuedConnection);
+        });
+    settings.attach(client);
+    ASSERT_TRUE(wait_until([&] { return exhausted; }));
+    // Inject a previously read snapshot, then exercise an actual library-local
+    // rejection (no live session), not a synthetic server ACK.
+    const boost::json::object fusion{{"mode", "edge_feather"},  {"diagnostic", "color"},
+                                     {"edge_width_px", 24.0},   {"angle_power", 2.0},
+                                     {"smoothness_weight", .1}, {"pyramid_levels", 4}};
+    settings.consume(
+        {{"config_revision", "1"}, {"fusion", fusion}, {"surface", boost::json::object{}}});
+    const auto original = settings.fusionJson();
+    settings.applyFusion(original, "1");
+    ASSERT_TRUE(settings.pending());
+    settings.commandFailed({{"command_id", "999"}}, "unrelated_error");
+    EXPECT_TRUE(settings.pending());
+    ASSERT_TRUE(wait_until([&] { return !settings.pending(); }));
+    EXPECT_TRUE(settings.status().contains("not_ready_or_queue_full"));
+    EXPECT_TRUE(settings.status().contains("не подтверждён"));
+    EXPECT_EQ(settings.revision(), "1");
+    EXPECT_EQ(settings.fusionJson(), original);
+    client->stop();
+}
 } // namespace
 
 int main(int argc, char **argv)
 {
     QCoreApplication app(argc, argv);
-    if (argc == 3 && std::string(argv[1]) == "--unix")
+    const bool unit = argc == 2 && std::string(argv[1]) == "--unit";
+    if (!unit && argc == 3 && std::string(argv[1]) == "--unix")
     {
         endpoint.directory = argv[2];
     }
@@ -130,11 +187,12 @@ int main(int argc, char **argv)
         endpoint.control_port = static_cast<uint16_t>(std::stoul(argv[3]));
         endpoint.data_port = static_cast<uint16_t>(std::stoul(argv[4]));
     }
-    else
+    else if (!unit)
     {
         return 2;
     }
     argc = 1;
     ::testing::InitGoogleTest(&argc, argv);
+    ::testing::GTEST_FLAG(filter) = unit ? "SimulatorRuntimeUnit.*" : "SimulatorRuntime.*";
     return RUN_ALL_TESTS();
 }
