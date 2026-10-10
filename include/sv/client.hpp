@@ -76,14 +76,14 @@ class Client
         return command("preset", {{"name", std::move(name)}});
     }
 
-    uint64_t pause()
+    uint64_t pause(std::string lease_id = {})
     {
-        return command("pause");
+        return command("pause", {{"lease_id", std::move(lease_id)}});
     }
 
-    uint64_t resume()
+    uint64_t resume(std::string lease_id = {})
     {
-        return command("resume");
+        return command("resume", {{"lease_id", std::move(lease_id)}});
     }
 
     uint64_t step()
@@ -102,14 +102,32 @@ class Client
     }
 
     // Temporary experiment configuration; only the server publishes its snapshot.
-    uint64_t configure_fusion(uint64_t base_config_revision, const FusionSettings &fusion)
+    uint64_t configure_fusion(uint64_t base_config_revision, const FusionSettings &fusion,
+                              std::string lease_id = {})
     {
         return command("configure_fusion",
                        {{"base_config_revision", std::to_string(base_config_revision)},
+                        {"lease_id", std::move(lease_id)},
                         {"fusion", boost::json::object{{"mode", fusion.mode},
                                                        {"diagnostic", fusion.diagnostic},
                                                        {"edge_width_px", fusion.edge_width_px},
                                                        {"angle_power", fusion.angle_power}}}});
+    }
+
+    uint64_t acquire_experiment(unsigned ttl_ms = 5000)
+    {
+        return command("experiment_acquire", {{"ttl_ms", ttl_ms}});
+    }
+
+    uint64_t renew_experiment(std::string lease_id)
+    {
+        return command("experiment_renew", {{"lease_id", std::move(lease_id)}});
+    }
+
+    // ACK starts restoration; poll state.experiment_lease until idle or failed.
+    uint64_t release_experiment(std::string lease_id)
+    {
+        return command("experiment_release", {{"lease_id", std::move(lease_id)}});
     }
 
     // Release a delivered frame after consuming/copying it; old-session releases are ignored.

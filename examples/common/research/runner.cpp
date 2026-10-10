@@ -1,11 +1,13 @@
 #include "connection.hpp"
 #include "scenario.hpp"
 #include <algorithm>
+#include <chrono>
 #include <cmath>
 #include <numeric>
 #include <openssl/sha.h>
 #include <random>
 #include <stdexcept>
+#include <thread>
 
 namespace sv::research
 {
@@ -118,10 +120,10 @@ boost::json::object run(const Scenario &scenario, const client::Options &options
                                {"samples", boost::json::array{}},
                                {"limitation",
                                 "One paused frame set; no independent quality truth, "
-                                "temporal reset, sustained FPS, or server experiment lease"}};
+                                "temporal reset, sustained FPS, or durable progress checkpoints"}};
     std::unique_ptr<Connection> connection;
     boost::json::object original;
-    std::string revision;
+    std::string revision, lease_id;
     auto check_cancel = [&]
     {
         if (cancel && cancel->load())
@@ -141,9 +143,12 @@ boost::json::object run(const Scenario &scenario, const client::Options &options
         {
             throw std::runtime_error("research requires replay source");
         }
-        revision = text(original, "config_revision");
+        const auto acquired = accepted(*connection, "experiment_acquire", {{"ttl_ms", 30000}});
+        lease_id = text(acquired.at("experiment_lease").as_object(), "lease_id");
+        report["lease_id"] = lease_id;
+        revision = text(acquired, "config_revision");
         report["restore_required"] = true;
-        const auto paused = accepted(*connection, "pause");
+        const auto paused = accepted(*connection, "pause", {{"lease_id", lease_id}});
         const auto baseline = connection->frame(text(paused, "state_revision"));
         if (baseline->header.at("health") != "READY" ||
             baseline->header.at("source_type") != "replay")
@@ -164,9 +169,12 @@ boost::json::object run(const Scenario &scenario, const client::Options &options
             for (const auto index : order)
             {
                 check_cancel();
+                accepted(*connection, "experiment_renew", {{"lease_id", lease_id}});
                 const auto fusion = settings(scenario.variants[index]);
                 auto ack = accepted(*connection, "configure_fusion",
-                                    {{"base_config_revision", revision}, {"fusion", fusion}});
+                                    {{"base_config_revision", revision},
+                                     {"fusion", fusion},
+                                     {"lease_id", lease_id}});
                 revision = text(ack, "config_revision");
                 auto frame = connection->frame(text(ack, "state_revision"));
                 if (text(frame->header, "config_revision") != revision ||
@@ -200,10 +208,12 @@ boost::json::object run(const Scenario &scenario, const client::Options &options
     {
         try
         {
+            accepted(*connection, "experiment_renew", {{"lease_id", lease_id}});
             // Revision check avoids overwriting an unexpected concurrent config change.
-            const auto restored =
-                accepted(*connection, "configure_fusion",
-                         {{"base_config_revision", revision}, {"fusion", original.at("fusion")}});
+            const auto restored = accepted(*connection, "configure_fusion",
+                                           {{"base_config_revision", revision},
+                                            {"fusion", original.at("fusion")},
+                                            {"lease_id", lease_id}});
             auto frame = connection->frame(text(restored, "state_revision"));
             report["restored_frame"] = frame->header;
             report["restored_rgba_sha256"] = hash(frame->payload.data(), frame->payload.size());
@@ -213,7 +223,30 @@ boost::json::object run(const Scenario &scenario, const client::Options &options
             {
                 throw std::runtime_error("restore output mismatch");
             }
-            accepted(*connection, original.at("paused").as_bool() ? "pause" : "resume");
+            accepted(*connection, "experiment_release", {{"lease_id", lease_id}});
+            const auto deadline =
+                std::chrono::steady_clock::now() + std::chrono::milliseconds(options.timeout_ms);
+            while (true)
+            {
+                const auto state = accepted(*connection, "state");
+                const auto &status = state.at("experiment_lease").as_object();
+                if (status.at("state").as_string() == "idle")
+                {
+                    if (state.at("fusion") != original.at("fusion") ||
+                        state.at("paused") != original.at("paused"))
+                    {
+                        throw std::runtime_error("lease restore state mismatch");
+                    }
+                    report["final_state"] = state;
+                    break;
+                }
+                if (status.at("state").as_string() == "failed" ||
+                    std::chrono::steady_clock::now() >= deadline)
+                {
+                    throw std::runtime_error("lease restore failed or timed out");
+                }
+                std::this_thread::sleep_for(std::chrono::milliseconds(5));
+            }
             report["restored"] = true;
         }
         catch (const std::exception &error)

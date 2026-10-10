@@ -117,6 +117,8 @@ class ClientTransportTests(unittest.TestCase):
                 report = json.loads(report_path.read_text())
                 self.assertTrue(report['success'])
                 self.assertTrue(report['restored'])
+                self.assertEqual(report['final_state']['experiment_lease']['state'], 'idle')
+                self.assertEqual(report['final_state']['paused'], report['initial_state']['paused'])
                 self.assertEqual(len(report['scenario_sha256']), 64)
                 self.assertEqual(len(report['catalog']['source_fingerprint']), 64)
                 self.assertEqual(len(report['samples']), 9)
