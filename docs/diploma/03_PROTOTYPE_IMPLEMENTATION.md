@@ -506,7 +506,7 @@ end
 
 Интеграционная проверка останавливает replay, переключает каждый режим и сверяет идентичность входных frame IDs, отсутствие повторных upload/mesh rebuild, а также версию и параметры результата. После восстановления полного исходного fusion проверяется побайтовое совпадение RGB; дополнительно проверяются неизвестные поля, недопустимые параметры и stale revision. GTest проверяет валидацию и отсутствие записи temporary snapshot в файл. Эти проверки доказывают механизм управления, но не превосходство алгоритмов и не их целевую производительность.
 
-Настройки не сохраняются командой `configure_fusion`; они доступны до последующих изменений/завершения сервера. Существующее persistent применение калибровки сохраняет весь актуальный snapshot, поэтому в этой версии требуется восстановление baseline до него. Автоматический rollback при disconnect, lease, history reset, общий ConfigService и GUI сценариев остаются следующими этапами. Полный контракт: [[engineering/PROTOCOL_IMPLEMENTED]], план: [[architecture/RESEARCH_RUNTIME]].
+Настройки не сохраняются командой `configure_fusion`; они доступны до последующих изменений/завершения сервера. Существующее persistent применение калибровки сохраняет весь актуальный snapshot, поэтому в этой версии требуется восстановление baseline до него. Ограниченный lease с автоматическим rollback fusion/pause при disconnect реализован в §3.21; history reset, общий ConfigService и GUI сценариев остаются следующими этапами. Полный контракт: [[engineering/PROTOCOL_IMPLEMENTED]], план: [[architecture/RESEARCH_RUNTIME]].
 
 
 ## 3.20 Декларативный сценарий сравнения серверных реализаций
@@ -551,4 +551,33 @@ A --> U : JSON report
 
 Принципиальное ограничение — warm-render одного набора: нет новых capture/decode/upload для каждого sample. Поэтому эти значения не превращаются в оценку sustained FPS и не смешиваются с live pipeline performance. Input IDs не заменяют content hashes независимого dataset. Сравнение качества требует отдельного evaluator с Blender/physical truth, заранее выбранных метрик и новых сцен.
 
-Контрактные тесты проверяют схему и бюджет; Unix/TCP интеграция использует настоящие библиотеку и сервер, сверяет полные блоки, inputs, hashes и неизменность config file. Native GTest на живом endpoint проверяет cancel и исключение progress callback после первого кадра с успешным restore. Потеря связи или завершение процесса могут помешать восстановлению; report отмечает restore failure, а серверный lease/watchdog остаётся необходимым следующим этапом. Подробная приёмка: [[validation/RESEARCH_RUNTIME]].
+Контрактные тесты проверяют схему и бюджет; Unix/TCP интеграция использует настоящие библиотеку и сервер, сверяет полные блоки, inputs, hashes и неизменность config file. Native GTest на живом endpoint проверяет cancel и исключение progress callback после первого кадра с успешным restore. Report отмечает restore failure клиента; ограниченный server lease/watchdog из §3.21 восстанавливает fusion/pause независимо от штатного cleanup клиента, пока server loop продолжает выполняться. Подробная приёмка: [[validation/RESEARCH_RUNTIME]].
+
+
+## 3.21 Серверный lease и восстановление после потери исследовательского клиента
+
+Клиентский cleanup недостаточен при аварии ноутбука, процесса или сети. Поэтому добавлен ограниченный lease `experiment_lease_v1`, принадлежащий control session. При acquire сервер фиксирует исходные fusion и pause; срок составляет 250..30000 ms по серверным монотонным часам. Renew продлевает тот же lease; старый или чужой ID не позволяет изменять состояние. Runner продлевает lease перед trial и cleanup, а client library предоставляет типизированные acquire/renew/release и передачу ID в mutations.
+
+Пока lease активен, допускаются только изменения fusion и pause/resume владельцем; изменение view, step и calibration mutations блокируется. Это ограничение удерживает область восстановления проверяемой и препятствует persistent сохранению временного fusion через apply_calibration. Общая транзакция всех параметров сервера ещё не реализована.
+
+```plantuml
+@startuml
+[*] --> Idle
+Idle --> Active : acquire(owner, TTL)
+сохранить fusion/pause
+Active --> Active : renew от владельца
+Active --> Restoring : release / TTL expired / control closed
+Restoring --> Idle : config восстановлен
+source ACK соответствует baseline pause
+Restoring --> Failed : config/source error или timeout
+Failed --> Failed : мутации отклоняются
+поздний ACK не снимает ошибку
+Failed --> [*] : требуется перезапуск
+@enduml
+```
+
+*Рисунок 3.21 — Реализованная машина состояний ограниченного эксперимента.*
+
+Recovery выполняется на render thread между обработками кадров. Новый config snapshot возвращает fusion, затем при необходимости отправляется асинхронный source pause/resume. ACK release подтверждает лишь переход в restoring; клиент ждёт idle либо failed. Ошибка подготовки или source recovery сохраняется в status/trace, а мутации остаются заблокированными. Timeout recovery составляет 5 s при выполняющемся server loop; watchdog не прерывает зависший GPU/драйвер и не переживает аварию самого сервера. Истечение TTL использует серверные часы и не требует синхронизации с ноутбуком.
+
+Native tests проверяют deadlines/ownership/conflicts, интеграционные — expiry, disconnect, running/paused baseline, неизменность файла и новый lease после восстановления. Они не доказывают восстановление при half-open сети раньше TTL, ограниченность зависших физических драйверов или hard realtime. Восстанавливаются настройки и pause/resume, но не playback cursor, временная история и прежний RGB после движения записи. Durable checkpoint клиентского отчёта также остаётся открытым. Контракт и проверки: [[engineering/PROTOCOL_IMPLEMENTED]], [[validation/RESEARCH_RUNTIME]].

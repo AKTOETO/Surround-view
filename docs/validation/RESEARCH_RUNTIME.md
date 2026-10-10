@@ -28,4 +28,17 @@ ctest --test-dir build -R '^(research_scenarios|svctl_options|client_transports|
 
 Нет собственного truth или данных для рейтинга алгоритмов. Это один текущий paused frame set, не clip/independent scenes. Frame hashes проверяют повторяемость output, а не целостность исходного dataset. Тайминги повторно используемых GPU resources не описывают поток с capture/decode/upload. Samples хранят settings, actual order, server source fingerprint и GPU device; для финального опыта дополнительно нужны input content hashes, dataset split, frozen metrics/criteria, аппаратный паспорт и CPU/GPU/thermal profiles.
 
-Серверный lease/watchdog, автоматическое восстановление после kill/disconnect, lost-ACK recovery, durable progress, GPU/fusion parity новых кандидатов и simulator GUI остаются открытыми: [[architecture/RESEARCH_RUNTIME]], [[../TODO]].
+Ограниченный серверный lease/watchdog fusion/pause реализован и проверен ниже. General transaction/history restore, lost-ACK recovery, durable progress, GPU/fusion parity новых кандидатов и simulator GUI остаются открытыми: [[architecture/RESEARCH_RUNTIME]], [[../TODO]].
+
+
+## Проверка server lease/watchdog
+
+GTest `experiment_lease` проверяет ownership/token, пределы TTL, точную границу истечения, renew, запрет conflicting persistence/view changes, старые IDs после завершения и failed state. Python `experiment_watchdog` на настоящем сервере проверяет expiry/renew, конфликты, восстановление исходного fusion/pause без записи config file, закрытие control и повторное подключение. Отдельно проверяются исходные running и paused источники; новый клиент начинает следующий lease после idle. Закрытие сокетов моделирует обнаруживаемый EOF, но не half-open сеть.
+
+`client_transports` выполняет runner с lease через Unix/TCP, cancellation/failure GTest также проходит через новый контракт. ACK release проверяется как начало recovery; runner ждёт idle и сохраняет final_state. Конечные state/fusion должны совпасть с исходными. Предельный 5 s timeout source recovery и зависший GPU не проверены физическим fault injection; кооперативный watchdog не считается hard realtime.
+
+```bash
+ctest --test-dir build -R '^(experiment_lease|experiment_watchdog|research_scenarios|client_transports|replay_ipc)$' --output-on-failure
+```
+
+Регрессия после интеграции lease: 8/8 CTest entries прошли (`client_lifecycle`, `experiment_watchdog`, `replay_ipc`, `client_transports`, `config_store_persistence`, `experiment_lease`, `research_scenarios`, `svctl_options`). После добавления invalid owner/baseline/TTL controls отдельно повторены `experiment_lease` и `experiment_watchdog`.
