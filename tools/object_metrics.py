@@ -52,6 +52,30 @@ def measure_target(predicted, truth, minimum_pixels=8):
             'missing_rows': int(missing.sum())}
 
 
+def measure_target_support(support, truth, thresholds=(.25, .50, .75)):
+    """Measure camera-source identity support inside/outside direct target truth.
+
+    This is provenance, not a reconstruction of final RGB contribution (especially
+    for multi-band blending). Thresholds are fixed by the experiment protocol.
+    """
+    support, truth = np.asarray(support, float), np.asarray(truth, bool)
+    if (support.ndim != 2 or support.shape != truth.shape or not np.isfinite(support).all()
+            or np.any(support < -1e-6) or np.any(support > 1+1e-6) or not truth.any()):
+        raise ValueError('finite normalized 2D support and nonempty matching truth required')
+    if any(not np.isfinite(t) or not 0 < t <= 1 for t in thresholds):
+        raise ValueError('support thresholds must be finite and in (0,1]')
+    support = np.clip(support, 0, 1)
+    total = float(support.sum())
+    inside = float(support[truth].sum())
+    outside = float(support[~truth].sum())
+    return {
+        'mean_support_inside_truth': float(support[truth].mean()),
+        'outside_support_fraction': outside/total if total > 0 else None,
+        'support_mass_over_truth_area': total/float(truth.sum()),
+        'thresholds': {str(t): measure_target(support >= t, truth) for t in thresholds},
+    }
+
+
 def projected_object_ids(camera, points, ids):
     """Nearest-label sampling at the carrier's fisheye UV; no interpolation of IDs."""
     ids = np.asarray(ids)

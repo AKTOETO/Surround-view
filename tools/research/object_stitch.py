@@ -14,7 +14,7 @@ from PIL import Image
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from fusion import FUSION_MODES
-from object_metrics import measure_target, projected_object_ids, target_mask
+from object_metrics import measure_target, measure_target_support, projected_object_ids, target_mask
 from reference import render
 from run_e_stitch_01 import CARRIERS
 from temporal_seam_stability import _verified, load_sequence
@@ -119,20 +119,27 @@ def run_study(fixture, output, warmup=2, repeats=7, order_seed=20261010):
         name = f'{carrier}_{mode}_{index:04d}'
         Image.fromarray(result['rgb']).save(output/f'{name}.png')
         Image.fromarray((observed*255).astype(np.uint8)).save(output/f'{name}_mask.png')
+        support_metric = measure_target_support(support, expected[index])
+        Image.fromarray(np.rint(np.clip(support, 0, 1)*255).astype(np.uint8)).save(
+            output/f'{name}_source_support.png')
         timings = timings_by_key[case['key']]
         rows.append({'carrier':carrier,'mode':mode,'frame':index,'target':metric,
+                     'source_identity_support':support_metric,
                      'cpu_render_ms':{'samples':timings,'p50':float(np.median(timings)),
                                       'p95':float(np.percentile(timings,95)), 'max':max(timings)}})
     fixture = Path(fixture)
     hashes = {name:hashlib.sha256((fixture/name).read_bytes()).hexdigest()
               for name in ('config.json','capture.json','paired_truth.json','manifest.json','ground_truth.json')}
-    protocol = Path(__file__).resolve().parents[2]/'docs/research/STITCH_TIMING_PROTOCOL.md'
+    research_docs = Path(__file__).resolve().parents[2]/'docs/research'
+    support_protocol = research_docs/'STITCH_OBJECT_SUPPORT_PROTOCOL.md'
+    timing_protocol = research_docs/'STITCH_TIMING_PROTOCOL.md'
     code = {p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in (
         Path(__file__), Path(__file__).resolve().parents[1]/'object_metrics.py',
         Path(__file__).resolve().parents[1]/'reference.py', Path(__file__).resolve().parents[1]/'fusion.py',
         Path(__file__).resolve().parents[1]/'run_e_stitch_01.py')}
-    report = {'schema_version':1,'experiment':'E-STITCH-coded-object-timing-02', 'target_id':object_id,
-              'protocol_sha256':hashlib.sha256(protocol.read_bytes()).hexdigest(),
+    report = {'schema_version':1,'experiment':'E-STITCH-object-support-01', 'target_id':object_id,
+              'protocol_sha256':hashlib.sha256(support_protocol.read_bytes()).hexdigest(),
+              'timing_protocol_sha256':hashlib.sha256(timing_protocol.read_bytes()).hexdigest(),
               'timing': {'warmup_per_case':warmup, 'repeats':repeats, 'order':'randomized complete blocks',
                          'order_seed':order_seed, 'case_keys':keys, 'block_orders':schedules,
                          'host':_host_metadata(),

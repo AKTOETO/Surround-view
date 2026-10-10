@@ -10,7 +10,7 @@ import numpy as np
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path[:0] = [str(ROOT/'tools'), str(ROOT/'tools/research')]
-from object_metrics import measure_target, projected_object_ids, target_mask
+from object_metrics import measure_target, measure_target_support, projected_object_ids, target_mask
 from object_stitch import interleaved_orders, load_objects
 
 
@@ -29,6 +29,35 @@ class ObjectMetricTests(unittest.TestCase):
         self.assertGreater(len({tuple(order) for order in first}), 1)
         with self.assertRaises(ValueError):
             interleaved_orders(keys + [keys[0]], 3)
+
+    def test_source_support_known_answers_and_merged_copy(self):
+        support = self.truth.astype(float)
+        exact = measure_target_support(support, self.truth)
+        self.assertEqual(exact['mean_support_inside_truth'], 1)
+        self.assertEqual(exact['outside_support_fraction'], 0)
+        self.assertEqual(exact['support_mass_over_truth_area'], 1)
+        self.assertEqual(exact['thresholds']['0.5']['iou'], 1)
+
+        # A touching extra copy can form a single component while source IDs
+        # still reveal that half of the target support lies outside direct truth.
+        doubled = support.copy()
+        doubled[8:24, 12:16] = 1
+        result = measure_target_support(doubled, self.truth)
+        self.assertEqual(result['outside_support_fraction'], .5)
+        self.assertEqual(result['support_mass_over_truth_area'], 2)
+        self.assertEqual(result['thresholds']['0.5']['components'], 1)
+        self.assertEqual(result['thresholds']['0.5']['extra_components'], 0)
+        self.assertEqual(result['thresholds']['0.5']['iou'], .5)
+
+    def test_empty_support_and_invalid_support(self):
+        result = measure_target_support(np.zeros_like(self.truth, dtype=float), self.truth)
+        self.assertIsNone(result['outside_support_fraction'])
+        self.assertEqual(result['support_mass_over_truth_area'], 0)
+        self.assertEqual(result['thresholds']['0.5']['recall'], 0)
+        with self.assertRaises(ValueError):
+            measure_target_support(np.full_like(self.truth, 1.1, dtype=float), self.truth)
+        with self.assertRaises(ValueError):
+            measure_target_support(np.zeros_like(self.truth, dtype=float), np.zeros_like(self.truth))
 
     def test_clean_rgb(self):
         rgb = np.full((32,48,3), .3)
