@@ -363,11 +363,17 @@ struct Client::Impl
                 throw std::runtime_error("unexpected control message");
             }
             auto id = parse_decimal_u64(std::string(m.header.at("command_id").as_string()));
+            // Validate the ACK before completing it. Otherwise fail() cannot
+            // report the mutation's unknown outcome for a malformed response.
+            const bool accepted = m.header.at("accepted").as_bool();
+            if (!accepted)
+            {
+                m.header.at("reason").as_string();
+            }
             if (!pending.erase(id))
             {
                 throw std::runtime_error("unexpected command ACK");
             }
-            m.header.at("accepted").as_bool();
         }
         else
         {

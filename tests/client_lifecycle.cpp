@@ -73,6 +73,24 @@ void mock(int mode)
                 data.accept(video);
                 receive(video);
                 send(video, {2, {{"session_id", "s"}}, {}});
+                if (mode >= 3)
+                {
+                    const auto command = receive(socket);
+                    boost::json::object ack{{"command_id", command.header.at("command_id")}};
+                    if (mode == 3)
+                    {
+                        ack["accepted"] = "invalid_boolean";
+                    }
+                    else
+                    {
+                        ack["accepted"] = false;
+                        ack["reason"] = mode == 4 ? boost::json::value(42)
+                                                  : boost::json::value("invalid_parameters");
+                    }
+                    send(socket, {21, std::move(ack), {}});
+                    std::this_thread::sleep_for(std::chrono::milliseconds(80));
+                    return;
+                }
                 if (mode == 2)
                 {
                     asio::write(video, asio::buffer("SV01", 4));
@@ -100,26 +118,57 @@ void mock(int mode)
         });
     std::mutex mutex;
     std::condition_variable cv;
-    bool failed = false, delivered = false;
+    bool failed = false, delivered = false, ready = false, ack_delivered = false;
+    bool command_lost = false;
     std::string detail;
     {
-        sv::client::Client client(options,
-                                  [&](sv::client::Event event)
-                                  {
-                                      std::lock_guard<std::mutex> lock(mutex);
-                                      if (event.kind == sv::client::Event::Kind::Error)
-                                      {
-                                          failed = true;
-                                          detail = event.detail;
-                                      }
-                                      if (event.message && event.message->type == 11)
-                                      {
-                                          delivered = true;
-                                      }
-                                      cv.notify_one();
-                                  });
+        sv::client::Client client(
+            options,
+            [&](sv::client::Event event)
+            {
+                std::lock_guard<std::mutex> lock(mutex);
+                if (event.kind == sv::client::Event::Kind::Error)
+                {
+                    if (event.detail == "session_lost" && event.message)
+                    {
+                        command_lost = event.message->header.at("command_id") == "1";
+                    }
+                    failed = true;
+                    detail = event.detail;
+                }
+                if (event.kind == sv::client::Event::Kind::State && event.detail == "ready")
+                {
+                    ready = true;
+                }
+                if (event.kind == sv::client::Event::Kind::Message && event.message->type == 21)
+                {
+                    ack_delivered = true;
+                }
+                if (event.message && event.message->type == 11)
+                {
+                    delivered = true;
+                }
+                cv.notify_one();
+            });
         std::unique_lock<std::mutex> lock(mutex);
-        const bool signaled = cv.wait_for(lock, std::chrono::seconds(2), [&] { return failed; });
+        if (mode >= 3)
+        {
+            const bool connected =
+                cv.wait_for(lock, std::chrono::seconds(2), [&] { return ready || failed; });
+            if (connected && ready)
+            {
+                lock.unlock();
+                client.state();
+                lock.lock();
+            }
+        }
+        const bool signaled =
+            cv.wait_for(lock, std::chrono::seconds(2),
+                        [&]
+                        {
+                            return failed && ((mode != 3 && mode != 4) ||
+                                              detail.find("protocol:") != std::string::npos);
+                        });
         lock.unlock();
         client.stop();
         server.join();
@@ -127,9 +176,22 @@ void mock(int mode)
     }
     check(server_error.empty(), server_error.c_str());
     check(!delivered, "invalid frame delivered");
-    check(mode == 1 ? detail.find("invalid RGBA size") != std::string::npos
-                    : detail.find("timeout") != std::string::npos,
-          "unexpected error reason");
+    if (mode == 3 || mode == 4)
+    {
+        check(command_lost, "malformed ACK silently removed the pending command");
+        check(!ack_delivered, "malformed ACK delivered to the consumer");
+        check(detail.find("protocol:") != std::string::npos, "malformed ACK not a protocol error");
+    }
+    else if (mode == 5)
+    {
+        check(ack_delivered && !command_lost, "valid rejection was not completed normally");
+    }
+    else
+    {
+        check(mode == 1 ? detail.find("invalid RGBA size") != std::string::npos
+                        : detail.find("timeout") != std::string::npos,
+              "unexpected error reason");
+    }
 }
 
 int main()
@@ -151,6 +213,9 @@ int main()
         mock(0);
         mock(1);
         mock(2);
+        mock(3);
+        mock(4);
+        mock(5);
         std::atomic<unsigned> callbacks{0};
         sv::client::Options unavailable;
         unavailable.endpoint.directory = "/tmp/sv-does-not-exist-lifecycle";
