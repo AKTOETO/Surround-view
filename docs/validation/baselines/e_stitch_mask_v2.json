@@ -1,0 +1,3717 @@
+{
+  "schema_version": 1,
+  "experiment_id": "E-STITCH-01",
+  "fusion_implementation": "validity_zero_extension_v2",
+  "timestamp_utc": "2026-10-10T18:44:12Z",
+  "dataset": "tests/data/e_stitch_01_v1",
+  "provenance": {
+    "config_sha256": "cdf90d578d165f63734678a0709e9bc3a71199e13ba7095771bd351e4d1a9bca",
+    "manifest_sha256": "5109162ec2a52b0de176b64bb27a2469f0a77c3eb4ba84f3191114c4ef7ac7a8",
+    "ground_truth_sha256": "6ab6faa1c9f68e43081a5669c1ded6b3caff450af86531d819a3469861d3e851",
+    "implementation_sha256": {
+      "run_e_stitch_01.py": "266500a77d9284b9e191f290c08506fab4598859ba220d9e362dd9883715a9ec",
+      "fusion.py": "7dd094116f8e7817dcd43ee3a8f126f665c87b406444c71353fa4efa91bd4c84",
+      "stitch_metrics.py": "de8d287f1f7b098d526f8677f5e96c59a77bf6f48dd7bde7c36ef250bcef1814",
+      "reference.py": "45342a907a08361bdaa4bf6fb5b5daf8e13870688acc3beba1caf1f46d369432"
+    }
+  },
+  "cases_count": 84,
+  "results": [
+    {
+      "carrier": "plane",
+      "view": "oblique",
+      "mode": "hard_best_angle",
+      "timing_ms": {
+        "intersection_ms": 159.7165879993554,
+        "fusion_ms": 56.01885900068737,
+        "total_render_ms": 215.73544700004277
+      },
+      "coverage": {
+        "roi_pixels": 479958,
+        "miss_pixels": 10386,
+        "valid_projection_fraction": 0.9984915346759509
+      },
+      "seam": {
+        "seam_pixels": 1041,
+        "mean_delta_e": 5.11170768737793,
+        "p95_delta_e": 15.235308647155762,
+        "max_delta_e": 43.30949020385742,
+        "gradient_discontinuity": 0.253941148519516
+      },
+      "ghosting": {
+        "overlap_pixels": 207958,
+        "ghost_pixel_count": 2920,
+        "ghost_fraction_of_overlap": 0.014041296800315448,
+        "mean_ghost_offset_px": 9.06435557070209
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.17322364837613874,
+          "depth_consistent_weight_fraction": 0.14556333422660828
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.2562524167695743,
+          "depth_consistent_weight_fraction": 0.2250267118215561
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.4016639848320423,
+          "depth_consistent_weight_fraction": 0.357241153717041
+        },
+        "foreground_occluded_weight_fraction": 0.4279002249240875
+      },
+      "preview_file": "plane_oblique_hard_best_angle.png"
+    },
+    {
+      "carrier": "plane",
+      "view": "oblique",
+      "mode": "edge_feather",
+      "timing_ms": {
+        "intersection_ms": 185.8473940001204,
+        "fusion_ms": 44.56328700052836,
+        "total_render_ms": 230.41068100064876
+      },
+      "coverage": {
+        "roi_pixels": 479958,
+        "miss_pixels": 10386,
+        "valid_projection_fraction": 0.9984915346759509
+      },
+      "seam": {
+        "seam_pixels": 1329,
+        "mean_delta_e": 0.3334721326828003,
+        "p95_delta_e": 0.8108487129211426,
+        "max_delta_e": 7.065018653869629,
+        "gradient_discontinuity": 0.18205490708351135
+      },
+      "ghosting": {
+        "overlap_pixels": 207958,
+        "ghost_pixel_count": 3088,
+        "ghost_fraction_of_overlap": 0.014849152232662364,
+        "mean_ghost_offset_px": 9.126088372320584
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.17322364837613874,
+          "depth_consistent_weight_fraction": 0.14221793439464317
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.2562524167695743,
+          "depth_consistent_weight_fraction": 0.21760336109505332
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.4016639848320423,
+          "depth_consistent_weight_fraction": 0.3431437681196438
+        },
+        "foreground_occluded_weight_fraction": 0.42785595352520833
+      },
+      "preview_file": "plane_oblique_edge_feather.png"
+    },
+    {
+      "carrier": "plane",
+      "view": "oblique",
+      "mode": "angular_feather",
+      "timing_ms": {
+        "intersection_ms": 187.77914800011786,
+        "fusion_ms": 59.83380599991506,
+        "total_render_ms": 247.61295400003291
+      },
+      "coverage": {
+        "roi_pixels": 479958,
+        "miss_pixels": 10386,
+        "valid_projection_fraction": 0.9984915346759509
+      },
+      "seam": {
+        "seam_pixels": 1041,
+        "mean_delta_e": 0.4551081657409668,
+        "p95_delta_e": 1.2022087574005127,
+        "max_delta_e": 2.5394513607025146,
+        "gradient_discontinuity": 0.1791008561849594
+      },
+      "ghosting": {
+        "overlap_pixels": 207958,
+        "ghost_pixel_count": 3062,
+        "ghost_fraction_of_overlap": 0.014724126987180104,
+        "mean_ghost_offset_px": 8.639467729496147
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.17322364837613874,
+          "depth_consistent_weight_fraction": 0.1446550310813545
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.2562524167695743,
+          "depth_consistent_weight_fraction": 0.22316908022448936
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.4016639848320423,
+          "depth_consistent_weight_fraction": 0.353717271417579
+        },
+        "foreground_occluded_weight_fraction": 0.4268585723232404
+      },
+      "preview_file": "plane_oblique_angular_feather.png"
+    },
+    {
+      "carrier": "plane",
+      "view": "oblique",
+      "mode": "seam_distance_feather",
+      "timing_ms": {
+        "intersection_ms": 168.85345300033805,
+        "fusion_ms": 82.66650200039294,
+        "total_render_ms": 251.519955000731
+      },
+      "coverage": {
+        "roi_pixels": 479958,
+        "miss_pixels": 10386,
+        "valid_projection_fraction": 0.9984915346759509
+      },
+      "seam": {
+        "seam_pixels": 1220,
+        "mean_delta_e": 0.4448288083076477,
+        "p95_delta_e": 1.7514339685440063,
+        "max_delta_e": 6.776099681854248,
+        "gradient_discontinuity": 0.17772404849529266
+      },
+      "ghosting": {
+        "overlap_pixels": 207958,
+        "ghost_pixel_count": 2840,
+        "ghost_fraction_of_overlap": 0.013656603737293107,
+        "mean_ghost_offset_px": 8.522090114481648
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.17322364837613874,
+          "depth_consistent_weight_fraction": 0.1436501145362854
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.2562524167695743,
+          "depth_consistent_weight_fraction": 0.22096602618694305
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.4016639848320423,
+          "depth_consistent_weight_fraction": 0.349563330411911
+        },
+        "foreground_occluded_weight_fraction": 0.42596110701560974
+      },
+      "preview_file": "plane_oblique_seam_distance_feather.png"
+    },
+    {
+      "carrier": "plane",
+      "view": "oblique",
+      "mode": "graph_cut_seam",
+      "timing_ms": {
+        "intersection_ms": 241.82735800059163,
+        "fusion_ms": 345.21085300002596,
+        "total_render_ms": 587.0382110006176
+      },
+      "coverage": {
+        "roi_pixels": 479958,
+        "miss_pixels": 10386,
+        "valid_projection_fraction": 0.9984915346759509
+      },
+      "seam": {
+        "seam_pixels": 1041,
+        "mean_delta_e": 5.6622700691223145,
+        "p95_delta_e": 29.485504150390625,
+        "max_delta_e": 45.79838562011719,
+        "gradient_discontinuity": 0.2884911894798279
+      },
+      "ghosting": {
+        "overlap_pixels": 207958,
+        "ghost_pixel_count": 3094,
+        "ghost_fraction_of_overlap": 0.01487800421238904,
+        "mean_ghost_offset_px": 8.98201829692197
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.17322364837613874,
+          "depth_consistent_weight_fraction": 0.14576706290245056
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.2562524167695743,
+          "depth_consistent_weight_fraction": 0.22436769306659698
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.4016639848320423,
+          "depth_consistent_weight_fraction": 0.35555097460746765
+        },
+        "foreground_occluded_weight_fraction": 0.4258566200733185
+      },
+      "preview_file": "plane_oblique_graph_cut_seam.png"
+    },
+    {
+      "carrier": "plane",
+      "view": "oblique",
+      "mode": "multi_band",
+      "timing_ms": {
+        "intersection_ms": 272.4671230007516,
+        "fusion_ms": 329.4218629998795,
+        "total_render_ms": 601.8889860006311
+      },
+      "coverage": {
+        "roi_pixels": 479958,
+        "miss_pixels": 10386,
+        "valid_projection_fraction": 0.9984915346759509
+      },
+      "seam": {
+        "seam_pixels": 1329,
+        "mean_delta_e": 0.3456687331199646,
+        "p95_delta_e": 0.817596971988678,
+        "max_delta_e": 6.161826133728027,
+        "gradient_discontinuity": 0.1793636828660965
+      },
+      "ghosting": {
+        "overlap_pixels": 207958,
+        "ghost_pixel_count": 3140,
+        "ghost_fraction_of_overlap": 0.015099202723626887,
+        "mean_ghost_offset_px": 9.065190707475146
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.17322364837613874,
+          "depth_consistent_weight_fraction": 0.14221793439464317
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.2562524167695743,
+          "depth_consistent_weight_fraction": 0.21760336109505332
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.4016639848320423,
+          "depth_consistent_weight_fraction": 0.3431437681196438
+        },
+        "foreground_occluded_weight_fraction": 0.42785595352520833
+      },
+      "preview_file": "plane_oblique_multi_band.png"
+    },
+    {
+      "carrier": "plane",
+      "view": "oblique",
+      "mode": "graph_cut_multi_band",
+      "timing_ms": {
+        "intersection_ms": 149.4546240001,
+        "fusion_ms": 689.2642650000198,
+        "total_render_ms": 838.7188890001198
+      },
+      "coverage": {
+        "roi_pixels": 479958,
+        "miss_pixels": 10386,
+        "valid_projection_fraction": 0.9984915346759509
+      },
+      "seam": {
+        "seam_pixels": 1041,
+        "mean_delta_e": 0.6672689318656921,
+        "p95_delta_e": 2.3294248580932617,
+        "max_delta_e": 5.575826644897461,
+        "gradient_discontinuity": 0.24335238337516785
+      },
+      "ghosting": {
+        "overlap_pixels": 207958,
+        "ghost_pixel_count": 3123,
+        "ghost_fraction_of_overlap": 0.015017455447734638,
+        "mean_ghost_offset_px": 8.951278132128008
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.17322364837613874,
+          "depth_consistent_weight_fraction": 0.14576706290245056
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.2562524167695743,
+          "depth_consistent_weight_fraction": 0.22436769306659698
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.4016639848320423,
+          "depth_consistent_weight_fraction": 0.35555097460746765
+        },
+        "foreground_occluded_weight_fraction": 0.4258566200733185
+      },
+      "preview_file": "plane_oblique_graph_cut_multi_band.png"
+    },
+    {
+      "carrier": "plane",
+      "view": "low",
+      "mode": "hard_best_angle",
+      "timing_ms": {
+        "intersection_ms": 150.347322000016,
+        "fusion_ms": 54.94199100030528,
+        "total_render_ms": 205.28931300032127
+      },
+      "coverage": {
+        "roi_pixels": 332591,
+        "miss_pixels": 173711,
+        "valid_projection_fraction": 0.9991100180101085
+      },
+      "seam": {
+        "seam_pixels": 1031,
+        "mean_delta_e": 6.216666221618652,
+        "p95_delta_e": 26.270401000976562,
+        "max_delta_e": 48.592105865478516,
+        "gradient_discontinuity": 0.5585028529167175
+      },
+      "ghosting": {
+        "overlap_pixels": 151626,
+        "ghost_pixel_count": 3489,
+        "ghost_fraction_of_overlap": 0.023010565470301926,
+        "mean_ghost_offset_px": 6.295329718186261
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.16774784240150095,
+          "depth_consistent_weight_fraction": 0.14077597856521606
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.2450251407129456,
+          "depth_consistent_weight_fraction": 0.21343038976192474
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.4110649155722326,
+          "depth_consistent_weight_fraction": 0.3636532723903656
+        },
+        "foreground_occluded_weight_fraction": 0.3945726156234741
+      },
+      "preview_file": "plane_low_hard_best_angle.png"
+    },
+    {
+      "carrier": "plane",
+      "view": "low",
+      "mode": "edge_feather",
+      "timing_ms": {
+        "intersection_ms": 145.27068799998233,
+        "fusion_ms": 42.9624779999358,
+        "total_render_ms": 188.23316599991813
+      },
+      "coverage": {
+        "roi_pixels": 332591,
+        "miss_pixels": 173711,
+        "valid_projection_fraction": 0.9991100180101085
+      },
+      "seam": {
+        "seam_pixels": 1182,
+        "mean_delta_e": 0.44430091977119446,
+        "p95_delta_e": 1.2304506301879883,
+        "max_delta_e": 8.527673721313477,
+        "gradient_discontinuity": 0.377955824136734
+      },
+      "ghosting": {
+        "overlap_pixels": 151626,
+        "ghost_pixel_count": 3394,
+        "ghost_fraction_of_overlap": 0.02238402384815269,
+        "mean_ghost_offset_px": 7.221280994370498
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.16774784240150095,
+          "depth_consistent_weight_fraction": 0.13304960197084523
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.2450251407129456,
+          "depth_consistent_weight_fraction": 0.19986412851522506
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.4110649155722326,
+          "depth_consistent_weight_fraction": 0.33787040492339876
+        },
+        "foreground_occluded_weight_fraction": 0.40318806221347003
+      },
+      "preview_file": "plane_low_edge_feather.png"
+    },
+    {
+      "carrier": "plane",
+      "view": "low",
+      "mode": "angular_feather",
+      "timing_ms": {
+        "intersection_ms": 144.2408089997116,
+        "fusion_ms": 57.32238499967934,
+        "total_render_ms": 201.56319399939093
+      },
+      "coverage": {
+        "roi_pixels": 332591,
+        "miss_pixels": 173711,
+        "valid_projection_fraction": 0.9991100180101085
+      },
+      "seam": {
+        "seam_pixels": 1031,
+        "mean_delta_e": 0.7066466808319092,
+        "p95_delta_e": 2.029231071472168,
+        "max_delta_e": 13.05799674987793,
+        "gradient_discontinuity": 0.3005295991897583
+      },
+      "ghosting": {
+        "overlap_pixels": 151626,
+        "ghost_pixel_count": 3392,
+        "ghost_fraction_of_overlap": 0.022370833498212707,
+        "mean_ghost_offset_px": 5.874023379575718
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.16774784240150095,
+          "depth_consistent_weight_fraction": 0.13831164367447565
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.2450251407129456,
+          "depth_consistent_weight_fraction": 0.20947416935673357
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.4110649155722326,
+          "depth_consistent_weight_fraction": 0.3561507909324388
+        },
+        "foreground_occluded_weight_fraction": 0.4003249727377436
+      },
+      "preview_file": "plane_low_angular_feather.png"
+    },
+    {
+      "carrier": "plane",
+      "view": "low",
+      "mode": "seam_distance_feather",
+      "timing_ms": {
+        "intersection_ms": 152.76919400002953,
+        "fusion_ms": 82.01238400033617,
+        "total_render_ms": 234.7815780003657
+      },
+      "coverage": {
+        "roi_pixels": 332591,
+        "miss_pixels": 173711,
+        "valid_projection_fraction": 0.9991100180101085
+      },
+      "seam": {
+        "seam_pixels": 1143,
+        "mean_delta_e": 0.6111695170402527,
+        "p95_delta_e": 1.7874994277954102,
+        "max_delta_e": 9.988133430480957,
+        "gradient_discontinuity": 0.3565292954444885
+      },
+      "ghosting": {
+        "overlap_pixels": 151626,
+        "ghost_pixel_count": 3063,
+        "ghost_fraction_of_overlap": 0.020201020933085356,
+        "mean_ghost_offset_px": 5.468435632238649
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.16774784240150095,
+          "depth_consistent_weight_fraction": 0.13682900369167328
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.2450251407129456,
+          "depth_consistent_weight_fraction": 0.20688602328300476
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.4110649155722326,
+          "depth_consistent_weight_fraction": 0.35117852687835693
+        },
+        "foreground_occluded_weight_fraction": 0.40169867873191833
+      },
+      "preview_file": "plane_low_seam_distance_feather.png"
+    },
+    {
+      "carrier": "plane",
+      "view": "low",
+      "mode": "graph_cut_seam",
+      "timing_ms": {
+        "intersection_ms": 140.0227399999494,
+        "fusion_ms": 291.8756700000813,
+        "total_render_ms": 431.8984100000307
+      },
+      "coverage": {
+        "roi_pixels": 332591,
+        "miss_pixels": 173711,
+        "valid_projection_fraction": 0.9991100180101085
+      },
+      "seam": {
+        "seam_pixels": 938,
+        "mean_delta_e": 4.406254768371582,
+        "p95_delta_e": 11.935602188110352,
+        "max_delta_e": 45.611846923828125,
+        "gradient_discontinuity": 0.4782381057739258
+      },
+      "ghosting": {
+        "overlap_pixels": 151626,
+        "ghost_pixel_count": 3253,
+        "ghost_fraction_of_overlap": 0.021454104177383825,
+        "mean_ghost_offset_px": 5.975189697296474
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.16774784240150095,
+          "depth_consistent_weight_fraction": 0.1406198889017105
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.2450251407129456,
+          "depth_consistent_weight_fraction": 0.21292006969451904
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.4110649155722326,
+          "depth_consistent_weight_fraction": 0.3623204529285431
+        },
+        "foreground_occluded_weight_fraction": 0.392876535654068
+      },
+      "preview_file": "plane_low_graph_cut_seam.png"
+    },
+    {
+      "carrier": "plane",
+      "view": "low",
+      "mode": "multi_band",
+      "timing_ms": {
+        "intersection_ms": 152.86097699936363,
+        "fusion_ms": 328.8393789998736,
+        "total_render_ms": 481.7003559992372
+      },
+      "coverage": {
+        "roi_pixels": 332591,
+        "miss_pixels": 173711,
+        "valid_projection_fraction": 0.9991100180101085
+      },
+      "seam": {
+        "seam_pixels": 1182,
+        "mean_delta_e": 0.5000871419906616,
+        "p95_delta_e": 1.2793408632278442,
+        "max_delta_e": 6.217580795288086,
+        "gradient_discontinuity": 0.38708940148353577
+      },
+      "ghosting": {
+        "overlap_pixels": 151626,
+        "ghost_pixel_count": 3670,
+        "ghost_fraction_of_overlap": 0.02420429213987047,
+        "mean_ghost_offset_px": 7.359267464681021
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.16774784240150095,
+          "depth_consistent_weight_fraction": 0.13304960197084523
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.2450251407129456,
+          "depth_consistent_weight_fraction": 0.19986412851522506
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.4110649155722326,
+          "depth_consistent_weight_fraction": 0.33787040492339876
+        },
+        "foreground_occluded_weight_fraction": 0.40318806221347003
+      },
+      "preview_file": "plane_low_multi_band.png"
+    },
+    {
+      "carrier": "plane",
+      "view": "low",
+      "mode": "graph_cut_multi_band",
+      "timing_ms": {
+        "intersection_ms": 151.1792660003266,
+        "fusion_ms": 603.2810659999086,
+        "total_render_ms": 754.4603320002352
+      },
+      "coverage": {
+        "roi_pixels": 332591,
+        "miss_pixels": 173711,
+        "valid_projection_fraction": 0.9991100180101085
+      },
+      "seam": {
+        "seam_pixels": 938,
+        "mean_delta_e": 0.6611548066139221,
+        "p95_delta_e": 2.3665289878845215,
+        "max_delta_e": 8.88572883605957,
+        "gradient_discontinuity": 0.34139809012413025
+      },
+      "ghosting": {
+        "overlap_pixels": 151626,
+        "ghost_pixel_count": 3281,
+        "ghost_fraction_of_overlap": 0.0216387690765436,
+        "mean_ghost_offset_px": 5.944864332920713
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.16774784240150095,
+          "depth_consistent_weight_fraction": 0.1406198889017105
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.2450251407129456,
+          "depth_consistent_weight_fraction": 0.21292006969451904
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.4110649155722326,
+          "depth_consistent_weight_fraction": 0.3623204529285431
+        },
+        "foreground_occluded_weight_fraction": 0.392876535654068
+      },
+      "preview_file": "plane_low_graph_cut_multi_band.png"
+    },
+    {
+      "carrier": "bowl",
+      "view": "oblique",
+      "mode": "hard_best_angle",
+      "timing_ms": {
+        "intersection_ms": 172.8850899999088,
+        "fusion_ms": 56.34769999960554,
+        "total_render_ms": 229.23278999951435
+      },
+      "coverage": {
+        "roi_pixels": 488810,
+        "miss_pixels": 1534,
+        "valid_projection_fraction": 0.9985188519056484
+      },
+      "seam": {
+        "seam_pixels": 1039,
+        "mean_delta_e": 5.531627655029297,
+        "p95_delta_e": 13.25585651397705,
+        "max_delta_e": 31.906145095825195,
+        "gradient_discontinuity": 0.28991976380348206
+      },
+      "ghosting": {
+        "overlap_pixels": 207279,
+        "ghost_pixel_count": 3418,
+        "ghost_fraction_of_overlap": 0.016489851842203022,
+        "mean_ghost_offset_px": 8.767733840167038
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.15984983648589615,
+          "depth_consistent_weight_fraction": 0.13456332683563232
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.24105367590320617,
+          "depth_consistent_weight_fraction": 0.21212536096572876
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.36497940253048794,
+          "depth_consistent_weight_fraction": 0.32306793332099915
+        },
+        "foreground_occluded_weight_fraction": 0.1330588310956955
+      },
+      "preview_file": "bowl_oblique_hard_best_angle.png"
+    },
+    {
+      "carrier": "bowl",
+      "view": "oblique",
+      "mode": "edge_feather",
+      "timing_ms": {
+        "intersection_ms": 153.91632400042,
+        "fusion_ms": 42.633846000171616,
+        "total_render_ms": 196.5501700005916
+      },
+      "coverage": {
+        "roi_pixels": 488810,
+        "miss_pixels": 1534,
+        "valid_projection_fraction": 0.9985188519056484
+      },
+      "seam": {
+        "seam_pixels": 1309,
+        "mean_delta_e": 0.36419180035591125,
+        "p95_delta_e": 0.8161963224411011,
+        "max_delta_e": 7.062910556793213,
+        "gradient_discontinuity": 0.19078470766544342
+      },
+      "ghosting": {
+        "overlap_pixels": 207279,
+        "ghost_pixel_count": 3402,
+        "ghost_fraction_of_overlap": 0.016412661195779603,
+        "mean_ghost_offset_px": 8.872332384884844
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.15984983648589615,
+          "depth_consistent_weight_fraction": 0.13410047856094554
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.24105367590320617,
+          "depth_consistent_weight_fraction": 0.20765616964521286
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.36497940253048794,
+          "depth_consistent_weight_fraction": 0.315162804292856
+        },
+        "foreground_occluded_weight_fraction": 0.14436113897808575
+      },
+      "preview_file": "bowl_oblique_edge_feather.png"
+    },
+    {
+      "carrier": "bowl",
+      "view": "oblique",
+      "mode": "angular_feather",
+      "timing_ms": {
+        "intersection_ms": 158.41276999981346,
+        "fusion_ms": 58.32267599998886,
+        "total_render_ms": 216.73544599980232
+      },
+      "coverage": {
+        "roi_pixels": 488810,
+        "miss_pixels": 1534,
+        "valid_projection_fraction": 0.9985188519056484
+      },
+      "seam": {
+        "seam_pixels": 1039,
+        "mean_delta_e": 0.4749268591403961,
+        "p95_delta_e": 1.1994879245758057,
+        "max_delta_e": 2.5394513607025146,
+        "gradient_discontinuity": 0.18438521027565002
+      },
+      "ghosting": {
+        "overlap_pixels": 207279,
+        "ghost_pixel_count": 3439,
+        "ghost_fraction_of_overlap": 0.01659116456563376,
+        "mean_ghost_offset_px": 8.478689681355917
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.15984983648589615,
+          "depth_consistent_weight_fraction": 0.13445848903561936
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.24105367590320617,
+          "depth_consistent_weight_fraction": 0.21108057772837693
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.36497940253048794,
+          "depth_consistent_weight_fraction": 0.32122528492103825
+        },
+        "foreground_occluded_weight_fraction": 0.13548924613403618
+      },
+      "preview_file": "bowl_oblique_angular_feather.png"
+    },
+    {
+      "carrier": "bowl",
+      "view": "oblique",
+      "mode": "seam_distance_feather",
+      "timing_ms": {
+        "intersection_ms": 149.6863909997046,
+        "fusion_ms": 80.21182700031204,
+        "total_render_ms": 229.89821800001664
+      },
+      "coverage": {
+        "roi_pixels": 488810,
+        "miss_pixels": 1534,
+        "valid_projection_fraction": 0.9985188519056484
+      },
+      "seam": {
+        "seam_pixels": 1048,
+        "mean_delta_e": 0.5221250057220459,
+        "p95_delta_e": 1.7675752639770508,
+        "max_delta_e": 6.776099681854248,
+        "gradient_discontinuity": 0.22132091224193573
+      },
+      "ghosting": {
+        "overlap_pixels": 207279,
+        "ghost_pixel_count": 3204,
+        "ghost_fraction_of_overlap": 0.015457426946289784,
+        "mean_ghost_offset_px": 8.463872963486468
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.15984983648589615,
+          "depth_consistent_weight_fraction": 0.13449187576770782
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.24105367590320617,
+          "depth_consistent_weight_fraction": 0.20993056893348694
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.36497940253048794,
+          "depth_consistent_weight_fraction": 0.319013774394989
+        },
+        "foreground_occluded_weight_fraction": 0.138705313205719
+      },
+      "preview_file": "bowl_oblique_seam_distance_feather.png"
+    },
+    {
+      "carrier": "bowl",
+      "view": "oblique",
+      "mode": "graph_cut_seam",
+      "timing_ms": {
+        "intersection_ms": 159.7825320004631,
+        "fusion_ms": 272.32848799940257,
+        "total_render_ms": 432.1110199998657
+      },
+      "coverage": {
+        "roi_pixels": 488810,
+        "miss_pixels": 1534,
+        "valid_projection_fraction": 0.9985188519056484
+      },
+      "seam": {
+        "seam_pixels": 1029,
+        "mean_delta_e": 6.8046555519104,
+        "p95_delta_e": 33.043373107910156,
+        "max_delta_e": 47.618011474609375,
+        "gradient_discontinuity": 0.27643775939941406
+      },
+      "ghosting": {
+        "overlap_pixels": 207279,
+        "ghost_pixel_count": 3586,
+        "ghost_fraction_of_overlap": 0.017300353629648928,
+        "mean_ghost_offset_px": 8.664812828592597
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.15984983648589615,
+          "depth_consistent_weight_fraction": 0.13460823893547058
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.24105367590320617,
+          "depth_consistent_weight_fraction": 0.21132105588912964
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.36497940253048794,
+          "depth_consistent_weight_fraction": 0.32142871618270874
+        },
+        "foreground_occluded_weight_fraction": 0.1329873949289322
+      },
+      "preview_file": "bowl_oblique_graph_cut_seam.png"
+    },
+    {
+      "carrier": "bowl",
+      "view": "oblique",
+      "mode": "multi_band",
+      "timing_ms": {
+        "intersection_ms": 153.49366400005238,
+        "fusion_ms": 327.8569789999892,
+        "total_render_ms": 481.3506430000416
+      },
+      "coverage": {
+        "roi_pixels": 488810,
+        "miss_pixels": 1534,
+        "valid_projection_fraction": 0.9985188519056484
+      },
+      "seam": {
+        "seam_pixels": 1309,
+        "mean_delta_e": 0.37473028898239136,
+        "p95_delta_e": 0.8206934332847595,
+        "max_delta_e": 6.161826133728027,
+        "gradient_discontinuity": 0.19610528647899628
+      },
+      "ghosting": {
+        "overlap_pixels": 207279,
+        "ghost_pixel_count": 3475,
+        "ghost_fraction_of_overlap": 0.016764843520086455,
+        "mean_ghost_offset_px": 8.778607215570663
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.15984983648589615,
+          "depth_consistent_weight_fraction": 0.13410047856094554
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.24105367590320617,
+          "depth_consistent_weight_fraction": 0.20765616964521286
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.36497940253048794,
+          "depth_consistent_weight_fraction": 0.315162804292856
+        },
+        "foreground_occluded_weight_fraction": 0.14436113897808575
+      },
+      "preview_file": "bowl_oblique_multi_band.png"
+    },
+    {
+      "carrier": "bowl",
+      "view": "oblique",
+      "mode": "graph_cut_multi_band",
+      "timing_ms": {
+        "intersection_ms": 162.26102000018727,
+        "fusion_ms": 551.593430000139,
+        "total_render_ms": 713.8544500003263
+      },
+      "coverage": {
+        "roi_pixels": 488810,
+        "miss_pixels": 1534,
+        "valid_projection_fraction": 0.9985188519056484
+      },
+      "seam": {
+        "seam_pixels": 1029,
+        "mean_delta_e": 0.6942925453186035,
+        "p95_delta_e": 2.347501754760742,
+        "max_delta_e": 6.036511421203613,
+        "gradient_discontinuity": 0.21166202425956726
+      },
+      "ghosting": {
+        "overlap_pixels": 207279,
+        "ghost_pixel_count": 3596,
+        "ghost_fraction_of_overlap": 0.017348597783663565,
+        "mean_ghost_offset_px": 8.62559086581534
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.15984983648589615,
+          "depth_consistent_weight_fraction": 0.13460823893547058
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.24105367590320617,
+          "depth_consistent_weight_fraction": 0.21132105588912964
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.36497940253048794,
+          "depth_consistent_weight_fraction": 0.32142871618270874
+        },
+        "foreground_occluded_weight_fraction": 0.1329873949289322
+      },
+      "preview_file": "bowl_oblique_graph_cut_multi_band.png"
+    },
+    {
+      "carrier": "bowl",
+      "view": "low",
+      "mode": "hard_best_angle",
+      "timing_ms": {
+        "intersection_ms": 198.54498299991974,
+        "fusion_ms": 54.35841599955893,
+        "total_render_ms": 252.90339899947867
+      },
+      "coverage": {
+        "roi_pixels": 356828,
+        "miss_pixels": 149474,
+        "valid_projection_fraction": 0.9991704686851929
+      },
+      "seam": {
+        "seam_pixels": 1078,
+        "mean_delta_e": 7.137134075164795,
+        "p95_delta_e": 27.123735427856445,
+        "max_delta_e": 52.138526916503906,
+        "gradient_discontinuity": 0.5535234212875366
+      },
+      "ghosting": {
+        "overlap_pixels": 168039,
+        "ghost_pixel_count": 3678,
+        "ghost_fraction_of_overlap": 0.021887776051987932,
+        "mean_ghost_offset_px": 6.5438530435772275
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.1504664737716937,
+          "depth_consistent_weight_fraction": 0.1244984045624733
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.2214421231132577,
+          "depth_consistent_weight_fraction": 0.19096322357654572
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.35346231552319496,
+          "depth_consistent_weight_fraction": 0.30694645643234253
+        },
+        "foreground_occluded_weight_fraction": 0.12701407074928284
+      },
+      "preview_file": "bowl_low_hard_best_angle.png"
+    },
+    {
+      "carrier": "bowl",
+      "view": "low",
+      "mode": "edge_feather",
+      "timing_ms": {
+        "intersection_ms": 176.9971780004198,
+        "fusion_ms": 45.65047300002334,
+        "total_render_ms": 222.64765100044315
+      },
+      "coverage": {
+        "roi_pixels": 356828,
+        "miss_pixels": 149474,
+        "valid_projection_fraction": 0.9991704686851929
+      },
+      "seam": {
+        "seam_pixels": 1245,
+        "mean_delta_e": 0.47905176877975464,
+        "p95_delta_e": 1.2475429773330688,
+        "max_delta_e": 5.822658538818359,
+        "gradient_discontinuity": 0.4075700640678406
+      },
+      "ghosting": {
+        "overlap_pixels": 168039,
+        "ghost_pixel_count": 3614,
+        "ghost_fraction_of_overlap": 0.021506912085884823,
+        "mean_ghost_offset_px": 6.424523955698037
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.1504664737716937,
+          "depth_consistent_weight_fraction": 0.11931974703292776
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.2214421231132577,
+          "depth_consistent_weight_fraction": 0.1805952863377664
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.35346231552319496,
+          "depth_consistent_weight_fraction": 0.28874961606770105
+        },
+        "foreground_occluded_weight_fraction": 0.1491515552964087
+      },
+      "preview_file": "bowl_low_edge_feather.png"
+    },
+    {
+      "carrier": "bowl",
+      "view": "low",
+      "mode": "angular_feather",
+      "timing_ms": {
+        "intersection_ms": 171.35200799930317,
+        "fusion_ms": 62.77493899960973,
+        "total_render_ms": 234.1269469989129
+      },
+      "coverage": {
+        "roi_pixels": 356828,
+        "miss_pixels": 149474,
+        "valid_projection_fraction": 0.9991704686851929
+      },
+      "seam": {
+        "seam_pixels": 1078,
+        "mean_delta_e": 0.6945473551750183,
+        "p95_delta_e": 2.0122506618499756,
+        "max_delta_e": 13.05799674987793,
+        "gradient_discontinuity": 0.2940574288368225
+      },
+      "ghosting": {
+        "overlap_pixels": 168039,
+        "ghost_pixel_count": 3527,
+        "ghost_fraction_of_overlap": 0.020989175131963415,
+        "mean_ghost_offset_px": 5.521100834012846
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.1504664737716937,
+          "depth_consistent_weight_fraction": 0.12292131364672038
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.2214421231132577,
+          "depth_consistent_weight_fraction": 0.18807700624033155
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.35346231552319496,
+          "depth_consistent_weight_fraction": 0.30165450552784456
+        },
+        "foreground_occluded_weight_fraction": 0.13515119305512555
+      },
+      "preview_file": "bowl_low_angular_feather.png"
+    },
+    {
+      "carrier": "bowl",
+      "view": "low",
+      "mode": "seam_distance_feather",
+      "timing_ms": {
+        "intersection_ms": 188.1947020001462,
+        "fusion_ms": 86.78963100010151,
+        "total_render_ms": 274.9843330002477
+      },
+      "coverage": {
+        "roi_pixels": 356828,
+        "miss_pixels": 149474,
+        "valid_projection_fraction": 0.9991704686851929
+      },
+      "seam": {
+        "seam_pixels": 1228,
+        "mean_delta_e": 0.6064736247062683,
+        "p95_delta_e": 1.8933579921722412,
+        "max_delta_e": 9.238829612731934,
+        "gradient_discontinuity": 0.38860300183296204
+      },
+      "ghosting": {
+        "overlap_pixels": 168039,
+        "ghost_pixel_count": 2977,
+        "ghost_fraction_of_overlap": 0.017716125423264836,
+        "mean_ghost_offset_px": 4.801409894615078
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.1504664737716937,
+          "depth_consistent_weight_fraction": 0.12217895686626434
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.2214421231132577,
+          "depth_consistent_weight_fraction": 0.18634548783302307
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.35346231552319496,
+          "depth_consistent_weight_fraction": 0.2984573245048523
+        },
+        "foreground_occluded_weight_fraction": 0.13975518941879272
+      },
+      "preview_file": "bowl_low_seam_distance_feather.png"
+    },
+    {
+      "carrier": "bowl",
+      "view": "low",
+      "mode": "graph_cut_seam",
+      "timing_ms": {
+        "intersection_ms": 187.41499699990527,
+        "fusion_ms": 327.31515300019964,
+        "total_render_ms": 514.7301500001049
+      },
+      "coverage": {
+        "roi_pixels": 356828,
+        "miss_pixels": 149474,
+        "valid_projection_fraction": 0.9991704686851929
+      },
+      "seam": {
+        "seam_pixels": 1031,
+        "mean_delta_e": 4.417658805847168,
+        "p95_delta_e": 10.787565231323242,
+        "max_delta_e": 44.165470123291016,
+        "gradient_discontinuity": 0.4299774467945099
+      },
+      "ghosting": {
+        "overlap_pixels": 168039,
+        "ghost_pixel_count": 3520,
+        "ghost_fraction_of_overlap": 0.020947518135670886,
+        "mean_ghost_offset_px": 5.928085655990057
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.1504664737716937,
+          "depth_consistent_weight_fraction": 0.12476144731044769
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.2214421231132577,
+          "depth_consistent_weight_fraction": 0.1910499781370163
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.35346231552319496,
+          "depth_consistent_weight_fraction": 0.3069324791431427
+        },
+        "foreground_occluded_weight_fraction": 0.125444233417511
+      },
+      "preview_file": "bowl_low_graph_cut_seam.png"
+    },
+    {
+      "carrier": "bowl",
+      "view": "low",
+      "mode": "multi_band",
+      "timing_ms": {
+        "intersection_ms": 199.46625499960646,
+        "fusion_ms": 340.7476949996635,
+        "total_render_ms": 540.21394999927
+      },
+      "coverage": {
+        "roi_pixels": 356828,
+        "miss_pixels": 149474,
+        "valid_projection_fraction": 0.9991704686851929
+      },
+      "seam": {
+        "seam_pixels": 1245,
+        "mean_delta_e": 0.5132430195808411,
+        "p95_delta_e": 1.2183549404144287,
+        "max_delta_e": 4.542140960693359,
+        "gradient_discontinuity": 0.43244653940200806
+      },
+      "ghosting": {
+        "overlap_pixels": 168039,
+        "ghost_pixel_count": 3767,
+        "ghost_fraction_of_overlap": 0.022417415004850064,
+        "mean_ghost_offset_px": 6.680185379530922
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.1504664737716937,
+          "depth_consistent_weight_fraction": 0.11931974703292776
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.2214421231132577,
+          "depth_consistent_weight_fraction": 0.1805952863377664
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.35346231552319496,
+          "depth_consistent_weight_fraction": 0.28874961606770105
+        },
+        "foreground_occluded_weight_fraction": 0.1491515552964087
+      },
+      "preview_file": "bowl_low_multi_band.png"
+    },
+    {
+      "carrier": "bowl",
+      "view": "low",
+      "mode": "graph_cut_multi_band",
+      "timing_ms": {
+        "intersection_ms": 153.94763200038142,
+        "fusion_ms": 606.8244839998442,
+        "total_render_ms": 760.7721160002257
+      },
+      "coverage": {
+        "roi_pixels": 356828,
+        "miss_pixels": 149474,
+        "valid_projection_fraction": 0.9991704686851929
+      },
+      "seam": {
+        "seam_pixels": 1031,
+        "mean_delta_e": 0.6406183242797852,
+        "p95_delta_e": 2.177109718322754,
+        "max_delta_e": 8.88572883605957,
+        "gradient_discontinuity": 0.32824140787124634
+      },
+      "ghosting": {
+        "overlap_pixels": 168039,
+        "ghost_pixel_count": 3590,
+        "ghost_fraction_of_overlap": 0.02136408809859616,
+        "mean_ghost_offset_px": 5.861207341287551
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.1504664737716937,
+          "depth_consistent_weight_fraction": 0.12476144731044769
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.2214421231132577,
+          "depth_consistent_weight_fraction": 0.1910499781370163
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.35346231552319496,
+          "depth_consistent_weight_fraction": 0.3069324791431427
+        },
+        "foreground_occluded_weight_fraction": 0.125444233417511
+      },
+      "preview_file": "bowl_low_graph_cut_multi_band.png"
+    },
+    {
+      "carrier": "dome_floor",
+      "view": "oblique",
+      "mode": "hard_best_angle",
+      "timing_ms": {
+        "intersection_ms": 27.261152999926708,
+        "fusion_ms": 54.3794559998787,
+        "total_render_ms": 81.64060899980541
+      },
+      "coverage": {
+        "roi_pixels": 490344,
+        "miss_pixels": 0,
+        "valid_projection_fraction": 0.9985234855529995
+      },
+      "seam": {
+        "seam_pixels": 1041,
+        "mean_delta_e": 5.11170768737793,
+        "p95_delta_e": 15.235308647155762,
+        "max_delta_e": 43.30949020385742,
+        "gradient_discontinuity": 0.253941148519516
+      },
+      "ghosting": {
+        "overlap_pixels": 211918,
+        "ghost_pixel_count": 2920,
+        "ghost_fraction_of_overlap": 0.013778914485791674,
+        "mean_ghost_offset_px": 9.06435557070209
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.16956247456247456,
+          "depth_consistent_weight_fraction": 0.14248676598072052
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.25083638583638584,
+          "depth_consistent_weight_fraction": 0.22027064859867096
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.3931746031746032,
+          "depth_consistent_weight_fraction": 0.34969067573547363
+        },
+        "foreground_occluded_weight_fraction": 0.42836794257164
+      },
+      "preview_file": "dome_floor_oblique_hard_best_angle.png"
+    },
+    {
+      "carrier": "dome_floor",
+      "view": "oblique",
+      "mode": "edge_feather",
+      "timing_ms": {
+        "intersection_ms": 27.763804000642267,
+        "fusion_ms": 42.5580520004587,
+        "total_render_ms": 70.32185600110097
+      },
+      "coverage": {
+        "roi_pixels": 490344,
+        "miss_pixels": 0,
+        "valid_projection_fraction": 0.9985234855529995
+      },
+      "seam": {
+        "seam_pixels": 1329,
+        "mean_delta_e": 0.3334721326828003,
+        "p95_delta_e": 0.8108487129211426,
+        "max_delta_e": 7.065018653869629,
+        "gradient_discontinuity": 0.18205490708351135
+      },
+      "ghosting": {
+        "overlap_pixels": 211918,
+        "ghost_pixel_count": 2977,
+        "ghost_fraction_of_overlap": 0.014047886446644457,
+        "mean_ghost_offset_px": 9.063517852525086
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.16956247456247456,
+          "depth_consistent_weight_fraction": 0.13921208281421427
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.25083638583638584,
+          "depth_consistent_weight_fraction": 0.2130041984814326
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.3931746031746032,
+          "depth_consistent_weight_fraction": 0.33589124232458756
+        },
+        "foreground_occluded_weight_fraction": 0.4287144550777607
+      },
+      "preview_file": "dome_floor_oblique_edge_feather.png"
+    },
+    {
+      "carrier": "dome_floor",
+      "view": "oblique",
+      "mode": "angular_feather",
+      "timing_ms": {
+        "intersection_ms": 28.331298000011884,
+        "fusion_ms": 59.32762699922023,
+        "total_render_ms": 87.65892499923211
+      },
+      "coverage": {
+        "roi_pixels": 490344,
+        "miss_pixels": 0,
+        "valid_projection_fraction": 0.9985234855529995
+      },
+      "seam": {
+        "seam_pixels": 1041,
+        "mean_delta_e": 0.4551081657409668,
+        "p95_delta_e": 1.2022087574005127,
+        "max_delta_e": 2.5394513607025146,
+        "gradient_discontinuity": 0.1791008561849594
+      },
+      "ghosting": {
+        "overlap_pixels": 211918,
+        "ghost_pixel_count": 3062,
+        "ghost_fraction_of_overlap": 0.014448984984758256,
+        "mean_ghost_offset_px": 8.639467729496147
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.16956247456247456,
+          "depth_consistent_weight_fraction": 0.1415976701680233
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.25083638583638584,
+          "depth_consistent_weight_fraction": 0.21845228318091683
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.3931746031746032,
+          "depth_consistent_weight_fraction": 0.3462412690143577
+        },
+        "foreground_occluded_weight_fraction": 0.42738300714652755
+      },
+      "preview_file": "dome_floor_oblique_angular_feather.png"
+    },
+    {
+      "carrier": "dome_floor",
+      "view": "oblique",
+      "mode": "seam_distance_feather",
+      "timing_ms": {
+        "intersection_ms": 27.826692999951774,
+        "fusion_ms": 81.55871500002831,
+        "total_render_ms": 109.38540799998009
+      },
+      "coverage": {
+        "roi_pixels": 490344,
+        "miss_pixels": 0,
+        "valid_projection_fraction": 0.9985234855529995
+      },
+      "seam": {
+        "seam_pixels": 1026,
+        "mean_delta_e": 0.5029603242874146,
+        "p95_delta_e": 1.7691320180892944,
+        "max_delta_e": 6.776099681854248,
+        "gradient_discontinuity": 0.17751947045326233
+      },
+      "ghosting": {
+        "overlap_pixels": 211918,
+        "ghost_pixel_count": 2794,
+        "ghost_fraction_of_overlap": 0.013184344888117101,
+        "mean_ghost_offset_px": 8.564755783255055
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.16956247456247456,
+          "depth_consistent_weight_fraction": 0.14089666306972504
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.25083638583638584,
+          "depth_consistent_weight_fraction": 0.21657848358154297
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.3931746031746032,
+          "depth_consistent_weight_fraction": 0.34256529808044434
+        },
+        "foreground_occluded_weight_fraction": 0.42760175466537476
+      },
+      "preview_file": "dome_floor_oblique_seam_distance_feather.png"
+    },
+    {
+      "carrier": "dome_floor",
+      "view": "oblique",
+      "mode": "graph_cut_seam",
+      "timing_ms": {
+        "intersection_ms": 27.101871999548166,
+        "fusion_ms": 235.62565200063545,
+        "total_render_ms": 262.7275240001836
+      },
+      "coverage": {
+        "roi_pixels": 490344,
+        "miss_pixels": 0,
+        "valid_projection_fraction": 0.9985234855529995
+      },
+      "seam": {
+        "seam_pixels": 1024,
+        "mean_delta_e": 5.8550639152526855,
+        "p95_delta_e": 30.037809371948242,
+        "max_delta_e": 45.79838562011719,
+        "gradient_discontinuity": 0.2815675139427185
+      },
+      "ghosting": {
+        "overlap_pixels": 211918,
+        "ghost_pixel_count": 3095,
+        "ghost_fraction_of_overlap": 0.014604705593673025,
+        "mean_ghost_offset_px": 8.980281150873033
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.16956247456247456,
+          "depth_consistent_weight_fraction": 0.14277777075767517
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.25083638583638584,
+          "depth_consistent_weight_fraction": 0.2197171300649643
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.3931746031746032,
+          "depth_consistent_weight_fraction": 0.348182737827301
+        },
+        "foreground_occluded_weight_fraction": 0.4266727864742279
+      },
+      "preview_file": "dome_floor_oblique_graph_cut_seam.png"
+    },
+    {
+      "carrier": "dome_floor",
+      "view": "oblique",
+      "mode": "multi_band",
+      "timing_ms": {
+        "intersection_ms": 28.080041999601235,
+        "fusion_ms": 319.6600689998377,
+        "total_render_ms": 347.7401109994389
+      },
+      "coverage": {
+        "roi_pixels": 490344,
+        "miss_pixels": 0,
+        "valid_projection_fraction": 0.9985234855529995
+      },
+      "seam": {
+        "seam_pixels": 1329,
+        "mean_delta_e": 0.3456687331199646,
+        "p95_delta_e": 0.817596971988678,
+        "max_delta_e": 6.161826133728027,
+        "gradient_discontinuity": 0.1793636828660965
+      },
+      "ghosting": {
+        "overlap_pixels": 211918,
+        "ghost_pixel_count": 3029,
+        "ghost_fraction_of_overlap": 0.014293264375843487,
+        "mean_ghost_offset_px": 9.001462718624358
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.16956247456247456,
+          "depth_consistent_weight_fraction": 0.13921208281421427
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.25083638583638584,
+          "depth_consistent_weight_fraction": 0.2130041984814326
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.3931746031746032,
+          "depth_consistent_weight_fraction": 0.33589124232458756
+        },
+        "foreground_occluded_weight_fraction": 0.4287144550777607
+      },
+      "preview_file": "dome_floor_oblique_multi_band.png"
+    },
+    {
+      "carrier": "dome_floor",
+      "view": "oblique",
+      "mode": "graph_cut_multi_band",
+      "timing_ms": {
+        "intersection_ms": 26.878138999563816,
+        "fusion_ms": 524.385102999986,
+        "total_render_ms": 551.2632419995498
+      },
+      "coverage": {
+        "roi_pixels": 490344,
+        "miss_pixels": 0,
+        "valid_projection_fraction": 0.9985234855529995
+      },
+      "seam": {
+        "seam_pixels": 1024,
+        "mean_delta_e": 0.6632918119430542,
+        "p95_delta_e": 2.3385021686553955,
+        "max_delta_e": 5.575826644897461,
+        "gradient_discontinuity": 0.226827472448349
+      },
+      "ghosting": {
+        "overlap_pixels": 211918,
+        "ghost_pixel_count": 3123,
+        "ghost_fraction_of_overlap": 0.014736832170934041,
+        "mean_ghost_offset_px": 8.951278132128008
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.16956247456247456,
+          "depth_consistent_weight_fraction": 0.14277777075767517
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.25083638583638584,
+          "depth_consistent_weight_fraction": 0.2197171300649643
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.3931746031746032,
+          "depth_consistent_weight_fraction": 0.348182737827301
+        },
+        "foreground_occluded_weight_fraction": 0.4266727864742279
+      },
+      "preview_file": "dome_floor_oblique_graph_cut_multi_band.png"
+    },
+    {
+      "carrier": "dome_floor",
+      "view": "low",
+      "mode": "hard_best_angle",
+      "timing_ms": {
+        "intersection_ms": 26.95174800010136,
+        "fusion_ms": 54.28804299936019,
+        "total_render_ms": 81.23979099946155
+      },
+      "coverage": {
+        "roi_pixels": 506302,
+        "miss_pixels": 0,
+        "valid_projection_fraction": 0.9994153686929935
+      },
+      "seam": {
+        "seam_pixels": 1191,
+        "mean_delta_e": 6.580325126647949,
+        "p95_delta_e": 25.84488296508789,
+        "max_delta_e": 48.592105865478516,
+        "gradient_discontinuity": 0.5335581302642822
+      },
+      "ghosting": {
+        "overlap_pixels": 240621,
+        "ghost_pixel_count": 5807,
+        "ghost_fraction_of_overlap": 0.024133388191388116,
+        "mean_ghost_offset_px": 8.776567244512425
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.11250779344797923,
+          "depth_consistent_weight_fraction": 0.0940343588590622
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.16329937099969222,
+          "depth_consistent_weight_fraction": 0.14178748428821564
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.27243131900654255,
+          "depth_consistent_weight_fraction": 0.240523561835289
+        },
+        "foreground_occluded_weight_fraction": 0.42224112153053284
+      },
+      "preview_file": "dome_floor_low_hard_best_angle.png"
+    },
+    {
+      "carrier": "dome_floor",
+      "view": "low",
+      "mode": "edge_feather",
+      "timing_ms": {
+        "intersection_ms": 27.319914000145218,
+        "fusion_ms": 42.741297999782546,
+        "total_render_ms": 70.06121199992776
+      },
+      "coverage": {
+        "roi_pixels": 506302,
+        "miss_pixels": 0,
+        "valid_projection_fraction": 0.9994153686929935
+      },
+      "seam": {
+        "seam_pixels": 1592,
+        "mean_delta_e": 0.4367487132549286,
+        "p95_delta_e": 1.2298328876495361,
+        "max_delta_e": 9.203582763671875,
+        "gradient_discontinuity": 0.29535767436027527
+      },
+      "ghosting": {
+        "overlap_pixels": 240621,
+        "ghost_pixel_count": 4646,
+        "ghost_fraction_of_overlap": 0.019308372918406955,
+        "mean_ghost_offset_px": 7.9173399801629385
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.11250779344797923,
+          "depth_consistent_weight_fraction": 0.0891524056233926
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.16329937099969222,
+          "depth_consistent_weight_fraction": 0.13306718112295565
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.27243131900654255,
+          "depth_consistent_weight_fraction": 0.22377372294017633
+        },
+        "foreground_occluded_weight_fraction": 0.4296118494331323
+      },
+      "preview_file": "dome_floor_low_edge_feather.png"
+    },
+    {
+      "carrier": "dome_floor",
+      "view": "low",
+      "mode": "angular_feather",
+      "timing_ms": {
+        "intersection_ms": 29.54942199994548,
+        "fusion_ms": 56.29058099930262,
+        "total_render_ms": 85.8400029992481
+      },
+      "coverage": {
+        "roi_pixels": 506302,
+        "miss_pixels": 0,
+        "valid_projection_fraction": 0.9994153686929935
+      },
+      "seam": {
+        "seam_pixels": 1191,
+        "mean_delta_e": 0.738633930683136,
+        "p95_delta_e": 2.010512351989746,
+        "max_delta_e": 13.05799674987793,
+        "gradient_discontinuity": 0.2823040187358856
+      },
+      "ghosting": {
+        "overlap_pixels": 240621,
+        "ghost_pixel_count": 5409,
+        "ghost_fraction_of_overlap": 0.022479334721408357,
+        "mean_ghost_offset_px": 7.9660526636334685
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.11250779344797923,
+          "depth_consistent_weight_fraction": 0.09239709495022072
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.16329937099969222,
+          "depth_consistent_weight_fraction": 0.13916965326869485
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.27243131900654255,
+          "depth_consistent_weight_fraction": 0.23557489986208366
+        },
+        "foreground_occluded_weight_fraction": 0.42684013617269473
+      },
+      "preview_file": "dome_floor_low_angular_feather.png"
+    },
+    {
+      "carrier": "dome_floor",
+      "view": "low",
+      "mode": "seam_distance_feather",
+      "timing_ms": {
+        "intersection_ms": 27.435231999334064,
+        "fusion_ms": 79.21655300015118,
+        "total_render_ms": 106.65178499948524
+      },
+      "coverage": {
+        "roi_pixels": 506302,
+        "miss_pixels": 0,
+        "valid_projection_fraction": 0.9994153686929935
+      },
+      "seam": {
+        "seam_pixels": 1251,
+        "mean_delta_e": 0.5707657933235168,
+        "p95_delta_e": 1.9515540599822998,
+        "max_delta_e": 9.238829612731934,
+        "gradient_discontinuity": 0.24158301949501038
+      },
+      "ghosting": {
+        "overlap_pixels": 240621,
+        "ghost_pixel_count": 4482,
+        "ghost_fraction_of_overlap": 0.018626803146857506,
+        "mean_ghost_offset_px": 6.780045378880534
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.11250779344797923,
+          "depth_consistent_weight_fraction": 0.09188028424978256
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.16329937099969222,
+          "depth_consistent_weight_fraction": 0.13793084025382996
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.27243131900654255,
+          "depth_consistent_weight_fraction": 0.23287425935268402
+        },
+        "foreground_occluded_weight_fraction": 0.42738398909568787
+      },
+      "preview_file": "dome_floor_low_seam_distance_feather.png"
+    },
+    {
+      "carrier": "dome_floor",
+      "view": "low",
+      "mode": "graph_cut_seam",
+      "timing_ms": {
+        "intersection_ms": 27.81768600016221,
+        "fusion_ms": 227.11896800046816,
+        "total_render_ms": 254.93665400063037
+      },
+      "coverage": {
+        "roi_pixels": 506302,
+        "miss_pixels": 0,
+        "valid_projection_fraction": 0.9994153686929935
+      },
+      "seam": {
+        "seam_pixels": 1244,
+        "mean_delta_e": 5.102634429931641,
+        "p95_delta_e": 14.245397567749023,
+        "max_delta_e": 45.611846923828125,
+        "gradient_discontinuity": 0.4393596947193146
+      },
+      "ghosting": {
+        "overlap_pixels": 240621,
+        "ghost_pixel_count": 5667,
+        "ghost_fraction_of_overlap": 0.02355156033762639,
+        "mean_ghost_offset_px": 8.57699737238436
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.11250779344797923,
+          "depth_consistent_weight_fraction": 0.09449013322591782
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.16329937099969222,
+          "depth_consistent_weight_fraction": 0.14201043546199799
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.27243131900654255,
+          "depth_consistent_weight_fraction": 0.2403361201286316
+        },
+        "foreground_occluded_weight_fraction": 0.4223259687423706
+      },
+      "preview_file": "dome_floor_low_graph_cut_seam.png"
+    },
+    {
+      "carrier": "dome_floor",
+      "view": "low",
+      "mode": "multi_band",
+      "timing_ms": {
+        "intersection_ms": 27.035596999667177,
+        "fusion_ms": 318.8603859998693,
+        "total_render_ms": 345.8959829995365
+      },
+      "coverage": {
+        "roi_pixels": 506302,
+        "miss_pixels": 0,
+        "valid_projection_fraction": 0.9994153686929935
+      },
+      "seam": {
+        "seam_pixels": 1592,
+        "mean_delta_e": 0.4786436855792999,
+        "p95_delta_e": 1.2487058639526367,
+        "max_delta_e": 7.936376571655273,
+        "gradient_discontinuity": 0.2694293260574341
+      },
+      "ghosting": {
+        "overlap_pixels": 240621,
+        "ghost_pixel_count": 4848,
+        "ghost_fraction_of_overlap": 0.0201478673931203,
+        "mean_ghost_offset_px": 7.925277817357845
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.11250779344797923,
+          "depth_consistent_weight_fraction": 0.0891524056233926
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.16329937099969222,
+          "depth_consistent_weight_fraction": 0.13306718112295565
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.27243131900654255,
+          "depth_consistent_weight_fraction": 0.22377372294017633
+        },
+        "foreground_occluded_weight_fraction": 0.4296118494331323
+      },
+      "preview_file": "dome_floor_low_multi_band.png"
+    },
+    {
+      "carrier": "dome_floor",
+      "view": "low",
+      "mode": "graph_cut_multi_band",
+      "timing_ms": {
+        "intersection_ms": 27.4297320002006,
+        "fusion_ms": 521.9346150006459,
+        "total_render_ms": 549.3643470008465
+      },
+      "coverage": {
+        "roi_pixels": 506302,
+        "miss_pixels": 0,
+        "valid_projection_fraction": 0.9994153686929935
+      },
+      "seam": {
+        "seam_pixels": 1244,
+        "mean_delta_e": 0.703538179397583,
+        "p95_delta_e": 2.3970279693603516,
+        "max_delta_e": 8.88572883605957,
+        "gradient_discontinuity": 0.31890255212783813
+      },
+      "ghosting": {
+        "overlap_pixels": 240621,
+        "ghost_pixel_count": 5725,
+        "ghost_fraction_of_overlap": 0.02379260330561339,
+        "mean_ghost_offset_px": 8.499117212627645
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.11250779344797923,
+          "depth_consistent_weight_fraction": 0.09449013322591782
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.16329937099969222,
+          "depth_consistent_weight_fraction": 0.14201043546199799
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.27243131900654255,
+          "depth_consistent_weight_fraction": 0.2403361201286316
+        },
+        "foreground_occluded_weight_fraction": 0.4223259687423706
+      },
+      "preview_file": "dome_floor_low_graph_cut_multi_band.png"
+    },
+    {
+      "carrier": "cylinder_floor",
+      "view": "oblique",
+      "mode": "hard_best_angle",
+      "timing_ms": {
+        "intersection_ms": 33.82362899992586,
+        "fusion_ms": 54.05965099998866,
+        "total_render_ms": 87.88327999991452
+      },
+      "coverage": {
+        "roi_pixels": 490344,
+        "miss_pixels": 0,
+        "valid_projection_fraction": 0.9985234855529995
+      },
+      "seam": {
+        "seam_pixels": 1041,
+        "mean_delta_e": 5.11170768737793,
+        "p95_delta_e": 15.235308647155762,
+        "max_delta_e": 43.30949020385742,
+        "gradient_discontinuity": 0.253941148519516
+      },
+      "ghosting": {
+        "overlap_pixels": 211914,
+        "ghost_pixel_count": 2920,
+        "ghost_fraction_of_overlap": 0.013779174570816463,
+        "mean_ghost_offset_px": 9.06435557070209
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.16956247456247456,
+          "depth_consistent_weight_fraction": 0.14248676598072052
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.25083638583638584,
+          "depth_consistent_weight_fraction": 0.22027064859867096
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.3931746031746032,
+          "depth_consistent_weight_fraction": 0.34969067573547363
+        },
+        "foreground_occluded_weight_fraction": 0.42836794257164
+      },
+      "preview_file": "cylinder_floor_oblique_hard_best_angle.png"
+    },
+    {
+      "carrier": "cylinder_floor",
+      "view": "oblique",
+      "mode": "edge_feather",
+      "timing_ms": {
+        "intersection_ms": 35.58641300060117,
+        "fusion_ms": 42.130242999519396,
+        "total_render_ms": 77.71665600012057
+      },
+      "coverage": {
+        "roi_pixels": 490344,
+        "miss_pixels": 0,
+        "valid_projection_fraction": 0.9985234855529995
+      },
+      "seam": {
+        "seam_pixels": 1329,
+        "mean_delta_e": 0.3334721326828003,
+        "p95_delta_e": 0.8108487129211426,
+        "max_delta_e": 7.065018653869629,
+        "gradient_discontinuity": 0.18205490708351135
+      },
+      "ghosting": {
+        "overlap_pixels": 211914,
+        "ghost_pixel_count": 2977,
+        "ghost_fraction_of_overlap": 0.014048151608671441,
+        "mean_ghost_offset_px": 9.063517852525086
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.16956247456247456,
+          "depth_consistent_weight_fraction": 0.13921208281421427
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.25083638583638584,
+          "depth_consistent_weight_fraction": 0.2130041984814326
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.3931746031746032,
+          "depth_consistent_weight_fraction": 0.33589124232458756
+        },
+        "foreground_occluded_weight_fraction": 0.42871445507084605
+      },
+      "preview_file": "cylinder_floor_oblique_edge_feather.png"
+    },
+    {
+      "carrier": "cylinder_floor",
+      "view": "oblique",
+      "mode": "angular_feather",
+      "timing_ms": {
+        "intersection_ms": 33.76290300002438,
+        "fusion_ms": 56.099118999554776,
+        "total_render_ms": 89.86202199957916
+      },
+      "coverage": {
+        "roi_pixels": 490344,
+        "miss_pixels": 0,
+        "valid_projection_fraction": 0.9985234855529995
+      },
+      "seam": {
+        "seam_pixels": 1041,
+        "mean_delta_e": 0.4551081657409668,
+        "p95_delta_e": 1.2022087574005127,
+        "max_delta_e": 2.5394513607025146,
+        "gradient_discontinuity": 0.1791008561849594
+      },
+      "ghosting": {
+        "overlap_pixels": 211914,
+        "ghost_pixel_count": 3062,
+        "ghost_fraction_of_overlap": 0.014449257717753428,
+        "mean_ghost_offset_px": 8.639467729496147
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.16956247456247456,
+          "depth_consistent_weight_fraction": 0.1415976701680233
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.25083638583638584,
+          "depth_consistent_weight_fraction": 0.21845228318091683
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.3931746031746032,
+          "depth_consistent_weight_fraction": 0.3462412690143577
+        },
+        "foreground_occluded_weight_fraction": 0.42738300725009515
+      },
+      "preview_file": "cylinder_floor_oblique_angular_feather.png"
+    },
+    {
+      "carrier": "cylinder_floor",
+      "view": "oblique",
+      "mode": "seam_distance_feather",
+      "timing_ms": {
+        "intersection_ms": 34.08752799987269,
+        "fusion_ms": 80.92554599988944,
+        "total_render_ms": 115.01307399976213
+      },
+      "coverage": {
+        "roi_pixels": 490344,
+        "miss_pixels": 0,
+        "valid_projection_fraction": 0.9985234855529995
+      },
+      "seam": {
+        "seam_pixels": 1026,
+        "mean_delta_e": 0.5029603242874146,
+        "p95_delta_e": 1.7691320180892944,
+        "max_delta_e": 6.776099681854248,
+        "gradient_discontinuity": 0.17751947045326233
+      },
+      "ghosting": {
+        "overlap_pixels": 211914,
+        "ghost_pixel_count": 2794,
+        "ghost_fraction_of_overlap": 0.013184593750294932,
+        "mean_ghost_offset_px": 8.564755783255055
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.16956247456247456,
+          "depth_consistent_weight_fraction": 0.14089666306972504
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.25083638583638584,
+          "depth_consistent_weight_fraction": 0.21657848358154297
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.3931746031746032,
+          "depth_consistent_weight_fraction": 0.34256529808044434
+        },
+        "foreground_occluded_weight_fraction": 0.42760199308395386
+      },
+      "preview_file": "cylinder_floor_oblique_seam_distance_feather.png"
+    },
+    {
+      "carrier": "cylinder_floor",
+      "view": "oblique",
+      "mode": "graph_cut_seam",
+      "timing_ms": {
+        "intersection_ms": 33.21937500004424,
+        "fusion_ms": 230.12977300004422,
+        "total_render_ms": 263.34914800008846
+      },
+      "coverage": {
+        "roi_pixels": 490344,
+        "miss_pixels": 0,
+        "valid_projection_fraction": 0.9985234855529995
+      },
+      "seam": {
+        "seam_pixels": 1024,
+        "mean_delta_e": 5.8537397384643555,
+        "p95_delta_e": 30.037809371948242,
+        "max_delta_e": 45.79838562011719,
+        "gradient_discontinuity": 0.2799854874610901
+      },
+      "ghosting": {
+        "overlap_pixels": 211914,
+        "ghost_pixel_count": 3094,
+        "ghost_fraction_of_overlap": 0.014600262370584293,
+        "mean_ghost_offset_px": 8.98201829692197
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.16956247456247456,
+          "depth_consistent_weight_fraction": 0.14277777075767517
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.25083638583638584,
+          "depth_consistent_weight_fraction": 0.2197171300649643
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.3931746031746032,
+          "depth_consistent_weight_fraction": 0.34818682074546814
+        },
+        "foreground_occluded_weight_fraction": 0.42667683959007263
+      },
+      "preview_file": "cylinder_floor_oblique_graph_cut_seam.png"
+    },
+    {
+      "carrier": "cylinder_floor",
+      "view": "oblique",
+      "mode": "multi_band",
+      "timing_ms": {
+        "intersection_ms": 32.99483000046166,
+        "fusion_ms": 320.5634469995857,
+        "total_render_ms": 353.5582770000474
+      },
+      "coverage": {
+        "roi_pixels": 490344,
+        "miss_pixels": 0,
+        "valid_projection_fraction": 0.9985234855529995
+      },
+      "seam": {
+        "seam_pixels": 1329,
+        "mean_delta_e": 0.3456687331199646,
+        "p95_delta_e": 0.817596971988678,
+        "max_delta_e": 6.161826133728027,
+        "gradient_discontinuity": 0.1793636828660965
+      },
+      "ghosting": {
+        "overlap_pixels": 211914,
+        "ghost_pixel_count": 3029,
+        "ghost_fraction_of_overlap": 0.014293534169521598,
+        "mean_ghost_offset_px": 9.001462718624358
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.16956247456247456,
+          "depth_consistent_weight_fraction": 0.13921208281421427
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.25083638583638584,
+          "depth_consistent_weight_fraction": 0.2130041984814326
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.3931746031746032,
+          "depth_consistent_weight_fraction": 0.33589124232458756
+        },
+        "foreground_occluded_weight_fraction": 0.42871445507084605
+      },
+      "preview_file": "cylinder_floor_oblique_multi_band.png"
+    },
+    {
+      "carrier": "cylinder_floor",
+      "view": "oblique",
+      "mode": "graph_cut_multi_band",
+      "timing_ms": {
+        "intersection_ms": 33.148401000289596,
+        "fusion_ms": 527.0944450003299,
+        "total_render_ms": 560.2428460006195
+      },
+      "coverage": {
+        "roi_pixels": 490344,
+        "miss_pixels": 0,
+        "valid_projection_fraction": 0.9985234855529995
+      },
+      "seam": {
+        "seam_pixels": 1024,
+        "mean_delta_e": 0.6629387736320496,
+        "p95_delta_e": 2.3385021686553955,
+        "max_delta_e": 5.575826644897461,
+        "gradient_discontinuity": 0.2271757423877716
+      },
+      "ghosting": {
+        "overlap_pixels": 211914,
+        "ghost_pixel_count": 3123,
+        "ghost_fraction_of_overlap": 0.014737110337212265,
+        "mean_ghost_offset_px": 8.951278132128008
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.16956247456247456,
+          "depth_consistent_weight_fraction": 0.14277777075767517
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.25083638583638584,
+          "depth_consistent_weight_fraction": 0.2197171300649643
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.3931746031746032,
+          "depth_consistent_weight_fraction": 0.34818682074546814
+        },
+        "foreground_occluded_weight_fraction": 0.42667683959007263
+      },
+      "preview_file": "cylinder_floor_oblique_graph_cut_multi_band.png"
+    },
+    {
+      "carrier": "cylinder_floor",
+      "view": "low",
+      "mode": "hard_best_angle",
+      "timing_ms": {
+        "intersection_ms": 34.76473799946689,
+        "fusion_ms": 54.462342000078934,
+        "total_render_ms": 89.22707999954582
+      },
+      "coverage": {
+        "roi_pixels": 506302,
+        "miss_pixels": 0,
+        "valid_projection_fraction": 0.9994153686929935
+      },
+      "seam": {
+        "seam_pixels": 1189,
+        "mean_delta_e": 6.7467451095581055,
+        "p95_delta_e": 25.764814376831055,
+        "max_delta_e": 48.592105865478516,
+        "gradient_discontinuity": 0.5280174612998962
+      },
+      "ghosting": {
+        "overlap_pixels": 240970,
+        "ghost_pixel_count": 5137,
+        "ghost_fraction_of_overlap": 0.021318006390837033,
+        "mean_ghost_offset_px": 8.26043184828536
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.11320821725370732,
+          "depth_consistent_weight_fraction": 0.09491828083992004
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.1639997948054203,
+          "depth_consistent_weight_fraction": 0.1426713913679123
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.27313174281227065,
+          "depth_consistent_weight_fraction": 0.24140748381614685
+        },
+        "foreground_occluded_weight_fraction": 0.425082266330719
+      },
+      "preview_file": "cylinder_floor_low_hard_best_angle.png"
+    },
+    {
+      "carrier": "cylinder_floor",
+      "view": "low",
+      "mode": "edge_feather",
+      "timing_ms": {
+        "intersection_ms": 33.68113900069147,
+        "fusion_ms": 42.59287799959566,
+        "total_render_ms": 76.27401700028713
+      },
+      "coverage": {
+        "roi_pixels": 506302,
+        "miss_pixels": 0,
+        "valid_projection_fraction": 0.9994153686929935
+      },
+      "seam": {
+        "seam_pixels": 1626,
+        "mean_delta_e": 0.4411280155181885,
+        "p95_delta_e": 1.2292749881744385,
+        "max_delta_e": 8.527673721313477,
+        "gradient_discontinuity": 0.26824039220809937
+      },
+      "ghosting": {
+        "overlap_pixels": 240970,
+        "ghost_pixel_count": 4277,
+        "ghost_fraction_of_overlap": 0.01774909739801635,
+        "mean_ghost_offset_px": 7.688960906009099
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.11320821725370732,
+          "depth_consistent_weight_fraction": 0.08994950764455921
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.1639997948054203,
+          "depth_consistent_weight_fraction": 0.13386428314412224
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.27313174281227065,
+          "depth_consistent_weight_fraction": 0.22457082496134295
+        },
+        "foreground_occluded_weight_fraction": 0.43253882865428606
+      },
+      "preview_file": "cylinder_floor_low_edge_feather.png"
+    },
+    {
+      "carrier": "cylinder_floor",
+      "view": "low",
+      "mode": "angular_feather",
+      "timing_ms": {
+        "intersection_ms": 33.580207000341034,
+        "fusion_ms": 57.33701100052713,
+        "total_render_ms": 90.91721800086816
+      },
+      "coverage": {
+        "roi_pixels": 506302,
+        "miss_pixels": 0,
+        "valid_projection_fraction": 0.9994153686929935
+      },
+      "seam": {
+        "seam_pixels": 1189,
+        "mean_delta_e": 0.7470875382423401,
+        "p95_delta_e": 2.013587713241577,
+        "max_delta_e": 13.05799674987793,
+        "gradient_discontinuity": 0.2857424318790436
+      },
+      "ghosting": {
+        "overlap_pixels": 240970,
+        "ghost_pixel_count": 4963,
+        "ghost_fraction_of_overlap": 0.0205959248039175,
+        "mean_ghost_offset_px": 7.5571774891312105
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.11320821725370732,
+          "depth_consistent_weight_fraction": 0.0932414873659982
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.1639997948054203,
+          "depth_consistent_weight_fraction": 0.14001404568447234
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.27313174281227065,
+          "depth_consistent_weight_fraction": 0.23641929227786115
+        },
+        "foreground_occluded_weight_fraction": 0.42996410784879086
+      },
+      "preview_file": "cylinder_floor_low_angular_feather.png"
+    },
+    {
+      "carrier": "cylinder_floor",
+      "view": "low",
+      "mode": "seam_distance_feather",
+      "timing_ms": {
+        "intersection_ms": 34.213135000754846,
+        "fusion_ms": 80.6747019996692,
+        "total_render_ms": 114.88783700042404
+      },
+      "coverage": {
+        "roi_pixels": 506302,
+        "miss_pixels": 0,
+        "valid_projection_fraction": 0.9994153686929935
+      },
+      "seam": {
+        "seam_pixels": 1251,
+        "mean_delta_e": 0.5614614486694336,
+        "p95_delta_e": 1.8834655284881592,
+        "max_delta_e": 9.238829612731934,
+        "gradient_discontinuity": 0.24327543377876282
+      },
+      "ghosting": {
+        "overlap_pixels": 240970,
+        "ghost_pixel_count": 4122,
+        "ghost_fraction_of_overlap": 0.01710586380047309,
+        "mean_ghost_offset_px": 6.2808110860385975
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.11320821725370732,
+          "depth_consistent_weight_fraction": 0.09271403402090073
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.1639997948054203,
+          "depth_consistent_weight_fraction": 0.13876457512378693
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.27313174281227065,
+          "depth_consistent_weight_fraction": 0.23370800912380219
+        },
+        "foreground_occluded_weight_fraction": 0.4305577874183655
+      },
+      "preview_file": "cylinder_floor_low_seam_distance_feather.png"
+    },
+    {
+      "carrier": "cylinder_floor",
+      "view": "low",
+      "mode": "graph_cut_seam",
+      "timing_ms": {
+        "intersection_ms": 34.426126999278495,
+        "fusion_ms": 223.32137200010038,
+        "total_render_ms": 257.7474989993789
+      },
+      "coverage": {
+        "roi_pixels": 506302,
+        "miss_pixels": 0,
+        "valid_projection_fraction": 0.9994153686929935
+      },
+      "seam": {
+        "seam_pixels": 1244,
+        "mean_delta_e": 5.430751323699951,
+        "p95_delta_e": 17.384199142456055,
+        "max_delta_e": 45.611846923828125,
+        "gradient_discontinuity": 0.4395233988761902
+      },
+      "ghosting": {
+        "overlap_pixels": 240970,
+        "ghost_pixel_count": 4995,
+        "ghost_fraction_of_overlap": 0.02072872141760385,
+        "mean_ghost_offset_px": 8.020644932833893
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.11320821725370732,
+          "depth_consistent_weight_fraction": 0.09537602216005325
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.1639997948054203,
+          "depth_consistent_weight_fraction": 0.14289632439613342
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.27313174281227065,
+          "depth_consistent_weight_fraction": 0.24121609330177307
+        },
+        "foreground_occluded_weight_fraction": 0.4255932867527008
+      },
+      "preview_file": "cylinder_floor_low_graph_cut_seam.png"
+    },
+    {
+      "carrier": "cylinder_floor",
+      "view": "low",
+      "mode": "multi_band",
+      "timing_ms": {
+        "intersection_ms": 33.65559000030771,
+        "fusion_ms": 315.85059000008187,
+        "total_render_ms": 349.5061800003896
+      },
+      "coverage": {
+        "roi_pixels": 506302,
+        "miss_pixels": 0,
+        "valid_projection_fraction": 0.9994153686929935
+      },
+      "seam": {
+        "seam_pixels": 1626,
+        "mean_delta_e": 0.4829494059085846,
+        "p95_delta_e": 1.2458621263504028,
+        "max_delta_e": 7.207733631134033,
+        "gradient_discontinuity": 0.26790115237236023
+      },
+      "ghosting": {
+        "overlap_pixels": 240970,
+        "ghost_pixel_count": 4470,
+        "ghost_fraction_of_overlap": 0.018550026974312156,
+        "mean_ghost_offset_px": 7.654856481636586
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.11320821725370732,
+          "depth_consistent_weight_fraction": 0.08994950764455921
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.1639997948054203,
+          "depth_consistent_weight_fraction": 0.13386428314412224
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.27313174281227065,
+          "depth_consistent_weight_fraction": 0.22457082496134295
+        },
+        "foreground_occluded_weight_fraction": 0.43253882865428606
+      },
+      "preview_file": "cylinder_floor_low_multi_band.png"
+    },
+    {
+      "carrier": "cylinder_floor",
+      "view": "low",
+      "mode": "graph_cut_multi_band",
+      "timing_ms": {
+        "intersection_ms": 33.33449300043867,
+        "fusion_ms": 518.6688240000876,
+        "total_render_ms": 552.0033170005263
+      },
+      "coverage": {
+        "roi_pixels": 506302,
+        "miss_pixels": 0,
+        "valid_projection_fraction": 0.9994153686929935
+      },
+      "seam": {
+        "seam_pixels": 1244,
+        "mean_delta_e": 0.7153723835945129,
+        "p95_delta_e": 2.407802104949951,
+        "max_delta_e": 8.88572883605957,
+        "gradient_discontinuity": 0.3129265606403351
+      },
+      "ghosting": {
+        "overlap_pixels": 240970,
+        "ghost_pixel_count": 5053,
+        "ghost_fraction_of_overlap": 0.020969415279910364,
+        "mean_ghost_offset_px": 7.93520237977936
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.11320821725370732,
+          "depth_consistent_weight_fraction": 0.09537602216005325
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.1639997948054203,
+          "depth_consistent_weight_fraction": 0.14289632439613342
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.27313174281227065,
+          "depth_consistent_weight_fraction": 0.24121609330177307
+        },
+        "foreground_occluded_weight_fraction": 0.4255932867527008
+      },
+      "preview_file": "cylinder_floor_low_graph_cut_multi_band.png"
+    },
+    {
+      "carrier": "cube_floor",
+      "view": "oblique",
+      "mode": "hard_best_angle",
+      "timing_ms": {
+        "intersection_ms": 59.908215000177734,
+        "fusion_ms": 53.76727699967887,
+        "total_render_ms": 113.6754919998566
+      },
+      "coverage": {
+        "roi_pixels": 490344,
+        "miss_pixels": 0,
+        "valid_projection_fraction": 0.9985234855529995
+      },
+      "seam": {
+        "seam_pixels": 1041,
+        "mean_delta_e": 5.11170768737793,
+        "p95_delta_e": 15.235308647155762,
+        "max_delta_e": 43.30949020385742,
+        "gradient_discontinuity": 0.253941148519516
+      },
+      "ghosting": {
+        "overlap_pixels": 211894,
+        "ghost_pixel_count": 2920,
+        "ghost_fraction_of_overlap": 0.013780475143231993,
+        "mean_ghost_offset_px": 9.06435557070209
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.16956247456247456,
+          "depth_consistent_weight_fraction": 0.14248676598072052
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.25083638583638584,
+          "depth_consistent_weight_fraction": 0.22027064859867096
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.3931746031746032,
+          "depth_consistent_weight_fraction": 0.34969067573547363
+        },
+        "foreground_occluded_weight_fraction": 0.4297313690185547
+      },
+      "preview_file": "cube_floor_oblique_hard_best_angle.png"
+    },
+    {
+      "carrier": "cube_floor",
+      "view": "oblique",
+      "mode": "edge_feather",
+      "timing_ms": {
+        "intersection_ms": 59.76716799978021,
+        "fusion_ms": 41.20077399966249,
+        "total_render_ms": 100.9679419994427
+      },
+      "coverage": {
+        "roi_pixels": 490344,
+        "miss_pixels": 0,
+        "valid_projection_fraction": 0.9985234855529995
+      },
+      "seam": {
+        "seam_pixels": 1329,
+        "mean_delta_e": 0.3334721326828003,
+        "p95_delta_e": 0.8108487129211426,
+        "max_delta_e": 7.065018653869629,
+        "gradient_discontinuity": 0.18205490708351135
+      },
+      "ghosting": {
+        "overlap_pixels": 211894,
+        "ghost_pixel_count": 2977,
+        "ghost_fraction_of_overlap": 0.014049477568973167,
+        "mean_ghost_offset_px": 9.063517852525086
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.16956247456247456,
+          "depth_consistent_weight_fraction": 0.13921208281421427
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.25083638583638584,
+          "depth_consistent_weight_fraction": 0.2130041984814326
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.3931746031746032,
+          "depth_consistent_weight_fraction": 0.33589124232458756
+        },
+        "foreground_occluded_weight_fraction": 0.4296615960453581
+      },
+      "preview_file": "cube_floor_oblique_edge_feather.png"
+    },
+    {
+      "carrier": "cube_floor",
+      "view": "oblique",
+      "mode": "angular_feather",
+      "timing_ms": {
+        "intersection_ms": 60.48432500028866,
+        "fusion_ms": 58.13946899979783,
+        "total_render_ms": 118.62379400008649
+      },
+      "coverage": {
+        "roi_pixels": 490344,
+        "miss_pixels": 0,
+        "valid_projection_fraction": 0.9985234855529995
+      },
+      "seam": {
+        "seam_pixels": 1041,
+        "mean_delta_e": 0.4551081657409668,
+        "p95_delta_e": 1.2022087574005127,
+        "max_delta_e": 2.5394513607025146,
+        "gradient_discontinuity": 0.1791008561849594
+      },
+      "ghosting": {
+        "overlap_pixels": 211894,
+        "ghost_pixel_count": 3062,
+        "ghost_fraction_of_overlap": 0.014450621537183687,
+        "mean_ghost_offset_px": 8.639467729496147
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.16956247456247456,
+          "depth_consistent_weight_fraction": 0.1415976701680233
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.25083638583638584,
+          "depth_consistent_weight_fraction": 0.21845228318091683
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.3931746031746032,
+          "depth_consistent_weight_fraction": 0.3462412690143577
+        },
+        "foreground_occluded_weight_fraction": 0.42871012869098996
+      },
+      "preview_file": "cube_floor_oblique_angular_feather.png"
+    },
+    {
+      "carrier": "cube_floor",
+      "view": "oblique",
+      "mode": "seam_distance_feather",
+      "timing_ms": {
+        "intersection_ms": 60.706575000040175,
+        "fusion_ms": 80.76796800014563,
+        "total_render_ms": 141.4745430001858
+      },
+      "coverage": {
+        "roi_pixels": 490344,
+        "miss_pixels": 0,
+        "valid_projection_fraction": 0.9985234855529995
+      },
+      "seam": {
+        "seam_pixels": 1026,
+        "mean_delta_e": 0.5029603242874146,
+        "p95_delta_e": 1.7691320180892944,
+        "max_delta_e": 6.776099681854248,
+        "gradient_discontinuity": 0.17751947045326233
+      },
+      "ghosting": {
+        "overlap_pixels": 211894,
+        "ghost_pixel_count": 2794,
+        "ghost_fraction_of_overlap": 0.013185838202119929,
+        "mean_ghost_offset_px": 8.564755783255055
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.16956247456247456,
+          "depth_consistent_weight_fraction": 0.140896737575531
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.25083638583638584,
+          "depth_consistent_weight_fraction": 0.21657855808734894
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.3931746031746032,
+          "depth_consistent_weight_fraction": 0.3425654172897339
+        },
+        "foreground_occluded_weight_fraction": 0.42883622646331787
+      },
+      "preview_file": "cube_floor_oblique_seam_distance_feather.png"
+    },
+    {
+      "carrier": "cube_floor",
+      "view": "oblique",
+      "mode": "graph_cut_seam",
+      "timing_ms": {
+        "intersection_ms": 59.78049299937993,
+        "fusion_ms": 228.14695099987148,
+        "total_render_ms": 287.9274439992514
+      },
+      "coverage": {
+        "roi_pixels": 490344,
+        "miss_pixels": 0,
+        "valid_projection_fraction": 0.9985234855529995
+      },
+      "seam": {
+        "seam_pixels": 1024,
+        "mean_delta_e": 5.855034351348877,
+        "p95_delta_e": 30.037809371948242,
+        "max_delta_e": 45.79838562011719,
+        "gradient_discontinuity": 0.2807205021381378
+      },
+      "ghosting": {
+        "overlap_pixels": 211894,
+        "ghost_pixel_count": 3094,
+        "ghost_fraction_of_overlap": 0.014601640442862942,
+        "mean_ghost_offset_px": 8.98201829692197
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.16956247456247456,
+          "depth_consistent_weight_fraction": 0.14277777075767517
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.25083638583638584,
+          "depth_consistent_weight_fraction": 0.2197171300649643
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.3931746031746032,
+          "depth_consistent_weight_fraction": 0.34818682074546814
+        },
+        "foreground_occluded_weight_fraction": 0.4280402958393097
+      },
+      "preview_file": "cube_floor_oblique_graph_cut_seam.png"
+    },
+    {
+      "carrier": "cube_floor",
+      "view": "oblique",
+      "mode": "multi_band",
+      "timing_ms": {
+        "intersection_ms": 60.04889099949651,
+        "fusion_ms": 315.72022199998173,
+        "total_render_ms": 375.76911299947824
+      },
+      "coverage": {
+        "roi_pixels": 490344,
+        "miss_pixels": 0,
+        "valid_projection_fraction": 0.9985234855529995
+      },
+      "seam": {
+        "seam_pixels": 1329,
+        "mean_delta_e": 0.3456687331199646,
+        "p95_delta_e": 0.817596971988678,
+        "max_delta_e": 6.161826133728027,
+        "gradient_discontinuity": 0.1793636828660965
+      },
+      "ghosting": {
+        "overlap_pixels": 211894,
+        "ghost_pixel_count": 3029,
+        "ghost_fraction_of_overlap": 0.014294883290701955,
+        "mean_ghost_offset_px": 9.001462718624358
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.16956247456247456,
+          "depth_consistent_weight_fraction": 0.13921208281421427
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.25083638583638584,
+          "depth_consistent_weight_fraction": 0.2130041984814326
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.3931746031746032,
+          "depth_consistent_weight_fraction": 0.33589124232458756
+        },
+        "foreground_occluded_weight_fraction": 0.4296615960453581
+      },
+      "preview_file": "cube_floor_oblique_multi_band.png"
+    },
+    {
+      "carrier": "cube_floor",
+      "view": "oblique",
+      "mode": "graph_cut_multi_band",
+      "timing_ms": {
+        "intersection_ms": 58.908253000481636,
+        "fusion_ms": 522.0952839999882,
+        "total_render_ms": 581.0035370004698
+      },
+      "coverage": {
+        "roi_pixels": 490344,
+        "miss_pixels": 0,
+        "valid_projection_fraction": 0.9985234855529995
+      },
+      "seam": {
+        "seam_pixels": 1024,
+        "mean_delta_e": 0.6624765992164612,
+        "p95_delta_e": 2.3385021686553955,
+        "max_delta_e": 5.575826644897461,
+        "gradient_discontinuity": 0.22701749205589294
+      },
+      "ghosting": {
+        "overlap_pixels": 211894,
+        "ghost_pixel_count": 3123,
+        "ghost_fraction_of_overlap": 0.014738501326134766,
+        "mean_ghost_offset_px": 8.951278132128008
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.16956247456247456,
+          "depth_consistent_weight_fraction": 0.14277777075767517
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.25083638583638584,
+          "depth_consistent_weight_fraction": 0.2197171300649643
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.3931746031746032,
+          "depth_consistent_weight_fraction": 0.34818682074546814
+        },
+        "foreground_occluded_weight_fraction": 0.4280402958393097
+      },
+      "preview_file": "cube_floor_oblique_graph_cut_multi_band.png"
+    },
+    {
+      "carrier": "cube_floor",
+      "view": "low",
+      "mode": "hard_best_angle",
+      "timing_ms": {
+        "intersection_ms": 60.56725199960056,
+        "fusion_ms": 53.957797000293795,
+        "total_render_ms": 114.52504899989435
+      },
+      "coverage": {
+        "roi_pixels": 506302,
+        "miss_pixels": 0,
+        "valid_projection_fraction": 0.9994153686929935
+      },
+      "seam": {
+        "seam_pixels": 1189,
+        "mean_delta_e": 8.248854637145996,
+        "p95_delta_e": 27.850292205810547,
+        "max_delta_e": 48.592105865478516,
+        "gradient_discontinuity": 0.5355340838432312
+      },
+      "ghosting": {
+        "overlap_pixels": 241045,
+        "ghost_pixel_count": 4915,
+        "ghost_fraction_of_overlap": 0.02039038353834346,
+        "mean_ghost_offset_px": 8.375396272988525
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.11358901104104681,
+          "depth_consistent_weight_fraction": 0.09537996351718903
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.16438058859275978,
+          "depth_consistent_weight_fraction": 0.14313308894634247
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.2735125365996101,
+          "depth_consistent_weight_fraction": 0.24186916649341583
+        },
+        "foreground_occluded_weight_fraction": 0.44301116466522217
+      },
+      "preview_file": "cube_floor_low_hard_best_angle.png"
+    },
+    {
+      "carrier": "cube_floor",
+      "view": "low",
+      "mode": "edge_feather",
+      "timing_ms": {
+        "intersection_ms": 58.49154499992437,
+        "fusion_ms": 42.488130000492674,
+        "total_render_ms": 100.97967500041705
+      },
+      "coverage": {
+        "roi_pixels": 506302,
+        "miss_pixels": 0,
+        "valid_projection_fraction": 0.9994153686929935
+      },
+      "seam": {
+        "seam_pixels": 1563,
+        "mean_delta_e": 0.4291151165962219,
+        "p95_delta_e": 1.2287139892578125,
+        "max_delta_e": 8.527673721313477,
+        "gradient_discontinuity": 0.26385071873664856
+      },
+      "ghosting": {
+        "overlap_pixels": 241045,
+        "ghost_pixel_count": 3786,
+        "ghost_fraction_of_overlap": 0.0157066107988135,
+        "mean_ghost_offset_px": 7.514644009122244
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.11358901104104681,
+          "depth_consistent_weight_fraction": 0.09013299895141193
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.16438058859275978,
+          "depth_consistent_weight_fraction": 0.13404777445097496
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.2735125365996101,
+          "depth_consistent_weight_fraction": 0.22475431626819564
+        },
+        "foreground_occluded_weight_fraction": 0.4478522063993394
+      },
+      "preview_file": "cube_floor_low_edge_feather.png"
+    },
+    {
+      "carrier": "cube_floor",
+      "view": "low",
+      "mode": "angular_feather",
+      "timing_ms": {
+        "intersection_ms": 59.311836999768275,
+        "fusion_ms": 56.68471699937072,
+        "total_render_ms": 115.996553999139
+      },
+      "coverage": {
+        "roi_pixels": 506302,
+        "miss_pixels": 0,
+        "valid_projection_fraction": 0.9994153686929935
+      },
+      "seam": {
+        "seam_pixels": 1189,
+        "mean_delta_e": 0.7291353940963745,
+        "p95_delta_e": 2.0003695487976074,
+        "max_delta_e": 13.05799674987793,
+        "gradient_discontinuity": 0.28137320280075073
+      },
+      "ghosting": {
+        "overlap_pixels": 241045,
+        "ghost_pixel_count": 4607,
+        "ghost_fraction_of_overlap": 0.019112613827293658,
+        "mean_ghost_offset_px": 7.38293810179756
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.11358901104104681,
+          "depth_consistent_weight_fraction": 0.09364246282589644
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.16438058859275978,
+          "depth_consistent_weight_fraction": 0.1404150211443706
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.2735125365996101,
+          "depth_consistent_weight_fraction": 0.23682026773775938
+        },
+        "foreground_occluded_weight_fraction": 0.4461477731685035
+      },
+      "preview_file": "cube_floor_low_angular_feather.png"
+    },
+    {
+      "carrier": "cube_floor",
+      "view": "low",
+      "mode": "seam_distance_feather",
+      "timing_ms": {
+        "intersection_ms": 61.046638999869174,
+        "fusion_ms": 80.32513899979676,
+        "total_render_ms": 141.37177799966594
+      },
+      "coverage": {
+        "roi_pixels": 506302,
+        "miss_pixels": 0,
+        "valid_projection_fraction": 0.9994153686929935
+      },
+      "seam": {
+        "seam_pixels": 1247,
+        "mean_delta_e": 0.5429516434669495,
+        "p95_delta_e": 1.6577651500701904,
+        "max_delta_e": 9.238829612731934,
+        "gradient_discontinuity": 0.23793843388557434
+      },
+      "ghosting": {
+        "overlap_pixels": 241045,
+        "ghost_pixel_count": 3756,
+        "ghost_fraction_of_overlap": 0.015582152710074883,
+        "mean_ghost_offset_px": 6.164957120464095
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.11358901104104681,
+          "depth_consistent_weight_fraction": 0.09289462864398956
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.16438058859275978,
+          "depth_consistent_weight_fraction": 0.13894511759281158
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.2735125365996101,
+          "depth_consistent_weight_fraction": 0.23388762772083282
+        },
+        "foreground_occluded_weight_fraction": 0.4464585483074188
+      },
+      "preview_file": "cube_floor_low_seam_distance_feather.png"
+    },
+    {
+      "carrier": "cube_floor",
+      "view": "low",
+      "mode": "graph_cut_seam",
+      "timing_ms": {
+        "intersection_ms": 58.92568599938386,
+        "fusion_ms": 226.78706699934992,
+        "total_render_ms": 285.7127529987338
+      },
+      "coverage": {
+        "roi_pixels": 506302,
+        "miss_pixels": 0,
+        "valid_projection_fraction": 0.9994153686929935
+      },
+      "seam": {
+        "seam_pixels": 1240,
+        "mean_delta_e": 7.024520397186279,
+        "p95_delta_e": 31.76629066467285,
+        "max_delta_e": 45.611846923828125,
+        "gradient_discontinuity": 0.40620410442352295
+      },
+      "ghosting": {
+        "overlap_pixels": 241045,
+        "ghost_pixel_count": 4691,
+        "ghost_fraction_of_overlap": 0.019461096475761788,
+        "mean_ghost_offset_px": 8.000165784794179
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.11358901104104681,
+          "depth_consistent_weight_fraction": 0.09552399814128876
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.16438058859275978,
+          "depth_consistent_weight_fraction": 0.14304429292678833
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.2735125365996101,
+          "depth_consistent_weight_fraction": 0.24136801064014435
+        },
+        "foreground_occluded_weight_fraction": 0.44300130009651184
+      },
+      "preview_file": "cube_floor_low_graph_cut_seam.png"
+    },
+    {
+      "carrier": "cube_floor",
+      "view": "low",
+      "mode": "multi_band",
+      "timing_ms": {
+        "intersection_ms": 58.70981699990807,
+        "fusion_ms": 315.9432939992257,
+        "total_render_ms": 374.6531109991338
+      },
+      "coverage": {
+        "roi_pixels": 506302,
+        "miss_pixels": 0,
+        "valid_projection_fraction": 0.9994153686929935
+      },
+      "seam": {
+        "seam_pixels": 1563,
+        "mean_delta_e": 0.47307610511779785,
+        "p95_delta_e": 1.2476314306259155,
+        "max_delta_e": 6.217580795288086,
+        "gradient_discontinuity": 0.2604621350765228
+      },
+      "ghosting": {
+        "overlap_pixels": 241045,
+        "ghost_pixel_count": 4015,
+        "ghost_fraction_of_overlap": 0.016656640876184944,
+        "mean_ghost_offset_px": 7.605422853627702
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.11358901104104681,
+          "depth_consistent_weight_fraction": 0.09013299895141193
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.16438058859275978,
+          "depth_consistent_weight_fraction": 0.13404777445097496
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.2735125365996101,
+          "depth_consistent_weight_fraction": 0.22475431626819564
+        },
+        "foreground_occluded_weight_fraction": 0.4478522063993394
+      },
+      "preview_file": "cube_floor_low_multi_band.png"
+    },
+    {
+      "carrier": "cube_floor",
+      "view": "low",
+      "mode": "graph_cut_multi_band",
+      "timing_ms": {
+        "intersection_ms": 59.31674600014958,
+        "fusion_ms": 521.5874820005411,
+        "total_render_ms": 580.9042280006906
+      },
+      "coverage": {
+        "roi_pixels": 506302,
+        "miss_pixels": 0,
+        "valid_projection_fraction": 0.9994153686929935
+      },
+      "seam": {
+        "seam_pixels": 1240,
+        "mean_delta_e": 0.7737062573432922,
+        "p95_delta_e": 2.503521203994751,
+        "max_delta_e": 8.88572883605957,
+        "gradient_discontinuity": 0.3073270916938782
+      },
+      "ghosting": {
+        "overlap_pixels": 241045,
+        "ghost_pixel_count": 4741,
+        "ghost_fraction_of_overlap": 0.019668526623659484,
+        "mean_ghost_offset_px": 7.93167882973194
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.11358901104104681,
+          "depth_consistent_weight_fraction": 0.09552399814128876
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.16438058859275978,
+          "depth_consistent_weight_fraction": 0.14304429292678833
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.2735125365996101,
+          "depth_consistent_weight_fraction": 0.24136801064014435
+        },
+        "foreground_occluded_weight_fraction": 0.44300130009651184
+      },
+      "preview_file": "cube_floor_low_graph_cut_multi_band.png"
+    },
+    {
+      "carrier": "burger_like",
+      "view": "oblique",
+      "mode": "hard_best_angle",
+      "timing_ms": {
+        "intersection_ms": 45.03581899916753,
+        "fusion_ms": 53.941296000630246,
+        "total_render_ms": 98.97711499979778
+      },
+      "coverage": {
+        "roi_pixels": 465722,
+        "miss_pixels": 24622,
+        "valid_projection_fraction": 0.9984454245236428
+      },
+      "seam": {
+        "seam_pixels": 1041,
+        "mean_delta_e": 5.11170768737793,
+        "p95_delta_e": 15.235308647155762,
+        "max_delta_e": 43.30949020385742,
+        "gradient_discontinuity": 0.253941148519516
+      },
+      "ghosting": {
+        "overlap_pixels": 200841,
+        "ghost_pixel_count": 2920,
+        "ghost_fraction_of_overlap": 0.014538864076558073,
+        "mean_ghost_offset_px": 9.06435557070209
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.17627223219603322,
+          "depth_consistent_weight_fraction": 0.14801040291786194
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.26183324835360705,
+          "depth_consistent_weight_fraction": 0.22989729046821594
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.41136900196667364,
+          "depth_consistent_weight_fraction": 0.36580345034599304
+        },
+        "foreground_occluded_weight_fraction": 0.40663012862205505
+      },
+      "preview_file": "burger_like_oblique_hard_best_angle.png"
+    },
+    {
+      "carrier": "burger_like",
+      "view": "oblique",
+      "mode": "edge_feather",
+      "timing_ms": {
+        "intersection_ms": 44.98129599960521,
+        "fusion_ms": 43.058248000306776,
+        "total_render_ms": 88.03954399991198
+      },
+      "coverage": {
+        "roi_pixels": 465722,
+        "miss_pixels": 24622,
+        "valid_projection_fraction": 0.9984454245236428
+      },
+      "seam": {
+        "seam_pixels": 1255,
+        "mean_delta_e": 0.3432108759880066,
+        "p95_delta_e": 0.8149081468582153,
+        "max_delta_e": 7.065018653869629,
+        "gradient_discontinuity": 0.23475518822669983
+      },
+      "ghosting": {
+        "overlap_pixels": 200841,
+        "ghost_pixel_count": 3237,
+        "ghost_fraction_of_overlap": 0.01611722706021181,
+        "mean_ghost_offset_px": 9.305040010895743
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.17627223219603322,
+          "depth_consistent_weight_fraction": 0.14515366369918323
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.26183324835360705,
+          "depth_consistent_weight_fraction": 0.22283822817923818
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.41136900196667364,
+          "depth_consistent_weight_fraction": 0.3519979253834236
+        },
+        "foreground_occluded_weight_fraction": 0.4088189989043454
+      },
+      "preview_file": "burger_like_oblique_edge_feather.png"
+    },
+    {
+      "carrier": "burger_like",
+      "view": "oblique",
+      "mode": "angular_feather",
+      "timing_ms": {
+        "intersection_ms": 48.075950999191264,
+        "fusion_ms": 57.729813999685575,
+        "total_render_ms": 105.80576499887684
+      },
+      "coverage": {
+        "roi_pixels": 465722,
+        "miss_pixels": 24622,
+        "valid_projection_fraction": 0.9984454245236428
+      },
+      "seam": {
+        "seam_pixels": 1041,
+        "mean_delta_e": 0.4551081657409668,
+        "p95_delta_e": 1.2022087574005127,
+        "max_delta_e": 2.5394513607025146,
+        "gradient_discontinuity": 0.1791008561849594
+      },
+      "ghosting": {
+        "overlap_pixels": 200841,
+        "ghost_pixel_count": 3062,
+        "ghost_fraction_of_overlap": 0.015245891028226308,
+        "mean_ghost_offset_px": 8.639467729496147
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.17627223219603322,
+          "depth_consistent_weight_fraction": 0.14716107296909373
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.26183324835360705,
+          "depth_consistent_weight_fraction": 0.22806967799018704
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.41136900196667364,
+          "depth_consistent_weight_fraction": 0.3622744274596759
+        },
+        "foreground_occluded_weight_fraction": 0.40583837844799797
+      },
+      "preview_file": "burger_like_oblique_angular_feather.png"
+    },
+    {
+      "carrier": "burger_like",
+      "view": "oblique",
+      "mode": "seam_distance_feather",
+      "timing_ms": {
+        "intersection_ms": 46.54340100023546,
+        "fusion_ms": 80.93968100001803,
+        "total_render_ms": 127.48308200025349
+      },
+      "coverage": {
+        "roi_pixels": 465722,
+        "miss_pixels": 24622,
+        "valid_projection_fraction": 0.9984454245236428
+      },
+      "seam": {
+        "seam_pixels": 1352,
+        "mean_delta_e": 0.48733389377593994,
+        "p95_delta_e": 1.5800741910934448,
+        "max_delta_e": 6.776099681854248,
+        "gradient_discontinuity": 0.2819652259349823
+      },
+      "ghosting": {
+        "overlap_pixels": 200841,
+        "ghost_pixel_count": 2920,
+        "ghost_fraction_of_overlap": 0.014538864076558073,
+        "mean_ghost_offset_px": 8.586845883196286
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.17627223219603322,
+          "depth_consistent_weight_fraction": 0.1466323882341385
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.26183324835360705,
+          "depth_consistent_weight_fraction": 0.22630345821380615
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.41136900196667364,
+          "depth_consistent_weight_fraction": 0.3584890067577362
+        },
+        "foreground_occluded_weight_fraction": 0.4075472950935364
+      },
+      "preview_file": "burger_like_oblique_seam_distance_feather.png"
+    },
+    {
+      "carrier": "burger_like",
+      "view": "oblique",
+      "mode": "graph_cut_seam",
+      "timing_ms": {
+        "intersection_ms": 46.3471799994295,
+        "fusion_ms": 469.45112899993546,
+        "total_render_ms": 515.798308999365
+      },
+      "coverage": {
+        "roi_pixels": 465722,
+        "miss_pixels": 24622,
+        "valid_projection_fraction": 0.9984454245236428
+      },
+      "seam": {
+        "seam_pixels": 1045,
+        "mean_delta_e": 5.572459697723389,
+        "p95_delta_e": 29.436767578125,
+        "max_delta_e": 45.79838562011719,
+        "gradient_discontinuity": 0.2906816601753235
+      },
+      "ghosting": {
+        "overlap_pixels": 200841,
+        "ghost_pixel_count": 3094,
+        "ghost_fraction_of_overlap": 0.015405221045503657,
+        "mean_ghost_offset_px": 8.98201829692197
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.17627223219603322,
+          "depth_consistent_weight_fraction": 0.1482246369123459
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.26183324835360705,
+          "depth_consistent_weight_fraction": 0.22922246158123016
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.41136900196667364,
+          "depth_consistent_weight_fraction": 0.36403173208236694
+        },
+        "foreground_occluded_weight_fraction": 0.40398433804512024
+      },
+      "preview_file": "burger_like_oblique_graph_cut_seam.png"
+    },
+    {
+      "carrier": "burger_like",
+      "view": "oblique",
+      "mode": "multi_band",
+      "timing_ms": {
+        "intersection_ms": 46.11574200043833,
+        "fusion_ms": 318.61300299988216,
+        "total_render_ms": 364.7287450003205
+      },
+      "coverage": {
+        "roi_pixels": 465722,
+        "miss_pixels": 24622,
+        "valid_projection_fraction": 0.9984454245236428
+      },
+      "seam": {
+        "seam_pixels": 1255,
+        "mean_delta_e": 0.3564120829105377,
+        "p95_delta_e": 0.8198672533035278,
+        "max_delta_e": 6.161826133728027,
+        "gradient_discontinuity": 0.23156869411468506
+      },
+      "ghosting": {
+        "overlap_pixels": 200841,
+        "ghost_pixel_count": 3316,
+        "ghost_fraction_of_overlap": 0.016510573040365264,
+        "mean_ghost_offset_px": 9.229961678492161
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.17627223219603322,
+          "depth_consistent_weight_fraction": 0.14515366369918323
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.26183324835360705,
+          "depth_consistent_weight_fraction": 0.22283822817923818
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.41136900196667364,
+          "depth_consistent_weight_fraction": 0.3519979253834236
+        },
+        "foreground_occluded_weight_fraction": 0.4088189989043454
+      },
+      "preview_file": "burger_like_oblique_multi_band.png"
+    },
+    {
+      "carrier": "burger_like",
+      "view": "oblique",
+      "mode": "graph_cut_multi_band",
+      "timing_ms": {
+        "intersection_ms": 64.69119299981685,
+        "fusion_ms": 803.4689539999817,
+        "total_render_ms": 868.1601469997986
+      },
+      "coverage": {
+        "roi_pixels": 465722,
+        "miss_pixels": 24622,
+        "valid_projection_fraction": 0.9984454245236428
+      },
+      "seam": {
+        "seam_pixels": 1045,
+        "mean_delta_e": 0.653620719909668,
+        "p95_delta_e": 2.3277416229248047,
+        "max_delta_e": 5.575826644897461,
+        "gradient_discontinuity": 0.24625901877880096
+      },
+      "ghosting": {
+        "overlap_pixels": 200841,
+        "ghost_pixel_count": 3123,
+        "ghost_fraction_of_overlap": 0.015549613873661255,
+        "mean_ghost_offset_px": 8.951278132128008
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.17627223219603322,
+          "depth_consistent_weight_fraction": 0.1482246369123459
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.26183324835360705,
+          "depth_consistent_weight_fraction": 0.22922246158123016
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.41136900196667364,
+          "depth_consistent_weight_fraction": 0.36403173208236694
+        },
+        "foreground_occluded_weight_fraction": 0.40398433804512024
+      },
+      "preview_file": "burger_like_oblique_graph_cut_multi_band.png"
+    },
+    {
+      "carrier": "burger_like",
+      "view": "low",
+      "mode": "hard_best_angle",
+      "timing_ms": {
+        "intersection_ms": 57.30394799957139,
+        "fusion_ms": 57.200641999770596,
+        "total_render_ms": 114.50458999934199
+      },
+      "coverage": {
+        "roi_pixels": 494452,
+        "miss_pixels": 11850,
+        "valid_projection_fraction": 0.9994013574624028
+      },
+      "seam": {
+        "seam_pixels": 1180,
+        "mean_delta_e": 6.492920398712158,
+        "p95_delta_e": 25.399173736572266,
+        "max_delta_e": 48.592105865478516,
+        "gradient_discontinuity": 0.5349003672599792
+      },
+      "ghosting": {
+        "overlap_pixels": 232769,
+        "ghost_pixel_count": 5108,
+        "ghost_fraction_of_overlap": 0.02194450291920316,
+        "mean_ghost_offset_px": 8.765550840377417
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.11409817651408323,
+          "depth_consistent_weight_fraction": 0.09578453004360199
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.1661057080402274,
+          "depth_consistent_weight_fraction": 0.14468085765838623
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.2777331076030433,
+          "depth_consistent_weight_fraction": 0.2456594705581665
+        },
+        "foreground_occluded_weight_fraction": 0.41487637162208557
+      },
+      "preview_file": "burger_like_low_hard_best_angle.png"
+    },
+    {
+      "carrier": "burger_like",
+      "view": "low",
+      "mode": "edge_feather",
+      "timing_ms": {
+        "intersection_ms": 45.79354300039995,
+        "fusion_ms": 42.461699999876146,
+        "total_render_ms": 88.2552430002761
+      },
+      "coverage": {
+        "roi_pixels": 494452,
+        "miss_pixels": 11850,
+        "valid_projection_fraction": 0.9994013574624028
+      },
+      "seam": {
+        "seam_pixels": 1542,
+        "mean_delta_e": 0.4315408766269684,
+        "p95_delta_e": 1.2292749881744385,
+        "max_delta_e": 8.527673721313477,
+        "gradient_discontinuity": 0.4546166956424713
+      },
+      "ghosting": {
+        "overlap_pixels": 232769,
+        "ghost_pixel_count": 4506,
+        "ghost_fraction_of_overlap": 0.01935824787665024,
+        "mean_ghost_offset_px": 7.971090694790686
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.11409817651408323,
+          "depth_consistent_weight_fraction": 0.09091131509967923
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.1661057080402274,
+          "depth_consistent_weight_fraction": 0.1358774134440698
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.2777331076030433,
+          "depth_consistent_weight_fraction": 0.22868468355412466
+        },
+        "foreground_occluded_weight_fraction": 0.422878849262626
+      },
+      "preview_file": "burger_like_low_edge_feather.png"
+    },
+    {
+      "carrier": "burger_like",
+      "view": "low",
+      "mode": "angular_feather",
+      "timing_ms": {
+        "intersection_ms": 45.5120500000703,
+        "fusion_ms": 56.60577700018621,
+        "total_render_ms": 102.11782700025651
+      },
+      "coverage": {
+        "roi_pixels": 494452,
+        "miss_pixels": 11850,
+        "valid_projection_fraction": 0.9994013574624028
+      },
+      "seam": {
+        "seam_pixels": 1180,
+        "mean_delta_e": 0.7431890964508057,
+        "p95_delta_e": 2.0092711448669434,
+        "max_delta_e": 13.05799674987793,
+        "gradient_discontinuity": 0.2860294282436371
+      },
+      "ghosting": {
+        "overlap_pixels": 232769,
+        "ghost_pixel_count": 4831,
+        "ghost_fraction_of_overlap": 0.02075448191125107,
+        "mean_ghost_offset_px": 7.984045030344929
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.11409817651408323,
+          "depth_consistent_weight_fraction": 0.0940813887591936
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.1661057080402274,
+          "depth_consistent_weight_fraction": 0.14197368544617497
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.2777331076030433,
+          "depth_consistent_weight_fraction": 0.2405737652256268
+        },
+        "foreground_occluded_weight_fraction": 0.41986085896665093
+      },
+      "preview_file": "burger_like_low_angular_feather.png"
+    },
+    {
+      "carrier": "burger_like",
+      "view": "low",
+      "mode": "seam_distance_feather",
+      "timing_ms": {
+        "intersection_ms": 45.45135399985156,
+        "fusion_ms": 80.31056199979503,
+        "total_render_ms": 125.76191599964659
+      },
+      "coverage": {
+        "roi_pixels": 494452,
+        "miss_pixels": 11850,
+        "valid_projection_fraction": 0.9994013574624028
+      },
+      "seam": {
+        "seam_pixels": 1593,
+        "mean_delta_e": 0.5748654007911682,
+        "p95_delta_e": 1.6571266651153564,
+        "max_delta_e": 9.238829612731934,
+        "gradient_discontinuity": 0.4675047695636749
+      },
+      "ghosting": {
+        "overlap_pixels": 232769,
+        "ghost_pixel_count": 3849,
+        "ghost_fraction_of_overlap": 0.016535707074395646,
+        "mean_ghost_offset_px": 6.378841870999865
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.11409817651408323,
+          "depth_consistent_weight_fraction": 0.09332962334156036
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.1661057080402274,
+          "depth_consistent_weight_fraction": 0.14046497642993927
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.2777331076030433,
+          "depth_consistent_weight_fraction": 0.23738543689250946
+        },
+        "foreground_occluded_weight_fraction": 0.42145681381225586
+      },
+      "preview_file": "burger_like_low_seam_distance_feather.png"
+    },
+    {
+      "carrier": "burger_like",
+      "view": "low",
+      "mode": "graph_cut_seam",
+      "timing_ms": {
+        "intersection_ms": 46.434303999376425,
+        "fusion_ms": 510.65334399936546,
+        "total_render_ms": 557.0876479987419
+      },
+      "coverage": {
+        "roi_pixels": 494452,
+        "miss_pixels": 11850,
+        "valid_projection_fraction": 0.9994013574624028
+      },
+      "seam": {
+        "seam_pixels": 1090,
+        "mean_delta_e": 3.912137985229492,
+        "p95_delta_e": 11.011310577392578,
+        "max_delta_e": 45.611846923828125,
+        "gradient_discontinuity": 0.4982609450817108
+      },
+      "ghosting": {
+        "overlap_pixels": 232769,
+        "ghost_pixel_count": 5059,
+        "ghost_fraction_of_overlap": 0.021733993787832574,
+        "mean_ghost_offset_px": 8.614816283247093
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.11409817651408323,
+          "depth_consistent_weight_fraction": 0.09582897275686264
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.1661057080402274,
+          "depth_consistent_weight_fraction": 0.14448288083076477
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.2777331076030433,
+          "depth_consistent_weight_fraction": 0.24489985406398773
+        },
+        "foreground_occluded_weight_fraction": 0.4169228971004486
+      },
+      "preview_file": "burger_like_low_graph_cut_seam.png"
+    },
+    {
+      "carrier": "burger_like",
+      "view": "low",
+      "mode": "multi_band",
+      "timing_ms": {
+        "intersection_ms": 48.14021199945273,
+        "fusion_ms": 320.94973199946253,
+        "total_render_ms": 369.08994399891526
+      },
+      "coverage": {
+        "roi_pixels": 494452,
+        "miss_pixels": 11850,
+        "valid_projection_fraction": 0.9994013574624028
+      },
+      "seam": {
+        "seam_pixels": 1542,
+        "mean_delta_e": 0.48098284006118774,
+        "p95_delta_e": 1.2497506141662598,
+        "max_delta_e": 7.017254829406738,
+        "gradient_discontinuity": 0.46351540088653564
+      },
+      "ghosting": {
+        "overlap_pixels": 232769,
+        "ghost_pixel_count": 4666,
+        "ghost_fraction_of_overlap": 0.020045624632146035,
+        "mean_ghost_offset_px": 8.016942735792112
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.11409817651408323,
+          "depth_consistent_weight_fraction": 0.09091131509967923
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.1661057080402274,
+          "depth_consistent_weight_fraction": 0.1358774134440698
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.2777331076030433,
+          "depth_consistent_weight_fraction": 0.22868468355412466
+        },
+        "foreground_occluded_weight_fraction": 0.422878849262626
+      },
+      "preview_file": "burger_like_low_multi_band.png"
+    },
+    {
+      "carrier": "burger_like",
+      "view": "low",
+      "mode": "graph_cut_multi_band",
+      "timing_ms": {
+        "intersection_ms": 45.959184999446734,
+        "fusion_ms": 818.943076999858,
+        "total_render_ms": 864.9022619993048
+      },
+      "coverage": {
+        "roi_pixels": 494452,
+        "miss_pixels": 11850,
+        "valid_projection_fraction": 0.9994013574624028
+      },
+      "seam": {
+        "seam_pixels": 1090,
+        "mean_delta_e": 0.6682289242744446,
+        "p95_delta_e": 2.0711822509765625,
+        "max_delta_e": 8.88572883605957,
+        "gradient_discontinuity": 0.34221068024635315
+      },
+      "ghosting": {
+        "overlap_pixels": 232769,
+        "ghost_pixel_count": 5144,
+        "ghost_fraction_of_overlap": 0.02209916268918971,
+        "mean_ghost_offset_px": 8.500017546306935
+      },
+      "depth_consistency": {
+        "0.02": {
+          "exact_visible_coverage_fraction": 0.11409817651408323,
+          "depth_consistent_weight_fraction": 0.09582897275686264
+        },
+        "0.05": {
+          "exact_visible_coverage_fraction": 0.1661057080402274,
+          "depth_consistent_weight_fraction": 0.14448288083076477
+        },
+        "0.1": {
+          "exact_visible_coverage_fraction": 0.2777331076030433,
+          "depth_consistent_weight_fraction": 0.24489985406398773
+        },
+        "foreground_occluded_weight_fraction": 0.4169228971004486
+      },
+      "preview_file": "burger_like_low_graph_cut_multi_band.png"
+    }
+  ]
+}

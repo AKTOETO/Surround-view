@@ -1261,6 +1261,22 @@ $$E(L)=\sum_{p}D_p(L_p)+\sum_{(p,q)\in\mathcal{N}}V_{pq}\,[L_p\ne L_q],$$
 
 Новые методы работают после GLES-проекции в координатах конечного viewport. RGB слоёв квантован в sRGB8, edge weights — в 1/254; эти отличия не входят в float core parity. Для итогового сопоставления необходимы серверные изображения на независимых Blender truth/holdout, равные ресурсные бюджеты, несколько ракурсов и динамические клипы. Гибридный CPU backend сравнивается с тремя GPU local methods с отдельной маркировкой: вывод о скорости алгоритма нельзя отделить от исполнения без дополнительных опытов. Отчёт и команды воспроизведения: [[validation/NATIVE_FUSION]].
 
+## 4.42 Проверка готового RGBA и повторный screen после исправления масок
+
+После float core parity выполнена проверка всего гибридного renderer path. Для пяти носителей и четырёх native методов сохранены projected RGB/validity/edge слои; NumPy/SciPy независимо пересчитывают fusion, кодирование sRGB, diagnostics и композицию с actual fallback/ego. На 60 сочетаниях (5×4×3) при размере 63×47, levels=3 и smoothness=0.7 выполнен допуск 1 code value RGBA; alpha=255. Сохранение inspection не меняет output, camera uploads и mesh count.
+
+Для плоскости отдельно использованы analytic ray intersections и независимые fisheye/bilinear samples. Validity совпала точно, RGB удовлетворяет допуску 2/255 sRGB, edge weights — 1/254 + 1e-5. Через настоящий sv-server получены ещё 12 кадров (4 метода × 3 diagnostics) на однокадровом replay; каждый побитово совпал с renderer probe. Это проверяет применение настроек и доставку RGBA, но один fixture/view не подтверждает все режимы оптики или сцены.
+
+Во время проверки исправлены два параметрических расхождения: offline reference теперь читает серверное имя pyramid_levels (старое num_pyramid_levels — alias, конфликт отклоняется), smoothness_weight передаётся в оба graph-cut метода. Отдельно исправлено использование ненаблюдаемого RGB в пирамиде: введено одинаковое нулевое продолжение перед фильтрацией. Native/reference проверка теперь содержит 34 численных сравнения, включая изменение invalid RGB без изменения результата. Полная регрессия прошла: 44/44 CTest entries. После заключительной пересборки catalog/probe повторно прошли три затронутые проверки.
+
+![E-STITCH mask convention v2](figures/experiments/e_stitch_mask_v2.png)
+
+*Рисунок 4.42 — Повторный exploratory E-STITCH-01 screen после фиксации validity-zero extension. Скрипт `plot_e_stitch.py`, raw summary `baselines/e_stitch_mask_v2.json`. Seam/ghost показатели остаются output proxies одной синтетической сцены; график не доказывает превосходство метода.*
+
+В 84 случаях пять непирамидальных методов дали прежние RGB. Для multiband средняя абсолютная разница каналов составила 0.009666 RGB8, максимум — 23, доля изменившихся пикселей — 1.9604%; для graph-cut/multiband — 0.000375, 25 и 0.04716% соответственно. Среднее вычислено по 12 carrier/view случаям одинакового разрешения для каждого метода, максимум — по всем каналам/случаям. Максимальное изменение seam p95 равно 0.015787 и 0.057588. Эти величины характеризуют чувствительность к реализации, а не ошибку относительно независимой истины.
+
+Нулевое продолжение исключает влияние ненаблюдаемого RGB, но не является доказательством отсутствия тёмных границ либо ghosting (§3.23). Следующий опыт должен сравнивать border extension/normalized convolution на независимых truth и пересчитать оставшиеся pyramid object/robustness/resolution серии. Tracked трёхкадровый temporal опыт дополнительно повторён с новой конвенцией; его таблица, source hashes и графики обновлены в [[validation/PAIRED_STITCH_TEMPORAL]]. Shared fallback/ego в композиционном oracle остаются не независимыми; аналитическая проверка новых слоёв здесь ограничена плоскостью. Текущие raw results, hashes и команды: [[validation/NATIVE_FUSION]].
+
 ## Предварительные выводы по четвёртой главе
 
 1. **Экспериментальная инфраструктура сшивки:** реализованы offline-варианты fusion и carrier matrix; исправленные binary graph-cut и output proxies проверены на fixtures, добавлены парный 3-frame Blender clip (§4.25), статический coded-object screen (§4.28) и девятикадровый moving-target screen (§4.39). Эти результаты уточняют failure modes в конкретных synthetic scenes; качество методов на holdout scenes и естественная object-correspondence ghost truth пока не подтверждены.

@@ -102,3 +102,5 @@ QQuickImageProvider заменяет проектный QQuickItem/QSGTexture. �
 `CalibrationJobManager` и wire `calibrate` требуют provenance. Общий validator отклоняет duplicate IDs, общие train/validation frames, exact XYZ/UV copies и non-finite данные до enqueue. В job status сохранены dataset ID/split counts и явно ограниченная validation policy. 11 GTest cases и настоящий Unix calibration request/status test дополняют прежние ownership/gate/revision/cancellation проверки. Это проверка клиентских деклараций/точных копий, не verified acquisition или статистическая независимость. Контракт миграции: [[engineering/PROTOCOL_IMPLEMENTED]]; свидетельства: [[validation/CALIBRATION_PROVENANCE]].
 
 Native fusion/parity и runtime geometry: [[validation/NATIVE_FUSION]]. Binary cuts не являются global multilabel solver; серверные smoke/parity не закрывают исследование качества на holdout и целевом устройстве.
+
+Полный hybrid raster oracle (60 cases), analytic plane sampling и 12 SV01 frames добавлены; исправлены offline parameter forwarding и pyramid invalid-RGB leakage. 84-case matrix пересчитана, исторические pyramid серии помечены для повторения: [[validation/NATIVE_FUSION]].

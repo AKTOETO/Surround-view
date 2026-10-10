@@ -1,5 +1,7 @@
 # E-STITCH-object-motion-01: coded target crossing camera sectors
 
+> Примечание реализации 10.10.2026: pyramid-результаты этой серии предшествуют validity_zero_extension_v2. Они исторические; перед итоговым сравнением требуется повторный прогон. Новый 84-case пересчёт и границы raster parity: [[validation/NATIVE_FUSION]]. Непирамидальные методы в статическом 84-case regression не изменились, но это не заменяет пересчёт данной серии.
+
 Status: **captured and analyzed on 10.10.2026**. Frozen protocol: [[../research/STITCH_MOVING_OBJECT_PROTOCOL]]. This is a controlled synthetic screen, not evidence from physical cameras or Aurora hardware.
 
 ## Purpose and scope

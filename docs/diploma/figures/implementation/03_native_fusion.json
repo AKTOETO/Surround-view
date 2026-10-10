@@ -1,0 +1,348 @@
+{
+  "kind": "actual_renderer_visualization_not_quality_ranking",
+  "capture_index": {
+    "width": 320,
+    "height": 180,
+    "float_endian": "little",
+    "origin": "top_left",
+    "cases": [
+      {
+        "mode": "seam_distance_feather",
+        "diagnostic": "color",
+        "directory": "seam_distance_feather-color"
+      },
+      {
+        "mode": "seam_distance_feather",
+        "diagnostic": "weights",
+        "directory": "seam_distance_feather-weights"
+      },
+      {
+        "mode": "seam_distance_feather",
+        "diagnostic": "coverage",
+        "directory": "seam_distance_feather-coverage"
+      },
+      {
+        "mode": "graph_cut_seam",
+        "diagnostic": "color",
+        "directory": "graph_cut_seam-color"
+      },
+      {
+        "mode": "graph_cut_seam",
+        "diagnostic": "weights",
+        "directory": "graph_cut_seam-weights"
+      },
+      {
+        "mode": "graph_cut_seam",
+        "diagnostic": "coverage",
+        "directory": "graph_cut_seam-coverage"
+      },
+      {
+        "mode": "multi_band",
+        "diagnostic": "color",
+        "directory": "multi_band-color"
+      },
+      {
+        "mode": "multi_band",
+        "diagnostic": "weights",
+        "directory": "multi_band-weights"
+      },
+      {
+        "mode": "multi_band",
+        "diagnostic": "coverage",
+        "directory": "multi_band-coverage"
+      },
+      {
+        "mode": "graph_cut_multi_band",
+        "diagnostic": "color",
+        "directory": "graph_cut_multi_band-color"
+      },
+      {
+        "mode": "graph_cut_multi_band",
+        "diagnostic": "weights",
+        "directory": "graph_cut_multi_band-weights"
+      },
+      {
+        "mode": "graph_cut_multi_band",
+        "diagnostic": "coverage",
+        "directory": "graph_cut_multi_band-coverage"
+      }
+    ],
+    "device": "llvmpipe (LLVM 22.1.8, 256 bits)",
+    "config": {
+      "schema_version": 1,
+      "profile_id": "blender-street-v1",
+      "units": {
+        "length": "m",
+        "angle": "rad",
+        "time": "ns"
+      },
+      "vehicle": {
+        "length_m": 4.6,
+        "width_m": 1.8,
+        "mask_margin_m": 0.1
+      },
+      "cameras": [
+        {
+          "id": 0,
+          "name": "front",
+          "calibration_id": "blender-rig-front-v1",
+          "resolution": {
+            "width": 400,
+            "height": 400
+          },
+          "projection": {
+            "model": "opencv_fisheye",
+            "fx": 128.0,
+            "fy": 128.0,
+            "cx": 199.5,
+            "cy": 199.5,
+            "alpha": 0.0,
+            "k": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "theta_max_rad": 1.48,
+            "z_epsilon_m": 1e-06
+          },
+          "T_camera_from_vehicle": [
+            [
+              0.0,
+              -1.0,
+              0.0,
+              0.0
+            ],
+            [
+              -0.20791169081775937,
+              -0.0,
+              -0.9781476007338056,
+              1.322097050953647
+            ],
+            [
+              0.9781476007338056,
+              0.0,
+              -0.20791169081775937,
+              -2.131703400536686
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "id": 1,
+          "name": "right",
+          "calibration_id": "blender-rig-right-v1",
+          "resolution": {
+            "width": 400,
+            "height": 400
+          },
+          "projection": {
+            "model": "opencv_fisheye",
+            "fx": 128.0,
+            "fy": 128.0,
+            "cx": 199.5,
+            "cy": 199.5,
+            "alpha": 0.0,
+            "k": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "theta_max_rad": 1.48,
+            "z_epsilon_m": 1e-06
+          },
+          "T_camera_from_vehicle": [
+            [
+              -1.0,
+              -6.123233995736766e-17,
+              0.0,
+              0.3499999999999999
+            ],
+            [
+              -1.2730919333264157e-17,
+              0.20791169081775937,
+              -0.9781476007338056,
+              1.3242281727213978
+            ],
+            [
+              5.989426641661592e-17,
+              -0.9781476007338056,
+              -0.20791169081775937,
+              -0.843101267091296
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "id": 2,
+          "name": "rear",
+          "calibration_id": "blender-rig-rear-v1",
+          "resolution": {
+            "width": 400,
+            "height": 400
+          },
+          "projection": {
+            "model": "opencv_fisheye",
+            "fx": 128.0,
+            "fy": 128.0,
+            "cx": 199.5,
+            "cy": 199.5,
+            "alpha": 0.0,
+            "k": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "theta_max_rad": 1.48,
+            "z_epsilon_m": 1e-06
+          },
+          "T_camera_from_vehicle": [
+            [
+              1.2246467991473532e-16,
+              1.0,
+              -0.0,
+              2.8901664459877536e-16
+            ],
+            [
+              0.20791169081775937,
+              -2.5461838666528314e-17,
+              -0.9781476007338056,
+              1.322097050953647
+            ],
+            [
+              -0.9781476007338056,
+              1.1978853283323184e-16,
+              -0.20791169081775937,
+              -2.131703400536686
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        },
+        {
+          "id": 3,
+          "name": "left",
+          "calibration_id": "blender-rig-left-v1",
+          "resolution": {
+            "width": 400,
+            "height": 400
+          },
+          "projection": {
+            "model": "opencv_fisheye",
+            "fx": 128.0,
+            "fy": 128.0,
+            "cx": 199.5,
+            "cy": 199.5,
+            "alpha": 0.0,
+            "k": [
+              0.0,
+              0.0,
+              0.0,
+              0.0
+            ],
+            "theta_max_rad": 1.48,
+            "z_epsilon_m": 1e-06
+          },
+          "T_camera_from_vehicle": [
+            [
+              1.0,
+              -6.123233995736766e-17,
+              0.0,
+              -0.3499999999999999
+            ],
+            [
+              -1.2730919333264157e-17,
+              -0.20791169081775937,
+              -0.9781476007338056,
+              1.3242281727213978
+            ],
+            [
+              5.989426641661592e-17,
+              0.9781476007338056,
+              -0.20791169081775937,
+              -0.843101267091296
+            ],
+            [
+              0.0,
+              0.0,
+              0.0,
+              1.0
+            ]
+          ]
+        }
+      ],
+      "surface": {
+        "type": "dome_floor_v1",
+        "dome_radius_m": 12.0,
+        "dome_latitude_cells": 64,
+        "dome_longitude_cells": 128,
+        "floor_radial_cells": 32
+      },
+      "virtual_camera": {
+        "azimuth_rad": 0.8,
+        "elevation_rad": 1.0,
+        "distance_m": 8.5,
+        "fov_y_rad": 1.0,
+        "clip_m": [
+          0.1,
+          100.0
+        ]
+      },
+      "output": {
+        "width": 320,
+        "height": 180
+      },
+      "runtime": {
+        "input_queue_per_camera": 3,
+        "skew_window_ms": 10.0,
+        "max_input_age_ms": 100.0
+      },
+      "connections": {
+        "unix": {
+          "enabled": true,
+          "directory": "/home/bogdan/prog/MAI/surround-view/artifacts/native-fusion-runtime/ipc"
+        },
+        "tcp": {
+          "enabled": false
+        },
+        "udp": {
+          "enabled": false
+        }
+      }
+    },
+    "source_revision": "c5dee4dd9908cc0f104a5ff56a23e4e829c6adf2",
+    "source_fingerprint": "160958e97bc35aba9630380d1da3cff006c32d6636f796bfe514e706b494239f"
+  },
+  "rgba_sha256": {
+    "seam_distance_feather-color": "deaed3381d9ea79d45b2f418ef394a5121f7a8ef231e20d1c7b801cdbfca2c1b",
+    "seam_distance_feather-weights": "ff0a6c3499c11c3ff22784029efe0ee11557ca2aa346fcf9f2ef215498b85b5e",
+    "seam_distance_feather-coverage": "e959424ce4f4a40278b07e15ea15245a641a53ee71f7e44af9daa1b78623f668",
+    "graph_cut_seam-color": "d6f805180c3ca28f1fb72b2800539e0a093af5012ee841d8070b50b10084ba7c",
+    "graph_cut_seam-weights": "8943e3f534e957d782bd66f666eb5c24ebda751913555187ad4a85d9b2c12201",
+    "graph_cut_seam-coverage": "e959424ce4f4a40278b07e15ea15245a641a53ee71f7e44af9daa1b78623f668",
+    "multi_band-color": "297861b4df49c3a7be5de4244a33107e5e2274d26779e4e23cb7c883ac4712a7",
+    "multi_band-weights": "b0f5f2f55036337855b26b421e877a743070a4eb6162501fc6cf02a168d501dd",
+    "multi_band-coverage": "e959424ce4f4a40278b07e15ea15245a641a53ee71f7e44af9daa1b78623f668",
+    "graph_cut_multi_band-color": "9ca4aa1e5263a883efa162b7e1450c2b26eef22c68a02360786dbd1d9149d752",
+    "graph_cut_multi_band-weights": "8943e3f534e957d782bd66f666eb5c24ebda751913555187ad4a85d9b2c12201",
+    "graph_cut_multi_band-coverage": "e959424ce4f4a40278b07e15ea15245a641a53ee71f7e44af9daa1b78623f668"
+  },
+  "script_sha256": "3e84952842445fb9780da6c77095505ae3ae47dddb971f84e92a1e6099390a21",
+  "figure_sha256": "db36a82aa1531db4c00f454ce051a587a6d55963f85d9136477461e2f23771b8"
+}

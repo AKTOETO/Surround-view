@@ -145,3 +145,10 @@ python3 tools/compare_visibility.py \
 ```
 
 Требуются NumPy и Pillow, данные должны содержать `config.json`, `manifest.json`, `ground_truth.json`, четыре RGB-файла и четыре проверяемых NPY depth maps. Report содержит source hashes, coverage, доли matching/occluded/no-return weights и ограничения; одна heatmap сохраняется как `visibility-dome-low-edge_feather.png`. Методика и результаты: [[validation/STITCH_VISIBILITY]]. Сейчас прогон использует один Blender frame с face-size 32 и analytic CPU reference; он не даёт seam/ghosting/temporal ranking и не проверяет GLES server readback.
+
+
+## Численная инспекция гибридного рендера
+
+`Renderer::render(set, view, RenderInspection*)` позволяет явно сохранить actual projected linear RGB/validity/edge weights, базовый fallback RGBA и ego overlay. Тип объявлен в `sv/render_inspection.hpp`. По умолчанию pointer=nullptr: capture не выполняется. Матрицы принадлежат OpenCV через reference counting; API вызывается на render thread и не является сетевой subscription. Для трёх local GPU modes samples отсутствуют. Полный raster oracle и реальный SV01 parity используют этот путь: [[validation/NATIVE_FUSION]].
+
+В multiband RGB вне validity обнуляется перед Gaussian filtering; проверена независимость output от hidden invalid RGB. Это явная конвенция продолжения изображения, а не восстановление наблюдений. На границах она может давать тёмные полосы; исследование других способов продолжения/нормированного сглаживания остаётся отдельной задачей. `weights` для graph_cut_multi_band показывает исходную cut mask до smoothing; она не является полной картой вкладов всех частотных уровней.

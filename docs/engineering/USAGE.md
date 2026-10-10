@@ -606,3 +606,28 @@ build/svctl --unix /tmp/sv-runtime-screen command configure_surface --params '{"
 ```
 
 Эти команды temporary и не записывают файл. Вне lease автоматического rollback нет: сохраните исходные fusion/surface, верните их с текущей revision либо перезапустите сервер с исходным config. Для подтверждающего опыта используйте runner, проверяющий restore. Semantics, GPU/CPU timings и проверка эталона: [[engineering/PROTOCOL_IMPLEMENTED]], [[validation/NATIVE_FUSION]].
+
+
+### Проверка полного гибридного изображения
+
+При BUILD_TESTING доступен `sv-render-fusion-probe`. Он выполняет тот же Renderer, что сервер, и сохраняет bounded projected layers, actual RGBA, fallback/ego и index.json. Это локальный проверочный executable, не remote debug API и не заменяет quality oracle. Проверка сервера по SV01 входит в CTest:
+
+```bash
+ctest --test-dir build -R 'render_fusion_parity|native_fusion_parity|analytic_reference' --output-on-failure
+```
+
+Для иллюстрации на Blender-записи создайте отдельный config с output 320×180 (исходный Blender config 960×540 превышает native pixel budget). Например, используйте `artifacts/native-fusion-runtime/server.json`, если сохранён smoke предыдущего этапа:
+
+```bash
+SV_EGL_PLATFORM=surfaceless build/sv-render-fusion-probe artifacts/native-fusion-runtime/server.json artifacts/blender-street/manifest.json artifacts/native-fusion-raster-real-v2
+python3 docs/diploma/plot_native_fusion.py --capture artifacts/native-fusion-raster-real-v2
+```
+
+Probe читает только первый manifest frame, использует его четыре камеры для четырёх native методов и трёх diagnostics; результат не зависит от playback cursor сервера. Raw f32 слои имеют endian в index.json, изображения RGBA8 имеют top-left origin. Local artifacts не входят в Git; итоговый рисунок, его metadata и скрипт хранятся рядом с дипломом.
+
+В offline `reference.render` используется серверное имя `pyramid_levels`; прежнее `num_pyramid_levels` остаётся alias, конфликтующие значения отклоняются. `smoothness_weight` передаётся в оба graph-cut метода. Новый 84-case screen:
+
+```bash
+python3 tools/run_e_stitch_01.py --config tests/data/e_stitch_01_v1/config.json --dataset tests/data/e_stitch_01_v1 --output artifacts/e-stitch-01-mask-v2
+python3 docs/diploma/plot_e_stitch.py --summary artifacts/e-stitch-01-mask-v2/e_stitch_01_summary.json --output docs/diploma/figures/experiments/e_stitch_mask_v2.png
+```

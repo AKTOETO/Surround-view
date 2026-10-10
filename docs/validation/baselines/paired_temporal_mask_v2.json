@@ -1,0 +1,492 @@
+{
+  "schema_version": 2,
+  "inputs": {
+    "dataset": "/home/bogdan/prog/MAI/surround-view/tests/data/paired_street_v1",
+    "capture": "/home/bogdan/prog/MAI/surround-view/tests/data/paired_street_v1"
+  },
+  "visibility_policy": "ignore",
+  "input_sha256": {
+    "tests/data/paired_street_v1/config.json": "a7c87c1c2717200a8876c5bd23289ad5650bda94c928db3de7d23a3bbd097ed4",
+    "tests/data/paired_street_v1/manifest.json": "0ab46ef4687e22f8d38a0a0adcf728fd4a581a074171d17a26b7adc464e9c4e5",
+    "tests/data/paired_street_v1/ground_truth.json": "d6d4eebd55391dae1a6c936098a68d81d63d2b282ea9b0994cd562dd967312fa",
+    "tests/data/paired_street_v1/capture.json": "793695f8a45746f91164f6ce120ae6539fbe282a183349d806cb6e51eeff8bd2",
+    "tests/data/paired_street_v1/paired_truth.json": "08818583a39d39a0223a64886fa24a82ccc5d1c087e6907e498740b40723234a"
+  },
+  "code_sha256": {
+    "temporal_seam_stability.py": "993548b75655b4554faeb44907ee23fcdfca2711cd336455a62d8818b0e33a0d",
+    "reference.py": "45342a907a08361bdaa4bf6fb5b5daf8e13870688acc3beba1caf1f46d369432",
+    "fusion.py": "7dd094116f8e7817dcd43ee3a8f126f665c87b406444c71353fa4efa91bd4c84",
+    "stitch_metrics.py": "de8d287f1f7b098d526f8677f5e96c59a77bf6f48dd7bde7c36ef250bcef1814"
+  },
+  "results": {
+    "hard_best_angle": {
+      "num_frames": 3,
+      "transitions": [
+        {
+          "from": 0,
+          "to": 1,
+          "dt_ns": 200000000,
+          "translation_m": 0.4,
+          "roi_pixels": 42033,
+          "residual_change_mae": 0.009009727650963318,
+          "raw_change_mae": 0.008384479732622158,
+          "seam_motion": {
+            "previous_pixels": 644,
+            "current_pixels": 644,
+            "iou": 1.0,
+            "mean_distance_px": 0.0,
+            "p95_distance_px": 0.0
+          }
+        },
+        {
+          "from": 1,
+          "to": 2,
+          "dt_ns": 200000000,
+          "translation_m": 0.4,
+          "roi_pixels": 42032,
+          "residual_change_mae": 0.010609594681674215,
+          "raw_change_mae": 0.009922412055800623,
+          "seam_motion": {
+            "previous_pixels": 644,
+            "current_pixels": 644,
+            "iou": 1.0,
+            "mean_distance_px": 0.0,
+            "p95_distance_px": 0.0
+          }
+        }
+      ],
+      "interpretation": "vehicle-view residual change; no optical-flow compensation; not pure flicker",
+      "frames": [
+        {
+          "roi_pixels": 44584,
+          "mae": 0.04067264084891089,
+          "edges": {
+            "output_edge_pixels": 6078,
+            "extra_edge_pixels": 4205,
+            "extra_edge_fraction": 0.6918394208621257
+          }
+        },
+        {
+          "roi_pixels": 44655,
+          "mae": 0.0416363068199698,
+          "edges": {
+            "output_edge_pixels": 6080,
+            "extra_edge_pixels": 4183,
+            "extra_edge_fraction": 0.6879934210526316
+          }
+        },
+        {
+          "roi_pixels": 44639,
+          "mae": 0.0415220021415079,
+          "edges": {
+            "output_edge_pixels": 5968,
+            "extra_edge_pixels": 4153,
+            "extra_edge_fraction": 0.6958780160857909
+          }
+        }
+      ]
+    },
+    "edge_feather": {
+      "num_frames": 3,
+      "transitions": [
+        {
+          "from": 0,
+          "to": 1,
+          "dt_ns": 200000000,
+          "translation_m": 0.4,
+          "roi_pixels": 42033,
+          "residual_change_mae": 0.0072204394648524685,
+          "raw_change_mae": 0.006474029353531592,
+          "seam_motion": {
+            "previous_pixels": 552,
+            "current_pixels": 552,
+            "iou": 1.0,
+            "mean_distance_px": 0.0,
+            "p95_distance_px": 0.0
+          }
+        },
+        {
+          "from": 1,
+          "to": 2,
+          "dt_ns": 200000000,
+          "translation_m": 0.4,
+          "roi_pixels": 42032,
+          "residual_change_mae": 0.007853897808330285,
+          "raw_change_mae": 0.0070616598371362254,
+          "seam_motion": {
+            "previous_pixels": 552,
+            "current_pixels": 552,
+            "iou": 1.0,
+            "mean_distance_px": 0.0,
+            "p95_distance_px": 0.0
+          }
+        }
+      ],
+      "interpretation": "vehicle-view residual change; no optical-flow compensation; not pure flicker",
+      "frames": [
+        {
+          "roi_pixels": 44584,
+          "mae": 0.03920061594827535,
+          "edges": {
+            "output_edge_pixels": 6040,
+            "extra_edge_pixels": 4132,
+            "extra_edge_fraction": 0.6841059602649007
+          }
+        },
+        {
+          "roi_pixels": 44655,
+          "mae": 0.04004045540135958,
+          "edges": {
+            "output_edge_pixels": 6328,
+            "extra_edge_pixels": 4402,
+            "extra_edge_fraction": 0.6956384323640961
+          }
+        },
+        {
+          "roi_pixels": 44639,
+          "mae": 0.039742029266884214,
+          "edges": {
+            "output_edge_pixels": 6150,
+            "extra_edge_pixels": 4341,
+            "extra_edge_fraction": 0.7058536585365853
+          }
+        }
+      ]
+    },
+    "angular_feather": {
+      "num_frames": 3,
+      "transitions": [
+        {
+          "from": 0,
+          "to": 1,
+          "dt_ns": 200000000,
+          "translation_m": 0.4,
+          "roi_pixels": 42033,
+          "residual_change_mae": 0.008549895981199956,
+          "raw_change_mae": 0.007871344161737842,
+          "seam_motion": {
+            "previous_pixels": 644,
+            "current_pixels": 644,
+            "iou": 1.0,
+            "mean_distance_px": 0.0,
+            "p95_distance_px": 0.0
+          }
+        },
+        {
+          "from": 1,
+          "to": 2,
+          "dt_ns": 200000000,
+          "translation_m": 0.4,
+          "roi_pixels": 42032,
+          "residual_change_mae": 0.009912118000353293,
+          "raw_change_mae": 0.009207457250125022,
+          "seam_motion": {
+            "previous_pixels": 644,
+            "current_pixels": 644,
+            "iou": 1.0,
+            "mean_distance_px": 0.0,
+            "p95_distance_px": 0.0
+          }
+        }
+      ],
+      "interpretation": "vehicle-view residual change; no optical-flow compensation; not pure flicker",
+      "frames": [
+        {
+          "roi_pixels": 44584,
+          "mae": 0.040132044204726575,
+          "edges": {
+            "output_edge_pixels": 5571,
+            "extra_edge_pixels": 3726,
+            "extra_edge_fraction": 0.6688206785137318
+          }
+        },
+        {
+          "roi_pixels": 44655,
+          "mae": 0.041095837879809104,
+          "edges": {
+            "output_edge_pixels": 5725,
+            "extra_edge_pixels": 3840,
+            "extra_edge_fraction": 0.6707423580786026
+          }
+        },
+        {
+          "roi_pixels": 44639,
+          "mae": 0.041004034251827325,
+          "edges": {
+            "output_edge_pixels": 5542,
+            "extra_edge_pixels": 3745,
+            "extra_edge_fraction": 0.6757488271382173
+          }
+        }
+      ]
+    },
+    "seam_distance_feather": {
+      "num_frames": 3,
+      "transitions": [
+        {
+          "from": 0,
+          "to": 1,
+          "dt_ns": 200000000,
+          "translation_m": 0.4,
+          "roi_pixels": 42033,
+          "residual_change_mae": 0.008313231636083008,
+          "raw_change_mae": 0.0076098627144654,
+          "seam_motion": {
+            "previous_pixels": 644,
+            "current_pixels": 644,
+            "iou": 1.0,
+            "mean_distance_px": 0.0,
+            "p95_distance_px": 0.0
+          }
+        },
+        {
+          "from": 1,
+          "to": 2,
+          "dt_ns": 200000000,
+          "translation_m": 0.4,
+          "roi_pixels": 42032,
+          "residual_change_mae": 0.009407926982492017,
+          "raw_change_mae": 0.008679194936444316,
+          "seam_motion": {
+            "previous_pixels": 644,
+            "current_pixels": 644,
+            "iou": 1.0,
+            "mean_distance_px": 0.0,
+            "p95_distance_px": 0.0
+          }
+        }
+      ],
+      "interpretation": "vehicle-view residual change; no optical-flow compensation; not pure flicker",
+      "frames": [
+        {
+          "roi_pixels": 44584,
+          "mae": 0.03971142377640092,
+          "edges": {
+            "output_edge_pixels": 5458,
+            "extra_edge_pixels": 3607,
+            "extra_edge_fraction": 0.660864785635764
+          }
+        },
+        {
+          "roi_pixels": 44655,
+          "mae": 0.040655541431292776,
+          "edges": {
+            "output_edge_pixels": 5661,
+            "extra_edge_pixels": 3768,
+            "extra_edge_fraction": 0.665606783253842
+          }
+        },
+        {
+          "roi_pixels": 44639,
+          "mae": 0.04044413228152585,
+          "edges": {
+            "output_edge_pixels": 5438,
+            "extra_edge_pixels": 3652,
+            "extra_edge_fraction": 0.6715704303052593
+          }
+        }
+      ]
+    },
+    "graph_cut_seam": {
+      "num_frames": 3,
+      "transitions": [
+        {
+          "from": 0,
+          "to": 1,
+          "dt_ns": 200000000,
+          "translation_m": 0.4,
+          "roi_pixels": 42033,
+          "residual_change_mae": 0.008740751314443412,
+          "raw_change_mae": 0.00811824011914697,
+          "seam_motion": {
+            "previous_pixels": 644,
+            "current_pixels": 644,
+            "iou": 0.8321479374110953,
+            "mean_distance_px": 0.09161490683229814,
+            "p95_distance_px": 1.0
+          }
+        },
+        {
+          "from": 1,
+          "to": 2,
+          "dt_ns": 200000000,
+          "translation_m": 0.4,
+          "roi_pixels": 42032,
+          "residual_change_mae": 0.010742328907200489,
+          "raw_change_mae": 0.010070509614834387,
+          "seam_motion": {
+            "previous_pixels": 644,
+            "current_pixels": 644,
+            "iou": 0.9081481481481481,
+            "mean_distance_px": 0.04813664596273292,
+            "p95_distance_px": 0.0
+          }
+        }
+      ],
+      "interpretation": "vehicle-view residual change; no optical-flow compensation; not pure flicker",
+      "frames": [
+        {
+          "roi_pixels": 44584,
+          "mae": 0.04041137299467906,
+          "edges": {
+            "output_edge_pixels": 5926,
+            "extra_edge_pixels": 4050,
+            "extra_edge_fraction": 0.6834289571380358
+          }
+        },
+        {
+          "roi_pixels": 44655,
+          "mae": 0.041706035304802325,
+          "edges": {
+            "output_edge_pixels": 6036,
+            "extra_edge_pixels": 4122,
+            "extra_edge_fraction": 0.6829025844930418
+          }
+        },
+        {
+          "roi_pixels": 44639,
+          "mae": 0.041704087416159295,
+          "edges": {
+            "output_edge_pixels": 5938,
+            "extra_edge_pixels": 4099,
+            "extra_edge_fraction": 0.6902997642303806
+          }
+        }
+      ]
+    },
+    "multi_band": {
+      "num_frames": 3,
+      "transitions": [
+        {
+          "from": 0,
+          "to": 1,
+          "dt_ns": 200000000,
+          "translation_m": 0.4,
+          "roi_pixels": 42033,
+          "residual_change_mae": 0.007328291232114698,
+          "raw_change_mae": 0.00659214383221151,
+          "seam_motion": {
+            "previous_pixels": 552,
+            "current_pixels": 552,
+            "iou": 1.0,
+            "mean_distance_px": 0.0,
+            "p95_distance_px": 0.0
+          }
+        },
+        {
+          "from": 1,
+          "to": 2,
+          "dt_ns": 200000000,
+          "translation_m": 0.4,
+          "roi_pixels": 42032,
+          "residual_change_mae": 0.007987222931299153,
+          "raw_change_mae": 0.007210783691728182,
+          "seam_motion": {
+            "previous_pixels": 552,
+            "current_pixels": 552,
+            "iou": 1.0,
+            "mean_distance_px": 0.0,
+            "p95_distance_px": 0.0
+          }
+        }
+      ],
+      "interpretation": "vehicle-view residual change; no optical-flow compensation; not pure flicker",
+      "frames": [
+        {
+          "roi_pixels": 44584,
+          "mae": 0.039640587379158855,
+          "edges": {
+            "output_edge_pixels": 6466,
+            "extra_edge_pixels": 4529,
+            "extra_edge_fraction": 0.7004330343334364
+          }
+        },
+        {
+          "roi_pixels": 44655,
+          "mae": 0.04044937110439293,
+          "edges": {
+            "output_edge_pixels": 6765,
+            "extra_edge_pixels": 4785,
+            "extra_edge_fraction": 0.7073170731707317
+          }
+        },
+        {
+          "roi_pixels": 44639,
+          "mae": 0.040050033917701726,
+          "edges": {
+            "output_edge_pixels": 6537,
+            "extra_edge_pixels": 4694,
+            "extra_edge_fraction": 0.7180663913109989
+          }
+        }
+      ]
+    },
+    "graph_cut_multi_band": {
+      "num_frames": 3,
+      "transitions": [
+        {
+          "from": 0,
+          "to": 1,
+          "dt_ns": 200000000,
+          "translation_m": 0.4,
+          "roi_pixels": 42033,
+          "residual_change_mae": 0.008647267343165944,
+          "raw_change_mae": 0.008024320760112386,
+          "seam_motion": {
+            "previous_pixels": 644,
+            "current_pixels": 644,
+            "iou": 0.8321479374110953,
+            "mean_distance_px": 0.09161490683229814,
+            "p95_distance_px": 1.0
+          }
+        },
+        {
+          "from": 1,
+          "to": 2,
+          "dt_ns": 200000000,
+          "translation_m": 0.4,
+          "roi_pixels": 42032,
+          "residual_change_mae": 0.010682959264152305,
+          "raw_change_mae": 0.010013690160748982,
+          "seam_motion": {
+            "previous_pixels": 644,
+            "current_pixels": 644,
+            "iou": 0.9081481481481481,
+            "mean_distance_px": 0.04813664596273292,
+            "p95_distance_px": 0.0
+          }
+        }
+      ],
+      "interpretation": "vehicle-view residual change; no optical-flow compensation; not pure flicker",
+      "frames": [
+        {
+          "roi_pixels": 44584,
+          "mae": 0.04044470949454008,
+          "edges": {
+            "output_edge_pixels": 5737,
+            "extra_edge_pixels": 3860,
+            "extra_edge_fraction": 0.6728255185637092
+          }
+        },
+        {
+          "roi_pixels": 44655,
+          "mae": 0.041763205636824945,
+          "edges": {
+            "output_edge_pixels": 5819,
+            "extra_edge_pixels": 3906,
+            "extra_edge_fraction": 0.6712493555593745
+          }
+        },
+        {
+          "roi_pixels": 44639,
+          "mae": 0.041863800038859304,
+          "edges": {
+            "output_edge_pixels": 5715,
+            "extra_edge_pixels": 3888,
+            "extra_edge_fraction": 0.6803149606299213
+          }
+        }
+      ]
+    }
+  }
+}

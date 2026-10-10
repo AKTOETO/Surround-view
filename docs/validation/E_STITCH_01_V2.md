@@ -2,6 +2,8 @@
 
 Исходный прогон: 2026-10-09T20:13:20Z. После изменения fallback для равной centrality матрица повторно выполнена 10.10.2026 (84 случая). Статус: **матрица пересчитана после аудита, но исследование качества не закрыто**. Таблица ниже содержит повторный прогон; quality metrics совпали с исходной матрицей, а CPU времена изменились из-за нагрузки/частоты. Это одна синтетическая статическая Blender-сцена × 6 carriers × 2 virtual views × 7 fusion modes (84 случая), не независимая подтверждающая серия.
 
+> Обновление 10.10.2026: после исправления zero extension в multiband выполнена новая 84-case matrix (`validity_zero_extension_v2`). Таблицы ниже описывают исторический tie-v1 прогон. Текущий raw summary — `baselines/e_stitch_mask_v2.json`, численная разница — `baselines/e_stitch_mask_delta_v2.json`; объяснение и ограничения: [[validation/NATIVE_FUSION#Полный raster path и исправление offline параметров]]. Старые числа нельзя считать побитовым результатом текущего кода.
+
 ## Воспроизводимость и вычислительная среда
 
 Входы хранятся в `tests/data/e_stitch_01_v1`: четыре RGB PPM 400×400, четыре radial-depth NPY float32 400×400, manifest, ground truth и calibration config. Runner проверяет SHA-256 файлов, соответствие порядка camera IDs и calibration IDs, разрешения RGB/depth и синхронность кадров. Исходная сцена и происхождение описаны в [[engineering/ASSETS]] и `assets/scenes/metric-street/provenance.json`.

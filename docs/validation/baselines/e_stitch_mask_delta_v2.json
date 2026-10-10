@@ -1,0 +1,70 @@
+{
+  "kind": "implementation_regression_comparison_not_quality_truth",
+  "old_summary_sha256": "6962ff13f11937fa31ecec68257915db98738c5bd103745c5bffafc5636001c3",
+  "new_summary_sha256": "22927cb4c2bba6e539d626d5cb27e220ca9f0357be494752ef8df1999bb43aa7",
+  "rows": [
+    {
+      "mode": "angular_feather",
+      "cases": 12,
+      "mean_absolute_rgb8_delta": 0.0,
+      "max_absolute_rgb8_delta": 0,
+      "changed_pixel_fraction": 0.0,
+      "max_absolute_seam_p95_delta": 0.0,
+      "max_absolute_ghost_fraction_delta": 0.0
+    },
+    {
+      "mode": "edge_feather",
+      "cases": 12,
+      "mean_absolute_rgb8_delta": 0.0,
+      "max_absolute_rgb8_delta": 0,
+      "changed_pixel_fraction": 0.0,
+      "max_absolute_seam_p95_delta": 0.0,
+      "max_absolute_ghost_fraction_delta": 0.0
+    },
+    {
+      "mode": "graph_cut_multi_band",
+      "cases": 12,
+      "mean_absolute_rgb8_delta": 0.0003746034807956104,
+      "max_absolute_rgb8_delta": 25,
+      "changed_pixel_fraction": 0.00047164351851851854,
+      "max_absolute_seam_p95_delta": 0.05758786201477051,
+      "max_absolute_ghost_fraction_delta": 1.4937189119752434e-05
+    },
+    {
+      "mode": "graph_cut_seam",
+      "cases": 12,
+      "mean_absolute_rgb8_delta": 0.0,
+      "max_absolute_rgb8_delta": 0,
+      "changed_pixel_fraction": 0.0,
+      "max_absolute_seam_p95_delta": 0.0,
+      "max_absolute_ghost_fraction_delta": 0.0
+    },
+    {
+      "mode": "hard_best_angle",
+      "cases": 12,
+      "mean_absolute_rgb8_delta": 0.0,
+      "max_absolute_rgb8_delta": 0,
+      "changed_pixel_fraction": 0.0,
+      "max_absolute_seam_p95_delta": 0.0,
+      "max_absolute_ghost_fraction_delta": 0.0
+    },
+    {
+      "mode": "multi_band",
+      "cases": 12,
+      "mean_absolute_rgb8_delta": 0.009666441615226338,
+      "max_absolute_rgb8_delta": 23,
+      "changed_pixel_fraction": 0.019604230967078192,
+      "max_absolute_seam_p95_delta": 0.015787363052368164,
+      "max_absolute_ghost_fraction_delta": 6.873767554958082e-05
+    },
+    {
+      "mode": "seam_distance_feather",
+      "cases": 12,
+      "mean_absolute_rgb8_delta": 0.0,
+      "max_absolute_rgb8_delta": 0,
+      "changed_pixel_fraction": 0.0,
+      "max_absolute_seam_p95_delta": 0.0,
+      "max_absolute_ghost_fraction_delta": 0.0
+    }
+  ]
+}

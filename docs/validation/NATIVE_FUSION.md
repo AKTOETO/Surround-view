@@ -85,3 +85,33 @@ CPU-профиль также собран; четыре проверки core/c
 *Таблица В.2 — Короткий smoke warm-render стоимости на одном остановленном Blender frame set. CPU/GPU backend различается; числа не являются рейтингом качества, sustained FPS или прогнозом Авроры.*
 
 Каждая строка содержит семь measurement samples, после двух полных warmup blocks. Не контролировались CPU frequencies/thermal, нет capture/decode/upload на каждом повторе. Carrier smoke использует разные density и поэтому не ранжируется по скорости. Числа нужны для проверки фактического исполнения и различения backend costs. Для переноса опыта нужны входные изображения с проверкой manifest hashes; инструкция Blender: [[engineering/BLENDER]].
+
+## Полный raster path и исправление offline параметров
+
+Следующий срез от 10.10.2026 закрывает часть разрыва между float core parity и готовым RGBA. Добавлен явно запрашиваемый `RenderInspection`; стандартный сервер его не запрашивает и не копирует inspection products. Test probe использует тот же renderer и сохраняет actual samples, fallback и ego overlay. Python самостоятельно выполняет NumPy/SciPy fusion, sRGB encode, выбор diagnostics и композицию. Проверены пять носителей × четыре native метода × три diagnostics = **60 случаев**, размер 63×47, levels=3, smoothness=0.7. Максимальная допустимая ошибка RGBA — 1 code value; alpha должна быть 255. Capture и обычный render побитово совпадают, camera uploads и mesh builds не повторяются.
+
+Для плоскости отдельно рассчитаны analytic ray/carrier intersections и fisheye/bilinear samples. Validity совпадает точно; RGB sampling допускает 2/255 в sRGB из-за GPU filtering/RGB8 quantization, edge weights — 1/254 + 1e-5. Асимметричные градиенты обнаруживают row flip, camera reorder и перепутанные оси. Дополнительно настоящий sv-server с однокадровым replay переключает четыре режима/три diagnostics: **12 SV01 RGBA кадров побитово совпали с probe**. После последнего изменения catalog metadata эти три затронутые entries повторно прошли.
+
+Это композиционный oracle: fallback/ego берутся из actual GPU passes, а не независимого mesh/vehicle rasterizer. Он не доказывает точность геометрии всех носителей, физическую видимость или качество реальной сцены. Независимая analytic sampling проверка здесь относится только к плоскости и одному ракурсу. Сетевые подписки на эти слои ещё не реализованы.
+
+Найденные и исправленные дефекты:
+
+1. `reference.render` игнорировал серверное имя pyramid_levels, читая только num_pyramid_levels. Теперь серверное имя основное, legacy alias поддержан, конфликт отклоняется; regression test подтверждает различие levels 1/4 и равенство alias.
+2. `fuse_samples` не передавал smoothness_weight в cut. Теперь параметр проходит в graph_cut_seam и graph_cut_multi_band; native/reference tests используют и default 0.1, и 0.7.
+3. Pyramid filtering мог использовать RGB невалидной камеры вокруг границы маски. В native и offline введена одинаковая **zero extension до filtering**; изменение invalid RGB не меняет результат. В native projected samples эти значения уже были нулевыми, поэтому меняется прежде всего поведение общего ядра и offline пути. Версия алгоритма — validity_zero_extension_v2; она публикуется в catalog, analytic reports и новой matrix.
+
+Float core suite теперь содержит **34 сопоставления**. Полная регрессия: **44/44 CTest entries passed**, 32.31 s; заключительная проверка после пересборки catalog/probe — native_fusion_parity, render_fusion_parity и client_transports, 3/3 passed. CPU/GPU timings этого запуска не используются как benchmark.
+
+### Пересчёт 84-case screen
+
+Повторно выполнены все 84 случая tracked E-STITCH-01 fixture. Raw summary: `baselines/e_stitch_mask_v2.json`; сравнение с прежним tie-v1: `baselines/e_stitch_mask_delta_v2.json`. Input hashes прежние, новые source hashes записаны в summary.
+
+| Режим | Средняя абсолютная разница RGB8 | Максимальная разница канала | Доля изменившихся пикселей | Максимальное изменение seam p95 |
+|---|---:|---:|---:|---:|
+| multi_band | 0.009666 | 23 | 1.9604% | 0.015787 |
+| graph_cut_multi_band | 0.000375 | 25 | 0.04716% | 0.057588 |
+| Остальные пять методов | 0 | 0 | 0% | 0 |
+
+*Таблица В.3 — Изменение output после фиксации конвенции маски. Для каждого метода 12 carrier/view случаев одинакового разрешения; среднее по случаям, максимум по каналам/случаям. Seam — прежний output proxy, не независимая оценка качества.*
+
+Небольшая средняя ошибка не означает отсутствия локального эффекта: максимум достигает 23–25 code values. Zero extension предотвращает влияние ненаблюдаемого RGB, но сама может создавать тёмные полосы по границе validity. Это не новый «лучший метод». Нужны отдельные исследования border extension/normalized convolution и независимой object correspondence. Tracked 3-frame temporal серия дополнительно пересчитана: [[validation/PAIRED_STITCH_TEMPORAL]], raw `baselines/paired_temporal_mask_v2.json`; таблица, source hashes и графики обновлены. Остальные старые object/robustness/resolution tables с pyramid modes остаются историческими, их нельзя считать результатами текущей версии; требуется пересчёт до итогового заключения.

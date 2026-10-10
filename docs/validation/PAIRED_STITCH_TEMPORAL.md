@@ -1,5 +1,7 @@
 # Парная Blender-серия: сшивка и изменение швов
 
+> Повторный прогон 10.10.2026 с validity_zero_extension_v2 выполнен на том же tracked 3-frame fixture. Таблица и рисунки обновлены; raw report — `baselines/paired_temporal_mask_v2.json`. Длинные клипы, независимые сцены и физическая проверка остаются открытыми. Исправления: [[validation/NATIVE_FUSION]].
+
 Дата: 10.10.2026. Статус: воспроизводимая проверка методики на одном коротком синтетическом клипе; E-STITCH-01 остаётся открытым.
 
 ## Данные и независимость эталона
@@ -33,8 +35,8 @@ Extra-edge fraction: доля fused Sobel edges (threshold 0.08), удалённ
 | `angular_feather` | 0.04013 / 0.04110 / 0.04100 | 0.00855 / 0.00991 | 0.00000 / 0.00000 | 66.88207 / 67.07424 / 67.57488 |
 | `seam_distance_feather` | 0.03971 / 0.04066 / 0.04044 | 0.00831 / 0.00941 | 0.00000 / 0.00000 | 66.08648 / 66.56068 / 67.15704 |
 | `graph_cut_seam` | 0.04041 / 0.04171 / 0.04170 | 0.00874 / 0.01074 | 0.09161 / 0.04814 | 68.34290 / 68.29026 / 69.02998 |
-| `multi_band` | 0.03963 / 0.04044 / 0.04004 | 0.00733 / 0.00799 | 0.00000 / 0.00000 | 70.07898 / 70.73099 / 71.81721 |
-| `graph_cut_multi_band` | 0.04044 / 0.04176 / 0.04186 | 0.00865 / 0.01068 | 0.09161 / 0.04814 | 67.28858 / 67.13082 / 68.02590 |
+| `multi_band` | 0.03964 / 0.04045 / 0.04005 | 0.00733 / 0.00799 | 0.00000 / 0.00000 | 70.04330 / 70.73171 / 71.80664 |
+| `graph_cut_multi_band` | 0.04044 / 0.04176 / 0.04186 | 0.00865 / 0.01068 | 0.09161 / 0.04814 | 67.28255 / 67.12494 / 68.03150 |
 
 Для `graph_cut_seam` boundary IoU: 0.83215 / 0.90815; p95 boundary distance: 1 / 0 px. Нулевой p95 второго перехода не означает отсутствия изменений: среднее 0.04814 px и IoU<1 показывают изменение небольшой части границы. Геометрические веса feather остаются неподвижны в vehicle-fixed view, хотя сцена и RGB меняются. **Это свойство весов, а не доказательство отсутствия мерцания.**
 
@@ -54,9 +56,9 @@ Extra-edge fraction: доля fused Sobel edges (threshold 0.08), удалённ
 python3 tools/temporal_seam_stability.py \
   --dataset tests/data/paired_street_v1 \
   --capture tests/data/paired_street_v1 \
-  --output artifacts/paired-temporal-repeat
+  --output artifacts/paired-temporal-mask-v2
 python3 tests/test_temporal_truth.py
-python3 docs/diploma/plot_paired_stitch.py --results artifacts/paired-temporal-repeat
+python3 docs/diploma/plot_paired_stitch.py --results artifacts/paired-temporal-mask-v2
 ```
 
 Для нового Blender capture: активировать нужную сцену, затем выполнить в Python console или MCP:
@@ -95,9 +97,9 @@ python3 tools/temporal_seam_stability.py --dataset artifacts/new-paired-inputs \
 | `tests/data/paired_street_v1/ground_truth.json` | `d6d4eebd55391dae1a6c936098a68d81d63d2b282ea9b0994cd562dd967312fa` |
 | `tests/data/paired_street_v1/capture.json` | `793695f8a45746f91164f6ce120ae6539fbe282a183349d806cb6e51eeff8bd2` |
 | `tests/data/paired_street_v1/paired_truth.json` | `08818583a39d39a0223a64886fa24a82ccc5d1c087e6907e498740b40723234a` |
-| `temporal_seam_stability.py` | `ab9c0209729539c4e3e583f6e45b13e89fade8dc339ad1a08b6247e19d33b099` |
-| `reference.py` | `68f9bdc75bb72b615a0def04d85ed3c2beabeacecc54bc9a667c05a917384840` |
-| `fusion.py` | `8b547e30d7da630063afbc4034b23e924341b97bfbd318c38c5aa9186a6498b9` |
+| `temporal_seam_stability.py` | `993548b75655b4554faeb44907ee23fcdfca2711cd336455a62d8818b0e33a0d` |
+| `reference.py` | `45342a907a08361bdaa4bf6fb5b5daf8e13870688acc3beba1caf1f46d369432` |
+| `fusion.py` | `7dd094116f8e7817dcd43ee3a8f126f665c87b406444c71353fa4efa91bd4c84` |
 | `stitch_metrics.py` | `de8d287f1f7b098d526f8677f5e96c59a77bf6f48dd7bde7c36ef250bcef1814` |
 
 ## Последовательность получения данных
