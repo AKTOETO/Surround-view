@@ -109,6 +109,26 @@ $$IoU=\frac{|P\cap T|}{|P\cup T|},\qquad recall=\frac{|P\cap T|}{|T|},\qquad pre
 
 Во всех 84 случаях избыток компонент и дополнительных строковых runs равен нулю. Форма и положение существенно ошибочны, но соединённый след остаётся одной компонентой. Это отрицательный результат для полноты счётчика копий; нужна геометрическая correspondence/instance оценка и отдельная temporal ghost-trail метрика. Видимый объект здесь не является плоской частью carrier. Пять carrier имеют общий центральный пол и близкие результаты: опыт не различает качество всей оболочки, mesh budgets не выровнены.
 
+## E-STITCH-object-support-01: взвешенный source-ID support
+
+Чтобы проверить слепую зону соединённых копий, после фиксации [[../research/STITCH_OBJECT_SUPPORT_PROTOCOL]] для каждого output pixel рассчитан $s(p)=\sum_i w_i(p)\,1[id_i(p)=target]$: сумма весов тех камер, где nearest-sampled ID совпадает с кодированной мишенью. Support сопоставлен с direct Blender target mask. Для RGB по-прежнему отдельно измеряется исходный chroma classifier. Проверки exact/doubled/empty support прошли known-answer unit tests.
+
+| Fusion | Median outside-support fraction | Range | Median support mass / truth area | Median RGB IoU |
+|---|---:|---:|---:|---:|
+| `angular_feather` | 0.747 | 0.737–0.757 | 1.204 | 0.095 |
+| `edge_feather` | 0.847 | 0.837–0.857 | 1.992 | 0.074 |
+| `graph_cut_multi_band` | 0.548 | 0.353–0.742 | 0.815 | 0.193 |
+| `graph_cut_seam` | 0.548 | 0.353–0.742 | 0.815 | 0.226 |
+| `hard_best_angle` | 0.521 | 0.362–0.682 | 0.706 | 0.237 |
+| `multi_band` | 0.847 | 0.837–0.857 | 1.992 | 0.074 |
+| `seam_distance_feather` | 0.795 | 0.790–0.801 | 1.491 | 0.083 |
+
+![Source-ID support вне truth и RGB IoU](../diploma/figures/experiments/object_stitch_source_support.png)
+
+*Рисунок 4 — Все 84 carrier/mode/frame cases. По горизонтали — доля взвешенного source-ID support вне прямой truth mask; по вертикали — IoU финальной RGB-маски. Точки — два кадра одного synthetic rig; это не независимые сцены и не рейтинг.*
+
+Во всех 84 случаях RGB classifier по-прежнему сообщает ноль дополнительных компонентов и runs. Следовательно, provenance support показывает source-ID присутствие вне direct truth там, где бинарный RGB count не поднимает число копий. Это объясняет геометрическое расхождение, однако не доказывает, что весь такой support виден в финальном RGB как отдельный ghost. Returned weights у multi-band режимов являются лишь pointwise provenance, поскольку реальная цветовая смесь частотно-зависима. Natural-object correspondence и dynamic ghost rate остаются не измерены. Полный результат, включая thresholds 0.25/0.50/0.75 и хэши обоих frozen protocols: `artifacts/object-support-v2/summary.json`.
+
 Первичный timing screen использовал 2 warmup и 7 повторов, но фиксированный carrier/mode/frame order; его timing нельзя считать сравнительным результатом. Новый follow-up ниже чередует полный набор условий и сохраняет host metadata.
 
 ## Follow-up: randomized complete-block timing
@@ -168,4 +188,4 @@ Blender regression `tests/blender/test_visibility.py:run_source_capture` отд�
 
 ## Выполненные регрессионные проверки
 
-CMake configure прошёл с системными GLM 1.0.3 и OpenCV 5.0.0. Восемь CTest suites прошли: `blender_fixture`, `stitch_fusion`, `e_stitch_inputs`, `image_quality_oracle`, `temporal_truth`, `scene_visibility`, `stitch_robustness`, `object_metrics` (последний содержит восемь Python unit tests). Blender-specific hidden-helper и source-export smoke выполнены отдельно через MCP, не входят в эти восемь suites. SHA-256 пяти fixture indexes и пяти вычислительных модулей совпадают с опубликованным отчётом.
+CMake configure прошёл с системными GLM 1.0.3 и OpenCV 5.0.0. Восемь CTest suites прошли: `blender_fixture`, `stitch_fusion`, `e_stitch_inputs`, `image_quality_oracle`, `temporal_truth`, `scene_visibility`, `stitch_robustness`, `object_metrics` (последний содержит 11 Python unit tests после добавления support known-answer controls). В текущей сессии повторно прошли `scene_visibility` и `object_metrics`, а полный object study сформировал source support для всех 84 случаев. Blender-specific hidden-helper и source-export smoke выполнены отдельно через MCP, не входят в эти восемь suites. SHA-256 fixture indexes, вычислительных модулей и frozen protocol хранятся в исходных report JSON.

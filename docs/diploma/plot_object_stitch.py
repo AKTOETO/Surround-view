@@ -61,6 +61,22 @@ def main():
     fig.savefig(output/'object_stitch_iou.png', dpi=140)
     plt.close(fig)
 
+    if all('source_identity_support' in row for row in report['results']):
+        fig, ax = plt.subplots(figsize=(8, 5))
+        for mode in modes:
+            rows = [row for row in report['results'] if row['mode'] == mode]
+            x = [row['source_identity_support']['outside_support_fraction'] for row in rows]
+            y = [row['target']['iou'] for row in rows]
+            ax.scatter(x, y, s=24, alpha=.75, label=mode)
+        ax.set_xlabel('Weighted source-ID support outside direct-view truth')
+        ax.set_ylabel('Final RGB coded-target IoU')
+        ax.set_title('Provenance support and RGB appearance are different measurements')
+        ax.grid(alpha=.25)
+        ax.legend(fontsize=7, ncol=2)
+        fig.tight_layout()
+        fig.savefig(output/'object_stitch_source_support.png', dpi=150)
+        plt.close(fig)
+
 
 if __name__ == '__main__':
     main()

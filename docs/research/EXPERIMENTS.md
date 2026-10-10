@@ -124,3 +124,7 @@ GPU execution time измерять асинхронными timer queries, CPU 
 ## E-STITCH-coded-object-timing-02 — 10.10.2026
 
 [[validation/OBJECT_STITCH]]: повторён неизменённый 84-case coded-object workload, 2 warmups и 7 seeded randomized complete blocks. Каждый блок содержит все условия один раз; все семь permutations различны. Host, order, raw samples, fixture/source/protocol hashes сохранены. Это устраняет фиксированный порядок первого screen, но не выравнивает mesh/memory budget и не превращает один view/target или Python CPU время в GPU/server/Aurora performance evidence. Protocol: [[STITCH_TIMING_PROTOCOL]].
+
+## E-STITCH-object-support-01 — 10.10.2026
+
+[[validation/OBJECT_STITCH]] расширяет тот же 84-case fixture метрикой $s(p)=\sum_i w_i(p)1[id_i(p)=target]$. Она измеряет взвешенное source-camera object-ID присутствие вне прямой Blender truth и фиксированные threshold masks; known-answer tests покрывают точный, удвоенный, пустой support и соединённую копию. Во всех случаях RGB classifier не находит дополнительных компонентов, при этом median outside-support fraction находится в диапазоне 0.521–0.847 по fusion mode. Это provenance diagnostic, не видимая ghost segmentation; особенно для multi-band веса не представляют фактическую цветовую смесь. Один synthetic target/view не поддерживает ranking. Frozen protocol: [[STITCH_OBJECT_SUPPORT_PROTOCOL]].
