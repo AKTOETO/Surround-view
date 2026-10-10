@@ -59,7 +59,8 @@ class Client
     ~Client();
     Client(const Client &) = delete;
     Client &operator=(const Client &) = delete;
-    // IDs are scoped to this Client instance; pending commands are never replayed.
+    // Concurrent submissions are ordered by ID; IDs belong to this instance.
+    // Pending commands are never replayed. Exhaustion throws without wrapping.
     uint64_t command(std::string type, boost::json::object parameters = {});
 
     uint64_t orbit(double azimuth_delta_rad, double elevation_delta_rad)

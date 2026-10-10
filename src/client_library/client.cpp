@@ -4,7 +4,9 @@
 #include <boost/asio/generic/stream_protocol.hpp>
 #include <boost/asio/local/stream_protocol.hpp>
 #include <deque>
+#include <limits>
 #include <map>
+#include <mutex>
 #include <thread>
 
 namespace sv::client
@@ -22,7 +24,8 @@ struct Client::Impl
     Handler handler;
     std::thread worker;
     std::atomic<bool> stopped{false};
-    std::atomic<uint64_t> next_id{0};
+    std::mutex command_submission;
+    uint64_t next_id = 0;
     std::atomic<size_t> submitted{0};
     std::atomic<size_t> releases_submitted{0};
 
@@ -457,9 +460,16 @@ void Client::stop()
 uint64_t Client::command(std::string type, boost::json::object p)
 {
     auto &i = *impl_;
+    // Serialize ID allocation through post(): concurrent callers must reach the
+    // control stream in increasing ID order, as required by the server.
+    std::lock_guard<std::mutex> lock(i.command_submission);
     if (i.stopped)
     {
         throw std::logic_error("client stopped");
+    }
+    if (i.next_id == std::numeric_limits<uint64_t>::max())
+    {
+        throw std::overflow_error("command ID exhausted; create a new Client");
     }
     const auto id = ++i.next_id;
     p["type"] = std::move(type);

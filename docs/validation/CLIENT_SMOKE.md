@@ -4,6 +4,14 @@
 
 ## Результаты
 
+### Дополнение 10.10.2026: порядок конкурентных команд
+
+В `sv-client-lib` исправлена гонка между выдачей command ID и post в Asio worker. Atomic increment сам по себе не сохранял wire order: native TCP regression из восьми потоков воспроизвёл начало `3,4,5,1,2` и rejects `duplicate_or_out_of_order`. Участок allocation/encode/post теперь сериализован mutex; release использует прежнюю независимую очередь. Wrap uint64 запрещён guard-ом, прямой exhaustion test пока отсутствует.
+
+Новый GTest/CTest `client_command_order` отправляет 256 команд с разной стоимостью encoding, сохраняет coalesced TCP messages, проверяет возрастающие IDs и все accepted ACK. До изменения production кода тест упал; после исправления прошёл. Полная сборка сервера, библиотеки и обоих GUI успешна; `ctest --test-dir build --output-on-failure -j4` — **49/49**, 20.70 s. Это localhost library regression, не multi-client или межмашинная проверка. Полный текущий каталог сценариев: [[engineering/PROTOCOL_SCENARIOS]].
+
+### Исторический стенд 0.5.0
+
 | Проверка | Результат | Ограничение |
 |---|---|---|
 | Release CTest | 10/10 групп | Native lifecycle + настоящие Unix/TCP/GUI integration tests |
