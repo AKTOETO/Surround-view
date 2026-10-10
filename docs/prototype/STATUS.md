@@ -1,6 +1,6 @@
 # Состояние прототипа и границы подтверждения
 
-Редакция 09.10.2026, Linux-профиль 0.6.x. Это карта фактически реализованного прототипа, а не объявление завершения всех MUST из [[requirements/SYSTEM]]. Рабочий профиль — `linux-prototype-v1`; его JSON намеренно уже полной проектной схемы из [[requirements/CONFIGURATION]]. Совпадение `schema_version: 1` означает версию этого явно именованного профиля, а не взаимозаменяемость всех полей прежнего YAML-примера.
+Редакция 10.10.2026, Linux-профиль 0.6.x. Это карта фактически реализованного прототипа, а не объявление завершения всех MUST из [[requirements/SYSTEM]]. Рабочий профиль — `linux-prototype-v1`; его JSON намеренно уже полной проектной схемы из [[requirements/CONFIGURATION]]. Совпадение `schema_version: 1` означает версию этого явно именованного профиля, а не взаимозаменяемость всех полей прежнего YAML-примера.
 
 ## Реализовано и проверено
 
@@ -104,3 +104,7 @@ QQuickImageProvider заменяет проектный QQuickItem/QSGTexture. �
 Native fusion/parity и runtime geometry: [[validation/NATIVE_FUSION]]. Binary cuts не являются global multilabel solver; серверные smoke/parity не закрывают исследование качества на holdout и целевом устройстве.
 
 Полный hybrid raster oracle (60 cases), analytic plane sampling и 12 SV01 frames добавлены; исправлены offline parameter forwarding и pyramid invalid-RGB leakage. 84-case matrix пересчитана, исторические pyramid серии помечены для повторения: [[validation/NATIVE_FUSION]].
+
+## Нативный путь настройки из симулятора
+
+В `sv-simulator` добавлен отдельный C++ `RuntimeSettings` adapter и QML редактор fusion/surface: чтение state/catalog, полный JSON-снимок, revision-aware apply через типизированные методы `sv-client-lib`, отображение server ACK/rejection. Изменения временные; записи server config из клиента нет. Черновики привязаны к загруженной ревизии и сбрасываются при переподключении. Это не полный ConfigService и не GUI сценариев. Политика дальнейшего переноса продуктовых Python workflows: [[architecture/CLIENT_SERVER_MODEL]].
