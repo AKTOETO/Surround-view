@@ -10,7 +10,7 @@ DIRECTIONS = ('shift_x', 'radial', 'tangential', 'random')
 LABELS = ('shift x', 'radial', 'tangential', 'random fields')
 
 
-def plot(results, output):
+def plot(results, output, suffix=''):
     output.mkdir(parents=True, exist_ok=True)
     data = json.loads((results / 'summary.json').read_text())['results']
     plt.rcParams.update({'font.size': 10, 'axes.grid': True, 'grid.alpha': .25})
@@ -39,7 +39,7 @@ def plot(results, output):
         ax.set_ylabel('Squared response share assigned to intrinsics')
         ax.set_title(title)
     fig.suptitle('Equal-RMS UV perturbations: camera parameters versus nuisance poses')
-    fig.savefig(output / 'calibration_component_attribution.png', dpi=180)
+    fig.savefig(output / f'calibration_component_attribution{suffix}.png', dpi=180)
     plt.close(fig)
 
     complete = [pair for case in data for pair in case['directions']
@@ -57,7 +57,7 @@ def plot(results, output):
     ax.set_ylabel('Relative L2 difference from linear prediction (%)')
     ax.set_title('Linearization error at h = 0.05 px (converged signed pairs only)')
     ax.set_ylim(bottom=0)
-    fig.savefig(output / 'calibration_component_linearization_error.png', dpi=180)
+    fig.savefig(output / f'calibration_component_linearization_error{suffix}.png', dpi=180)
     plt.close(fig)
 
 
@@ -65,5 +65,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--results', type=Path, required=True)
     parser.add_argument('--output', type=Path, default=Path('docs/diploma/figures/experiments'))
+    parser.add_argument('--suffix', default='')
     args = parser.parse_args()
-    plot(args.results, args.output)
+    plot(args.results, args.output, args.suffix)

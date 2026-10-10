@@ -57,6 +57,16 @@ class JointInformationTests(unittest.TestCase):
         self.assertLess(np.linalg.norm(np.delete(response[:6], 2)), 1e-5)
         self.assertLess(np.linalg.norm(response[6:]), 1e-5)
 
+    def test_dense_lm_matches_sparse_trf_on_exact_joint_capture(self):
+        sparse = solve_joint(self.objects, self.observed, self.poses, self.estimate, 2, method='trf')
+        dense = solve_joint(self.objects, self.observed, self.poses, self.estimate, 2, method='lm')
+        self.assertTrue(sparse.success, sparse.message)
+        self.assertTrue(dense.success, dense.message)
+        self.assertLess(np.linalg.norm(dense.residuals), 1e-5)
+        for key in ('fx', 'fy', 'cx', 'cy'):
+            self.assertAlmostEqual(dense.estimate[key], sparse.estimate[key], delta=1e-5)
+        self.assertEqual(dense.jacobian.shape, sparse.jacobian.shape)
+
 
 if __name__ == '__main__':
     unittest.main()

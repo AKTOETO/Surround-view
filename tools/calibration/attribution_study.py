@@ -68,7 +68,7 @@ def _partition(vector, amplitude, intrinsic_count):
 
 
 def study(output, capture_path=CAPTURE, diagnostic_path=DIAGNOSTIC,
-          sensitivity_path=SENSITIVITY, baseline_joint_path=BASELINE_JOINT):
+          sensitivity_path=SENSITIVITY, baseline_joint_path=BASELINE_JOINT, solver='trf'):
     output = Path(output)
     input_paths = [Path(capture_path), Path(diagnostic_path), Path(sensitivity_path), Path(baseline_joint_path)]
     input_hashes = {str(path): digest(path) for path in input_paths}
@@ -88,7 +88,8 @@ def study(output, capture_path=CAPTURE, diagnostic_path=DIAGNOSTIC,
     code = ['tools/calibration/attribution_study.py', 'tools/calibration/information_study.py',
             'tools/calibration/joint_information.py', 'tools/calibration/sensitivity.py',
             'tools/calibration/optical_models.py', 'tools/calibration/raster_study.py',
-            'docs/research/CALIBRATION_COMPONENT_ATTRIBUTION_PROTOCOL.md']
+            'docs/research/CALIBRATION_COMPONENT_ATTRIBUTION_PROTOCOL.md',
+            'docs/research/CALIBRATION_COMPONENT_SOLVER_PROTOCOL.md']
     code_hashes = {name: digest(ROOT / name) for name in code}
     output.mkdir(parents=True, exist_ok=False)
     results, dataset_hashes, field_hashes = [], {}, {}
@@ -114,13 +115,15 @@ def study(output, capture_path=CAPTURE, diagnostic_path=DIAGNOSTIC,
             geometry[profile][i] for i in range(8)]
         initial_poses = [(Rotation.from_matrix(np.asarray(row['rotation'], float)).as_rotvec(),
                           np.asarray(row['translation'], float)) for row in pose_data]
-        baseline_fit = solve_joint(objects, uv, initial_poses, parent_fit['central_gate']['estimate'], order)
+        baseline_fit = solve_joint(objects, uv, initial_poses,
+                                   parent_fit['central_gate']['estimate'], order, method=solver)
         if not baseline_fit.success:
             raise RuntimeError(f'exact baseline failed for {case_id}: {baseline_fit.message}')
         baseline_joint_row = next(row for row in baseline_joint['results']
                                   if row['family'] == family and row['seed'] == seed and
                                   row['profile'] == profile and row['distortion_order'] == order and
                                   row['observation_source'] == 'analytic_truth')
+        baseline_singular = np.linalg.svd(baseline_fit.jacobian, compute_uv=False)
         field_rows = []
         for direction, noise_seed in DIRECTIONS:
             field = direction_field(uv, direction, noise_seed)
@@ -134,11 +137,12 @@ def study(output, capture_path=CAPTURE, diagnostic_path=DIAGNOSTIC,
                 refit_poses = [(Rotation.from_matrix(rotation).as_rotvec(), translation)
                                for rotation, translation in baseline_fit.poses]
                 fit = solve_joint(objects, observed, refit_poses,
-                                  baseline_fit.estimate, order)
+                                  baseline_fit.estimate, order, method=solver)
                 delta_q = _full_q(fit, baseline_fit)
                 actual_by_sign[sign] = delta_q
                 pair[sign] = {'success': fit.success, 'status': fit.status,
                               'message': fit.message, 'cost': fit.cost,
+                              'optimality': fit.optimality,
                               'residual_rms_px': float(np.sqrt(np.mean(fit.residuals**2))),
                               'function_evaluations': fit.evaluations,
                               'joint_estimate': fit.estimate,
@@ -170,8 +174,9 @@ def study(output, capture_path=CAPTURE, diagnostic_path=DIAGNOSTIC,
                                          'function_evaluations': baseline_fit.evaluations,
                                          'jacobian_sha256_le_f64': hashlib.sha256(
                                              np.asarray(baseline_fit.jacobian, dtype='<f8').tobytes()).hexdigest(),
-                                         'singular_values': baseline_joint_row['singular_values'],
-                                         'condition_number': baseline_joint_row['condition_number']},
+                                         'singular_values': baseline_singular.tolist(),
+                                         'condition_number': float(baseline_singular[0] / baseline_singular[-1]),
+                                         'sparse_reference_condition_number': baseline_joint_row['condition_number']},
                         'directions': field_rows})
     if code_hashes != {name: digest(ROOT / name) for name in code}:
         raise RuntimeError('analysis source changed during study')
@@ -185,6 +190,11 @@ def study(output, capture_path=CAPTURE, diagnostic_path=DIAGNOSTIC,
               'joint_baseline_sha256': input_hashes[str(input_paths[3])],
               'runtime': {'python': platform.python_version(), 'numpy': np.__version__,
                           'scipy': scipy.__version__, 'platform': platform.platform()},
+              'solver': solver,
+              'solver_settings': {'method': solver, 'jacobian': '3-point finite difference',
+                                  'loss': 'linear', 'ftol': 1e-9, 'xtol': 1e-9,
+                                  'gtol': 1e-8, 'max_nfev': 750,
+                                  'jacobian_sparsity': solver == 'trf'},
               'code_sha256': code_hashes, 'dataset_sha256': dataset_hashes,
               'field_sha256_le_f64': field_hashes, 'cases': len(results),
               'amplitude_px': AMPLITUDE, 'direction_fields_per_case': len(DIRECTIONS),
@@ -207,5 +217,6 @@ if __name__ == '__main__':
     parser.add_argument('--diagnostic', type=Path, default=DIAGNOSTIC)
     parser.add_argument('--sensitivity', type=Path, default=SENSITIVITY)
     parser.add_argument('--joint-baseline', type=Path, default=BASELINE_JOINT)
+    parser.add_argument('--solver', choices=('trf', 'lm'), default='trf')
     args = parser.parse_args()
-    study(args.output, args.capture, args.diagnostic, args.sensitivity, args.joint_baseline)
+    study(args.output, args.capture, args.diagnostic, args.sensitivity, args.joint_baseline, args.solver)

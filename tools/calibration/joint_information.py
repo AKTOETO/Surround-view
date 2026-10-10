@@ -69,7 +69,9 @@ def residual_vector(parameters, object_points, observed, initial_poses, estimate
                            for (r, t), uv in zip(fitted_poses, observed)])
 
 
-def solve_joint(object_points, observed, initial_poses, estimate, order, max_nfev=750):
+def solve_joint(object_points, observed, initial_poses, estimate, order, max_nfev=750, method='trf'):
+    if method not in ('trf', 'lm'):
+        raise ValueError('joint least-squares method must be trf or lm')
     names, _, scales = _model_vector(estimate, order)
     intrinsic_count = len(names)
     count = len(observed)
@@ -81,10 +83,14 @@ def solve_joint(object_points, observed, initial_poses, estimate, order, max_nfe
         pose_columns = slice(intrinsic_count + view * 6, intrinsic_count + (view + 1) * 6)
         sparsity[rows, :intrinsic_count] = 1
         sparsity[rows, pose_columns] = 1
-    result = least_squares(
-        residual_vector, parameters, args=(object_points, observed, initial_poses, estimate, order, scales),
-        jac='3-point', jac_sparsity=sparsity.tocsr(), x_scale='jac', loss='linear',
-        ftol=1e-9, xtol=1e-9, gtol=1e-8, max_nfev=max_nfev)
+    solver_options = {'jac': '3-point', 'x_scale': 'jac', 'loss': 'linear',
+                      'ftol': 1e-9, 'xtol': 1e-9, 'gtol': 1e-8,
+                      'max_nfev': max_nfev, 'method': method}
+    if method == 'trf':
+        solver_options['jac_sparsity'] = sparsity.tocsr()
+    result = least_squares(residual_vector, parameters,
+                           args=(object_points, observed, initial_poses, estimate, order, scales),
+                           **solver_options)
     fx, fy, cx, cy, coefficients, fitted_poses = _unpack(
         result.x, estimate, initial_poses, order, scales)
     joint_estimate = {'fx': float(fx), 'fy': float(fy), 'cx': float(cx), 'cy': float(cy),
