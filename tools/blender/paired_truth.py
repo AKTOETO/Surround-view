@@ -89,6 +89,9 @@ def capture_paired(scene, output, frames=3, face_size=64, frame_step=6, width=32
     saved_matrix, saved_ego = camera.matrix_world.copy(), ego.matrix_world.copy()
     saved_frame = scene.frame_current
     saved_config = scene.get('sv_config')
+    diagnostic_target = json.loads(scene.get('sv_diagnostic_target', 'null'))
+    target_object = scene.objects.get(diagnostic_target['object_name']) if diagnostic_target else None
+    saved_target_location = target_object.location.copy() if target_object else None
     cfg = json.loads(saved_config) if saved_config else configuration()
     cfg['output'] = {'width': width, 'height': height}
     scene['sv_config'] = json.dumps(cfg)
@@ -117,6 +120,12 @@ def capture_paired(scene, output, frames=3, face_size=64, frame_step=6, width=32
         for index in range(frames):
             frame = index * frame_step
             scene.frame_set(frame+1)
+            if target_object:
+                from diagnostic_motion import position_for_capture
+                target_position = position_for_capture(
+                    diagnostic_target, {'frames':frames, 'frame_step':frame_step}, index)
+                if target_position is not None:
+                    target_object.location = target_position
             pose = vehicle_pose(frame)
             ego.matrix_world = Matrix(pose.tolist())
             view_pose = pose @ virtual_pose(cfg)
@@ -142,6 +151,9 @@ def capture_paired(scene, output, frames=3, face_size=64, frame_step=6, width=32
             rows.append({'scenario_timestamp_ns': str(round(frame*1e9/30)),
                          'T_world_from_vehicle': pose.tolist(), 'rgb': rgb_name,
                          'objects': labels_name, 'visibility': visibility_name})
+            if target_object:
+                evaluated_target = target_object.evaluated_get(bpy.context.evaluated_depsgraph_get())
+                rows[-1]['diagnostic_target_position_m'] = [float(x) for x in evaluated_target.matrix_world.translation]
             if source_ids:
                 source_names = []
                 for camera_spec, ids_image in zip(cfg['cameras'], source_object_ids(scene, cfg, pose, ids)):
@@ -152,7 +164,7 @@ def capture_paired(scene, output, frames=3, face_size=64, frame_step=6, width=32
         files = [row[key] for row in rows for key in ('rgb', 'objects', 'visibility')]
         files += [name for row in rows for name in row.get('source_objects', [])]
         metadata = {'schema_version': 2, 'frames': rows, 'objects': ids,
-                    'diagnostic_target': json.loads(scene.get('sv_diagnostic_target', 'null')),
+                    'diagnostic_target': diagnostic_target,
                     'source_visibility': {'encoding': 'uint8 bit i = visible from camera i',
                                           'tolerance_m': .02,
                                           'ignored_render_helpers': sorted(o.name for o in scene.objects if o.hide_render),
@@ -163,6 +175,8 @@ def capture_paired(scene, output, frames=3, face_size=64, frame_step=6, width=32
                     'script_sha256': hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
                     'visibility_script_sha256': hashlib.sha256(Path(__file__).with_name('visibility.py').read_bytes()).hexdigest(),
                     'geometry_script_sha256': hashlib.sha256(Path(__file__).with_name('geometry_truth.py').read_bytes()).hexdigest(),
+                    'diagnostic_motion_script_sha256': hashlib.sha256(
+                        Path(__file__).with_name('diagnostic_motion.py').read_bytes()).hexdigest(),
                     'sha256': {name: hashlib.sha256((output/name).read_bytes()).hexdigest() for name in files},
                     'limitations': ['synthetic scene, scripted straight drive, no sensor noise',
                                     'object ray casts ignore alpha and antialiasing; exclude boundaries',
@@ -172,6 +186,8 @@ def capture_paired(scene, output, frames=3, face_size=64, frame_step=6, width=32
     finally:
         scene.frame_set(saved_frame)
         camera.matrix_world, ego.matrix_world = saved_matrix, saved_ego
+        if target_object:
+            target_object.location = saved_target_location
         for key, value in saved_render.items():
             setattr(render, key, value)
         for key, value in saved_camera.items():

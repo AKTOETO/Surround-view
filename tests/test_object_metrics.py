@@ -9,9 +9,10 @@ import unittest
 import numpy as np
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path[:0] = [str(ROOT/'tools'), str(ROOT/'tools/research')]
+sys.path[:0] = [str(ROOT/'tools'), str(ROOT/'tools/research'), str(ROOT/'tools/blender')]
 from object_metrics import measure_target, measure_target_support, projected_object_ids, target_mask
 from object_stitch import interleaved_orders, load_objects
+from diagnostic_motion import frame_positions, position_for_capture, validate_captured_positions
 
 
 class ObjectMetricTests(unittest.TestCase):
@@ -58,6 +59,23 @@ class ObjectMetricTests(unittest.TestCase):
             measure_target_support(np.full_like(self.truth, 1.1, dtype=float), self.truth)
         with self.assertRaises(ValueError):
             measure_target_support(np.zeros_like(self.truth, dtype=float), np.zeros_like(self.truth))
+
+    def test_frozen_motion_plan_maps_positions_to_capture_frames(self):
+        target = json.loads((ROOT/'assets/scenarios/object-stitch-motion-v1.json').read_text())['target']
+        capture = json.loads((ROOT/'assets/scenarios/object-stitch-motion-v1.json').read_text())['capture']
+        keyed = frame_positions(target, capture)
+        self.assertEqual([frame for frame, _ in keyed], [1, 4, 7, 10, 13, 16, 19, 22, 25])
+        self.assertEqual(keyed[0][1], (4.0, -1.2, .9))
+        self.assertEqual(keyed[-1][1], (4.0, 1.2, .9))
+        self.assertEqual(position_for_capture(target, capture, 4), (4., 0., .9))
+        validate_captured_positions(target, [
+            {'diagnostic_target_position_m':list(position)} for _, position in keyed])
+        with self.assertRaisesRegex(ValueError, 'differs'):
+            validate_captured_positions(target, [
+                {'diagnostic_target_position_m':list(position)} for _, position in keyed[:-1]]
+                + [{'diagnostic_target_position_m':[99, 99, 99]}])
+        with self.assertRaises(ValueError):
+            frame_positions(target, {'frames':8,'frame_step':3})
 
     def test_clean_rgb(self):
         rgb = np.full((32,48,3), .3)
@@ -124,6 +142,21 @@ class ObjectMetricTests(unittest.TestCase):
         self.assertGreaterEqual(sum((ids == object_id).any() for ids in source[0]), 2)
         for rgb, mask in zip(truths, masks):
             self.assertGreaterEqual(measure_target(target_mask(rgb),mask)['iou'], .75)
+        with tempfile.TemporaryDirectory() as folder:
+            separated = Path(folder)
+            dataset, capture = separated/'dataset', separated/'capture'
+            dataset.mkdir()
+            capture.mkdir()
+            for path in root.iterdir():
+                if path.name.startswith(('camera',)) or path.name in ('config.json','ground_truth.json','manifest.json','nominal-config.json'):
+                    shutil.copy2(path, dataset/path.name)
+                elif path.name.startswith(('objects_', 'virtual_', 'visibility_', 'source_objects_')) or path.name in ('capture.json','paired_truth.json'):
+                    shutil.copy2(path, capture/path.name)
+            split = load_objects(dataset, capture)
+            self.assertEqual(split[-1], object_id)
+            self.assertEqual(len(split[1]), len(images))
+            np.testing.assert_array_equal(split[4][0], masks[0])
+
         with tempfile.TemporaryDirectory() as folder:
             copy = Path(folder)/'fixture'
             shutil.copytree(root,copy)

@@ -24,6 +24,7 @@ from mathutils import Matrix, Vector
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from rig import FACES, configuration, face_basis, vehicle_pose
+from diagnostic_motion import position_for_capture
 from scenario import load as load_scenario, validate as validate_scenario, perturb, near_obstacle_positions
 import board_targets
 import depth as depth_tools
@@ -276,11 +277,17 @@ def capture(scene, output, frames=2, face_size=256, start_frame=0, calibration_b
     depth_dir = output / 'depth'
     depth_state = depth_tools.attach_depth_output(scene, depth_dir) if depth_truth else None
     rows = []
+    diagnostic_target = json.loads(scene.get('sv_diagnostic_target', 'null'))
+    target_object = scene.objects.get(diagnostic_target['object_name']) if diagnostic_target else None
     for index in range(frames):
         frame = start_frame + index * frame_step
         pose = vehicle_pose(frame)
         ego.matrix_world = Matrix(pose.tolist())
         scene.frame_set(frame + 1)
+        if target_object:
+            target_position = position_for_capture(diagnostic_target, {'frames':frames, 'frame_step':frame_step}, index)
+            if target_position is not None:
+                target_object.location = target_position
         captures = []
         board_records = []
         for cam in cfg['cameras']:
@@ -325,6 +332,9 @@ def capture(scene, output, frames=2, face_size=256, start_frame=0, calibration_b
         if targets:
             row['calibration_boards'] = board_records
         rows.append(row)
+    if target_object and diagnostic_target.get('motion_positions_m'):
+        target_object.location = position_for_capture(
+            diagnostic_target, {'frames':frames, 'frame_step':frame_step}, 0)
     depth_tools.restore_depth_output(scene, depth_state)
     # A true 3D overview, separate from sv-server's reconstructed surround view.
     scene.camera.location = (10,-12,10)
@@ -357,7 +367,8 @@ def capture(scene, output, frames=2, face_size=256, start_frame=0, calibration_b
                                'offline render; no sensor noise, rolling shutter or exposure skew'] +
                               ([] if depth_truth else ['depth/semantic truth not exported']),
                 'script_sha256':{name:hashlib.sha256(Path(__file__).with_name(name).read_bytes()).hexdigest()
-                                 for name in ('scene.py','rig.py','scenario.py','board_targets.py','depth.py')},
+                                 for name in ('scene.py','rig.py','scenario.py','board_targets.py','depth.py',
+                                               'diagnostic_motion.py')},
                 'sha256':{p.relative_to(output).as_posix():hashlib.sha256(p.read_bytes()).hexdigest()
                           for p in sorted([*output.glob('*.png'), *depth_dir.glob('*.exr')])}}
     (output / 'capture.json').write_text(json.dumps(metadata,indent=2)+'\n')

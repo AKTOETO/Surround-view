@@ -2,6 +2,7 @@
 import json
 import bpy
 from scene import box, build_scene
+from diagnostic_motion import frame_positions
 
 
 def build_diagnostic(plan):
@@ -17,5 +18,9 @@ def build_diagnostic(plan):
     material.node_tree.links.new(emission.outputs[0], output.inputs['Surface'])
     target = box(scene, 'coded object target', plan['target']['center_m'],
                  plan['target']['size_m'], material)
+    keyed_positions = frame_positions(plan['target'], plan['capture'])
+    if keyed_positions:
+        scene.frame_set(keyed_positions[0][0])
+        bpy.context.view_layer.update()
     scene['sv_diagnostic_target'] = json.dumps({'object_name':target.name, **plan['target']})
     return scene

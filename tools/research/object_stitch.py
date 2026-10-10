@@ -13,11 +13,13 @@ import numpy as np
 from PIL import Image
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]/'blender'))
 from fusion import FUSION_MODES
 from object_metrics import measure_target, measure_target_support, projected_object_ids, target_mask
 from reference import render
 from run_e_stitch_01 import CARRIERS
 from temporal_seam_stability import _verified, load_sequence
+from diagnostic_motion import validate_captured_positions
 
 
 def interleaved_orders(keys, repeats, seed=20261010):
@@ -41,13 +43,15 @@ def _host_metadata():
     }
 
 
-def load_objects(root):
+def load_objects(root, capture_root=None):
     root = Path(root).resolve()
-    cfg, images, truths, masks, stamps, poses = load_sequence(root, root, 'any')
-    metadata = json.loads((root/'paired_truth.json').read_text())
+    capture_root = Path(capture_root).resolve() if capture_root else root
+    cfg, images, truths, masks, stamps, poses = load_sequence(root, capture_root, 'any')
+    metadata = json.loads((capture_root/'paired_truth.json').read_text())
     target = metadata.get('diagnostic_target')
     if not target or target['object_name'] not in metadata['objects']:
         raise ValueError('coded diagnostic target identity required')
+    validate_captured_positions(target, metadata['frames'])
     object_id = metadata['objects'][target['object_name']]
     source, expected = [], []
     for row in metadata['frames']:
@@ -58,21 +62,21 @@ def load_objects(root):
         for camera, name in zip(cfg['cameras'], names):
             if not Path(name).name.startswith(f"source_objects_camera{camera['id']}_"):
                 raise ValueError('source object camera order mismatch')
-            value = np.load(_verified(root, name, metadata['sha256']), allow_pickle=False)
+            value = np.load(_verified(capture_root, name, metadata['sha256']), allow_pickle=False)
             shape = (camera['resolution']['height'], camera['resolution']['width'])
             if value.shape != shape or value.dtype != np.uint16:
                 raise ValueError('uint16 source ID map at camera resolution required')
             arrays.append(value)
         source.append(arrays)
-        ids = np.load(_verified(root, row['objects'], metadata['sha256']), allow_pickle=False)
+        ids = np.load(_verified(capture_root, row['objects'], metadata['sha256']), allow_pickle=False)
         expected.append(ids == object_id)
     return cfg, images, truths, source, expected, target, object_id
 
 
-def run_study(fixture, output, warmup=2, repeats=7, order_seed=20261010):
+def run_study(fixture, output, warmup=2, repeats=7, order_seed=20261010, capture_root=None):
     if warmup < 0 or repeats < 3:
         raise ValueError('warmup >= 0 and at least three CPU render repeats required')
-    cfg, images, truths, source, expected, target, object_id = load_objects(fixture)
+    cfg, images, truths, source, expected, target, object_id = load_objects(fixture, capture_root)
     threshold, minimum = target['chroma_threshold'], target['min_component_pixels']
     controls = [measure_target(target_mask(rgb, threshold), mask, minimum)
                 for rgb, mask in zip(truths, expected)]
@@ -127,16 +131,24 @@ def run_study(fixture, output, warmup=2, repeats=7, order_seed=20261010):
                      'source_identity_support':support_metric,
                      'cpu_render_ms':{'samples':timings,'p50':float(np.median(timings)),
                                       'p95':float(np.percentile(timings,95)), 'max':max(timings)}})
-    fixture = Path(fixture)
-    hashes = {name:hashlib.sha256((fixture/name).read_bytes()).hexdigest()
-              for name in ('config.json','capture.json','paired_truth.json','manifest.json','ground_truth.json')}
+    fixture = Path(fixture).resolve()
+    capture_root = Path(capture_root).resolve() if capture_root else fixture
+    hashes = {
+        'dataset': {name:hashlib.sha256((fixture/name).read_bytes()).hexdigest()
+                    for name in ('config.json','manifest.json','ground_truth.json')},
+        'capture': {name:hashlib.sha256((capture_root/name).read_bytes()).hexdigest()
+                    for name in ('capture.json','paired_truth.json')},
+    }
     research_docs = Path(__file__).resolve().parents[2]/'docs/research'
     support_protocol = research_docs/'STITCH_OBJECT_SUPPORT_PROTOCOL.md'
     timing_protocol = research_docs/'STITCH_TIMING_PROTOCOL.md'
     code = {p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in (
         Path(__file__), Path(__file__).resolve().parents[1]/'object_metrics.py',
         Path(__file__).resolve().parents[1]/'reference.py', Path(__file__).resolve().parents[1]/'fusion.py',
-        Path(__file__).resolve().parents[1]/'run_e_stitch_01.py')}
+        Path(__file__).resolve().parents[1]/'run_e_stitch_01.py',
+        Path(__file__).resolve().parents[1]/'blender/diagnostic_motion.py',
+        Path(__file__).resolve().parents[1]/'blender/paired_truth.py',
+        Path(__file__).resolve().parents[1]/'blender/scene.py')}
     report = {'schema_version':1,'experiment':'E-STITCH-object-support-01', 'target_id':object_id,
               'protocol_sha256':hashlib.sha256(support_protocol.read_bytes()).hexdigest(),
               'timing_protocol_sha256':hashlib.sha256(timing_protocol.read_bytes()).hexdigest(),
@@ -158,9 +170,10 @@ def run_study(fixture, output, warmup=2, repeats=7, order_seed=20261010):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--fixture', type=Path, default=Path('tests/data/object_stitch_v1'))
+    parser.add_argument('--capture', type=Path, help='paired Blender capture directory when different from fixture')
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--warmup', type=int, default=2)
     parser.add_argument('--repeats', type=int, default=7)
     parser.add_argument('--order-seed', type=int, default=20261010)
     args = parser.parse_args()
-    run_study(args.fixture, args.output, args.warmup, args.repeats, args.order_seed)
+    run_study(args.fixture, args.output, args.warmup, args.repeats, args.order_seed, args.capture)
