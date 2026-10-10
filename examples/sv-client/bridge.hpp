@@ -39,7 +39,10 @@ class Bridge : public QObject
     QString sourceInfo_ = "Информация об источниках появится после получения кадра";
     FrameProvider *provider_;
     std::atomic<unsigned> pending_frames_{0};
+    bool message_failed_ = false;
     void consume(sv::client::Event);
+    void consumeChecked(sv::client::Event);
+    void resetSessionState();
     void command(QString, boost::json::object = {});
 
   public:

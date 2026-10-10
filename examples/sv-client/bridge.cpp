@@ -6,6 +6,11 @@
 
 namespace
 {
+double number(const boost::json::object &header, const char *key)
+{
+    return boost::json::value_to<double>(header.at(key));
+}
+
 qint64 monotonic()
 {
     return std::chrono::duration_cast<std::chrono::nanoseconds>(
@@ -81,17 +86,49 @@ Bridge::~Bridge()
 
 void Bridge::consume(sv::client::Event event)
 {
+    if (message_failed_)
+    {
+        return;
+    }
+    try
+    {
+        if (event.kind == sv::client::Event::Kind::Message && !event.message)
+        {
+            throw std::runtime_error("empty message event");
+        }
+        consumeChecked(std::move(event));
+    }
+    catch (const std::exception &error)
+    {
+        // Runs on the GUI thread. Stop the invalid stream before more queued
+        // messages can publish a partial or obsolete snapshot.
+        message_failed_ = true;
+        client_->stop();
+        resetSessionState();
+        status_ =
+            "Ошибка обработки сообщения; перезапустите клиент: " + QString::fromUtf8(error.what());
+        emit changed();
+    }
+}
+
+void Bridge::resetSessionState()
+{
+    url_.clear();
+    readyFrame_.clear();
+    lastPresented_.clear();
+    serverInfo_ = "Ожидание состояния текущей сессии";
+    pipelineInfo_ = "Ожидание первого кадра текущей сессии";
+    sourceInfo_ = "Нет данных об источниках текущей сессии";
+    provider_->setImage({});
+}
+
+void Bridge::consumeChecked(sv::client::Event event)
+{
     if (event.kind != sv::client::Event::Kind::Message)
     {
         if (event.kind == sv::client::Event::Kind::State && event.detail != "ready")
         {
-            url_.clear();
-            readyFrame_.clear();
-            lastPresented_.clear();
-            serverInfo_ = "Ожидание состояния текущей сессии";
-            pipelineInfo_ = "Ожидание первого кадра текущей сессии";
-            sourceInfo_ = "Нет данных об источниках текущей сессии";
-            provider_->setImage({});
+            resetSessionState();
         }
         status_ = QString::fromStdString(event.detail);
         emit changed();
@@ -103,9 +140,9 @@ void Bridge::consume(sv::client::Event event)
     {
         serverInfo_ =
             QString("Азимут: %1 рад · Высота: %2 рад\nРасстояние: %3 м\nРевизия состояния: %4")
-                .arg(h.at("azimuth_rad").as_double(), 0, 'f', 2)
-                .arg(h.at("elevation_rad").as_double(), 0, 'f', 2)
-                .arg(h.at("distance_m").as_double(), 0, 'f', 2)
+                .arg(number(h, "azimuth_rad"), 0, 'f', 2)
+                .arg(number(h, "elevation_rad"), 0, 'f', 2)
+                .arg(number(h, "distance_m"), 0, 'f', 2)
                 .arg(QString::fromStdString(std::string(h.at("state_revision").as_string())));
         emit changed();
     }
@@ -127,13 +164,15 @@ void Bridge::consume(sv::client::Event event)
     // Server monotonic timestamps cannot be subtracted from a remote client's clock.
     status_ = QString::fromStdString(std::string(h.at("health").as_string())) +
               (h.at("paused").as_bool() ? " · Пауза" : "") +
-              QString(" · обработка %1 мс").arg(h.at("render_readback_ms").as_double(), 0, 'f', 2);
+              QString(" · обработка %1 мс").arg(number(h, "render_readback_ms"), 0, 'f', 2);
     const auto gpu = h.at("pipeline_spans_ms").as_object().at("gpu_draw");
-    pipelineInfo_ = QString("Сервер: receive → render %1 мс · render wall %2 мс · GPU draw %3")
-                        .arg(h.at("server_receive_to_render_ms").as_double(), 0, 'f', 2)
-                        .arg(h.at("render_readback_ms").as_double(), 0, 'f', 2)
-                        .arg(gpu.is_double() ? QString::number(gpu.as_double(), 'f', 2) + " мс"
-                                             : QString("нет GPU timer"));
+    pipelineInfo_ =
+        QString("Сервер: receive → render %1 мс · render wall %2 мс · GPU draw %3")
+            .arg(number(h, "server_receive_to_render_ms"), 0, 'f', 2)
+            .arg(number(h, "render_readback_ms"), 0, 'f', 2)
+            .arg(gpu.is_number()
+                     ? QString::number(boost::json::value_to<double>(gpu), 'f', 2) + " мс"
+                     : QString("нет GPU timer"));
     QStringList cameras;
     for (const auto &input : h.at("inputs").as_array())
     {
@@ -158,6 +197,10 @@ void Bridge::consume(sv::client::Event event)
 
 void Bridge::command(QString type, boost::json::object parameters)
 {
+    if (message_failed_)
+    {
+        return;
+    }
     try
     {
         parameters["ui_event_timestamp_ns"] = std::to_string(monotonic());

@@ -144,6 +144,7 @@ class SimulatorBridge : public QObject
   private:
 
     void consume(sv::client::Event event);
+    void consumeChecked(sv::client::Event event);
     void command(const QString &type, boost::json::object parameters = {});
     void beginConnection(sv::client::Endpoint endpoint, int timeoutMs, int reconnectMs,
                          int maxRetries, const QString &label);
