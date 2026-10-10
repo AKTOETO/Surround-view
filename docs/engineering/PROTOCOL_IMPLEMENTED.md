@@ -4,6 +4,8 @@
 
 ## Транспорт и кадрирование
 
+Полный каталог 18 команд и 11 сценариев подключения, применения, обработки кадров и отказов с PlantUML: [[engineering/PROTOCOL_SCENARIOS]]. Сценарии описывают текущий код; проектируемые API остаются отдельно.
+
 Один логический клиент использует две независимые stream-связи: control и data. Поддерживаются Unix domain sockets либо TCP; транспорт выбирается только конфигурацией endpoint/listeners. Клиентская библиотека сама не переключается на другой транспорт. UDP, TLS, несколько одновременных клиентов и control-only пока отсутствуют. Серверная сторона ограничена одной сессией: второй клиент не образует независимое пространство состояния.
 
 Сообщение содержит 24-байтовый префикс: ASCII `SV01`, версия 1, тип uint16, полная длина заголовка uint32, длина payload uint64, flags uint32=0; числа big-endian. За ним следуют JSON UTF-8 и binary payload. Пределы — 64 KiB header и 64 MiB payload. TCP-чтение не совпадает с границами сообщений, поэтому decoder буферизует частичные и пакетированные сообщения.
@@ -105,6 +107,8 @@ end note
 ## Команды
 
 Все команды имеют заголовок `{command_id: decimal-string, type: string, ...parameters}`. Повторный или меньший ID отклоняется как `duplicate_or_out_of_order`. ACK несёт `command_id`, `accepted`, при отказе — `reason`; состояние/результат включается в ACK. Потерянные при разрыве pending-команды получают локальную ошибку `session_lost` и автоматически не воспроизводятся после reconnect.
+
+Библиотека сериализует выдачу ID и постановку command в worker при вызовах из нескольких потоков. ID принадлежат объекту Client и не сбрасываются при reconnect; сервер проверяет порядок в пределах control connection. Пропуски после синхронной ошибки допустимы; переполнение uint64 даёт exception без wrap. Ранний reject duplicate/out-of-order не содержит полного state snapshot. Проверка конкурентного порядка — `client_command_order`.
 
 | Команда | Параметры | Эффект / отказ |
 |---|---|---|
@@ -215,4 +219,4 @@ end
 
 Несколько независимых клиентов, control-only, per-session view, config snapshot/update, subscriptions (`final_frame=false`), canvas/coverage/weights, trace stream, typed library API, UDP и двуххостовой clock mapping не реализованы. Их normative target contract — [[requirements/PROTOCOL]] и [[architecture/CLIENT_SERVER_MODEL]]. Protobuf не нужен для текущего небольшого JSON-header/binary-frame профиля: менять codec следует при появлении совместного schema/codegen требования, а не ради замены формата.
 
-Основные тесты текущего протокола: `client_lifecycle`, `client_transports`, `server_session`, `calibration_job`, `config_store`, `replay_ipc`. Пробелы: fuzz/property decoder, контрольные vectors для каждого message type, command ID overflow/wrap policy, длительный release/backpressure, cancellation race, и межмашинное TCP испытание.
+Основные тесты текущего протокола: `client_lifecycle`, `client_transports`, `client_command_order`, `server_session`, `calibration_job`, `config_store_persistence`, `replay_ipc`. Пробелы: fuzz/property decoder, контрольные vectors для каждого message type, прямой тест exhaustion uint64 (guard запрещает wrap), длительный release/backpressure, cancellation race, и межмашинное TCP испытание.

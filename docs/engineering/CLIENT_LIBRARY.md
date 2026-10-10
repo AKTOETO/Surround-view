@@ -55,6 +55,8 @@ build/sv-client-probe --unix /tmp/sv-blender --frames 3
 
 ## Каталог операций
 
+Точные серверные сценарии, их предусловия, ACK/frame ordering и отказы: [[engineering/PROTOCOL_SCENARIOS]].
+
 | API / событие | Результат / гарантия |
 |---|---|
 | `Client(Options, Handler)` | Создаёт свой Asio worker и начинает подключение; некорректные options отвергаются синхронно |
@@ -73,6 +75,8 @@ build/sv-client-probe --unix /tmp/sv-blender --frames 3
 Callback вызывается на worker библиотеки: он должен быстро передать данные своему executor/очереди. Нельзя вызывать blocking `stop()` или уничтожать Client внутри callback; это выполняет владеющий поток. Исключение потребителя перехватывается и не завершает сетевой worker. Буфер можно сохранить после release; никакой Qt/GPU-объект библиотека не создаёт.
 
 Defaults Options: timeout 2000 ms (handshake, partial message, ACK), reconnect delay 1000 ms, max_retries 10 подряд, command_capacity 64. После полной ready-сессии счётчик retries сбрасывается. Command submission, release submission, pending ACK и stream output ограничены; переполнение сообщается как synchronous exception или Error. Команды на disconnect не воспроизводятся; consumer сам решает, посылать ли новую команду. Выбор нового транспорта после ошибки не выполняется. Shutdown отменяет оставшиеся операции; callbacks после stop отсутствуют. `command`/`release` допускают передачу из потоков потребителя; `stop`/destruction должны быть сериализованы владельцем с этими вызовами.
+
+Concurrent command callers сериализуются на участке выдачи command ID, проверки размера и post в worker. Это сохраняет возрастающий wire order; заранее заданного порядка между одновременными вызовами разных потоков нет. После failed submission возможен пропуск ID. Счётчик общий для жизни Client, при reconnect не обнуляется; exhaustion uint64 выдаёт overflow_error и требует нового Client. Проверка `client_command_order` воспроизвела прежний out-of-order reject и проверяет 256 команд от восьми потоков после исправления.
 
 Handshake проверяет codec version и связывает data/session случайным token. Размеры/stride/origin/payload и IDs кадров проверяются до доставки callback. Сервер пока ждёт release 250 ms; медленный потребитель теряет data session и переподключается. Qt-адаптер автомобильного клиента ограничивает отложенные кадры 64, симулятора — 128; ACK/ошибки/lifecycle не отбрасываются из-за frame budget. Адаптер копирует QImage и возвращает release. При новой сессии сервер повторно выдаёт кадр даже на паузе. Время monotonic другого узла не вычитается из локального: GUI показывает server processing time, а physical/network latency требует отдельного clock mapping.
 
