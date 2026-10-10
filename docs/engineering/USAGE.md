@@ -525,4 +525,15 @@ python3 tests/test_joint_information.py
 ctest --test-dir build -R joint_calibration_information --output-on-failure
 ```
 
-Выполняются 12 exact joint baselines и 144 signed refits на `h=0.05 px`. Summary хранит успех/отказ каждой стороны пары, `J+ d` response, fitted intrinsics, pose responses, costs и hashes. Нынешний solver достигает evaluation limit в части order4 refits; полная nonlinear сводка включает только пары с двумя успешными знаками. Это synthetic diagnostic без production gate. Протокол и текущие результаты: [[research/CALIBRATION_COMPONENT_ATTRIBUTION_PROTOCOL]], [[validation/CALIBRATION_COMPONENT_ATTRIBUTION]].
+Выполняются 12 exact joint baselines и 144 signed refits на `h=0.05 px`. Summary хранит успех/отказ каждой стороны пары, `J+ d` response, fitted intrinsics, pose responses, costs и hashes. Это synthetic diagnostic без production gate. Протокол и sparse результаты: [[research/CALIBRATION_COMPONENT_ATTRIBUTION_PROTOCOL]], [[validation/CALIBRATION_COMPONENT_ATTRIBUTION]].
+
+Post-hoc dense LM follow-up на тех же входах запускается отдельно, чтобы отчёты не смешивали solver paths:
+
+```bash
+python3 tools/configurator.py compare-attribution --solver lm \
+  --output artifacts/calibration-attribution-lm-repeat
+MPLCONFIGDIR=/tmp/sv-mpl python3 docs/diploma/plot_calibration_attribution.py \
+  --results artifacts/calibration-attribution-lm-repeat --suffix _lm
+```
+
+Без `--solver` используется sparse TRF/LSMR. Follow-up выбран после наблюдения failures и не является независимой solver comparison или production recommendation: [[validation/CALIBRATION_COMPONENT_SOLVER]].

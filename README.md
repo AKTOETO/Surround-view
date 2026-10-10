@@ -22,6 +22,7 @@
 - [Карта документации и правила её ведения](docs/README.md).
 - [Тема, цель и задачи](docs/research/TOPIC.md).
 - [Источники и порядок чтения](docs/references/README.md).
+- [Совместная калибровка: Jacobian, uncertainty и solver ablation](docs/validation/JOINT_CALIBRATION_INFORMATION.md), [атрибуция camera/pose](docs/validation/CALIBRATION_COMPONENT_ATTRIBUTION.md), [сходимость solver](docs/validation/CALIBRATION_COMPONENT_SOLVER.md).
 - [Архитектура](docs/architecture/SYSTEM.md).
 - [Подробный план реализации](docs/planning/ROADMAP.md).
 

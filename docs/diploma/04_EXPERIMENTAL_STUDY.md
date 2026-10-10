@@ -1191,19 +1191,42 @@ $$\Delta q_{lin}=\arg\min_z\|Jz-d\|_2^2=J^+d,$$
 
 Изменение общего x координат почти полностью эквивалентно изменению $c_x$: ответ равен 1.0 px/px с максимальной относительной L2-разностью linear/nonlinear response 0.0023%; nuisance poses почти не меняются. Для radial field механизм зависит от порядка модели: order 2 в основном объясняет его переоценкой board poses, а order 4 — параметрами камеры. Для tangential и random fields основную часть ответа поглощают poses, причём их физический RMS изменения на h=0.05 px зависит от профиля/модели. Поэтому один общий corner RMS не показывает, какой параметр будет смещён.
 
-Результат nonlinear части пока ограничен сходимостью. Из 144 individual fits успешны 110; 34 достигли лимита 750 evaluations, все относятся к order 4. Из 72 direction pairs 21 неполная, 18 таких пар относятся к `small_front`. Все failure statuses и последние итерации сохранены. У них residual RMS 0.0041–0.0348 px, но малый остаток не компенсирует неуспешный solver status. Поэтому linear attribution представлена для всех 72 pairs; nonlinear component conclusions относятся лишь к успешному подмножеству, особенно слабому для order4/small_front. Линейный прогноз и успешные fits близки в норме параметрического response: median relative L2 mismatch составляет 0.18–0.59% для order2 полей, 0.21–2.49% для успешных не-random order4 pairs и 3.45% для successful random/order4 pairs. Максимум среди успешных random/order4 — 7.16%.
+Первичный nonlinear результат был ограничен сходимостью sparse TRF/LSMR; отдельная solver ablation и полный повтор приведены в §4.38. Исходные failures сохранены, поэтому исходный результат не подменяется постфактум.
 
 ![Отклонение joint fit от полного-Jacobian прогноза](figures/experiments/calibration_component_linearization_error.png)
 
 *Рисунок 4.43 — Relative L2 mismatch между нелинейной central difference и $J^+D$, только для complete pairs. Недостающие пары отражены в предыдущем рисунке меньшим n и в отчёте перечислены поимённо.*
 
-Это exploratory переанализ прежних synthetic scenes. Среди открытых задач — объяснить/исправить order4 convergence, затем повторить замороженные pairs, проверить signed attribution на новых captures, robust/noise conditions и физических target geometry. Данные не включают повторное raster/detector обнаружение или автомобильные extrinsic perturbations и не применяются к server gate. Полная детализация и ограничения: [[validation/CALIBRATION_COMPONENT_ATTRIBUTION]]. Реализованный linear known-answer shift control добавлен в `tests/test_joint_information.py`.
+Это exploratory переанализ прежних synthetic scenes. Данные не включают повторное raster/detector обнаружение или автомобильные extrinsic perturbations и не применяются к server gate. Полная детализация: [[validation/CALIBRATION_COMPONENT_ATTRIBUTION]]. Реализованный linear known-answer shift control добавлен в `tests/test_joint_information.py`.
+
+## 4.38 Сходимость нелинейной атрибуции: сравнение solver paths
+
+Поскольку 34 из 144 первых signed refits достигли лимита оценок функции, до нового вывода была зафиксирована отдельная ablation: те же 12 matched cases, те же шесть полей и амплитуда ±0.05 px, но dense Levenberg–Marquardt с трёхточечной конечной разностью. Метод сохраняет loss, tolerances и предел 750 evaluations; меняется solver path и использование плотного Jacobian вместо sparse TRF/LSMR.
+
+| Solver path | Сошедшиеся fits | Complete pairs | Число evaluations |
+|---|---:|---:|---:|
+| Sparse TRF/LSMR, первичная серия | 110/144 | 51/72 | до лимита 750; 34 отказа |
+| Dense LM, post-hoc follow-up | 144/144 | 72/72 | 3–6 |
+
+На общей подвыборке 51 пары медианное абсолютное расхождение доли intrinsics между методами равно 0.00010, максимум — 0.0253. Это указывает, что успешные исходные fits согласованы с повтором в данных cases; post-hoc выбор LM и синтетическая природа данных не позволяют считать его независимым подтверждением.
+
+![Доли ответа камеры и поз при dense LM](figures/experiments/calibration_component_attribution_lm.png)
+
+*Рисунок 4.44 — Линейный `J⁺d` и нелинейный симметричный response при dense LM для всех 72 направлений; каждая пара ±h сошлась.*
+
+![Погрешность локального линейного прогноза](figures/experiments/calibration_component_linearization_error_lm.png)
+
+*Рисунок 4.45 — Относительная L2-разность между нелинейным LM response и `J⁺d`. Медиана — 0.0139%, максимум — 0.629%; это согласие локального приближения на искусственной амплитуде, не метрика точности модели.*
+
+Контроль общего сдвига даёт `dcx/dh = 1 px/px`. Доля ответа intrinsics для radial поля составляет 0.060 при order 2 и 0.996 при order 4; для tangential — 0.019 и 0.081, для seeded random — 0.011 и 0.107. Значения зависят от нормировки параметров и не являются физическим разделением ошибки.
+
+Это объясняет, почему первый sparse TRF запуск оставил неполные пары на этих synthetic inputs, но не доказывает превосходство LM в общем случае. Исследование остаётся exploratory и не заменяет production OpenCV calibrator. Детали, хеши и ограничения: [[validation/CALIBRATION_COMPONENT_SOLVER]].
 
 ## Предварительные выводы по четвёртой главе
 
 1. **Экспериментальная инфраструктура сшивки:** реализованы offline-варианты fusion и carrier matrix; исправленные binary graph-cut и output proxies проверены на fixtures, добавлен парный 3-frame Blender clip (§4.25). Качество методов на holdout scenes и object-correspondence ghost truth пока не подтверждено.
 2. **Scene Truth/GPU checks:** получены числа на конкретном синтетическом fixture и CPU/GPU sample. Они характеризуют только этот тест и не заменяют испытания реальной сцены/камер.
-3. **Калибровочное ядро:** реализованы синтетические эксперименты Joint Bundle Adjustment и server calibration gate. Сопоставление моделей и пороги требуют независимых данных; историческая jitter-модель не оценивает detector, новые image-based серии выполняют OpenCV на синтетических PNG (§4.29, §4.31–4.37). Full joint Jacobian имеет полный ранг на 12 selected cases; order 4 имеет худшую обусловленность, а локальная uncertainty зависит от принятой covariance model. Направленные UV errors по-разному делятся между intrinsics и позами, но часть order4 joint-refits не сошлась и требует доработки. Peripheral views уменьшают часть ошибок экстраполяции, но ни angular coverage, ни конкретная комбинация размера/наклона не гарантируют точной реконструкции плоскости.
+3. **Калибровочное ядро:** реализованы синтетические эксперименты Joint Bundle Adjustment и server calibration gate. Сопоставление моделей и пороги требуют независимых данных; историческая jitter-модель не оценивает detector, новые image-based серии выполняют OpenCV на синтетических PNG (§4.29, §4.31–4.38). Full joint Jacobian имеет полный ранг на 12 selected cases; order 4 имеет худшую обусловленность, а локальная uncertainty зависит от принятой covariance model. Направленные UV errors по-разному делятся между intrinsics и позами. Sparse TRF сошёлся в 110/144 refits, dense LM follow-up — в 144/144 на тех же synthetic inputs; это исследовательский результат, не production-рекомендация. Peripheral views уменьшают часть ошибок экстраполяции, но ни angular coverage, ни конкретная комбинация размера/наклона не гарантируют точной реконструкции плоскости.
 
 Таким образом, перечислены достигнутые этапы реализации и проверок на синтетике; качество сшивки, перенос на физическую оптику и физическая обоснованность Quality Gate остаются открытыми.
 

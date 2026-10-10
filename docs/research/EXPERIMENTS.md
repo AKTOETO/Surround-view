@@ -115,4 +115,8 @@ GPU execution time измерять асинхронными timer queries, CPU 
 
 ## E-CAL-attribution-01 — 10.10.2026
 
-[[validation/CALIBRATION_COMPONENT_ATTRIBUTION]]: 12 cases × 6 equal-RMS fields, full-Jacobian `J+ d` predictions and ±0.05 px nonlinear joint refits. Known-answer `shift_x` maps to cx at 1 px/px. Intrinsic/pose response differs by direction and polynomial order: radial order2 is mainly explained by board poses, radial order4 by intrinsics in the linear model. 110/144 individual refits converged; all 34 failures are order4, hence nonlinear conclusions are partial and explicitly selection-limited. Source hashes and failures preserved. Next: solver convergence, then independent/physical validation.
+[[validation/CALIBRATION_COMPONENT_ATTRIBUTION]]: 12 cases × 6 equal-RMS fields, full-Jacobian `J+ d` predictions and ±0.05 px nonlinear joint refits. Known-answer `shift_x` maps to cx at 1 px/px. Intrinsic/pose response differs by direction and polynomial order. Первичный sparse TRF runner сошёлся в 110/144 fits; исходные failures сохранены.
+
+## E-CAL-attribution-solver-01 — 10.10.2026
+
+[[validation/CALIBRATION_COMPONENT_SOLVER]]: после отдельной фиксации ablation protocol dense SciPy LM пересчитал те же 144 signed refits; сошлись 144/144 за 3–6 evaluations, против 110/144 у sparse TRF/LSMR. На 51 общих complete pairs median difference intrinsic share 0.00010, max 0.0253. Все исходы и source hashes сохранены. Post-hoc synthetic solver-path study объясняет неполноту первого runner, но не является production solver comparison или physical evidence.
