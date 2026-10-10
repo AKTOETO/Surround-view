@@ -20,11 +20,11 @@
 
 ## Переключение fusion во время работы: fusion_runtime_v1
 
-Handshake объявляет `fusion_runtime_v1`. Это первый реализованный срез исследовательского runtime, не общий ConfigService и не сценарный исполнитель. Сервер сохраняет все три текущих GPU-режима; для переключения не требуется перезапуск, повторный upload камер или rebuild сетки.
+Handshake объявляет `fusion_runtime_v1`. Это первый реализованный срез исследовательского runtime, не общий ConfigService. Поверх него реализован application-level paused-frame runner через sv-client-lib: [[validation/RESEARCH_RUNTIME]]. Сервер сохраняет все три текущих GPU-режима; для переключения не требуется перезапуск, повторный upload камер или rebuild сетки.
 
 | Команда / поле | Контракт |
 |---|---|
-| `fusion_catalog` | Read-only ACK с `fusion_catalog`: version=1, modes, diagnostics, пределы параметров и temporary persistence |
+| `fusion_catalog` | Read-only ACK с `fusion_catalog`: version=1, modes, diagnostics, пределы параметров, temporary persistence, backend/GL device и server source revision/fingerprint |
 | `configure_fusion` | Обязательные `base_config_revision` (decimal string) и `fusion` (object); полностью заменяет fusion-секцию, пропущенные необязательные поля получают defaults |
 | `fusion.mode` | `edge_feather`, `hard_best_angle`, `angular_feather` |
 | `fusion.diagnostic` | `color` (default), `coverage`, `weights` |
@@ -76,7 +76,7 @@ end note
 
 | Команда | Параметры | Эффект / отказ |
 |---|---|---|
-| `state` | нет | Read-only view, fusion, pause и revision |
+| `state` | нет | Read-only view, fusion, source_type, pause и state/config revisions |
 | `orbit` | `azimuth_delta_rad`, `elevation_delta_rad` | Изменение virtual view с ограничением elevation и проверкой clearance |
 | `zoom` | `distance_delta_m` | Изменение дистанции, диапазон 6–18 m |
 | `preset` | `name=top/front/rear` | Переключение стандартного ракурса; иначе `unknown_preset` |

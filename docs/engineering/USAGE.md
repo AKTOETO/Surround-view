@@ -553,3 +553,31 @@ build/svctl --unix /tmp/sv-prototype command configure_fusion --params '{"base_c
 Для удалённого сервера заменить `--unix /tmp/sv-prototype` на `--tcp HOST CONTROL_PORT DATA_PORT` с endpoint из конфигурации сервера. Текущий сервер обслуживает одну сессию: перед отдельным CLI-клиентом отключить simulator/другой клиент. Для каждого следующего изменения использовать новую `config_revision`; сохранить исходный `fusion` для восстановления. Настройки временные, но persistent `apply_calibration` сохраняет весь текущий snapshot — сначала восстановить baseline. Подробности и ограничения: [[engineering/PROTOCOL_IMPLEMENTED#Переключение fusion во время работы: fusion_runtime_v1]].
 
 Для парного исследования сравнивать кадры с совпадающими input IDs при paused replay и с revision из ACK. Отдельные CLI-подключения сами по себе ещё не создают воспроизводимый сценарий и не сбрасывают временную историю.
+
+
+## Сценарное сравнение fusion через sv-client-lib
+
+Первый C++ runner доступен через `svctl research SCENARIO_JSON REPORT_JSON`; тот же application service в `examples/common/research` предназначен для будущего GUI. Нужен сервер текущей версии с replay-источником; отключить остальные клиенты, поскольку сервер пока односессионный.
+
+Подготовка минимальной записи и запуск сервера в первом терминале:
+
+```bash
+python3 tools/simulator.py --config configs/synthetic.json --output artifacts/runtime-screen/fixture --frames 12
+SV_EGL_PLATFORM=surfaceless build/sv-server --config configs/synthetic.json --manifest artifacts/runtime-screen/fixture/manifest.json --ipc-dir /tmp/sv-runtime-screen --trace artifacts/runtime-screen/server.jsonl
+```
+
+Во втором терминале:
+
+```bash
+build/svctl --unix /tmp/sv-runtime-screen research configs/research/fusion-screen.json artifacts/runtime-screen/report.json
+```
+
+Для удалённого сервера заменить endpoint на `--tcp HOST CONTROL_PORT DATA_PORT`. Scenario/report находятся у клиента; камеры/manifest для replay находятся у сервера. Не передавать один путь для scenario и report. Exit 0 означает успешную серию и восстановление; exit 4 — failed/interrupted report, exit 3 — ошибка ввода/соединения/записи отчёта. При failed report проверить `restore_error`; при невозможности восстановления восстановить настройки вручную или перезапустить сервер с исходным конфигом.
+
+Сценарий содержит `schema_version=1`, `seed`, `warmup` (0..100), `repeats` (1..1000), список `variants` (1..32) с fusion settings. Общий бюджет — не более 10000 кадров. Warmup задаёт число полных прогревочных блоков; каждый блок содержит все варианты в перемешанном порядке. Пример выполняет 2 прогревочных и 7 измерительных блоков для трёх режимов, всего 27 кадров. Порядок воспроизводим в той же реализации стандартной библиотеки; фактический порядок всегда записан в samples, переносимость `std::shuffle` между STL не обещается.
+
+Runner сохраняет исходные fusion/pause, останавливает replay на текущем READY frame set, для каждого варианта применяет весь fusion и ждёт соответствующую state revision. Сверяются input IDs, frame-set ID и настройки. Отчёт включает исходное состояние, actual catalog/backend/server fingerprint, нормализованный scenario SHA-256, raw metadata/RGBA SHA-256 каждого кадра и p50/p95 стадий без warmup (nearest-rank percentile). После серии восстанавливаются fusion, исходный RGB и pause/resume. Повторный replay не запускается: сравнение относится к текущему остановленному набору.
+
+Это **screen механизма управления и warm-render стоимости**, а не финальное исследование качества/FPS: нет independent truth, dataset content registry, seek/reset истории или нового кадра на каждый sample. Задержка очереди/control и 16 ms limiter не включаются в `render_wall`; отсутствие захвата/decode/upload делает результаты несопоставимыми с sustained pipeline throughput. Прогрев чередующихся вариантов не измеряет cold-cache стоимость. Нужны последующие live/replay-sequence сценарии и независимые сцены.
+
+При отмене через C++ service (`atomic_bool`, проверка между trials) либо исключении progress callback выполняется попытка restore. `Ctrl+C` CLI/kill процесса, падение ноутбука и разрыв control **не гарантируют** restore: серверного lease/watchdog ещё нет. Автоматические retries мутаций отключены; failed restore явно фиксируется. Отчёт записывается по завершении, durable checkpoint пока отсутствует. Persistent calibration apply во время этого опыта не выполнять.

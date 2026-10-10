@@ -507,3 +507,48 @@ end
 Интеграционная проверка останавливает replay, переключает каждый режим и сверяет идентичность входных frame IDs, отсутствие повторных upload/mesh rebuild, а также версию и параметры результата. После восстановления полного исходного fusion проверяется побайтовое совпадение RGB; дополнительно проверяются неизвестные поля, недопустимые параметры и stale revision. GTest проверяет валидацию и отсутствие записи temporary snapshot в файл. Эти проверки доказывают механизм управления, но не превосходство алгоритмов и не их целевую производительность.
 
 Настройки не сохраняются командой `configure_fusion`; они доступны до последующих изменений/завершения сервера. Существующее persistent применение калибровки сохраняет весь актуальный snapshot, поэтому в этой версии требуется восстановление baseline до него. Автоматический rollback при disconnect, lease, history reset, общий ConfigService и GUI сценариев остаются следующими этапами. Полный контракт: [[engineering/PROTOCOL_IMPLEMENTED]], план: [[architecture/RESEARCH_RUNTIME]].
+
+
+## 3.20 Декларативный сценарий сравнения серверных реализаций
+
+Общий application service `examples/common/research` отделён от Qt и CLI. `svctl research` читает версионированный JSON и вызывает этот сервис; будущий GUI сможет вызывать его в рабочем потоке с callback прогресса и cancellation token. Сервис общается с сервером только через `sv-client-lib`, не читает и не переписывает server config. Строгая схема запрещает неизвестные поля и исполняемые команды, ограничивает количество вариантов и кадров.
+
+Первый сценарий сравнивает режимы fusion на текущем остановленном READY frame set. На каждом полном блоке порядок вариантов перемешивается с фиксированным seed; измерительные блоки следуют после прогревочных. Применение каждого профиля подтверждается ACK, а получение нужного результата проверяется по state/config revision, actual fusion и input IDs. RGBA SHA-256 позволяет проверить повторяемость каждого профиля и восстановление исходного изображения. Для настоящего парного опыта с последовательностями далее требуется reset/seek временной истории и одинаковый набор кадров для всех методов.
+
+```plantuml
+@startuml
+actor "Исследователь" as U
+participant "svctl / будущий GUI" as A
+participant "Общий C++ ResearchRunner" as E
+participant "sv-client-lib" as L
+participant "sv-server" as S
+U -> A : scenario JSON / endpoint / report path
+A -> E : parse + run
+E -> L : discovery + state
+L -> S : fusion_catalog / state
+S --> E : catalog + baseline state через библиотеку
+E -> L : pause и ожидание matching frame
+loop warmup и measurement blocks
+  E -> E : shuffle полного набора variants
+  loop каждый вариант
+    E -> L : configure_fusion(base revision, settings)
+    L -> S : command
+    S --> E : ACK + matching RGBA через библиотеку
+    E -> E : проверить inputs/settings; сохранить metadata/hash
+  end
+end
+E -> L : restore исходного fusion и pause/resume
+L -> S : revision-checked commands
+S --> E : проверяемый восстановленный кадр
+E --> A : success/failure + restore status + raw report
+A --> U : JSON report
+@enduml
+```
+
+*Рисунок 3.20 — Сценарное управление существующими серверными алгоритмами. Независимая оценка качества и GUI пока не подключены.*
+
+Отчёт содержит нормализованный сценарий и его SHA-256, исходное состояние, GPU/backend, revision и fingerprint серверных исходников, фактический порядок вариантов, метаданные и хеши кадров. p50/p95 вычисляются nearest-rank методом отдельно для каждого варианта, исключая warmup; raw samples сохраняются. На столь малой выборке квантили описательны и не дают доказательства устойчивого преимущества.
+
+Принципиальное ограничение — warm-render одного набора: нет новых capture/decode/upload для каждого sample. Поэтому эти значения не превращаются в оценку sustained FPS и не смешиваются с live pipeline performance. Input IDs не заменяют content hashes независимого dataset. Сравнение качества требует отдельного evaluator с Blender/physical truth, заранее выбранных метрик и новых сцен.
+
+Контрактные тесты проверяют схему и бюджет; Unix/TCP интеграция использует настоящие библиотеку и сервер, сверяет полные блоки, inputs, hashes и неизменность config file. Native GTest на живом endpoint проверяет cancel и исключение progress callback после первого кадра с успешным restore. Потеря связи или завершение процесса могут помешать восстановлению; report отмечает restore failure, а серверный lease/watchdog остаётся необходимым следующим этапом. Подробная приёмка: [[validation/RESEARCH_RUNTIME]].
