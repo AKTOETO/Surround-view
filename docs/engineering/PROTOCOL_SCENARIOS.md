@@ -159,6 +159,8 @@ Active lease пропускает read-only state/catalog/calibration_status; м
 
 ## С07. Калибровочная job, отмена и применение
 
+`camera_id` проверяется как JSON integer 0..3 до сужения типа. XYZ/UV принимают конечные JSON integers/doubles без приведения bool/string. Пример `camera_id=4294967296` должен отклоняться, а координата `0` должна иметь тот же смысл, что `0.0`. Точные причины numeric rejects: [[engineering/PROTOCOL_IMPLEMENTED#Команды]]. Эти проверки предшествуют выделению job ID.
+
 Порядок: `calibrate` с train/held-out observations и provenance → ACK `job_id` → polling `calibration_status` → решение оператора → `apply_calibration` либо отмена. Подробная sequence diagram и точные validation требования: [[engineering/PROTOCOL_IMPLEMENTED#Команды]]. Все job операции проверяют владельца session; reconnect не переносит владение job.
 
 ACK calibrate означает постановку задания, а не завершение solver и не применение калибровки. Cancellation кооперативная: текущий вызов OpenCV заканчивается, результат после отмены не применяется. Read-only status не сохраняет файл. Apply требует completed job, предварительного held-out gate и актуальной base config revision; сервер сначала готовит renderer, затем атомарно сохраняет snapshot и публикует активную пару. При отказе сохраняется прежняя конфигурация. Применение временных fusion/surface через persistent snapshot — ограничение С05.
@@ -235,7 +237,7 @@ Stopped --> [*]
 | С01–С04, С08–С09 | `client_lifecycle`, `client_transports`, `replay_ipc`, `server_session` |
 | С05 | `render_fusion_parity`, `native_fusion_parity`, runtime GUI probes внутри `client_transports` |
 | С06 | `experiment_lease`, `experiment_watchdog`, `research_scenarios`, lease/runtime checks внутри `client_transports` |
-| С07 | `calibration_job`, `calibration_observations`, `config_store_persistence`, provenance checks внутри `replay_ipc` |
+| С07 | `command_parameters`, `calibration_job`, `calibration_observations`, `config_store_persistence`, provenance/numeric checks внутри `replay_ipc` |
 | С08, С10 | `client_release_budget`, `client_command_order` |
 | С11 | `client_lifecycle` и cleanup остальных library suites |
 

@@ -4,6 +4,18 @@
 
 ## Реализация
 
+### Дополнение 11.10.2026: числовой входной контракт
+
+Исправлены два дефекта wire parser перед job manager. Он требовал `as_double()` для XYZ/UV и отклонял корректные целые JSON числа. Кроме того, проверка camera_id выполнялась после `int64 → int`: на проверенном Linux `4294967296` превращалось в индекс 0, а `4294967297` — в 1. До исправления настоящий сервер создал две jobs вместо reject; расширенный `replay_ipc` воспроизвёл оба случая.
+
+`src/apps/command_parameters.hpp` теперь отделяет конечную геометрию от строгих индексов. Geometry принимает int64/uint64/double; bool/string/null/collections не конвертируются. Camera index проверяется в исходном целочисленном типе и только затем сужается. Общий helper применяется к train/validation XYZ/UV и вещественным view commands. Схема SV01, provenance, solver и gate не изменены.
+
+Новый C++ GTest `command_parameters` проверяет три numeric representations, uint64 max для вещественной геометрии, nonfinite values, неподходящие типы и индексные границы до сужения. Интеграционный `replay_ipc` проверяет восемь недопустимых camera IDs и четыре неверных типа в train/validation XYZ/UV: reject без job ID и без изменения config/state revisions. Затем два численно одинаковых запроса — исходный double и mixed integer/double — завершают calibration jobs с quality accepted и совпадающими train/validation/max-error метриками до 9 десятичных знаков. Это проверка представления входных данных, не независимый опыт качества калибровки. NaN/Inf проверяются напрямую в native helper; тест не заявляет передачу этих нестандартных JSON токенов по wire.
+
+### Проверка provenance и разделения наблюдений
+
+После numeric fix полная сборка успешна; `ctest --test-dir build --output-on-failure -j4` — **50/50**, 18.42 s, 11.10.2026. Отдельный targeted запуск `command_parameters|replay_ipc` также прошёл. Данные ниже описывают прежнюю проверку разделения observations; результаты numeric regression не расширяют её выводы о независимости измерений.
+
 `include/sv/calibration_observations.hpp` задаёт логические подструктуры provenance/split/audit. `src/vision/calibration_observations.cpp` разбирает wire metadata и проверяет содержимое. `CalibrationJobManager::submit_job` всегда вызывает validator до блокировки очереди, выделения job ID и вызова calibrator; прямой C++ вызов также обязан передать provenance. Некорректная job не занимает очередь и не меняет конфигурацию.
 
 Условия: по 6..10000 соответствий, одна observation/frame запись на XYZ/UV пару, ограниченные непустые IDs, finite XYZ/UV, valid pixels, уникальные observation IDs. Frame IDs могут повторяться внутри split для разных углов одного снимка, но train/validation frame sets не пересекаются. Точные одинаковые пятёрки `(X,Y,Z,u,v)` не допускаются даже под разными labels. Повторное измерение одной XYZ точки с другим UV и frame ID допустимо. Сравнение exact-content выполняется через ordered set конечных значений: порядок массива и переименование IDs не скрывают точную копию; near duplicates не выявляются.
