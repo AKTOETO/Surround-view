@@ -1,0 +1,38 @@
+{
+  "scenario": {
+    "schema_version": 1,
+    "seed": 15,
+    "split": "validation",
+    "mounts": {
+      "yaw_deg": 0,
+      "pitch_deg": 0,
+      "along_body_m": 0
+    }
+  },
+  "target": {
+    "center_m": [4.0, -1.2, 0.9],
+    "size_m": [0.55, 0.55, 1.8],
+    "motion_positions_m": [
+      [4.0, -1.2, 0.9],
+      [4.0, -0.9, 0.9],
+      [4.0, -0.6, 0.9],
+      [4.0, -0.3, 0.9],
+      [4.0, 0.0, 0.9],
+      [4.0, 0.3, 0.9],
+      [4.0, 0.6, 0.9],
+      [4.0, 0.9, 0.9],
+      [4.0, 1.2, 0.9]
+    ],
+    "linear_rgb": [1, 0, 1],
+    "chroma_threshold": 0.15,
+    "min_component_pixels": 8
+  },
+  "capture": {
+    "frames": 9,
+    "face_size": 256,
+    "frame_step": 3,
+    "width": 320,
+    "height": 180,
+    "source_ids": true
+  }
+}
