@@ -45,7 +45,7 @@ ctest --test-dir build -R '^(experiment_lease|experiment_watchdog|research_scena
 
 ## Расширение серверных алгоритмов и геометрии
 
-Четыре native fusion-кандидата и temporary surface apply добавлены и проверены: [[validation/NATIVE_FUSION]]. Unix/TCP сценарий теперь включает 7 вариантов, 21 sample (7 warmup/14 measurement), explicit cube и baseline surface. Rollback при expiry/disconnect покрывает геометрию. Предыдущий 6-entry прогон выше — исторический; текущая полная регрессия — 43/43 entries.
+Четыре native fusion-кандидата и temporary surface apply добавлены и проверены: [[validation/NATIVE_FUSION]]. Unix/TCP сценарий теперь включает 7 вариантов, 21 sample (7 warmup/14 measurement), explicit cube и baseline surface. Rollback при expiry/disconnect покрывает геометрию. Предыдущий 6-entry прогон выше — исторический; на этом этапе полная регрессия составляла 43/43 entries (исторический прогон).
 
 ## GUI runtime adapter без Python
 
@@ -57,3 +57,17 @@ C++ GTest `sv-simulator-runtime-tests`, запускаемый из `client_tran
 cmake --build build
 ctest --test-dir build -R 'client_transports|simulator_ipc_discovery' --output-on-failure
 ```
+
+### Ошибки клиентской очереди и доставка GUI событий
+
+Локальный отказ `Client::command` может приходить как `Event::Error` с command_id, без серверного ACK. `RuntimeSettings::commandFailed` сопоставляет ID и снимает pending; чужая ошибка не завершает текущую операцию. Сообщение «запрос не подтверждён» не утверждает, что сервер отклонил или не применил изменение: при session_lost исход может быть неизвестен. Автоматического повторения команды нет.
+
+Отдельный C++ GTest/CTest `simulator_runtime_errors` воспроизводит настоящий `not_ready_or_queue_full` из библиотеки после неудачного подключения, проверяет выход из pending, сохранение снимка и игнорирование другого command_id. Он запускается без сервера; это не fault injection переполнения очереди работающего сервера.
+
+Оба Qt GUI теперь ограничивают очередь кадров отдельно от управляющих событий: ACK, Error и lifecycle не отбрасываются из-за заполнения frame budget. Отброшенный кадр освобождается через библиотеку; публикация weak client reference между constructor/worker защищена mutex. Это не квалификация длительного overload или отдельного жёсткого лимита GUI control mailbox. Диагностика GUI показывает config_revision, а не state_revision в поле конфигурации.
+
+```sh
+ctest --test-dir build -R 'simulator_runtime_errors|client_transports|client_lifecycle' --output-on-failure
+```
+
+Проверка 10.10.2026: полная сборка `cmake --build build -j4` успешна; `ctest --test-dir build --output-on-failure` — **45/45**, 58.05 s. Unix/TCP GUI/native adapter regression включён в client_transports; simulator_runtime_errors проверяет локальный отказ. Это Linux/loopback/offscreen результат, не подтверждение длительного overload, реального экрана или Авроры.

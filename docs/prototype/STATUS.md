@@ -108,3 +108,5 @@ Native fusion/parity и runtime geometry: [[validation/NATIVE_FUSION]]. Binary c
 ## Нативный путь настройки из симулятора
 
 В `sv-simulator` добавлен отдельный C++ `RuntimeSettings` adapter и QML редактор fusion/surface: чтение state/catalog, полный JSON-снимок, revision-aware apply через типизированные методы `sv-client-lib`, отображение server ACK/rejection. Изменения временные; записи server config из клиента нет. Черновики привязаны к загруженной ревизии и сбрасываются при переподключении. Это не полный ConfigService и не GUI сценариев. Политика дальнейшего переноса продуктовых Python workflows: [[architecture/CLIENT_SERVER_MODEL]].
+
+Исправления GUI runtime: локальные Error с command_id завершают pending без ожидания ACK; чужой ID игнорируется. В обоих Qt клиентах заполненный frame budget больше не удаляет ACK/ошибки/lifecycle; отброшенные кадры освобождаются. Публикация weak reference в callback защищена mutex. Поле ревизии конфигурации теперь использует config_revision. Новый C++ regression `simulator_runtime_errors` и ограничения overload проверки описаны в [[validation/RESEARCH_RUNTIME]].

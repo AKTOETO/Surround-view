@@ -45,3 +45,5 @@ The current server protocol does not expose arbitrary config read/update, source
 ## Verification limits
 
 The GUI and visual driving preview have been compiled/smoke-tested on Linux. Remote two-host operation, Aurora, physical cameras, and using the driving preview as a live camera producer have not been accepted. Read [[engineering/CLIENT_LIBRARY]], [[engineering/USAGE]], and [[architecture/CLIENT_SERVER_MODEL]] for the current protocol boundary.
+
+Runtime command errors reported locally by the client library also end the pending operation. They are displayed as an unconfirmed request, not as a server rejection; mutations are never retried automatically. A lost session can have an unknown mutation outcome. Frame queue limits do not discard command acknowledgements or connection lifecycle events. The separate C++ regression is available as `ctest --test-dir build -R simulator_runtime_errors --output-on-failure`.
