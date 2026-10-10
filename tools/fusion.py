@@ -52,8 +52,9 @@ def compute_graph_cut_seam_mask(colors, validity, smoothness_weight=0.1):
 
     The unary term prefers samples farther from each camera's validity boundary. The
     pairwise Potts cost is lower where the two source colors agree, so a seam can pass
-    through those pixels. Three- and four-camera overlaps use the centrality unary.
-    This is a set of pairwise binary cuts, not a global four-label alpha-expansion.
+    through those pixels. In 3+ camera overlaps, maximum-centrality labels are used;
+    exact centrality ties share weight uniformly, avoiding a camera-index preference.
+    This is not a global multi-label optimization.
     """
     H, W, num_cams, C = colors.shape
     if colors.ndim != 4 or validity.shape != (H, W, num_cams):
@@ -140,6 +141,23 @@ def compute_graph_cut_seam_mask(colors, validity, smoothness_weight=0.1):
     seam_weights = np.zeros((H, W, num_cams), dtype=np.float32)
     for i in range(num_cams):
         seam_weights[..., i] = (winner == i) & validity[..., i]
+
+    # The fallback for 3+ overlaps has no multi-label energy. Equal centrality
+    # should not privilege whichever camera happens to have the smallest index.
+    multi_overlap = coverage >= 3
+    if np.any(multi_overlap):
+        maximum_distance = np.max(np.where(validity, distances, -np.inf), axis=-1, keepdims=True)
+        centrality_ties = validity & np.isclose(
+            distances, maximum_distance, rtol=1e-6, atol=1e-6
+        )
+        tie_count = np.sum(centrality_ties, axis=-1, keepdims=True)
+        centrality_weights = np.divide(
+            centrality_ties,
+            tie_count,
+            out=np.zeros_like(distances, dtype=np.float32),
+            where=tie_count > 0,
+        )
+        seam_weights[multi_overlap] = centrality_weights[multi_overlap]
         
     return seam_weights
 

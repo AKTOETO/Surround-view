@@ -84,12 +84,15 @@ class StitchFusionTests(unittest.TestCase):
             has_cov = np.sum(self.validity, axis=-1) > 0
             np.testing.assert_allclose(weight_sum[has_cov], 1.0, atol=1e-5)
 
-    def test_graph_cut_produces_binary_valid_labels(self):
+    def test_graph_cut_is_binary_in_one_and_two_camera_regions(self):
         weights = compute_graph_cut_seam_mask(self.colors, self.validity)
         self.assertEqual(weights.shape, (self.H, self.W, 4))
-        has_cov = np.sum(self.validity, axis=-1) > 0
-        self.assertTrue(np.all(np.isin(weights[has_cov], [0.0, 1.0])))
+        coverage = np.sum(self.validity, axis=-1)
+        has_cov = coverage > 0
+        binary_region = has_cov & (coverage <= 2)
+        self.assertTrue(np.all(np.isin(weights[binary_region], [0.0, 1.0])))
         np.testing.assert_allclose(np.sum(weights[has_cov], axis=-1), 1.0)
+        self.assertTrue(np.all(weights[~self.validity] == 0.0))
 
     def test_graph_cut_places_seam_in_low_source_disagreement_corridor(self):
         height, width = 32, 48
@@ -182,11 +185,27 @@ class StitchFusionTests(unittest.TestCase):
             ], axis=-1)
             centrality_winner = np.argmax(np.where(validity, distances, -1.0), axis=-1)
             fallback = validity.sum(axis=-1) >= 3
-            labels = np.argmax(compute_graph_cut_seam_mask(colors, validity), axis=-1)
+            weights = compute_graph_cut_seam_mask(colors, validity)
 
             self.assertTrue(fallback.any())
-            np.testing.assert_array_equal(labels[fallback], centrality_winner[fallback])
-            self.assertEqual(int(centrality_winner[5, 5]), camera_count - 1)
+            maximum = np.max(np.where(validity, distances, -np.inf), axis=-1, keepdims=True)
+            tied = validity & np.isclose(distances, maximum, rtol=1e-6, atol=1e-6)
+            tie_count = tied.sum(axis=-1, keepdims=True)
+            expected = np.divide(tied, tie_count, out=np.zeros_like(distances),
+                                 where=tie_count > 0)
+            np.testing.assert_allclose(weights[fallback], expected[fallback])
+            unique = fallback & (tied.sum(axis=-1) == 1)
+            np.testing.assert_array_equal(np.argmax(weights[unique], axis=-1),
+                                          centrality_winner[unique])
+
+    def test_multi_overlap_centrality_ties_are_camera_permutation_invariant(self):
+        validity = np.ones((7, 7, 4), dtype=bool)
+        colors = np.random.default_rng(812).random((7, 7, 4, 3), dtype=np.float32)
+        order = np.array([2, 0, 3, 1])
+        original = compute_graph_cut_seam_mask(colors, validity)
+        permuted = compute_graph_cut_seam_mask(colors[..., order, :], validity[..., order])
+        np.testing.assert_allclose(permuted, original[..., order], atol=0, rtol=0)
+        np.testing.assert_allclose(original, np.full_like(original, 0.25))
 
     def test_burger_like_carrier_intersection(self):
         burger_surface = {
