@@ -62,7 +62,7 @@ build/sv-client-probe --unix /tmp/sv-blender --frames 3
 | `Client(Options, Handler)` | Создаёт свой Asio worker и начинает подключение; некорректные options отвергаются синхронно |
 | `state()` | Авторитетные paused/view/fusion/revision в ACK без изменения revision |
 | `orbit(azimuth_delta_rad, elevation_delta_rad)`, `zoom(distance_delta_m)`, `preset(name)` | Command ID; сервер применяет допустимый ракурс или возвращает reject |
-| `pause()`, `resume()`, `step()` | Управление replay; step переводит на один следующий набор и сохраняет паузу |
+| `pause()`, `resume()`, `step(lease_id = {})` | Управление replay; step переводит на один следующий набор и сохраняет паузу |
 | `command(type, parameters)` | Общая точка доступа к опубликованным командам, включая будущие; unsupported command возвращает reject |
 | State event | `connecting`, `ready`, `disconnected`, `retry_exhausted` |
 | Message event, type 2 | Hello/capabilities сервера |
@@ -119,3 +119,7 @@ GTest/CTest `client_release_budget` с TCP mock проверяет случай 
 Транспорт проверяет базовый конверт; обязательные поля прикладной диагностики дополнительно читают Qt-адаптеры. Исключение при обработке сообщения в GUI теперь останавливает соединение, очищает изображение и состояние и отображает ошибку. Симулятор допускает явное повторное подключение; автомобильный клиент после такой ошибки требует перезапуска. Обычные transport failures продолжают использовать политику reconnect библиотеки. JSON числа в углах, расстоянии и timings допускают целую и дробную запись (`0` и `0.0`). Проверки: [[validation/RESEARCH_RUNTIME]].
 
 `FusionSettings::pyramid_boundary` выбирает `zero` (default) или `normalized` для pyramid fusion. Метод `configure_fusion` опускает исторический default zero при сериализации, normalized передаёт явно. Перед новым вариантом проверить server catalog v3; сервер остаётся владельцем validation/apply. Поддержка в GUI и C++ scenario runner, численные проверки: [[validation/PYRAMID_BOUNDARY]].
+
+### Replay step в исследовательском lease
+
+`step()` сохраняет прежний wire-запрос без token. `step(lease_id)` добавляет token и допускается внутри active replay experiment; перед этим проверить hello capability `experiment_step_v1`. Token не разрешает другим владельцам мутации. Source ACK и frame для его state_revision подтверждают переход, но не обещают seek назад или reset history. Общий C++ runner поддерживает `frames`, typed capture consumer и per-frame baselines; callback вызывается только для measurement frames. Ошибка callback прерывает опыт с попыткой восстановления fusion/surface/pause: [[validation/RESEARCH_RUNTIME]].

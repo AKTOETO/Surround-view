@@ -78,7 +78,7 @@ ACK и frame идут разными streams: приложение не долж
 
 Сервер передаёт управление источнику; ACK отправляется после source control event, а не при одном помещении запроса в очередь. При ожидании source event остальные команды сохраняются для последующей обработки. Причины отказа включают `source_control_queue_full`; step для источника кроме replay — `step_unsupported_for_source`.
 
-Pause сохраняет текущий согласованный набор, но не гарантирует READY: можно остановиться на NO_INPUT/устаревшем наборе. Перед исследовательским trial проверять health и входные frame IDs. Step продвигает replay и оставляет его на паузе. Seek к произвольному кадру и сброс temporal history не реализованы. В активном lease допускаются pause/resume владельца с lease ID, но step запрещён его guard-ом.
+Pause сохраняет текущий согласованный набор, но не гарантирует READY: можно остановиться на NO_INPUT/устаревшем наборе. Перед исследовательским trial проверять health и входные frame IDs. Step продвигает replay и оставляет его на паузе. Seek к произвольному кадру и сброс temporal history не реализованы. В активном lease допускаются pause/resume владельца с lease ID, а step владельца разрешён при capability `experiment_step_v1` и действующем lease ID. Позиция replay и history не восстанавливаются.
 
 ## С05. Temporary настройка fusion и носителя
 
@@ -118,7 +118,7 @@ end note
 
 ## С06. Ограниченный исследовательский lease
 
-Предусловия: replay source, idle lease. Библиотека предоставляет acquire/renew/release, а общий C++ runner использует их для одного paused frame set. Lease хранит исходные fusion/surface/pause, но не playback cursor/изображения/temporal history.
+Предусловия: replay source, idle lease. Библиотека предоставляет acquire/renew/release, а общий C++ runner использует их для последовательности paused frame sets. Lease хранит исходные fusion/surface/pause, но не playback cursor/изображения/temporal history.
 
 ```plantuml
 @startuml
@@ -155,7 +155,7 @@ end
 
 *Рисунок ПС.3 — Lease и автоматическое восстановление. ACK release подтверждает начало recovery, не его завершение.*
 
-Active lease пропускает read-only state/catalog/calibration_status; мутации ограничены configure_fusion/configure_surface/pause/resume/renew/release владельца. Orbit, step, новые calibration jobs и persistent apply заблокированы. Старый lease ID не становится обычной мутацией после expiry. В failed состоянии проверить error и серверный журнал; не считать baseline восстановленным. Состояние deadline относится к часам сервера, его нельзя вычитать из часов ноутбука.
+Active lease пропускает read-only state/catalog/calibration_status; мутации ограничены configure_fusion/configure_surface/pause/resume/step/renew/release владельца. Orbit, новые calibration jobs и persistent apply заблокированы. Старый lease ID не становится обычной мутацией после expiry. В failed состоянии проверить error и серверный журнал; не считать baseline восстановленным. Состояние deadline относится к часам сервера, его нельзя вычитать из часов ноутбука.
 
 ## С07. Калибровочная job, отмена и применение
 
@@ -244,3 +244,47 @@ Stopped --> [*]
 | С11 | `client_lifecycle` и cleanup остальных library suites |
 
 Названия — точки входа проверок, а не утверждение о полном покрытии всех ветвей. Длительный overload, два физических узла, fuzz decoder, cancellation/ACK races и fault injection persistence ещё требуют расширения. Multi-session, control-only, subscriptions/intermediate products, общий persistent ConfigService и UDP находятся в TODO; не добавлять их в список текущих возможностей без реализации и тестов.
+
+### С06а. Несколько paused frame sets и capture
+
+Это расширение С06 теми же командами; новых wire command types нет. Capability `experiment_step_v1` означает разрешённый step владельца lease. Клиент проверяет её до mutation для frames>1.
+
+```plantuml
+@startuml
+participant "svctl / будущий GUI" as UI
+participant "C++ ExperimentRunner" as R
+participant "sv-client-lib" as L
+participant "sv-server + replay" as S
+UI -> R : scenario(frames, variants, capture_frames)
+R -> L : hello / catalog / state
+L -> S : experiment_acquire / pause
+opt Начальный кадр не READY, step поддерживается
+  R -> L : step(lease_id)
+  L -> S : step
+end
+loop Каждый frame set
+  S --> R : READY baseline + inputs/frame_set_id
+  loop Randomized complete blocks
+    R -> L : renew / configure_fusion(lease_id, revision)
+    L -> S : validate / apply
+    S --> R : ACK + frame для applied revision
+    R -> R : Проверить inputs/settings/hash
+    opt Measurement и capture_frames
+      R -> UI : Capture consumer(RGBA, frame/variant/block)
+    end
+  end
+  opt Есть следующий кадр
+    R -> L : вернуть baseline fusion/surface / step(lease_id)
+    L -> S : apply / следующий replay frame set
+  end
+end
+R -> L : вернуть fusion/surface / проверить последний RGBA
+R -> L : experiment_release / дождаться idle
+S --> R : исходная pause state
+R --> UI : report + restored scope / cursor_restored=false
+@enduml
+```
+
+*Рисунок С06а — Последовательное сравнение вариантов на одних входах каждого кадра. Capture consumer не управляет fusion; исключение вызывает тот же cleanup, что cancel.*
+
+Восстановленный image hash сравнивается с baseline последнего пройденного кадра. Cursor/history не восстанавливаются; новый READY после stale preparation также продвигает позицию. Lease не является полной транзакцией replay. Ограничения и тесты: [[validation/RESEARCH_RUNTIME]], опыт: [[validation/SERVER_BOUNDARY]].

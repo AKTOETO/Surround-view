@@ -660,4 +660,30 @@ build/svctl --unix /tmp/sv-runtime-screen command configure_fusion --params '{"b
 build/svctl --unix /tmp/sv-runtime-screen research configs/research/pyramid-boundary-screen.json artifacts/pyramid-boundary-report.json
 ```
 
-Apply полностью заменяет fusion snapshot, остальные optional поля получают defaults. Конфигурация временная. Тот же выбор доступен в JSON редакторе симулятора и `FusionSettings` клиентской библиотеки. Native сценарий сравнивает четыре варианта на одном READY paused frame set и восстанавливает исходные настройки; он не выполняет многокадровое quality исследование. При NO_INPUT runner завершает опыт с ошибкой и восстанавливает состояние; данные replay должны быть доступны до pause. Численные контролируемые опыты, отрицательный результат и ограничения: [[validation/PYRAMID_BOUNDARY]].
+Apply полностью заменяет fusion snapshot, остальные optional поля получают defaults. Конфигурация временная. Тот же выбор доступен в JSON редакторе симулятора и `FusionSettings` клиентской библиотеки. Прежний сценарий сравнивает четыре варианта на одном READY paused frame set. Новый sequence режим описан ниже. При NO_INPUT и наличии capability `experiment_step_v1` runner пробует один защищённый step; если READY не получен, завершает опыт с ошибкой и выполняет cleanup. Численные контролируемые опыты, отрицательный результат и ограничения: [[validation/PYRAMID_BOUNDARY]].
+
+### Многокадровый native эксперимент и RGBA capture
+
+Сервер выполняет fusion; общий C++ runner управляет им через `sv-client-lib`. Для воспроизводимого двухкадрового примера используются проверенные входы из Git:
+
+```sh
+cmake --build build --target sv-server svctl
+mkdir -p artifacts/boundary-example
+cp tests/data/object_stitch_v1/config.json artifacts/boundary-example/config.json
+SV_EGL_PLATFORM=surfaceless build/sv-server --config artifacts/boundary-example/config.json --manifest tests/data/object_stitch_v1/manifest.json --ipc-dir /tmp/sv-boundary-example --trace artifacts/boundary-example/trace.jsonl
+```
+
+В другом терминале, отключив GUI от односессионного сервера:
+
+```sh
+build/svctl --unix /tmp/sv-boundary-example research configs/research/boundary-sequence.json artifacts/boundary-example/report.json
+python3 tools/research/server_boundary.py --fixture tests/data/object_stitch_v1 --report artifacts/boundary-example/report.json --output artifacts/boundary-example/audit.json
+```
+
+`frames` — число последовательных paused frame sets (1…256, default 1), `capture_frames` — запись measurement RGBA (default false). Общий бюджет frames × variants × (warmup + repeats) ограничен 10000. Несколько кадров требуют replay hello capability `experiment_step_v1`; старый сервер отклоняется до lease/mutation. Native CLI создаёт свежую папку `report.json.frames`; повторное использование существующей capture папки отклоняется до опыта, прежний report не перезаписывается. Для повторного опыта задайте новое имя отчёта.
+
+Каждый файл — RGBA8, top-left origin, размеры/stride/pixel format и SHA-256 находятся в sample metadata. Warmup изображения не сохраняются. Report содержит frame_baselines, frame_index каждого sample, frame_summaries и pooled summaries. Для анализа пар используйте frame summaries: объединённая статистика разных кадров не является оценкой доверительного интервала по независимым сценам. Python audit только читает результаты и независимый truth; он не управляет сервером и не выполняет product rendering.
+
+Runner делает один защищённый step, если начальная пауза застала stale/NO_INPUT; затем перед каждым следующим кадром восстанавливает исходные fusion/surface и делает step. Варианты одного кадра обязаны использовать одинаковые inputs/frame_set_id. Cancel и ошибка capture вызывают cleanup. `restored=true`, `restore_scope=fusion_surface_pause_only` подтверждают только fusion/surface/pause. `cursor_restored=false`: позиция replay и история не возвращаются. Для независимого повторного старта перезапустите сервер с исходным manifest. На конце записи без loop можно получить ошибку step; runner не подменяет её повтором прежнего кадра.
+
+Дополнительная девятикадровая серия требует сохранённых `artifacts/object-stitch-motion-inputs` и `artifacts/object-stitch-motion-capture`; запустите сервер с config/manifest из первого каталога и используйте `configs/research/boundary-motion-sequence.json`. Для audit задайте `--fixture artifacts/object-stitch-motion-inputs --capture artifacts/object-stitch-motion-capture`. Полная matrix пяти carriers запускалась последовательно с отдельным server config/report для каждого; менять разрешение/virtual view перед данным audit нельзя. Результаты и ограничения: [[validation/SERVER_BOUNDARY]].

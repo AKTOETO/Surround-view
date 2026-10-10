@@ -4,11 +4,13 @@
 
 ## Реализовано и проверено
 
+Дополнение 11.10.2026: native runner поддерживает последовательные paused frame sets и RGBA capture, owner lease step и подготовку stale baseline. Проверены cancel/capture failure после перехода; 76 исследовательских условий на прежних Blender fixtures и все шесть settings restores прошли independent audit. Результаты не дают универсального преимущества normalized: [[validation/SERVER_BOUNDARY]]. Полная регрессия — 50/50, 29.12 s.
+
 Дополнение 11.10.2026: Client::release проверяет размер сообщения до post/queue budget, сервер отклоняет release с непустым binary payload закрытием data connection. Проверены synchronous reject, доступность правильного release при насыщении command queue и живой control после malformed data packet: [[validation/CLIENT_SMOKE]].
 
 Дополнение 11.10.2026: parser калибровочных команд принимает конечные XYZ/UV в integer/double представлении, camera_id проверяет до сужения типа. Устранён воспроизведённый дефект выбора другой камеры по большому ID. Native boundary tests и два эквивалентных wire calibration requests проверены; полная регрессия 50/50: [[validation/CALIBRATION_PROVENANCE]].
 
-Текущий SV01 описан каталогом 18 команд и 11 сценариев с условиями отказа и пятью диаграммами: [[engineering/PROTOCOL_SCENARIOS]]. Исправлен wire order конкурентных command callers в библиотеке; новый тест восьми отправителей/256 команд и полная регрессия 49/49 прошли: [[validation/CLIENT_SMOKE]]. Это не поддержка нескольких клиентских сессий сервером.
+Текущий SV01 описан каталогом 18 команд и 11 сценариев с условиями отказа и шестью диаграммами: [[engineering/PROTOCOL_SCENARIOS]]. Исправлен wire order конкурентных command callers в библиотеке; новый тест восьми отправителей/256 команд и полная регрессия 49/49 прошли: [[validation/CLIENT_SMOKE]]. Это не поддержка нескольких клиентских сессий сервером.
 
 | Работа | Свидетельство | Оставшееся ограничение |
 |---|---|---|
@@ -24,7 +26,7 @@
 | Купол, цилиндр и куб с полом | Shared containment, outward meshes; GPU coverage для 36 ракурсов, без отверстий геометрии | Это носители проекции; depth truth пока не используется при рендере, visibility masks и качество на независимых сценах не оценены |
 | Семь fusion-режимов и расширенные baseline | Native RGB/weights/coverage oracles; 84-case E-STITCH-01 matrix across 6 carriers; Image-Quality Oracle и маска кузова; [[engineering/RENDERING]], [[research/PROJECTION_AND_STITCHING]], [[validation/STITCH_VISIBILITY]], [[validation/IMAGE_QUALITY_ORACLE]] | Photometric correction на динамических клипах |
 | Сервисная диагностика задней камеры | Заданный поворот, известные точки, INDETERMINATE | Нет анализа признаков перекрытий и статистики реальных ложных тревог |
-| Headless research runner | Общий C++ service + `svctl research`; paused-frame blocks через sv-client-lib, reports/hash/timing summaries, cancel/failure restore на Unix/TCP | Server lease/watchdog fusion/surface/pause есть; пока без GUI, sequence/reset, independent truth и durable checkpoint; [[validation/RESEARCH_RUNTIME]] |
+| Headless research runner | Общий C++ service + `svctl research`; sequential paused-frame blocks через sv-client-lib, native RGBA capture, reports/hash/per-frame timing summaries, cancel/failure restore на Unix/TCP | Server lease/watchdog fusion/surface/pause есть; пока без GUI сценариев, cursor/history reset и durable checkpoint; проверка независимого direct-view truth на прежних fixtures: [[validation/SERVER_BOUNDARY]]; [[validation/RESEARCH_RUNTIME]] |
 | Runtime fusion control | `fusion_runtime_v1`: catalog и typed client API, revision-checked temporary переключение трёх GPU и четырёх GLES/CPU режимов/diagnostics/параметров, пяти носителей; paused-input integration проверяет apply/reject/restore без upload; fusion не перестраивает mesh | Нет общего ConfigService; runner и auto-restore fusion/surface/pause доступны при experiment lease; burger-like carrier остаётся offline |
 | Сервер с Asio и отдельным EGL-потоком | Unix/TCP listeners по config, state/pause/step, timeout/reconnect, decode/mesh counters | Один клиент и один ожидающий release; V4L2 adapter есть, но реальные устройства и driver shutdown не проверены |
 | Универсальная клиентская библиотека | GUI/headless, Unix/TCP localhost, installed CMake consumer, RGBA ownership, deadlines и restart/reconnect; calibration jobs доступны через generic command API | Нет UDP, two-host испытания и типизированного доменного API для общей config/calibration/source management |

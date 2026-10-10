@@ -4,7 +4,7 @@
 
 ## Управляемый runtime перед финальной исследовательской серией
 
-Первый срез `fusion_runtime_v1` реализован: три GPU fusion-режима и параметры переключаются между render calls, ACK/frames содержат revision/settings, тест проверяет одинаковые paused inputs и восстановление. Первый общий C++ runner и CLI выполняют paired paused-frame blocks с report/restore и ограниченным server lease/watchdog fusion/surface/pause ([[validation/RESEARCH_RUNTIME]]). Четыре offline fusion-кандидата перенесены в native сервер и проверены на parity; пять носителей переключаются temporary command. GUI уже редактирует temporary fusion/surface через библиотеку; общий ConfigService, многокадровый runner и GUI сценариев остаются открытыми: [[validation/NATIVE_FUSION]]. Исследовательский target build должен сохранять доступные альтернативы; сокращение до единственного алгоритма сейчас не является целью.
+Первый срез `fusion_runtime_v1` реализован: три GPU fusion-режима и параметры переключаются между render calls, ACK/frames содержат revision/settings, тест проверяет одинаковые paused inputs и восстановление. Первый общий C++ runner и CLI выполняют paired paused-frame blocks с report/restore и ограниченным server lease/watchdog fusion/surface/pause ([[validation/RESEARCH_RUNTIME]]). Четыре offline fusion-кандидата перенесены в native сервер и проверены на parity; пять носителей переключаются temporary command. GUI уже редактирует temporary fusion/surface через библиотеку; многокадровый headless runner и native RGBA capture уже реализованы; общий ConfigService, cursor/history reset и GUI сценариев остаются открытыми: [[validation/NATIVE_FUSION]]. Исследовательский target build должен сохранять доступные альтернативы; сокращение до единственного алгоритма сейчас не является целью.
 
 Уточнение 10.10.2026: [[architecture/RESEARCH_RUNTIME]]. Минимальные server catalog + temporary apply/status/restore + общий headless ExperimentRunner через sv-client-lib реализованы для fusion/surface; полный ConfigService не является условием первых подтверждающих опытов. Сначала переключаются текущие режимы на одних replay frames, затем кандидаты переносятся из offline после parity tests. GUI сценариев использует тот же runner. Общий multi-client, весь GUI и все алгоритмы не должны блокировать первый проверяемый end-to-end опыт. Independent truth, holdout и требования качества из исследовательских этапов сохраняются; сам runtime не закрывает их.
 
@@ -167,3 +167,18 @@ Tracked трёхкадровый paired temporal опыт повторён по�
 Алгоритмы обработки и проверка/применение конфигурации реализуются в C++ сервере с API `sv-client-lib`, доступным каждому клиенту. Оркестрация опытов и создание виртуальных входов — общие компилируемые клиентские сервисы. Уже доступны native fusion, surface switching, calibration jobs и headless ExperimentRunner; редактор fusion/surface теперь есть в `sv-simulator`. Далее: серверный registry снимков/observations, GUI общего runner, native live camera producer и экспорт/сравнение отчётов. Не подменять перенос вызовом Python subprocess из клиента. Независимые Python oracle/tests/figures и Blender asset scripts остаются допустимыми исследовательскими средствами: [[architecture/CLIENT_SERVER_MODEL]].
 
 Исследование границ pyramid blending: zero extension воспроизводимо создаёт тёмные/светлые ореолы на постоянном поле. Введён native temporary переключатель zero/normalized, catalog v3, typed client/GUI/scenario поддержка, 72 constant controls, 90 RGBA parity cases и 18 wire frames; сохранён C++ four-variant screen с restore. Default zero не заменён. Следующий критерий — независимая textured/occlusion/bias ablation и overhead/target trials: [[validation/PYRAMID_BOUNDARY]].
+
+## Исследовательские этапы 1–8: обновление 11.10.2026
+
+| Этап | Выполнено в текущем продолжении | Осталось для завершения |
+|---|---|---|
+| 1. Textured zero/normalized | Production server, 40 условий на двух прежних позах / пяти носителях; frozen protocol и raw reports | Независимые новые scenes/occlusions/validity holes, holdout |
+| 2. Независимые quality/ghost метрики | Read-only audit direct Blender RGB/object IDs; false-positive/missing pixels; известный touching duplicate control | Natural-object correspondence и ghost truth, sensitivity анализ порогов |
+| 3. Multilabel seams | Текущий binary scope/fallback сохранён и честно указан в reports | Реализовать и проверить 3–4-label optimizer на known-answer graphs и images |
+| 4. Независимые сцены/mount seeds | Сохранены воспроизводимые прежние fixtures; новое получение данных не заявляется | Blender MCP не соединяется; новые frozen scenes/seeds/captures |
+| 5. Равные carrier budgets | Zero/normalized сравниваются на одной сетке внутри каждой пары | Equal triangle/memory matrix; текущие carriers между собой не ранжировать |
+| 6. Temporal/photometry | Production paired screen на девяти прежних moving-target кадрах, 36 условий | Длинные независимые клипы, exposure/noise compensation, correspondence/history |
+| 7. Calibration families/coverage | Новых solver families в этой серии нет | Angular coverage, non-oracle robust fits, ChArUco, физические данные по TODO |
+| 8. Native ExperimentRunner | Sequential paused sets, owner step, capture consumer, per-frame reports, cancel/capture-failure cleanup | Cursor/history reset, continuous scenarios, durable progress и GUI сценариев |
+
+Результаты: [[validation/SERVER_BOUNDARY]], runtime: [[validation/RESEARCH_RUNTIME]]. Частичное продвижение не закрывает приоритет 1 и не заменяет Aurora acceptance.

@@ -558,7 +558,7 @@ A --> U : JSON report
 
 Клиентский cleanup недостаточен при аварии ноутбука, процесса или сети. Поэтому добавлен ограниченный lease `experiment_lease_v1`, принадлежащий control session. При acquire сервер фиксирует исходные fusion и pause; срок составляет 250..30000 ms по серверным монотонным часам. Renew продлевает тот же lease; старый или чужой ID не позволяет изменять состояние. Runner продлевает lease перед trial и cleanup, а client library предоставляет типизированные acquire/renew/release и передачу ID в mutations.
 
-Пока lease активен, допускаются только изменения fusion и pause/resume владельцем; изменение view, step и calibration mutations блокируется. Это ограничение удерживает область восстановления проверяемой и препятствует persistent сохранению временного fusion через apply_calibration. Общая транзакция всех параметров сервера ещё не реализована.
+Пока lease активен, допускаются изменения fusion/surface и pause/resume владельцем; изменение view и calibration mutations блокируется. Расширение §3.31 допускает также owner step при capability experiment_step_v1, без восстановления replay cursor. Это ограничение удерживает область восстановления проверяемой и препятствует persistent сохранению временного fusion через apply_calibration. Общая транзакция всех параметров сервера ещё не реализована.
 
 ```plantuml
 @startuml
@@ -813,3 +813,42 @@ GTest проверяет типы, границы и nonfinite values. Наст�
 Выходной кадр удерживает ограниченный серверный слот до release или закрытия data connection. Поэтому ошибки сообщения освобождения должны обрабатываться явно. В библиотеке размер metadata проверяется синхронно до post и до расходования release budget. Это предотвращает ситуацию, когда слишком большой token впервые вызывает исключение encode внутри network worker. Типы полей проверяются в том же вызывающем потоке; правильный release сохраняет независимую от command submission очередь.
 
 На серверной границе type 22 обязан иметь пустой binary payload. Раньше достаточно было совпадения session/frame/token, даже при лишнем бинарном теле: native-server integration test получил следующий кадр. Теперь такой пакет закрывает data connection без ACK; слот возвращается при cleanup, а control ещё способен отвечать на state. Штатная библиотека при data EOF завершает свои оба канала и следует reconnect policy. Два GTest cases проверяют release до ready и при насыщении command queue; integration проверяет malformed packet и продолжение control. Результаты и границы проверки: [[validation/CLIENT_SMOKE]].
+
+### 3.31. Последовательный native ExperimentRunner
+
+Для парного исследования серверных алгоритмов общий C++ application service расширен до последовательности replay frame sets. Декларативный сценарий задаёт frames, варианты, warmup/repeats/seed и native RGBA capture; библиотека передаёт только команды и кадры. Python не участвует в исполнении сценария или product fusion. Сервер объявляет `experiment_step_v1` только для replay и разрешает step владельцу действующего lease. Настройки меняет сервер с проверкой revision.
+
+```plantuml
+@startuml
+start
+:Проверить schema и общий бюджет;
+:Получить capabilities, catalog, исходное state;
+if (Несколько кадров без experiment_step_v1?) then (да)
+  :Ошибка до mutations;
+  stop
+endif
+:Acquire lease и pause;
+if (Baseline не READY?) then (да)
+  :Один owner step, если поддерживается;
+endif
+while (Есть frame set и READY?) is (да)
+  :Сохранить baseline inputs, metadata, RGBA hash;
+  :Выполнить randomized warmup/measurement blocks;
+  :Проверить exact inputs/settings каждой пары;
+  :Вызвать capture consumer для measurements;
+  if (Есть следующий кадр?) then (да)
+    :Вернуть baseline fusion/surface;
+    :Renew и owner step;
+  endif
+endwhile (нет)
+:При success/cancel/error — общий cleanup;
+:Вернуть fusion/surface и сравнить последний RGBA;
+:Release lease, дождаться idle/original pause;
+:Report: restore scope; cursor_restored=false;
+stop
+@enduml
+```
+
+*Рисунок 3.31 — Жизненный цикл многокадрового native опыта. Исключение capture/progress или отмена выходят в общий cleanup; стрелки основного пути не обещают восстановления cursor/history.*
+
+CLI создаёт отдельную свежую папку raw RGBA и сохраняет ссылки/hashes в samples. Report включает per-frame baseline и summaries; старый однофреймовый сценарий работает с defaults. Между кадрами исходная fusion/surface возвращаются перед step, поэтому следующий baseline не зависит от последнего случайного варианта. Watchdog защищает настройки, но lease не хранит replay cursor/history: состояние после опыта не тождественно состоянию до него по всем параметрам. Tests проверяют Unix/TCP, hash capture, отмену после перехода, исключение consumer и stale NO_INPUT preparation. Контракт и проверки: [[engineering/PROTOCOL_SCENARIOS]], [[validation/RESEARCH_RUNTIME]]; полученные исследовательские результаты — §4.45.

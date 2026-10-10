@@ -1312,7 +1312,7 @@ Mean absolute RGB8 change характеризует расхождение ве
 
 Актуальные таблицы разрешений и экспозиционных условий обновлены в [[validation/STITCH_RESOLUTION_VISIBILITY]] и [[validation/STITCH_CONVERGENCE_ROBUSTNESS]]. Старые CPU timing tables object screens сохранены как исторические; новые quality-only результаты и полные provenance приведены в [[validation/STITCH_MASK_FOLLOWUP]]. Новые CPU samples не используются для сравнения скорости, поскольку пересчёты качества шли одновременно без изоляции нагрузки. Проверки затронутых fusion/metrics и native parity прошли 6/6 CTest entries.
 
-Пересчёт устраняет несоответствие версии реализации опубликованным результатам, но не закрывает E-STITCH-01. Следующие условия: исследование border extension/normalized convolution, длинные независимые клипы и scene/mount seeds, natural-object correspondence и stale/history опыт, равные ресурсные бюджеты, многокадровый серверный runner и отдельные целевые performance trials.
+Пересчёт устраняет несоответствие версии реализации опубликованным результатам, но не закрывает E-STITCH-01. Следующие условия: исследование border extension/normalized convolution, длинные независимые клипы и scene/mount seeds, natural-object correspondence и stale/history опыт, равные ресурсные бюджеты, cursor/history reset многокадрового серверного runner и отдельные целевые performance trials (§4.45 описывает выполненный paused-sequence этап).
 
 ## 4.44 Контролируемый опыт: граница маски и сохранение постоянного цвета
 
@@ -1336,6 +1336,39 @@ Mean absolute RGB8 change характеризует расхождение ве
 Четырёхвариантный `svctl research` screen выполнил 36 samples на одном paused frame set и восстановил fusion/surface/pause. Первый запуск на двухкадровом replay остановился с NO_INPUT и корректным restored=true: шаг кадров 200 ms превышал допустимый возраст 100 ms. Успешный запуск использовал первый исходный кадр без изменения RGB/calibration. Оба отчёта сохранены. Эти прогоны не оценивают временную устойчивость или FPS; reported GL device — AMD integrated radeonsi, не Аврора.
 
 Вывод ограничен проверенными инвариантами. Normalized support остаётся отдельным переключаемым кандидатом, default zero сохранён для сравнения. Перед выбором алгоритма нужны textured independent scenes, silhouettes/occlusions, exposure/noise, крупные отверстия масок, равные бюджеты и отдельный overhead/target опыт. Сохранение постоянного поля не доказывает отсутствия цветовых переносов либо лучшего качества естественных объектов.
+
+## 4.45 Серверная проверка normalized support на текстурированной сцене
+
+Следующий опыт проверяет, переносится ли найденный в §4.44 constant-field инвариант на текстурированные входы. До запуска зафиксирован [[research/SERVER_BOUNDARY_PROTOCOL]]; production sv-server получает четыре исходные камеры, а C++ `svctl research` меняет настройки через библиотеку, собирает actual RGBA и восстанавливает состояние. Независимый analyzer только читает изображения и direct-view Blender truth. Это exploratory follow-up на уже просмотренных данных, не подтверждающая holdout серия.
+
+Первичная matrix включает две позы прежнего coded-object fixture, пять носителей, два fusion режима и две boundary conventions: 40 условий. Дополнительная matrix — девять прежних moving-target кадров, dome и те же четыре fusion profiles: 36 условий. Каждый вариант имеет два warmup и семь measurement blocks с полным случайным порядком, seed 20261011. Всего получены 684 samples, из них 532 RGBA сохранены нативным capture consumer. Внутри frame/variant все hashes совпали; между вариантами проверены одинаковые inputs/frame_set_id, calibration и virtual view. Raw metadata сохранены в [[validation/SERVER_BOUNDARY]].
+
+Для независимого RGB сравнения используется ROI из прямого object-ID truth и any-camera ray visibility, без ego/background и двухпиксельной полосы границ. Она не зависит от output метода. Пусть R — эта область, а L — sRGB→linear преобразование. Тогда
+
+$$E_{RGB}=\frac{1}{3|R|}\sum_{p\in R}\sum_{c\in\{r,g,b\}}|L(I_{pc})-L(T_{pc})|.$$
+
+IoU контрольного объекта определяется как $|M_I\cap M_T|/|M_I\cup M_T|$, где output mask извлекается заранее заданным chroma classifier, а truth mask — object ID. Дополнительно учитываются false-positive/missing pixels, precision и recall. Known-answer controls различают точное совпадение и touching duplicate даже при одном connected component. Это ограниченный coded-target измеритель; natural-object correspondence и полная ghost segmentation ещё не реализованы.
+
+| Серия / режим | Средняя парная Δ linear MAE | Средняя парная Δ target IoU | Средняя Δ median fusion CPU, ms |
+|---|---:|---:|---:|
+| Static / multi_band | −0.00021651 | −0.00190991 | +0.35888 |
+| Static / graph_cut_multi_band | −0.00002781 | +0.00031153 | +0.46665 |
+| Motion / multi_band | −0.00013861 | −0.00160427 | +0.11010 |
+| Motion / graph_cut_multi_band | +0.00000925 | −0.00074422 | +1.63112 |
+
+Разности определены как normalized−zero. Для CPU в каждой паре сначала взяты медианы семи повторов. Средние по условиям описывают эту matrix, не confidence interval: повторные рендеры и кадры одной сцены зависимы. Linux device — AMD Ryzen 9 9950X integrated radeonsi; это не измерения RTX, Авроры или sensor-to-display latency. Полные stage samples, renderer и source fingerprint находятся в raw reports.
+
+![Парные различия boundaries](figures/experiments/server_boundary_metrics.png)
+
+*Рисунок 4.45 — Измеренные разности normalized−zero по каждой статической паре. Отрицательная RGB разность означает меньшую ошибку, отрицательная IoU — худшее совпадение объекта. Цвет обозначает fusion режим; шкалы трёх метрик различаются.*
+
+![Прямой truth и actual server RGBA](figures/experiments/server_boundary_views.png)
+
+*Рисунок 4.46 — Обе заранее заданные позы dome baseline: прямой Blender RGB и четыре production-server outputs. Сильная деформация поднятого magenta объекта сохраняется при обеих boundary conventions. Это actual capture, не иллюстрация, созданная другим renderer. Скрипт `plot_server_boundary.py` расположен рядом с главой и проверяет hashes исходных RGBA.*
+
+На static matrix RGB MAE уменьшилась в 20/20 пар, но target IoU ухудшилась в шести, улучшилась в одной и не изменилась в 13. На moving-target matrix RGB улучшилась в 14/18 пар и ухудшилась в четырёх; target IoU ухудшилась в восьми и не изменилась в десяти. Таким образом, normalized convolution исправляет определённый mask-boundary дефект, но не решает неверную геометрию проекции поднятых объектов и не гарантирует улучшения RGB любого кадра. Default zero сохранён для ablation; универсально лучшая convention не установлена.
+
+Восстановление подтверждено для fusion/surface/pause всех шести запусков; восстановленный RGBA совпал с baseline последнего кадра. Cursor/history не возвращаются, что явно отражено в отчёте. Пять carriers имеют разные mesh budgets, поэтому эти числа нельзя использовать для выбора лучшего носителя. Девять кадров покрывают 0…800 ms одной прежней траектории; этот опыт не заменяет длинные continuous clips, temporal-history/flicker анализ или photometric compensation. Для окончательного вывода нужны новые сцены/mount seeds и holdout, multilabel seam, равные budgets и целевая платформа.
 
 ## Предварительные выводы по четвёртой главе
 

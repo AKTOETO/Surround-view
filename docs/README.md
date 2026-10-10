@@ -1,6 +1,6 @@
 # Карта документации
 
-> Сверено 10.10.2026. Linux-прототип, Qt Quick 3D visual driving preview и Blender depth-truth smoke реализованы. Полный сравнительный опыт fusion/surface, интеграция preview как camera producer и перенос/приёмка на Авроре ещё не выполнены.
+> Сверено 11.10.2026. Linux-прототип, Qt Quick 3D visual driving preview и Blender depth-truth smoke реализованы. Полный сравнительный опыт fusion/surface, интеграция preview как camera producer и перенос/приёмка на Авроре ещё не выполнены.
 
 ## Порядок чтения
 
@@ -91,3 +91,5 @@ Wire-контракт текущей реализации, калибровоч�
 Convergence 256→512 и три варианта улицы с EV stress: [[validation/STITCH_CONVERGENCE_ROBUSTNESS]]. Условия готовности итоговых выводов: [[planning/ROADMAP#Критерии готовности исследовательского заключения]].
 
 Движущаяся coded-мишень, синхронные Blender camera/truth кадры, 378-case fusion screen и ограничения: [[validation/OBJECT_STITCH_MOTION]]; frozen setup: [[research/STITCH_MOVING_OBJECT_PROTOCOL]].
+
+Native sequential research и textured boundary follow-up: [[validation/SERVER_BOUNDARY]], frozen [[research/SERVER_BOUNDARY_PROTOCOL]], runtime [[validation/RESEARCH_RUNTIME]]. В §4.45 диплома опубликованы positive/negative paired результаты и actual server RGBA; это прежние fixtures, не holdout.

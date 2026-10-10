@@ -22,7 +22,7 @@
 
 ## Переключение fusion во время работы: fusion_runtime_v1
 
-Handshake объявляет `fusion_runtime_v1`. Это первый реализованный срез исследовательского runtime, не общий ConfigService. Поверх него реализован application-level paused-frame runner через sv-client-lib: [[validation/RESEARCH_RUNTIME]]. Сервер сохраняет все три текущих GPU-режима; для переключения не требуется перезапуск, повторный upload камер или rebuild сетки.
+Handshake объявляет `fusion_runtime_v1`. Это первый реализованный срез исследовательского runtime, не общий ConfigService. Поверх него реализован application-level sequential paused-frame runner через sv-client-lib: [[validation/RESEARCH_RUNTIME]]. Сервер сохраняет все три текущих GPU-режима; для переключения не требуется перезапуск, повторный upload камер или rebuild сетки.
 
 | Команда / поле | Контракт |
 |---|---|
@@ -65,9 +65,9 @@ Handshake объявляет `experiment_lease_v1`. Lease привязан к co
 | `experiment_release` | `lease_id`: тот же владелец; ACK означает переход в restoring, а не завершение |
 | `state` / ACK | `experiment_lease`: state=`idle/active/restoring/failed`, lease_id, deadline_monotonic_ns, error; deadline не является временем клиента |
 
-Во время active владелец передаёт `lease_id` в `configure_fusion`, `configure_surface`, `pause`, `resume` и lease commands. Другие мутации (orbit/zoom/preset/step, calibration start/apply/cancel) блокируются; read-only state/catalog/calibration_status доступны. Команды без token, с чужим/старым ID или после истечения TTL возвращают `experiment_lease_conflict` без изменений. После завершения старый ID не становится обычной mutation без lease. Существующие команды без lease работают по-прежнему в idle.
+Во время active владелец передаёт `lease_id` в `configure_fusion`, `configure_surface`, `pause`, `resume`, `step` и lease commands. Replay hello объявляет `experiment_step_v1`; шаг разрешён только владельцу с действующим token. Lease не возвращает playback cursor. Другие мутации (orbit/zoom/preset, calibration start/apply/cancel) блокируются; read-only state/catalog/calibration_status доступны. Команды без token, с чужим/старым ID или после истечения TTL возвращают `experiment_lease_conflict` без изменений. После завершения старый ID не становится обычной mutation без lease. Существующие команды без lease работают по-прежнему в idle.
 
-`sv-client-lib` предоставляет `acquire_experiment(ttl_ms)`, `renew_experiment(id)`, `release_experiment(id)`, optional lease ID у configure_fusion/surface/pause/resume. Runner приобретает lease на 30000 ms и продлевает перед каждым trial и cleanup. Долгий progress callback/ожидание дольше TTL может прервать эксперимент.
+`sv-client-lib` предоставляет `acquire_experiment(ttl_ms)`, `renew_experiment(id)`, `release_experiment(id)`, optional lease ID у configure_fusion/surface/pause/resume/step. Runner приобретает lease на 30000 ms и продлевает перед каждым trial и cleanup. Долгий progress callback/ожидание дольше TTL может прервать эксперимент.
 
 Истечение срока или удаление control session запускает recovery на render thread: проверенные fusion и surface публикуются новым config snapshot, uniform settings обновляются между render calls, затем source получает асинхронный pause/resume при необходимости. Пока restoring, новые мутации отклоняются. На успешном source ACK состояние становится idle; статус idle означает завершённую координацию конфигурации и источника. Recovery не пишет файл. Source request не исполнился за 5 s либо восстановление завершилось ошибкой — failed; мутации остаются заблокированы до перезапуска. Поздний source ACK не снимает failed. Ошибки/переходы записываются в trace как experiment_restore events.
 

@@ -57,3 +57,5 @@ Raw native controls: `baselines/pyramid_boundary_v1.json` (GTest JSON с profile
 ## Ограничения и следующие опыты
 
 Постоянное поле показывает нарушение инварианта baseline и его устранение в выбранных controls, но не доказывает улучшение на textured scenes, silhouettes, occlusions, различной экспозиции или всех масках. Нормализованная фильтрация продолжает смешивать соседние наблюдения по масштабу и может размывать/переносить цвет через разрывы. Нужны paired independent Blender RGB/object-ID/visibility, bias/noise и маски с крупными отверстиями/разрывами, равные resource budgets, отдельное измерение overhead и целевая Аврора. Исторические zero screening tables остаются результатами default версии; они не являются результатами нового normalized варианта. E-STITCH-01 не закрыт.
+
+Textured production follow-up выполнен 11.10.2026: 40 static и 36 moving-target условий, включая ухудшения normalized; [[validation/SERVER_BOUNDARY]], §4.45. Runner теперь поддерживает sequential frame sets и защищённый step для stale READY preparation; прежний однофреймовый отказ выше сохранён как исторический результат.

@@ -95,3 +95,20 @@ URL image provider теперь содержит session_id/frame_id; C++ GUI bo
 Проверка 10.10.2026: `cmake --build build -j4` успешна; `ctest --test-dir build --output-on-failure -j4` — **47/47 CTest entries**, 23.69 s. Новые случаи входят в существующие entries, поэтому число entries не увеличилось. Это Linux/mock/loopback, Qt adapter unit и offscreen проверки; физическая Аврора, удалённые две машины и длительный overload этим результатом не подтверждаются.
 
 Catalog v3 и C++ scenario runner дополнены `pyramid_boundary=zero|normalized`. Сценарий `configs/research/pyramid-boundary-screen.json` сравнивает два pyramid fusion × две политики. Native 36-sample READY replay screen восстановил исходные fusion/surface/pause; отрицательный NO_INPUT прогон также сохранил restored=true. GUI typed apply проверен по Unix/TCP. Raw, формулы и ограничения: [[PYRAMID_BOUNDARY]]. Многокадровый runner и независимая quality серия остаются открытыми.
+
+## Последовательный native runner, 11.10.2026
+
+Прежнее ограничение одним frame set снято: `frames=1…256`, native measurement capture consumer, per-frame baselines/summaries и защищённый step. Cursor/history по-прежнему не восстанавливаются. Новый hello capability `experiment_step_v1` проверяется до мутаций; старый default frames=1 сохранён.
+
+Дополненные GTest/schema/lease и live Unix/TCP проверки покрывают:
+
+- бюджет с учётом frames, fractional counters и отсутствие capture consumer до соединения;
+- три кадра × два boundary profiles × два measurement blocks, 12 сохранённых RGBA с проверкой размеров/hashes и разных frame sets;
+- одинаковые inputs внутри кадра, восстановление последнего baseline RGBA и неизменность server config;
+- отмену после первого sample второго кадра и исключение capture consumer с успешным restore;
+- повторный CLI запуск с существующей capture папкой без перезаписи прежнего report;
+- stale paused NO_INPUT → один owner step → READY, затем второй кадр (`replay_ipc`); wrong-owner/expired step отклоняется native lease guard.
+
+Реальный исследовательский запуск: 76 условий, 684 samples, 532 captured measurement frames, все шесть запусков восстановили настройки. Independent direct-view audit и отрицательные результаты описаны в [[validation/SERVER_BOUNDARY]]. Это short paused sequence, не continuous-stream performance/temporal-history квалификация. Произвольный seek, durable checkpoint, reset history и GUI сценариев остаются открытыми.
+
+Итоговая Linux регрессия 11.10.2026: полная сборка успешна; CTest **50/50**, 29.12 s. Первый прогон нового NO_INPUT теста выявил пропущенное поле schema_version в тестовом scenario; после исправления fixture отдельно прошёл replay_ipc и затем вся suite. Это не обнаруженный дефект server schema validation.

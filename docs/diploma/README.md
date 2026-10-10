@@ -52,3 +52,13 @@ python3 docs/diploma/plot_platform.py
 ## Дополнение 0.6.0
 
 Глава 3 (§3.16) описывает source workers, per-camera queues и разделение producer/client endpoints; рисунок 3.14 — actual server output новой socket pipeline. `plot_blender.py` принимает дополнительный `--socket-validation artifacts/blender-virtual-v06`, остальные параметры сохранены. Глава 4 (§4.9.4/§4.14) содержит новые PC baselines и source tests; старые измерения не переписаны. Происхождение — [[validation/SOURCES_SMOKE]].
+
+## Native boundary follow-up, 11.10.2026
+
+§3.31 описывает последовательный C++ runner/capture, §4.45 — 76 production-server условий и отрицательные результаты normalized. Исходные численные reports: [[validation/SERVER_BOUNDARY]]. Графики из сохранённого baseline и local captures:
+
+```sh
+MPLCONFIGDIR=/tmp/sv-matplotlib python3 docs/diploma/plot_server_boundary.py
+```
+
+Для actual views требуются сохранённые RGBA в `artifacts/server-boundary-v2`; воспроизведение их нативным runner описано в [[engineering/USAGE#Многокадровый native эксперимент и RGBA capture]]. Две позы и все четыре profiles показаны без выбора лучшего изображения по результату.
