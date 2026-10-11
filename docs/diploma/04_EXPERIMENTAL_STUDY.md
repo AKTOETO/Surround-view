@@ -1929,3 +1929,66 @@ Near-z080 при512px имеет404–1665 predicted pixels для rig101 и305�
 Рисунок4.74 — все12 factors×5 carriers×4 profiles;512 минус256, средние двух зависимых poses. Каждая панель имеет собственную симметричную шкалу. Conditional mean undefined, если хотя бы один pose undefined; такие данные не исключены из среднего. Нулевые raised IoU deltas означают одинаковый провал overlap, а не одинаковые RGBA.
 
 Таким образом, в пределах этого контрольного опыта детализация cubemap256px **не является достаточным объяснением** полного отсутствия overlap поднятых объектов: повышение до512px изменяет pixels, но не устраняет ошибку. Это не доказательство отсутствия sampling contribution вообще: остаются фиксированные400px fisheye inputs,320×180 raster, bilinear filtering, порог chroma и component policy, ограниченная source visibility и конечная triangulation. Для строгого разделения геометрии и sampling необходимы отдельные source/output-resolution серии и correspondence/triangle-hit контроль. Optical-height/baseline sweep, натуральные объекты, независимые scene families и целевое устройство остаются открытыми. Проверка повторного audit —побитное совпадение paired baseline; CTest object_metrics/blender_fixture/render_fusion_parity/render_modes:4/4,5.82s. Полные hashes/команды: [[validation/PARALLAX_SAMPLING]].
+
+## 4.57. Чувствительность серверной цепочки к выходному растру
+
+После cubemap control §4.56 выполнен отдельный дизайн E-STITCH-parallax-output-01: output320×180→640×360 при прежних512px cubemap и400×400 fisheye inputs. Сохраняются12 factors, два mounts101/104,2 poses,5 medium carriers,4 fusion/boundary profiles и2 warmups/7 repeats.230400 high-resolution pixels остаются внутри native CPU research budget262144. Алгоритмы исполняются compiled sv-server, управление —native svctl/sv-client-lib; Python здесь проверяет независимый truth и формирует figures, не заменяет серверную реализацию fusion.
+
+Протокол [[research/PARALLAX_OUTPUT_PROTOCOL]] зафиксирован до captures/quality results. Reference содержит exact SHA256 прежнего full summary; все его numerical/native/input/protocol поля должны воспроизвестись с явно разрешённым изменением analyzer digest. Runtime/asset plans после удаления только предусмотренных output/идентификаторов опыта обязаны совпадать. Full configs сравниваются после удаления output dimensions; calibration, source intrinsics/extrinsics, vehicle/view, timestamps/trajectory и native binaries/device сохраняются.
+
+В отличие от §4.56, direct RGB/ID/visibility при новом разрешении **не** должны совпасть побитно: независимые ray casts выполняются в новых pixel centers. Повторное независимое получение truth необходимо; resize прежнего ground truth запрещён. Сопоставляются unchanged scene inventory/target material/positions, ID table, projection/visibility definitions, helper hashes и poses. Аналитические bounds полного box удовлетворяют $b_{640}=2(b_{320}+0.5)-0.5$ в pixel-center convention.
+
+```plantuml
+@startuml
+participant "Frozen 512px sources / camera400" as I
+participant "Same native sv-server algorithms" as S
+participant "Blender independent direct camera" as B
+participant "Keyed audit:480 condition pairs" as A
+I -> S : identical decoded source RGB / poses / calibration
+S -> A : previous320x180 native RGBA
+S -> A : new640x360 native RGBA
+B -> A : independent320 truth
+B -> A : independent640 truth at new pixel centers
+A -> A : verify source/config/binary/device controls
+A -> A : normalized distances/areas; retain null
+A -> A : high component threshold8 and32px
+@enduml
+```
+
+Рисунок4.75 — сравнение выходных разрешений при общих sources. Источники сохраняются, а прямой эталон независимо пересчитывается для каждого растра.
+
+Source preflight выявил отклонение от первоначального raw-hash требования протокола: Blender записывает в PNG изменяемые Date/Camera/Scene/RenderTime. На первых проверенных source images decoded RGB совпадал побитно, file SHA256 различался. До запуска native quality matrix приёмка явно уточнена в [[validation/PARALLAX_OUTPUT]]: проверять manifest hashes каждого файла внутри своей серии, а между сериями —decoded RGB всех фактических faces и PNG metadata после удаления только этих четырёх динамических полей. Полный preflight всех12 pairs/960 faces прошёл; frozen протокол не переписан. Изменения RGB или остальных metadata по-прежнему отклоняются. Также исправлен прежний завышенный counter faces в §4.56; качество/native hashes остались прежними.
+
+Для normalized displacement используется $d_n=\|c_P-c_T\|_2/H$, для доли predicted area —$a_n=|P|/(WH)$. Эти величины допускают сравнение320×180 и640×360 без искусственного удвоения ошибки из-за единиц. Full/conditional IoU остаются dimensionless. Если predicted component или visible truth отсутствует, соответствующий score сохраняется как undefined. Дополнительная, заранее заданная sensitivity применяет component threshold32px к high output, что соответствует8px low по доле площади; основной high score сохраняет8px. Обе политики публикуются целиком, без выбора лучшей по результату.
+
+Pyramid levels, fusion/seam параметры и suppression bands RGB ROI сохраняются в pixel units. При увеличении output их physical/angular support меняется; ROI не является строго одной и той же непрерывной областью. Поэтому результат характеризует sensitivity всей серверной цепочки к output resolution, не изолированную rasterizer ablation. Независимые scene families/natural correspondence, source-resolution и optical-height/baseline исследования остаются необходимыми; timings этой серии не принимаются как benchmark Авроры.
+
+В truth inventory также сохраняются служебные Blender name suffixes, зависящие от числа ранее созданных сцен. Приёмка сравнивает numeric ID→semantic base-name после удаления только terminal `.digits`; исходные обе таблицы сохраняются. Target/helper/ego IDs, visibility tolerance/definitions, poses и остальные поля должны совпасть. Literal-name отличие явно записано как protocol deviation до анализа quality; оно не допускает смену semantic type, ID correspondence или перестановку target. Frozen generator и actual decoded source observations подтверждают общий controlled world.
+
+Все12 пар source/config/trajectory/binary/device controls приняты. Новая native серия содержит60 fresh processes,4320 samples/3360 measurement RGBA и480 quality rows. Проверены960 фактических cube faces обеих серий и совпадение decoded fisheye inputs;480 raw cube-file pairs имеют разные hashes из-за разрешённых metadata, одинаковые RGB/static metadata. Минимальный запас полного target box до края high frame —20.358621px; independent target не касается frame border. Фактический renderer обеих серий —NVIDIA RTX5070Ti/OpenGL ES3, fusion CPU.
+
+![Native результаты при320×180 и640×360](figures/experiments/parallax_output_views.png)
+
+Рисунок4.76 — все12 cases, первый pose, заранее выбранный dome/multi_band/zero. Слева независимый direct truth640×360; далее native low/high RGBA. Последняя колонка —absolute sRGB difference после nearest-neighbor увеличения **только low native кадра**, шкала0…1. Эталон и numerical scores таким resize не получены.
+
+| Показатель |320×180 |640×360,8px |640×360,32px |
+|---|---:|---:|---:|
+| Raised full IoU=0 |320/320 |320/320 |320/320 |
+| Conditional IoU undefined |40/480 |0/480 |0/480 |
+| Defined conditional IoU=0 |280/440 |320/480 |320/480 |
+| Отсутствует predicted centroid |240/480 |240/480 |240/480 |
+| Near-z080 normalized centroid distance, оба rigs |0.284299…0.331383 |0.284821…0.331941 |0.284821…0.331941 |
+
+Таблица — полный набор зависимых conditions.32px и8px дают одинаковые high metrics во всех480 строках, включая area/centroid/conditional scores; это наблюдение данного опыта, а не универсальная эквивалентность порогов.
+
+На ground controls full IoU улучшилась93 раза и ухудшилась67, $\Delta$=−0.012317…+0.013367. Все320 raised пары сохраняют full overlap0. Defined conditional deltas:96 улучшений/64 ухудшения/280 ties;40 разность undefined, поскольку low score отсутствовал. Они не считаются улучшениями: high score в этих40 случаях стал определённым нулём. Normalized centroid distance уменьшилась155 раз и выросла85,240 undefined сохраняются; near-z080 остаётся смещённым на28.5–33.2% высоты кадра. В остальных raised factors surviving coded component отсутствует, как в low output.
+
+Изменение наблюдаемости direct truth заслуживает отдельного вывода. Far-z140 второго pose имеет131 target pixels/0 visible при320×180; новый independent640×360 truth имеет548 target/32 visible для обоих mounts. Поэтому прежняя undefined conditional оценка была чувствительна к дискретному набору direct rays и не означала доказанную непрерывную невидимость всей поверхности. Первый pose far-z140 меняется151/3→616/34. Near-z140 меняется48/1→202/11 на первом pose; на втором49/4→190/7 для rig101 и190/8 для rig104. Visible fragments остаются малы относительно target, но high conditional score определён для всех320 raised условий и равен0. Этот результат усиливает негативный вывод в данной постановке, не превращая ray visibility в pixel correspondence или гарантию восстановления texture.
+
+![Все парные разности и заранее заданная area-threshold sensitivity](figures/experiments/parallax_output_metrics.png)
+
+Рисунок4.77 — все12 factors×5 carriers×4 profiles, средние двух зависимых poses. Панели: full IoU delta high8−low8, conditional delta, full IoU delta high32−low8 и normalized centroid distance delta. Каждая шкала симметрична отдельно. Undefined low/high delta сохраняется, среднее не вычисляется с исключением отсутствующего pose. Совпадение первой и третьей панелей отражает фактическую нечувствительность этой серии к8/32px component cutoff.
+
+Linear RGB MAE выросла478 раз и снизилась2 раза, $\Delta$=−0.00007758…+0.00308372. Это не изолированная оценка ухудшения fusion: masks/ROI boundary widths и pyramid support фиксированы в pixels, то есть continuous support между разрешениями различается. Object-space failure сохраняется при обоих выходных растрах и обоих area policies; недостаточное output320×180 разрешение не является достаточным объяснением нулевого raised overlap. Совместно с cubemap control §4.56 это сужает, но не завершает разделение причин: остаются fisheye input resolution/filtering, source-surface correspondence, реальный triangle-hit носителя, модель сцены и optical-height/baseline. Ни universal carrier ranking, ни пригодность на Авроре пока не подтверждены.
+
+Read-only paired audit побитно воспроизводит baseline `parallax_output_v1.json`. CTest object_metrics/blender_fixture/render_fusion_parity/render_modes:4/4,6.21s; первоначальная несовместимость legacy test fixture исправлена явным modern provenance field в unit-test setup, actual study requirements не ослаблялись. Known-answer controls проверяют dimensions/plan confounders, нормализацию площади/дистанции, semantic ID preservation, undefined deltas и noise cutoff8→32. Blender вернулся к исходной Scene. Команды/source hashes/deviations: [[validation/PARALLAX_OUTPUT]], [[engineering/USAGE#Чувствительность к выходному разрешению]].

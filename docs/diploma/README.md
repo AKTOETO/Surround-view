@@ -130,3 +130,11 @@ MPLCONFIGDIR=/tmp/sv-matplotlib python3 docs/diploma/plot_server_boundary.py --r
 ```
 
 Нужны raw данные обеих серий; regeneration figures не запускает новые серверные trials. Протокол: [[research/PARALLAX_SAMPLING_PROTOCOL]].
+
+§4.57 — sensitivity output320×180→640×360 при прежних512px cubemap/400px fisheye. Рисунки4.76–4.77:
+
+```sh
+MPLCONFIGDIR=/tmp/sv-matplotlib python3 docs/diploma/plot_server_boundary.py --report docs/validation/baselines/parallax_output_v1.json --captures-root artifacts/parallax-output-v1 --inputs-root artifacts/parallax-output-inputs-v1 --reference-root artifacts/parallax-sampling-v1
+```
+
+Raw обеих серий необходимы; independent high-resolution truth не получается resize прежнего. Политики high8/high32pixels заданы заранее: [[research/PARALLAX_OUTPUT_PROTOCOL]], [[validation/PARALLAX_OUTPUT]].

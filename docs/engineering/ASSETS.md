@@ -161,3 +161,7 @@ sha256sum assets/demo/urban_street_01_1k.hdr \
 ## A06 — Рецепт парного контроля cubemap resolution
 
 `assets/scenarios/parallax-sampling-v1.json` —авторская копия A05 с единственным изменением `capture.face_size=512`. Все12 positions/mount cases сохранены. Используется прежний versioned `tools/blender/parallax_study.py`; сторонних загрузок и .blend/LFS нет. Raw cubemap, derived fisheye replay, native RGBA/reports —generated `artifacts/parallax-sampling-*`; recipes, audit comparison и подписанные дипломные рисунки входят в Git. Низкодетальный оригинал A05 не удаляется и не подменяется. Протокол/команды: [[research/PARALLAX_SAMPLING_PROTOCOL]], [[engineering/USAGE#Парный контроль разрешения cubemap]].
+
+## A07 — Рецепт output-resolution follow-up
+
+`assets/scenarios/parallax-output-v1.json` —авторский derivative A06, меняется только output width/height640×360. Все12 case/rig factors, cubemap512 и optical inputs400 сохранены. Внешних загрузок/.blend/LFS нет. Неизменённый Blender driver экспортирует новые независимые RGB/ID/visibility; sources и static metadata проверяются по decoded content. Raw `artifacts/parallax-output-inputs-v1`/`parallax-output-v1` —generated, recipe/audit/дипломные figures versioned. `configs/research/parallax-output-plan.json` фиксирует exact SHA256 reference full summary предыдущей серии; удаление generated reference лишает возможности полного paired audit. Протокол/приёмка: [[research/PARALLAX_OUTPUT_PROTOCOL]], [[validation/PARALLAX_OUTPUT]].

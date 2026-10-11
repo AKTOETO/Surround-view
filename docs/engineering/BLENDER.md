@@ -277,3 +277,13 @@ capture_study(root/'assets/scenarios/parallax-sampling-v1.json', root/'artifacts
 ```
 
 Выходной каталог должен отсутствовать. Не менять старые helpers или framed asset: парный audit сверяет их hashes, полные конфигурации/позы и decoded direct RGB/object-ID/visibility. Старые 256px captures сохраняются для сравнения; переснятая серия не подменяет их. Дождаться `progress.json: state=complete` и остановить capture перед native trials. Протокол: [[research/PARALLAX_SAMPLING_PROTOCOL]], команды: [[engineering/USAGE#Парный контроль разрешения cubemap]].
+
+## Независимый truth640×360
+
+Recipe `assets/scenarios/parallax-output-v1.json` сохраняет512px cubemap и400px fisheye, меняя только output320×180→640×360. Прежние imports/`root` из раздела paired capture:
+
+```python
+capture_study(root/'assets/scenarios/parallax-output-v1.json', root/'artifacts/parallax-output-inputs-v1')
+```
+
+Используется прежний неизменённый driver/helpers. Новый direct RGB/ID/visibility вычисляется заново для новых pixel centers; нельзя resize старый truth. Дождаться `state=complete` в progress и остановить capture перед native trials. Сравнение принимает только побитно прежние source camera RGB. Blender PNG содержит переменные Date/Camera/Scene/RenderTime: file hashes могут различаться при одинаковом содержимом, но manifest checks не отключаются. Подсчёт cube faces идёт по фактическим `frames[].cameras[].faces`, исключая overview; этот exporter сохраняет5 нужных граней на камеру. [[engineering/USAGE#Чувствительность к выходному разрешению]], [[research/PARALLAX_OUTPUT_PROTOCOL]].

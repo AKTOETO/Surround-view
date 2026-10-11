@@ -938,3 +938,20 @@ MPLCONFIGDIR=/tmp/sv-matplotlib python3 docs/diploma/plot_server_boundary.py --r
 ```
 
 Проверяются фактические размеры всех cubemap faces, неизменные 400×400 fisheye inputs, direct truth и native binaries/device. Разности — 512 минус 256; `null` не заменяется нулём. Это sampling control на одном flat-world family, а не подтверждение пригодности на Авроре или сходимости по всем разрешениям: [[research/PARALLAX_SAMPLING_PROTOCOL]].
+
+## Чувствительность к выходному разрешению
+
+После [[engineering/BLENDER#Независимый truth640×360]] запустить новую серию, сохраняя512px cubemap/400px fisheye:
+
+```sh
+python3 tools/research/parallax_height.py --plan configs/research/parallax-output-plan.json --root artifacts/parallax-output-v1 --inputs artifacts/parallax-output-inputs-v1 --run-binaries build --output artifacts/parallax-output-v1/summary.json
+python3 tools/research/parallax_height.py --plan configs/research/parallax-output-plan.json --root artifacts/parallax-output-v1 --inputs artifacts/parallax-output-inputs-v1 --output-resolution-pair --output artifacts/parallax-output-v1/paired.json
+```
+
+Вторая команда read-only проверяет frozen reference из runtime plan (прежние512px sampling captures/native/full summary с SHA256). Все reference raw данные должны оставаться на диске; изменившийся reference summary отклоняется. Первый root должен отсутствовать. Нужны GPU/testing build и scientific Python dependencies. Во время native trials остановить Blender/сборки/тесты/plots.
+
+```sh
+MPLCONFIGDIR=/tmp/sv-matplotlib python3 docs/diploma/plot_server_boundary.py --report artifacts/parallax-output-v1/paired.json --captures-root artifacts/parallax-output-v1 --inputs-root artifacts/parallax-output-inputs-v1 --reference-root artifacts/parallax-sampling-v1
+```
+
+Изображения справа640×360 получены сервером; low output увеличивается nearest-neighbor только для display difference, не для scores/truth. Centroid сравнивается как distance/output-height, predicted area как доля кадра. Report содержит high8px и high32px component policies;32px эквивалентны прежним8px по площади. Null сохраняются. Между captures сравниваются decoded cube/fisheye RGB и статические PNG metadata; файловые hashes проверяются внутри каждой серии (Blender меняет Date/Camera/Scene/RenderTime). Протокол и явное уточнение приёмки: [[research/PARALLAX_OUTPUT_PROTOCOL]], [[validation/PARALLAX_OUTPUT]].
