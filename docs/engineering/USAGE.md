@@ -832,3 +832,14 @@ MPLCONFIGDIR=/tmp/sv-matplotlib python3 docs/diploma/plot_server_boundary.py --r
 ```
 
 Аудитор требует360 условий с120 pinned medium reuse, совпадающий native fingerprint, hashes, shape invariance, строго возрастающие cells/resources и корректный restore. Если medium originals отсутствуют или требуется новая сборка, создать новую версию полной серии/plan с новым закреплённым medium baseline: текущий протокол не допускает незаметной подмены прежних samples. Compact tracked audit сохраняет metrics/hash references; large raw reports/RGBA нужны для re-audit и не дублируются в Git. Fine output — finite reference для sensitivity, direct Blender RGB/object-ID остаётся независимым truth. Универсальный convergence/acceptance threshold и speed ranking из этой серии не следуют.
+
+### Раздельные scene ROI и полоса границ
+
+Это read-only анализ уже сохранённых360 conditions refinement, без запуска server/Blender. Нужны raw reports/RGBA coarse/fine и прежний medium, captured/converted seeds101–103, а также неизменный pinned `carrier_refinement_v1.json`. Frozen policy: `configs/research/spatial-roi-plan.json`, протокол [[research/SPATIAL_ROI_PROTOCOL]].
+
+```sh
+python3 tools/research/server_boundary.py --spatial-plan configs/research/spatial-roi-plan.json --refinement-root artifacts/carrier-refinement-v1 --inputs-root artifacts/seam-generalization-v1 --output artifacts/carrier-refinement-v1/spatial-audit.json
+MPLCONFIGDIR=/tmp/sv-matplotlib python3 docs/diploma/plot_server_boundary.py --report artifacts/carrier-refinement-v1/spatial-audit.json --inputs-root artifacts/seam-generalization-v1
+```
+
+Audit перепроверяет inputs/poses/calibration/visibility/reports/RGBA и совпадение прежних metrics, создаёт disjoint ground/other_scene/coded_target interior/boundary masks по direct object IDs и подтверждает pixel-weighted reconstruction прежней MAE. Empty ROI даёт null, не0. Ground —semantic road/markings, other_scene —остальные non-ego objects, не измеренный physical-height class. Полоса границ повторяет прежнее исключение из global metric и теперь измеряется отдельно. Новые masks не заменяют исторический baseline, не являются ghost correspondence или carrier-shell coverage. Результаты/ограничения: [[validation/SPATIAL_ROI]]. Для новых inputs/policy подготовить отдельную версию plan/analysis; текущий набор уже просмотрен и остаётся exploratory.

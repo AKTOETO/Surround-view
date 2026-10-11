@@ -99,3 +99,5 @@ Multilabel server candidate/cost/global-gap controls: [[validation/MULTILABEL_SE
 Первое сравнение носителей при общем mesh budget: [[validation/CARRIER_BUDGET]], frozen plan: [[research/CARRIER_BUDGET_PROTOCOL]], диплом§4.48.
 
 Чувствительность к дискретизации носителя: [[validation/CARRIER_REFINEMENT]], frozen plan [[research/CARRIER_REFINEMENT_PROTOCOL]], диплом§4.49.
+
+Раздельные scene/boundary ROI и ограничения aggregate RGB metric: [[validation/SPATIAL_ROI]], протокол [[research/SPATIAL_ROI_PROTOCOL]], диплом§4.50.

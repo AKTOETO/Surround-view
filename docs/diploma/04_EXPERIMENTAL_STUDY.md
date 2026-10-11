@@ -1535,3 +1535,51 @@ Fine уменьшает RGB MAE относительно direct truth в92/120 c
 *Рисунок 4.56 —первый seed101, первый кадр и профиль multi_band/zero для всех пяти carriers: direct RGB, coarse, medium, fine и абсолютная RGB8-разность medium/fine, усиленная×8 с clipping. Последний столбец — диагностическое изображение, не scene RGB. Изображения выбраны по порядку плана, а не по качеству.*
 
 Серия ограничена тремя просмотренными экземплярами одной street family и двумя близкими позами; high-angle views и shell ROI ещё не проверены. Сгущение не устраняет вытягивание поднятого target. Скорость не ранжируется из-за fixed level order/thermal и reuse medium. Для выбора нужны ground/raised/shell ROI, spatial density, разные views/resolutions, новые scene families/long clips и целевой стенд. Raw paths, compact baseline и подробности: [[validation/CARRIER_REFINEMENT]].
+
+## 4.50. Раздельная оценка дороги, объектов и полосы границ
+
+Выводы §§4.48–4.49 использовали общую RGB MAE по внутренним областям видимых объектов. Для проверки её ограничений проведена post-hoc стратификация360 прежних outputs. Policy зафиксирована до stratified errors, но исходные images/aggregate metrics уже просмотрены: это exploratory re-analysis, не holdout и не новые server samples. Protocol: [[research/SPATIAL_ROI_PROTOCOL]].
+
+Маски строятся только по independent direct Blender object-ID и any-camera visibility. Семантические ground (дорога/разметка), coded_target и other_scene дополнительно делятся на interior и boundary band. Ego/background исключены. Ground не означает строго z=0; other_scene включает curb/sidewalk/buildings и не называется измеренным raised-class. ID boundaries включают маркировку и object seams, не только силуэты. Union interiors точно воспроизводит прежний ROI; все шесть masks непересекающиеся.
+
+| Seed / кадр | Ground interior | Other interior | Target interior | Все boundary pixels |
+|---|---:|---:|---:|---:|
+| 101 / 0 | 39374 | 4658 | 48 | 8196 |
+| 101 / 1 | 39303 | 4657 | 52 | 8049 |
+| 102 / 0 | 39449 | 4756 | 0 | 8262 |
+| 102 / 1 | 39490 | 4696 | 0 | 8193 |
+| 103 / 0 | 39408 | 4028 | 149 | 7797 |
+| 103 / 1 | 39670 | 3917 | 149 | 7635 |
+
+![Независимые semantic masks и полоса исключения](figures/experiments/spatial_roi_masks.png)
+
+*Рисунок 4.57 —первый кадр каждого seed: direct Blender RGB, visible classes (голубая дорога, магентовый target, оранжевые остальные объекты), ID boundary band и прежний interior ROI. Чёрный цвет на masks означает исключение. Узкий столб seed102 полностью исключён из interior.*
+
+Ground занимает89.24–90.70% старого ROI. Полоса границ составляет14.86–15.75% полного independently visible scene. Seed102 имеет0 target-interior pixels на обоих кадрах, поэтому прежняя RGB MAE вообще не измеряла его поверхность; отдельная coded IoU по-прежнему учитывала объект. Undefined error в пустой группе возвращается null, а не0.
+
+Для групп измерены linear RGB MAE, channel p95/max и count. Проверено восстановление исторического среднего:
+
+$$E_{interior}=\frac{\sum_g N_g E_g}{\sum_g N_g}.$$
+
+Простое невзвешенное среднее групп не используется. Equality с прежней MAE подтверждена до1e−12 во360 conditions. Дополнительная full-visible MAE включает band и выше historical interior MAE во120/120 medium conditions на0.008543…0.014834. Это другая область оценки, а не исправленная задним числом baseline.
+
+![Раздельные ошибки на medium носителях](figures/experiments/spatial_roi_metrics.png)
+
+*Рисунок 4.58 —linear RGB MAE по семантическим interior/boundary группам, medium/multi_band/zero. Каждая ячейка —среднее двух frame errors одного seed/carrier; серые undefined cells не являются нулевой ошибкой. Полный отчёт содержит все360 conditions.*
+
+Additional exploratory bowl−dome сравнение на medium:
+
+| ROI | Определённых пар bowl−dome | RGB лучше / хуже | Диапазон Δ linear MAE |
+|---|---:|---:|---:|
+| ground_interior | 24 | 0 / 24 | +0.009926…+0.015041 |
+| ground_boundary | 24 | 0 / 24 | +0.036077…+0.052457 |
+| coded_target_interior | 16 | 16 / 0 | -0.012632…-0.002416 |
+| coded_target_boundary | 24 | 20 / 4 | -0.019234…+0.021591 |
+| other_scene_interior | 24 | 24 / 0 | -0.086951…-0.027603 |
+| other_scene_boundary | 24 | 24 / 0 | -0.026565…-0.001789 |
+
+Bowl хуже по дороге во24/24 парах, но лучше по other_scene interior/boundary во24/24. Таким образом, aggregate error не разрешает конфликт реконструкции дороги и остальных объектов: вес дороги около90% доминировал в итоговом числе. Эти данные не устанавливают universal superiority bowl и не определяют физическую высоту каждого object pixel. Target boundary имеет20 улучшений и4 ухудшения; target-interior сравнений16 из-за отсутствия этой ROI у seed102.
+
+При fine−medium ground interior RGB улучшилась в86/120, но other_scene interior —только50/120 (66 ухудшений и4 ties). Target boundary улучшилась в20, ухудшилась в44 и совпала в56. Поэтому уменьшение общей ошибки при сгущении недостаточно для вывода о natural-object silhouette/ghost quality. Такой вывод требует correspondence и geometric truth, которых stratification не добавляет.
+
+Все native inputs/reports/RGBA перепроверены, source baseline закреплён SHA256; нового product C++ или server trials нет. Условные ROI не являются carrier-shell coverage. Остаются physical-height truth, carrier-hit/triangle coverage, новые views/families/long clips и target validation. Подробные ограничения и воспроизведение: [[validation/SPATIAL_ROI]].

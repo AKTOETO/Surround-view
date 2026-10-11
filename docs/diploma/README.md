@@ -86,3 +86,9 @@ MPLCONFIGDIR=/tmp/sv-matplotlib python3 docs/diploma/plot_server_boundary.py --r
 ```sh
 MPLCONFIGDIR=/tmp/sv-matplotlib python3 docs/diploma/plot_server_boundary.py --report docs/validation/baselines/carrier_refinement_v1.json --captures-root artifacts/carrier-refinement-v1 --fixture artifacts/seam-generalization-v1/seed101-inputs --capture artifacts/seam-generalization-v1/seed101-capture
 ```
+
+§4.50 —post-hoc semantic/boundary stratification360 outputs: [[validation/SPATIAL_ROI]]. Рисунки4.57–4.58 воспроизводятся без server rendering:
+
+```sh
+MPLCONFIGDIR=/tmp/sv-matplotlib python3 docs/diploma/plot_server_boundary.py --report docs/validation/baselines/spatial_roi_v1.json --inputs-root artifacts/seam-generalization-v1
+```
