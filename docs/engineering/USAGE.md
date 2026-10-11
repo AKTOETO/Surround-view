@@ -1022,3 +1022,7 @@ cmp docs/validation/baselines/carrier_positions_v1.json artifacts/carrier-inspec
 ### Проверка координат исходных камер
 
 Для разработчика: `RenderInspectionRequest::source_projections=true` включает локальный capture четырёх source pixel/status matrices. Проверка: `ctest --test-dir build -R '^(carrier_inspection|render_fusion_parity)$' --output-on-failure` после сборки `sv-carrier-inspection-tests`, `sv-render-fusion-probe`, `sv-server`. Нужны GLES и доступ к Unix socket. Форматы, коды отказа и команды выбора Mesa/NVIDIA: [[engineering/RENDERING#Opt-in source projections]], [[validation/CARRIER_POSITIONS#Расширение: координаты исходных камер]]. Пока это внутренний C++ API и тестовый export; CLI команды удалённого capture нет.
+
+### Проверка вклада камер
+
+Разработчик может передать `RenderInspectionRequest{true, true, true}` для одновременного carrier/source/hybrid-fusion capture; результат находится в `RenderInspection::fusion`. Поддерживаемые режимы, матрицы и стоимость: [[engineering/RENDERING#Opt-in fusion contributions]]. Проверка C++ core: `build/sv-fusion-boundary-tests`; полная команда сборки и native/wire parity: [[validation/CARRIER_POSITIONS#Расширение: вклад камер после смешивания]]. Это внутренний API; клиентская команда capture пока отсутствует.

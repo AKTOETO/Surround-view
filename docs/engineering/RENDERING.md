@@ -184,3 +184,20 @@ Inspection сохраняет прежнюю geometry policy с ego model так
 Приоритет: background/ego depth, footprint, отсутствие кадра, Z, угол, границы. Проекция использует общую с основным shader функцию, а не повторный CPU расчёт. Значения получаются 12 дополнительными RGBA8 passes/readbacks (U, V, status для каждой камеры); сохраняемый payload — 36 bytes/output pixel, без transient readback/region buffers. Carrier XYZ запрашивается независимо. Внутренняя geometry policy всегда включает ego, даже если final weights/coverage view его не рисует. Поэтому допустимость hybrid sample сравнивается только вне background/ego.
 
 `valid` не означает отсутствие перекрытия объектом сцены и не означает ненулевой вклад после seam/weight/pyramid policy. Это ещё не source-scene correspondence. API render-thread-only; сетевого продукта и клиентского метода пока нет. Стоимость captures не включена в завершённые до них regular stage timings; end-to-end render call становится дороже. Проверки и ограничения: [[validation/CARRIER_POSITIONS#Расширение: координаты исходных камер]].
+
+### Opt-in fusion contributions
+
+`fuse_research(samples, settings, FusionInspection*)` получает необязательный destination. `Renderer::render` включает тот же capture через третий флаг `RenderInspectionRequest::fusion_contributions`, результат — `RenderInspection::fusion`. Поддерживаются четыре hybrid research modes; запрос для `edge_feather`, `angular_feather`, `hard_best_angle` явно отклоняется до рендера. Без destination запрос также отклоняется. При отключённом флаге `fusion` отсутствует, повторный capture очищает прежнее состояние.
+
+| Поле | Смысл / формат |
+|---|---|
+| `FusionResult::weights` | Существующие CV_32FC4 weights до optional seam smoothing; diagnostic weights view сохраняет этот смысл |
+| `FusionInspection::blend_weights` | CV_32FC4 после smoothing/remasking/normalization, непосредственно перед pyramid reduction |
+| `level_weights` | CV_32FC4 для каждого фактически построенного уровня, fine → coarse; сумма 1 при поддержке, иначе 0 |
+| `camera_contributions[4]` | Full-resolution CV_32FC3 signed linear RGB, восстановленный вклад камеры до финального clamp |
+
+Для single-scale fusion вклад — произведение веса на цвет камеры. Для multiband это восстановление взвешенных Laplacian layers конкретной камеры; уровни могут иметь отрицательные значения, а spatial filtering переносит вклад через локальные границы validity. Сумма четырёх вкладов с последующим clamp [0,1] воспроизводит multiband color с погрешностью float regrouping. Эти вклады не являются вероятностями, opacity или покамерными локальными коэффициентами: final clamp и input-dependent seam solver не допускают такой интерпретации. При counterfactual изменении входа solver может выбрать другие швы.
+
+Это данные fusion stage до server composition: ego overlay, fallback вне coverage и диагностические RGB views выполняются после него. Вклад за границей coverage не означает, что он попадёт в отправленный кадр. Geometry inspection отдельно depth-masks ego. Все capture matrices top-left; размеры уровней различаются, фактическое число может быть меньше pyramid_levels для малого raster.
+
+Дополнительных GLES проходов не требуется. Сохраняемые contributions стоят 48 bytes/full-resolution pixel, blend weights — 16, level weights — 16 на пиксель каждого уровня; transient weighted layers и reconstruction требуют дополнительной памяти. Без запроса эти diagnostic allocations не выполняются. При capture CPU затраты входят в fusion timer; сравнивать производительность с обычным режимом необходимо отдельным опытом. Wire delivery пока не реализован. Проверки: [[validation/CARRIER_POSITIONS#Расширение: вклад камер после смешивания]].

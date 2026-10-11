@@ -2201,3 +2201,45 @@ end note
 На синтетическом плоском fixture проверены все категории; координаты допустимых выборок сопоставлены с независимым double CPU projection при ненулевых коэффициентах distortion. Принят инженерный допуск 0.01 source pixel для этого fixture. Совместно с прежними geometry tests получено 7/7 успешных GTest cases на Mesa и NVIDIA. Для пяти carriers и 18 комбинаций hybrid fusion/diagnostic/boundary проверено совпадение validity с sample masks вне background/ego; composition и plane wire parity сохранены. Подробные команды и границы применимости: [[validation/CARRIER_POSITIONS#Расширение: координаты исходных камер]].
 
 Расширение требует 12 дополнительных readback passes и 36 bytes/output pixel сохраняемых source matrices. Оно пока предназначено для явного локального capture. Ни накладные расходы, ни качество сшивки этой проверкой не измерены. Следующий участок — contributing support, независимая source-scene surface и передача ограниченного diagnostic capture через сервер и клиентскую библиотеку. Причина raised-object failure пока не установлена.
+
+## 4.61. Разделение допустимости камеры и её вклада в смешивание
+
+Диагностика §4.60 определяет допустимость проекции в исходную камеру. Для объяснения итогового цвета дополнительно требуется знать, какие вычисленные значения сохранились после шва, сглаживания и многоуровневой реконструкции. Существующая карта weights в сервере хранит веса до сглаживания шва; её недостаточно для анализа multiband результата.
+
+В C++ fusion stage добавлен явный capture post-smoothing weights, коэффициентов уровней и восстановленных цветовых вкладов камер. Основной путь вычисления цвета сохраняется. Для уровня $l$ регистрируется $a_{i,l}(p)=m_{i,l}(p)/\sum_j m_{j,l}(p)$ при сумме больше используемого порога; иначе коэффициенты равны нулю. Для камеры сохраняется реконструкция $C_i$ её взвешенной Laplacian pyramid. Тогда $C=\operatorname{clamp}_{[0,1]}(\sum_i C_i)$ для multiband с точностью перегруппировки операций float. Для single-scale fusion $C_i=w_iI_i$.
+
+```plantuml
+@startuml
+rectangle "Проецированные samples
+RGB / validity / edge weights" as Samples
+rectangle "Швы / нормировка
+weights до сглаживания" as Seam
+rectangle "Smoothing + remask
+blend_weights" as Smooth
+rectangle "Пирамиды
+level_weights + Laplacian colors" as Pyramid
+rectangle "Обычное смешивание
+reconstruction + clamp" as Color
+rectangle "Opt-in capture
+четыре reconstructed C_i" as Capture
+rectangle "Server composition
+coverage / fallback / ego" as Compose
+Samples --> Seam
+Seam --> Smooth
+Smooth --> Pyramid
+Pyramid --> Color
+Pyramid --> Capture
+Color --> Compose
+note bottom of Capture
+C_i может быть отрицательным
+и выходить за локальную validity.
+Это не opacity и не вероятность.
+end note
+@enduml
+```
+
+Рисунок 4.85 — Место capture вкладов в реализованном hybrid multiband pipeline. Для single-scale вариантов pyramid stage отсутствует; capture предшествует композиции итогового server frame.
+
+Проверка на full-support constant fixture с весами 1:2:3:4 и цветами 0.25:0.5:0.75:1 даёт вклады 0.025, 0.1, 0.225, 0.4 и сумму 0.75. Для 16 combinations mode/boundary/seam solver проверяются сохранность обычного результата, нормировка коэффициентов и восстановление итогового цвета с допуском 2e-6. Отдельный fixture с двумя неперекрывающимися половинами показывает перенос multiband вклада за границу локальной validity. Это ожидаемое свойство пространственного фильтра: локальная допустимость проекции сама по себе не определяет полный цветовой вклад.
+
+Указанное разложение фиксирует уже выбранные швы. Оно не оценивает counterfactual влияние камеры при повторном решении seam optimization и не является локальным соответствием поверхности. После fusion server может заменить значение fallback или ego overlay. Диагностический payload и CPU allocations значительны; overhead измеряется отдельно. Для GPU-only basic modes capture пока отклоняется явно. Форматы и условия повторения: [[engineering/RENDERING#Opt-in fusion contributions]], [[validation/CARRIER_POSITIONS#Расширение: вклад камер после смешивания]]. Следующая задача — связать фактическую source sample с независимой scene surface и предоставить bounded capture через server/client-lib.

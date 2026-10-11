@@ -71,3 +71,25 @@ __EGL_VENDOR_LIBRARY_FILENAMES=/usr/share/glvnd/egl_vendor.d/10_nvidia.json EGL_
 Требуются доступ к GPU для NVIDIA и разрешённый Unix socket для integration. Первые запуски в sandbox остановились соответственно на EGL initialization и socket bind; после запуска с необходимым доступом проверки прошли.
 
 Native fusion probe дополнительно экспортирует `cameraN-source-pixels.f32` (H×W×2, float32 в native byte order тестовой машины) и `cameraN-source-status.u8` (H×W). Эти тестовые файлы не являются переносимым wire-контрактом. Передача через server/client-lib, triangle ID, scene-surface truth, contributing support, измерение overhead и boundary-focused optical tests остаются открытыми. Исторические 40-condition archived RGBA comparisons заново не запускались; текущая проверка равенства относится к включению/выключению capture в новой сборке.
+
+## Расширение: вклад камер после смешивания
+
+`FusionInspection` получает реальные post-smoothing blend weights, normalized per-level weights и четыре reconstructed linear-RGB contributions; определения: [[engineering/RENDERING#Opt-in fusion contributions]]. Существующие diagnostic weights view и `FusionResult::weights` сохраняют прежний смысл до smoothing. Включение capture не заменяет основную арифметику другим renderer.
+
+В `tests/fusion_inspection_tests.cpp`:
+
+- Для четырёх modes × двух boundary policies × двух seam solvers (16 комбинаций) проверены bitwise-equivalent color/weights при включении capture, reconstruction sum с допуском 2e-6, нормировка/неотрицательность level coefficients и фактическое число уровней.
+- Known-answer full-support constant fixture: входные веса 1:2:3:4 дают коэффициенты 0.1:0.2:0.3:0.4 и итоговый RGB 0.75; четыре вклада равны 0.025, 0.1, 0.225, 0.4.
+- Повторное использование destination после многоуровневого capture не сохраняет старые уровни; all-invalid fixture даёт нулевые weights/contributions/output.
+- Две неперекрывающиеся половины raster демонстрируют ненулевой multiband camera0 contribution справа от её validity при нулевом локальном blend weight. Это known-behavior control, а не доказательство ошибки конкретной Blender-сцены.
+
+Native render fusion probe запрашивает capture для каждой из 18 fusion/diagnostic/boundary combinations на пяти carriers и экспортирует `blend-weights.f32`, `levelN-weights.f32`, `cameraN-contribution.f32`. Layout: H×W×channels, origin top-left, native float32 byte order из index.json; уровень N использует собственные reduced dimensions из case.fusion_levels в index.json. Формат предназначен для тестовых артефактов, не wire ABI. Проверка unsupported native GPU mode добавлена в source inspection GTest.
+
+```sh
+cmake --build build --target sv-fusion-boundary-tests sv-fusion-probe sv-render-fusion-probe sv-carrier-inspection-tests sv-server -j4
+__EGL_VENDOR_LIBRARY_FILENAMES=/usr/share/glvnd/egl_vendor.d/50_mesa.json ctest --test-dir build -R '^(fusion_boundary|carrier_inspection|native_fusion_parity|render_fusion_parity)$' --output-on-failure
+```
+
+Пределы проверки: небольшие synthetic fixtures, не реальная scene correspondence; GPU-only contributions, bounded wire capture и оценка overhead остаются открытыми. Исторические baselines/числа качества не пересчитаны этим инженерным шагом.
+
+Результат 11.10.2026: CPU GTest **7/7** (четыре прежние boundary проверки и три contribution проверки); целевые CTest группы native_fusion_parity/render_fusion_parity/carrier_inspection/fusion_boundary **4/4** на Mesa с разрешённым IPC. Это regression validation текущей реализации, а не новая quality серия.
