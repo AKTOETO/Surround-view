@@ -15,6 +15,58 @@ sys.path.insert(0, str(ROOT/'tools'))
 from temporal_seam_stability import load_sequence
 
 
+def plot_parallax(data, args):
+    profiles = [(m,b) for m in ('multi_band','graph_cut_multi_band') for b in ('zero','normalized')]
+    ids = {'dome_floor_v1':'dome_floor','cylinder_floor_v1':'cylinder_floor','cube_floor_v1':'cube_floor'}
+    labels, ious, errors = [], [], []
+    fig, axes = plt.subplots(6, 6, figsize=(20, 15))
+    for index, entry in enumerate(data['cases']):
+        cid = entry['id']
+        case = entry['audit']['cases'][0]
+        cfg,_,truths,_,_,_ = load_sequence(args.inputs_root/cid/'seed101-inputs',
+                                         args.inputs_root/cid/'seed101-capture','any')
+        axes[index,0].imshow(truths[0])
+        axes[index,0].set_title(cid+' / direct truth')
+        for column, carrier in enumerate(case['resources'],1):
+            rows = [r for r in case['audit']['results'] if r['carrier'] == carrier]
+            groups = [[r for r in rows if (r['mode'],r['boundary']) == p] for p in profiles]
+            labels.append(cid+' / '+ids.get(carrier,carrier))
+            ious.append([np.mean([r['quality']['target']['iou'] for r in g]) for g in groups])
+            errors.append([np.mean([r['quality']['linear_mae'] for r in g]) for g in groups])
+            directory = args.captures_root/cid/'native/seed101'/ids.get(carrier,carrier)
+            report_path = directory/'report.json'
+            if hashlib.sha256(report_path.read_bytes()).hexdigest() != case['audit']['native_report_sha256'][carrier]:
+                raise ValueError('parallax report checksum mismatch')
+            native = json.loads(report_path.read_text())
+            row = next(r for r in rows if r['truth_index'] == 0 and (r['mode'],r['boundary']) == profiles[0])
+            variant = next(n for n,v in enumerate(native['scenario']['variants'])
+                           if (v['mode'],v['pyramid_boundary']) == profiles[0])
+            sample = next(s for s in native['samples'] if s['frame_index'] == row['frame_index']
+                          and s['variant'] == variant and not s['warmup'])
+            payload = (directory/sample['rgba_file']).read_bytes()
+            if hashlib.sha256(payload).hexdigest() != row['rgba_sha256']:
+                raise ValueError('parallax RGBA checksum mismatch')
+            axes[index,column].imshow(np.frombuffer(payload,np.uint8).reshape(
+                cfg['output']['height'],cfg['output']['width'],4))
+            axes[index,column].set_title(ids.get(carrier,carrier))
+    for ax in axes.flat: ax.set_axis_off()
+    args.output.mkdir(parents=True,exist_ok=True)
+    fig.suptitle('All six controlled factors, first pose; fixed multi_band/zero profile')
+    fig.tight_layout();fig.savefig(args.output/'parallax_height_views.png',dpi=150);plt.close(fig)
+    fig, axes = plt.subplots(1,2,figsize=(13,14),sharey=True)
+    for ax,values,title,cmap in zip(axes,(ious,errors),('Coded-target IoU','Visible-interior linear RGB MAE'),('viridis','magma_r')):
+        im = ax.imshow(values,aspect='auto',cmap=cmap)
+        ax.set_xticks(range(4),['MB / zero','MB / normalized','GC MB / zero','GC MB / normalized'],rotation=25,ha='right')
+        ax.set_yticks(range(len(labels)),labels,fontsize=8);ax.set_title(title)
+        for y,row in enumerate(values):
+            for x,v in enumerate(row):
+                ax.text(x,y,f'{v:.4f}',ha='center',va='center',fontsize=7,color='white',
+                        bbox=dict(facecolor='black',alpha=.35,edgecolor='none',pad=1))
+        fig.colorbar(im,ax=ax,shrink=.5)
+    fig.suptitle('Full factor/carrier/profile matrix; means of two dependent poses')
+    fig.tight_layout();fig.savefig(args.output/'parallax_height_metrics.png',dpi=150);plt.close(fig)
+
+
 def plot_lateral(data, args):
     profiles = [(m,b) for m in ('multi_band','graph_cut_multi_band') for b in ('zero','normalized')]
     carriers = list(data['cases'][0]['resources'])
@@ -319,6 +371,9 @@ def main():
     parser.add_argument('--inputs-root', type=Path, default=ROOT/'artifacts/seam-generalization-v1')
     args = parser.parse_args()
     report = json.loads(args.report.read_text())
+    if report.get('experiment') == 'E-STITCH-parallax-height-01':
+        plot_parallax(report, args)
+        return
     if report.get('experiment') == 'E-STITCH-carrier-lateral-01':
         plot_lateral(report, args)
         return
