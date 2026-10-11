@@ -44,6 +44,9 @@ TEST(SourceInspection, ShaderCoordinatesAndRejectionsMatchIndependentProjection)
     sv::RenderInspection inspection;
     EXPECT_THROW(renderer.render(frames, config.view, nullptr, {false, true}),
                  std::invalid_argument);
+    EXPECT_THROW(renderer.render(frames, config.view, &inspection, {false, false, true}),
+                 std::invalid_argument);
+    EXPECT_FALSE(inspection.fusion);
     const auto plain = renderer.render(frames, config.view);
     EXPECT_EQ(plain.pixels, renderer.render(frames, config.view, &inspection, {true, true}).pixels);
     EXPECT_EQ(plain.pixels, renderer.render(frames, config.view).pixels);

@@ -66,7 +66,7 @@ int main(int argc, char **argv)
                     renderer.set_fusion(settings);
                     sv::RenderInspection inspection;
                     const auto actual =
-                        renderer.render(set, config.view, &inspection, {true, true});
+                        renderer.render(set, config.view, &inspection, {true, true, true});
                     if (inspection.carrier_positions.type() != CV_32FC3 ||
                         inspection.carrier_positions.size() !=
                             cv::Size(config.width, config.height))
@@ -78,13 +78,32 @@ int main(int argc, char **argv)
                     {
                         throw std::runtime_error("missing projected samples");
                     }
+                    if (!inspection.fusion)
+                    {
+                        throw std::runtime_error("missing fusion contribution inspection");
+                    }
                     const auto directory =
                         output / (std::string(mode) + "-" + diagnostic +
                                   (std::string(boundary) == "zero" ? "" : "-normalized"));
                     std::filesystem::create_directory(directory);
+                    boost::json::array fusion_levels;
+                    matrix(directory / "blend-weights.f32", inspection.fusion->blend_weights);
+                    for (size_t level = 0; level < inspection.fusion->level_weights.size(); ++level)
+                    {
+                        const auto &weights = inspection.fusion->level_weights[level];
+                        fusion_levels.emplace_back(boost::json::object{
+                            {"file", "level" + std::to_string(level) + "-weights.f32"},
+                            {"width", weights.cols},
+                            {"height", weights.rows},
+                            {"channels", 4}});
+                        matrix(directory / ("level" + std::to_string(level) + "-weights.f32"),
+                               inspection.fusion->level_weights[level]);
+                    }
                     for (int c = 0; c < 4; ++c)
                     {
                         const auto name = "camera" + std::to_string(c);
+                        matrix(directory / (name + "-contribution.f32"),
+                               inspection.fusion->camera_contributions[c]);
                         const auto &source = inspection.source_projections[c];
                         matrix(directory / (name + "-source-pixels.f32"), source.pixels);
                         matrix(directory / (name + "-source-status.u8"), source.status);
@@ -126,11 +145,13 @@ int main(int argc, char **argv)
                     {
                         throw std::runtime_error("inspection changed output/resources");
                     }
-                    cases.emplace_back(
-                        boost::json::object{{"mode", mode},
-                                            {"diagnostic", diagnostic},
-                                            {"boundary", boundary},
-                                            {"directory", directory.filename().string()}});
+                    cases.emplace_back(boost::json::object{
+                        {"mode", mode},
+                        {"diagnostic", diagnostic},
+                        {"boundary", boundary},
+                        {"directory", directory.filename().string()},
+                        {"fusion_levels", fusion_levels},
+                        {"contribution_scope", "signed_linear_rgb_pre_clamp_pre_composition"}});
                 }
             }
         }
