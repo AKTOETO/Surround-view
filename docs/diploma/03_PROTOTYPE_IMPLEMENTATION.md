@@ -493,8 +493,7 @@ alt актуальная revision и валидные параметры
   S -> R : set_fusion между render calls
   S --> C : accepted + revisions + settings
   S -> R : render того же paused frame set
-  R --> C : RGBA через server data channel
-config_revision + settings + input IDs
+  R --> C : RGBA через server data channel\nconfig_revision + settings + input IDs
 else ошибка или stale revision
   K --> S : отказ без публикации
   S --> C : rejected, прежнее состояние
@@ -563,15 +562,12 @@ A --> U : JSON report
 ```plantuml
 @startuml
 [*] --> Idle
-Idle --> Active : acquire(owner, TTL)
-сохранить fusion/pause
+Idle --> Active : acquire(owner, TTL)\nсохранить fusion/pause
 Active --> Active : renew от владельца
 Active --> Restoring : release / TTL expired / control closed
-Restoring --> Idle : config восстановлен
-source ACK соответствует baseline pause
+Restoring --> Idle : config восстановлен\nsource ACK соответствует baseline pause
 Restoring --> Failed : config/source error или timeout
-Failed --> Failed : мутации отклоняются
-поздний ACK не снимает ошибку
+Failed --> Failed : мутации отклоняются\nпоздний ACK не снимает ошибку
 Failed --> [*] : требуется перезапуск
 @enduml
 ```

@@ -237,3 +237,18 @@ capture_study(root/'assets/scenarios/carrier-lateral-v1.json', root/'artifacts/c
 Драйвер создаёт новый каталог, сохраняет plan/helper hashes и progress.json, строит три isolated coded-target scenes, задаёт virtual_camera до paired capture и восстанавливает исходную активную Scene в finally. Камерные cubefaces и direct RGB/object-ID/visibility/source IDs снимаются заново. Не переиспользуйте уже существующий output и не меняйте frozen scripts/plan между capture и audit. При сбое progress содержит failed/error, неполную запись нельзя включать в matrix. Generated data остаются в artifacts; source recipe/driver сохраняются обычным Git, без LFS.
 
 После завершения `carrier_lateral.py --run-binaries` конвертирует captures в fisheye PNG, если inputs ещё нет, и выполняет native matrix: [[engineering/USAGE#Сшивка в боковом ракурсе]]. Для прочих ракурсов создавайте новую версию recipe/protocol; прежний direct truth нельзя использовать после изменения virtual_camera.
+
+## Управляемая высота и расстояние объекта
+
+После подключения Blender выполнить в Python Console, указав путь проекта:
+
+```python
+from pathlib import Path
+import sys
+root = Path('/home/bogdan/prog/MAI/surround-view')
+sys.path.insert(0, str(root/'tools/blender'))
+from parallax_study import capture_study
+capture_study(root/'assets/scenarios/parallax-height-v1.json', root/'artifacts/parallax-height-repeat-inputs')
+```
+
+Шесть isolated scenes сохраняют автомобиль, camera locators, дорогу100×100m и box0.4m. Остальные meshes удаляются только из новых сцен. Варьируются высота центра и расстояние box; исходная active Scene восстанавливается. Это идеализированный стенд, не новая городская карта. Root progress должен иметь state=complete. Provenance фиксирует master/helper hashes, local case plans и retained mesh inventory. Запускайте capture и timing trials последовательно. Команды native matrix: [[engineering/USAGE#Управляемая высота и параллакс]]. Ограничения: [[research/PARALLAX_HEIGHT_PROTOCOL]].

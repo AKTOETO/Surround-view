@@ -874,3 +874,20 @@ MPLCONFIGDIR=/tmp/sv-matplotlib python3 docs/diploma/plot_server_boundary.py --r
 ```
 
 Фигуры показывают все шесть кадров и полный набор profiles; качество сравнивается на одинаковом support внутри каждого кадра. Это exploratory paused CPU/Mesa screen, не sustained FPS и не target validation. Native региональные masks пока не экспортируются как SV01 subscription.
+
+## Управляемая высота и параллакс
+
+Сначала получить complete Blender capture по [[engineering/BLENDER#Управляемая высота и расстояние объекта]], затем выполнить из корня проекта:
+
+```sh
+python3 tools/research/parallax_height.py --plan configs/research/parallax-height-plan.json --root artifacts/parallax-height-repeat --inputs artifacts/parallax-height-repeat-inputs --run-binaries build --output artifacts/parallax-height-repeat/audit.json
+```
+
+Нужны native GPU build с testing (`sv-server`, `svctl`, `sv-carrier-probe`), Python NumPy/SciPy/OpenCV/Pillow для независимого аудита и конвертации. Launcher создаёт30 fresh servers через Unix IPC, запускает native `svctl research`, сохраняет исходные RGBA, reports, logs и конфигурации; алгоритмы остаются в C++. Для timing остановите Blender render и другие нагрузки. Каталог --root должен быть новым. Повторная read-only проверка не запускает серверы:
+
+```sh
+python3 tools/research/parallax_height.py --plan configs/research/parallax-height-plan.json --root artifacts/parallax-height-repeat --inputs artifacts/parallax-height-repeat-inputs --output artifacts/parallax-height-repeat/reaudit.json
+MPLCONFIGDIR=/tmp/sv-matplotlib python3 docs/diploma/plot_server_boundary.py --report artifacts/parallax-height-repeat/reaudit.json --captures-root artifacts/parallax-height-repeat --inputs-root artifacts/parallax-height-repeat-inputs
+```
+
+Сохранённый checked-in baseline: [[validation/PARALLAX_HEIGHT]]. Python здесь является research harness/oracle, не продуктовым API или реализацией сшивки.

@@ -147,3 +147,9 @@ sha256sum assets/demo/urban_street_01_1k.hdr \
 `assets/scenarios/carrier-lateral-v1.json` —авторский текстовый recipe трёх street instances с coded targets и view elevation0.35/fov1.6rad. Он сохраняет scenario/mount/target параметры прежнего seam-generalization-v1, явно задавая новый virtual_camera. Внешних downloads нет. Генератор `tools/blender/carrier_study.py` использует прежние scene/rig/paired_truth helpers и создаёт новый complete capture; source/helper hashes сохраняются в provenance.
 
 В Git сохраняются recipe, driver, protocol, compact baseline и иллюстрации диплома. Cubefaces, direct truth, source IDs, fisheye replay, native RGBA/traces/logs —generated artifacts, а не исходные ассеты. Для восстановления нужны Blender и прежние versioned helpers; команды: [[engineering/BLENDER#Боковой ракурс с независимым truth]]. Результаты и ограничения: [[validation/CARRIER_LATERAL]].
+
+## A04 — Управляемый стенд высоты и расстояния
+
+`assets/scenarios/parallax-height-v1.json` —авторский текстовый recipe шести факторов одного perturbed rig: box0.4m на двух расстояниях, center z0.2/0.8/1.4m. `tools/blender/parallax_study.py` воспроизводит из legacy street builder плоский стенд с ego/road/target, фиксируя удаление остальных meshes в provenance. Новых downloads и внешних моделей нет; .blend/LFS не нужны. Два верхних положения —идеализированный перенос box без опоры.
+
+В Git входят recipe, generator, протокол, компактный audit и подписанные рисунки; captures/RGBA/logs остаются generated measurement artifacts. Восстановление: [[engineering/BLENDER#Управляемая высота и расстояние объекта]], ограничения: [[validation/PARALLAX_HEIGHT]].

@@ -104,3 +104,9 @@ MPLCONFIGDIR=/tmp/sv-matplotlib python3 docs/diploma/plot_server_boundary.py --r
 ```sh
 MPLCONFIGDIR=/tmp/sv-matplotlib python3 docs/diploma/plot_server_boundary.py --report docs/validation/baselines/carrier_lateral_v1.json --captures-root artifacts/carrier-lateral-v1 --inputs-root artifacts/carrier-lateral-inputs-v1
 ```
+
+§4.53 — controlled height/range,240 native условий, отрицательные результаты и visibility/clipping ограничения: [[validation/PARALLAX_HEIGHT]]. Рисунки4.64–4.65:
+
+```sh
+MPLCONFIGDIR=/tmp/sv-matplotlib python3 docs/diploma/plot_server_boundary.py --report docs/validation/baselines/parallax_height_v1.json --captures-root artifacts/parallax-height-v1 --inputs-root artifacts/parallax-height-inputs-v1
+```

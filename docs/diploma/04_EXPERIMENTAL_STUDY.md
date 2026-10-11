@@ -1619,8 +1619,7 @@ participant "Blender: isolated scenes" as B
 collections "Камерные RGB и view-specific truth" as D
 participant "Исследовательский launcher" as L
 participant "sv-carrier-probe\nproduction Renderer" as P
-participant "svctl research
-sv-client-lib" as C
+participant "svctl research\nsv-client-lib" as C
 participant "свежий sv-server" as S
 participant "Read-only audit" as A
 U -> B : frozen recipe + virtual view
@@ -1679,3 +1678,60 @@ Normalized boundary улучшил aggregate и floor MAE во60/60 парах; 
 Pole seed102 имеет64/62 direct-ID pixels, но IoU0 во всех40 условиях: truth не пуст, реконструированный coded object не пересекается с ним после component policy. В seed101 IoU0.00633–0.02885, seed1030.00960–0.13559. Низкие значения и растянутые colored traces согласуются с ограничением единого носителя при параллаксе, но опыт не отделяет все вклады geometry/sampling/fusion. Требуются controlled height/depth ablation и natural-object correspondence, а не только подбор blend weights.
 
 Все inputs/reports/RGBA проверены, restore и source fingerprint согласованы. Это завершённый exploratory lateral follow-up, не итоговое подтверждение E-STITCH-01: остаются другие scene families/views/resolutions, physical-height/triangle-hit truth, длинные клипы и Aurora hardware. Данные и воспроизведение: [[validation/CARRIER_LATERAL]].
+
+## 4.53. Управляемый перенос объекта по высоте и расстоянию
+
+Lateral опыт (§4.52) смешивал формы объектов, материалы и перекрытия. В E-STITCH-parallax-height-01 построен отдельный плоский стенд: автомобиль с прежним perturbed rig seed101, дорога100×100m и magenta emission box0.4×0.4×0.4m. Меняется положение одного box, а не его размер. Center z=0.2/0.8/1.4m; XY near=(2.4,2.3) и far=(4.8,4.6)m. На нижнем уровне box стоит на дороге; верхние положения идеализированы, без опоры. Сохранены два одинаковых для всех факторов vehicle poses, исходные камеры, direct view и освещение. Это один управляемый синтетический стенд, не независимая выборка городских сцен.
+
+```plantuml
+@startuml
+participant "Frozen factor recipe" as R
+participant "Blender: flat road + ego + box" as B
+collections "Camera RGB + independent truth" as D
+participant "svctl research\nsv-client-lib" as C
+participant "30 fresh sv-server instances" as S
+participant "Read-only audit" as A
+R -> B : 2 ranges × 3 center heights
+B -> D : same rig/view/poses; RGB, ID, visibility
+D -> S : converted four-camera replay
+C -> S : 5 carriers × 4 profiles; pause/step/repeat
+S -> A : native RGBA + metadata + restore status
+D -> A : independent RGB/ID/visibility + hashes
+A -> A : 240 conditions; full matrix
+@enduml
+```
+
+Рисунок4.63 — последовательность controlled height/range опыта. Python управляет экспортом и независимым аудитом; сшивку и rendering выполняет production C++, команды идут через клиентскую библиотеку.
+
+При optical center $C$ и точке $P$ продолжение camera ray до плоскости $z=0$ имеет вид
+
+$$Q=C+t(P-C),\qquad t=\frac{C_z}{C_z-P_z}.$$
+
+При $P_z=0$ получается $Q=P$. Для двух optical centers на одинаковой высоте $H$ и horizontal baseline $b$ расхождение ground intersections одной поднятой точки по направлению baseline имеет модуль $b h/(H-h)$ при $0<h<H$. При $h\to H$ приближение становится неустойчивым; при $h>H$ пересечение лежит позади направления луча. Это аналитический контроль ground approximation, а не предсказание IoU полного box: его видимые грани, окклюзии, sampling, finite carriers и shell intersections отличаются от луча через центр.
+
+В текущем rig optical centers имеют высоты0.85/1.12m. Гипотетический horizontal displacement центра для всех четырёх камер/двух poses/двух ranges составляет0.437–2.603m при z0.2 и5.028–135.353m при z0.8. При z1.4 все16 проверенных лучей имеют t<0; displacement остаётся undefined, а не подменяется нулём. Known-answer tests отдельно проверяют ground point, parallel/behind cases и baseline disparity.
+
+![Все факторы высоты и расстояния: direct RGB и серверные outputs](figures/experiments/parallax_height_views.png)
+
+Рисунок4.64 — все шесть заранее заданных факторов на первом pose; фиксированный профиль multi_band/zero, слева independent direct Blender RGB. Нижний дальний box касается границы direct frame; это ограничение fixed-view постановки, а не успех алгоритма. Все вторые poses и четыре profiles включены в числовой baseline.
+
+| Фактор | Direct target pixels | Any-camera visible target pixels | Predicted pixels | IoU min…max по40 условиям |
+|---|---:|---:|---:|---:|
+| near-z020 | 69–79 | 20–26 | 191–619 | 0.03715…0.08787 |
+| near-z080 | 71–82 | 15–19 | 373–2578 | 0 |
+| near-z140 | 79–85 | 2–5 | 0 | 0 |
+| far-z020 | 403–417 | 237–327 | 290–768 | 0.45441…0.72059 |
+| far-z080 | 477–627 | 241–350 | 0 | 0 |
+| far-z140 | 549–744 | 24–28 | 0 | 0 |
+
+Таблица — full-frame coded target mask после прежней component policy, min8 pixels/chroma0.15. Диапазоны охватывают пять carriers, четыре profiles и два poses. Visible column относится к независимо трассированной части direct поверхности; full-mask IoU не ограничена этой частью.
+
+При near-z080 изображение target присутствует, но смещено и не пересекается с эталоном. В трёх других поднятых cases coded output отсутствует после component filtering. При этом chroma target присутствует хотя бы в одной входной fisheye camera каждого pose всех шести cases. Следовательно, disappearance не объясняется отсутствием всех исходных наблюдений. Однако source cameras видят не всю direct поверхность: особенно мало support у верхнего близкого box. Нельзя приписывать весь deficit исключительно fusion или требовать реконструкции невидимых граней без модели сцены.
+
+![Полная матрица IoU и RGB MAE для controlled factors](figures/experiments/parallax_height_metrics.png)
+
+Рисунок4.65 — все factor/carrier/profile combinations, средние двух зависимых poses. Linear RGB MAE вычислена на independent visible interior ROI; однородная дорога может маскировать исчезновение маленького объекта.
+
+Итого160/240 условий имеют нулевой IoU: ни один исследованный profile/carrier не восстановил поднятый target в этой постановке. Это воспроизводимый отрицательный результат, согласующийся с ограничением единой поверхности при параллаксе. Он не доказывает бесполезность всех носителей или fusion: проверены фиксированные shapes/budgets и один rig. Различия near/far нельзя объявлять чистым эффектом расстояния: меняются projected size, source visibility и clipping. Центроид также не заменяет IoU —две симметричные ложные копии способны дать верный центр при нулевом пересечении, что проверяется отдельным контрольным тестом.
+
+Все30 native запусков дали2160 samples/1680 measurement captures;240 quality conditions проверены по hashes, input/config/pose equality, budgets и restore metadata. Product fingerprint совпадает с §4.52; код продукта в этом опыте не менялся. Generated inputs/reports остаются в artifacts, рецепт и generator воспроизводят мир без LFS. Источники данных, команды и ограничения: [[research/PARALLAX_HEIGHT_PROTOCOL]], [[validation/PARALLAX_HEIGHT]]. Следующие шаги —полностью помещающиеся в кадр targets, object IoU на source-visible support, другие rig baselines/mounts/views/resolutions и natural-object correspondence, затем целевая аппаратная проверка. Финальное исследовательское заключение пока не закрыто.
