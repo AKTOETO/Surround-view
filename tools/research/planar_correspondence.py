@@ -75,13 +75,18 @@ def collect(root, plan_path):
             native_points=transform_points(ego,products['carrier-positions.f32'][y,x])
             carrier_error=np.linalg.norm(native_points-direct,axis=-1)
             regions=products['carrier-regions.u8'][y,x,0]
-            gaps=[];source_errors=[];inverse_errors=[];valid_count=0
+            gaps=[];source_errors=[];inverse_errors=[];optical_errors=[];carrier_projection_gaps=[];valid_count=0
             for i,camera in enumerate(config['cameras']):
                 status=products[f'camera{i}-status.u8'][y,x,0]
                 valid=status==1;valid_count+=int(valid.sum())
                 uv=products[f'camera{i}-pixels.f32'][y,x]
                 correct,correct_valid=project(camera,transform_points(np.linalg.inv(ego),direct))
+                projected_carrier,carrier_valid=project(camera,products['carrier-positions.f32'][y,x])
+                if not np.array_equal(carrier_valid,valid):
+                    raise ValueError('native/independent carrier validity differs')
+                optical_errors.extend(np.linalg.norm(uv[valid]-projected_carrier[valid],axis=-1))
                 overlap=valid & correct_valid
+                carrier_projection_gaps.extend(np.linalg.norm(projected_carrier[overlap]-correct[overlap],axis=-1))
                 gaps.extend(np.linalg.norm(uv[overlap]-correct[overlap],axis=-1))
                 hits=arrays[carrier+'-hits.npy'][:,i]
                 if not np.isfinite(hits[valid]).all():
@@ -100,16 +105,18 @@ def collect(root, plan_path):
                 raise ValueError('empty control or source ray oracle mismatch')
             strict=carrier!='bowl'
             passed=(carrier_error.max()<=plan['planar_tolerance_m'] and source_errors.max()<=plan['planar_tolerance_m'] and max(gaps)<=plan['uv_tolerance_px'])
-            if strict and not passed:
-                raise ValueError('exact floor planar control failed: '+carrier)
             rows.append({'frame_index':frame,'carrier':carrier,'pixels':len(pixels),'source_pairs':len(pixels)*4,
                          'valid_pairs':valid_count,'planar_geometry_required':strict,'planar_tolerances_passed':bool(passed),
                          'source_matches_002m':int((source_errors<=.02).sum()),
                          'carrier_regions':{str(k):int((regions==k).sum()) for k in np.unique(regions)},
                          'carrier_to_plane_m':describe(carrier_error),'source_to_direct_plane_m':describe(source_errors),
-                         'correct_vs_native_uv_px':describe(gaps),'blender_analytic_direct_m':describe(truth_error),
+                         'correct_vs_native_uv_px':describe(gaps),'native_optical_residual_px':describe(optical_errors),
+                         'carrier_projection_vs_plane_uv_px':describe(carrier_projection_gaps),
+                         'blender_analytic_direct_m':describe(truth_error),
                          'blender_analytic_source_m':describe(inverse_errors),
                          'native_report_sha256':sha(native/'report.json'),'normal_rgba_sha256':sha(native/'output.rgba')})
     return {'schema_version':1,'scope':plan['scope'],'plan_sha256':sha(plan_path),
             'collector_sha256':sha(__file__),'helper_sha256':scene['helper_sha256'],'scene_truth_sha256':sha(scene_path),
-            'blender_version':scene['blender_version'],'rows':rows,'limitations':plan['limitations']}
+            'blender_version':scene['blender_version'],
+            'exact_planar_controls_passed':all(r['planar_tolerances_passed'] for r in rows if r['planar_geometry_required']),
+            'rows':rows,'limitations':plan['limitations']}
