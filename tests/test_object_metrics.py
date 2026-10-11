@@ -14,11 +14,47 @@ from object_metrics import measure_target, measure_target_support, projected_obj
 from object_stitch import interleaved_orders, load_objects
 from diagnostic_motion import frame_positions, position_for_capture, validate_captured_positions
 from parallax_height import ray_ground, object_position, validate_factors, verify_historical_results, box_frame_bounds, verify_rig_pair, verify_sampling_design, pair_sampling_rows
+from parallax_output import validate_output_design, normalized_config, normalized_metrics, deltas
 from server_boundary import (quality as server_quality, timestamp as server_timestamp, audit_study,
     check_mesh_budget, validate_refinement_plan, refinement_difference, audit_refinement, audit_spatial)
 
 
 class ObjectMetricTests(unittest.TestCase):
+    def test_output_resolution_design_rejects_confounders(self):
+        low = json.loads((ROOT/'configs/research/parallax-sampling-plan.json').read_text())
+        high = json.loads((ROOT/'configs/research/parallax-output-plan.json').read_text())
+        a = json.loads((ROOT/low['inputs_plan']).read_text())
+        b = json.loads((ROOT/high['inputs_plan']).read_text())
+        validate_output_design(low,high,a,b)
+        wrong = json.loads(json.dumps(high));wrong['carriers'][0]['surface']['corner_height_m'] = 1
+        with self.assertRaisesRegex(ValueError,'non-output'): validate_output_design(low,wrong,a,b)
+        wrong = json.loads(json.dumps(b))
+        for case in wrong['cases']: case['capture']['face_size'] = 1024
+        with self.assertRaisesRegex(ValueError,'fixed cubemap512'): validate_output_design(low,high,a,wrong)
+        cfg = json.loads((ROOT/'tests/data/object_stitch_v1/config.json').read_text())
+        cfg['output'] = {'width':640,'height':360}
+        # This fixture uses400px cameras; output removal must retain every other field.
+        other = json.loads(json.dumps(cfg));other.pop('output')
+        self.assertEqual(normalized_config(cfg,(640,360)),other)
+        with self.assertRaisesRegex(ValueError,'actual output'): normalized_config(cfg,(320,180))
+        cfg['cameras'][0]['resolution']['width'] += 1
+        with self.assertRaisesRegex(ValueError,'fisheye'): normalized_config(cfg,(640,360))
+
+    def test_output_metrics_normalize_pixels_and_keep_undefined(self):
+        row = {'quality':{'target':{'iou':.5,'predicted_pixels':576},'linear_mae':.02},
+               'visible_target':{'conditional_iou':None},'object_position':{'centroid_distance_px':18}}
+        a = normalized_metrics(row,180)
+        row['quality']['target']['predicted_pixels'] *= 4
+        row['object_position']['centroid_distance_px'] *= 2
+        b = normalized_metrics(row,360)
+        self.assertAlmostEqual(a['predicted_area_fraction'],.01)
+        self.assertAlmostEqual(a['centroid_distance_over_height'],.1)
+        self.assertEqual(a,b)
+        self.assertIsNone(deltas(a,b)['conditional_iou'])
+        row['object_position']['centroid_distance_px'] = None
+        self.assertIsNone(normalized_metrics(row,360)['centroid_distance_over_height'])
+        with self.assertRaises(ValueError): normalized_metrics(row,0)
+
     def test_sampling_design_rejects_view_and_budget_confounders(self):
         low = json.loads((ROOT/'configs/research/parallax-framed-plan.json').read_text())
         high = json.loads((ROOT/'configs/research/parallax-sampling-plan.json').read_text())

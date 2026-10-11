@@ -1,0 +1,11 @@
+# Output-resolution sensitivity: журнал приёмки
+
+## Уточнение до native quality results, 11.10.2026
+
+Frozen protocol [[research/PARALLAX_OUTPUT_PROTOCOL]]/commit8d6bcdc требует прежних source observations. После нового Blender capture, **до запуска native quality matrix**, первые cube PNG имеют побитно одинаковые decoded RGB, но разные file SHA256: Blender PNG text metadata Date/Camera/Scene/RenderTime меняется между captures. Capture metadata/config после исключения output dimensions совпадает; иных изменений постановки не обнаружено.
+
+Приёмка уточнена явно: файлы каждой серии по-прежнему проверяются по собственным manifest SHA256. Между сериями проверяются decoded RGB **всех реально экспортированных cube faces**, dimensions/mode и PNG metadata после исключения только Date/Camera/Scene/RenderTime. Fisheye RGB должны совпасть побитно. Разные RGB или иные metadata блокируют сравнение. Frozen protocol не переписан; отличие от требования равенства raw-file hashes обозначено как deviation. Численные/алгоритмические условия и критерии вывода не меняются.
+
+Одновременно выявлена ошибка bookkeeping предыдущего sampling audit: `checked_cube_faces=96` было константой, хотя exporter сохраняет только нужные fisheye rays faces, а не обязательно6 граней каждой камеры. Реальные файлы в прежнем audit проверялись циклом, но опубликованный counter и derived prose были завышены. Counter исправлен на число фактически открытых/проверенных faces; предыдущий paired baseline будет перепроверен и исправлен только по analyzer digest/counter. Numerical results, native hashes и controls не меняются. Это provenance correction, не повтор trials.
+
+Полный source preflight до native matrix принят:12 cases,960 реальных cube faces обеих серий. Decoded RGB и статические PNG metadata совпали. В прежнем sampling report исправлено960 фактически проверенных faces (80 на case pair); до/после correction совпали все поля, кроме analyzer digest и counter. Source faces в этой постановке по5 на камеру/pose; `overview.png` входит в capture manifest, но не считается source face.

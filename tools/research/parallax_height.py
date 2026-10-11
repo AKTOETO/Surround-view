@@ -362,6 +362,7 @@ def sampling_followup(current, baseline_path, low_root, low_inputs, high_root, h
         cid, seed = case['id'], case['scenario']['seed']
         contexts, truths, metadata = [], [], []
         binary_digests = []
+        checked_faces = 0
         for inputs, root, size in ((low_inputs,low_root,256),(high_inputs,high_root,512)):
             capture = inputs/cid/f'seed{seed}-capture'
             dataset = inputs/cid/f'seed{seed}-inputs'
@@ -381,6 +382,7 @@ def sampling_followup(current, baseline_path, low_root, low_inputs, high_root, h
             for frame in info['frames']:
                 for camera in frame['cameras']:
                     for name in camera['faces'].values():
+                        checked_faces += 1
                         with Image.open(_verified(capture,name,info['sha256'])) as image:
                             if image.size != (size,size):
                                 raise ValueError('actual cubemap dimensions differ')
@@ -394,7 +396,7 @@ def sampling_followup(current, baseline_path, low_root, low_inputs, high_root, h
                 or metadata[0] != metadata[1] or binary_digests[0] != binary_digests[1]):
             raise ValueError('sampling controls differ: config/trajectory/truth/capture/binaries')
         controls.append({'case':cid,'decoded_truth_sha256':truths[0],
-                         'identical_controls':True,'checked_cube_faces':96})
+                         'identical_controls':True,'checked_cube_faces':checked_faces})
     results = pair_sampling_rows(low,current)
     if len(results) != 480:
         raise ValueError('complete 480-condition sampling comparison required')
@@ -425,7 +427,10 @@ def main():
     parser.add_argument('--sampling-baseline', type=Path, help='Reaudit and pair the frozen 256px framed baseline')
     parser.add_argument('--reference-root', type=Path)
     parser.add_argument('--reference-inputs', type=Path)
+    parser.add_argument('--output-resolution-pair', action='store_true', help='Verify frozen reference and pair output resolutions')
     args = parser.parse_args()
+    if args.output_resolution_pair and (args.visibility_baseline or args.sampling_baseline):
+        parser.error('output-resolution comparison excludes other follow-ups')
     if args.sampling_baseline and (args.visibility_baseline or not args.reference_root or not args.reference_inputs):
         parser.error('sampling comparison requires reference root/inputs and excludes visibility follow-up')
     if args.visibility_baseline and args.run_binaries:
@@ -439,6 +444,9 @@ def main():
     if args.sampling_baseline:
         result = sampling_followup(result, args.sampling_baseline.resolve(),
                                    args.reference_root.resolve(), args.reference_inputs.resolve(), root, inputs)
+    if args.output_resolution_pair:
+        from parallax_output import output_followup
+        result = output_followup(result,root,inputs)
     args.output.parent.mkdir(parents=True,exist_ok=True)
     write(args.output,result)
     print('Audited',len(result['results']) if 'results' in result else

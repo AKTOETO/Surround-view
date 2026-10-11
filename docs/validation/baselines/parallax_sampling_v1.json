@@ -178,7 +178,7 @@
     "gl_vendor": "NVIDIA Corporation",
     "gl_renderer": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2"
   },
-  "analyzer_sha256": "8014ea8d89e5cc917b73a08dd3a9fa6c42f58803d6c8b14b158f49130ee68e5a",
+  "analyzer_sha256": "f99d169851c96f92cd3f735f21adb58b9c0d7c02b73b6496e77804a78a955213",
   "native_report_sha256": {
     "low": {
       "rig101-near-z020": {
@@ -358,73 +358,73 @@
       "case": "rig101-near-z020",
       "decoded_truth_sha256": "e24f13c623491fafa11de23f77e7fdf317dffa228cd35f1f78143167e6d962ea",
       "identical_controls": true,
-      "checked_cube_faces": 96
+      "checked_cube_faces": 80
     },
     {
       "case": "rig101-near-z080",
       "decoded_truth_sha256": "f847da5560834e949628d2f8439e8e8774a113e1e3d9c8ea81ab5cfa6176cc70",
       "identical_controls": true,
-      "checked_cube_faces": 96
+      "checked_cube_faces": 80
     },
     {
       "case": "rig101-near-z140",
       "decoded_truth_sha256": "e2a4e1b37b61fe7299a90e44c23b8b3b668b4ac2cb0368fbe6038af97fcb9726",
       "identical_controls": true,
-      "checked_cube_faces": 96
+      "checked_cube_faces": 80
     },
     {
       "case": "rig101-far-z020",
       "decoded_truth_sha256": "9515bed10422294cc85266918f647ce2f087d03605677564abef7ad5603e9272",
       "identical_controls": true,
-      "checked_cube_faces": 96
+      "checked_cube_faces": 80
     },
     {
       "case": "rig101-far-z080",
       "decoded_truth_sha256": "1b3cf2ef47d9837d2bc8d807f36870c993a515f0bd40a9f5355f34f65c90d605",
       "identical_controls": true,
-      "checked_cube_faces": 96
+      "checked_cube_faces": 80
     },
     {
       "case": "rig101-far-z140",
       "decoded_truth_sha256": "f5e7c86b0f28fdea10b8bac92e80d5be8e8bb52816101b326470b73dac563e83",
       "identical_controls": true,
-      "checked_cube_faces": 96
+      "checked_cube_faces": 80
     },
     {
       "case": "rig104-near-z020",
       "decoded_truth_sha256": "0b2bdcae5f3413582c6aff82679b6a457067de8e70c29f12127680beebb6cb0e",
       "identical_controls": true,
-      "checked_cube_faces": 96
+      "checked_cube_faces": 80
     },
     {
       "case": "rig104-near-z080",
       "decoded_truth_sha256": "003a6e7e71d0f50c5c4928e17c66abf7beac7f9d841cfaa7f8c623ae858f5851",
       "identical_controls": true,
-      "checked_cube_faces": 96
+      "checked_cube_faces": 80
     },
     {
       "case": "rig104-near-z140",
       "decoded_truth_sha256": "6019d764b59cc01418ae2c6b7d800ccdfd5bd4b47e016edd6264b197ea8525cd",
       "identical_controls": true,
-      "checked_cube_faces": 96
+      "checked_cube_faces": 80
     },
     {
       "case": "rig104-far-z020",
       "decoded_truth_sha256": "abec70cd807fa8c9fe4a1736d7f280643ea7586810e7f6cf31de006fa38b73be",
       "identical_controls": true,
-      "checked_cube_faces": 96
+      "checked_cube_faces": 80
     },
     {
       "case": "rig104-far-z080",
       "decoded_truth_sha256": "5e3277cb1eee3951e85e598b49bb11aa4a5bea4f3ae4f900e4332941dcee49ef",
       "identical_controls": true,
-      "checked_cube_faces": 96
+      "checked_cube_faces": 80
     },
     {
       "case": "rig104-far-z140",
       "decoded_truth_sha256": "8de880c5f246a5a8be015c5477f4e31f8aada6d52ea8e034bab20b368bf207db",
       "identical_controls": true,
-      "checked_cube_faces": 96
+      "checked_cube_faces": 80
     }
   ],
   "results": [
