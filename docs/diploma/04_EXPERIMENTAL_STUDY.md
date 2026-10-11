@@ -1790,3 +1790,74 @@ Conditional IoU ниже прежней full-mask IoU в80 условиях и �
 Отдельный border-contact flag сработал для far-z020 первого pose:20/40 условий этого фактора; второй pose края не касается. False flag не доказывает полноту геометрии объекта. По-прежнему нельзя интерпретировать near/far как чистый эффект дистанции: меняются projected size, visibility и clipping. Ray-visible point не гарантирует достаточного sampling или correspondence; новая метрика не отделяет все причины ошибки geometry/fusion и не заменяет natural-object исследование.
 
 Known-answer tests проверяют perfect-visible reconstruction, ignored predictions, ghost penalty, пустой support, сохранение tiny fragments и contact с границей. Изменение historical IoU или native RGBA hash отвергается. Воспроизведение и baseline: [[validation/PARALLAX_VISIBILITY]], определения: [[research/PARALLAX_VISIBILITY_PROTOCOL]]. Следующий capture должен иметь целиком попадающий в кадр target и дополнительные независимые rig/scene параметры; окончательное заключение и hardware проверка остаются открытыми.
+
+## 4.55. Полный объект в кадре и две реализации монтажа
+
+Следующий опыт E-STITCH-parallax-framed-01 устраняет обрезание полного box границей direct frame и повторяет controlled height/range matrix для двух mount seeds101/104. Мир остаётся одним flat-ground стендом: road100×100m, ego и emission box0.4m. XY near=(2.4,2.3)/far=(4.8,4.6), center z0.2/0.8/1.4m и два vehicle poses с перемещением0.4m сохраняются. Каждый seed реализует bounds ±3° yaw/pitch и ±0.1m along body; optical heights0.85/1.12m не меняются. Это две реализации монтажа, а не широкий sweep высоты/базы камер. Фактические extrinsics экспортированы и подаются серверу: ошибки calibration solver в данном опыте не моделируются.
+
+Общий virtual view: azimuth0.8/elevation0.6rad, distance10m, fov_y1.6rad, target origin. Выход320×180, fisheye400px/cubefaces256px. Выбор view сделан до final capture и quality results. Первая exploratory постановка использовала optional Blender target_m, отсутствующий в production config. Geometry probe отклонил её до measurement samples. Попытка сохранена отдельно, а окончательная серия заново снята с поддерживаемым view; все пять конфигураций носителей предварительно приняты compiled probe. Framed validator дополнительно отвергает неподдерживаемые поля view до native run. Нельзя молча использовать иной direct view, чем реально исполняет сервер.
+
+Проверка frame clipping выполнена на всех восьми углах полного box, а не только на видимом ID-фрагменте. Обозначим вертикальный угол обзора $\varphi_y$; после world-to-camera transform $p_c=(x_c,y_c,z_c)$ и $d=-z_c>0$ pinhole pixel coordinates равны
+
+$$u=\left(1+\frac{x_c}{d\tan(\varphi_y/2)(W/H)}\right)\frac{W}{2}-\frac12,$$
+
+$$v=\left(1-\frac{y_c}{d\tan(\varphi_y/2)}\right)\frac{H}{2}-\frac12.$$
+
+Каждый угол должен лежать между near/far. Для положительной глубины перспективные экстремумы convex box достигаются на его вершинах; projected bounds поэтому ограничивают полный объект, включая невидимые грани. Минимум расстояний bounds до image footprint borders −0.5 и dimension−0.5 должен быть не меньше8px. Фактический минимум на24 case/pose сочетаниях равен10.179px. Audit дополнительно проверяет, что independent target-ID pixels лежат внутри analytic bounds и не касаются frame borders. Occlusion и слабая source visibility при этом остаются возможными.
+
+```plantuml
+@startuml
+participant "Frozen recipe: 2 mounts × 6 positions" as R
+participant "Full-box projection preflight" as P
+participant "Blender paired capture" as B
+participant "Native svctl / sv-client-lib" as C
+participant "60 fresh sv-server processes" as S
+participant "Independent audit" as A
+R -> P : 8 corners × 24 case/pose combinations
+P -> P : depth valid; margin >= 8 px
+P -> B : accepted common view
+B -> A : direct RGB / IDs / visibility / poses
+B -> S : actual calibrated four-camera inputs
+C -> S : 5 carriers × 4 profiles, two poses
+S -> A : RGBA / metadata / restore
+A -> A : validate intrinsics/trajectory; extrinsics differ
+A -> A : full + conditional object scores; retain null
+@enduml
+```
+
+Рисунок4.69 — приёмка постановки до measurement и серверная матрица. Внутри seeds сохраняется один rig; между seeds меняются только camera extrinsics, а не virtual view, intrinsics или trajectory.
+
+Independent direct RGB совпадает между seeds побитно для обоих poses всех шести факторов. Это сильнее одинакового имени recipe: измеряемый direct эталон действительно сохраняется при смене source-camera монтажа. Provenance фиксирует шесть paired decoded-RGB hashes, actual mount offsets, master/helper/local-plan hashes. Изменение camera intrinsics/view/trajectory вместо extrinsics отвергается отдельным guard; known-answer tests проверяют pinhole bounds, clipping и неполную/confounded factor matrix.
+
+![Все двенадцать controlled cases и пять серверных носителей](figures/experiments/parallax_framed_views.png)
+
+Рисунок4.70 — первый pose всех12 cases без отбора удачного результата, fixed multi_band/zero. Слева independent direct RGB, далее actual native outputs пяти носителей. Зелёный прямоугольник показывает projected bounds полного эталонного box и в серверных кадрах: это ожидаемое место объекта, а не detection из output.
+
+| Фактор | Rig101 full IoU | Rig101 conditional IoU | Rig104 full IoU | Rig104 conditional IoU |
+|---|---:|---:|---:|---:|
+| near-z020 | 0.052632…0.110553 | 0.007634…0.017241 | 0.056122…0.110000 | 0.008174…0.017143 |
+| near-z080 | 0 | 0 | 0 | 0 |
+| near-z140 | 0 | 0 | 0 | 0 |
+| far-z020 | 0.171171…0.338816 | 0.128788…0.271739 | 0.170251…0.343234 | 0.128060…0.276364 |
+| far-z080 | 0 | 0 | 0 | 0 |
+| far-z140 | 0 | 0;20 undefined | 0 | 0;20 undefined |
+
+Таблица — min…max по40 carrier/profile/pose условиям на factor/rig; conditional диапазоны относятся только к определённым значениям. Undefined не считаются ни успехом, ни нулевой ошибкой.
+
+Полный box помещается в кадре во всех24 case/pose сочетаниях; independent ID border contact0/480. Несмотря на это, full-mask IoU0 во320/480 условиях, все —center z0.8/1.4m. Conditional IoU0 в280 из440 определённых условий. Остальные40 имеют пустой visible target: far-z140 второго pose обоих rigs,131 direct target pixels при0 any-camera-visible. На первом pose far-z140 видны лишь3 из151 pixels, near-z140 —1/4 из48/49 pixels. Это фиксирует ограничение наблюдаемости, а не скрывает его нулевой оценкой.
+
+Во всех24 case/pose сочетаниях coded chroma присутствует хотя бы в одной source camera. Near-z080 имеет414–1682 predicted pixels для rig101 и308–1504 для rig104, но ни один не пересекается с truth. Near-z140/far-z080/far-z140 дают0 predicted pixels после прежней component policy. Поэтому смещённый/растянутый объект и исчезнувший объект должны описываться отдельно, хотя оба имеют full IoU0. Устранение direct frame clipping и второй монтаж не исправили эту проблему в исследуемой постановке; причина не сводится к отсутствию всех входных observations.
+
+![Полная матрица full/conditional IoU и RGB MAE для двух монтажей](figures/experiments/parallax_framed_metrics.png)
+
+Рисунок4.71 — все12 factors×5 carriers×4 profiles, средние двух зависимых poses. Если один conditional score undefined, среднее тоже undefined: исключение такого pose через nanmean не применяется. RGB MAE относится к independently visible interior ROI, не к одному объекту.
+
+Normalized boundary снизил aggregate linear RGB MAE во240/240 zero/normalized парах. Full IoU ухудшилась10 раз и совпала230 раз; conditional IoU ухудшилась10 раз, совпала210 и неопределена20. Улучшений object IoU нет. Следовательно, улучшение цветового критерия на однородной дороге вновь не подтверждает исправление пространственного силуэта.
+
+Монтажи сопоставлены по carrier/truth_index/mode/boundary, а не по порядку строк отчёта. Δfull IoU rig104−rig101 для near-z020 лежит в−0.000553…+0.005462 (14 улучшений/18 ухудшений/8 ties), для far-z020 —в−0.002611…+0.007455 (26/10/4). Все320 raised-object условий совпадают с full IoU0. Это не статистический рейтинг надёжности монтажа: проверены только две реализации одного small-perturbation rig при известной фактической калибровке.
+
+Серия содержит60 fresh servers/4320 samples/3360 measurement RGBA captures/480 quality conditions. Hashes, budgets, restore/cursors, full-box bounds и direct-RGB equality проверены; повторный audit совпал побитно. CTest object_metrics/blender_fixture/render_fusion_parity/render_modes:4/4,5.88s. Product C++ и source fingerprint прежние; Python расширяет исследовательский oracle, а не заменяет продуктовые алгоритмы.
+
+Этот опыт исключает direct clipping как объяснение текущего отрицательного результата, но не доказывает бесполезность всех носителей или невозможность реконструкции сцены. Новый view меняет apparent size и direct surface support относительно §4.53, так что разность серий нельзя приписывать только clipping. Source ray visibility не гарантирует correspondence/sampling; материал/размер/разрешение и scene family остаются одними. Дальнейшее исследование должно отделить geometric reprojection error от sampling, расширить optical-height/baseline/mount варианты и natural-object correspondence, затем проверить длинные клипы и Aurora hardware. Данные и команды: [[validation/PARALLAX_FRAMED]], frozen методика: [[research/PARALLAX_FRAMED_PROTOCOL]].
+
+Уточнение аппаратного provenance: catalog всех60 native reports указывает NVIDIA GeForce RTX5070Ti/NVIDIA Corporation/OpenGL ES3, хотя launcher задавал LIBGL_ALWAYS_SOFTWARE=1. Fusion CPU и GPU rendering необходимо разделять; environment flag не доказывает Mesa software device. Frozen protocol сохраняет первоначальную ошибочную CPU-Mesa формулировку, новый baseline берёт render_device из catalogs. Проверка30 прежних height и15 lateral reports также показала NVIDIA; числовые результаты сохранены, hardware label исправлен в validation документах. Это не target/real-time trial.

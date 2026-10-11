@@ -902,3 +902,22 @@ MPLCONFIGDIR=/tmp/sv-matplotlib python3 docs/diploma/plot_server_boundary.py --r
 ```
 
 Сначала проверяются все прежние числовые результаты и data hashes; только code digests расширенных analyzer/object_metrics.py сохраняются как новые. Historical baseline не перезаписывается. Conditional report сравнивается с `docs/validation/baselines/parallax_visibility_v1.json`; `--run-binaries` в этом режиме запрещён. Метрика и ограничения: [[validation/PARALLAX_VISIBILITY]]. Новых Blender captures не требуется; fully framed targets остаются отдельным следующим опытом.
+
+## Полностью помещающийся в кадр объект и два монтажа
+
+Сначала получить полный новый capture по [[engineering/BLENDER#Полный объект в кадре: два варианта монтажа]], затем из корня проекта:
+
+```sh
+python3 tools/research/parallax_height.py --plan configs/research/parallax-framed-plan.json --root artifacts/parallax-framed-repeat --inputs artifacts/parallax-framed-repeat-inputs --run-binaries build --output artifacts/parallax-framed-repeat/audit.json
+```
+
+Matrix12 cases×5 carriers запускает60 fresh production servers через native svctl/sv-client-lib. Нужны GPU+testing build, Python scientific dependencies и Blender для inputs. Остановите capture/другие нагрузки перед timing. Actual perturbed calibration экспортируется; это не оценка calibration solver. Root должен быть новым. Повторная read-only проверка и рисунки:
+
+```sh
+python3 tools/research/parallax_height.py --plan configs/research/parallax-framed-plan.json --root artifacts/parallax-framed-repeat --inputs artifacts/parallax-framed-repeat-inputs --output artifacts/parallax-framed-repeat/reaudit.json
+MPLCONFIGDIR=/tmp/sv-matplotlib python3 docs/diploma/plot_server_boundary.py --report artifacts/parallax-framed-repeat/reaudit.json --captures-root artifacts/parallax-framed-repeat --inputs-root artifacts/parallax-framed-repeat-inputs
+```
+
+Source hashes, config/trajectory equality внутри rig, intrinsics/non-camera settings между rigs, full-box margin≥8px и direct-ID border проверяются audit. Conditional score=null при пустом visibility support. Не заменяйте null нулём и не подбирайте view после сравнения quality. Протокол/результаты: [[research/PARALLAX_FRAMED_PROTOCOL]], [[validation/PARALLAX_FRAMED]].
+
+В этой проверенной серии GLVND выбрал NVIDIA RTX5070Ti даже при LIBGL_ALWAYS_SOFTWARE=1. Для паспорта опыта используйте `render_device` нового audit и `catalog.gl_vendor/gl_renderer` native reports, а не environment flag. При сравнении платформ фиксируйте CPU fusion и GLES renderer отдельно; frozen CPU-Mesa wording уточнена в [[validation/PARALLAX_FRAMED]].

@@ -116,3 +116,9 @@ MPLCONFIGDIR=/tmp/sv-matplotlib python3 docs/diploma/plot_server_boundary.py --r
 ```sh
 MPLCONFIGDIR=/tmp/sv-matplotlib python3 docs/diploma/plot_server_boundary.py --report docs/validation/baselines/parallax_visibility_v1.json --captures-root artifacts/parallax-height-v1 --inputs-root artifacts/parallax-height-inputs-v1
 ```
+
+§4.55 — fully framed object/two-mount screen,480 новых native условий: [[validation/PARALLAX_FRAMED]]. Рисунки4.70–4.71:
+
+```sh
+MPLCONFIGDIR=/tmp/sv-matplotlib python3 docs/diploma/plot_server_boundary.py --report docs/validation/baselines/parallax_framed_v1.json --captures-root artifacts/parallax-framed-v2 --inputs-root artifacts/parallax-framed-inputs-v2
+```

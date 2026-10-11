@@ -2,7 +2,7 @@
 aliases: [Заключение диссертации]
 tags: [diploma, conclusion]
 status: preliminary
-updated: 2026-10-10
+updated: 2026-10-11
 ---
 
 # Заключение диссертационного исследования
@@ -12,11 +12,11 @@ updated: 2026-10-10
 1. **Теоретические основания и моделирование:** Систематизированы модели широкоугольных камер и реализованы synthetic fits Kannala-Brandt, Brown-Conrady и Scaramuzza. Результат относится к заданным математическим моделям; выбор модели для физической оптики не подтверждён.
 2. **Алгоритмы слияния и геометрия поверхностей (серия E-STITCH-01):**
    - Реализованы и экспериментально сопоставлены 7 алгоритмов слияния (`hard_best_angle`, `edge_feather`, `angular_feather`, `seam_distance_feather`, `graph_cut_seam`, `multi_band`, `graph_cut_multi_band`) на 6 поверхностях-носителях (`plane`, `bowl`, `dome_floor`, `cylinder_floor`, `cube_floor`, `burger_like`);
-   - Сформирован 84-конфигурационный offline matrix на одном статическом fixture; seam/ghost metrics оказались некорректными, а `graph_cut_seam` не является graph-cut optimizer, поэтому алгоритмический рейтинг не установлен;
-   - Геометрия carrier и видимость исследованы на synthetic fixtures, но сравнение требует корректной общей ROI, independent truth и равного бюджета сетки/памяти.
+   - Историческая 84-конфигурационная offline matrix имела некорректные seam/ghost proxies и label `graph_cut_seam`, который тогда не означал graph-cut optimizer. В текущем native коде реализованы binary cuts и переключаемый multilabel alpha-expansion, проверенные independent exhaustive controls (§4.46); историческое замечание не описывает нынешний solver;
+   - Выполнены native сравнения пяти носителей при сопоставимом mesh budget, independent paired RGB/ID/visibility, refinement и floor/shell strata. Controlled height/range серии выявляют сильные геометрические ошибки поднятых объектов даже при известной фактической калибровке (§§4.53–4.55). Универсальный алгоритмический рейтинг не установлен; полная память, новые scene families и target trials остаются открытыми.
 3. **Независимый эталон качества и валидация GPU Readback:**
    - Реализован analytic oracle prototype, но его дорожная разметка не совпадает с Blender RGB fixture; SSIM/PSNR comparison не является валидной оценкой качества до унификации scene truth;
-   - Подтверждена попиксельная точность GPU GLES шейдера относительно аналитического эталона ($\text{SSIM} = 0.9664$, среднее расхождение $<3.8\text{ LSB}$).
+   - Native core/raster/SV01 parity проверены отдельными controls: [[validation/NATIVE_FUSION]]. Historical analytic RGB similarity не является доказательством качества реконструкции независимой сцены; актуальные scene comparisons используют paired Blender truth.
 4. **Методика калибровки и пороги Quality Gate:**
    - Реализован synthetic Joint Bundle Adjustment и held-out gate workflow; точность ограничена построенной моделью/наблюдениями;
    - Пороговые значения gate заданы, но не откалиброваны на реальных измерениях и не являются физически обоснованными.
@@ -25,7 +25,7 @@ updated: 2026-10-10
 |---|---|---|
 | R1: анализ и теория | Главы 1–2, математические модели проекции, обзор Burger model | Выполнено |
 | R2: модели дисторсии и калибровка | Synthetic KB/RadTan/Omni fits, Joint Bundle Adjustment, PnP, server gate | Частично: production detector/solver проверены на синтетических PNG (§4.29); physical observations/пороги не подтверждены |
-| R3: 3D-носители и слияние камер | 6 offline carriers, 7 fusion labels, 84 конфигурации | Частично: seam/ghost ranking невалиден, holdout quality series не выполнена |
+| R3: 3D-носители и слияние камер | 6 offline carriers, 5 native carriers, 7 native modes, budget/refinement/lateral/controlled height screens | Частично: native корректность проверена; поднятые объекты и natural correspondence остаются проблемой, независимый scene-family holdout не выполнен |
 | R4: контроль смещения и оракул | Scene Truth prototype, body mask, temporal script | Частично: парный 3-frame rig-motion опыт проверен; длинные клипы, object correspondence и drift diagnostics не завершены |
 | R5: архитектура и интеграция | Linux C++17 ядро, EGL Surfaceless, сервер, `sv-client-lib` | Частично: multi-session, полноценный ConfigService и Aurora acceptance открыты |
 | R6: доказательные испытания | CTest, GPU readback, synthetic sweeps | Частично: pass-ы покрывают кодовые проверки, не целевое качество/физические условия |
@@ -55,3 +55,5 @@ Post-hoc ROI анализ (§4.50) выявил ограничение обще�
 Геометрическая проверка §4.51 показала, что historical view почти не исследовал shell:0.203–0.325% кадра и0.143–0.428% прежней RGB ROI. Боковой view увеличивает shell representation до42.608–43.944%, а paired RGB truth для него подготовлен на следующем этапе (§4.52). Поэтому прежние carrier comparisons сохраняются как результат преимущественно для пола; вывод о лучшей оболочке вокруг наблюдателя пока не подтверждён: [[validation/CARRIER_COVERAGE]].
 
 Парный lateral follow-up §4.52 закрыл недостаток представления оболочки в прежнем ракурсе:120 quality conditions с новым independent Blender truth и побитно прежними camera inputs. На common-shell ROI dome имеет меньшую RGB MAE, чем cylinder/cube, во24/24 парах с каждым, но это результат одного view/street family. Незаполненный background plane иногда получает меньшую MAE, чем искажённая оболочка, поэтому средняя RGB-ошибка недостаточна для выбора носителя. Низкая coded IoU и растянутые raised-object textures требуют controlled parallax/height и correspondence исследования; normalized улучшил aggregate60/60, но shell только42/60, с4 ухудшениями. Итоговое качество решения пока не подтверждено: [[validation/CARRIER_LATERAL]].
+
+Controlled follow-up §§4.53–4.55 отделил высоту объекта и clipping от общей street scene. Первая серия240 native условий дала нулевую full IoU поднятого target во160 случаях; повторная conditional оценка сохранила отрицательный результат на source-visible support. Новый fully framed screen480 условий на двух mount seeds исключил clipping полного box: margin≥10.179px, direct RGB между rigs побитно одинаков. Full IoU поднятого target0 во320 условиях, conditional IoU0 в280 определённых случаях и undefined40 из-за пустого visible support. Normalized снижает aggregate RGB MAE во240/240 парах новой серии, но ни разу не улучшает object IoU. Эти результаты показывают ограничение выбранного единого носителя/проекции; они не подтверждают универсальный выбор blend algorithm и не объясняются только обрезанием эталонного кадра. Требуются geometry-versus-sampling ablation, optical-height/baseline и natural correspondence; реальная Aurora проверка по-прежнему отсутствует: [[validation/PARALLAX_FRAMED]].

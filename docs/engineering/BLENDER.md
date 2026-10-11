@@ -252,3 +252,18 @@ capture_study(root/'assets/scenarios/parallax-height-v1.json', root/'artifacts/p
 ```
 
 Шесть isolated scenes сохраняют автомобиль, camera locators, дорогу100×100m и box0.4m. Остальные meshes удаляются только из новых сцен. Варьируются высота центра и расстояние box; исходная active Scene восстанавливается. Это идеализированный стенд, не новая городская карта. Root progress должен иметь state=complete. Provenance фиксирует master/helper hashes, local case plans и retained mesh inventory. Запускайте capture и timing trials последовательно. Команды native matrix: [[engineering/USAGE#Управляемая высота и параллакс]]. Ограничения: [[research/PARALLAX_HEIGHT_PROTOCOL]].
+
+## Полный объект в кадре: два варианта монтажа
+
+Recipe `assets/scenarios/parallax-framed-v1.json` использует seeds101/104,12 cases, view around origin (azimuth0.8/elevation0.6, distance10m/fov_y1.6rad). Blender Console:
+
+```python
+from pathlib import Path
+import sys
+root = Path('/home/bogdan/prog/MAI/surround-view')
+sys.path.insert(0, str(root/'tools/blender'))
+from parallax_study import capture_study
+capture_study(root/'assets/scenarios/parallax-framed-v1.json', root/'artifacts/parallax-framed-repeat-inputs')
+```
+
+Тот же versioned generator сохраняет helper/master/local-plan hashes, retained mesh inventory и progress. Активная пользовательская Scene восстанавливается. Требуется новый output каталог. После state=complete используйте [[engineering/USAGE#Полностью помещающийся в кадр объект и два монтажа]]. Legacy Blender virtual_pose умеет optional target_m, но production config этого поля не поддерживает: не добавляйте его в server study. Frozen framed validator отвергает такое расширение; перед финальной серией пять native configurations проверены geometry probe. Протокол: [[research/PARALLAX_FRAMED_PROTOCOL]].
