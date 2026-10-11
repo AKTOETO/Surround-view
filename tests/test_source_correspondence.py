@@ -9,6 +9,7 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools/research'))
 from source_correspondence import classify, load_product, project
+from source_correspondence_controls import transform_points
 
 
 class SourceCorrespondenceTests(unittest.TestCase):
@@ -38,6 +39,16 @@ class SourceCorrespondenceTests(unittest.TestCase):
             expected = np.zeros((5, 1), bool)
             expected[index, 0] = True
             np.testing.assert_array_equal(categories[name], expected)
+
+    def test_world_vehicle_transform_includes_rotation_and_translation(self):
+        pose = np.array([[0, -1, 0, 4], [1, 0, 0, -3], [0, 0, 1, 1], [0, 0, 0, 1]])
+        vehicle = np.array([[1, 2, 3], [-2, 1, 0]])
+        expected = np.array([[2, -2, 4], [3, -5, 1]])
+        np.testing.assert_allclose(transform_points(pose, vehicle), expected)
+        np.testing.assert_allclose(transform_points(np.linalg.inv(pose), expected), vehicle)
+        self.assertGreater(np.linalg.norm(expected - vehicle), 1)
+        with self.assertRaises(ValueError):
+            transform_points(np.eye(3), vehicle)
 
     def test_layout_checksum_and_payload_size_are_enforced(self):
         with tempfile.TemporaryDirectory() as directory:

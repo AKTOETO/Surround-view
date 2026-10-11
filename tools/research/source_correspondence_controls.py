@@ -23,7 +23,8 @@ def collect_case(root, plan_path, case_entry, frame_index):
     inputs = root / case_entry['input_root']
     scene_path = output / 'scene-truth.json'
     scene = json.loads(scene_path.read_text())
-    if (scene['plan_sha256'] != sha(plan_path) or not scene['direct_mask_bitwise_equal']
+    if (scene['case'] != case_entry['id'] or scene['frame_index'] != frame_index
+            or scene['plan_sha256'] != sha(plan_path) or not scene['direct_mask_bitwise_equal']
             or not scene['target_visibility_bitwise_equal']):
         raise ValueError('scene truth plan/reconstruction differs')
     verified(root / 'tools/blender/source_surface_controls.py', scene['helper_sha256'])
@@ -72,7 +73,7 @@ def collect_case(root, plan_path, case_entry, frame_index):
         output_sha = sha(directory / 'output.rgba')
         baseline = next(f for f in reference['frame_baselines'] if f['frame_index'] == frame_index)
         if output_sha != baseline['rgba_sha256'] or baseline['metadata']['fusion_mode'] != 'edge_feather':
-            raise ValueError('historical first-frame server RGBA hash differs')
+            raise ValueError('historical selected-frame server RGBA hash differs')
         regions = products['carrier-regions.u8'][yy, xx, 0]
         carrier_points = products['carrier-positions.f32'][yy, xx]
         status = np.stack([products[f'camera{i}-status.u8'][yy, xx, 0] for i in range(4)], axis=-1)
