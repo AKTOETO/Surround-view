@@ -81,6 +81,68 @@ def plot_visibility(data, args):
     fig.tight_layout();fig.savefig(args.output/'parallax_visibility_metrics.png',dpi=150);plt.close(fig)
 
 
+def plot_sampling(data, args):
+    profiles = [(m,b) for m in ('multi_band','graph_cut_multi_band') for b in ('zero','normalized')]
+    cases = list(dict.fromkeys(r['case'] for r in data['results']))
+    carriers = list(dict.fromkeys(r['carrier'] for r in data['results']))
+    labels, metrics = [], {k:[] for k in ('full_iou','conditional_iou','linear_mae')}
+    for cid in cases:
+        for carrier in carriers:
+            labels.append(cid+' / '+carrier.replace('_floor_v1',''))
+            groups = [[r for r in data['results'] if r['case']==cid and r['carrier']==carrier
+                       and (r['mode'],r['boundary'])==p] for p in profiles]
+            for field in metrics:
+                metrics[field].append([np.mean([r['delta'][field] if r['delta'][field] is not None
+                                                else np.nan for r in g]) for g in groups])
+    args.output.mkdir(parents=True,exist_ok=True)
+    fig,axes = plt.subplots(1,3,figsize=(20,24),sharey=True)
+    for ax,(field,values) in zip(axes,metrics.items()):
+        values = np.asarray(values)
+        maximum = max(float(np.nanmax(np.abs(values))),1e-9)
+        im = ax.imshow(values,vmin=-maximum,vmax=maximum,cmap='coolwarm',aspect='auto')
+        ax.set_yticks(range(len(labels)),labels,fontsize=8)
+        ax.set_xticks(range(4),['MB-zero','MB-normalized','GC MB-zero','GC MB-normalized'],rotation=25,ha='right')
+        ax.set_title(field+' / 512 minus 256')
+        for y,row in enumerate(values):
+            for x,v in enumerate(row):
+                label = (f'{v:+.1e}' if field=='linear_mae' else f'{v:+.4f}') if np.isfinite(v) else 'undefined'
+                ax.text(x,y,label,ha='center',va='center',fontsize=7,
+                        bbox=dict(facecolor='white',alpha=.7,edgecolor='none',pad=1))
+        fig.colorbar(im,ax=ax,shrink=.5)
+    fig.suptitle('Cubemap sampling only; all 480 pairs, means of two dependent poses')
+    fig.tight_layout(rect=(0,0,1,.98));fig.savefig(args.output/'parallax_sampling_metrics.png',dpi=150);plt.close(fig)
+    fig,axes = plt.subplots(len(cases),4,figsize=(14,2.5*len(cases)))
+    from PIL import Image
+    for index,cid in enumerate(cases):
+        seed = int(cid.split('-')[0][3:])
+        capture = (args.inputs_root/cid/f'seed{seed}-capture').resolve()
+        truth = json.loads((capture/'paired_truth.json').read_text())
+        with Image.open(_verified(capture,truth['frames'][0]['rgb'],truth['sha256'])) as image:
+            direct = np.asarray(image.convert('RGB'))
+        axes[index,0].imshow(direct);axes[index,0].set_title(cid+' / direct truth')
+        row = next(r for r in data['results'] if r['case']==cid and r['carrier']=='dome_floor_v1'
+                   and r['truth_index']==0 and (r['mode'],r['boundary'])==profiles[0])
+        rendered = []
+        for column,(level,root) in enumerate((('low',args.reference_root),('high',args.captures_root)),1):
+            directory = root/cid/f'native/seed{seed}/dome_floor'
+            path = directory/'report.json'
+            if hashlib.sha256(path.read_bytes()).hexdigest() != data['native_report_sha256'][level][cid]['dome_floor_v1']:
+                raise ValueError('sampling native report changed')
+            native = json.loads(path.read_text())
+            sample = next(s for s in native['samples'] if not s['warmup'] and s['rgba_sha256']==row[level+'_rgba_sha256'])
+            payload = (directory/sample['rgba_file']).read_bytes()
+            if hashlib.sha256(payload).hexdigest() != row[level+'_rgba_sha256']:
+                raise ValueError('sampling RGBA changed')
+            rgb = np.frombuffer(payload,np.uint8).reshape(180,320,4)[...,:3]
+            rendered.append(rgb);axes[index,column].imshow(rgb)
+            axes[index,column].set_title(('256' if level=='low' else '512')+' / native dome MB-zero')
+        axes[index,3].imshow(np.abs(rendered[1].astype(float)-rendered[0])/255.,vmin=0,vmax=1)
+        axes[index,3].set_title('Absolute sRGB difference / scale 0..1')
+    for ax in axes.flat: ax.set_axis_off()
+    fig.suptitle('All factors, first pose, fixed dome/multi_band/zero; unchanged direct truth')
+    fig.tight_layout(rect=(0,0,1,.98));fig.savefig(args.output/'parallax_sampling_views.png',dpi=150);plt.close(fig)
+
+
 def plot_parallax(data, args):
     from matplotlib.patches import Rectangle
     profiles = [(m,b) for m in ('multi_band','graph_cut_multi_band') for b in ('zero','normalized')]
@@ -449,12 +511,16 @@ def main():
                         default=ROOT/'docs/validation/baselines/server_boundary_v1.json')
     parser.add_argument('--captures-root', type=Path, default=ROOT/'artifacts/server-boundary-v2')
     parser.add_argument('--output', type=Path, default=Path(__file__).parent/'figures/experiments')
+    parser.add_argument('--reference-root', type=Path, default=ROOT/'artifacts/parallax-framed-v2')
     parser.add_argument('--optimizer-report', type=Path)
     parser.add_argument('--fixture', type=Path, default=ROOT/'tests/data/object_stitch_v1')
     parser.add_argument('--capture', type=Path)
     parser.add_argument('--inputs-root', type=Path, default=ROOT/'artifacts/seam-generalization-v1')
     args = parser.parse_args()
     report = json.loads(args.report.read_text())
+    if report.get('experiment') == 'E-STITCH-parallax-sampling-paired-01':
+        plot_sampling(report,args)
+        return
     if report.get('experiment') == 'E-STITCH-parallax-visibility-01':
         plot_visibility(report,args)
         return
