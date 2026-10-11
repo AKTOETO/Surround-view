@@ -1606,4 +1606,76 @@ Bowl хуже по дороге во24/24 парах, но лучше по other
 
 Боковой ракурс действительно увеличивает shell representation до42.608–43.944%. Plane/bowl при этом оставляют незаполненный фон, в отличие от трёх enclosure. Это проверка геометрической замкнутости в выбранном ракурсе, а не доказательство наличия изображения камер во всех shell pixels. Равенство counters dome/cylinder не означает равенства projected textures. Поднятый bowl классифицируется по интерполированному world.z>1e−6m; эта высота относится к носителю и не является physical-height truth сцены.
 
-Следующий paired experiment должен экспортировать независимые Blender RGB/object-ID/visibility для бокового view и считать ошибки floor/shell отдельно. Использовать прежний direct truth для нового view нельзя. Native inspection пока является локальным render-thread API, без SV01 subscription; дополнительный проход не входит в опубликованные штатные Renderer timings. Raw provenance, masks и ограничения: [[validation/CARRIER_COVERAGE]]. Triangle-hit coverage, другие scene families, natural-object correspondence и целевые trials остаются открытыми.
+Этот geometry-only этап не содержит paired RGB; следующий опыт с независимым Blender RGB/object-ID/visibility для бокового view и общими floor/shell метриками выполнен в §4.52. Использовать прежний direct truth для нового view нельзя. Native inspection пока является локальным render-thread API, без SV01 subscription; дополнительный проход не входит в опубликованные штатные Renderer timings. Raw provenance, masks и ограничения: [[validation/CARRIER_COVERAGE]]. Triangle-hit coverage, другие scene families, natural-object correspondence и целевые trials остаются открытыми.
+
+## 4.52. Парное исследование сшивки на оболочке в боковом ракурсе
+
+Выявленный в §4.51 недостаток покрытия shell устранён в постановке нового опыта: virtual camera elevation0.35rad/fov_y1.6rad при прежних distance8.5m/azimuth0.8rad. Для трёх прежних recipes/mount seeds и шести poses Blender заново снимает camera inputs и независимые direct RGB/object-ID/visibility. Audit подтвердил побитовое равенство всех24 новых fisheye images с прежними, а также калибровки и poses/timestamps; изменились virtual view и соответствующий truth. Это позволяет исследовать другой ракурс при том же камерном сигнале, но не сравнивать MAE разных pixel rays как одну парную ошибку. Протокол до capture: [[research/CARRIER_LATERAL_PROTOCOL]].
+
+```plantuml
+@startuml
+actor Исследователь as U
+participant "Blender: isolated scenes" as B
+collections "Камерные RGB и view-specific truth" as D
+participant "Исследовательский launcher" as L
+participant "sv-carrier-probe\nproduction Renderer" as P
+participant "svctl research
+sv-client-lib" as C
+participant "свежий sv-server" as S
+participant "Read-only audit" as A
+U -> B : frozen recipe + virtual view
+B -> D : synchronized RGB / IDs / visibility / poses / hashes
+B -> B : restore original active Scene
+U -> L : frozen mesh/profile matrix
+loop 3 seeds × 5 carriers
+  L -> P : config / depth-tested region masks
+  P --> D : geometry IDs / source fingerprint
+  L -> S : config / replay manifest
+  L -> C : native two-frame scenario
+  C -> S : lease / pause / variants / capture / restore
+  S --> C : RGBA / inputs / revisions / mesh resources
+  C --> D : native report / RGBA captures
+  L -> S : terminate process
+end
+D -> A : verified inputs, truth, native outputs, masks
+A --> U : common floor/shell errors + IoU + negative results
+@enduml
+```
+
+Рисунок4.60 — процессы сбора независимого truth, native серверного эксперимента и проверки. Geometry probe является отдельным процессом, не SV01 subscription и не частью timing samples.
+
+Пять medium meshes сохраняют3196–3208 triangles и прежние shared vertex/buffer ceilings.15 fresh servers дали1080 samples,840 measurement captures и120 quality conditions: multi_band/graph_cut_multi_band × zero/normalized, два кадра, warmup2/repeats7. Растеризация и fusion выполняются production C++; launcher не содержит реализации исследуемых алгоритмов.
+
+Common floor/shell —пересечения ID1/ID2 masks трёх enclosure, затем пересечение с независимой interior ROI. Один и тот же support применяется ко всем пяти outputs кадра. Вместе с остатком он разбивает общую ROI; для ошибки e=|linear(I)−linear(T)| выполняется:
+
+$$
+E_k=\frac{1}{3|M_k|}\sum_{p\in M_k}\sum_{c=1}^{3}e_{p,c},\qquad
+E_{ROI}=\frac{\sum_k |M_k|E_k}{\sum_k |M_k|}.
+$$
+
+Empty mask имеет undefined error. Weighted identity проверена с tolerance1e−12. Common-shell support содержит4042–5844pixels, common-floor16013–16966pixels, other121–210pixels. Masks обозначают геометрию носителя, не physical height сцены.
+
+| Carrier относительно dome | Shell MAE лучше / хуже,24 пары | Диапазон Δ shell MAE | Aggregate MAE лучше / хуже |
+|---|---:|---:|---:|
+| plane | 17 / 7 | -0.024566…+0.006843 | 16 / 8 |
+| bowl | 16 / 8 | -0.022271…+0.008691 | 10 / 14 |
+| cylinder_floor | 0 / 24 | +0.005822…+0.014484 | 0 / 24 |
+| cube_floor | 0 / 24 | +0.019735…+0.049332 | 0 / 24 |
+
+На этой серии dome лучше cylinder/cube по shell и aggregate MAE во24/24 парах с каждым. На common floor различия малы (max absolute около5.15e−5), что согласуется с предыдущим ограничением floor-dominated исследования. Результат относится к выбранному lateral view, фиксированным shapes/budget и одному street family.
+
+Plane/bowl сохраняют незаполненный фон42.608%/39.363% кадра. Постоянный background иногда ближе к direct RGB по MAE, чем искажённая текстура оболочки. Это демонстрирует недостаточность одной MAE: отсутствие реконструкции не становится успехом из-за меньшего среднего цветового отклонения. Требования заполнения, object correspondence и silhouette должны оцениваться отдельно.
+
+![Независимый direct truth и native сшивка для всех шести кадров](figures/experiments/carrier_lateral_views.png)
+
+Рисунок4.61 — новый direct Blender RGB и пять outputs при заранее выбранном multi_band/zero, все seeds/poses без выбора удачного кадра. Красная машина впереди direct camera —припаркованный объект; синий ego находится ближе к центру. Видимая деформация parked car иллюстрирует ошибку отображения поднятых объектов.
+
+![Common-floor/common-shell ошибки и coded-target IoU](figures/experiments/carrier_lateral_metrics.png)
+
+Рисунок4.62 — полная scene/carrier/profile matrix, арифметические средние двух кадров. Раздельные критерии не сведены в неподтверждённый единый рейтинг.
+
+Normalized boundary улучшил aggregate и floor MAE во60/60 парах; shell улучшился42/60, ухудшился4/60 и совпал14/60. Все четыре shell ухудшения —graph_cut_multi_band/bowl seeds101/103. IoU улучшилась13/60, ухудшилась10/60, совпала37/60. Следовательно, эффект normalized по дороге не гарантирует улучшения оболочки и объекта.
+
+Pole seed102 имеет64/62 direct-ID pixels, но IoU0 во всех40 условиях: truth не пуст, реконструированный coded object не пересекается с ним после component policy. В seed101 IoU0.00633–0.02885, seed1030.00960–0.13559. Низкие значения и растянутые colored traces согласуются с ограничением единого носителя при параллаксе, но опыт не отделяет все вклады geometry/sampling/fusion. Требуются controlled height/depth ablation и natural-object correspondence, а не только подбор blend weights.
+
+Все inputs/reports/RGBA проверены, restore и source fingerprint согласованы. Это завершённый exploratory lateral follow-up, не итоговое подтверждение E-STITCH-01: остаются другие scene families/views/resolutions, physical-height/triangle-hit truth, длинные клипы и Aurora hardware. Данные и воспроизведение: [[validation/CARRIER_LATERAL]].

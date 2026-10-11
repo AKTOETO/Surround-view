@@ -220,3 +220,20 @@ python3 tools/blender/convert.py --capture artifacts/seam-generalization-v1/seed
 ```
 
 Повторите для seeds102/103. Используйте **actual perturbed config** из inputs, а не nominal-config, если цель — сравнение сшивки при известной калибровке. Это не испытание восстановления параметров calibration solver. Research matrix/ограничения: [[research/SEAM_GENERALIZATION_PROTOCOL]].
+
+## Боковой ракурс с независимым truth
+
+Inputs recipe: `assets/scenarios/carrier-lateral-v1.json`; protocol [[research/CARRIER_LATERAL_PROTOCOL]]. В Blender Python Console или через MCP выполнить, указав абсолютный путь проекта:
+
+```python
+from pathlib import Path
+import sys
+root = Path('/home/bogdan/prog/MAI/surround-view')
+sys.path.insert(0, str(root/'tools/blender'))
+from carrier_study import capture_study
+capture_study(root/'assets/scenarios/carrier-lateral-v1.json', root/'artifacts/carrier-lateral-repeat-inputs')
+```
+
+Драйвер создаёт новый каталог, сохраняет plan/helper hashes и progress.json, строит три isolated coded-target scenes, задаёт virtual_camera до paired capture и восстанавливает исходную активную Scene в finally. Камерные cubefaces и direct RGB/object-ID/visibility/source IDs снимаются заново. Не переиспользуйте уже существующий output и не меняйте frozen scripts/plan между capture и audit. При сбое progress содержит failed/error, неполную запись нельзя включать в matrix. Generated data остаются в artifacts; source recipe/driver сохраняются обычным Git, без LFS.
+
+После завершения `carrier_lateral.py --run-binaries` конвертирует captures в fisheye PNG, если inputs ещё нет, и выполняет native matrix: [[engineering/USAGE#Сшивка в боковом ракурсе]]. Для прочих ракурсов создавайте новую версию recipe/protocol; прежний direct truth нельзя использовать после изменения virtual_camera.

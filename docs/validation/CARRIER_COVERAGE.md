@@ -18,7 +18,7 @@
 
 Рисунок1 — native depth-tested region IDs, независимо от изображений камер. Чёрный показывает незакрытый фон; оранжевый —shell; фиолетовый —поднятую поверхность bowl. Модель автомобиля включена для контроля окклюзии.
 
-Прежние mesh-budget/refinement результаты остаются верными для своих кадров, но почти не проверяют оболочку dome/cylinder/cube. Для следующей paired RGB серии нужен lateral view с независимым Blender RGB/object-ID/visibility truth и раздельными floor/shell метриками; новые views нельзя оценивать по прежнему truth. Также остаются triangle-hit coverage, physical-height truth, другие scene families и полные GPU/memory бюджеты.
+Прежние mesh-budget/refinement результаты остаются верными для своих кадров, но почти не проверяют оболочку dome/cylinder/cube. Следующая paired RGB серия с lateral view, независимым Blender RGB/object-ID/visibility truth и common floor/shell метриками уже выполнена: [[validation/CARRIER_LATERAL]]; новые views нельзя оценивать по прежнему truth. Также остаются triangle-hit coverage, physical-height truth, другие scene families и полные GPU/memory бюджеты.
 
 ## Воспроизведение
 

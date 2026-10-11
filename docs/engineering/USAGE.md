@@ -854,3 +854,23 @@ LIBGL_ALWAYS_SOFTWARE=1 EGL_PLATFORM=surfaceless build/sv-carrier-probe artifact
 ```
 
 На выходе `carrier-regions.u8` (top-left, один ID на pixel) и `report.json` с layout, pixel counters, mesh resources, config/mask SHA256 и source fingerprint. Input camera frames не нужны. Дополнительный pass выполняется только при запросе локального `RenderInspection`; SV01 API его пока не экспортирует. Значения ID/ограничения и вся15-case matrix: [[research/CARRIER_COVERAGE_PROTOCOL]], [[validation/CARRIER_COVERAGE]]. Geometry coverage не заменяет camera validity, quality truth или triangle-hit coverage; wall-clock render с inspection не использовать для обычных performance trials.
+
+### Сшивка в боковом ракурсе
+
+Protocol [[research/CARRIER_LATERAL_PROTOCOL]], results [[validation/CARRIER_LATERAL]]. Нужны новый complete capture по [[engineering/BLENDER#Боковой ракурс с независимым truth]] и сохранённые historical captures/inputs `artifacts/seam-generalization-v1`: audit проверяет побитовое равенство камерных RGB, калибровки и траектории. Сборка: SV_GPU=ON, BUILD_TESTING=ON, binaries sv-server/svctl/sv-carrier-probe.
+
+```sh
+cmake --build build --target sv-server svctl sv-carrier-probe -j4
+python3 tools/research/carrier_lateral.py --plan configs/research/carrier-lateral-plan.json --root artifacts/carrier-lateral-repeat --inputs artifacts/carrier-lateral-repeat-inputs --run-binaries build --output artifacts/carrier-lateral-repeat/audit.json
+```
+
+Root native matrix обязан быть новым. Python wrapper запускает15 fresh native processes, сохраняет command lines/environment/binary hashes/logs, проверяет readiness с deadline, выполняет C++ research scenario и завершает server в finally; сам fusion не реализует. Native geometry probe выполняется отдельно от timing samples. При сбое root сохраняется для диагностики: для повтора используйте другой root. Не запускайте сборку/Blender/CTest параллельно с timing samples. Unix-сокеты должны быть разрешены средой запуска.
+
+Без `--run-binaries` выполняется read-only audit всех120 quality conditions: capture/config/view/helper hashes, input equivalence, mesh ceilings, RGBA repeatability/restore, region-ID masks и раздельные common floor/shell/other metrics. Полная команда для сохранённой текущей серии:
+
+```sh
+python3 tools/research/carrier_lateral.py --plan configs/research/carrier-lateral-plan.json --root artifacts/carrier-lateral-v1 --inputs artifacts/carrier-lateral-inputs-v1 --output artifacts/carrier-lateral-v1/audit.json
+MPLCONFIGDIR=/tmp/sv-matplotlib python3 docs/diploma/plot_server_boundary.py --report artifacts/carrier-lateral-v1/audit.json --captures-root artifacts/carrier-lateral-v1 --inputs-root artifacts/carrier-lateral-inputs-v1
+```
+
+Фигуры показывают все шесть кадров и полный набор profiles; качество сравнивается на одинаковом support внутри каждого кадра. Это exploratory paused CPU/Mesa screen, не sustained FPS и не target validation. Native региональные masks пока не экспортируются как SV01 subscription.

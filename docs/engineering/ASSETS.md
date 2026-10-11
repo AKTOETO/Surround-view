@@ -9,6 +9,7 @@
 | `assets/demo/` | Фотографическое окружение для существующего `sv-scene`; этот путь также используется installed/RPM-профилем |
 | `assets/scenes/metric-street/` | Авторская объёмная улица Blender и описание её происхождения |
 | `tools/blender/` | Исходники генерации мира, rig, конвертера и проверки; это код, а не бинарный ассет |
+| `assets/scenarios/` | Текстовые recipes процедурных исследовательских сцен и ракурсов |
 
 Серии входных кадров, capture/replay manifests, traces, bench previews, отчёты, RPM и сборочные архивы относятся к результатам выполнения и остаются в `artifacts/`. Иллюстрации диплома и исследования хранятся рядом с соответствующей документацией; их источники — Python-скрипты глав/исследования. Копировать эти результаты в `assets/` не нужно.
 
@@ -140,3 +141,9 @@ sha256sum assets/demo/urban_street_01_1k.hdr \
 ## Новые procedural cases для seam study
 
 `assets/scenarios/seam-generalization-v1.json` — авторский recipe трёх новых seeded world/mount/target instances (101/102/103). Все meshes/materials создаются checked-in `tools/blender/scene.py`/`diagnostic.py`; внешний .blend, художественные downloads и Git LFS не нужны. Рецепт включает правила окружения, физические target размеры и bounds отклонений камер. Frozen исследовательские условия: [[research/SEAM_GENERALIZATION_PROTOCOL]]. Scientific captures/inputs/reports находятся в игнорируемом `artifacts/seam-generalization-v1`; их provenance содержит recipe/generator hashes. Это generated measurement data, не дополнительные художественные ассеты. Реальный Blender world остаётся отдельной сценой; исходная active scene не удаляется.
+
+## A03 — Рецепт исследования бокового ракурса
+
+`assets/scenarios/carrier-lateral-v1.json` —авторский текстовый recipe трёх street instances с coded targets и view elevation0.35/fov1.6rad. Он сохраняет scenario/mount/target параметры прежнего seam-generalization-v1, явно задавая новый virtual_camera. Внешних downloads нет. Генератор `tools/blender/carrier_study.py` использует прежние scene/rig/paired_truth helpers и создаёт новый complete capture; source/helper hashes сохраняются в provenance.
+
+В Git сохраняются recipe, driver, protocol, compact baseline и иллюстрации диплома. Cubefaces, direct truth, source IDs, fisheye replay, native RGBA/traces/logs —generated artifacts, а не исходные ассеты. Для восстановления нужны Blender и прежние versioned helpers; команды: [[engineering/BLENDER#Боковой ракурс с независимым truth]]. Результаты и ограничения: [[validation/CARRIER_LATERAL]].
