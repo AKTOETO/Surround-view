@@ -16,6 +16,8 @@ def capture(root, plan_path):
     for name, digest in plan['frozen_files'].items():
         if sha(root/name) != digest:
             raise ValueError('frozen input changed: '+name)
+    if (root/plan['output_root']).exists():
+        raise FileExistsError('capture output already exists; use a new plan/output_root')
     original = bpy.context.window.scene
     scene = bpy.data.scenes.new('SV isolated planar correspondence')
     mesh = bpy.data.meshes.new('SV planar control mesh')
