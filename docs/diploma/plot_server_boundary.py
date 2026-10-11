@@ -12,7 +12,73 @@ import numpy as np
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT/'tools'))
-from temporal_seam_stability import load_sequence
+from temporal_seam_stability import load_sequence, _verified
+
+
+def plot_visibility(data, args):
+    from matplotlib.colors import ListedColormap
+    baseline = ROOT/'docs/validation/baselines/parallax_height_v1.json'
+    if hashlib.sha256(baseline.read_bytes()).hexdigest() != data['baseline_sha256']:
+        raise ValueError('historical baseline changed')
+    historical = json.loads(baseline.read_text())
+    profiles = [(m,b) for m in ('multi_band','graph_cut_multi_band') for b in ('zero','normalized')]
+    cases = list(dict.fromkeys(r['case'] for r in data['results']))
+    carriers = list(dict.fromkeys(r['carrier'] for r in data['results']))
+    labels, full, conditional = [], [], []
+    fig, axes = plt.subplots(6,3,figsize=(13,15))
+    for i,cid in enumerate(cases):
+        capture = (args.inputs_root/cid/'seed101-capture').resolve()
+        truth = json.loads((capture/'paired_truth.json').read_text())
+        cfg,_,rgb,_,_,_ = load_sequence(args.inputs_root/cid/'seed101-inputs',capture,'any')
+        frame = truth['frames'][0]
+        ids = np.load(_verified(capture,frame['objects'],truth['sha256']),allow_pickle=False)
+        bits = np.load(_verified(capture,frame['visibility'],truth['sha256']),allow_pickle=False)
+        target = ids == truth['objects'][truth['diagnostic_target']['object_name']]
+        mask = np.zeros(target.shape,np.uint8)
+        mask[target & (bits == 0)] = 1; mask[target & (bits != 0)] = 2
+        axes[i,0].imshow(rgb[0]);axes[i,0].set_title(cid+' / direct RGB')
+        axes[i,1].imshow(mask,cmap=ListedColormap(['#20242b','#ef9b41','#54ce8d']),vmin=0,vmax=2)
+        axes[i,1].set_title('Green: visible; orange: unobserved')
+        row = next(r for r in data['results'] if r['case']==cid and r['truth_index']==0
+                   and r['carrier']=='dome_floor_v1' and (r['mode'],r['boundary'])==profiles[0])
+        old = next(c for c in historical['cases'] if c['id']==cid)['audit']['cases'][0]['audit']
+        directory = args.captures_root/cid/'native/seed101/dome_floor'
+        path = directory/'report.json'
+        if hashlib.sha256(path.read_bytes()).hexdigest() != old['native_report_sha256']['dome_floor_v1']:
+            raise ValueError('native report changed')
+        native = json.loads(path.read_text())
+        variant = next(n for n,v in enumerate(native['scenario']['variants'])
+                       if (v['mode'],v['pyramid_boundary'])==profiles[0])
+        sample = next(s for s in native['samples'] if not s['warmup'] and s['variant']==variant
+                      and s['frame_index']==row['frame_index'])
+        payload = (directory/sample['rgba_file']).read_bytes()
+        if hashlib.sha256(payload).hexdigest() != row['rgba_sha256']:
+            raise ValueError('native RGBA changed')
+        axes[i,2].imshow(np.frombuffer(payload,np.uint8).reshape(cfg['output']['height'],cfg['output']['width'],4))
+        axes[i,2].set_title('Native dome / MB-zero')
+        for carrier in carriers:
+            groups = [[r for r in data['results'] if r['case']==cid and r['carrier']==carrier
+                       and (r['mode'],r['boundary'])==p] for p in profiles]
+            labels.append(cid+' / '+carrier.replace('_floor_v1',''))
+            full.append([np.mean([r['full_mask_iou'] for r in g]) for g in groups])
+            conditional.append([np.mean([r['visible_target']['conditional_iou']
+                if r['visible_target']['conditional_iou'] is not None else np.nan for r in g]) for g in groups])
+    for ax in axes.flat: ax.set_axis_off()
+    args.output.mkdir(parents=True,exist_ok=True)
+    fig.suptitle('Independent surface visibility; all factors, first pose, fixed native profile')
+    fig.tight_layout();fig.savefig(args.output/'parallax_visibility_views.png',dpi=150);plt.close(fig)
+    fig,axes = plt.subplots(1,2,figsize=(13,14),sharey=True)
+    for ax,values,title in zip(axes,(full,conditional),('Full-mask IoU','Conditional visible-surface IoU')):
+        im = ax.imshow(values,vmin=0,vmax=1,cmap='viridis',aspect='auto')
+        ax.set_yticks(range(len(labels)),labels,fontsize=8)
+        ax.set_xticks(range(4),['MB-zero','MB-normalized','GC MB-zero','GC MB-normalized'],rotation=25,ha='right')
+        ax.set_title(title)
+        for y,row in enumerate(values):
+            for x,v in enumerate(row):
+                ax.text(x,y,f'{v:.4f}' if np.isfinite(v) else 'undefined',ha='center',va='center',fontsize=7,color='white')
+        fig.colorbar(im,ax=ax,shrink=.5)
+    fig.suptitle('All 240 historical conditions; means of two dependent poses')
+    fig.tight_layout();fig.savefig(args.output/'parallax_visibility_metrics.png',dpi=150);plt.close(fig)
 
 
 def plot_parallax(data, args):
@@ -371,6 +437,9 @@ def main():
     parser.add_argument('--inputs-root', type=Path, default=ROOT/'artifacts/seam-generalization-v1')
     args = parser.parse_args()
     report = json.loads(args.report.read_text())
+    if report.get('experiment') == 'E-STITCH-parallax-visibility-01':
+        plot_visibility(report,args)
+        return
     if report.get('experiment') == 'E-STITCH-parallax-height-01':
         plot_parallax(report, args)
         return
