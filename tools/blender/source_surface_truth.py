@@ -10,6 +10,7 @@ import numpy as np
 from diagnostic import build_diagnostic
 from geometry_truth import opaque_hit
 from paired_truth import virtual_pose
+from visibility import visible_camera_bits
 
 
 def sha(path):
@@ -94,6 +95,18 @@ def capture(root, plan_path):
         if not np.array_equal(mask, legacy_mask):
             raise ValueError(f'reconstructed direct target mask differs in {np.count_nonzero(mask != legacy_mask)} pixels')
         coordinates = np.argwhere(mask)
+        visibility_path = inputs / 'seed101-capture' / frame['visibility']
+        if sha(visibility_path) != archived['sha256'][frame['visibility']]:
+            raise ValueError('archived visibility checksum mismatch')
+        old_visibility = np.load(visibility_path, allow_pickle=False)
+        new_visibility = np.zeros(len(coordinates), np.uint8)
+        def cast(origin, direction, distance):
+            hit = opaque_hit(scene, dependency, origin, direction, distance)
+            return np.asarray(hit[1]) if hit[0] else None
+        for n, (y, x) in enumerate(coordinates):
+            new_visibility[n] = visible_camera_bits(points[y, x], vehicle_pose, config['cameras'], cast)
+        if not np.array_equal(new_visibility, old_visibility[mask]):
+            raise ValueError('reconstructed target-ROI visibility differs')
         output.mkdir(parents=True, exist_ok=True)
         files = {}
         def save(name, value):
@@ -103,11 +116,24 @@ def capture(root, plan_path):
         save('direct-mask.npy', mask)
         save('direct-points.npy', points)
         save('target-pixels.npy', coordinates)
+        save('target-visibility.npy', new_visibility)
+        camera_roundtrip_error = 0.
+        native_report_hashes = {}
         for carrier in plan['carriers']:
             directory = output / 'native' / carrier
             report = json.loads((directory / 'report.json').read_text())
-            if report['config']['cameras'] != config['cameras']:
-                raise ValueError('native cameras differ from truth calibration')
+            native_report_hashes[carrier] = sha(directory / 'report.json')
+            reference_path = root / plan['native_reference_root'] / carrier / 'config.json'
+            reference = json.loads(reference_path.read_text())
+            if reference['cameras'] != config['cameras'] or report['config_sha256'] != sha(reference_path):
+                raise ValueError('native input cameras differ from frozen truth calibration')
+            for actual, expected in zip(report['config']['cameras'], config['cameras']):
+                actual, expected = dict(actual), dict(expected)
+                ta, te = np.asarray(actual.pop('T_camera_from_vehicle')), np.asarray(expected.pop('T_camera_from_vehicle'))
+                error = float(np.max(np.abs(ta-te)))
+                camera_roundtrip_error = max(camera_roundtrip_error, error)
+                if actual != expected or error > 1e-12:
+                    raise ValueError('native report camera differs beyond JSON roundtrip tolerance')
             products = {p['file']: p for p in report['products']}
             hits = np.full((len(coordinates), 4, 3), np.nan, np.float32)
             kinds = np.zeros((len(coordinates), 4), np.uint8)
@@ -134,9 +160,9 @@ def capture(root, plan_path):
         record = {'schema_version': 1, 'scope': 'opaque_subpixel_source_rays_at_native_uv_target_roi',
                   'plan_sha256': sha(plan_path), 'blender_version': bpy.app.version_string,
                   'helper_sha256': sha(__file__), 'archived_truth_sha256': sha(truth_path),
-                  'direct_mask_bitwise_equal': True, 'target_pixels': int(mask.sum()),
+                  'target_visibility_bitwise_equal': True, 'direct_mask_bitwise_equal': True, 'camera_json_roundtrip_max_abs': camera_roundtrip_error, 'target_pixels': int(mask.sum()),
                   'source_kinds': {'0': 'no_hit_or_invalid_projection', '1': 'target', '2': 'road', '3': 'ego', '4': 'other'},
-                  'files': files}
+                  'files': files, 'native_report_sha256': native_report_hashes}
         (output / 'scene-truth.json').write_text(json.dumps(record, indent=2)+'\n')
         return record
     finally:
