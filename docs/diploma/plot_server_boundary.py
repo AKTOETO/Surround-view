@@ -108,6 +108,65 @@ def plot_budget(data, args):
     fig.tight_layout();fig.savefig(args.output/'carrier_budget_views.png',dpi=150);plt.close(fig)
 
 
+def plot_refinement(data, args):
+    carriers = list(data['levels']['medium']['cases'][0]['resources'])
+    fig,axes = plt.subplots(1,3,figsize=(16,5))
+    for index,carrier in enumerate(carriers):
+        rows = [r for r in data['comparisons'] if r['carrier'] == carrier]
+        for level,offset,color in (('coarse',-.15,'#dc8039'),('medium',.15,'#2878b5')):
+            values = [r[level+'_to_fine']['roi_linear_mae_to_fine'] for r in rows]
+            axes[0].scatter(np.full(len(values),index+offset),values,c=color,alpha=.6,
+                            label=level+' to fine' if index == 0 else None)
+        for ax,field,title in zip(axes[1:],('linear_mae_delta','target_iou_delta'),
+                                 ('Truth RGB MAE difference','Truth coded IoU difference')):
+            for step,offset,color in (('medium_minus_coarse',-.15,'#dc8039'),('fine_minus_medium',.15,'#2878b5')):
+                values = [r[step][field] for r in rows]
+                ax.scatter(np.full(len(values),index+offset),values,c=color,alpha=.6,
+                           label=step.replace('_',' ') if index == 0 else None)
+            ax.set_title(title)
+            ax.axhline(0,color='black',linewidth=.6)
+    axes[0].set_title('Output linear RGB difference to finite fine mesh')
+    for ax in axes:
+        ax.set_xticks(range(len(carriers)),[c.replace('_floor_v1','') for c in carriers],rotation=25)
+        ax.ticklabel_format(axis='y',style='sci',scilimits=(0,0))
+        ax.grid(axis='y',alpha=.2);ax.legend(fontsize=8)
+    fig.suptitle('Within-carrier refinement: 24 paired conditions per carrier, not independent clips')
+    fig.tight_layout();args.output.mkdir(parents=True,exist_ok=True)
+    fig.savefig(args.output/'carrier_refinement_metrics.png',dpi=150);plt.close(fig)
+    # First seed/frame/profile, all five carriers; read the hash-verified native captures.
+    seed = data['plan']['levels'][0]['plan']['seeds'][0]
+    cfg,_,truths,_,_,_ = load_sequence(args.fixture,args.capture or args.fixture,'any')
+    fig,axes = plt.subplots(5,5,figsize=(19,14),squeeze=False)
+    ids = {'dome_floor_v1':'dome_floor','cylinder_floor_v1':'cylinder_floor','cube_floor_v1':'cube_floor'}
+    for row,carrier in enumerate(carriers):
+        images = []
+        axes[row,0].imshow(truths[0]);axes[row,0].set_title(carrier+' / direct truth')
+        for column,level in enumerate(data['plan']['levels'],1):
+            name = level['id']
+            root = ROOT/level['reused_root'] if 'reused_root' in level else args.captures_root/name
+            case = next(c for c in data['levels'][name]['cases'] if c['seed'] == seed)
+            for filename,digest in case['audit']['fixture_sha256'].items():
+                if hashlib.sha256((args.fixture/filename).read_bytes()).hexdigest() != digest:
+                    raise ValueError('refinement plot fixture hash mismatch')
+            path = root/f'seed{seed}'/ids.get(carrier,carrier)/'report.json'
+            if hashlib.sha256(path.read_bytes()).hexdigest() != case['audit']['native_report_sha256'][carrier]:
+                raise ValueError('refinement plot native report hash mismatch')
+            native = json.loads(path.read_text())
+            sample = next(s for s in native['samples'] if s['frame_index'] == 0 and s['variant'] == 0 and not s['warmup'])
+            payload = (path.parent/sample['rgba_file']).read_bytes()
+            if hashlib.sha256(payload).hexdigest() != sample['rgba_sha256']:
+                raise ValueError('refinement plot RGBA hash mismatch')
+            image = np.frombuffer(payload,np.uint8).reshape(cfg['output']['height'],cfg['output']['width'],4)
+            images.append(image[...,:3])
+            axes[row,column].imshow(image)
+            axes[row,column].set_title(name+f" / {case['resources'][carrier]['triangles']} triangles")
+        delta = np.abs(images[1].astype(float)-images[2].astype(float))*8/255
+        axes[row,4].imshow(np.clip(delta,0,1));axes[row,4].set_title('|medium - fine| RGB8 x8')
+    for ax in axes.flat:ax.set_axis_off()
+    fig.suptitle(f'Seed{seed}, first frame, multi_band/zero; last column is amplified difference, not a scene')
+    fig.tight_layout();fig.savefig(args.output/'carrier_refinement_views.png',dpi=150);plt.close(fig)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--report', type=Path,
@@ -119,6 +178,9 @@ def main():
     parser.add_argument('--capture', type=Path)
     args = parser.parse_args()
     report = json.loads(args.report.read_text())
+    if report.get('experiment') == 'E-STITCH-carrier-refinement-01':
+        plot_refinement(report,args)
+        return
     if report.get('experiment') == 'E-STITCH-carrier-budget-01':
         plot_budget(report,args)
         return
