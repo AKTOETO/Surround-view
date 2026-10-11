@@ -82,24 +82,37 @@ def plot_visibility(data, args):
 
 
 def plot_parallax(data, args):
+    from matplotlib.patches import Rectangle
     profiles = [(m,b) for m in ('multi_band','graph_cut_multi_band') for b in ('zero','normalized')]
     ids = {'dome_floor_v1':'dome_floor','cylinder_floor_v1':'cylinder_floor','cube_floor_v1':'cube_floor'}
-    labels, ious, errors = [], [], []
-    fig, axes = plt.subplots(6, 6, figsize=(20, 15))
+    framed = data['experiment'] == 'E-STITCH-parallax-framed-01'
+    prefix = 'parallax_framed' if framed else 'parallax_height'
+    labels, ious, errors, visible = [], [], [], []
+    fig, axes = plt.subplots(len(data['cases']), 6, figsize=(20, 2.5*len(data['cases'])))
     for index, entry in enumerate(data['cases']):
         cid = entry['id']
         case = entry['audit']['cases'][0]
-        cfg,_,truths,_,_,_ = load_sequence(args.inputs_root/cid/'seed101-inputs',
-                                         args.inputs_root/cid/'seed101-capture','any')
+        seed = case['seed']
+        cfg,_,truths,_,_,_ = load_sequence(args.inputs_root/cid/f'seed{seed}-inputs',
+                                         args.inputs_root/cid/f'seed{seed}-capture','any')
         axes[index,0].imshow(truths[0])
         axes[index,0].set_title(cid+' / direct truth')
+        bounds = None
+        if framed:
+            bounds = next(c['projected_box']['bounds_px'] for c in data['ray_ground_controls']
+                          if c['case']==cid and c['truth_index']==0)
+            x0,y0,x1,y1 = bounds
+            axes[index,0].add_patch(Rectangle((x0,y0),x1-x0,y1-y0,fill=False,edgecolor='#62eaa6',linewidth=.8))
         for column, carrier in enumerate(case['resources'],1):
             rows = [r for r in case['audit']['results'] if r['carrier'] == carrier]
             groups = [[r for r in rows if (r['mode'],r['boundary']) == p] for p in profiles]
             labels.append(cid+' / '+ids.get(carrier,carrier))
             ious.append([np.mean([r['quality']['target']['iou'] for r in g]) for g in groups])
             errors.append([np.mean([r['quality']['linear_mae'] for r in g]) for g in groups])
-            directory = args.captures_root/cid/'native/seed101'/ids.get(carrier,carrier)
+            if framed:
+                visible.append([np.mean([r['visible_target']['conditional_iou']
+                    if r['visible_target']['conditional_iou'] is not None else np.nan for r in g]) for g in groups])
+            directory = args.captures_root/cid/f'native/seed{seed}'/ids.get(carrier,carrier)
             report_path = directory/'report.json'
             if hashlib.sha256(report_path.read_bytes()).hexdigest() != case['audit']['native_report_sha256'][carrier]:
                 raise ValueError('parallax report checksum mismatch')
@@ -115,22 +128,27 @@ def plot_parallax(data, args):
             axes[index,column].imshow(np.frombuffer(payload,np.uint8).reshape(
                 cfg['output']['height'],cfg['output']['width'],4))
             axes[index,column].set_title(ids.get(carrier,carrier))
+            if bounds is not None:
+                axes[index,column].add_patch(Rectangle((x0,y0),x1-x0,y1-y0,fill=False,edgecolor='#62eaa6',linewidth=.8))
     for ax in axes.flat: ax.set_axis_off()
     args.output.mkdir(parents=True,exist_ok=True)
-    fig.suptitle('All six controlled factors, first pose; fixed multi_band/zero profile')
-    fig.tight_layout();fig.savefig(args.output/'parallax_height_views.png',dpi=150);plt.close(fig)
-    fig, axes = plt.subplots(1,2,figsize=(13,14),sharey=True)
-    for ax,values,title,cmap in zip(axes,(ious,errors),('Coded-target IoU','Visible-interior linear RGB MAE'),('viridis','magma_r')):
+    fig.suptitle('All controlled factors, first pose; fixed multi_band/zero profile')
+    fig.tight_layout(rect=(0,0,1,.98));fig.savefig(args.output/(prefix+'_views.png'),dpi=150);plt.close(fig)
+    series = [(ious,'Coded-target IoU','viridis')]
+    if framed: series.append((visible,'Conditional visible IoU','viridis'))
+    series.append((errors,'Visible-interior linear RGB MAE','magma_r'))
+    fig, axes = plt.subplots(1,len(series),figsize=(6.5*len(series),14 if not framed else 24),sharey=True)
+    for ax,(values,title,cmap) in zip(axes,series):
         im = ax.imshow(values,aspect='auto',cmap=cmap)
         ax.set_xticks(range(4),['MB / zero','MB / normalized','GC MB / zero','GC MB / normalized'],rotation=25,ha='right')
         ax.set_yticks(range(len(labels)),labels,fontsize=8);ax.set_title(title)
         for y,row in enumerate(values):
             for x,v in enumerate(row):
-                ax.text(x,y,f'{v:.4f}',ha='center',va='center',fontsize=7,color='white',
+                ax.text(x,y,f'{v:.4f}' if np.isfinite(v) else 'undefined',ha='center',va='center',fontsize=7,color='white',
                         bbox=dict(facecolor='black',alpha=.35,edgecolor='none',pad=1))
         fig.colorbar(im,ax=ax,shrink=.5)
     fig.suptitle('Full factor/carrier/profile matrix; means of two dependent poses')
-    fig.tight_layout();fig.savefig(args.output/'parallax_height_metrics.png',dpi=150);plt.close(fig)
+    fig.tight_layout(rect=(0,0,1,.98));fig.savefig(args.output/(prefix+'_metrics.png'),dpi=150);plt.close(fig)
 
 
 def plot_lateral(data, args):
@@ -440,7 +458,7 @@ def main():
     if report.get('experiment') == 'E-STITCH-parallax-visibility-01':
         plot_visibility(report,args)
         return
-    if report.get('experiment') == 'E-STITCH-parallax-height-01':
+    if report.get('experiment') in ('E-STITCH-parallax-height-01','E-STITCH-parallax-framed-01'):
         plot_parallax(report, args)
         return
     if report.get('experiment') == 'E-STITCH-carrier-lateral-01':
