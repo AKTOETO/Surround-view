@@ -167,6 +167,63 @@ def plot_refinement(data, args):
     fig.tight_layout();fig.savefig(args.output/'carrier_refinement_views.png',dpi=150);plt.close(fig)
 
 
+def plot_spatial(data, args):
+    from object_metrics import spatial_rois
+    from temporal_seam_stability import _verified, visibility_mask
+    groups = list(data['roi_counts'][0]['groups'])
+    labels, values = [], []
+    carriers = list(dict.fromkeys(r['carrier'] for r in data['results']))
+    for seed in data['plan']['seeds']:
+        for carrier in carriers:
+            rows = [r for r in data['results'] if r['seed'] == seed and r['carrier'] == carrier
+                    and r['level'] == 'medium' and r['mode'] == 'multi_band' and r['boundary'] == 'zero']
+            labels.append(f"seed{seed} / {carrier.replace('_floor_v1','')}")
+            values.append([np.mean([r['groups'][g]['linear_mae'] for r in rows if r['groups'][g]['pixels']])
+                           if any(r['groups'][g]['pixels'] for r in rows) else np.nan for g in groups])
+    fig,ax = plt.subplots(figsize=(12,9))
+    cmap = plt.get_cmap('magma_r').copy();cmap.set_bad('#cccccc')
+    im = ax.imshow(values,aspect='auto',cmap=cmap)
+    ax.set_xticks(range(len(groups)),[g.replace('_',' ') for g in groups],rotation=25,ha='right')
+    ax.set_yticks(range(len(labels)),labels)
+    for y,row in enumerate(values):
+        for x,v in enumerate(row):
+            ax.text(x,y,f'{v:.3f}' if np.isfinite(v) else 'undefined',ha='center',va='center',
+                    color='white' if np.isfinite(v) else 'black',
+                    bbox=dict(facecolor='black' if np.isfinite(v) else '#cccccc',alpha=.4,edgecolor='none',pad=1))
+    ax.set_title('Linear RGB error: medium / multi_band / zero; mean of two frames')
+    fig.colorbar(im,ax=ax,label='linear RGB MAE');fig.tight_layout()
+    args.output.mkdir(parents=True,exist_ok=True)
+    fig.savefig(args.output/'spatial_roi_metrics.png',dpi=150);plt.close(fig)
+    fig,axes = plt.subplots(3,4,figsize=(16,9),squeeze=False)
+    colors = {'ground':np.array([.35,.75,.95]),'coded_target':np.array([1.,0.,1.]),
+              'other_scene':np.array([1.,.65,.1])}
+    for index,seed in enumerate(data['plan']['seeds']):
+        capture = args.inputs_root/f'seed{seed}-capture'
+        fixture = args.inputs_root/f'seed{seed}-inputs'
+        _,_,truths,interiors,_,_ = load_sequence(fixture,capture,'any')
+        truth = json.loads((capture/'paired_truth.json').read_text());frame=truth['frames'][0]
+        ids = np.load(_verified(capture.resolve(),frame['objects'],truth['sha256']),allow_pickle=False)
+        bits = np.load(_verified(capture.resolve(),frame['visibility'],truth['sha256']),allow_pickle=False)
+        masks = spatial_rois(ids,truth['objects'],truth['ego_object_ids'],
+            truth['objects'][truth['diagnostic_target']['object_name']],visibility_mask(bits,'any'),
+            data['plan']['ground_object_prefixes'])
+        expected = next(c['groups'] for c in data['roi_counts'] if c['seed'] == seed and c['truth_index'] == 0)
+        semantic = np.zeros_like(truths[0]);boundary=np.zeros_like(truths[0])
+        for group,mask in masks.items():
+            if hashlib.sha256(mask.astype(np.uint8).tobytes()).hexdigest() != expected[group]['mask_sha256']:
+                raise ValueError('spatial plot mask hash mismatch')
+            name,part=group.rsplit('_',1)
+            semantic[mask]=colors[name]
+            if part == 'boundary':boundary[mask]=colors[name]
+        axes[index,0].imshow(truths[0]);axes[index,0].set_title(f'Seed{seed}: direct truth')
+        axes[index,1].imshow(semantic);axes[index,1].set_title('Visible classes: ground / target / other')
+        axes[index,2].imshow(boundary);axes[index,2].set_title('Independent object-ID boundary band')
+        axes[index,3].imshow(interiors[0],cmap='gray',vmin=0,vmax=1);axes[index,3].set_title('Original evaluation interior ROI')
+    for ax in axes.flat:ax.set_axis_off()
+    fig.suptitle('First declared frame of every seed; cyan ground, magenta target, orange other scene')
+    fig.tight_layout();fig.savefig(args.output/'spatial_roi_masks.png',dpi=150);plt.close(fig)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--report', type=Path,
@@ -176,8 +233,12 @@ def main():
     parser.add_argument('--optimizer-report', type=Path)
     parser.add_argument('--fixture', type=Path, default=ROOT/'tests/data/object_stitch_v1')
     parser.add_argument('--capture', type=Path)
+    parser.add_argument('--inputs-root', type=Path, default=ROOT/'artifacts/seam-generalization-v1')
     args = parser.parse_args()
     report = json.loads(args.report.read_text())
+    if report.get('experiment') == 'E-STITCH-spatial-roi-01':
+        plot_spatial(report,args)
+        return
     if report.get('experiment') == 'E-STITCH-carrier-refinement-01':
         plot_refinement(report,args)
         return
