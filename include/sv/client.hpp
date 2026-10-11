@@ -31,6 +31,7 @@ struct FusionSettings
     double edge_width_px = 24, angle_power = 2, smoothness_weight = .1;
     unsigned pyramid_levels = 4;
     std::string pyramid_boundary = "zero";
+    std::string seam_solver = "binary_pairs";
 };
 
 struct Event
@@ -120,6 +121,10 @@ class Client
         if (fusion.pyramid_boundary != "zero")
         {
             fields["pyramid_boundary"] = fusion.pyramid_boundary;
+        }
+        if (fusion.seam_solver != "binary_pairs")
+        {
+            fields["seam_solver"] = fusion.seam_solver;
         }
         return command("configure_fusion",
                        {{"base_config_revision", std::to_string(base_config_revision)},

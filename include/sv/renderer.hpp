@@ -1,5 +1,6 @@
 #pragma once
 #include "sv/frame.hpp"
+#include "sv/seam_optimizer.hpp"
 #include <memory>
 
 namespace sv
@@ -13,6 +14,7 @@ struct RenderTiming
     double readback_copy_cpu_ms = 0;
     std::optional<double> gpu_draw_ms;
     std::string gpu_timer_status = "extension_unavailable";
+    std::optional<seam::Summary> seam_optimization;
 };
 
 class Renderer

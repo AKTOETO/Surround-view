@@ -200,7 +200,7 @@ Config parse_config(const boost::json::value &value)
         const auto &fusion = value->as_object();
         keys(fusion, {"mode"}, "fusion",
              {"diagnostic", "edge_width_px", "angle_power", "smoothness_weight", "pyramid_levels",
-              "pyramid_boundary"});
+              "pyramid_boundary", "seam_solver"});
         c.fusion.mode = str(fusion.at("mode"));
         require(c.fusion.mode == "edge_feather" || c.fusion.mode == "hard_best_angle" ||
                     c.fusion.mode == "angular_feather" ||
@@ -236,6 +236,12 @@ Config parse_config(const boost::json::value &value)
         }
         require(c.fusion.pyramid_boundary == "zero" || c.fusion.pyramid_boundary == "normalized",
                 "fusion.pyramid_boundary: expected zero or normalized");
+        if (const auto *v = fusion.if_contains("seam_solver"))
+        {
+            c.fusion.seam_solver = str(*v);
+        }
+        require(c.fusion.seam_solver == "binary_pairs" || c.fusion.seam_solver == "alpha_expansion",
+                "fusion.seam_solver: expected binary_pairs or alpha_expansion");
         require(c.fusion.smoothness_weight >= 0 && c.fusion.smoothness_weight <= 100,
                 "fusion.smoothness_weight: expected [0,100]");
         require(c.fusion.edge_width_px > 0 && c.fusion.edge_width_px <= 4096,

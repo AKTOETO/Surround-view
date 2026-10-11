@@ -153,7 +153,9 @@ class ClientTransportTests(unittest.TestCase):
                 sequence_report = directory / 'sequence-report.json'
                 sequence_path.write_text(json.dumps(dict(schema_version=1, frames=3,
                     capture_frames=True, warmup=0, repeats=2, seed=31,
-                    variants=[dict(mode='multi_band',pyramid_boundary=p) for p in ('zero','normalized')])))
+                    variants=[dict(mode='graph_cut_multi_band',pyramid_boundary=p,
+                        seam_solver='alpha_expansion' if p == 'normalized' else 'binary_pairs')
+                        for p in ('zero','normalized')])))
                 time.sleep(.08)
                 sequence = subprocess.run([str(BUILD / 'svctl'), *endpoint, '--timeout-ms', '3000',
                     'research', str(sequence_path), str(sequence_report)],
@@ -163,6 +165,10 @@ class ClientTransportTests(unittest.TestCase):
                 self.assertTrue(sequence_data['restored'])
                 self.assertFalse(sequence_data['cursor_restored'])
                 self.assertEqual(sequence_data['restore_scope'],'fusion_surface_pause_only')
+                self.assertIn('alpha_expansion',sequence_data['catalog']['seam_solver'])
+                self.assertEqual(sequence_data['scenario']['variants'][1]['seam_solver'],'alpha_expansion')
+                self.assertEqual(sequence_data['samples'][0]['metadata']['fusion'],
+                    sequence_data['scenario']['variants'][sequence_data['samples'][0]['variant']])
                 self.assertEqual(len(sequence_data['frame_baselines']),3)
                 self.assertEqual(len(sequence_data['samples']),12)
                 self.assertEqual(len({b['metadata']['frame_set_id'] for b in sequence_data['frame_baselines']}),3)
@@ -170,6 +176,13 @@ class ClientTransportTests(unittest.TestCase):
                 for sample in sequence_data['samples']:
                     baseline = sequence_data['frame_baselines'][sample['frame_index']]['metadata']
                     self.assertEqual(sample['metadata']['inputs'],baseline['inputs'])
+                    if sample['metadata']['fusion'].get('seam_solver') == 'alpha_expansion':
+                        stats = sample['metadata']['seam_optimization']
+                        self.assertLessEqual(stats['final_energy'],stats['initial_energy'])
+                        self.assertLessEqual(stats['sweeps'],8)
+                        self.assertIsInstance(stats['converged'],bool)
+                    else:
+                        self.assertNotIn('seam_optimization',sample['metadata'])
                     pixels = (directory/sample['rgba_file']).read_bytes()
                     self.assertEqual(hashlib.sha256(pixels).hexdigest(),sample['rgba_sha256'])
                     self.assertEqual(len(pixels),160*96*4)

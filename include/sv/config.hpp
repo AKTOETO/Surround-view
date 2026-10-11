@@ -11,6 +11,7 @@ struct Fusion
     double edge_width_px = 24, angle_power = 2, smoothness_weight = .1;
     unsigned pyramid_levels = 4;
     std::string pyramid_boundary = "zero";
+    std::string seam_solver = "binary_pairs";
 };
 
 struct Connections

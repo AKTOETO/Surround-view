@@ -10,7 +10,8 @@ FusionResult fuse_research(const FusionSamples &samples, const Fusion &settings)
     if (size.empty() || size.area() > 262144 || settings.pyramid_levels < 1 ||
         settings.pyramid_levels > 8 || !std::isfinite(settings.smoothness_weight) ||
         settings.smoothness_weight < 0 || settings.smoothness_weight > 100 ||
-        (settings.pyramid_boundary != "zero" && settings.pyramid_boundary != "normalized"))
+        (settings.pyramid_boundary != "zero" && settings.pyramid_boundary != "normalized") ||
+        (settings.seam_solver != "binary_pairs" && settings.seam_solver != "alpha_expansion"))
     {
         throw std::invalid_argument("research fusion budget/parameters");
     }
@@ -32,10 +33,20 @@ FusionResult fuse_research(const FusionSamples &samples, const Fusion &settings)
         throw std::invalid_argument("unknown research fusion mode");
     }
     cv::Mat weights = cv::Mat::zeros(size, CV_32FC4);
+    std::optional<seam::Summary> optimization;
     if (cut)
     {
-        weights = fusion_detail::cut_weights(samples, fusion_detail::distances(samples),
-                                             settings.smoothness_weight);
+        const auto distance = fusion_detail::distances(samples);
+        if (settings.seam_solver == "alpha_expansion")
+        {
+            optimization.emplace();
+            weights = fusion_detail::multilabel_weights(samples, distance,
+                                                        settings.smoothness_weight, *optimization);
+        }
+        else
+        {
+            weights = fusion_detail::cut_weights(samples, distance, settings.smoothness_weight);
+        }
     }
     else
     {
@@ -114,6 +125,6 @@ FusionResult fuse_research(const FusionSamples &samples, const Fusion &settings)
             }
         }
     }
-    return {color, weights};
+    return {color, weights, optimization};
 }
 } // namespace sv

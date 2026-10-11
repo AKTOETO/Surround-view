@@ -11,18 +11,23 @@ inline bool research_fusion(const std::string &mode)
 
 inline boost::json::object fusion_settings(const Fusion &fusion)
 {
-    return {{"mode", fusion.mode},
-            {"diagnostic", fusion.diagnostic},
-            {"edge_width_px", fusion.edge_width_px},
-            {"angle_power", fusion.angle_power},
-            {"smoothness_weight", fusion.smoothness_weight},
-            {"pyramid_levels", fusion.pyramid_levels},
-            {"pyramid_boundary", fusion.pyramid_boundary}};
+    boost::json::object result{{"mode", fusion.mode},
+                               {"diagnostic", fusion.diagnostic},
+                               {"edge_width_px", fusion.edge_width_px},
+                               {"angle_power", fusion.angle_power},
+                               {"smoothness_weight", fusion.smoothness_weight},
+                               {"pyramid_levels", fusion.pyramid_levels},
+                               {"pyramid_boundary", fusion.pyramid_boundary}};
+    if (fusion.seam_solver != "binary_pairs")
+    {
+        result["seam_solver"] = fusion.seam_solver;
+    }
+    return result;
 }
 
 inline boost::json::object fusion_catalog()
 {
-    return {{"version", 3},
+    return {{"version", 4},
             {"modes", boost::json::array{"edge_feather", "hard_best_angle", "angular_feather",
                                          "seam_distance_feather", "graph_cut_seam", "multi_band",
                                          "graph_cut_multi_band"}},
@@ -36,7 +41,10 @@ inline boost::json::object fusion_catalog()
             {"research_backend", "gles_projection_cpu_fusion_v1"},
             {"research_fusion_implementation", "validity_zero_extension_v2"},
             {"research_pixel_limit", 262144},
-            {"graph_cut_scope", "independent_binary_pairs; centrality_ties_for_3plus"},
+            {"seam_solver", boost::json::array{"binary_pairs", "alpha_expansion"}},
+            {"graph_cut_scope", "binary_pairs_default_or_global_weighted_potts_expansion"},
+            {"alpha_expansion_implementation", "integer_potts_v1"},
+            {"alpha_expansion_max_sweeps", 8},
             {"apply", "between_render_calls"},
             {"persistence", "temporary"}};
 }

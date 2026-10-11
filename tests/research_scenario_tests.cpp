@@ -37,6 +37,7 @@ TEST(ResearchScenario, RejectsUnsupportedAndUnboundedScenariosBeforeConnection)
           R"({"schema_version":1,"variants":[{"mode":"edge_feather","edge_width_px":4097}]})",
           R"({"schema_version":1,"variants":[{"mode":"multi_band","pyramid_levels":9}]})",
           R"({"schema_version":1,"variants":[{"mode":"multi_band","pyramid_boundary":"unknown"}]})",
+          R"({"schema_version":1,"variants":[{"mode":"graph_cut_seam","seam_solver":"unknown"}]})",
           R"({"schema_version":1,"variants":[{"mode":"graph_cut_seam","smoothness_weight":-1}]})",
           R"({"schema_version":1,"variants":[{"mode":"edge_feather","shader":"code"}]})"})
     {
@@ -69,9 +70,10 @@ TEST(ResearchScenario, SequenceBudgetAndCaptureConsumer)
 TEST(ResearchScenario, NativeFusionAndOptionalCarrierArePreserved)
 {
     const auto scenario = sv::research::parse_scenario(boost::json::parse(
-        R"({"schema_version":1,"variants":[{"mode":"graph_cut_multi_band","pyramid_levels":5,"smoothness_weight":0.7,"pyramid_boundary":"normalized","surface":{"type":"cube_floor_v1","half_extent_m":14,"height_m":14,"face_cells":8}},{"mode":"multi_band"}]})"));
+        R"({"schema_version":1,"variants":[{"mode":"graph_cut_multi_band","pyramid_levels":5,"smoothness_weight":0.7,"pyramid_boundary":"normalized","seam_solver":"alpha_expansion","surface":{"type":"cube_floor_v1","half_extent_m":14,"height_m":14,"face_cells":8}},{"mode":"multi_band"}]})"));
     EXPECT_EQ(scenario.variants[0].fusion.pyramid_levels, 5U);
     EXPECT_EQ(scenario.variants[0].fusion.pyramid_boundary, "normalized");
+    EXPECT_EQ(scenario.variants[0].fusion.seam_solver, "alpha_expansion");
     EXPECT_EQ(scenario.variants[1].fusion.pyramid_boundary, "zero");
     EXPECT_DOUBLE_EQ(scenario.variants[0].fusion.smoothness_weight, .7);
     ASSERT_TRUE(scenario.variants[0].surface);

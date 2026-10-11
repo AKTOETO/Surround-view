@@ -640,6 +640,7 @@ Image Renderer::render(const FrameSet &set, const View &view, RenderInspection *
         i.timing.layer_readback_cpu_ms = (now_ns() - layer_start) / 1e6;
         const auto fusion_start = now_ns();
         const auto fused = fuse_research(samples, c.fusion);
+        i.timing.seam_optimization = fused.seam_optimization;
         for (int y = 0; y < c.height; ++y)
         {
             for (int x = 0; x < c.width; ++x)

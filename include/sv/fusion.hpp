@@ -1,6 +1,8 @@
 #pragma once
 #include "sv/config.hpp"
+#include "sv/seam_optimizer.hpp"
 #include <opencv2/core.hpp>
+#include <optional>
 
 namespace sv
 {
@@ -15,6 +17,7 @@ struct FusionResult
 {
     cv::Mat color;   // CV_32FC3
     cv::Mat weights; // CV_32FC4; graph-cut weights before optional smoothing
+    std::optional<seam::Summary> seam_optimization;
 };
 
 FusionResult fuse_research(const FusionSamples &, const Fusion &);

@@ -44,6 +44,10 @@ int main()
         {
             settings.pyramid_boundary = std::string(v->as_string());
         }
+        if (auto v = input.if_contains("seam_solver"))
+        {
+            settings.seam_solver = std::string(v->as_string());
+        }
         const auto result = sv::fuse_research(samples, settings);
         boost::json::array color, weights;
         for (int y = 0; y < height; ++y)

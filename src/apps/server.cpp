@@ -1306,6 +1306,20 @@ int main(int argc, char **argv)
                      {"upload_count", std::to_string(renderer->uploads())}},
                     std::move(image.pixels)};
 
+                if (timing.seam_optimization)
+                {
+                    const auto &seam = *timing.seam_optimization;
+                    output.header["seam_optimization"] =
+                        boost::json::object{{"implementation", "integer_potts_v1"},
+                                            {"initial_energy", seam.initial_energy},
+                                            {"final_energy", seam.final_energy},
+                                            {"nodes", seam.nodes},
+                                            {"edges", seam.edges},
+                                            {"sweeps", seam.sweeps},
+                                            {"accepted_moves", seam.accepted_moves},
+                                            {"converged", seam.converged},
+                                            {"max_sweeps", 8}};
+                }
                 const auto publish_start = sv::now_ns();
                 const bool published = network.publish(std::move(output));
                 ft.publish_enqueue_ms = static_cast<double>(sv::now_ns() - publish_start) / 1e6;

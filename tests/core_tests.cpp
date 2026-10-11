@@ -162,6 +162,7 @@ int main(int argc, char **argv)
                   boost::json::object{{"mode", mode}, {"angle_power", 33}},
                   boost::json::object{{"mode", mode}, {"diagnostic", "invalid"}},
                   boost::json::object{{"mode", mode}, {"pyramid_boundary", "unknown"}},
+                  boost::json::object{{"mode", mode}, {"seam_solver", "unknown"}},
                   boost::json::object{{"mode", mode}, {"extra", true}}})
             {
                 value.as_object()["fusion"] = invalid;

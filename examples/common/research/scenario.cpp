@@ -83,7 +83,7 @@ Scenario parse_scenario(const boost::json::value &value)
     {
         const auto &fields = variant.as_object();
         keys(fields, {"mode", "diagnostic", "edge_width_px", "angle_power", "pyramid_levels",
-                      "smoothness_weight", "pyramid_boundary", "surface"});
+                      "smoothness_weight", "pyramid_boundary", "seam_solver", "surface"});
         client::FusionSettings fusion;
         fusion.mode = std::string(fields.at("mode").as_string());
         if (fusion.mode != "edge_feather" && fusion.mode != "hard_best_angle" &&
@@ -126,6 +126,14 @@ Scenario parse_scenario(const boost::json::value &value)
         if (auto v = fields.if_contains("pyramid_boundary"))
         {
             fusion.pyramid_boundary = std::string(v->as_string());
+        }
+        if (auto v = fields.if_contains("seam_solver"))
+        {
+            fusion.seam_solver = std::string(v->as_string());
+        }
+        if (fusion.seam_solver != "binary_pairs" && fusion.seam_solver != "alpha_expansion")
+        {
+            throw std::invalid_argument("unsupported seam solver");
         }
         if (fusion.pyramid_boundary != "zero" && fusion.pyramid_boundary != "normalized")
         {

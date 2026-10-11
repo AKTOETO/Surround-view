@@ -29,13 +29,18 @@ std::string hash(const void *data, size_t size)
 
 boost::json::object settings(const client::FusionSettings &fusion)
 {
-    return {{"mode", fusion.mode},
-            {"diagnostic", fusion.diagnostic},
-            {"edge_width_px", fusion.edge_width_px},
-            {"angle_power", fusion.angle_power},
-            {"pyramid_levels", fusion.pyramid_levels},
-            {"smoothness_weight", fusion.smoothness_weight},
-            {"pyramid_boundary", fusion.pyramid_boundary}};
+    boost::json::object result{{"mode", fusion.mode},
+                               {"diagnostic", fusion.diagnostic},
+                               {"edge_width_px", fusion.edge_width_px},
+                               {"angle_power", fusion.angle_power},
+                               {"pyramid_levels", fusion.pyramid_levels},
+                               {"smoothness_weight", fusion.smoothness_weight},
+                               {"pyramid_boundary", fusion.pyramid_boundary}};
+    if (fusion.seam_solver != "binary_pairs")
+    {
+        result["seam_solver"] = fusion.seam_solver;
+    }
+    return result;
 }
 
 boost::json::object accepted(Connection &connection, std::string operation,

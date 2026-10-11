@@ -119,11 +119,16 @@ void RuntimeSettings::apply(const QString &json, const QString &baseRevision, bo
         const auto object = boost::json::parse(json.toStdString()).as_object();
         if (fusion)
         {
-            // Accept the historical six-field snapshot and the optional boundary policy.
-            if (object.size() != 6 && !(object.size() == 7 && object.contains("pyramid_boundary")))
+            // Preserve historical snapshots; reject unknown optional fields.
+            for (const auto &field : object)
             {
-                throw std::runtime_error(
-                    "fusion_requires_six_fields_and_optional_pyramid_boundary");
+                if (field.key() != "mode" && field.key() != "diagnostic" &&
+                    field.key() != "edge_width_px" && field.key() != "angle_power" &&
+                    field.key() != "smoothness_weight" && field.key() != "pyramid_levels" &&
+                    field.key() != "pyramid_boundary" && field.key() != "seam_solver")
+                {
+                    throw std::runtime_error("unknown_fusion_field");
+                }
             }
             sv::client::FusionSettings settings;
             settings.mode = std::string(object.at("mode").as_string());
@@ -143,6 +148,10 @@ void RuntimeSettings::apply(const QString &json, const QString &baseRevision, bo
             if (auto value = object.if_contains("pyramid_boundary"))
             {
                 settings.pyramid_boundary = std::string(value->as_string());
+            }
+            if (auto value = object.if_contains("seam_solver"))
+            {
+                settings.seam_solver = std::string(value->as_string());
             }
             pending_id_ = client->configure_fusion(revision, settings);
         }
