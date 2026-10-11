@@ -13,12 +13,52 @@ sys.path[:0] = [str(ROOT/'tools'), str(ROOT/'tools/research'), str(ROOT/'tools/b
 from object_metrics import measure_target, measure_target_support, projected_object_ids, target_mask, spatial_rois, spatial_errors, measure_visible_target
 from object_stitch import interleaved_orders, load_objects
 from diagnostic_motion import frame_positions, position_for_capture, validate_captured_positions
-from parallax_height import ray_ground, object_position, validate_factors, verify_historical_results, box_frame_bounds, verify_rig_pair
+from parallax_height import ray_ground, object_position, validate_factors, verify_historical_results, box_frame_bounds, verify_rig_pair, verify_sampling_design, pair_sampling_rows
 from server_boundary import (quality as server_quality, timestamp as server_timestamp, audit_study,
     check_mesh_budget, validate_refinement_plan, refinement_difference, audit_refinement, audit_spatial)
 
 
 class ObjectMetricTests(unittest.TestCase):
+    def test_sampling_design_rejects_view_and_budget_confounders(self):
+        low = json.loads((ROOT/'configs/research/parallax-framed-plan.json').read_text())
+        high = json.loads((ROOT/'configs/research/parallax-sampling-plan.json').read_text())
+        a = json.loads((ROOT/low['inputs_plan']).read_text())
+        b = json.loads((ROOT/high['inputs_plan']).read_text())
+        verify_sampling_design(low,high,a,b)
+        wrong = json.loads(json.dumps(high));wrong['triangles_max'] += 1
+        with self.assertRaisesRegex(ValueError,'non-resolution'):
+            verify_sampling_design(low,wrong,a,b)
+        wrong = json.loads(json.dumps(b))
+        for c in wrong['cases']: c['virtual_camera']['distance_m'] += 1
+        with self.assertRaisesRegex(ValueError,'non-resolution'):
+            verify_sampling_design(low,high,a,wrong)
+        wrong = json.loads(json.dumps(b));wrong['cases'][0]['capture']['face_size'] = 256
+        with self.assertRaises(ValueError): verify_sampling_design(low,high,a,wrong)
+
+    def test_sampling_pairing_order_missing_duplicates_and_undefined(self):
+        low = json.loads((ROOT/'docs/validation/baselines/parallax_framed_v1.json').read_text())
+        high = json.loads(json.dumps(low))
+        high['cases'].reverse()
+        for case in high['cases']: case['audit']['cases'][0]['audit']['results'].reverse()
+        pairs = pair_sampling_rows(low,high)
+        self.assertEqual(len(pairs),480)
+        self.assertEqual(sum(p['delta']['conditional_iou'] is None for p in pairs),40)
+        self.assertTrue(all(p['delta']['full_iou'] == 0 for p in pairs))
+        row = next(r for r in high['cases'][0]['audit']['cases'][0]['audit']['results']
+                   if r['visible_target']['conditional_iou'] is not None)
+        row['visible_target']['conditional_iou'] = None
+        pairs = pair_sampling_rows(low,high)
+        key = (high['cases'][0]['id'],row['carrier'],row['truth_index'],row['mode'],row['boundary'])
+        pair = next(p for p in pairs if tuple(p[k] for k in ('case','carrier','truth_index','mode','boundary')) == key)
+        self.assertIsNone(pair['high']['conditional_iou'])
+        self.assertIsNone(pair['delta']['conditional_iou'])
+        self.assertEqual(sum(p['high']['conditional_iou'] is None for p in pairs),41)
+        rows = high['cases'][0]['audit']['cases'][0]['audit']['results']
+        rows.append(rows[0])
+        with self.assertRaisesRegex(ValueError,'duplicate'): pair_sampling_rows(low,high)
+        rows.pop();rows.pop()
+        with self.assertRaisesRegex(ValueError,'conditions differ'): pair_sampling_rows(low,high)
+
     def test_full_box_projection_known_bounds_and_clipping(self):
         case = {'target':{'center_m':[0,0,0],'size_m':[2,2,2]},
                 'capture':{'width':320,'height':180},

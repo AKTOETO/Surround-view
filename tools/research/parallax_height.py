@@ -297,6 +297,122 @@ def audit(master_path, root, inputs):
     return summary
 
 
+
+def verify_sampling_design(low_plan, high_plan, low_asset, high_asset):
+    """Reject every plan change except the predeclared cubemap resolution."""
+    plans_copy = json.loads(json.dumps([low_plan, high_plan]))
+    for plan in plans_copy:
+        for field in ('experiment', 'inputs_plan', 'protocol'):
+            del plan[field]
+    assets_copy = json.loads(json.dumps([low_asset, high_asset]))
+    for asset, size in zip(assets_copy, (256, 512)):
+        validate_factors(asset)
+        for case in asset['cases']:
+            if case['capture'].pop('face_size') != size:
+                raise ValueError('sampling requires exactly 256 and 512 cubemap faces')
+    if plans_copy[0] != plans_copy[1] or assets_copy[0] != assets_copy[1]:
+        raise ValueError('sampling design changed a non-resolution factor')
+
+
+def sampling_rows(summary):
+    rows = {}
+    for case in summary['cases']:
+        for row in case['audit']['cases'][0]['audit']['results']:
+            key = (case['id'], *(row[k] for k in ('carrier','truth_index','mode','boundary')))
+            if key in rows:
+                raise ValueError('duplicate sampling condition')
+            rows[key] = row
+    return rows
+
+
+def pair_sampling_rows(low, high):
+    """Match by semantic key, never by report ordering; undefined remains null."""
+    a, b = sampling_rows(low), sampling_rows(high)
+    if a.keys() != b.keys():
+        raise ValueError('sampling conditions differ')
+    def metrics(row):
+        return {'full_iou':row['quality']['target']['iou'],
+                'conditional_iou':row['visible_target']['conditional_iou'],
+                'predicted_pixels':row['quality']['target']['predicted_pixels'],
+                'centroid_distance_px':row['object_position']['centroid_distance_px'],
+                'linear_mae':row['quality']['linear_mae']}
+    result = []
+    for key in sorted(a):
+        if a[key]['scenario_timestamp_ns'] != b[key]['scenario_timestamp_ns']:
+            raise ValueError('sampling timestamps differ')
+        x, y = metrics(a[key]), metrics(b[key])
+        result.append(dict(zip(('case','carrier','truth_index','mode','boundary'),key)) |
+                      {'low_rgba_sha256':a[key]['rgba_sha256'],'high_rgba_sha256':b[key]['rgba_sha256'],
+                       'low':x,'high':y,'delta':{k:y[k]-x[k] if x[k] is not None and y[k] is not None
+                                                else None for k in x}})
+    return result
+
+
+def sampling_followup(current, baseline_path, low_root, low_inputs, high_root, high_inputs):
+    from PIL import Image
+    historical = json.loads(baseline_path.read_text())
+    low = audit(ROOT/'configs/research/parallax-framed-plan.json',low_root,low_inputs)
+    verify_historical_results(low,historical)
+    verify_sampling_design(low['plan'],current['plan'],low['asset'],current['asset'])
+    if (low['source_fingerprint'] != current['source_fingerprint']
+            or low['render_device'] != current['render_device']):
+        raise ValueError('sampling implementation or rendering device changed')
+    controls = []
+    for case in low['asset']['cases']:
+        cid, seed = case['id'], case['scenario']['seed']
+        contexts, truths, metadata = [], [], []
+        binary_digests = []
+        for inputs, root, size in ((low_inputs,low_root,256),(high_inputs,high_root,512)):
+            capture = inputs/cid/f'seed{seed}-capture'
+            dataset = inputs/cid/f'seed{seed}-inputs'
+            cfg, images, direct, _, stamps, poses = load_sequence(dataset,capture,'any')
+            contexts.append((cfg,stamps,poses))
+            truth = json.loads((capture/'paired_truth.json').read_text())
+            # Compare all decoded truth pixels and raw visibility camera bits.
+            digest = hashlib.sha256(np.asarray(direct).tobytes())
+            for frame in truth['frames']:
+                for key in ('objects','visibility'):
+                    value = np.load(_verified(capture,frame[key],truth['sha256']),allow_pickle=False)
+                    digest.update(str((value.shape,value.dtype.str)).encode());digest.update(value.tobytes())
+            truths.append(digest.hexdigest())
+            info = json.loads((capture/'capture.json').read_text())
+            if info['face_size'] != size:
+                raise ValueError('capture resolution differs from sampling design')
+            for frame in info['frames']:
+                for camera in frame['cameras']:
+                    for name in camera['faces'].values():
+                        with Image.open(_verified(capture,name,info['sha256'])) as image:
+                            if image.size != (size,size):
+                                raise ValueError('actual cubemap dimensions differ')
+            # Strict equality of capture controls; only files/face size differ.
+            metadata.append({k:v for k,v in info.items() if k not in ('face_size','sha256')})
+            binary_digests.append([json.loads((root/cid/f'native/seed{seed}'/c['id']/'invocation.json')
+                                               .read_text())['binary_sha256'] for c in low['plan']['carriers']])
+            if any(image.shape != (400,400,3) for frame in images for image in frame):
+                raise ValueError('fisheye input dimensions changed')
+        if (contexts[0] != contexts[1] or truths[0] != truths[1]
+                or metadata[0] != metadata[1] or binary_digests[0] != binary_digests[1]):
+            raise ValueError('sampling controls differ: config/trajectory/truth/capture/binaries')
+        controls.append({'case':cid,'decoded_truth_sha256':truths[0],
+                         'identical_controls':True,'checked_cube_faces':96})
+    results = pair_sampling_rows(low,current)
+    if len(results) != 480:
+        raise ValueError('complete 480-condition sampling comparison required')
+    return {'schema_version':1,'experiment':'E-STITCH-parallax-sampling-paired-01',
+            'baseline_sha256':sha(baseline_path),'low_plan':low['plan'],'high_plan':current['plan'],
+            'low_provenance':low['provenance'],'high_provenance':current['provenance'],
+            'source_fingerprint':current['source_fingerprint'],'render_device':current['render_device'],
+            'analyzer_sha256':sha(Path(__file__)),
+            'native_report_sha256':{level:{c['id']:c['audit']['cases'][0]['audit']['native_report_sha256']
+                                          for c in summary['cases']}
+                                    for level,summary in (('low',low),('high',current))},
+            'controls':controls,'results':results,
+            'limitations':['only cubemap 256 to 512; fixed 400px fisheye and 320x180 output',
+                           'two mounts of one flat scene, two dependent poses; no universal carrier ranking',
+                           'persistent error does not isolate all geometric and sampling contributions',
+                           'timings not compared; desktop NVIDIA, not target Aurora']}
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--plan', type=Path, required=True)
@@ -306,7 +422,12 @@ def main():
     parser.add_argument('--output', type=Path, required=True)
     parser.add_argument('--visibility-baseline', type=Path,
                         help='Verify this historical full-mask baseline and emit conditional visibility follow-up')
+    parser.add_argument('--sampling-baseline', type=Path, help='Reaudit and pair the frozen 256px framed baseline')
+    parser.add_argument('--reference-root', type=Path)
+    parser.add_argument('--reference-inputs', type=Path)
     args = parser.parse_args()
+    if args.sampling_baseline and (args.visibility_baseline or not args.reference_root or not args.reference_inputs):
+        parser.error('sampling comparison requires reference root/inputs and excludes visibility follow-up')
     if args.visibility_baseline and args.run_binaries:
         parser.error('--visibility-baseline reuses historical trials; omit --run-binaries')
     master, root, inputs = (p.resolve() for p in (args.plan,args.root,args.inputs))
@@ -315,6 +436,9 @@ def main():
     result = audit(master,root,inputs)
     if args.visibility_baseline:
         result = visibility_followup(result,args.visibility_baseline.resolve(),root,inputs)
+    if args.sampling_baseline:
+        result = sampling_followup(result, args.sampling_baseline.resolve(),
+                                   args.reference_root.resolve(), args.reference_inputs.resolve(), root, inputs)
     args.output.parent.mkdir(parents=True,exist_ok=True)
     write(args.output,result)
     print('Audited',len(result['results']) if 'results' in result else
