@@ -1,0 +1,1816 @@
+{
+  "schema_version": 1,
+  "experiment": "E-CARRIER-positions-pilot-01",
+  "plan": {
+    "schema_version": 1,
+    "experiment": "E-CARRIER-positions-pilot-01",
+    "scope": "native carrier-position validation, not scene correspondence or quality ranking",
+    "case": "rig101-near-z080",
+    "inputs": "artifacts/parallax-sensor-inputs-v1/rig101-near-z080",
+    "native_plan": "artifacts/parallax-sensor-v1/rig101-near-z080/native-plan.json",
+    "native_plan_sha256": "d3bbf64c3dede40b1ad73d4148bd8a405484f1f0ce42db382d93aae6562c267f",
+    "configs": [
+      {
+        "carrier": "plane",
+        "config": "artifacts/parallax-sensor-v1/rig101-near-z080/native/seed101/plane/config.json",
+        "config_sha256": "328207a6a513bd12815707d75316dd4390335367e5c457be26d0f04d02b0e322",
+        "reference_report": "artifacts/parallax-sensor-v1/rig101-near-z080/native/seed101/plane/report.json",
+        "reference_report_sha256": "17c29e021c0d0184f49f4524274b4e7b8be07ee204168f1d426e8dee4e0f4052"
+      },
+      {
+        "carrier": "bowl",
+        "config": "artifacts/parallax-sensor-v1/rig101-near-z080/native/seed101/bowl/config.json",
+        "config_sha256": "380a07c2cbd82a91705f3e907f04bae7a0c50ca2e06ca34bb86dc5952c79a1ff",
+        "reference_report": "artifacts/parallax-sensor-v1/rig101-near-z080/native/seed101/bowl/report.json",
+        "reference_report_sha256": "256e513c9d347f51bd153f2d57fdea51cb925fbe35a5a7d21d371943b0cfc770"
+      },
+      {
+        "carrier": "dome_floor",
+        "config": "artifacts/parallax-sensor-v1/rig101-near-z080/native/seed101/dome_floor/config.json",
+        "config_sha256": "d631bca5bbb20b1dc10560c86b1cbc9d9a35076062a9441e42471c8b64b2f87a",
+        "reference_report": "artifacts/parallax-sensor-v1/rig101-near-z080/native/seed101/dome_floor/report.json",
+        "reference_report_sha256": "02d9410df7d460294eccec9d60fdf79f44f50a42a177b13010bbfdd3d6b30669"
+      },
+      {
+        "carrier": "cylinder_floor",
+        "config": "artifacts/parallax-sensor-v1/rig101-near-z080/native/seed101/cylinder_floor/config.json",
+        "config_sha256": "1cae390f3036aa566d9caf3140a4e4969cc2026b8cdd17f4e4197384fa885eec",
+        "reference_report": "artifacts/parallax-sensor-v1/rig101-near-z080/native/seed101/cylinder_floor/report.json",
+        "reference_report_sha256": "17a1f220afdfbcfdd6e1f3d2be72725891d9bda0d40bb9e4d59835016e147cd7"
+      },
+      {
+        "carrier": "cube_floor",
+        "config": "artifacts/parallax-sensor-v1/rig101-near-z080/native/seed101/cube_floor/config.json",
+        "config_sha256": "44a43688820e6d2cce68f25635421f3c8dca4ea5f5c21a345d01c56756e51d26",
+        "reference_report": "artifacts/parallax-sensor-v1/rig101-near-z080/native/seed101/cube_floor/report.json",
+        "reference_report_sha256": "769d5441ad5bc3786074c9a859068d87348768bf19957988070798d38ae901c1"
+      }
+    ],
+    "oracle_fixture": {
+      "width": 160,
+      "height": 100,
+      "max_axis_error_m": 0.005,
+      "max_reprojection_error_px": 0.002,
+      "sampling": "x modulo7=3,y modulo7=2, all non-background/non-ego pixels for reprojection",
+      "tolerance_status": "pilot bounds after NVIDIA1mm failure; not a preregistered quality hypothesis"
+    },
+    "limitations": [
+      "1343 selected coarse-mesh rays per backend; not exhaustive triangle boundaries or Aurora",
+      "source-surface correspondence/contributing samples and typed wire channel remain open"
+    ]
+  },
+  "plan_sha256": "20bbeb6ec8023e7e20ddd3ee2d15a5ec19e281c6356f9d5dac1fd3dbf1d16018",
+  "analyzer_sha256": "8a22c037c66e44773e4fd506cd497d40d9746775e126e02e0466f82c18c4e556",
+  "test_provenance_sha256": "33215e870ffe88b2c8876e0da5375c904adf2ea9b863a4737247bc8cfb548916",
+  "test_provenance": {
+    "files_sha256": {
+      "tests/mesa.xml": "547eae3f97634d18b177ad1b1cc8353e35d274d783c1ac00e1ff6d870c54dadc",
+      "tests/nvidia.xml": "5f7d30e74a1249776b0c4fb1866b121f50765a11466b105390a5ad9aee560565",
+      "binaries/sv-carrier-inspection-tests": "55526f5cefb15eaa941641e4b19fb2c33a7519355f49a391e159b44a767da992",
+      "binaries/sv-carrier-probe": "a512defef93f6a9d87cd90e82dbd5e657b56129f7df38ec758a4537d4d7994dc",
+      "binaries/sv-server": "9df34f9924541e6fd48a590620a5a9eeb4d16bcf528d7310d9171eaa42066858",
+      "binaries/svctl": "9ac0433d25f6c1ea451a310b8e208eafa4d952d440ed9610a501dfa33d0331eb"
+    },
+    "code_sha256": {
+      "CMakeLists.txt": "55f2b10f804782ba0983398726404980928623f7dd12486f068b5319efe51a29",
+      "tests/render_correspondence_tests.cpp": "6528587cb33f19867e89e390d19a75c19161fc941fbe0d2ae86eaa80b7263ee3",
+      "tests/carrier_probe.cpp": "8b0c319e95ac96009abb6f366d98065cba387f096833768a0a1f0049077782e2",
+      "include/sv/render_inspection.hpp": "1e7cc54287d46606b0e5d09fde244d7b15a1f024310e7ea7ae25bc5bf4a2a098",
+      "include/sv/renderer.hpp": "f54c9219445fb48d0034d7754e88bebc2c1e91c2da200489ae88f16df767d147",
+      "src/render/renderer.cpp": "f7a7e88379cb4f926404d697e9197f16e1d272c5f3e068be1aeedd57db19f97f",
+      "src/render/inspection.hpp": "4d702ccafe88018041b304a1d2606e0fe6fc09b8e2f6003957e99a38cb7bf6dc",
+      "src/render/surface.frag": "a1ad362bce8f411eb629a505b7bfd9584616fcbb0388c4c16505ff699341a46e",
+      "src/render/surface.vert": "109a931b2564d2b0745d3f5d32edecf76ddab73f4fe64045cbabd00902ec806d",
+      "src/render/vehicle.frag": "7a9843f9892312157194a7197f71ba61cc1ceeac68c893804aca104238592f7f"
+    },
+    "environment": {
+      "nvidia": {
+        "__EGL_VENDOR_LIBRARY_FILENAMES": "/usr/share/glvnd/egl_vendor.d/10_nvidia.json",
+        "EGL_PLATFORM": "surfaceless"
+      },
+      "mesa": {
+        "__EGL_VENDOR_LIBRARY_FILENAMES": "/usr/share/glvnd/egl_vendor.d/50_mesa.json",
+        "EGL_PLATFORM": "surfaceless",
+        "LIBGL_ALWAYS_SOFTWARE": "1"
+      }
+    }
+  },
+  "source_fingerprint": "df708cec09fb3602e5bfdb5064d0202dd31f93e3d491b0a3cee5ad1c274df1f1",
+  "geometry": [
+    {
+      "schema_version": 1,
+      "scope": "depth_tested_carrier_geometry",
+      "source_revision": "d3751e7c563fb5377f793148b7272385dd10cdf3",
+      "source_fingerprint": "df708cec09fb3602e5bfdb5064d0202dd31f93e3d491b0a3cee5ad1c274df1f1",
+      "config_sha256": "328207a6a513bd12815707d75316dd4390335367e5c457be26d0f04d02b0e322",
+      "config": {
+        "schema_version": 1,
+        "profile_id": "blender-street-v1",
+        "units": {
+          "length": "m",
+          "angle": "rad",
+          "time": "ns"
+        },
+        "vehicle": {
+          "length_m": 4.6,
+          "width_m": 1.8,
+          "mask_margin_m": 0.1
+        },
+        "cameras": [
+          {
+            "id": 0,
+            "name": "front",
+            "calibration_id": "blender-rig-front-v1",
+            "resolution": {
+              "width": 800,
+              "height": 800
+            },
+            "projection": {
+              "model": "opencv_fisheye",
+              "fx": 256.0,
+              "fy": 256.0,
+              "cx": 399.5,
+              "cy": 399.5,
+              "alpha": 0.0,
+              "k": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "theta_max_rad": 1.48,
+              "z_epsilon_m": 1e-06
+            },
+            "T_camera_from_vehicle": [
+              [
+                0.04642991738808383,
+                -0.9989215498583138,
+                0.0,
+                -0.05267495232926082
+              ],
+              [
+                -0.2220486121310304,
+                -0.010320829217113926,
+                -0.9749809712681344,
+                1.3533564358105563
+              ],
+              [
+                0.9739295029015288,
+                0.04526828595093321,
+                -0.2222883390217436,
+                -2.112107069245012
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            ]
+          },
+          {
+            "id": 1,
+            "name": "right",
+            "calibration_id": "blender-rig-right-v1",
+            "resolution": {
+              "width": 800,
+              "height": 800
+            },
+            "projection": {
+              "model": "opencv_fisheye",
+              "fx": 256.0,
+              "fy": 256.0,
+              "cx": 399.5,
+              "cy": 399.5,
+              "alpha": 0.0,
+              "k": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "theta_max_rad": 1.48,
+              "z_epsilon_m": 1e-06
+            },
+            "T_camera_from_vehicle": [
+              [
+                -0.999954316651693,
+                -0.0095584836478186,
+                0.0,
+                0.4240109537951208
+              ],
+              [
+                -0.00218821457795169,
+                0.22891859144230664,
+                -0.9734431109258678,
+                1.3430176128276936
+              ],
+              [
+                0.009304640057866574,
+                -0.9733986407851742,
+                -0.22892904968782113,
+                -0.8183812553046615
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            ]
+          },
+          {
+            "id": 2,
+            "name": "rear",
+            "calibration_id": "blender-rig-rear-v1",
+            "resolution": {
+              "width": 800,
+              "height": 800
+            },
+            "projection": {
+              "model": "opencv_fisheye",
+              "fx": 256.0,
+              "fy": 256.0,
+              "cx": 399.5,
+              "cy": 399.5,
+              "alpha": 0.0,
+              "k": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "theta_max_rad": 1.48,
+              "z_epsilon_m": 1e-06
+            },
+            "T_camera_from_vehicle": [
+              [
+                -0.03866666726745093,
+                0.9992521647924651,
+                0.0,
+                -0.18581792602148864
+              ],
+              [
+                0.22164079235441783,
+                0.008576524597915065,
+                -0.975090663677141,
+                1.3510876915640235
+              ],
+              [
+                -0.9743614565483047,
+                -0.03770350624800191,
+                -0.22180666718940803,
+                -2.107389285345618
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            ]
+          },
+          {
+            "id": 3,
+            "name": "left",
+            "calibration_id": "blender-rig-left-v1",
+            "resolution": {
+              "width": 800,
+              "height": 800
+            },
+            "projection": {
+              "model": "opencv_fisheye",
+              "fx": 256.0,
+              "fy": 256.0,
+              "cx": 399.5,
+              "cy": 399.5,
+              "alpha": 0.0,
+              "k": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "theta_max_rad": 1.48,
+              "z_epsilon_m": 1e-06
+            },
+            "T_camera_from_vehicle": [
+              [
+                0.9995839326701776,
+                -0.028843743647829052,
+                0.0,
+                -0.35429045167573425
+              ],
+              [
+                -0.005091448043925088,
+                -0.17644483742718237,
+                -0.9842973618282796,
+                1.2984685779855294
+              ],
+              [
+                0.028390820777809335,
+                0.9838878278531926,
+                -0.17651828091698837,
+                -0.8955400817800536
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            ]
+          }
+        ],
+        "surface": {
+          "type": "rectangular_bowl_v1",
+          "flat_half_length_m": 2.6,
+          "flat_half_width_m": 1.2,
+          "outer_half_length_m": 14.0,
+          "outer_half_width_m": 14.0,
+          "corner_height_m": 0,
+          "uniform_cells": [
+            32,
+            45
+          ]
+        },
+        "virtual_camera": {
+          "azimuth_rad": 0.8,
+          "elevation_rad": 0.6,
+          "distance_m": 10.0,
+          "fov_y_rad": 1.6,
+          "clip_m": [
+            0.1,
+            100.0
+          ]
+        },
+        "output": {
+          "width": 640,
+          "height": 360
+        },
+        "runtime": {
+          "input_queue_per_camera": 3,
+          "skew_window_ms": 10.0,
+          "max_input_age_ms": 100.0
+        }
+      },
+      "device": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+      "mesh_resources": {
+        "scope": "carrier_position_index_buffers",
+        "active": {
+          "vertices": 1680,
+          "indices": 9588,
+          "triangles": 3196,
+          "vertex_buffer_bytes": 20160,
+          "index_buffer_bytes": 38352,
+          "buffer_bytes": 58512
+        },
+        "resident": {
+          "vertices": 1680,
+          "indices": 9588,
+          "triangles": 3196,
+          "vertex_buffer_bytes": 20160,
+          "index_buffer_bytes": 38352,
+          "buffer_bytes": 58512
+        }
+      },
+      "width": 640,
+      "height": 360,
+      "origin": "top_left",
+      "mask_sha256": "f068622936d67cc99b6688c6c7a6a641d6cf3adf7d54c335851c7cc36fe6fe82",
+      "pixels": {
+        "background": 89662,
+        "floor": 137877,
+        "shell": 0,
+        "vehicle_footprint": 485,
+        "raised_bowl": 0,
+        "vehicle_model": 2376
+      },
+      "normal_output_unchanged": true,
+      "source_frames": 0,
+      "raster_subpixel_bits": 8,
+      "carrier_positions": {
+        "file": "carrier-positions.f32",
+        "sha256": "cb919701a3528f5ed675b4deebb769026e1b39f432749337fd02b6dd0ae5c0c9",
+        "dtype": "float32",
+        "byte_order": "little_endian",
+        "channels": 3,
+        "coordinate_frame": "vehicle_metres",
+        "origin": "top_left",
+        "invalid": "NaN_for_background_and_ego",
+        "scope": "perspective_interpolated_actual_carrier_triangles",
+        "extra_passes": 3,
+        "payload_bytes": 2764800
+      },
+      "carrier": "plane",
+      "report_sha256": "7a1b06a3118635d37661051634799b53db9b8821860de4777aede0578f49dced",
+      "supported_pixels": 138362,
+      "invalid_pixels": 92038
+    },
+    {
+      "schema_version": 1,
+      "scope": "depth_tested_carrier_geometry",
+      "source_revision": "d3751e7c563fb5377f793148b7272385dd10cdf3",
+      "source_fingerprint": "df708cec09fb3602e5bfdb5064d0202dd31f93e3d491b0a3cee5ad1c274df1f1",
+      "config_sha256": "380a07c2cbd82a91705f3e907f04bae7a0c50ca2e06ca34bb86dc5952c79a1ff",
+      "config": {
+        "schema_version": 1,
+        "profile_id": "blender-street-v1",
+        "units": {
+          "length": "m",
+          "angle": "rad",
+          "time": "ns"
+        },
+        "vehicle": {
+          "length_m": 4.6,
+          "width_m": 1.8,
+          "mask_margin_m": 0.1
+        },
+        "cameras": [
+          {
+            "id": 0,
+            "name": "front",
+            "calibration_id": "blender-rig-front-v1",
+            "resolution": {
+              "width": 800,
+              "height": 800
+            },
+            "projection": {
+              "model": "opencv_fisheye",
+              "fx": 256.0,
+              "fy": 256.0,
+              "cx": 399.5,
+              "cy": 399.5,
+              "alpha": 0.0,
+              "k": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "theta_max_rad": 1.48,
+              "z_epsilon_m": 1e-06
+            },
+            "T_camera_from_vehicle": [
+              [
+                0.04642991738808383,
+                -0.9989215498583138,
+                0.0,
+                -0.05267495232926082
+              ],
+              [
+                -0.2220486121310304,
+                -0.010320829217113926,
+                -0.9749809712681344,
+                1.3533564358105563
+              ],
+              [
+                0.9739295029015288,
+                0.04526828595093321,
+                -0.2222883390217436,
+                -2.112107069245012
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            ]
+          },
+          {
+            "id": 1,
+            "name": "right",
+            "calibration_id": "blender-rig-right-v1",
+            "resolution": {
+              "width": 800,
+              "height": 800
+            },
+            "projection": {
+              "model": "opencv_fisheye",
+              "fx": 256.0,
+              "fy": 256.0,
+              "cx": 399.5,
+              "cy": 399.5,
+              "alpha": 0.0,
+              "k": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "theta_max_rad": 1.48,
+              "z_epsilon_m": 1e-06
+            },
+            "T_camera_from_vehicle": [
+              [
+                -0.999954316651693,
+                -0.0095584836478186,
+                0.0,
+                0.4240109537951208
+              ],
+              [
+                -0.00218821457795169,
+                0.22891859144230664,
+                -0.9734431109258678,
+                1.3430176128276936
+              ],
+              [
+                0.009304640057866574,
+                -0.9733986407851742,
+                -0.22892904968782113,
+                -0.8183812553046615
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            ]
+          },
+          {
+            "id": 2,
+            "name": "rear",
+            "calibration_id": "blender-rig-rear-v1",
+            "resolution": {
+              "width": 800,
+              "height": 800
+            },
+            "projection": {
+              "model": "opencv_fisheye",
+              "fx": 256.0,
+              "fy": 256.0,
+              "cx": 399.5,
+              "cy": 399.5,
+              "alpha": 0.0,
+              "k": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "theta_max_rad": 1.48,
+              "z_epsilon_m": 1e-06
+            },
+            "T_camera_from_vehicle": [
+              [
+                -0.03866666726745093,
+                0.9992521647924651,
+                0.0,
+                -0.18581792602148864
+              ],
+              [
+                0.22164079235441783,
+                0.008576524597915065,
+                -0.975090663677141,
+                1.3510876915640235
+              ],
+              [
+                -0.9743614565483047,
+                -0.03770350624800191,
+                -0.22180666718940803,
+                -2.107389285345618
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            ]
+          },
+          {
+            "id": 3,
+            "name": "left",
+            "calibration_id": "blender-rig-left-v1",
+            "resolution": {
+              "width": 800,
+              "height": 800
+            },
+            "projection": {
+              "model": "opencv_fisheye",
+              "fx": 256.0,
+              "fy": 256.0,
+              "cx": 399.5,
+              "cy": 399.5,
+              "alpha": 0.0,
+              "k": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "theta_max_rad": 1.48,
+              "z_epsilon_m": 1e-06
+            },
+            "T_camera_from_vehicle": [
+              [
+                0.9995839326701776,
+                -0.028843743647829052,
+                0.0,
+                -0.35429045167573425
+              ],
+              [
+                -0.005091448043925088,
+                -0.17644483742718237,
+                -0.9842973618282796,
+                1.2984685779855294
+              ],
+              [
+                0.028390820777809335,
+                0.9838878278531926,
+                -0.17651828091698837,
+                -0.8955400817800536
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            ]
+          }
+        ],
+        "surface": {
+          "type": "rectangular_bowl_v1",
+          "flat_half_length_m": 2.6,
+          "flat_half_width_m": 1.2,
+          "outer_half_length_m": 14.0,
+          "outer_half_width_m": 14.0,
+          "corner_height_m": 1.5,
+          "uniform_cells": [
+            32,
+            45
+          ]
+        },
+        "virtual_camera": {
+          "azimuth_rad": 0.8,
+          "elevation_rad": 0.6,
+          "distance_m": 10.0,
+          "fov_y_rad": 1.6,
+          "clip_m": [
+            0.1,
+            100.0
+          ]
+        },
+        "output": {
+          "width": 640,
+          "height": 360
+        },
+        "runtime": {
+          "input_queue_per_camera": 3,
+          "skew_window_ms": 10.0,
+          "max_input_age_ms": 100.0
+        }
+      },
+      "device": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+      "mesh_resources": {
+        "scope": "carrier_position_index_buffers",
+        "active": {
+          "vertices": 1680,
+          "indices": 9588,
+          "triangles": 3196,
+          "vertex_buffer_bytes": 20160,
+          "index_buffer_bytes": 38352,
+          "buffer_bytes": 58512
+        },
+        "resident": {
+          "vertices": 1680,
+          "indices": 9588,
+          "triangles": 3196,
+          "vertex_buffer_bytes": 20160,
+          "index_buffer_bytes": 38352,
+          "buffer_bytes": 58512
+        }
+      },
+      "width": 640,
+      "height": 360,
+      "origin": "top_left",
+      "mask_sha256": "26e2a3c77d0471522a447d0c99350db02714e8136f69c28cabc5345750c66ccd",
+      "pixels": {
+        "background": 81749,
+        "floor": 382,
+        "shell": 0,
+        "vehicle_footprint": 485,
+        "raised_bowl": 145408,
+        "vehicle_model": 2376
+      },
+      "normal_output_unchanged": true,
+      "source_frames": 0,
+      "raster_subpixel_bits": 8,
+      "carrier_positions": {
+        "file": "carrier-positions.f32",
+        "sha256": "e60d2579123c20cbe3d7768cdc56a1842741f92a30b1ece363bb8ffcf2c6cceb",
+        "dtype": "float32",
+        "byte_order": "little_endian",
+        "channels": 3,
+        "coordinate_frame": "vehicle_metres",
+        "origin": "top_left",
+        "invalid": "NaN_for_background_and_ego",
+        "scope": "perspective_interpolated_actual_carrier_triangles",
+        "extra_passes": 3,
+        "payload_bytes": 2764800
+      },
+      "carrier": "bowl",
+      "report_sha256": "62a227afd23eca4e7da1e6ffbfd13e27ea1997ca9a4963d20aacc6978f1c53fb",
+      "supported_pixels": 146275,
+      "invalid_pixels": 84125
+    },
+    {
+      "schema_version": 1,
+      "scope": "depth_tested_carrier_geometry",
+      "source_revision": "d3751e7c563fb5377f793148b7272385dd10cdf3",
+      "source_fingerprint": "df708cec09fb3602e5bfdb5064d0202dd31f93e3d491b0a3cee5ad1c274df1f1",
+      "config_sha256": "d631bca5bbb20b1dc10560c86b1cbc9d9a35076062a9441e42471c8b64b2f87a",
+      "config": {
+        "schema_version": 1,
+        "profile_id": "blender-street-v1",
+        "units": {
+          "length": "m",
+          "angle": "rad",
+          "time": "ns"
+        },
+        "vehicle": {
+          "length_m": 4.6,
+          "width_m": 1.8,
+          "mask_margin_m": 0.1
+        },
+        "cameras": [
+          {
+            "id": 0,
+            "name": "front",
+            "calibration_id": "blender-rig-front-v1",
+            "resolution": {
+              "width": 800,
+              "height": 800
+            },
+            "projection": {
+              "model": "opencv_fisheye",
+              "fx": 256.0,
+              "fy": 256.0,
+              "cx": 399.5,
+              "cy": 399.5,
+              "alpha": 0.0,
+              "k": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "theta_max_rad": 1.48,
+              "z_epsilon_m": 1e-06
+            },
+            "T_camera_from_vehicle": [
+              [
+                0.04642991738808383,
+                -0.9989215498583138,
+                0.0,
+                -0.05267495232926082
+              ],
+              [
+                -0.2220486121310304,
+                -0.010320829217113926,
+                -0.9749809712681344,
+                1.3533564358105563
+              ],
+              [
+                0.9739295029015288,
+                0.04526828595093321,
+                -0.2222883390217436,
+                -2.112107069245012
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            ]
+          },
+          {
+            "id": 1,
+            "name": "right",
+            "calibration_id": "blender-rig-right-v1",
+            "resolution": {
+              "width": 800,
+              "height": 800
+            },
+            "projection": {
+              "model": "opencv_fisheye",
+              "fx": 256.0,
+              "fy": 256.0,
+              "cx": 399.5,
+              "cy": 399.5,
+              "alpha": 0.0,
+              "k": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "theta_max_rad": 1.48,
+              "z_epsilon_m": 1e-06
+            },
+            "T_camera_from_vehicle": [
+              [
+                -0.999954316651693,
+                -0.0095584836478186,
+                0.0,
+                0.4240109537951208
+              ],
+              [
+                -0.00218821457795169,
+                0.22891859144230664,
+                -0.9734431109258678,
+                1.3430176128276936
+              ],
+              [
+                0.009304640057866574,
+                -0.9733986407851742,
+                -0.22892904968782113,
+                -0.8183812553046615
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            ]
+          },
+          {
+            "id": 2,
+            "name": "rear",
+            "calibration_id": "blender-rig-rear-v1",
+            "resolution": {
+              "width": 800,
+              "height": 800
+            },
+            "projection": {
+              "model": "opencv_fisheye",
+              "fx": 256.0,
+              "fy": 256.0,
+              "cx": 399.5,
+              "cy": 399.5,
+              "alpha": 0.0,
+              "k": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "theta_max_rad": 1.48,
+              "z_epsilon_m": 1e-06
+            },
+            "T_camera_from_vehicle": [
+              [
+                -0.03866666726745093,
+                0.9992521647924651,
+                0.0,
+                -0.18581792602148864
+              ],
+              [
+                0.22164079235441783,
+                0.008576524597915065,
+                -0.975090663677141,
+                1.3510876915640235
+              ],
+              [
+                -0.9743614565483047,
+                -0.03770350624800191,
+                -0.22180666718940803,
+                -2.107389285345618
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            ]
+          },
+          {
+            "id": 3,
+            "name": "left",
+            "calibration_id": "blender-rig-left-v1",
+            "resolution": {
+              "width": 800,
+              "height": 800
+            },
+            "projection": {
+              "model": "opencv_fisheye",
+              "fx": 256.0,
+              "fy": 256.0,
+              "cx": 399.5,
+              "cy": 399.5,
+              "alpha": 0.0,
+              "k": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "theta_max_rad": 1.48,
+              "z_epsilon_m": 1e-06
+            },
+            "T_camera_from_vehicle": [
+              [
+                0.9995839326701776,
+                -0.028843743647829052,
+                0.0,
+                -0.35429045167573425
+              ],
+              [
+                -0.005091448043925088,
+                -0.17644483742718237,
+                -0.9842973618282796,
+                1.2984685779855294
+              ],
+              [
+                0.028390820777809335,
+                0.9838878278531926,
+                -0.17651828091698837,
+                -0.8955400817800536
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            ]
+          }
+        ],
+        "surface": {
+          "type": "dome_floor_v1",
+          "dome_radius_m": 14.0,
+          "dome_latitude_cells": 14,
+          "dome_longitude_cells": 64,
+          "floor_radial_cells": 12
+        },
+        "virtual_camera": {
+          "azimuth_rad": 0.8,
+          "elevation_rad": 0.6,
+          "distance_m": 10.0,
+          "fov_y_rad": 1.6,
+          "clip_m": [
+            0.1,
+            100.0
+          ]
+        },
+        "output": {
+          "width": 640,
+          "height": 360
+        },
+        "runtime": {
+          "input_queue_per_camera": 3,
+          "skew_window_ms": 10.0,
+          "max_input_age_ms": 100.0
+        }
+      },
+      "device": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+      "mesh_resources": {
+        "scope": "carrier_position_index_buffers",
+        "active": {
+          "vertices": 1666,
+          "indices": 9600,
+          "triangles": 3200,
+          "vertex_buffer_bytes": 19992,
+          "index_buffer_bytes": 38400,
+          "buffer_bytes": 58392
+        },
+        "resident": {
+          "vertices": 1666,
+          "indices": 9600,
+          "triangles": 3200,
+          "vertex_buffer_bytes": 19992,
+          "index_buffer_bytes": 38400,
+          "buffer_bytes": 58392
+        }
+      },
+      "width": 640,
+      "height": 360,
+      "origin": "top_left",
+      "mask_sha256": "459b9a64fb2800bbdd0fc59954b9f9d43db8461d1956b639d53162eceb46f10e",
+      "pixels": {
+        "background": 0,
+        "floor": 129951,
+        "shell": 97588,
+        "vehicle_footprint": 485,
+        "raised_bowl": 0,
+        "vehicle_model": 2376
+      },
+      "normal_output_unchanged": true,
+      "source_frames": 0,
+      "raster_subpixel_bits": 8,
+      "carrier_positions": {
+        "file": "carrier-positions.f32",
+        "sha256": "6c68ac8a0e5928641c428ff6aa9484fa424e5da1341b03d7e8f0d5adfd868f09",
+        "dtype": "float32",
+        "byte_order": "little_endian",
+        "channels": 3,
+        "coordinate_frame": "vehicle_metres",
+        "origin": "top_left",
+        "invalid": "NaN_for_background_and_ego",
+        "scope": "perspective_interpolated_actual_carrier_triangles",
+        "extra_passes": 3,
+        "payload_bytes": 2764800
+      },
+      "carrier": "dome_floor",
+      "report_sha256": "8c5b198547625326da3d82fbfa078f0e1bb99e8aaac742e1a319fdb63001401e",
+      "supported_pixels": 228024,
+      "invalid_pixels": 2376
+    },
+    {
+      "schema_version": 1,
+      "scope": "depth_tested_carrier_geometry",
+      "source_revision": "d3751e7c563fb5377f793148b7272385dd10cdf3",
+      "source_fingerprint": "df708cec09fb3602e5bfdb5064d0202dd31f93e3d491b0a3cee5ad1c274df1f1",
+      "config_sha256": "1cae390f3036aa566d9caf3140a4e4969cc2026b8cdd17f4e4197384fa885eec",
+      "config": {
+        "schema_version": 1,
+        "profile_id": "blender-street-v1",
+        "units": {
+          "length": "m",
+          "angle": "rad",
+          "time": "ns"
+        },
+        "vehicle": {
+          "length_m": 4.6,
+          "width_m": 1.8,
+          "mask_margin_m": 0.1
+        },
+        "cameras": [
+          {
+            "id": 0,
+            "name": "front",
+            "calibration_id": "blender-rig-front-v1",
+            "resolution": {
+              "width": 800,
+              "height": 800
+            },
+            "projection": {
+              "model": "opencv_fisheye",
+              "fx": 256.0,
+              "fy": 256.0,
+              "cx": 399.5,
+              "cy": 399.5,
+              "alpha": 0.0,
+              "k": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "theta_max_rad": 1.48,
+              "z_epsilon_m": 1e-06
+            },
+            "T_camera_from_vehicle": [
+              [
+                0.04642991738808383,
+                -0.9989215498583138,
+                0.0,
+                -0.05267495232926082
+              ],
+              [
+                -0.2220486121310304,
+                -0.010320829217113926,
+                -0.9749809712681344,
+                1.3533564358105563
+              ],
+              [
+                0.9739295029015288,
+                0.04526828595093321,
+                -0.2222883390217436,
+                -2.112107069245012
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            ]
+          },
+          {
+            "id": 1,
+            "name": "right",
+            "calibration_id": "blender-rig-right-v1",
+            "resolution": {
+              "width": 800,
+              "height": 800
+            },
+            "projection": {
+              "model": "opencv_fisheye",
+              "fx": 256.0,
+              "fy": 256.0,
+              "cx": 399.5,
+              "cy": 399.5,
+              "alpha": 0.0,
+              "k": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "theta_max_rad": 1.48,
+              "z_epsilon_m": 1e-06
+            },
+            "T_camera_from_vehicle": [
+              [
+                -0.999954316651693,
+                -0.0095584836478186,
+                0.0,
+                0.4240109537951208
+              ],
+              [
+                -0.00218821457795169,
+                0.22891859144230664,
+                -0.9734431109258678,
+                1.3430176128276936
+              ],
+              [
+                0.009304640057866574,
+                -0.9733986407851742,
+                -0.22892904968782113,
+                -0.8183812553046615
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            ]
+          },
+          {
+            "id": 2,
+            "name": "rear",
+            "calibration_id": "blender-rig-rear-v1",
+            "resolution": {
+              "width": 800,
+              "height": 800
+            },
+            "projection": {
+              "model": "opencv_fisheye",
+              "fx": 256.0,
+              "fy": 256.0,
+              "cx": 399.5,
+              "cy": 399.5,
+              "alpha": 0.0,
+              "k": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "theta_max_rad": 1.48,
+              "z_epsilon_m": 1e-06
+            },
+            "T_camera_from_vehicle": [
+              [
+                -0.03866666726745093,
+                0.9992521647924651,
+                0.0,
+                -0.18581792602148864
+              ],
+              [
+                0.22164079235441783,
+                0.008576524597915065,
+                -0.975090663677141,
+                1.3510876915640235
+              ],
+              [
+                -0.9743614565483047,
+                -0.03770350624800191,
+                -0.22180666718940803,
+                -2.107389285345618
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            ]
+          },
+          {
+            "id": 3,
+            "name": "left",
+            "calibration_id": "blender-rig-left-v1",
+            "resolution": {
+              "width": 800,
+              "height": 800
+            },
+            "projection": {
+              "model": "opencv_fisheye",
+              "fx": 256.0,
+              "fy": 256.0,
+              "cx": 399.5,
+              "cy": 399.5,
+              "alpha": 0.0,
+              "k": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "theta_max_rad": 1.48,
+              "z_epsilon_m": 1e-06
+            },
+            "T_camera_from_vehicle": [
+              [
+                0.9995839326701776,
+                -0.028843743647829052,
+                0.0,
+                -0.35429045167573425
+              ],
+              [
+                -0.005091448043925088,
+                -0.17644483742718237,
+                -0.9842973618282796,
+                1.2984685779855294
+              ],
+              [
+                0.028390820777809335,
+                0.9838878278531926,
+                -0.17651828091698837,
+                -0.8955400817800536
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            ]
+          }
+        ],
+        "surface": {
+          "type": "cylinder_floor_v1",
+          "radius_m": 14.0,
+          "height_m": 14.0,
+          "vertical_cells": 10,
+          "angular_cells": 64,
+          "floor_radial_cells": 8
+        },
+        "virtual_camera": {
+          "azimuth_rad": 0.8,
+          "elevation_rad": 0.6,
+          "distance_m": 10.0,
+          "fov_y_rad": 1.6,
+          "clip_m": [
+            0.1,
+            100.0
+          ]
+        },
+        "output": {
+          "width": 640,
+          "height": 360
+        },
+        "runtime": {
+          "input_queue_per_camera": 3,
+          "skew_window_ms": 10.0,
+          "max_input_age_ms": 100.0
+        }
+      },
+      "device": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+      "mesh_resources": {
+        "scope": "carrier_position_index_buffers",
+        "active": {
+          "vertices": 1730,
+          "indices": 9600,
+          "triangles": 3200,
+          "vertex_buffer_bytes": 20760,
+          "index_buffer_bytes": 38400,
+          "buffer_bytes": 59160
+        },
+        "resident": {
+          "vertices": 1730,
+          "indices": 9600,
+          "triangles": 3200,
+          "vertex_buffer_bytes": 20760,
+          "index_buffer_bytes": 38400,
+          "buffer_bytes": 59160
+        }
+      },
+      "width": 640,
+      "height": 360,
+      "origin": "top_left",
+      "mask_sha256": "459b9a64fb2800bbdd0fc59954b9f9d43db8461d1956b639d53162eceb46f10e",
+      "pixels": {
+        "background": 0,
+        "floor": 129951,
+        "shell": 97588,
+        "vehicle_footprint": 485,
+        "raised_bowl": 0,
+        "vehicle_model": 2376
+      },
+      "normal_output_unchanged": true,
+      "source_frames": 0,
+      "raster_subpixel_bits": 8,
+      "carrier_positions": {
+        "file": "carrier-positions.f32",
+        "sha256": "078c00efd0fbb9b8f703ba070b1619b81f3770ef5f4fa4df3e244f2fc3d04177",
+        "dtype": "float32",
+        "byte_order": "little_endian",
+        "channels": 3,
+        "coordinate_frame": "vehicle_metres",
+        "origin": "top_left",
+        "invalid": "NaN_for_background_and_ego",
+        "scope": "perspective_interpolated_actual_carrier_triangles",
+        "extra_passes": 3,
+        "payload_bytes": 2764800
+      },
+      "carrier": "cylinder_floor",
+      "report_sha256": "d4d4311ba54c36329e0ccfdfdb6cd08072ae7e3c33ebae2a65ad6d1d9d2e8e52",
+      "supported_pixels": 228024,
+      "invalid_pixels": 2376
+    },
+    {
+      "schema_version": 1,
+      "scope": "depth_tested_carrier_geometry",
+      "source_revision": "d3751e7c563fb5377f793148b7272385dd10cdf3",
+      "source_fingerprint": "df708cec09fb3602e5bfdb5064d0202dd31f93e3d491b0a3cee5ad1c274df1f1",
+      "config_sha256": "44a43688820e6d2cce68f25635421f3c8dca4ea5f5c21a345d01c56756e51d26",
+      "config": {
+        "schema_version": 1,
+        "profile_id": "blender-street-v1",
+        "units": {
+          "length": "m",
+          "angle": "rad",
+          "time": "ns"
+        },
+        "vehicle": {
+          "length_m": 4.6,
+          "width_m": 1.8,
+          "mask_margin_m": 0.1
+        },
+        "cameras": [
+          {
+            "id": 0,
+            "name": "front",
+            "calibration_id": "blender-rig-front-v1",
+            "resolution": {
+              "width": 800,
+              "height": 800
+            },
+            "projection": {
+              "model": "opencv_fisheye",
+              "fx": 256.0,
+              "fy": 256.0,
+              "cx": 399.5,
+              "cy": 399.5,
+              "alpha": 0.0,
+              "k": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "theta_max_rad": 1.48,
+              "z_epsilon_m": 1e-06
+            },
+            "T_camera_from_vehicle": [
+              [
+                0.04642991738808383,
+                -0.9989215498583138,
+                0.0,
+                -0.05267495232926082
+              ],
+              [
+                -0.2220486121310304,
+                -0.010320829217113926,
+                -0.9749809712681344,
+                1.3533564358105563
+              ],
+              [
+                0.9739295029015288,
+                0.04526828595093321,
+                -0.2222883390217436,
+                -2.112107069245012
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            ]
+          },
+          {
+            "id": 1,
+            "name": "right",
+            "calibration_id": "blender-rig-right-v1",
+            "resolution": {
+              "width": 800,
+              "height": 800
+            },
+            "projection": {
+              "model": "opencv_fisheye",
+              "fx": 256.0,
+              "fy": 256.0,
+              "cx": 399.5,
+              "cy": 399.5,
+              "alpha": 0.0,
+              "k": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "theta_max_rad": 1.48,
+              "z_epsilon_m": 1e-06
+            },
+            "T_camera_from_vehicle": [
+              [
+                -0.999954316651693,
+                -0.0095584836478186,
+                0.0,
+                0.4240109537951208
+              ],
+              [
+                -0.00218821457795169,
+                0.22891859144230664,
+                -0.9734431109258678,
+                1.3430176128276936
+              ],
+              [
+                0.009304640057866574,
+                -0.9733986407851742,
+                -0.22892904968782113,
+                -0.8183812553046615
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            ]
+          },
+          {
+            "id": 2,
+            "name": "rear",
+            "calibration_id": "blender-rig-rear-v1",
+            "resolution": {
+              "width": 800,
+              "height": 800
+            },
+            "projection": {
+              "model": "opencv_fisheye",
+              "fx": 256.0,
+              "fy": 256.0,
+              "cx": 399.5,
+              "cy": 399.5,
+              "alpha": 0.0,
+              "k": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "theta_max_rad": 1.48,
+              "z_epsilon_m": 1e-06
+            },
+            "T_camera_from_vehicle": [
+              [
+                -0.03866666726745093,
+                0.9992521647924651,
+                0.0,
+                -0.18581792602148864
+              ],
+              [
+                0.22164079235441783,
+                0.008576524597915065,
+                -0.975090663677141,
+                1.3510876915640235
+              ],
+              [
+                -0.9743614565483047,
+                -0.03770350624800191,
+                -0.22180666718940803,
+                -2.107389285345618
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            ]
+          },
+          {
+            "id": 3,
+            "name": "left",
+            "calibration_id": "blender-rig-left-v1",
+            "resolution": {
+              "width": 800,
+              "height": 800
+            },
+            "projection": {
+              "model": "opencv_fisheye",
+              "fx": 256.0,
+              "fy": 256.0,
+              "cx": 399.5,
+              "cy": 399.5,
+              "alpha": 0.0,
+              "k": [
+                0.0,
+                0.0,
+                0.0,
+                0.0
+              ],
+              "theta_max_rad": 1.48,
+              "z_epsilon_m": 1e-06
+            },
+            "T_camera_from_vehicle": [
+              [
+                0.9995839326701776,
+                -0.028843743647829052,
+                0.0,
+                -0.35429045167573425
+              ],
+              [
+                -0.005091448043925088,
+                -0.17644483742718237,
+                -0.9842973618282796,
+                1.2984685779855294
+              ],
+              [
+                0.028390820777809335,
+                0.9838878278531926,
+                -0.17651828091698837,
+                -0.8955400817800536
+              ],
+              [
+                0.0,
+                0.0,
+                0.0,
+                1.0
+              ]
+            ]
+          }
+        ],
+        "surface": {
+          "type": "cube_floor_v1",
+          "half_extent_m": 14.0,
+          "height_m": 14.0,
+          "face_cells": 16
+        },
+        "virtual_camera": {
+          "azimuth_rad": 0.8,
+          "elevation_rad": 0.6,
+          "distance_m": 10.0,
+          "fov_y_rad": 1.6,
+          "clip_m": [
+            0.1,
+            100.0
+          ]
+        },
+        "output": {
+          "width": 640,
+          "height": 360
+        },
+        "runtime": {
+          "input_queue_per_camera": 3,
+          "skew_window_ms": 10.0,
+          "max_input_age_ms": 100.0
+        }
+      },
+      "device": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+      "mesh_resources": {
+        "scope": "carrier_position_index_buffers",
+        "active": {
+          "vertices": 1806,
+          "indices": 9624,
+          "triangles": 3208,
+          "vertex_buffer_bytes": 21672,
+          "index_buffer_bytes": 38496,
+          "buffer_bytes": 60168
+        },
+        "resident": {
+          "vertices": 1806,
+          "indices": 9624,
+          "triangles": 3208,
+          "vertex_buffer_bytes": 21672,
+          "index_buffer_bytes": 38496,
+          "buffer_bytes": 60168
+        }
+      },
+      "width": 640,
+      "height": 360,
+      "origin": "top_left",
+      "mask_sha256": "972fbfe0f36378a07d281449c4328c9a0d7001d65010f040e2f460ed7c400c8e",
+      "pixels": {
+        "background": 0,
+        "floor": 137878,
+        "shell": 89662,
+        "vehicle_footprint": 484,
+        "raised_bowl": 0,
+        "vehicle_model": 2376
+      },
+      "normal_output_unchanged": true,
+      "source_frames": 0,
+      "raster_subpixel_bits": 8,
+      "carrier_positions": {
+        "file": "carrier-positions.f32",
+        "sha256": "e96d1931ed43c1f1569822ee57b2bbc10737bfa980c466beb83f846855bce111",
+        "dtype": "float32",
+        "byte_order": "little_endian",
+        "channels": 3,
+        "coordinate_frame": "vehicle_metres",
+        "origin": "top_left",
+        "invalid": "NaN_for_background_and_ego",
+        "scope": "perspective_interpolated_actual_carrier_triangles",
+        "extra_passes": 3,
+        "payload_bytes": 2764800
+      },
+      "carrier": "cube_floor",
+      "report_sha256": "d6818732b45806886147e463c485f78a7091332b0ea4be9f3a5e4d60c0839046",
+      "supported_pixels": 228024,
+      "invalid_pixels": 2376
+    }
+  ],
+  "tests": [
+    {
+      "backend": "nvidia",
+      "xml_sha256": "5f7d30e74a1249776b0c4fb1866b121f50765a11466b105390a5ad9aee560565",
+      "rows": [
+        {
+          "carrier": "plane",
+          "checked_rays": 189,
+          "device": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+          "raster_subpixel_bits": 8,
+          "max_axis_error_m": 0.0022681400004209706,
+          "max_reprojection_error_px": 0.0019021925170505938
+        },
+        {
+          "carrier": "bowl",
+          "checked_rays": 200,
+          "device": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+          "raster_subpixel_bits": 8,
+          "max_axis_error_m": 0.001315980541463091,
+          "max_reprojection_error_px": 0.0019229895660153318
+        },
+        {
+          "carrier": "dome_floor_v1",
+          "checked_rays": 318,
+          "device": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+          "raster_subpixel_bits": 8,
+          "max_axis_error_m": 0.0017389452670961703,
+          "max_reprojection_error_px": 0.0019320775855788952
+        },
+        {
+          "carrier": "cylinder_floor_v1",
+          "checked_rays": 318,
+          "device": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+          "raster_subpixel_bits": 8,
+          "max_axis_error_m": 0.0017389452670961703,
+          "max_reprojection_error_px": 0.0019320775855788952
+        },
+        {
+          "carrier": "cube_floor_v1",
+          "checked_rays": 318,
+          "device": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+          "raster_subpixel_bits": 8,
+          "max_axis_error_m": 0.0022681400004209706,
+          "max_reprojection_error_px": 0.0019021925170505938
+        }
+      ]
+    },
+    {
+      "backend": "mesa",
+      "xml_sha256": "547eae3f97634d18b177ad1b1cc8353e35d274d783c1ac00e1ff6d870c54dadc",
+      "rows": [
+        {
+          "carrier": "plane",
+          "checked_rays": 189,
+          "device": "llvmpipe (LLVM 22.1.8, 256 bits)",
+          "raster_subpixel_bits": 8,
+          "max_axis_error_m": 6.260548413905553e-06,
+          "max_reprojection_error_px": 4.8875675787485307e-05
+        },
+        {
+          "carrier": "bowl",
+          "checked_rays": 200,
+          "device": "llvmpipe (LLVM 22.1.8, 256 bits)",
+          "raster_subpixel_bits": 8,
+          "max_axis_error_m": 6.536340071860991e-06,
+          "max_reprojection_error_px": 4.8265049343854116e-05
+        },
+        {
+          "carrier": "dome_floor_v1",
+          "checked_rays": 318,
+          "device": "llvmpipe (LLVM 22.1.8, 256 bits)",
+          "raster_subpixel_bits": 8,
+          "max_axis_error_m": 1.1884863317490613e-05,
+          "max_reprojection_error_px": 0.00014331559833635765
+        },
+        {
+          "carrier": "cylinder_floor_v1",
+          "checked_rays": 318,
+          "device": "llvmpipe (LLVM 22.1.8, 256 bits)",
+          "raster_subpixel_bits": 8,
+          "max_axis_error_m": 4.749424981298489e-06,
+          "max_reprojection_error_px": 4.1389713146600116e-05
+        },
+        {
+          "carrier": "cube_floor_v1",
+          "checked_rays": 318,
+          "device": "llvmpipe (LLVM 22.1.8, 256 bits)",
+          "raster_subpixel_bits": 8,
+          "max_axis_error_m": 6.260548413905553e-06,
+          "max_reprojection_error_px": 4.8875675787485307e-05
+        }
+      ]
+    }
+  ],
+  "native_parity": [
+    {
+      "carrier": "plane",
+      "reference_report_sha256": "17c29e021c0d0184f49f4524274b4e7b8be07ee204168f1d426e8dee4e0f4052",
+      "report_sha256": "87153511940b1f50558ca2def5a782e350bfb2d32f263fe1dbb325bd0d8ebe92",
+      "invocation_sha256": "f7a97d2890d3775b244a11b978e19f8ab8aafc30182e533be7b76dc736ec6148",
+      "binary_sha256": {
+        "sv-server": "9df34f9924541e6fd48a590620a5a9eeb4d16bcf528d7310d9171eaa42066858",
+        "svctl": "9ac0433d25f6c1ea451a310b8e208eafa4d952d440ed9610a501dfa33d0331eb",
+        "sv-carrier-probe": "a512defef93f6a9d87cd90e82dbd5e657b56129f7df38ec758a4537d4d7994dc"
+      },
+      "old_source_fingerprint": "601a3878ba99e6bc953756bbc0c40e969fdb0c89c5d7487349332b7960ac87f4",
+      "new_source_fingerprint": "df708cec09fb3602e5bfdb5064d0202dd31f93e3d491b0a3cee5ad1c274df1f1",
+      "recorded_identical_samples": 72,
+      "stored_identical_samples": 56,
+      "conditions": 8
+    },
+    {
+      "carrier": "bowl",
+      "reference_report_sha256": "256e513c9d347f51bd153f2d57fdea51cb925fbe35a5a7d21d371943b0cfc770",
+      "report_sha256": "549d7125b9d1a660daef059c32feb4355a1697f34d156ddc7d2842281391be12",
+      "invocation_sha256": "2a78f694afac754a56b1d56c4a8b364ca3facfa2b3372c10fe4aedc92bff6002",
+      "binary_sha256": {
+        "sv-server": "9df34f9924541e6fd48a590620a5a9eeb4d16bcf528d7310d9171eaa42066858",
+        "svctl": "9ac0433d25f6c1ea451a310b8e208eafa4d952d440ed9610a501dfa33d0331eb",
+        "sv-carrier-probe": "a512defef93f6a9d87cd90e82dbd5e657b56129f7df38ec758a4537d4d7994dc"
+      },
+      "old_source_fingerprint": "601a3878ba99e6bc953756bbc0c40e969fdb0c89c5d7487349332b7960ac87f4",
+      "new_source_fingerprint": "df708cec09fb3602e5bfdb5064d0202dd31f93e3d491b0a3cee5ad1c274df1f1",
+      "recorded_identical_samples": 72,
+      "stored_identical_samples": 56,
+      "conditions": 8
+    },
+    {
+      "carrier": "dome_floor",
+      "reference_report_sha256": "02d9410df7d460294eccec9d60fdf79f44f50a42a177b13010bbfdd3d6b30669",
+      "report_sha256": "2fd8d98d425cbdf18d636fb26b102a90cfb415f23bad6b6ee300625173b3e764",
+      "invocation_sha256": "8800fa932a4a341e0e5b8096205dee8dcdafef48ec18e1879cb514d38f306fa6",
+      "binary_sha256": {
+        "sv-server": "9df34f9924541e6fd48a590620a5a9eeb4d16bcf528d7310d9171eaa42066858",
+        "svctl": "9ac0433d25f6c1ea451a310b8e208eafa4d952d440ed9610a501dfa33d0331eb",
+        "sv-carrier-probe": "a512defef93f6a9d87cd90e82dbd5e657b56129f7df38ec758a4537d4d7994dc"
+      },
+      "old_source_fingerprint": "601a3878ba99e6bc953756bbc0c40e969fdb0c89c5d7487349332b7960ac87f4",
+      "new_source_fingerprint": "df708cec09fb3602e5bfdb5064d0202dd31f93e3d491b0a3cee5ad1c274df1f1",
+      "recorded_identical_samples": 72,
+      "stored_identical_samples": 56,
+      "conditions": 8
+    },
+    {
+      "carrier": "cylinder_floor",
+      "reference_report_sha256": "17a1f220afdfbcfdd6e1f3d2be72725891d9bda0d40bb9e4d59835016e147cd7",
+      "report_sha256": "767c0ca21c6305d6a87e1812162bd85cff79eac6e328d692490d3557997ea92e",
+      "invocation_sha256": "c3f3905b600587346585bc7707c6e5da9597ef07638662902be1f7db1f240178",
+      "binary_sha256": {
+        "sv-server": "9df34f9924541e6fd48a590620a5a9eeb4d16bcf528d7310d9171eaa42066858",
+        "svctl": "9ac0433d25f6c1ea451a310b8e208eafa4d952d440ed9610a501dfa33d0331eb",
+        "sv-carrier-probe": "a512defef93f6a9d87cd90e82dbd5e657b56129f7df38ec758a4537d4d7994dc"
+      },
+      "old_source_fingerprint": "601a3878ba99e6bc953756bbc0c40e969fdb0c89c5d7487349332b7960ac87f4",
+      "new_source_fingerprint": "df708cec09fb3602e5bfdb5064d0202dd31f93e3d491b0a3cee5ad1c274df1f1",
+      "recorded_identical_samples": 72,
+      "stored_identical_samples": 56,
+      "conditions": 8
+    },
+    {
+      "carrier": "cube_floor",
+      "reference_report_sha256": "769d5441ad5bc3786074c9a859068d87348768bf19957988070798d38ae901c1",
+      "report_sha256": "6b9a423b92549978e2fa35d5affa915a0261f5dd24818016a0d3170b0f061da9",
+      "invocation_sha256": "6636995e7caa58ce446dd9a176f23f915eb557aa071e07dd44e204be68655a92",
+      "binary_sha256": {
+        "sv-server": "9df34f9924541e6fd48a590620a5a9eeb4d16bcf528d7310d9171eaa42066858",
+        "svctl": "9ac0433d25f6c1ea451a310b8e208eafa4d952d440ed9610a501dfa33d0331eb",
+        "sv-carrier-probe": "a512defef93f6a9d87cd90e82dbd5e657b56129f7df38ec758a4537d4d7994dc"
+      },
+      "old_source_fingerprint": "601a3878ba99e6bc953756bbc0c40e969fdb0c89c5d7487349332b7960ac87f4",
+      "new_source_fingerprint": "df708cec09fb3602e5bfdb5064d0202dd31f93e3d491b0a3cee5ad1c274df1f1",
+      "recorded_identical_samples": 72,
+      "stored_identical_samples": 56,
+      "conditions": 8
+    }
+  ],
+  "limitations": [
+    "1343 selected coarse-mesh rays per backend; not exhaustive triangle boundaries or Aurora",
+    "source-surface correspondence/contributing samples and typed wire channel remain open"
+  ]
+}
