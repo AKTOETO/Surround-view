@@ -8,7 +8,7 @@ Blender5.2.2LTS: шесть isolated scenes, box0.4×0.4×0.4m, center z0.2/0.8/
 
 30 fresh production sv-server процессов, пять medium carriers, четыре multi_band/graph_cut_multi_band × zero/normalized profiles, два кадра, warmup2/repeats7:2160 samples/1680 measurement captures/240 quality conditions. Native geometry probes идут отдельно. Config/calibration, poses/timestamps и virtual view одинаковы между факторами. Все RGBA/manifest/report hashes, budget constraints, restore/cursors и source fingerprint проверены независимым audit. Product C++ не менялся.
 
-Fingerprint `601a3878ba99e6bc953756bbc0c40e969fdb0c89c5d7487349332b7960ac87f4`; binary metadata base revision2240202 со сборкой inspection изменений27f1cc2, как в [[validation/CARRIER_LATERAL]]. CPU/Mesa, paused trials, fixed order; timing не является sustained FPS или target performance.
+Fingerprint `601a3878ba99e6bc953756bbc0c40e969fdb0c89c5d7487349332b7960ac87f4`; binary metadata base revision2240202 со сборкой inspection изменений27f1cc2, как в [[validation/CARRIER_LATERAL]]. CPU fusion/NVIDIA GLES rendering, paused trials, fixed order; timing не является sustained FPS или target performance.
 
 ## Результат всех факторов
 
@@ -36,3 +36,5 @@ Captures: `artifacts/parallax-height-inputs-v1`, native reports: `artifacts/para
 Known-answer controls проверяют ground intersections, parallel/behind/null, camera baseline disparity и centroid cancellation; factor validator отвергает changed range/size/view/height. Targeted CTest render_modes/blender_fixture/object_metrics/render_fusion_parity:4/4,13.75s. После фиксации analyzer повторный read-only audit должен совпасть побитно с baseline. Первоначальный автоматический audit остановился на отсутствующем legacy static position поле; исправлена проверка реально экспортируемого direct truth, native данные не пересчитывались и не выбирались заново.
 
 После расширения metric/analyzer для conditional follow-up их file digests отличаются от historical baseline; все прежние числовые результаты и data/native hashes проверяются без изменений. Сам historical JSON не перезаписан. Для актуального воспроизведения сравнения и byte-identical conditional audit используйте [[validation/PARALLAX_VISIBILITY]], а не требуйте равенства historical code digests новой версии файлов.
+
+Hardware erratum11.10.2026: все30 native catalogs содержат NVIDIA GeForce RTX5070Ti/NVIDIA Corporation, а не Mesa. Historical baseline limitation string CPU/Mesa ошибочна и сохранена для точного воспроизведения старого формата. Рендерер определяется native catalog, не LIBGL_ALWAYS_SOFTWARE flag; новый framed audit сохраняет его явно: [[validation/PARALLAX_FRAMED]].

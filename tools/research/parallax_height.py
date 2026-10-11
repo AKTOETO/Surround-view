@@ -184,7 +184,7 @@ def audit(master_path, root, inputs):
     if (provenance['master_plan_sha256'] != sha(master_path)
             or provenance['inputs_master_sha256'] != sha(ROOT/plan['inputs_plan'])):
         raise ValueError('native study master differs')
-    output, controls, fingerprints = [], [], set()
+    output, controls, fingerprints, devices = [], [], set(), set()
     references = {}
     direct_references, rig_controls = {}, []
     framed = asset['schema_version'] == 2
@@ -196,6 +196,9 @@ def audit(master_path, root, inputs):
         result = audit_budget(path, root/cid/'native', inputs/cid, plan.get('protocol','PARALLAX_HEIGHT_PROTOCOL.md'))
         native_case = result['cases'][0]
         if framed:
+            for report in native_case['audit']['native_reports'].values():
+                catalog = report['catalog']
+                devices.add(tuple(catalog[k] for k in ('backend','gl_vendor','gl_renderer')))
             result['limitations'] = [l for l in result['limitations'] if not l.startswith('three previously')]
             result['limitations'].append('one fully framed factor of two seeded mounts; not scene-family holdout')
             native_case['audit']['limitations'] = [l for l in native_case['audit']['limitations']
@@ -282,8 +285,14 @@ def audit(master_path, root, inputs):
                               if framed else 'one controlled world/rig, two dependent poses; not independent scene holdout'),
                             'box-center rays are hypothetical, not visible-surface correspondences',
                             'centroids may hide multiple copies; no natural-object ghost segmentation',
-                            'fixed order, CPU/Mesa paused trials; no sustained FPS or target conclusion']}
+                            # Preserve legacy baseline text for reproduction;
+                            # its Mesa label is erroneous (see validation erratum).
+                            ('fixed order, CPU fusion with reported GLES renderer; no sustained FPS or target conclusion'
+                             if framed else 'fixed order, CPU/Mesa paused trials; no sustained FPS or target conclusion')]}
     if framed:
+        if len(devices) != 1:
+            raise ValueError('mixed rendering devices in framed study')
+        summary['render_device'] = dict(zip(('backend','gl_vendor','gl_renderer'),devices.pop()))
         summary['mount_pair_direct_controls'] = rig_controls
     return summary
 
