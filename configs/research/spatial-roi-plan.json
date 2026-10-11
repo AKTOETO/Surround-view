@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "experiment": "E-STITCH-spatial-roi-01",
+  "baseline": "docs/validation/baselines/carrier_refinement_v1.json",
+  "baseline_sha256": "381c43c2c4e742384e3af76a1a343d42f92c5d4f2e66d4cbfdc6ed7e28d909f4",
+  "refinement_plan": "configs/research/carrier-refinement-plan.json",
+  "ground_object_prefixes": [
+    "SV ground",
+    "SV road",
+    "SV center dash",
+    "SV crosswalk",
+    "SV parking bay"
+  ],
+  "boundary_filter_size": 3,
+  "boundary_dilation_iterations": 2,
+  "visibility_policy": "any",
+  "seeds": [
+    101,
+    102,
+    103
+  ]
+}

@@ -3,6 +3,56 @@ import numpy as np
 from scipy import ndimage as ndi
 
 
+def spatial_rois(labels, objects, ego_ids, target_id, visibility, ground_prefixes):
+    """Disjoint semantic interiors/bands from independent direct-view IDs only."""
+    labels, visibility = np.asarray(labels), np.asarray(visibility)
+    ids = list(objects.values())
+    if (labels.ndim != 2 or not np.issubdtype(labels.dtype, np.integer)
+            or visibility.dtype != bool or visibility.shape != labels.shape
+            or len(set(ids)) != len(ids) or any(type(v) is not int or v <= 0 for v in ids)
+            or target_id not in ids or target_id in ego_ids
+            or not set(ego_ids) <= set(ids) or not ground_prefixes
+            or not np.isin(labels, [0]+ids).all()):
+        raise ValueError('known unique object IDs, non-ego target and boolean visibility required')
+    def base_name(name):
+        base, dot, suffix = name.rpartition('.')
+        return base if dot and suffix.isdigit() else name
+    ground_ids = [value for name,value in objects.items() if base_name(name) in ground_prefixes]
+    if target_id in ground_ids or set(ground_ids) & set(ego_ids):
+        raise ValueError('semantic ground must not contain ego or diagnostic target')
+    visible = (labels != 0) & ~np.isin(labels,ego_ids) & visibility
+    boundary = ndi.maximum_filter(labels,size=3) != ndi.minimum_filter(labels,size=3)
+    boundary = ndi.binary_dilation(boundary,iterations=2)
+    ground = np.isin(labels,ground_ids)
+    target = labels == target_id
+    classes = {'ground':ground, 'coded_target':target, 'other_scene':~(ground | target)}
+    return {group+'_'+part:visible & mask & (boundary if part == 'boundary' else ~boundary)
+            for group,mask in classes.items() for part in ('interior','boundary')}
+
+
+def spatial_errors(linear_absolute_error, masks):
+    """Summarize scene error; an empty stratum has undefined, not zero, error."""
+    error = np.asarray(linear_absolute_error)
+    if (error.ndim != 3 or error.shape[-1] != 3 or not error.size or not np.isfinite(error).all()
+            or error.min() < 0 or error.max() > 1):
+        raise ValueError('finite HxWx3 absolute linear error in [0,1] required')
+    output = {}
+    assigned = np.zeros(error.shape[:2],bool)
+    for name,mask in masks.items():
+        mask = np.asarray(mask)
+        if mask.dtype != bool or mask.shape != error.shape[:2]:
+            raise ValueError('matching boolean spatial mask required')
+        if (assigned & mask).any():
+            raise ValueError('spatial strata must be disjoint')
+        assigned |= mask
+        values = error[mask]
+        output[name] = {'pixels':int(mask.sum()),
+                        'linear_mae':float(values.mean()) if values.size else None,
+                        'linear_channel_p95':float(np.percentile(values,95)) if values.size else None,
+                        'linear_channel_max':float(values.max()) if values.size else None}
+    return output
+
+
 def target_mask(rgb, threshold=.15):
     rgb = np.asarray(rgb)
     if rgb.ndim != 3 or rgb.shape[-1] != 3 or not np.isfinite(rgb).all():

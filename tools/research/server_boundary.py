@@ -11,8 +11,8 @@ import sys
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from object_metrics import measure_target, remove_small, target_mask
-from temporal_seam_stability import _verified, load_sequence
+from object_metrics import measure_target, remove_small, target_mask, spatial_rois, spatial_errors
+from temporal_seam_stability import _verified, load_sequence, visibility_mask
 
 
 def linear(rgb):
@@ -468,6 +468,91 @@ def audit_refinement(plan_path, root, inputs_root):
                            'fixed level/carrier order, no timing ranking or full memory equality']}
 
 
+def audit_spatial(plan_path, root, inputs_root):
+    repository = Path(__file__).resolve().parents[2]
+    plan_path, root, inputs_root = (Path(p).resolve() for p in (plan_path,root,inputs_root))
+    plan = json.loads(plan_path.read_text())
+    if (plan['schema_version'] != 1 or plan['boundary_filter_size'] != 3
+            or plan['boundary_dilation_iterations'] != 2 or plan['visibility_policy'] != 'any'):
+        raise ValueError('unsupported frozen spatial policy')
+    baseline_path = repository/plan['baseline']
+    if hashlib.sha256(baseline_path.read_bytes()).hexdigest() != plan['baseline_sha256']:
+        raise ValueError('spatial source baseline changed')
+    pinned = json.loads(baseline_path.read_text())
+    fresh = audit_refinement(repository/plan['refinement_plan'],root,inputs_root)
+    if fresh['source_fingerprint'] != pinned['source_fingerprint']:
+        raise ValueError('spatial source implementation differs')
+    output, counts = [], []
+    for level in fresh['plan']['levels']:
+        name = level['id']
+        run_root = repository/level['reused_root'] if 'reused_root' in level else root/name
+        for index,case in enumerate(fresh['levels'][name]['cases']):
+            previous = pinned['levels'][name]['cases'][index]
+            if case['seed'] != previous['seed'] or case['audit']['results'] != previous['audit']['results']:
+                raise ValueError('spatial source metrics differ from pinned baseline')
+            seed = case['seed']
+            if seed not in plan['seeds']:
+                raise ValueError('unplanned spatial seed')
+            capture = inputs_root/f'seed{seed}-capture'
+            _,_,truths,interiors,_,_ = load_sequence(inputs_root/f'seed{seed}-inputs',capture,'any')
+            truth = json.loads((capture/'paired_truth.json').read_text())
+            masks = []
+            for t,frame in enumerate(truth['frames']):
+                labels = np.load(_verified(capture,frame['objects'],truth['sha256']),allow_pickle=False)
+                bits = np.load(_verified(capture,frame['visibility'],truth['sha256']),allow_pickle=False)
+                groups = spatial_rois(labels,truth['objects'],truth['ego_object_ids'],
+                    truth['objects'][truth['diagnostic_target']['object_name']],visibility_mask(bits,'any'),
+                    plan['ground_object_prefixes'])
+                interior = np.logical_or.reduce([m for k,m in groups.items() if k.endswith('_interior')])
+                if not np.array_equal(interior,interiors[t]):
+                    raise ValueError('stratified interiors do not reproduce original ROI')
+                masks.append(groups)
+                if name == 'medium':
+                    counts.append(dict(seed=seed,truth_index=t,groups={k:dict(pixels=int(m.sum()),
+                        mask_sha256=hashlib.sha256(m.astype(np.uint8).tobytes()).hexdigest()) for k,m in groups.items()}))
+            case['audit']['native_reports'] = {}
+            for carrier in case['resources']:
+                cid = {'dome_floor_v1':'dome_floor','cylinder_floor_v1':'cylinder_floor',
+                       'cube_floor_v1':'cube_floor'}.get(carrier,carrier)
+                path = run_root/f'seed{seed}'/cid/'report.json'
+                if hashlib.sha256(path.read_bytes()).hexdigest() != case['audit']['native_report_sha256'][carrier]:
+                    raise ValueError('spatial native report changed')
+                case['audit']['native_reports'][carrier] = json.loads(path.read_text())
+            for row in case['audit']['results']:
+                t = row['truth_index']
+                rgba = audited_rgba(case,row,run_root)
+                error = np.abs(linear(rgba[...,:3]/255.)-linear(truths[t]))
+                groups = spatial_errors(error,masks[t])
+                interior = [g for k,g in groups.items() if k.endswith('_interior') and g['pixels']]
+                weighted = sum(g['pixels']*g['linear_mae'] for g in interior)/sum(g['pixels'] for g in interior)
+                if not np.isclose(weighted,row['quality']['linear_mae'],rtol=0,atol=1e-12):
+                    raise ValueError('weighted spatial errors do not reproduce original metric')
+                full = [g for g in groups.values() if g['pixels']]
+                output.append(dict(level=name,seed=seed,**{k:row[k] for k in
+                    ('carrier','truth_index','mode','boundary','rgba_sha256')},groups=groups,
+                    original_interior_linear_mae=weighted,
+                    full_visible_linear_mae=sum(g['pixels']*g['linear_mae'] for g in full)/sum(g['pixels'] for g in full)))
+    if {c['seed'] for c in counts} != set(plan['seeds']) or len(output) != 360:
+        raise ValueError('complete spatial matrix required')
+    comparisons = []
+    key = lambda r: tuple(r[k] for k in ('seed','carrier','truth_index','mode','boundary'))
+    for medium in (r for r in output if r['level'] == 'medium'):
+        fine = next(r for r in output if r['level'] == 'fine' and key(r) == key(medium))
+        comparisons.append(dict(**{k:medium[k] for k in ('seed','carrier','truth_index','mode','boundary')},
+            fine_minus_medium={k:(fine['groups'][k]['linear_mae']-g['linear_mae'] if g['pixels'] else None)
+                               for k,g in medium['groups'].items()}))
+    protocol = repository/'docs/research/SPATIAL_ROI_PROTOCOL.md'
+    return dict(schema_version=1,experiment=plan['experiment'],plan=plan,
+                plan_sha256=hashlib.sha256(plan_path.read_bytes()).hexdigest(),
+                protocol_sha256=hashlib.sha256(protocol.read_bytes()).hexdigest(),
+                analyzer_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+                metric_code_sha256=hashlib.sha256((repository/'tools/object_metrics.py').read_bytes()).hexdigest(),
+                source_fingerprint=fresh['source_fingerprint'],roi_counts=counts,results=output,
+                comparisons=comparisons,limitations=['post-hoc strata on inspected outputs, not holdout',
+                    'semantic object names, not measured physical height',
+                    'object-ID boundary band is not ghost correspondence or carrier-shell coverage'])
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--fixture',type=Path)
@@ -475,6 +560,7 @@ if __name__ == '__main__':
     parser.add_argument('--report',type=Path,action='append')
     parser.add_argument('--output',type=Path,required=True)
     parser.add_argument('--comparison',choices=('pyramid_boundary','seam_solver'),default='pyramid_boundary')
+    parser.add_argument('--spatial-plan',type=Path)
     parser.add_argument('--refinement-plan',type=Path)
     parser.add_argument('--refinement-root',type=Path)
     parser.add_argument('--budget-plan',type=Path)
@@ -483,7 +569,11 @@ if __name__ == '__main__':
     parser.add_argument('--study-plan',type=Path)
     parser.add_argument('--study-root',type=Path)
     args = parser.parse_args()
-    if args.refinement_plan:
+    if args.spatial_plan:
+        if not args.refinement_root or not args.inputs_root or args.refinement_plan or args.budget_plan or args.study_plan or args.fixture or args.report or args.capture:
+            parser.error('spatial audit requires --refinement-root and --inputs-root only')
+        result = audit_spatial(args.spatial_plan,args.refinement_root,args.inputs_root)
+    elif args.refinement_plan:
         if not args.refinement_root or not args.inputs_root or args.budget_plan or args.study_plan or args.fixture or args.report or args.capture:
             parser.error('refinement audit requires --refinement-root and --inputs-root only')
         result = audit_refinement(args.refinement_plan,args.refinement_root,args.inputs_root)
@@ -503,4 +593,4 @@ if __name__ == '__main__':
     reports = ([c['audit'] for l in result['levels'].values() for c in l['cases']] if 'levels' in result
                else [c['audit'] for c in result['cases']] if 'cases' in result else [result])
     print(json.dumps({'conditions':sum(len(r['results']) for r in reports),
-                      'pairs':sum(len(r['paired_differences']) for r in reports)}))
+                      'pairs':sum(len(r.get('paired_differences',r.get('comparisons',[]))) for r in reports)}))

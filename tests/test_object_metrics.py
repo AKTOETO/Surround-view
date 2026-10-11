@@ -10,13 +10,68 @@ import numpy as np
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path[:0] = [str(ROOT/'tools'), str(ROOT/'tools/research'), str(ROOT/'tools/blender')]
-from object_metrics import measure_target, measure_target_support, projected_object_ids, target_mask
+from object_metrics import measure_target, measure_target_support, projected_object_ids, target_mask, spatial_rois, spatial_errors
 from object_stitch import interleaved_orders, load_objects
 from diagnostic_motion import frame_positions, position_for_capture, validate_captured_positions
-from server_boundary import quality as server_quality, timestamp as server_timestamp, audit_study, check_mesh_budget, validate_refinement_plan, refinement_difference, audit_refinement
+from server_boundary import (quality as server_quality, timestamp as server_timestamp, audit_study,
+    check_mesh_budget, validate_refinement_plan, refinement_difference, audit_refinement, audit_spatial)
 
 
 class ObjectMetricTests(unittest.TestCase):
+    def test_spatial_rejects_modified_pinned_baseline_before_reading_captures(self):
+        plan = json.loads((ROOT/'configs/research/spatial-roi-plan.json').read_text())
+        plan['baseline_sha256'] = '0'*64
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory)/'plan.json'
+            path.write_text(json.dumps(plan))
+            with self.assertRaisesRegex(ValueError,'source baseline changed'):
+                audit_spatial(path,Path(directory),Path(directory))
+
+    def test_spatial_partition_uses_names_visibility_and_independent_boundaries(self):
+        labels = np.ones((24,30),np.uint16)
+        labels[:,15:] = 2
+        labels[6:8,6:8] = 3
+        labels[20:,0:4] = 4
+        labels[0,0] = 0
+        labels[0,5] = 5
+        visible = np.ones(labels.shape,bool)
+        visible[12,12] = False
+        objects = {'SV road':1,'SV curb':2,'target':3,'ego':4,'SV road.001':5}
+        groups = spatial_rois(labels,objects,[4],3,visible,['SV road'])
+        counts = np.sum(list(groups.values()),axis=0)
+        expected = (labels != 0) & (labels != 4) & visible
+        np.testing.assert_array_equal(counts,expected.astype(int))
+        self.assertTrue(groups['ground_interior'][12,8])
+        self.assertTrue(groups['other_scene_interior'][12,22])
+        self.assertTrue(groups['ground_boundary'][12,14])
+        self.assertTrue(groups['other_scene_boundary'][12,15])
+        self.assertTrue(groups['ground_boundary'][0,5])
+        self.assertEqual(groups['coded_target_interior'].sum(),0)
+        self.assertEqual(groups['coded_target_boundary'].sum(),4)
+        wrong = labels.copy();wrong[12,12] = 99
+        with self.assertRaises(ValueError):
+            spatial_rois(wrong,objects,[4],3,visible,['SV road'])
+        with self.assertRaises(ValueError):
+            spatial_rois(labels,objects,[4],3,visible,['SV road','target'])
+
+    def test_spatial_errors_known_weighting_empty_and_overlapping_strata(self):
+        error = np.zeros((2,2,3))
+        error[0,0] = 1
+        a = np.array([[True,True],[False,False]])
+        b = ~a
+        result = spatial_errors(error,dict(a=a,b=b,empty=np.zeros_like(a)))
+        self.assertEqual(result['a']['linear_mae'],.5)
+        self.assertEqual(result['a']['linear_channel_p95'],1)
+        self.assertEqual(result['a']['linear_channel_max'],1)
+        self.assertIsNone(result['empty']['linear_mae'])
+        self.assertEqual(result['empty']['pixels'],0)
+        weighted = sum(g['pixels']*g['linear_mae'] for g in result.values() if g['pixels'])/4
+        self.assertEqual(weighted,error.mean())
+        with self.assertRaisesRegex(ValueError,'disjoint'):
+            spatial_errors(error,dict(a=a,b=a))
+        with self.assertRaises(ValueError):
+            spatial_errors(error,dict(a=a.astype(float)))
+
     def test_refinement_plan_rejects_changed_shape_and_nonincreasing_axes(self):
         master = json.loads((ROOT/'configs/research/carrier-refinement-plan.json').read_text())
         validate_refinement_plan(master)
