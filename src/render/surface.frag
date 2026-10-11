@@ -1,5 +1,6 @@
 #version 300 es
 precision highp float;
+precision highp int;
 in vec3 world;
 layout(location = 0) out vec4 color;
 uniform sampler2D input0, input1, input2, input3;
@@ -45,7 +46,15 @@ vec3 encode(vec3 x)
 
 void main()
 {
-    if (inspection_regions != 0)
+    if (inspection_regions >= 2)
+    {
+        // Pack one perspective-interpolated float into RGBA8. No float FBO extension.
+        uint bits = floatBitsToUint(world[inspection_regions - 2]);
+        uvec4 bytes = uvec4(bits, bits >> 8u, bits >> 16u, bits >> 24u) & uvec4(255u);
+        color = vec4(bytes) / 255.0;
+        return;
+    }
+    if (inspection_regions == 1)
     {
         int region = surface_mode == 1 ? 2 : (world.z > 1e-6 ? 4 : 1);
         if (surface_mode == 0 && abs(world.x) <= vehicle.x && abs(world.y) <= vehicle.y)

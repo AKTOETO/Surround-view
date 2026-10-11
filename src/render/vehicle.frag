@@ -6,5 +6,10 @@ uniform int inspection_regions;
 
 void main()
 {
+    if (inspection_regions >= 2)
+    {
+        color = vec4(0); // Depth occluder; CPU marks ego pixels invalid using region IDs.
+        return;
+    }
     color = inspection_regions != 0 ? vec4(5.0 / 255.0, 0, 0, 1) : vec4(paint, 1);
 }

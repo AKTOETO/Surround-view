@@ -1,5 +1,6 @@
 #pragma once
 #include "sv/frame.hpp"
+#include "sv/render_inspection.hpp"
 #include "sv/seam_optimizer.hpp"
 #include <memory>
 
@@ -31,7 +32,8 @@ class Renderer
     // Render-thread only; caller must validate and prepare settings before publishing.
     void set_fusion(Fusion) noexcept;
     void set_surface(Surface); // Prepare mesh buffers before committing; render-thread only.
-    Image render(const FrameSet &, const View &, RenderInspection *inspection = nullptr);
+    Image render(const FrameSet &, const View &, RenderInspection *inspection = nullptr,
+                 RenderInspectionRequest request = {});
     std::vector<Pixel> project_points(const Camera &, const std::vector<Vec3> &);
     std::string vendor() const;
     std::string device() const;

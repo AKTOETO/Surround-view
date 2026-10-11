@@ -8,6 +8,7 @@
 #include <GLES3/gl3.h>
 
 // Extension declarations depend on the API types defined by gl3.h.
+#include "inspection.hpp"
 #include <GLES2/gl2ext.h>
 #include <algorithm>
 #include <cstdlib>
@@ -438,8 +439,13 @@ Renderer::Renderer(const Config &c) : impl_(std::make_unique<Impl>())
 
 Renderer::~Renderer() = default;
 
-Image Renderer::render(const FrameSet &set, const View &view, RenderInspection *inspection)
+Image Renderer::render(const FrameSet &set, const View &view, RenderInspection *inspection,
+                       RenderInspectionRequest request)
 {
+    if (request.carrier_positions && !inspection)
+    {
+        throw std::invalid_argument("carrier positions require an inspection destination");
+    }
     if (inspection)
     {
         *inspection = {};
@@ -687,22 +693,37 @@ Image Renderer::render(const FrameSet &set, const View &view, RenderInspection *
         // The regular output and its timing measurements above are already complete.
         const GLboolean dither = glIsEnabled(GL_DITHER);
         glDisable(GL_DITHER);
-        glClearColor(0, 0, 0, 1);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-        glUseProgram(i.prog);
-        glUniform1i(glGetUniformLocation(i.prog, "inspection_regions"), 1);
-        draw_carrier();
-        glUniform1i(glGetUniformLocation(i.prog, "inspection_regions"), 0);
-        glUseProgram(i.vehicle_program);
-        matrix(i.vehicle_program, "mvp", view.mvp(double(c.width) / c.height));
-        glUniform1i(glGetUniformLocation(i.vehicle_program, "inspection_regions"), 1);
-        glBindVertexArray(i.vehicle_vao);
-        glDrawArrays(GL_TRIANGLES, 0, i.vehicle_vertices);
-        glUniform1i(glGetUniformLocation(i.vehicle_program, "inspection_regions"), 0);
-        cv::Mat bottom(c.height, c.width, CV_8UC4), top;
-        glReadPixels(0, 0, c.width, c.height, GL_RGBA, GL_UNSIGNED_BYTE, bottom.data);
-        cv::flip(bottom, top, 0);
-        cv::extractChannel(top, inspection->carrier_regions, 0);
+        const auto geometry_pass = [&](int mode)
+        {
+            glClearColor(0, 0, 0, 0);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+            glUseProgram(i.prog);
+            glUniform1i(glGetUniformLocation(i.prog, "inspection_regions"), mode);
+            draw_carrier();
+            glUniform1i(glGetUniformLocation(i.prog, "inspection_regions"), 0);
+            glUseProgram(i.vehicle_program);
+            matrix(i.vehicle_program, "mvp", view.mvp(double(c.width) / c.height));
+            glUniform1i(glGetUniformLocation(i.vehicle_program, "inspection_regions"), mode);
+            glBindVertexArray(i.vehicle_vao);
+            glDrawArrays(GL_TRIANGLES, 0, i.vehicle_vertices);
+            glUniform1i(glGetUniformLocation(i.vehicle_program, "inspection_regions"), 0);
+            cv::Mat bottom(c.height, c.width, CV_8UC4), top;
+            glReadPixels(0, 0, c.width, c.height, GL_RGBA, GL_UNSIGNED_BYTE, bottom.data);
+            cv::flip(bottom, top, 0);
+            return top;
+        };
+        cv::extractChannel(geometry_pass(1), inspection->carrier_regions, 0);
+        if (request.carrier_positions)
+        {
+            inspection->carrier_positions =
+                cv::Mat(c.height, c.width, CV_32FC3,
+                        cv::Scalar::all(std::numeric_limits<float>::quiet_NaN()));
+            for (int axis = 0; axis < 3; ++axis)
+            {
+                unpack_coordinate(geometry_pass(axis + 2), inspection->carrier_regions,
+                                  inspection->carrier_positions, axis);
+            }
+        }
         if (dither)
         {
             glEnable(GL_DITHER);
@@ -916,7 +937,8 @@ RenderTiming Renderer::last_timing() const
 
 boost::json::object Renderer::capabilities() const
 {
-    GLint texture = 0, renderbuffer = 0;
+    GLint texture = 0, renderbuffer = 0, subpixel = 0;
+    glGetIntegerv(GL_SUBPIXEL_BITS, &subpixel);
     glGetIntegerv(GL_MAX_TEXTURE_SIZE, &texture);
     glGetIntegerv(GL_MAX_RENDERBUFFER_SIZE, &renderbuffer);
     return {
@@ -928,6 +950,7 @@ boost::json::object Renderer::capabilities() const
         {"egl_vendor", eglQueryString(impl_->display, EGL_VENDOR)},
         {"egl_version", eglQueryString(impl_->display, EGL_VERSION)},
         {"egl_extensions", eglQueryString(impl_->display, EGL_EXTENSIONS)},
+        {"raster_subpixel_bits", subpixel},
         {"max_texture_size", texture},
         {"max_renderbuffer_size", renderbuffer},
         {"ego_vehicle_triangles", impl_->vehicle_vertices / 3},
