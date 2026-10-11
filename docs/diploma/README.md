@@ -160,3 +160,5 @@ MPLCONFIGDIR=/tmp/sv-matplotlib python3 docs/diploma/plot_carrier_positions.py -
 §4.61 описывает capture hybrid fusion contributions, known-answer reconstruction и диаграмму4.85; определения локальных weights и нелокальных вкладов разделены.
 
 §4.62 содержит первый native source-surface correspondence pilot: локализация выбора дороги вместо поднятого объекта на одном historical frame; три подписанных графика/readback comparison и PlantUML diagram4.89. Данные и ограничения: [[validation/SOURCE_CORRESPONDENCE]].
+
+§4.63: height/second-frame source-surface controls,20 native captures, явные world/vehicle transforms, таблица outcomes и рисунки4.90–4.92. [[validation/SOURCE_CORRESPONDENCE_CONTROLS]]. Ground-contact target объёмный; planar known-answer control остаётся открытым.

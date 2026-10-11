@@ -2292,3 +2292,70 @@ Audit -> Audit : invalid / no hit / wrong object / wrong point / match
 Локализованный механизм: virtual ray должен встретить поднятый объект, но серверный carrier intersection располагается около пола за ним. Source projection корректно выбирает другой луч и поверхность дороги. Замена формы enclosure не изменяет floor hit в данном ROI. Это подтверждает ограничение данного carrier-based baseline для этого объекта/view, но пока не доказывает причины всех historical zero-IoU cases, работу multiband либо универсальное преимущество альтернативной геометрии.
 
 План/проверки/данные: [[validation/SOURCE_CORRESPONDENCE]], baseline `source_correspondence_v1.json`. Три known-answer audit tests прошли, повторный read-only audit побитно воспроизводится. Следующие controls — второй кадр/ground/height и соответствие displaced pixels, hybrid contributions на тех же rays, затем bounded server/library diagnostic API и проверяемое уменьшение geometric failure. Реальные камеры и Аврора в этом опыте отсутствуют.
+
+## 4.63. Проверка source correspondence при изменении высоты и движении автомобиля
+
+Предыдущий опыт локализовал выбор дороги вместо поднятого объекта на одном кадре. Для проверки повторяемости механизма выполнена серия20 native captures: два ранее изученных case, frames0/1 и пять носителей. Центр box высотой0.4m находится на Z=0.2 либо0.8m. В первом случае box касается дороги, но сохраняет объём: это не контроль идеальной плоскости. Второй кадр соответствует смещению автомобиля на0.4m по X за0.2s без поворота. Входы800×800, выход640×360, true calibration и edge_feather сохранены. План/процедура/точные hashes приведены в [[validation/SOURCE_CORRESPONDENCE_CONTROLS]]. Независимые сценовые rays получены через Blender; продуктовый renderer остаётся C++.
+
+### 4.63.1. Координаты и контроль воспроизводимости
+
+Измерения второго кадра требуют разделения систем координат. Direct surface и scene hits oracle заданы в мировой системе W, native carrier hit — в системе автомобиля V. При ego pose \(T_{W\leftarrow V}\) сравнение выполняется как
+
+\[
+P_V^{truth}=T_{W\leftarrow V}^{-1}P_W^{truth},\qquad
+P_W^{carrier}=T_{W\leftarrow V}P_V^{carrier}.
+\]
+
+В optical projection подставляется \(P_V^{truth}\), а physical distances вычисляются между точками в W. Пропуск translation или rotation мог бы создать искусственную ошибку при движении. Known-answer test использует ненулевое смещение и поворот90°, проверяя оба направления преобразования. Сам исследуемый клип проверяет translation, но не содержит turn.
+
+```plantuml
+@startuml
+participant "Архив inputs / ego pose" as Archive
+participant "Native Renderer\nсистема автомобиля V" as Native
+participant "Blender oracle\nмировая система W" as Oracle
+participant "Read-only audit" as Audit
+Archive -> Native : выбранный manifest frame + true calibration
+Native -> Audit : carrier point V + actual source UV/status
+Archive -> Oracle : тот же scene recipe + frame pose
+Oracle -> Audit : direct point W + nearest source hits W
+Archive -> Audit : T_world_from_vehicle
+Audit -> Audit : carrier V → W: surface distances
+Audit -> Audit : truth W → V: correct source projection
+Audit -> Audit : identity AND distance ≤ 0.02m
+@enduml
+```
+
+Рисунок4.90 — Системы координат и порядок сопоставления при движении rig. Смена координат не меняет сцену или входные изображения.
+
+Direct target mask воспроизведён побитно для всех четырёх case/frame:166/161 pixels для ground-contact и178/172 для raised. Source visibility совпала на всех target pixels. Все20 ordinary native RGBA hashes совпали с соответствующими archived server frame baselines; RGBA также не меняется до/во время/после inspection. Проверены hashes binary, input/config/plan, helper и native exports. Source revision встроена во время CMake configure и предшествует расширению probe; для точной идентификации сборки сохранены binary SHA256 и probe source SHA256. Это ограничение provenance явно указано в проверочном отчёте.
+
+### 4.63.2. Различие object identity и surface correspondence
+
+Для классификации требуется совпадение target identity **и** расстояние source nearest hit до direct scene point не более0.02m. Попадание в тот же объект, но в другую точку, выделено отдельно. В следующей таблице ROI включает pixels, видимые хотя бы одной source camera; source pairs — pixels×4, а не независимые повторы. Число pixels, например76, не следует смешивать с числом допустимых camera pairs94.
+
+| Высота центра / frame | Носители | Pixels / pairs | Invalid | Road | Target, другая точка | Surface match |
+|---|---|---:|---:|---:|---:|---:|
+| 0.2m / 0 | plane/dome/cylinder/cube | 76 / 304 | 210 | 78 | 16 | 0 |
+| 0.2m / 0 | bowl | 76 / 304 | 210 | 76 | 18 | 0 |
+| 0.2m / 1 | plane/dome/cylinder/cube | 73 / 292 | 219 | 66 | 7 | 0 |
+| 0.2m / 1 | bowl | 73 / 292 | 219 | 65 | 8 | 0 |
+| 0.8m / 0 | все пять | 76 / 304 | 228 | 76 | 0 | 0 |
+| 0.8m / 1 | все пять | 69 / 276 | 207 | 69 | 0 | 0 |
+
+Таблица4.63 — Source-surface outcomes в visible target ROI. Road здесь исчерпывает valid wrong-object hits. Zero match сохраняется и на visible interior:46/43 pixels для ground-contact,48/43 для raised после двух cross erosions. Это снижает вероятность объяснить весь результат только границей coded mask, но не заменяет отдельный анализ bilinear footprint.
+
+![Контроли высоты и второго кадра](figures/experiments/source_controls_metrics.png)
+
+Рисунок4.91 — Слева median расстояния между правильной и фактической source UV для пар с direct source visibility и native validity; справа доля wrong-point target hits среди valid pairs в source-visible output ROI. Один seed, два коррелированных frames; линии не являются доверительными интервалами или рейтингом алгоритмов.
+
+Для ground-contact box median UV gap plane/bowl равен66.937/66.515px в frame0 и76.249/75.442px в frame1. Для raised —203.997/203.819 и246.327/246.141px соответственно. Другие enclosure carriers дают близкие значения. Native/double projection residual actual carrier point меньше0.00009px во всех20 условиях. Поэтому основной observed gap в этом fixture относится к выбору 3D correspondence, а не к численной ошибке оптической проекции.
+
+### 4.63.3. Проверка на реальных выходных изображениях и границы вывода
+
+![Независимый RGB и native plane/bowl при двух высотах и движении](figures/experiments/source_controls_views.png)
+
+Рисунок4.92 — Фрагменты сохранённого independent Blender RGB и реального native output. Cyan — direct target mask; orange — raw magenta proxy без component filtering. Python оформляет существующие изображения. Для поднятого box целевой ROI пуст, а изображение объекта смещено вниз и растянуто. У касающегося дороги box есть цветовое перекрытие, но оно не означает совпадения surface points.
+
+В ground-contact ROI proxy даёт11/14 pixels для plane/bowl в frame0 и8/9 в frame1, при нулевых matched surface counts. Для raised ROI proxy равен0 во всех случаях. Таким образом, object ID и цветовая близость сами по себе могут скрывать geometric correspondence error. Повторный кадр подтверждает прежний road-selection mechanism для raised object после translation, но не проверяет его на повороте или независимом клипе.
+
+Четыре known-answer audit tests, CTest1/1 и повторный read-only audit прошли; baseline воспроизведён побитно. Вывод ограничен edge_feather, двумя heights одной сцены и одним seed. Нулевой match для объёмного ground-contact target не доказывает ошибочность planar mapping для плоской мишени. Следующие задачи: настоящий planar control, displaced RGB attribution, hybrid per-level contributions, triangle identity/coverage и проверяемое уменьшение height failure. Без них, независимых сцен и физических испытаний нельзя завершать общий рейтинг методов сшивки или переносить результат на Аврору.

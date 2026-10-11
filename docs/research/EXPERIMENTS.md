@@ -144,3 +144,5 @@ GPU execution time измерять асинхронными timer queries, CPU 
 ## Source-surface localization, первый кадр
 
 §4.62 / [[validation/SOURCE_CORRESPONDENCE]] фиксирует первый native/Blender correspondence audit для rig101-near-z080 и пяти carriers. После проверки historical mask/visibility/RGBA подтверждено: на76 source-visible target pixels camera3 sample выбирает road; carrier-to-scene gap около1.35m median, source UV gap около204px median, native optical residual<0.00009px. Это local carrier-height limitation в одном edge-feather кадре, не quality ranking и не подтверждающая серия. Следующие controls — independent frame/height/displaced source samples и hybrid fusion, bounded native diagnostic delivery.
+
+§4.63 / [[validation/SOURCE_CORRESPONDENCE_CONTROLS]]:20 native captures, z020/z080 × frames0/1 × five carriers. После ego translation raised source rays снова выбирают road; ground-contact объёмный box даёт same-object/wrong-point hits. Все RGBA/mask/visibility controls прошли. Далее planar control и displaced/hybrid attribution; эти frames не являются независимым holdout.
