@@ -16,13 +16,39 @@ from diagnostic_motion import frame_positions, position_for_capture, validate_ca
 from parallax_height import ray_ground, object_position, validate_factors, verify_historical_results, box_frame_bounds, verify_rig_pair, verify_sampling_design, pair_sampling_rows
 from blender.camera_sampling import resample_config
 from blender.visibility import projects_inside
-from sensor_sampling import validate_sensor_design
+from sensor_sampling import validate_sensor_design, cube_control
 from parallax_output import validate_output_design, normalized_config, normalized_metrics, deltas, canonical_truth
 from server_boundary import (quality as server_quality, timestamp as server_timestamp, audit_study,
     check_mesh_budget, validate_refinement_plan, refinement_difference, audit_refinement, audit_spatial)
 
 
 class ObjectMetricTests(unittest.TestCase):
+    def test_sensor_cube_control_rejects_content_metadata_and_checksum_changes(self):
+        import hashlib
+        from PIL import Image, PngImagePlugin
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            def record(name, rgb, date, profile):
+                metadata = PngImagePlugin.PngInfo()
+                metadata.add_text('Date',date);metadata.add_text('profile',profile)
+                Image.fromarray(rgb).save(root/name,pnginfo=metadata)
+                info = {'frames':[{'cameras':[{'id':0,'faces':{'front':name}}]}],
+                        'sha256':{name:hashlib.sha256((root/name).read_bytes()).hexdigest()}}
+                value = cube_control(root,info)
+                return info,value[:2]
+            rgb = np.zeros((512,512,3),np.uint8)
+            _,a = record('a.png',rgb,'first','unchanged')
+            _,b = record('b.png',rgb,'second','unchanged')
+            self.assertEqual(a,b)
+            _,changed_profile = record('c.png',rgb,'first','changed')
+            self.assertNotEqual(a,changed_profile)
+            rgb[0,0,0] = 1
+            info,changed_pixel = record('d.png',rgb,'first','unchanged')
+            self.assertNotEqual(a,changed_pixel)
+            (root/'d.png').write_bytes((root/'a.png').read_bytes())
+            with self.assertRaises(ValueError): cube_control(root,info)
+            with self.assertRaises(ValueError): record('small.png',rgb[:256,:256],'first','unchanged')
+
     def test_sensor_resolution_design_rejects_other_changes(self):
         low = json.loads((ROOT/'configs/research/parallax-output-plan.json').read_text())
         high = json.loads((ROOT/'configs/research/parallax-sensor-plan.json').read_text())

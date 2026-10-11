@@ -83,8 +83,9 @@ def plot_visibility(data, args):
 
 def plot_sampling(data, args):
     output_study = data['experiment'] == 'E-STITCH-parallax-output-paired-01'
-    prefix = 'parallax_output' if output_study else 'parallax_sampling'
-    difference = '640x360 minus 320x180' if output_study else '512 minus 256'
+    sensor_study = data['experiment'] == 'E-STITCH-parallax-sensor-paired-01'
+    prefix = 'parallax_sensor' if sensor_study else 'parallax_output' if output_study else 'parallax_sampling'
+    difference = 'fisheye 800 minus 400' if sensor_study else '640x360 minus 320x180' if output_study else '512 minus 256'
     profiles = [(m,b) for m in ('multi_band','graph_cut_multi_band') for b in ('zero','normalized')]
     cases = list(dict.fromkeys(r['case'] for r in data['results']))
     carriers = list(dict.fromkeys(r['carrier'] for r in data['results']))
@@ -114,7 +115,7 @@ def plot_sampling(data, args):
                 ax.text(x,y,label,ha='center',va='center',fontsize=7,
                         bbox=dict(facecolor='white',alpha=.7,edgecolor='none',pad=1))
         fig.colorbar(im,ax=ax,shrink=.5)
-    fig.suptitle(('Output-resolution sensitivity' if output_study else 'Cubemap sampling only')+'; all 480 pairs, means of two dependent poses')
+    fig.suptitle(('Fisheye sampling sensitivity' if sensor_study else 'Output-resolution sensitivity' if output_study else 'Cubemap sampling only')+'; all 480 pairs, means of two dependent poses')
     fig.tight_layout(rect=(0,0,1,.98));fig.savefig(args.output/(prefix+'_metrics.png'),dpi=150);plt.close(fig)
     fig,axes = plt.subplots(len(cases),4,figsize=(14,2.5*len(cases)))
     from PIL import Image
@@ -138,10 +139,10 @@ def plot_sampling(data, args):
             payload = (directory/sample['rgba_file']).read_bytes()
             if hashlib.sha256(payload).hexdigest() != row[level+'_rgba_sha256']:
                 raise ValueError('sampling RGBA changed')
-            h,w = (360,640) if output_study and level=='high' else (180,320)
+            h,w = (360,640) if sensor_study or output_study and level=='high' else (180,320)
             rgb = np.frombuffer(payload,np.uint8).reshape(h,w,4)[...,:3]
             rendered.append(rgb);axes[index,column].imshow(rgb)
-            title = (f'{w}x{h}' if output_study else '256' if level=='low' else '512')
+            title = (('400' if level=='low' else '800')+'px fisheye' if sensor_study else f'{w}x{h}' if output_study else '256' if level=='low' else '512')
             axes[index,column].set_title(title+' / native dome MB-zero')
         if output_study:
             # Display difference only: never resize independent truth or numerical metrics.
@@ -528,7 +529,7 @@ def main():
     parser.add_argument('--inputs-root', type=Path, default=ROOT/'artifacts/seam-generalization-v1')
     args = parser.parse_args()
     report = json.loads(args.report.read_text())
-    if report.get('experiment') in ('E-STITCH-parallax-sampling-paired-01','E-STITCH-parallax-output-paired-01'):
+    if report.get('experiment') in ('E-STITCH-parallax-sampling-paired-01','E-STITCH-parallax-output-paired-01','E-STITCH-parallax-sensor-paired-01'):
         plot_sampling(report,args)
         return
     if report.get('experiment') == 'E-STITCH-parallax-visibility-01':
