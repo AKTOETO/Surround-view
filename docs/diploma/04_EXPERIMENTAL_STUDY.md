@@ -1861,3 +1861,71 @@ Normalized boundary снизил aggregate linear RGB MAE во240/240 zero/norma
 Этот опыт исключает direct clipping как объяснение текущего отрицательного результата, но не доказывает бесполезность всех носителей или невозможность реконструкции сцены. Новый view меняет apparent size и direct surface support относительно §4.53, так что разность серий нельзя приписывать только clipping. Source ray visibility не гарантирует correspondence/sampling; материал/размер/разрешение и scene family остаются одними. Дальнейшее исследование должно отделить geometric reprojection error от sampling, расширить optical-height/baseline/mount варианты и natural-object correspondence, затем проверить длинные клипы и Aurora hardware. Данные и команды: [[validation/PARALLAX_FRAMED]], frozen методика: [[research/PARALLAX_FRAMED_PROTOCOL]].
 
 Уточнение аппаратного provenance: catalog всех60 native reports указывает NVIDIA GeForce RTX5070Ti/NVIDIA Corporation/OpenGL ES3, хотя launcher задавал LIBGL_ALWAYS_SOFTWARE=1. Fusion CPU и GPU rendering необходимо разделять; environment flag не доказывает Mesa software device. Frozen protocol сохраняет первоначальную ошибочную CPU-Mesa формулировку, новый baseline берёт render_device из catalogs. Проверка30 прежних height и15 lateral reports также показала NVIDIA; числовые результаты сохранены, hardware label исправлен в validation документах. Это не target/real-time trial.
+
+## 4.56. Влияние разрешения исходной cubemap при фиксированной геометрии
+
+Нулевой overlap поднятого объекта в §4.55 не позволяет автоматически приписать всю ошибку геометрии носителя: цветовые наблюдения проходят несколько стадий дискретизации. Поэтому следующий E-STITCH-parallax-sampling-01 фиксирует парный контроль первого звена. Исходные шесть граней cubemap каждой физической камеры увеличены с256×256 до512×512; преобразованные fisheye inputs остаются400×400, direct RGB и server output —320×180. Это увеличение числа исходных texels вчетверо, а не увеличение разрешения сенсора, выходного кадра или сетки носителя. Bilinear cubemap-to-fisheye converter остаётся прежним.
+
+Протокол [[research/PARALLAX_SAMPLING_PROTOCOL]] и текстовые recipes зафиксированы до нового capture и quality outputs. Все12 прежних factors сохранены: два монтажа, две дистанции и три высоты центра box; два зависимых poses, пять medium carriers и четыре fusion/boundary profiles. Новый захват выполняется прежним неизменённым Blender driver. Новые60 native server processes исполняют480 quality conditions; старые результаты не пересчитываются другим алгоритмом и не заменяются вновь снятой низкодетальной сценой. Fusion выполняется CPU, GLES raster —на NVIDIA RTX5070Ti; environment software flag не определяет фактический GL vendor. Это desktop quality experiment, а не оценка целевой Авроры.
+
+```plantuml
+@startuml
+rectangle "Frozen world / calibration / poses / virtual view" as W
+rectangle "Cubemap 256²\nHistorical verified captures" as L
+rectangle "Cubemap 512²\nNew paired captures" as H
+rectangle "Unchanged converter\nFour fisheye inputs 400²" as C
+rectangle "Same native binaries\n5 carriers × 4 profiles" as S
+rectangle "Same direct RGB / IDs / visibility\n320 × 180" as T
+rectangle "Keyed paired audit\nFull IoU, visible IoU, centroid, RGB" as A
+W --> L
+W --> H
+L --> C
+H --> C
+C --> S
+W --> T
+T --> A
+S --> A
+note right of A
+Reject altered geometry/truth/binaries.
+Retain undefined scores as null.
+end note
+@enduml
+```
+
+Рисунок4.72 — контроль одного sampling звена. Геометрия, монтаж, trajectory, output и серверные варианты остаются общими; изменяется только face resolution исходных наблюдений.
+
+Парная приёмка требует полного воспроизведения прежнего tracked baseline: совпадения численных результатов, input/native hashes и протокола. Исключаются только digests файла расширенного analyzer и модуля метрик, разрешённые прежним historical audit. Runtime plans после удаления идентификатора опыта, пути input plan и имени протокола должны совпадать. Asset plans после удаления только `capture.face_size` должны совпадать целиком; допускаются строго256 и512. Дополнительно проверяются размеры всех48 cube faces каждого case в каждой серии, полные replay configs, stamps и poses, capture metadata, бинарники и фактический renderer. Direct RGB, object-ID и исходные visibility camera bits сравниваются побитно после декодирования; одинакового имени сцены для этого недостаточно.
+
+Для ключа $k=(case,carrier,pose,mode,boundary)$ определяется
+
+$$\Delta q_k=q_k^{512}-q_k^{256}.$$
+
+Для full/conditional IoU положительная разность означает улучшение, для linear MAE и centroid distance —ухудшение. Если хотя бы один score отсутствует, $\Delta q_k$ тоже отсутствует; отдельно сохраняются оба исходных значения. Смена defined/undefined не маскируется нулём. В качестве первичного контроля выделены320 raised-object пар, дополнительно160 ground controls. Все480 строк сохраняются; carriers/profiles/poses одной сцены не считаются независимыми статистическими репликами. Centroid не различает несколько симметричных копий, поэтому рассматривается вместе с counts и IoU.
+
+Все12 пар controls приняты:1152 cube faces имеют ожидаемые размеры; direct RGB/ID/visibility, config/trajectory и бинарники совпали. Предыдущий baseline воспроизведён с разрешённым изменением analyzer digest. Новая серия содержит4320 samples, из них3360 measurement RGBA; все480 сравниваемых RGBA hashes отличаются от256px outputs. Следовательно, вмешательство действительно изменило данные, а не повторило прежние кадры под другим именем. Ненулевой coded chroma остаётся хотя бы в одной входной камере всех24 case/pose сочетаний.
+
+![Парные native изображения при двух разрешениях исходной cubemap](figures/experiments/parallax_sampling_views.png)
+
+Рисунок4.73 — все12 factors, первый pose, фиксированный dome/multi_band/zero. Слева общий direct truth, далее native outputs256/512 и абсолютная разность sRGB без усиления (шкала0…1). Сходство кадров не означает побитной идентичности; смещение/растяжение near-z080 сохраняется.
+
+| Показатель | 256 px | 512 px | Изменение |
+|---|---:|---:|---|
+| Raised full IoU=0 | 320/320 | 320/320 | Все поднятые условия остаются с нулевым overlap |
+| Full IoU ground, near, rig101 | 0.052632…0.110553 | 0.053140…0.113990 | Смешанное направление |
+| Full IoU ground, near, rig104 | 0.056122…0.110000 | 0.054404…0.111111 | Смешанное направление |
+| Full IoU ground, far, rig101 | 0.171171…0.338816 | 0.169102…0.316498 | Смешанное направление |
+| Full IoU ground, far, rig104 | 0.170251…0.343234 | 0.163900…0.321070 | Смешанное направление |
+| Undefined conditional IoU | 40/480 | 40/480 | Пустая source-visible поверхность не меняется |
+| Undefined centroid | 240/480 | 240/480 | В этих outputs нет surviving coded component |
+
+Таблица — диапазоны ground scores по40 зависимым carrier/profile/pose условиям каждого factor/rig; raised результаты охватывают320 пар. Разности отдельных строк нельзя получать вычитанием границ диапазонов.
+
+Все160 ground пары имеют ненулевую $\Delta$full IoU:59 улучшений и101 ухудшение, диапазон−0.025509…+0.011355. Остальные320 raised pairs —точные ties0. Conditional IoU улучшилась67 раз, ухудшилась93, совпала280 раз;40 разность undefined. Linear RGB MAE снизилась228 раз и выросла252 раза, диапазон−0.0001564…+0.00006187. Следовательно, более подробная cubemap не гарантирует монотонного улучшения ни object overlap, ни RGB-метрики на фиксированных остальных стадиях.
+
+Near-z080 при512px имеет404–1665 predicted pixels для rig101 и305–1489 для rig104, но full IoU0. Расстояние центроидов до independent target —52.660–58.980px и51.174–59.649px соответственно, против прежних52.653–58.972px и50.878–59.429px. В остальных raised factors surviving coded component по-прежнему отсутствует. У238 пар predicted area уменьшилась на1–33 pixels, у242 совпала; увеличение разрешения не создало ни одного нового target overlap для raised cases. Counts и centroids здесь описывают разные формы ошибки и не заменяются aggregate RGB MAE.
+
+![Разности всех парных метрик при увеличении cubemap resolution](figures/experiments/parallax_sampling_metrics.png)
+
+Рисунок4.74 — все12 factors×5 carriers×4 profiles;512 минус256, средние двух зависимых poses. Каждая панель имеет собственную симметричную шкалу. Conditional mean undefined, если хотя бы один pose undefined; такие данные не исключены из среднего. Нулевые raised IoU deltas означают одинаковый провал overlap, а не одинаковые RGBA.
+
+Таким образом, в пределах этого контрольного опыта детализация cubemap256px **не является достаточным объяснением** полного отсутствия overlap поднятых объектов: повышение до512px изменяет pixels, но не устраняет ошибку. Это не доказательство отсутствия sampling contribution вообще: остаются фиксированные400px fisheye inputs,320×180 raster, bilinear filtering, порог chroma и component policy, ограниченная source visibility и конечная triangulation. Для строгого разделения геометрии и sampling необходимы отдельные source/output-resolution серии и correspondence/triangle-hit контроль. Optical-height/baseline sweep, натуральные объекты, независимые scene families и целевое устройство остаются открытыми. Проверка повторного audit —побитное совпадение paired baseline; CTest object_metrics/blender_fixture/render_fusion_parity/render_modes:4/4,5.82s. Полные hashes/команды: [[validation/PARALLAX_SAMPLING]].

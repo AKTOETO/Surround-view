@@ -157,3 +157,7 @@ sha256sum assets/demo/urban_street_01_1k.hdr \
 ## A05 — Полностью помещающийся в кадр объект, два монтажа
 
 `assets/scenarios/parallax-framed-v1.json` —авторский recipe12 controlled cases, rig seeds101/104, новый общий virtual view с origin target и full-box margin. Внешние models/downloads не используются. Генератор остаётся `tools/blender/parallax_study.py`; flat road/ego/box восстанавливаются из checked-in helpers без .blend/LFS. Это два монтажа одного стенда, не две независимые scene families. Provenance/native reports/raw captures —generated artifacts; source recipe, compact audit и подписанные рисунки включены в Git. Полный pipeline: [[engineering/BLENDER#Полный объект в кадре: два варианта монтажа]], [[validation/PARALLAX_FRAMED]]. Неудачный exploratory вариант с unsupported target_m сохранён отдельно в artifacts, не используется как evidence финальной серии.
+
+## A06 — Рецепт парного контроля cubemap resolution
+
+`assets/scenarios/parallax-sampling-v1.json` —авторская копия A05 с единственным изменением `capture.face_size=512`. Все12 positions/mount cases сохранены. Используется прежний versioned `tools/blender/parallax_study.py`; сторонних загрузок и .blend/LFS нет. Raw cubemap, derived fisheye replay, native RGBA/reports —generated `artifacts/parallax-sampling-*`; recipes, audit comparison и подписанные дипломные рисунки входят в Git. Низкодетальный оригинал A05 не удаляется и не подменяется. Протокол/команды: [[research/PARALLAX_SAMPLING_PROTOCOL]], [[engineering/USAGE#Парный контроль разрешения cubemap]].

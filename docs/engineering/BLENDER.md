@@ -267,3 +267,13 @@ capture_study(root/'assets/scenarios/parallax-framed-v1.json', root/'artifacts/p
 ```
 
 Тот же versioned generator сохраняет helper/master/local-plan hashes, retained mesh inventory и progress. Активная пользовательская Scene восстанавливается. Требуется новый output каталог. После state=complete используйте [[engineering/USAGE#Полностью помещающийся в кадр объект и два монтажа]]. Legacy Blender virtual_pose умеет optional target_m, но production config этого поля не поддерживает: не добавляйте его в server study. Frozen framed validator отвергает такое расширение; перед финальной серией пять native configurations проверены geometry probe. Протокол: [[research/PARALLAX_FRAMED_PROTOCOL]].
+
+## Парный контроль разрешения cubemap
+
+Новый recipe `assets/scenarios/parallax-sampling-v1.json` сохраняет все 12 framed cases, меняя только грани cubemap 256→512. Выполнить в Blender Console после загрузки прежних imports:
+
+```python
+capture_study(root/'assets/scenarios/parallax-sampling-v1.json', root/'artifacts/parallax-sampling-inputs-v1')
+```
+
+Выходной каталог должен отсутствовать. Не менять старые helpers или framed asset: парный audit сверяет их hashes, полные конфигурации/позы и decoded direct RGB/object-ID/visibility. Старые 256px captures сохраняются для сравнения; переснятая серия не подменяет их. Дождаться `progress.json: state=complete` и остановить capture перед native trials. Протокол: [[research/PARALLAX_SAMPLING_PROTOCOL]], команды: [[engineering/USAGE#Парный контроль разрешения cubemap]].

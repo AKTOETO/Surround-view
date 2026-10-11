@@ -122,3 +122,11 @@ MPLCONFIGDIR=/tmp/sv-matplotlib python3 docs/diploma/plot_server_boundary.py --r
 ```sh
 MPLCONFIGDIR=/tmp/sv-matplotlib python3 docs/diploma/plot_server_boundary.py --report docs/validation/baselines/parallax_framed_v1.json --captures-root artifacts/parallax-framed-v2 --inputs-root artifacts/parallax-framed-inputs-v2
 ```
+
+§4.56 — парный cubemap sampling control,256→512 при фиксированных fisheye400/output320×180. Генератор рисунков4.73–4.74:
+
+```sh
+MPLCONFIGDIR=/tmp/sv-matplotlib python3 docs/diploma/plot_server_boundary.py --report docs/validation/baselines/parallax_sampling_v1.json --captures-root artifacts/parallax-sampling-v1 --inputs-root artifacts/parallax-sampling-inputs-v1 --reference-root artifacts/parallax-framed-v2
+```
+
+Нужны raw данные обеих серий; regeneration figures не запускает новые серверные trials. Протокол: [[research/PARALLAX_SAMPLING_PROTOCOL]].

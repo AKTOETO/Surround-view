@@ -921,3 +921,20 @@ MPLCONFIGDIR=/tmp/sv-matplotlib python3 docs/diploma/plot_server_boundary.py --r
 Source hashes, config/trajectory equality внутри rig, intrinsics/non-camera settings между rigs, full-box margin≥8px и direct-ID border проверяются audit. Conditional score=null при пустом visibility support. Не заменяйте null нулём и не подбирайте view после сравнения quality. Протокол/результаты: [[research/PARALLAX_FRAMED_PROTOCOL]], [[validation/PARALLAX_FRAMED]].
 
 В этой проверенной серии GLVND выбрал NVIDIA RTX5070Ti даже при LIBGL_ALWAYS_SOFTWARE=1. Для паспорта опыта используйте `render_device` нового audit и `catalog.gl_vendor/gl_renderer` native reports, а не environment flag. При сравнении платформ фиксируйте CPU fusion и GLES renderer отдельно; frozen CPU-Mesa wording уточнена в [[validation/PARALLAX_FRAMED]].
+
+## Парный контроль разрешения cubemap
+
+Сначала выполнить новый Blender capture по [[engineering/BLENDER#Парный контроль разрешения cubemap]]. Затем запустить native серию (новый root, без параллельного Blender/сборки/тестов):
+
+```sh
+python3 tools/research/parallax_height.py --plan configs/research/parallax-sampling-plan.json --root artifacts/parallax-sampling-v1 --inputs artifacts/parallax-sampling-inputs-v1 --run-binaries build --output artifacts/parallax-sampling-v1/summary.json
+```
+
+Отдельная read-only команда перепроверяет обе серии, воспроизводит прежний baseline и создаёт все 480 пар. Требуются сохранённые raw данные обеих серий; одних JSON недостаточно:
+
+```sh
+python3 tools/research/parallax_height.py --plan configs/research/parallax-sampling-plan.json --root artifacts/parallax-sampling-v1 --inputs artifacts/parallax-sampling-inputs-v1 --sampling-baseline docs/validation/baselines/parallax_framed_v1.json --reference-root artifacts/parallax-framed-v2 --reference-inputs artifacts/parallax-framed-inputs-v2 --output artifacts/parallax-sampling-v1/paired.json
+MPLCONFIGDIR=/tmp/sv-matplotlib python3 docs/diploma/plot_server_boundary.py --report artifacts/parallax-sampling-v1/paired.json --captures-root artifacts/parallax-sampling-v1 --inputs-root artifacts/parallax-sampling-inputs-v1 --reference-root artifacts/parallax-framed-v2
+```
+
+Проверяются фактические размеры всех cubemap faces, неизменные 400×400 fisheye inputs, direct truth и native binaries/device. Разности — 512 минус 256; `null` не заменяется нулём. Это sampling control на одном flat-world family, а не подтверждение пригодности на Авроре или сходимости по всем разрешениям: [[research/PARALLAX_SAMPLING_PROTOCOL]].
