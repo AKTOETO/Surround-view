@@ -156,3 +156,7 @@ python3 tools/compare_visibility.py \
 ### Многометочный seam solver
 
 `fusion.seam_solver=binary_pairs|alpha_expansion` применяется в graph_cut_seam и graph_cut_multi_band. Catalog v4 объявляет integer_potts_v1 и восемь sweeps. Default field binary_pairs может отсутствовать в snapshot для совместимости; optional alpha передаётся явно. Global observed graph включает anchors и 3/4-camera overlaps; masks unavailable labels запрещены. В multi-band output Gaussian blur/pyramid следуют после hard labels. Actual frame содержит seam_optimization с convergence/energy, но energy не является RGB quality score. Формулы, budgets, tie policy и проверенные отрицательные результаты: [[validation/MULTILABEL_SEAM]].
+
+## Учёт бюджета носителя
+
+`Renderer::mesh_resources()` и frame `mesh_resources` содержат `scope=carrier_position_index_buffers`, объекты `active`/`resident` с vertices, indices, triangles, vertex_buffer_bytes, index_buffer_bytes, buffer_bytes. Active учитывает текущую surface; resident также учитывает неактивные carrier meshes, остающиеся после переключений. Это payload размеров `glBufferData` для float3 positions/unsigned indices, а не full GPU memory или RSS; textures/FBO/depth/ego/CPU capacity/driver overhead исключены. Для чистых resource comparisons запускайте новый server process на carrier. Known-answer counts/retained buffers и live Unix/TCP metadata проверены; первая budget series: [[validation/CARRIER_BUDGET]].

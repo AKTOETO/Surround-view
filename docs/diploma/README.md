@@ -74,3 +74,9 @@ MPLCONFIGDIR=/tmp/sv-matplotlib python3 docs/diploma/plot_server_boundary.py --r
 ```sh
 MPLCONFIGDIR=/tmp/sv-matplotlib python3 docs/diploma/plot_server_boundary.py --report docs/validation/baselines/seam_generalization_v1.json --captures-root artifacts/seam-generalization-v1/seed101-run --fixture artifacts/seam-generalization-v1/seed101-inputs --capture artifacts/seam-generalization-v1/seed101-capture
 ```
+
+§4.48 —120 native условий сравнения пяти носителей с сопоставимым числом треугольников и общими mesh-buffer ceilings: [[validation/CARRIER_BUDGET]]. Рисунки4.52–4.54:
+
+```sh
+MPLCONFIGDIR=/tmp/sv-matplotlib python3 docs/diploma/plot_server_boundary.py --report docs/validation/baselines/carrier_budget_v1.json --captures-root artifacts/carrier-budget-v1 --fixture artifacts/seam-generalization-v1/seed101-inputs --capture artifacts/seam-generalization-v1/seed101-capture
+```

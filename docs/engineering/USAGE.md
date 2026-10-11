@@ -724,3 +724,54 @@ python3 tools/research/server_boundary.py --study-plan assets/scenarios/seam-gen
 ```
 
 Audit только читает данные, не запускает продукты. При новой генерации используйте новый study root и пути reports/captures; пример root исходного опыта приведён для объяснения структуры. Неполная трёхcase серия не объявляется завершённой. Физические camera tests и независимые типы окружения этим протоколом не заменены.
+
+### Сравнение носителей в общем бюджете
+
+Протокол: [[research/CARRIER_BUDGET_PROTOCOL]], результаты: [[validation/CARRIER_BUDGET]]. Нужны captured/converted seeds101–103 из предыдущего раздела; Python ниже только создаёт исследовательские config copies и provenance. Рендеринг/сшивку и orchestration trials выполняют C++ server и `svctl research`.
+
+Подготовить все пятнадцать configs и заморозить hashes до запуска:
+
+```sh
+python3 - <<'PY'
+from pathlib import Path
+import hashlib, json
+root = Path('artifacts/carrier-budget-v1')
+plan_path = Path('configs/research/carrier-budget-plan.json')
+plan = json.loads(plan_path.read_text())
+root.mkdir(parents=True, exist_ok=True)
+sha = lambda p: hashlib.sha256(Path(p).read_bytes()).hexdigest()
+(root/'provenance.json').write_text(json.dumps(dict(
+    plan_sha256=sha(plan_path), inputs_plan_sha256=sha(plan['inputs_plan']),
+    scenario_sha256=sha(plan['scenario'])), indent=2)+'\n')
+for seed in plan['seeds']:
+    for carrier in plan['carriers']:
+        out = root/f'seed{seed}'/carrier['id']
+        out.mkdir(parents=True, exist_ok=True)
+        cfg = json.loads(Path(f'artifacts/seam-generalization-v1/seed{seed}-inputs/config.json').read_text())
+        cfg['surface'] = carrier['surface']
+        (out/'config.json').write_text(json.dumps(cfg, indent=2)+'\n')
+PY
+```
+
+Пример одной пары seed/carrier, первый терминал:
+
+```sh
+SV_EGL_PLATFORM=surfaceless __EGL_VENDOR_LIBRARY_FILENAMES=/usr/share/glvnd/egl_vendor.d/50_mesa.json build/sv-server --config artifacts/carrier-budget-v1/seed101/plane/config.json --manifest artifacts/seam-generalization-v1/seed101-inputs/manifest.json --ipc-dir /tmp/sv-budget-example --trace artifacts/carrier-budget-v1/seed101/plane/trace.jsonl
+```
+
+Во втором терминале:
+
+```sh
+build/svctl --unix /tmp/sv-budget-example --timeout-ms 10000 research configs/research/boundary-sequence.json artifacts/carrier-budget-v1/seed101/plane/report.json
+```
+
+Завершить первый server через Ctrl+C, повторить с новым process для каждой комбинации seeds101/102/103 и plane/bowl/dome_floor/cylinder_floor/cube_floor (соответствующие пути в frozen plan). Не менять surface внутри одного process этой серии: retained carrier buffers нарушат условие active=resident. Не выполнять одновременно сборку, CTest или Blender rendering. При ошибке сохранить неудачный report отдельно, а не смешивать его с успешной полной серией. Для другой машины путь Mesa vendor JSON может отсутствовать; выбранный EGL backend указать в отчёте и не смешивать fingerprints/platforms.
+
+Когда готовы все пятнадцать reports:
+
+```sh
+python3 tools/research/server_boundary.py --budget-plan configs/research/carrier-budget-plan.json --budget-root artifacts/carrier-budget-v1 --inputs-root artifacts/seam-generalization-v1 --output artifacts/carrier-budget-v1/audit.json
+MPLCONFIGDIR=/tmp/sv-matplotlib python3 docs/diploma/plot_server_boundary.py --report artifacts/carrier-budget-v1/audit.json --captures-root artifacts/carrier-budget-v1 --fixture artifacts/seam-generalization-v1/seed101-inputs --capture artifacts/seam-generalization-v1/seed101-capture
+```
+
+Аудитор требует все120 условий, actual metadata/budget consistency, frozen profiles/recipes/hashes и успешный settings restore. Сравнение ограничено mesh position/index payload; оно не уравнивает full memory, raster work или spatial density и не ранжирует скорость носителей. Для изменения бюджета/геометрии создать новую версию plan/protocol/output, а не перезаписывать опубликованный baseline.

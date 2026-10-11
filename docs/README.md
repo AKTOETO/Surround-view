@@ -95,3 +95,5 @@ Convergence 256→512 и три варианта улицы с EV stress: [[vali
 Native sequential research и textured boundary follow-up: [[validation/SERVER_BOUNDARY]], frozen [[research/SERVER_BOUNDARY_PROTOCOL]], runtime [[validation/RESEARCH_RUNTIME]]. В §4.45 диплома опубликованы positive/negative paired результаты и actual server RGBA; это прежние fixtures, не holdout.
 
 Multilabel server candidate/cost/global-gap controls: [[validation/MULTILABEL_SEAM]], protocol [[research/MULTILABEL_SEAM_PROTOCOL]]. Новые seeded world/mount recipes: [[research/SEAM_GENERALIZATION_PROTOCOL]]; Blender MCP доступен.
+
+Первое сравнение носителей при общем mesh budget: [[validation/CARRIER_BUDGET]], frozen plan: [[research/CARRIER_BUDGET_PROTOCOL]], диплом§4.48.

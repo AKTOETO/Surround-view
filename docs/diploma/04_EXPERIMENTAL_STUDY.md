@@ -1442,3 +1442,46 @@ RGB MAE уменьшилась в4/12 пар и выросла в8/12; IoU ул�
 *Рисунок 4.51 — seed101, два заранее заданных кадра: слева прямой Blender RGB, далее четыре серверных профиля. Выбран первый экземпляр по протоколу, а не лучший результат. Вытягивание магентового блока показывает геометрическую ошибку поверхности-носителя, сохраняющуюся при истинной калибровке.*
 
 Снижение Potts energy не доказывает улучшения изображения. Существующий носитель не восстанавливает глубину поднятых объектов, а многометочный solver не устраняет эту неоднозначность. На данном наборе оснований заменить default binary_pairs нет. Вывод ограничен тремя экземплярами одного генератора и короткими последовательностями: нельзя считать12 пар независимыми clips или переносить coded-object IoU на естественные ghost trails. Для завершения исследования остаются разные семейства сцен, длинные clips, natural-object correspondence, calibration ablation и равные бюджеты носителей. Скрипт рисунков — `plot_server_boundary.py`; raw отчёт — `validation/baselines/seam_generalization_v1.json`.
+
+## 4.48. Сравнение поверхностей при сопоставимом бюджете сетки
+
+Предыдущие carrier screens использовали разные дискретизации. Для исключения этой части смешения факторов зафиксированы пять profiles с общими пределами:3190–3210 active triangles,≤1810 vertices,≤60500 bytes position/index buffers. Диапазон разрешён заранее из-за разной топологии сеток; точное равенство полной памяти и вычислений не предполагается. План и протокол: [[research/CARRIER_BUDGET_PROTOCOL]].
+
+C++ сервер сообщает фактические active/resident vertices, indices, triangles и bytes. Это позволяет учитывать дополнительные flat-boundary линии make_mesh и обнаружить неактивные буферы после переключения surface. Каждый seed/carrier проверяется свежим process; active=resident подтверждено. Для mesh payload:
+
+$$B_{mesh}=3N_v\operatorname{sizeof}(float)+N_i\operatorname{sizeof}(unsigned),\qquad N_t=N_i/3.$$
+
+В текущем ABI обе sizeof равны4. CPU double positions/vector capacity, driver allocations, textures/FBO/depth и ego mesh в эту величину не входят. Output и camera inputs одинаковы; equal triangles не уравнивают raster coverage, локальную density или GPU work.
+
+| Носитель | Фактические triangles | Vertices | Position/index bytes |
+|---|---:|---:|---:|
+| plane | 3196 | 1680 | 58512 |
+| bowl | 3196 | 1680 | 58512 |
+| dome_floor_v1 | 3200 | 1666 | 58392 |
+| cylinder_floor_v1 | 3200 | 1730 | 59160 |
+| cube_floor_v1 | 3208 | 1806 | 60168 |
+
+![Фактические ресурсы носителей](figures/experiments/carrier_budget_resources.png)
+
+*Рисунок 4.52 — активные triangle/vertex counts и bytes запрошенных position/index buffers. Красные линии — общие потолки. Полная GPU/CPU память не измеряется этими столбцами.*
+
+Размах числа треугольников0.3755%, mesh bytes различаются в пределах58392–60168. На ранее просмотренных seeds101–103 выполнены120 условий: пять surfaces × два кадра × четыре profiles (multi_band/graph_cut_multi_band и zero/normalized). Два warmup и семь randomized blocks дают1080 samples и840 measurement RGBA. Все success/restore, input/truth/hash/budget проверки пройдены; полная регрессия51/51. Этот follow-up exploratory: новые carriers исследуются на знакомых входах одного street generator.
+
+![Ошибки по сценам, носителям и fusion profiles](figures/experiments/carrier_budget_metrics.png)
+
+*Рисунок 4.53 — абсолютные linear RGB MAE и coded-target IoU по seed/carrier/profile; каждая ячейка усредняет только два соседних кадра. Цветовые шкалы метрик раздельны; ячейки не являются независимыми clips.*
+
+| Носитель относительно dome | Диапазон Δ linear RGB MAE | Диапазон Δ coded IoU | RGB лучше / хуже из24 пар |
+|---|---:|---:|---:|
+| plane | +0.000014811…+0.000120689 | +0.000000000…+0.000000000 | 0 / 24 |
+| bowl | +0.001648975…+0.009858366 | -0.000390819…+0.011921873 | 0 / 24 |
+| cylinder_floor_v1 | -0.000004215…-0.000001781 | +0.000000000…+0.000000000 | 24 / 0 |
+| cube_floor_v1 | -0.000050957…-0.000010537 | +0.000000000…+0.000034687 | 24 / 0 |
+
+Каждая строка —24 парных carrier-minus-dome наблюдения, диапазон не является доверительным интервалом. Cylinder/cube имеют немного меньшую RGB MAE, plane немного большую; coded-target IoU почти совпадает. Bowl увеличивает общую MAE во всех24 парах, но улучшает IoU в20 и ухудшает в4. Следовательно, выбор по одному pooled score скрывает конфликт общей цветовой ошибки и формы объекта. Параметры bowl не подбирались, а другие heights/flat extents ещё не проверены.
+
+![Прямой вид и пять носителей при общем бюджете](figures/experiments/carrier_budget_views.png)
+
+*Рисунок 4.54 — первый заранее заданный seed101 и профиль multi_band/zero, оба кадра: direct Blender RGB и actual server RGBA пяти носителей. Близость результатов замкнутых surfaces согласуется с общей плоскостью пола в этих ракурсах; ground/shell coverage ещё не измерена, вытягивание поднятого блока сохраняется.*
+
+Дополнительные60 boundary пар показали уменьшение RGB MAE у normalized во всех60 случаях и ухудшение target IoU в16. Это расширяет предыдущий textured screen, но не обосновывает универсальный выбор normalized. Timings сохранены, однако фиксированный carrier order и отсутствие thermal/frequency контроля не позволяют ранжировать скорость. Необходимо продолжить budget convergence, разделить ground/raised/shell ROI, добавить верхние/боковые views, новые scene families и natural-object truth. Полный raw audit и ограничения: [[validation/CARRIER_BUDGET]].
