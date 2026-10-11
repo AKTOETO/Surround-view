@@ -92,3 +92,9 @@ MPLCONFIGDIR=/tmp/sv-matplotlib python3 docs/diploma/plot_server_boundary.py --r
 ```sh
 MPLCONFIGDIR=/tmp/sv-matplotlib python3 docs/diploma/plot_server_boundary.py --report docs/validation/baselines/spatial_roi_v1.json --inputs-root artifacts/seam-generalization-v1
 ```
+
+§4.51 — native raster coverage пола/оболочки и ограничения прежних ракурсов: [[validation/CARRIER_COVERAGE]]. Рисунок4.59:
+
+```sh
+MPLCONFIGDIR=/tmp/sv-matplotlib python3 docs/diploma/plot_server_boundary.py --report docs/validation/baselines/carrier_coverage_v1.json --captures-root artifacts/carrier-coverage-v1
+```

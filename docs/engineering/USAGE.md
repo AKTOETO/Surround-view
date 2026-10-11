@@ -843,3 +843,14 @@ MPLCONFIGDIR=/tmp/sv-matplotlib python3 docs/diploma/plot_server_boundary.py --r
 ```
 
 Audit перепроверяет inputs/poses/calibration/visibility/reports/RGBA и совпадение прежних metrics, создаёт disjoint ground/other_scene/coded_target interior/boundary masks по direct object IDs и подтверждает pixel-weighted reconstruction прежней MAE. Empty ROI даёт null, не0. Ground —semantic road/markings, other_scene —остальные non-ego objects, не измеренный physical-height class. Полоса границ повторяет прежнее исключение из global metric и теперь измеряется отдельно. Новые masks не заменяют исторический baseline, не являются ghost correspondence или carrier-shell coverage. Результаты/ограничения: [[validation/SPATIAL_ROI]]. Для новых inputs/policy подготовить отдельную версию plan/analysis; текущий набор уже просмотрен и остаётся exploratory.
+
+### Native диагностика покрытия носителя
+
+Исследовательская сборка с `SV_GPU=ON` и `BUILD_TESTING=ON` предоставляет C++ probe над тем же Renderer, который использует сервер:
+
+```sh
+cmake --build build --target sv-carrier-probe -j4
+LIBGL_ALWAYS_SOFTWARE=1 EGL_PLATFORM=surfaceless build/sv-carrier-probe artifacts/carrier-budget-v1/seed101/dome_floor/config.json artifacts/carrier-single
+```
+
+На выходе `carrier-regions.u8` (top-left, один ID на pixel) и `report.json` с layout, pixel counters, mesh resources, config/mask SHA256 и source fingerprint. Input camera frames не нужны. Дополнительный pass выполняется только при запросе локального `RenderInspection`; SV01 API его пока не экспортирует. Значения ID/ограничения и вся15-case matrix: [[research/CARRIER_COVERAGE_PROTOCOL]], [[validation/CARRIER_COVERAGE]]. Geometry coverage не заменяет camera validity, quality truth или triangle-hit coverage; wall-clock render с inspection не использовать для обычных performance trials.

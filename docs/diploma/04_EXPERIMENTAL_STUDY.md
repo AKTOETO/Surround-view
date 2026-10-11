@@ -1583,3 +1583,27 @@ Bowl хуже по дороге во24/24 парах, но лучше по other
 При fine−medium ground interior RGB улучшилась в86/120, но other_scene interior —только50/120 (66 ухудшений и4 ties). Target boundary улучшилась в20, ухудшилась в44 и совпала в56. Поэтому уменьшение общей ошибки при сгущении недостаточно для вывода о natural-object silhouette/ghost quality. Такой вывод требует correspondence и geometric truth, которых stratification не добавляет.
 
 Все native inputs/reports/RGBA перепроверены, source baseline закреплён SHA256; нового product C++ или server trials нет. Условные ROI не являются carrier-shell coverage. Остаются physical-height truth, carrier-hit/triangle coverage, новые views/families/long clips и target validation. Подробные ограничения и воспроизведение: [[validation/SPATIAL_ROI]].
+
+## 4.51. Проверка покрытия кадра полом и оболочкой носителя
+
+После semantic ROI анализа остаётся проверить, какие части самой геометрии видны наблюдателю. Для этого production Renderer дополнен отдельным depth-tested region-ID проходом над фактическими mesh buffers. Модель автомобиля участвует в окклюзии; camera textures/validity не определяют IDs. Методика, определения шести классов и frozen plan описаны в [[research/CARRIER_COVERAGE_PROTOCOL]]. Это геометрическая диагностика, не новая оценка качества сшивки.
+
+Испытаны пять medium meshes предыдущего budget screen и три ракурса при320×180px, distance8.5m, azimuth0.8rad. Historical view: elevation1rad/fov1rad; lateral: elevation0.35rad/fov1.6rad; overhead: elevationπ/2/fov1rad. Все конфиги проходят production validation;15 native masks сохраняют побитовое совпадение обычного RGBA с render без inspection. Дополнительно masks historical view пересечены с шестью прежними independently visible interior ROIs, всего30 пересечений.
+
+| Геометрия | Shell historical, % кадра | Shell lateral, % кадра | Background lateral, % кадра |
+|---|---:|---:|---:|
+| plane | 0 | 0 | 42.608 |
+| bowl | 0 | 0 | 39.363 |
+| dome_floor | 0.325 | 43.944 | 0 |
+| cylinder_floor | 0.325 | 43.944 | 0 |
+| cube_floor | 0.203 | 42.608 | 0 |
+
+![Разметка видимых областей носителя для пяти геометрий и трёх ракурсов](figures/experiments/carrier_coverage_masks.png)
+
+Рисунок4.59 — native geometry-ID raster: floor, shell, поднятый bowl, footprint, ego model и фон. Цвета обозначают геометрию, а не доступность камер или физическую сцену.
+
+В historical кадре enclosure floor занимает92.606–92.727%, автомобиль6.264% и footprint0.806%. В прежней RGB interior ROI оболочка dome/cylinder представлена всего95–187pixels, то есть0.215–0.428%; cube63–117pixels,0.143–0.268%. Таким образом, прежние mesh-budget/refinement опыты преимущественно исследуют пол. Они не дают достаточного основания для вывода о качестве оболочки вокруг наблюдателя. Overhead также имеет0% shell, поэтому повышение elevation само по себе не решает эту проблему.
+
+Боковой ракурс действительно увеличивает shell representation до42.608–43.944%. Plane/bowl при этом оставляют незаполненный фон, в отличие от трёх enclosure. Это проверка геометрической замкнутости в выбранном ракурсе, а не доказательство наличия изображения камер во всех shell pixels. Равенство counters dome/cylinder не означает равенства projected textures. Поднятый bowl классифицируется по интерполированному world.z>1e−6m; эта высота относится к носителю и не является physical-height truth сцены.
+
+Следующий paired experiment должен экспортировать независимые Blender RGB/object-ID/visibility для бокового view и считать ошибки floor/shell отдельно. Использовать прежний direct truth для нового view нельзя. Native inspection пока является локальным render-thread API, без SV01 subscription; дополнительный проход не входит в опубликованные штатные Renderer timings. Raw provenance, masks и ограничения: [[validation/CARRIER_COVERAGE]]. Triangle-hit coverage, другие scene families, natural-object correspondence и целевые trials остаются открытыми.
