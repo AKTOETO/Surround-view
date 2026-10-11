@@ -1,0 +1,510 @@
+{
+  "schema_version": 1,
+  "scope": "exploratory_first_frame_source_surface_localization",
+  "plan_sha256": "07f262d3b0ce91836fb4ee332be6fd52240f0ad1bc30f1538cd2679ad89c7316",
+  "scene_truth_sha256": "43a1ee801f37f390c98a155d91e007db29d4918a973d702bbebb666297e5bf97",
+  "binary_sha256": "5f7c7f6a70dd7d3055fd4942d6eb71971fac2cbbc7a9cf5180f39dd2ce79292e",
+  "collector_sha256": "723e6899ee98327454c77636663ae61e3533617e0bd9b848543520230b47fbef",
+  "probe_source_sha256": "f949ff8d98a2ebb0ae75f425c29807ed3aaadad429b759d18c6f071432002b17",
+  "capture_provenance_sha256": "9be8f358ef4ab96b131d21c8f3b2de6efeeac14e322770f7e99eb43f594df5db",
+  "scene": {
+    "schema_version": 1,
+    "scope": "opaque_subpixel_source_rays_at_native_uv_target_roi",
+    "plan_sha256": "07f262d3b0ce91836fb4ee332be6fd52240f0ad1bc30f1538cd2679ad89c7316",
+    "blender_version": "5.2.2 LTS",
+    "helper_sha256": "8d3060c79795a980018d33fbfff952db1860b30a122399b886b4ef9bb8f84a5f",
+    "archived_truth_sha256": "cc9c5f54261a19501514e40d9800cfadee1f37993881e4afc90605bd737b18ab",
+    "target_visibility_bitwise_equal": true,
+    "direct_mask_bitwise_equal": true,
+    "camera_json_roundtrip_max_abs": 1.1102230246251565e-16,
+    "target_pixels": 178,
+    "source_kinds": {
+      "0": "no_hit_or_invalid_projection",
+      "1": "target",
+      "2": "road",
+      "3": "ego",
+      "4": "other"
+    },
+    "files": {
+      "direct-mask.npy": "6d5fadf66daeb396b9d1e6050a59cfb5d3747f037b5e23ac2d46027ea0667b50",
+      "direct-points.npy": "747120cb53ffca668c97be6818e1f4dc2317a515b977a2807b746790d7fae901",
+      "target-pixels.npy": "8d613781dcb2383dbb4c120fb4fa969361af7cf1a01ac84f985de8986d033491",
+      "target-visibility.npy": "77cc0d00ab622bdf6c64e6fac913d7cab144d56cb1af6eb248fb093469a80f9d",
+      "plane-source-hits.npy": "1103c7082efb36b5f02698a59453a947e3696c36c1ed58bf0242a8a25bfa55e4",
+      "plane-source-kinds.npy": "2afd08e7aa2f40fc32b2d5990f4cc146c95dd87f7d70de62c3301e44ce5de6f1",
+      "bowl-source-hits.npy": "b7d3bebf920bb066e4bbf305df8fd943e427a07a03f2d3c4a6d476feb948fcda",
+      "bowl-source-kinds.npy": "2afd08e7aa2f40fc32b2d5990f4cc146c95dd87f7d70de62c3301e44ce5de6f1",
+      "dome_floor-source-hits.npy": "404afdfeba8a127825a2da3a8ed30c0776ffaec541c502c91a5bf6833da38806",
+      "dome_floor-source-kinds.npy": "2afd08e7aa2f40fc32b2d5990f4cc146c95dd87f7d70de62c3301e44ce5de6f1",
+      "cylinder_floor-source-hits.npy": "d6b85046ef70ffbd63cc30aa8bccb90ece9949185d6e68d3e90ae437064a589f",
+      "cylinder_floor-source-kinds.npy": "2afd08e7aa2f40fc32b2d5990f4cc146c95dd87f7d70de62c3301e44ce5de6f1",
+      "cube_floor-source-hits.npy": "76f7a82d8e8adbd1ccb8ee8d38899dc5c6d376aff2f2c9136c2fd6df17a80507",
+      "cube_floor-source-kinds.npy": "2afd08e7aa2f40fc32b2d5990f4cc146c95dd87f7d70de62c3301e44ce5de6f1"
+    },
+    "native_report_sha256": {
+      "plane": "9c83246800df010601c2c6625474e4052b64a8769ae8af8780bf3d242b86f36d",
+      "bowl": "0b8144327d7d8c8bf5d28c4446b7a837f0bd8598d82ad13668e283fe961028af",
+      "dome_floor": "995a66191725e574f57ac06e36accdad967833585c24152b271adc7e71bfc854",
+      "cylinder_floor": "6cce129a795b782f0a01716e0561747c17b735075baa96e25203e232a6ecff9e",
+      "cube_floor": "b36806092085dbd1071d37cbcb79432f357e7bfeff30e15175f3220c98396ed4"
+    }
+  },
+  "rows": [
+    {
+      "carrier": "plane",
+      "report_sha256": "9c83246800df010601c2c6625474e4052b64a8769ae8af8780bf3d242b86f36d",
+      "reference_report_sha256": "87153511940b1f50558ca2def5a782e350bfb2d32f263fe1dbb325bd0d8ebe92",
+      "output_sha256": "3a062c73511aa9d237ac2b398cccc0470ded29a31d7ceb9401ae66611bca2418",
+      "historical_server_baseline_hash_equal": true,
+      "source_revision": "684083db0b86a9c17c77de0103d11eab371a4478",
+      "source_fingerprint": "fdad9903f4bb27ca0fc9ece04394a95e107a75adb9c37e0ca43932ff02bab61f",
+      "device": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+      "rois": {
+        "all": {
+          "pixels": 178,
+          "source_pairs": 712,
+          "invalid_projection": 534,
+          "no_scene_hit": 0,
+          "wrong_object": 178,
+          "same_object_wrong_point": 0,
+          "matched_surface": 0,
+          "road_pairs": 178,
+          "predicted_target_pixels": 0
+        },
+        "source_visible": {
+          "pixels": 76,
+          "source_pairs": 304,
+          "invalid_projection": 228,
+          "no_scene_hit": 0,
+          "wrong_object": 76,
+          "same_object_wrong_point": 0,
+          "matched_surface": 0,
+          "road_pairs": 76,
+          "predicted_target_pixels": 0
+        },
+        "interior": {
+          "pixels": 102,
+          "source_pairs": 408,
+          "invalid_projection": 306,
+          "no_scene_hit": 0,
+          "wrong_object": 102,
+          "same_object_wrong_point": 0,
+          "matched_surface": 0,
+          "road_pairs": 102,
+          "predicted_target_pixels": 0
+        },
+        "visible_interior": {
+          "pixels": 48,
+          "source_pairs": 192,
+          "invalid_projection": 144,
+          "no_scene_hit": 0,
+          "wrong_object": 48,
+          "same_object_wrong_point": 0,
+          "matched_surface": 0,
+          "road_pairs": 48,
+          "predicted_target_pixels": 0
+        }
+      },
+      "carrier_region_counts": {
+        "1": 178
+      },
+      "carrier_z_m": {
+        "min": 0.0,
+        "p50": 0.0,
+        "max": 0.0
+      },
+      "carrier_to_direct_surface_m": {
+        "min": 0.833581268787384,
+        "p50": 1.3481279611587524,
+        "max": 1.49385404586792
+      },
+      "native_vs_double_projection_px": {
+        "min": 2.7186715260687856e-06,
+        "p50": 3.133627084844354e-05,
+        "max": 8.076200857597864e-05
+      },
+      "visible_true_vs_native_uv_px": {
+        "min": 171.97985208828703,
+        "p50": 203.99694200082547,
+        "max": 240.19520937861463
+      },
+      "valid_edge_weight": {
+        "min": 1.0,
+        "p50": 1.0,
+        "max": 1.0
+      },
+      "predicted_target_full_frame_pixels": 4843,
+      "statuses": {
+        "1": 178,
+        "3": 507,
+        "4": 27
+      }
+    },
+    {
+      "carrier": "bowl",
+      "report_sha256": "0b8144327d7d8c8bf5d28c4446b7a837f0bd8598d82ad13668e283fe961028af",
+      "reference_report_sha256": "549d7125b9d1a660daef059c32feb4355a1697f34d156ddc7d2842281391be12",
+      "output_sha256": "531f2d052113dd1ef235bf3bfb201d8c3b3075b8a84b0c44e8e77a998a15da55",
+      "historical_server_baseline_hash_equal": true,
+      "source_revision": "684083db0b86a9c17c77de0103d11eab371a4478",
+      "source_fingerprint": "fdad9903f4bb27ca0fc9ece04394a95e107a75adb9c37e0ca43932ff02bab61f",
+      "device": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+      "rois": {
+        "all": {
+          "pixels": 178,
+          "source_pairs": 712,
+          "invalid_projection": 534,
+          "no_scene_hit": 0,
+          "wrong_object": 178,
+          "same_object_wrong_point": 0,
+          "matched_surface": 0,
+          "road_pairs": 178,
+          "predicted_target_pixels": 0
+        },
+        "source_visible": {
+          "pixels": 76,
+          "source_pairs": 304,
+          "invalid_projection": 228,
+          "no_scene_hit": 0,
+          "wrong_object": 76,
+          "same_object_wrong_point": 0,
+          "matched_surface": 0,
+          "road_pairs": 76,
+          "predicted_target_pixels": 0
+        },
+        "interior": {
+          "pixels": 102,
+          "source_pairs": 408,
+          "invalid_projection": 306,
+          "no_scene_hit": 0,
+          "wrong_object": 102,
+          "same_object_wrong_point": 0,
+          "matched_surface": 0,
+          "road_pairs": 102,
+          "predicted_target_pixels": 0
+        },
+        "visible_interior": {
+          "pixels": 48,
+          "source_pairs": 192,
+          "invalid_projection": 144,
+          "no_scene_hit": 0,
+          "wrong_object": 48,
+          "same_object_wrong_point": 0,
+          "matched_surface": 0,
+          "road_pairs": 48,
+          "predicted_target_pixels": 0
+        }
+      },
+      "carrier_region_counts": {
+        "4": 178
+      },
+      "carrier_z_m": {
+        "min": 0.0001321851450484246,
+        "p50": 0.0014964065048843622,
+        "max": 0.003855763003230095
+      },
+      "carrier_to_direct_surface_m": {
+        "min": 0.828270673751831,
+        "p50": 1.3450925946235657,
+        "max": 1.4935442209243774
+      },
+      "native_vs_double_projection_px": {
+        "min": 4.611056387801353e-06,
+        "p50": 2.990882063500203e-05,
+        "max": 8.424417122969836e-05
+      },
+      "visible_true_vs_native_uv_px": {
+        "min": 171.5971208966786,
+        "p50": 203.81889437256896,
+        "max": 240.13387128634187
+      },
+      "valid_edge_weight": {
+        "min": 1.0,
+        "p50": 1.0,
+        "max": 1.0
+      },
+      "predicted_target_full_frame_pixels": 6261,
+      "statuses": {
+        "1": 178,
+        "3": 507,
+        "4": 27
+      }
+    },
+    {
+      "carrier": "dome_floor",
+      "report_sha256": "995a66191725e574f57ac06e36accdad967833585c24152b271adc7e71bfc854",
+      "reference_report_sha256": "2fd8d98d425cbdf18d636fb26b102a90cfb415f23bad6b6ee300625173b3e764",
+      "output_sha256": "2efe44c5a31ef287e22b36867f858ea12275df1aa53f6d47127b16fceeff38ef",
+      "historical_server_baseline_hash_equal": true,
+      "source_revision": "684083db0b86a9c17c77de0103d11eab371a4478",
+      "source_fingerprint": "fdad9903f4bb27ca0fc9ece04394a95e107a75adb9c37e0ca43932ff02bab61f",
+      "device": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+      "rois": {
+        "all": {
+          "pixels": 178,
+          "source_pairs": 712,
+          "invalid_projection": 534,
+          "no_scene_hit": 0,
+          "wrong_object": 178,
+          "same_object_wrong_point": 0,
+          "matched_surface": 0,
+          "road_pairs": 178,
+          "predicted_target_pixels": 0
+        },
+        "source_visible": {
+          "pixels": 76,
+          "source_pairs": 304,
+          "invalid_projection": 228,
+          "no_scene_hit": 0,
+          "wrong_object": 76,
+          "same_object_wrong_point": 0,
+          "matched_surface": 0,
+          "road_pairs": 76,
+          "predicted_target_pixels": 0
+        },
+        "interior": {
+          "pixels": 102,
+          "source_pairs": 408,
+          "invalid_projection": 306,
+          "no_scene_hit": 0,
+          "wrong_object": 102,
+          "same_object_wrong_point": 0,
+          "matched_surface": 0,
+          "road_pairs": 102,
+          "predicted_target_pixels": 0
+        },
+        "visible_interior": {
+          "pixels": 48,
+          "source_pairs": 192,
+          "invalid_projection": 144,
+          "no_scene_hit": 0,
+          "wrong_object": 48,
+          "same_object_wrong_point": 0,
+          "matched_surface": 0,
+          "road_pairs": 48,
+          "predicted_target_pixels": 0
+        }
+      },
+      "carrier_region_counts": {
+        "1": 178
+      },
+      "carrier_z_m": {
+        "min": 0.0,
+        "p50": 0.0,
+        "max": 0.0
+      },
+      "carrier_to_direct_surface_m": {
+        "min": 0.8335952162742615,
+        "p50": 1.3480982184410095,
+        "max": 1.493774652481079
+      },
+      "native_vs_double_projection_px": {
+        "min": 1.7420285694767466e-06,
+        "p50": 3.0452867980850882e-05,
+        "max": 6.998437685231398e-05
+      },
+      "visible_true_vs_native_uv_px": {
+        "min": 171.97060641503523,
+        "p50": 203.9908723118173,
+        "max": 240.17886459310122
+      },
+      "valid_edge_weight": {
+        "min": 1.0,
+        "p50": 1.0,
+        "max": 1.0
+      },
+      "predicted_target_full_frame_pixels": 4843,
+      "statuses": {
+        "1": 178,
+        "3": 507,
+        "4": 27
+      }
+    },
+    {
+      "carrier": "cylinder_floor",
+      "report_sha256": "6cce129a795b782f0a01716e0561747c17b735075baa96e25203e232a6ecff9e",
+      "reference_report_sha256": "767c0ca21c6305d6a87e1812162bd85cff79eac6e328d692490d3557997ea92e",
+      "output_sha256": "ceb74a1101e2526ebdf2b8b7bb96ec533b6c292b0197d50d004ce57cf8c19602",
+      "historical_server_baseline_hash_equal": true,
+      "source_revision": "684083db0b86a9c17c77de0103d11eab371a4478",
+      "source_fingerprint": "fdad9903f4bb27ca0fc9ece04394a95e107a75adb9c37e0ca43932ff02bab61f",
+      "device": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+      "rois": {
+        "all": {
+          "pixels": 178,
+          "source_pairs": 712,
+          "invalid_projection": 534,
+          "no_scene_hit": 0,
+          "wrong_object": 178,
+          "same_object_wrong_point": 0,
+          "matched_surface": 0,
+          "road_pairs": 178,
+          "predicted_target_pixels": 0
+        },
+        "source_visible": {
+          "pixels": 76,
+          "source_pairs": 304,
+          "invalid_projection": 228,
+          "no_scene_hit": 0,
+          "wrong_object": 76,
+          "same_object_wrong_point": 0,
+          "matched_surface": 0,
+          "road_pairs": 76,
+          "predicted_target_pixels": 0
+        },
+        "interior": {
+          "pixels": 102,
+          "source_pairs": 408,
+          "invalid_projection": 306,
+          "no_scene_hit": 0,
+          "wrong_object": 102,
+          "same_object_wrong_point": 0,
+          "matched_surface": 0,
+          "road_pairs": 102,
+          "predicted_target_pixels": 0
+        },
+        "visible_interior": {
+          "pixels": 48,
+          "source_pairs": 192,
+          "invalid_projection": 144,
+          "no_scene_hit": 0,
+          "wrong_object": 48,
+          "same_object_wrong_point": 0,
+          "matched_surface": 0,
+          "road_pairs": 48,
+          "predicted_target_pixels": 0
+        }
+      },
+      "carrier_region_counts": {
+        "1": 178
+      },
+      "carrier_z_m": {
+        "min": 0.0,
+        "p50": 0.0,
+        "max": 0.0
+      },
+      "carrier_to_direct_surface_m": {
+        "min": 0.8335516452789307,
+        "p50": 1.3480506539344788,
+        "max": 1.493722677230835
+      },
+      "native_vs_double_projection_px": {
+        "min": 3.886184054196606e-06,
+        "p50": 2.8960932662793747e-05,
+        "max": 8.978537984435854e-05
+      },
+      "visible_true_vs_native_uv_px": {
+        "min": 171.9644841773196,
+        "p50": 203.97685077671906,
+        "max": 240.16818604928145
+      },
+      "valid_edge_weight": {
+        "min": 1.0,
+        "p50": 1.0,
+        "max": 1.0
+      },
+      "predicted_target_full_frame_pixels": 4843,
+      "statuses": {
+        "1": 178,
+        "3": 507,
+        "4": 27
+      }
+    },
+    {
+      "carrier": "cube_floor",
+      "report_sha256": "b36806092085dbd1071d37cbcb79432f357e7bfeff30e15175f3220c98396ed4",
+      "reference_report_sha256": "6b9a423b92549978e2fa35d5affa915a0261f5dd24818016a0d3170b0f061da9",
+      "output_sha256": "f6426f9fb8990336e0316a509de47c4980658713425a9f7ddc32651e691044e3",
+      "historical_server_baseline_hash_equal": true,
+      "source_revision": "684083db0b86a9c17c77de0103d11eab371a4478",
+      "source_fingerprint": "fdad9903f4bb27ca0fc9ece04394a95e107a75adb9c37e0ca43932ff02bab61f",
+      "device": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+      "rois": {
+        "all": {
+          "pixels": 178,
+          "source_pairs": 712,
+          "invalid_projection": 534,
+          "no_scene_hit": 0,
+          "wrong_object": 178,
+          "same_object_wrong_point": 0,
+          "matched_surface": 0,
+          "road_pairs": 178,
+          "predicted_target_pixels": 0
+        },
+        "source_visible": {
+          "pixels": 76,
+          "source_pairs": 304,
+          "invalid_projection": 228,
+          "no_scene_hit": 0,
+          "wrong_object": 76,
+          "same_object_wrong_point": 0,
+          "matched_surface": 0,
+          "road_pairs": 76,
+          "predicted_target_pixels": 0
+        },
+        "interior": {
+          "pixels": 102,
+          "source_pairs": 408,
+          "invalid_projection": 306,
+          "no_scene_hit": 0,
+          "wrong_object": 102,
+          "same_object_wrong_point": 0,
+          "matched_surface": 0,
+          "road_pairs": 102,
+          "predicted_target_pixels": 0
+        },
+        "visible_interior": {
+          "pixels": 48,
+          "source_pairs": 192,
+          "invalid_projection": 144,
+          "no_scene_hit": 0,
+          "wrong_object": 48,
+          "same_object_wrong_point": 0,
+          "matched_surface": 0,
+          "road_pairs": 48,
+          "predicted_target_pixels": 0
+        }
+      },
+      "carrier_region_counts": {
+        "1": 178
+      },
+      "carrier_z_m": {
+        "min": 0.0,
+        "p50": 0.0,
+        "max": 0.0
+      },
+      "carrier_to_direct_surface_m": {
+        "min": 0.8335430026054382,
+        "p50": 1.3480463027954102,
+        "max": 1.4938132762908936
+      },
+      "native_vs_double_projection_px": {
+        "min": 8.834718623866823e-07,
+        "p50": 3.069093021155479e-05,
+        "max": 8.14121470736703e-05
+      },
+      "visible_true_vs_native_uv_px": {
+        "min": 171.96608212158773,
+        "p50": 203.98229515701507,
+        "max": 240.1868319673196
+      },
+      "valid_edge_weight": {
+        "min": 1.0,
+        "p50": 1.0,
+        "max": 1.0
+      },
+      "predicted_target_full_frame_pixels": 4843,
+      "statuses": {
+        "1": 178,
+        "3": 507,
+        "4": 27
+      }
+    }
+  ],
+  "limitations": [
+    "single historical explored scene and frame",
+    "ray-traced opaque point samples are not bilinear antialiased RGB",
+    "no universal ranking or confirmatory hypothesis",
+    "no calibration or target hardware claims"
+  ]
+}
