@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "experiment": "E-STITCH-carrier-coverage-01",
+  "configs": [
+    {
+      "id": "plane",
+      "path": "artifacts/carrier-budget-v1/seed101/plane/config.json",
+      "sha256": "7352c5f45bb1780c40f28b4e448bab070ea42f73cac15b244248e82100de56f5"
+    },
+    {
+      "id": "bowl",
+      "path": "artifacts/carrier-budget-v1/seed101/bowl/config.json",
+      "sha256": "4c97d4120c88ecd93471cb1d526b0b433ce141d2516ca0abbc114b88034a09e9"
+    },
+    {
+      "id": "dome_floor",
+      "path": "artifacts/carrier-budget-v1/seed101/dome_floor/config.json",
+      "sha256": "5e6bb8df1c200d8136faa355c82b53042ffe349a91fc64c2b2e7698f8d9a165f"
+    },
+    {
+      "id": "cylinder_floor",
+      "path": "artifacts/carrier-budget-v1/seed101/cylinder_floor/config.json",
+      "sha256": "9133f028952ea9a9aed5e2d639fb3654a97c6ec69907bf1ce3fff8e1eddba5ad"
+    },
+    {
+      "id": "cube_floor",
+      "path": "artifacts/carrier-budget-v1/seed101/cube_floor/config.json",
+      "sha256": "450b2bda3f323237571a63b6a4e6f823ef11690e8666c34d67b700dadb1eee89"
+    }
+  ],
+  "views": [
+    {
+      "id": "historical",
+      "override": {}
+    },
+    {
+      "id": "lateral",
+      "override": {
+        "elevation_rad": 0.35,
+        "fov_y_rad": 1.6
+      }
+    },
+    {
+      "id": "overhead",
+      "override": {
+        "elevation_rad": 1.5707963267948966
+      }
+    }
+  ],
+  "paired_inputs_root": "artifacts/seam-generalization-v1",
+  "roi_seeds": [
+    101,
+    102,
+    103
+  ]
+}

@@ -15,6 +15,33 @@ sys.path.insert(0, str(ROOT/'tools'))
 from temporal_seam_stability import load_sequence
 
 
+def plot_coverage(data, args):
+    from matplotlib.colors import ListedColormap, BoundaryNorm
+    palette = ['#20242b', '#80b1d3', '#fdb462', '#b3de69', '#bc80bd', '#fb8072']
+    cmap = ListedColormap(palette)
+    norm = BoundaryNorm(np.arange(7)-.5, cmap.N)
+    carriers = list(dict.fromkeys(r['carrier'] for r in data['results']))
+    views = list(dict.fromkeys(r['view'] for r in data['results']))
+    fig, axes = plt.subplots(len(carriers), len(views), figsize=(13, 12))
+    for row in data['results']:
+        path = args.captures_root/row['directory']/'carrier-regions.u8'
+        if hashlib.sha256(path.read_bytes()).hexdigest() != row['mask_sha256']:
+            raise ValueError('carrier mask checksum mismatch')
+        mask = np.fromfile(path, dtype=np.uint8).reshape(row['height'], row['width'])
+        ax = axes[carriers.index(row['carrier']), views.index(row['view'])]
+        ax.imshow(mask, cmap=cmap, norm=norm)
+        ax.set_title(f"{row['carrier']} / {row['view']}")
+        ax.set_axis_off()
+    from matplotlib.patches import Patch
+    fig.legend(handles=[Patch(color=c, label=n) for c,n in zip(palette, data['labels'])],
+               loc='lower center', ncol=3)
+    fig.suptitle('Depth-tested carrier geometry; no source-camera validity or scene-quality claim')
+    fig.tight_layout(rect=(0,.06,1,.97))
+    args.output.mkdir(parents=True, exist_ok=True)
+    fig.savefig(args.output/'carrier_coverage_masks.png', dpi=150)
+    plt.close(fig)
+
+
 def plot_optimizer(path, output):
     data = json.loads(path.read_text())
     test = next(t for suite in data['testsuites'] for t in suite['testsuite']
@@ -236,6 +263,9 @@ def main():
     parser.add_argument('--inputs-root', type=Path, default=ROOT/'artifacts/seam-generalization-v1')
     args = parser.parse_args()
     report = json.loads(args.report.read_text())
+    if report.get('experiment') == 'E-STITCH-carrier-coverage-01':
+        plot_coverage(report, args)
+        return
     if report.get('experiment') == 'E-STITCH-spatial-roi-01':
         plot_spatial(report,args)
         return

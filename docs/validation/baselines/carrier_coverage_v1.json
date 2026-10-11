@@ -1,0 +1,1174 @@
+{
+  "schema_version": 1,
+  "experiment": "E-STITCH-carrier-coverage-01",
+  "plan_sha256": "de17f0e4a1877ddfc106f0b978af93c5a47c309be8e46b519dae45764a71b1e6",
+  "source_fingerprint": "601a3878ba99e6bc953756bbc0c40e969fdb0c89c5d7487349332b7960ac87f4",
+  "scope": "geometry_only_no_quality_ranking",
+  "labels": [
+    "background",
+    "floor",
+    "shell",
+    "vehicle_footprint",
+    "raised_bowl",
+    "vehicle_model"
+  ],
+  "results": [
+    {
+      "carrier": "plane",
+      "view": "historical",
+      "pixels": {
+        "background": 117,
+        "floor": 53411,
+        "shell": 0,
+        "vehicle_footprint": 464,
+        "raised_bowl": 0,
+        "vehicle_model": 3608
+      },
+      "fractions": {
+        "background": 0.00203125,
+        "floor": 0.9272743055555556,
+        "shell": 0.0,
+        "vehicle_footprint": 0.008055555555555555,
+        "raised_bowl": 0.0,
+        "vehicle_model": 0.06263888888888888
+      },
+      "width": 320,
+      "height": 180,
+      "directory": "plane/historical",
+      "mask_sha256": "b2c034a18c3a5d5da1e8ea3585cb9adb9abb594b9d2fdcf4d76c32d3b3c69bd5",
+      "report_sha256": "b6a24f018d5a07052c8f2ab6dc9feafe6ffe3469722f22e5bc0e7ae5b7fc3b32",
+      "config_sha256": "7352c5f45bb1780c40f28b4e448bab070ea42f73cac15b244248e82100de56f5",
+      "mesh_resources": {
+        "scope": "carrier_position_index_buffers",
+        "active": {
+          "vertices": 1680,
+          "indices": 9588,
+          "triangles": 3196,
+          "vertex_buffer_bytes": 20160,
+          "index_buffer_bytes": 38352,
+          "buffer_bytes": 58512
+        },
+        "resident": {
+          "vertices": 1680,
+          "indices": 9588,
+          "triangles": 3196,
+          "vertex_buffer_bytes": 20160,
+          "index_buffer_bytes": 38352,
+          "buffer_bytes": 58512
+        }
+      }
+    },
+    {
+      "carrier": "plane",
+      "view": "lateral",
+      "pixels": {
+        "background": 24542,
+        "floor": 32219,
+        "shell": 0,
+        "vehicle_footprint": 172,
+        "raised_bowl": 0,
+        "vehicle_model": 667
+      },
+      "fractions": {
+        "background": 0.4260763888888889,
+        "floor": 0.5593576388888889,
+        "shell": 0.0,
+        "vehicle_footprint": 0.0029861111111111113,
+        "raised_bowl": 0.0,
+        "vehicle_model": 0.011579861111111112
+      },
+      "width": 320,
+      "height": 180,
+      "directory": "plane/lateral",
+      "mask_sha256": "30454326714da12f8b53b6cb7e77c9c7966c640aeced2039036a9146c27871bf",
+      "report_sha256": "e6f29c06a252622d14f34bb21531d477d48a83a060649b5ff7d6f1978ca09293",
+      "config_sha256": "83b1a62a303bc0e80d5828b0f3b4ec69226d1f4e561f88f807445b0e56a9b257",
+      "mesh_resources": {
+        "scope": "carrier_position_index_buffers",
+        "active": {
+          "vertices": 1680,
+          "indices": 9588,
+          "triangles": 3196,
+          "vertex_buffer_bytes": 20160,
+          "index_buffer_bytes": 38352,
+          "buffer_bytes": 58512
+        },
+        "resident": {
+          "vertices": 1680,
+          "indices": 9588,
+          "triangles": 3196,
+          "vertex_buffer_bytes": 20160,
+          "index_buffer_bytes": 38352,
+          "buffer_bytes": 58512
+        }
+      }
+    },
+    {
+      "carrier": "plane",
+      "view": "overhead",
+      "pixels": {
+        "background": 0,
+        "floor": 53704,
+        "shell": 0,
+        "vehicle_footprint": 132,
+        "raised_bowl": 0,
+        "vehicle_model": 3764
+      },
+      "fractions": {
+        "background": 0.0,
+        "floor": 0.9323611111111111,
+        "shell": 0.0,
+        "vehicle_footprint": 0.0022916666666666667,
+        "raised_bowl": 0.0,
+        "vehicle_model": 0.06534722222222222
+      },
+      "width": 320,
+      "height": 180,
+      "directory": "plane/overhead",
+      "mask_sha256": "403ca8f12a8f60c031d8053f45f9f26f6b46816537c328e33655359209e8f0ad",
+      "report_sha256": "ca557c6703ae1ca05af0c6ba1a38371ab5f97810ec3964feec2e70a6063d6b97",
+      "config_sha256": "aeb28eb8345a85d65a12371d0773518112f2f5fa7dc5a2bcf89e8b4a5df41fd7",
+      "mesh_resources": {
+        "scope": "carrier_position_index_buffers",
+        "active": {
+          "vertices": 1680,
+          "indices": 9588,
+          "triangles": 3196,
+          "vertex_buffer_bytes": 20160,
+          "index_buffer_bytes": 38352,
+          "buffer_bytes": 58512
+        },
+        "resident": {
+          "vertices": 1680,
+          "indices": 9588,
+          "triangles": 3196,
+          "vertex_buffer_bytes": 20160,
+          "index_buffer_bytes": 38352,
+          "buffer_bytes": 58512
+        }
+      }
+    },
+    {
+      "carrier": "bowl",
+      "view": "historical",
+      "pixels": {
+        "background": 0,
+        "floor": 627,
+        "shell": 0,
+        "vehicle_footprint": 464,
+        "raised_bowl": 52901,
+        "vehicle_model": 3608
+      },
+      "fractions": {
+        "background": 0.0,
+        "floor": 0.010885416666666667,
+        "shell": 0.0,
+        "vehicle_footprint": 0.008055555555555555,
+        "raised_bowl": 0.9184201388888888,
+        "vehicle_model": 0.06263888888888888
+      },
+      "width": 320,
+      "height": 180,
+      "directory": "bowl/historical",
+      "mask_sha256": "002890547a1d855e54bb09ffbad12e1eef576349fc6fd9917c6e1472a650bb81",
+      "report_sha256": "c8d5b18bcf026840371d73b49448c1491c4f1696bc99569ff88a37e397c80e49",
+      "config_sha256": "4c97d4120c88ecd93471cb1d526b0b433ce141d2516ca0abbc114b88034a09e9",
+      "mesh_resources": {
+        "scope": "carrier_position_index_buffers",
+        "active": {
+          "vertices": 1680,
+          "indices": 9588,
+          "triangles": 3196,
+          "vertex_buffer_bytes": 20160,
+          "index_buffer_bytes": 38352,
+          "buffer_bytes": 58512
+        },
+        "resident": {
+          "vertices": 1680,
+          "indices": 9588,
+          "triangles": 3196,
+          "vertex_buffer_bytes": 20160,
+          "index_buffer_bytes": 38352,
+          "buffer_bytes": 58512
+        }
+      }
+    },
+    {
+      "carrier": "bowl",
+      "view": "lateral",
+      "pixels": {
+        "background": 22673,
+        "floor": 93,
+        "shell": 0,
+        "vehicle_footprint": 172,
+        "raised_bowl": 33995,
+        "vehicle_model": 667
+      },
+      "fractions": {
+        "background": 0.39362847222222225,
+        "floor": 0.0016145833333333333,
+        "shell": 0.0,
+        "vehicle_footprint": 0.0029861111111111113,
+        "raised_bowl": 0.5901909722222223,
+        "vehicle_model": 0.011579861111111112
+      },
+      "width": 320,
+      "height": 180,
+      "directory": "bowl/lateral",
+      "mask_sha256": "3b82588d69e592d924b918014efff10183a4b2c94784d89abbbcf5c560057845",
+      "report_sha256": "d26fcc9173242dbddd47501f24046b02f4585725e14f9ae47f362c4fcec64f46",
+      "config_sha256": "efb3cdec1bc206a9980a9a2282512e0d9f9a7f6d99ae2eeffe7a2e6704a6424f",
+      "mesh_resources": {
+        "scope": "carrier_position_index_buffers",
+        "active": {
+          "vertices": 1680,
+          "indices": 9588,
+          "triangles": 3196,
+          "vertex_buffer_bytes": 20160,
+          "index_buffer_bytes": 38352,
+          "buffer_bytes": 58512
+        },
+        "resident": {
+          "vertices": 1680,
+          "indices": 9588,
+          "triangles": 3196,
+          "vertex_buffer_bytes": 20160,
+          "index_buffer_bytes": 38352,
+          "buffer_bytes": 58512
+        }
+      }
+    },
+    {
+      "carrier": "bowl",
+      "view": "overhead",
+      "pixels": {
+        "background": 0,
+        "floor": 796,
+        "shell": 0,
+        "vehicle_footprint": 132,
+        "raised_bowl": 52908,
+        "vehicle_model": 3764
+      },
+      "fractions": {
+        "background": 0.0,
+        "floor": 0.013819444444444445,
+        "shell": 0.0,
+        "vehicle_footprint": 0.0022916666666666667,
+        "raised_bowl": 0.9185416666666667,
+        "vehicle_model": 0.06534722222222222
+      },
+      "width": 320,
+      "height": 180,
+      "directory": "bowl/overhead",
+      "mask_sha256": "f84fabebeaa5b237575dce98dff665e1e0e87ad4833e7a54616e21430b59a5c8",
+      "report_sha256": "77a8af50d221acf8b10a0cc9f9e4fe73aeb7002b284d54756656235abbe6babc",
+      "config_sha256": "5998cf237ae2aad93a817514404e0d0af88149bae3babd5babdfc36c96138073",
+      "mesh_resources": {
+        "scope": "carrier_position_index_buffers",
+        "active": {
+          "vertices": 1680,
+          "indices": 9588,
+          "triangles": 3196,
+          "vertex_buffer_bytes": 20160,
+          "index_buffer_bytes": 38352,
+          "buffer_bytes": 58512
+        },
+        "resident": {
+          "vertices": 1680,
+          "indices": 9588,
+          "triangles": 3196,
+          "vertex_buffer_bytes": 20160,
+          "index_buffer_bytes": 38352,
+          "buffer_bytes": 58512
+        }
+      }
+    },
+    {
+      "carrier": "dome_floor",
+      "view": "historical",
+      "pixels": {
+        "background": 0,
+        "floor": 53341,
+        "shell": 187,
+        "vehicle_footprint": 464,
+        "raised_bowl": 0,
+        "vehicle_model": 3608
+      },
+      "fractions": {
+        "background": 0.0,
+        "floor": 0.9260590277777778,
+        "shell": 0.003246527777777778,
+        "vehicle_footprint": 0.008055555555555555,
+        "raised_bowl": 0.0,
+        "vehicle_model": 0.06263888888888888
+      },
+      "width": 320,
+      "height": 180,
+      "directory": "dome_floor/historical",
+      "mask_sha256": "91853912f32dde192501d9319be398a08546fb895f3e00aa0830bc904951202d",
+      "report_sha256": "e6003fb91a87e3af21878bb887c536aacde1c294dc00ad84d9986986b4623428",
+      "config_sha256": "5e6bb8df1c200d8136faa355c82b53042ffe349a91fc64c2b2e7698f8d9a165f",
+      "mesh_resources": {
+        "scope": "carrier_position_index_buffers",
+        "active": {
+          "vertices": 1666,
+          "indices": 9600,
+          "triangles": 3200,
+          "vertex_buffer_bytes": 19992,
+          "index_buffer_bytes": 38400,
+          "buffer_bytes": 58392
+        },
+        "resident": {
+          "vertices": 1666,
+          "indices": 9600,
+          "triangles": 3200,
+          "vertex_buffer_bytes": 19992,
+          "index_buffer_bytes": 38400,
+          "buffer_bytes": 58392
+        }
+      }
+    },
+    {
+      "carrier": "dome_floor",
+      "view": "lateral",
+      "pixels": {
+        "background": 0,
+        "floor": 31449,
+        "shell": 25312,
+        "vehicle_footprint": 172,
+        "raised_bowl": 0,
+        "vehicle_model": 667
+      },
+      "fractions": {
+        "background": 0.0,
+        "floor": 0.5459895833333334,
+        "shell": 0.43944444444444447,
+        "vehicle_footprint": 0.0029861111111111113,
+        "raised_bowl": 0.0,
+        "vehicle_model": 0.011579861111111112
+      },
+      "width": 320,
+      "height": 180,
+      "directory": "dome_floor/lateral",
+      "mask_sha256": "31d9df8ace1f0e6c3f9cba24a1f5a02bf7417820d9f09414f7662dfebbfd02c7",
+      "report_sha256": "20de144c0b2d9861fd691a368c9c53ea8fc45db164424a6bd0f3a784c5df8317",
+      "config_sha256": "d12cf879b35226af68a6ed7d9732496d99d861b08709e303d288bd8386598ec2",
+      "mesh_resources": {
+        "scope": "carrier_position_index_buffers",
+        "active": {
+          "vertices": 1666,
+          "indices": 9600,
+          "triangles": 3200,
+          "vertex_buffer_bytes": 19992,
+          "index_buffer_bytes": 38400,
+          "buffer_bytes": 58392
+        },
+        "resident": {
+          "vertices": 1666,
+          "indices": 9600,
+          "triangles": 3200,
+          "vertex_buffer_bytes": 19992,
+          "index_buffer_bytes": 38400,
+          "buffer_bytes": 58392
+        }
+      }
+    },
+    {
+      "carrier": "dome_floor",
+      "view": "overhead",
+      "pixels": {
+        "background": 0,
+        "floor": 53704,
+        "shell": 0,
+        "vehicle_footprint": 132,
+        "raised_bowl": 0,
+        "vehicle_model": 3764
+      },
+      "fractions": {
+        "background": 0.0,
+        "floor": 0.9323611111111111,
+        "shell": 0.0,
+        "vehicle_footprint": 0.0022916666666666667,
+        "raised_bowl": 0.0,
+        "vehicle_model": 0.06534722222222222
+      },
+      "width": 320,
+      "height": 180,
+      "directory": "dome_floor/overhead",
+      "mask_sha256": "403ca8f12a8f60c031d8053f45f9f26f6b46816537c328e33655359209e8f0ad",
+      "report_sha256": "e4191048d5ea42381336ef5aa254bb68923000b17e82afdb8b01c8c1701fd4b4",
+      "config_sha256": "3c4a99acf3ea3631611ce6ad81c6b7cd78d5810c363d782edc8efe18b3bc6727",
+      "mesh_resources": {
+        "scope": "carrier_position_index_buffers",
+        "active": {
+          "vertices": 1666,
+          "indices": 9600,
+          "triangles": 3200,
+          "vertex_buffer_bytes": 19992,
+          "index_buffer_bytes": 38400,
+          "buffer_bytes": 58392
+        },
+        "resident": {
+          "vertices": 1666,
+          "indices": 9600,
+          "triangles": 3200,
+          "vertex_buffer_bytes": 19992,
+          "index_buffer_bytes": 38400,
+          "buffer_bytes": 58392
+        }
+      }
+    },
+    {
+      "carrier": "cylinder_floor",
+      "view": "historical",
+      "pixels": {
+        "background": 0,
+        "floor": 53341,
+        "shell": 187,
+        "vehicle_footprint": 464,
+        "raised_bowl": 0,
+        "vehicle_model": 3608
+      },
+      "fractions": {
+        "background": 0.0,
+        "floor": 0.9260590277777778,
+        "shell": 0.003246527777777778,
+        "vehicle_footprint": 0.008055555555555555,
+        "raised_bowl": 0.0,
+        "vehicle_model": 0.06263888888888888
+      },
+      "width": 320,
+      "height": 180,
+      "directory": "cylinder_floor/historical",
+      "mask_sha256": "91853912f32dde192501d9319be398a08546fb895f3e00aa0830bc904951202d",
+      "report_sha256": "2ad21435dd39ace1ceafa14bc7cb250b69a1dd8f94aa3ae94f1eae14779571ea",
+      "config_sha256": "9133f028952ea9a9aed5e2d639fb3654a97c6ec69907bf1ce3fff8e1eddba5ad",
+      "mesh_resources": {
+        "scope": "carrier_position_index_buffers",
+        "active": {
+          "vertices": 1730,
+          "indices": 9600,
+          "triangles": 3200,
+          "vertex_buffer_bytes": 20760,
+          "index_buffer_bytes": 38400,
+          "buffer_bytes": 59160
+        },
+        "resident": {
+          "vertices": 1730,
+          "indices": 9600,
+          "triangles": 3200,
+          "vertex_buffer_bytes": 20760,
+          "index_buffer_bytes": 38400,
+          "buffer_bytes": 59160
+        }
+      }
+    },
+    {
+      "carrier": "cylinder_floor",
+      "view": "lateral",
+      "pixels": {
+        "background": 0,
+        "floor": 31449,
+        "shell": 25312,
+        "vehicle_footprint": 172,
+        "raised_bowl": 0,
+        "vehicle_model": 667
+      },
+      "fractions": {
+        "background": 0.0,
+        "floor": 0.5459895833333334,
+        "shell": 0.43944444444444447,
+        "vehicle_footprint": 0.0029861111111111113,
+        "raised_bowl": 0.0,
+        "vehicle_model": 0.011579861111111112
+      },
+      "width": 320,
+      "height": 180,
+      "directory": "cylinder_floor/lateral",
+      "mask_sha256": "31d9df8ace1f0e6c3f9cba24a1f5a02bf7417820d9f09414f7662dfebbfd02c7",
+      "report_sha256": "724da2970da81f731b86fb23234d1baeb5642fb465ffaa796447aee33acb6c37",
+      "config_sha256": "b313fa566ab5346dfa7551145ac69d494b81f701fc6fbac134161265652b60d8",
+      "mesh_resources": {
+        "scope": "carrier_position_index_buffers",
+        "active": {
+          "vertices": 1730,
+          "indices": 9600,
+          "triangles": 3200,
+          "vertex_buffer_bytes": 20760,
+          "index_buffer_bytes": 38400,
+          "buffer_bytes": 59160
+        },
+        "resident": {
+          "vertices": 1730,
+          "indices": 9600,
+          "triangles": 3200,
+          "vertex_buffer_bytes": 20760,
+          "index_buffer_bytes": 38400,
+          "buffer_bytes": 59160
+        }
+      }
+    },
+    {
+      "carrier": "cylinder_floor",
+      "view": "overhead",
+      "pixels": {
+        "background": 0,
+        "floor": 53704,
+        "shell": 0,
+        "vehicle_footprint": 132,
+        "raised_bowl": 0,
+        "vehicle_model": 3764
+      },
+      "fractions": {
+        "background": 0.0,
+        "floor": 0.9323611111111111,
+        "shell": 0.0,
+        "vehicle_footprint": 0.0022916666666666667,
+        "raised_bowl": 0.0,
+        "vehicle_model": 0.06534722222222222
+      },
+      "width": 320,
+      "height": 180,
+      "directory": "cylinder_floor/overhead",
+      "mask_sha256": "403ca8f12a8f60c031d8053f45f9f26f6b46816537c328e33655359209e8f0ad",
+      "report_sha256": "8c8bc3b1e9845b01da885e3058bfff8e10f84aae3fd7e0572988529b4abada04",
+      "config_sha256": "587a67516776330719a2241fa8536b9f32ea227c6f4d7db29356e4bd3d7c8d05",
+      "mesh_resources": {
+        "scope": "carrier_position_index_buffers",
+        "active": {
+          "vertices": 1730,
+          "indices": 9600,
+          "triangles": 3200,
+          "vertex_buffer_bytes": 20760,
+          "index_buffer_bytes": 38400,
+          "buffer_bytes": 59160
+        },
+        "resident": {
+          "vertices": 1730,
+          "indices": 9600,
+          "triangles": 3200,
+          "vertex_buffer_bytes": 20760,
+          "index_buffer_bytes": 38400,
+          "buffer_bytes": 59160
+        }
+      }
+    },
+    {
+      "carrier": "cube_floor",
+      "view": "historical",
+      "pixels": {
+        "background": 0,
+        "floor": 53411,
+        "shell": 117,
+        "vehicle_footprint": 464,
+        "raised_bowl": 0,
+        "vehicle_model": 3608
+      },
+      "fractions": {
+        "background": 0.0,
+        "floor": 0.9272743055555556,
+        "shell": 0.00203125,
+        "vehicle_footprint": 0.008055555555555555,
+        "raised_bowl": 0.0,
+        "vehicle_model": 0.06263888888888888
+      },
+      "width": 320,
+      "height": 180,
+      "directory": "cube_floor/historical",
+      "mask_sha256": "b6c8d3a6f70ac268065af63c5773485c81799a2209e1e0411356620f777735a3",
+      "report_sha256": "85efb5758696f3814570969f201f7d1dd284dc1062ca5812707e09618718d4db",
+      "config_sha256": "450b2bda3f323237571a63b6a4e6f823ef11690e8666c34d67b700dadb1eee89",
+      "mesh_resources": {
+        "scope": "carrier_position_index_buffers",
+        "active": {
+          "vertices": 1806,
+          "indices": 9624,
+          "triangles": 3208,
+          "vertex_buffer_bytes": 21672,
+          "index_buffer_bytes": 38496,
+          "buffer_bytes": 60168
+        },
+        "resident": {
+          "vertices": 1806,
+          "indices": 9624,
+          "triangles": 3208,
+          "vertex_buffer_bytes": 21672,
+          "index_buffer_bytes": 38496,
+          "buffer_bytes": 60168
+        }
+      }
+    },
+    {
+      "carrier": "cube_floor",
+      "view": "lateral",
+      "pixels": {
+        "background": 0,
+        "floor": 32219,
+        "shell": 24542,
+        "vehicle_footprint": 172,
+        "raised_bowl": 0,
+        "vehicle_model": 667
+      },
+      "fractions": {
+        "background": 0.0,
+        "floor": 0.5593576388888889,
+        "shell": 0.4260763888888889,
+        "vehicle_footprint": 0.0029861111111111113,
+        "raised_bowl": 0.0,
+        "vehicle_model": 0.011579861111111112
+      },
+      "width": 320,
+      "height": 180,
+      "directory": "cube_floor/lateral",
+      "mask_sha256": "36eef45b32d4bd10ee8d2e2b43994610fd42c68bc039d68d5267218a331bd3fc",
+      "report_sha256": "b18a85dda74d00e18f047eb315899989880b5af1ebf1118f823ab68081412232",
+      "config_sha256": "e51959e39be2f1024de15e0241a29a9d78eb7d1d88f4777627b89694f3798795",
+      "mesh_resources": {
+        "scope": "carrier_position_index_buffers",
+        "active": {
+          "vertices": 1806,
+          "indices": 9624,
+          "triangles": 3208,
+          "vertex_buffer_bytes": 21672,
+          "index_buffer_bytes": 38496,
+          "buffer_bytes": 60168
+        },
+        "resident": {
+          "vertices": 1806,
+          "indices": 9624,
+          "triangles": 3208,
+          "vertex_buffer_bytes": 21672,
+          "index_buffer_bytes": 38496,
+          "buffer_bytes": 60168
+        }
+      }
+    },
+    {
+      "carrier": "cube_floor",
+      "view": "overhead",
+      "pixels": {
+        "background": 0,
+        "floor": 53704,
+        "shell": 0,
+        "vehicle_footprint": 132,
+        "raised_bowl": 0,
+        "vehicle_model": 3764
+      },
+      "fractions": {
+        "background": 0.0,
+        "floor": 0.9323611111111111,
+        "shell": 0.0,
+        "vehicle_footprint": 0.0022916666666666667,
+        "raised_bowl": 0.0,
+        "vehicle_model": 0.06534722222222222
+      },
+      "width": 320,
+      "height": 180,
+      "directory": "cube_floor/overhead",
+      "mask_sha256": "403ca8f12a8f60c031d8053f45f9f26f6b46816537c328e33655359209e8f0ad",
+      "report_sha256": "40ee4477cd8e072a9537eff786cfdd0a220bde0f82be3cffd2b180957133c23a",
+      "config_sha256": "6c13628881c2ffa17fd023fd87995f1fa8fab4848fa01df7a13663ae66acaef3",
+      "mesh_resources": {
+        "scope": "carrier_position_index_buffers",
+        "active": {
+          "vertices": 1806,
+          "indices": 9624,
+          "triangles": 3208,
+          "vertex_buffer_bytes": 21672,
+          "index_buffer_bytes": 38496,
+          "buffer_bytes": 60168
+        },
+        "resident": {
+          "vertices": 1806,
+          "indices": 9624,
+          "triangles": 3208,
+          "vertex_buffer_bytes": 21672,
+          "index_buffer_bytes": 38496,
+          "buffer_bytes": 60168
+        }
+      }
+    }
+  ],
+  "historical_roi_intersections": [
+    {
+      "seed": 101,
+      "truth_index": 0,
+      "carrier": "plane",
+      "roi_pixels": 44080,
+      "roi_sha256": "077c4bdf0547240f601fe8ccc94f10cd99cbc6043adf9ca701875558c0dc0881",
+      "paired_truth_sha256": "c33b0df31fa54b6197a308fb2e31ad6c6a625521c1778f452c679b96cae224a5",
+      "pixels": {
+        "background": 95,
+        "floor": 43948,
+        "shell": 0,
+        "vehicle_footprint": 37,
+        "raised_bowl": 0,
+        "vehicle_model": 0
+      }
+    },
+    {
+      "seed": 101,
+      "truth_index": 1,
+      "carrier": "plane",
+      "roi_pixels": 44012,
+      "roi_sha256": "d3d008f119c4e97cff6bc1b42c39b70b07708def73b917e64eb5d069a81ae60d",
+      "paired_truth_sha256": "c33b0df31fa54b6197a308fb2e31ad6c6a625521c1778f452c679b96cae224a5",
+      "pixels": {
+        "background": 106,
+        "floor": 43869,
+        "shell": 0,
+        "vehicle_footprint": 37,
+        "raised_bowl": 0,
+        "vehicle_model": 0
+      }
+    },
+    {
+      "seed": 101,
+      "truth_index": 0,
+      "carrier": "bowl",
+      "roi_pixels": 44080,
+      "roi_sha256": "077c4bdf0547240f601fe8ccc94f10cd99cbc6043adf9ca701875558c0dc0881",
+      "paired_truth_sha256": "c33b0df31fa54b6197a308fb2e31ad6c6a625521c1778f452c679b96cae224a5",
+      "pixels": {
+        "background": 0,
+        "floor": 458,
+        "shell": 0,
+        "vehicle_footprint": 37,
+        "raised_bowl": 43585,
+        "vehicle_model": 0
+      }
+    },
+    {
+      "seed": 101,
+      "truth_index": 1,
+      "carrier": "bowl",
+      "roi_pixels": 44012,
+      "roi_sha256": "d3d008f119c4e97cff6bc1b42c39b70b07708def73b917e64eb5d069a81ae60d",
+      "paired_truth_sha256": "c33b0df31fa54b6197a308fb2e31ad6c6a625521c1778f452c679b96cae224a5",
+      "pixels": {
+        "background": 0,
+        "floor": 458,
+        "shell": 0,
+        "vehicle_footprint": 37,
+        "raised_bowl": 43517,
+        "vehicle_model": 0
+      }
+    },
+    {
+      "seed": 101,
+      "truth_index": 0,
+      "carrier": "dome_floor",
+      "roi_pixels": 44080,
+      "roi_sha256": "077c4bdf0547240f601fe8ccc94f10cd99cbc6043adf9ca701875558c0dc0881",
+      "paired_truth_sha256": "c33b0df31fa54b6197a308fb2e31ad6c6a625521c1778f452c679b96cae224a5",
+      "pixels": {
+        "background": 0,
+        "floor": 43895,
+        "shell": 148,
+        "vehicle_footprint": 37,
+        "raised_bowl": 0,
+        "vehicle_model": 0
+      }
+    },
+    {
+      "seed": 101,
+      "truth_index": 1,
+      "carrier": "dome_floor",
+      "roi_pixels": 44012,
+      "roi_sha256": "d3d008f119c4e97cff6bc1b42c39b70b07708def73b917e64eb5d069a81ae60d",
+      "paired_truth_sha256": "c33b0df31fa54b6197a308fb2e31ad6c6a625521c1778f452c679b96cae224a5",
+      "pixels": {
+        "background": 0,
+        "floor": 43813,
+        "shell": 162,
+        "vehicle_footprint": 37,
+        "raised_bowl": 0,
+        "vehicle_model": 0
+      }
+    },
+    {
+      "seed": 101,
+      "truth_index": 0,
+      "carrier": "cylinder_floor",
+      "roi_pixels": 44080,
+      "roi_sha256": "077c4bdf0547240f601fe8ccc94f10cd99cbc6043adf9ca701875558c0dc0881",
+      "paired_truth_sha256": "c33b0df31fa54b6197a308fb2e31ad6c6a625521c1778f452c679b96cae224a5",
+      "pixels": {
+        "background": 0,
+        "floor": 43895,
+        "shell": 148,
+        "vehicle_footprint": 37,
+        "raised_bowl": 0,
+        "vehicle_model": 0
+      }
+    },
+    {
+      "seed": 101,
+      "truth_index": 1,
+      "carrier": "cylinder_floor",
+      "roi_pixels": 44012,
+      "roi_sha256": "d3d008f119c4e97cff6bc1b42c39b70b07708def73b917e64eb5d069a81ae60d",
+      "paired_truth_sha256": "c33b0df31fa54b6197a308fb2e31ad6c6a625521c1778f452c679b96cae224a5",
+      "pixels": {
+        "background": 0,
+        "floor": 43813,
+        "shell": 162,
+        "vehicle_footprint": 37,
+        "raised_bowl": 0,
+        "vehicle_model": 0
+      }
+    },
+    {
+      "seed": 101,
+      "truth_index": 0,
+      "carrier": "cube_floor",
+      "roi_pixels": 44080,
+      "roi_sha256": "077c4bdf0547240f601fe8ccc94f10cd99cbc6043adf9ca701875558c0dc0881",
+      "paired_truth_sha256": "c33b0df31fa54b6197a308fb2e31ad6c6a625521c1778f452c679b96cae224a5",
+      "pixels": {
+        "background": 0,
+        "floor": 43948,
+        "shell": 95,
+        "vehicle_footprint": 37,
+        "raised_bowl": 0,
+        "vehicle_model": 0
+      }
+    },
+    {
+      "seed": 101,
+      "truth_index": 1,
+      "carrier": "cube_floor",
+      "roi_pixels": 44012,
+      "roi_sha256": "d3d008f119c4e97cff6bc1b42c39b70b07708def73b917e64eb5d069a81ae60d",
+      "paired_truth_sha256": "c33b0df31fa54b6197a308fb2e31ad6c6a625521c1778f452c679b96cae224a5",
+      "pixels": {
+        "background": 0,
+        "floor": 43869,
+        "shell": 106,
+        "vehicle_footprint": 37,
+        "raised_bowl": 0,
+        "vehicle_model": 0
+      }
+    },
+    {
+      "seed": 102,
+      "truth_index": 0,
+      "carrier": "plane",
+      "roi_pixels": 44205,
+      "roi_sha256": "2827207245eca25ca081618049c1b12a651f969f7b524924e54e185d4069f8f3",
+      "paired_truth_sha256": "119955e71ba2ab51321c6ecbfd46f02ae64c7016f6c5059347c82636bf025ca2",
+      "pixels": {
+        "background": 63,
+        "floor": 44079,
+        "shell": 0,
+        "vehicle_footprint": 63,
+        "raised_bowl": 0,
+        "vehicle_model": 0
+      }
+    },
+    {
+      "seed": 102,
+      "truth_index": 1,
+      "carrier": "plane",
+      "roi_pixels": 44186,
+      "roi_sha256": "fd9a295fdfc5743bf48d37798914532e9b9cb5f1f6732ac477088bfa499bb0e1",
+      "paired_truth_sha256": "119955e71ba2ab51321c6ecbfd46f02ae64c7016f6c5059347c82636bf025ca2",
+      "pixels": {
+        "background": 63,
+        "floor": 44060,
+        "shell": 0,
+        "vehicle_footprint": 63,
+        "raised_bowl": 0,
+        "vehicle_model": 0
+      }
+    },
+    {
+      "seed": 102,
+      "truth_index": 0,
+      "carrier": "bowl",
+      "roi_pixels": 44205,
+      "roi_sha256": "2827207245eca25ca081618049c1b12a651f969f7b524924e54e185d4069f8f3",
+      "paired_truth_sha256": "119955e71ba2ab51321c6ecbfd46f02ae64c7016f6c5059347c82636bf025ca2",
+      "pixels": {
+        "background": 0,
+        "floor": 497,
+        "shell": 0,
+        "vehicle_footprint": 63,
+        "raised_bowl": 43645,
+        "vehicle_model": 0
+      }
+    },
+    {
+      "seed": 102,
+      "truth_index": 1,
+      "carrier": "bowl",
+      "roi_pixels": 44186,
+      "roi_sha256": "fd9a295fdfc5743bf48d37798914532e9b9cb5f1f6732ac477088bfa499bb0e1",
+      "paired_truth_sha256": "119955e71ba2ab51321c6ecbfd46f02ae64c7016f6c5059347c82636bf025ca2",
+      "pixels": {
+        "background": 0,
+        "floor": 497,
+        "shell": 0,
+        "vehicle_footprint": 63,
+        "raised_bowl": 43626,
+        "vehicle_model": 0
+      }
+    },
+    {
+      "seed": 102,
+      "truth_index": 0,
+      "carrier": "dome_floor",
+      "roi_pixels": 44205,
+      "roi_sha256": "2827207245eca25ca081618049c1b12a651f969f7b524924e54e185d4069f8f3",
+      "paired_truth_sha256": "119955e71ba2ab51321c6ecbfd46f02ae64c7016f6c5059347c82636bf025ca2",
+      "pixels": {
+        "background": 0,
+        "floor": 44047,
+        "shell": 95,
+        "vehicle_footprint": 63,
+        "raised_bowl": 0,
+        "vehicle_model": 0
+      }
+    },
+    {
+      "seed": 102,
+      "truth_index": 1,
+      "carrier": "dome_floor",
+      "roi_pixels": 44186,
+      "roi_sha256": "fd9a295fdfc5743bf48d37798914532e9b9cb5f1f6732ac477088bfa499bb0e1",
+      "paired_truth_sha256": "119955e71ba2ab51321c6ecbfd46f02ae64c7016f6c5059347c82636bf025ca2",
+      "pixels": {
+        "background": 0,
+        "floor": 44028,
+        "shell": 95,
+        "vehicle_footprint": 63,
+        "raised_bowl": 0,
+        "vehicle_model": 0
+      }
+    },
+    {
+      "seed": 102,
+      "truth_index": 0,
+      "carrier": "cylinder_floor",
+      "roi_pixels": 44205,
+      "roi_sha256": "2827207245eca25ca081618049c1b12a651f969f7b524924e54e185d4069f8f3",
+      "paired_truth_sha256": "119955e71ba2ab51321c6ecbfd46f02ae64c7016f6c5059347c82636bf025ca2",
+      "pixels": {
+        "background": 0,
+        "floor": 44047,
+        "shell": 95,
+        "vehicle_footprint": 63,
+        "raised_bowl": 0,
+        "vehicle_model": 0
+      }
+    },
+    {
+      "seed": 102,
+      "truth_index": 1,
+      "carrier": "cylinder_floor",
+      "roi_pixels": 44186,
+      "roi_sha256": "fd9a295fdfc5743bf48d37798914532e9b9cb5f1f6732ac477088bfa499bb0e1",
+      "paired_truth_sha256": "119955e71ba2ab51321c6ecbfd46f02ae64c7016f6c5059347c82636bf025ca2",
+      "pixels": {
+        "background": 0,
+        "floor": 44028,
+        "shell": 95,
+        "vehicle_footprint": 63,
+        "raised_bowl": 0,
+        "vehicle_model": 0
+      }
+    },
+    {
+      "seed": 102,
+      "truth_index": 0,
+      "carrier": "cube_floor",
+      "roi_pixels": 44205,
+      "roi_sha256": "2827207245eca25ca081618049c1b12a651f969f7b524924e54e185d4069f8f3",
+      "paired_truth_sha256": "119955e71ba2ab51321c6ecbfd46f02ae64c7016f6c5059347c82636bf025ca2",
+      "pixels": {
+        "background": 0,
+        "floor": 44079,
+        "shell": 63,
+        "vehicle_footprint": 63,
+        "raised_bowl": 0,
+        "vehicle_model": 0
+      }
+    },
+    {
+      "seed": 102,
+      "truth_index": 1,
+      "carrier": "cube_floor",
+      "roi_pixels": 44186,
+      "roi_sha256": "fd9a295fdfc5743bf48d37798914532e9b9cb5f1f6732ac477088bfa499bb0e1",
+      "paired_truth_sha256": "119955e71ba2ab51321c6ecbfd46f02ae64c7016f6c5059347c82636bf025ca2",
+      "pixels": {
+        "background": 0,
+        "floor": 44060,
+        "shell": 63,
+        "vehicle_footprint": 63,
+        "raised_bowl": 0,
+        "vehicle_model": 0
+      }
+    },
+    {
+      "seed": 103,
+      "truth_index": 0,
+      "carrier": "plane",
+      "roi_pixels": 43585,
+      "roi_sha256": "3e73a0128fc87a42f6f6a820de81a0298b44d62b65af5e3efe9ac7e0591019fa",
+      "paired_truth_sha256": "354da8b7e8ecbb099403393ff44757b97645f3dc350d53d24043430cb2b2669c",
+      "pixels": {
+        "background": 106,
+        "floor": 43433,
+        "shell": 0,
+        "vehicle_footprint": 46,
+        "raised_bowl": 0,
+        "vehicle_model": 0
+      }
+    },
+    {
+      "seed": 103,
+      "truth_index": 1,
+      "carrier": "plane",
+      "roi_pixels": 43736,
+      "roi_sha256": "aa2d157da5572ff22e6050ec699074b3b2955cd43b61dd6e355c360f0a47eb26",
+      "paired_truth_sha256": "354da8b7e8ecbb099403393ff44757b97645f3dc350d53d24043430cb2b2669c",
+      "pixels": {
+        "background": 117,
+        "floor": 43573,
+        "shell": 0,
+        "vehicle_footprint": 46,
+        "raised_bowl": 0,
+        "vehicle_model": 0
+      }
+    },
+    {
+      "seed": 103,
+      "truth_index": 0,
+      "carrier": "bowl",
+      "roi_pixels": 43585,
+      "roi_sha256": "3e73a0128fc87a42f6f6a820de81a0298b44d62b65af5e3efe9ac7e0591019fa",
+      "paired_truth_sha256": "354da8b7e8ecbb099403393ff44757b97645f3dc350d53d24043430cb2b2669c",
+      "pixels": {
+        "background": 0,
+        "floor": 492,
+        "shell": 0,
+        "vehicle_footprint": 46,
+        "raised_bowl": 43047,
+        "vehicle_model": 0
+      }
+    },
+    {
+      "seed": 103,
+      "truth_index": 1,
+      "carrier": "bowl",
+      "roi_pixels": 43736,
+      "roi_sha256": "aa2d157da5572ff22e6050ec699074b3b2955cd43b61dd6e355c360f0a47eb26",
+      "paired_truth_sha256": "354da8b7e8ecbb099403393ff44757b97645f3dc350d53d24043430cb2b2669c",
+      "pixels": {
+        "background": 0,
+        "floor": 492,
+        "shell": 0,
+        "vehicle_footprint": 46,
+        "raised_bowl": 43198,
+        "vehicle_model": 0
+      }
+    },
+    {
+      "seed": 103,
+      "truth_index": 0,
+      "carrier": "dome_floor",
+      "roi_pixels": 43585,
+      "roi_sha256": "3e73a0128fc87a42f6f6a820de81a0298b44d62b65af5e3efe9ac7e0591019fa",
+      "paired_truth_sha256": "354da8b7e8ecbb099403393ff44757b97645f3dc350d53d24043430cb2b2669c",
+      "pixels": {
+        "background": 0,
+        "floor": 43373,
+        "shell": 166,
+        "vehicle_footprint": 46,
+        "raised_bowl": 0,
+        "vehicle_model": 0
+      }
+    },
+    {
+      "seed": 103,
+      "truth_index": 1,
+      "carrier": "dome_floor",
+      "roi_pixels": 43736,
+      "roi_sha256": "aa2d157da5572ff22e6050ec699074b3b2955cd43b61dd6e355c360f0a47eb26",
+      "paired_truth_sha256": "354da8b7e8ecbb099403393ff44757b97645f3dc350d53d24043430cb2b2669c",
+      "pixels": {
+        "background": 0,
+        "floor": 43503,
+        "shell": 187,
+        "vehicle_footprint": 46,
+        "raised_bowl": 0,
+        "vehicle_model": 0
+      }
+    },
+    {
+      "seed": 103,
+      "truth_index": 0,
+      "carrier": "cylinder_floor",
+      "roi_pixels": 43585,
+      "roi_sha256": "3e73a0128fc87a42f6f6a820de81a0298b44d62b65af5e3efe9ac7e0591019fa",
+      "paired_truth_sha256": "354da8b7e8ecbb099403393ff44757b97645f3dc350d53d24043430cb2b2669c",
+      "pixels": {
+        "background": 0,
+        "floor": 43373,
+        "shell": 166,
+        "vehicle_footprint": 46,
+        "raised_bowl": 0,
+        "vehicle_model": 0
+      }
+    },
+    {
+      "seed": 103,
+      "truth_index": 1,
+      "carrier": "cylinder_floor",
+      "roi_pixels": 43736,
+      "roi_sha256": "aa2d157da5572ff22e6050ec699074b3b2955cd43b61dd6e355c360f0a47eb26",
+      "paired_truth_sha256": "354da8b7e8ecbb099403393ff44757b97645f3dc350d53d24043430cb2b2669c",
+      "pixels": {
+        "background": 0,
+        "floor": 43503,
+        "shell": 187,
+        "vehicle_footprint": 46,
+        "raised_bowl": 0,
+        "vehicle_model": 0
+      }
+    },
+    {
+      "seed": 103,
+      "truth_index": 0,
+      "carrier": "cube_floor",
+      "roi_pixels": 43585,
+      "roi_sha256": "3e73a0128fc87a42f6f6a820de81a0298b44d62b65af5e3efe9ac7e0591019fa",
+      "paired_truth_sha256": "354da8b7e8ecbb099403393ff44757b97645f3dc350d53d24043430cb2b2669c",
+      "pixels": {
+        "background": 0,
+        "floor": 43433,
+        "shell": 106,
+        "vehicle_footprint": 46,
+        "raised_bowl": 0,
+        "vehicle_model": 0
+      }
+    },
+    {
+      "seed": 103,
+      "truth_index": 1,
+      "carrier": "cube_floor",
+      "roi_pixels": 43736,
+      "roi_sha256": "aa2d157da5572ff22e6050ec699074b3b2955cd43b61dd6e355c360f0a47eb26",
+      "paired_truth_sha256": "354da8b7e8ecbb099403393ff44757b97645f3dc350d53d24043430cb2b2669c",
+      "pixels": {
+        "background": 0,
+        "floor": 43573,
+        "shell": 117,
+        "vehicle_footprint": 46,
+        "raised_bowl": 0,
+        "vehicle_model": 0
+      }
+    }
+  ]
+}
