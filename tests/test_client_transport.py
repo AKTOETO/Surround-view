@@ -94,6 +94,16 @@ class ClientTransportTests(unittest.TestCase):
                 self.assertTrue(any(m['accepted'] for m in acks))
                 self.assertTrue(all(m['pixel_format'] == 'RGBA8' and m['row_origin'] == 'top_left' for m in frames))
                 self.assertTrue(all(m['mesh_build_count'] == '1' for m in frames))
+                for frame in frames:
+                    resources = frame['mesh_resources']
+                    self.assertEqual(resources['scope'], 'carrier_position_index_buffers')
+                    active = resources['active']
+                    self.assertEqual(active['triangles'], frame['mesh_triangles'])
+                    self.assertEqual(active['indices'], 3*active['triangles'])
+                    self.assertEqual(active['vertex_buffer_bytes'], 12*active['vertices'])
+                    self.assertEqual(active['index_buffer_bytes'], 4*active['indices'])
+                    self.assertEqual(active['buffer_bytes'], active['vertex_buffer_bytes']+active['index_buffer_bytes'])
+                    self.assertEqual(resources['resident'], active)
                 # The CLI uses the same installed public library, without Qt or config-file writes.
                 config_before = config.read_bytes()
                 for arguments, code in ((['state'], 0), (['preset', 'front'], 0),

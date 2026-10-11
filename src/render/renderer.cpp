@@ -775,6 +775,34 @@ size_t Renderer::triangles() const
     return impl_->mesh.indices.size() / 3;
 }
 
+boost::json::object Renderer::mesh_resources() const
+{
+    auto measure = [](std::initializer_list<const Mesh *> meshes)
+    {
+        size_t vertices = 0, indices = 0;
+        for (const auto *mesh : meshes)
+        {
+            vertices += mesh->vertices.size();
+            indices += mesh->indices.size();
+        }
+        // upload_mesh packs positions as three GLfloat values per vertex.
+        const auto vertex_bytes = vertices * 3 * sizeof(float);
+        const auto index_bytes = indices * sizeof(unsigned);
+        return boost::json::object{{"vertices", vertices},
+                                   {"indices", indices},
+                                   {"triangles", indices / 3},
+                                   {"vertex_buffer_bytes", vertex_bytes},
+                                   {"index_buffer_bytes", index_bytes},
+                                   {"buffer_bytes", vertex_bytes + index_bytes}};
+    };
+    const auto &i = *impl_;
+    return {{"scope", "carrier_position_index_buffers"},
+            {"active", i.config.surface.type == "rectangular_bowl_v1"
+                           ? measure({&i.mesh})
+                           : measure({&i.floor_mesh, &i.dome_mesh})},
+            {"resident", measure({&i.mesh, &i.floor_mesh, &i.dome_mesh})}};
+}
+
 void Renderer::set_surface(Surface surface)
 {
     auto &i = *impl_;

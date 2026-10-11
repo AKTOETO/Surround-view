@@ -1303,6 +1303,7 @@ int main(int argc, char **argv)
                      {"source_queue_depth", source_stats.queued_batches},
                      {"mesh_build_count", std::to_string(renderer->mesh_builds())},
                      {"mesh_triangles", renderer->triangles()},
+                     {"mesh_resources", renderer->mesh_resources()},
                      {"upload_count", std::to_string(renderer->uploads())}},
                     std::move(image.pixels)};
 
