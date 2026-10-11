@@ -126,6 +126,38 @@ def measure_target_support(support, truth, thresholds=(.25, .50, .75)):
     }
 
 
+def measure_visible_target(predicted, truth, visible, minimum_pixels=8):
+    """Conditional silhouette score, ignoring unobserved truth but retaining ghosts.
+
+    Filter components before restricting support: a small visible fragment of a
+    valid target must survive. Visibility is independent direct-surface truth,
+    not a source-pixel correspondence or a guarantee of recoverable appearance.
+    """
+    predicted, truth, visible = map(np.asarray, (predicted, truth, visible))
+    if (truth.ndim != 2 or not truth.size or any(m.dtype != bool or m.shape != truth.shape
+            for m in (predicted, truth, visible)) or type(minimum_pixels) is not int or minimum_pixels < 1):
+        raise ValueError('matching nonempty boolean 2D masks and positive integer area required')
+    predicted, _ = remove_small(predicted, minimum_pixels)
+    truth, _ = remove_small(truth, minimum_pixels)
+    observed = truth & visible
+    ignored = truth & ~visible
+    tp = int((predicted & observed).sum())
+    fp = int((predicted & ~truth).sum())
+    fn = int((observed & ~predicted).sum())
+    count, total = int(observed.sum()), int(truth.sum())
+    defined = count > 0
+    return {'truth_pixels': total, 'visible_truth_pixels': count,
+            'unobserved_truth_pixels': int(ignored.sum()),
+            'visible_fraction': count/total if total else None,
+            'true_positive_pixels': tp, 'false_positive_pixels': fp, 'missing_visible_pixels': fn,
+            'ignored_predicted_pixels': int((predicted & ignored).sum()),
+            'conditional_iou': tp/(tp+fp+fn) if defined else None,
+            'conditional_recall': tp/count if defined else None,
+            'conditional_precision': tp/(tp+fp) if defined and tp+fp else None,
+            'touches_frame_border': bool(truth[0].any() or truth[-1].any()
+                                         or truth[:,0].any() or truth[:,-1].any())}
+
+
 def projected_object_ids(camera, points, ids):
     """Nearest-label sampling at the carrier's fisheye UV; no interpolation of IDs."""
     ids = np.asarray(ids)

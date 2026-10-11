@@ -10,15 +10,63 @@ import numpy as np
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path[:0] = [str(ROOT/'tools'), str(ROOT/'tools/research'), str(ROOT/'tools/blender')]
-from object_metrics import measure_target, measure_target_support, projected_object_ids, target_mask, spatial_rois, spatial_errors
+from object_metrics import measure_target, measure_target_support, projected_object_ids, target_mask, spatial_rois, spatial_errors, measure_visible_target
 from object_stitch import interleaved_orders, load_objects
 from diagnostic_motion import frame_positions, position_for_capture, validate_captured_positions
-from parallax_height import ray_ground, object_position, validate_factors
+from parallax_height import ray_ground, object_position, validate_factors, verify_historical_results
 from server_boundary import (quality as server_quality, timestamp as server_timestamp, audit_study,
     check_mesh_budget, validate_refinement_plan, refinement_difference, audit_refinement, audit_spatial)
 
 
 class ObjectMetricTests(unittest.TestCase):
+    def test_visibility_followup_rejects_changed_results_and_native_hash(self):
+        baseline = json.loads((ROOT/'docs/validation/baselines/parallax_height_v1.json').read_text())
+        current = json.loads(json.dumps(baseline))
+        current['analyzer_sha256'] = 'new analyzer'
+        current['cases'][0]['audit']['cases'][0]['audit']['metric_code_sha256']['object_metrics.py'] = 'extended metrics'
+        verify_historical_results(current,baseline)
+        for field in ('quality','rgba_sha256'):
+            wrong = json.loads(json.dumps(current))
+            row = wrong['cases'][0]['audit']['cases'][0]['audit']['results'][0]
+            if field == 'quality': row[field]['target']['iou'] += .01
+            else: row[field] = '0'*64
+            with self.assertRaisesRegex(ValueError,'does not reproduce'):
+                verify_historical_results(wrong,baseline)
+
+    def test_visible_target_ignores_unobserved_surface_but_penalizes_ghosts(self):
+        truth = np.zeros((8,10),bool); truth[2:6,2:6] = True
+        visible = np.zeros_like(truth); visible[2:6,2:4] = True
+        result = measure_visible_target(truth,truth,visible,1)
+        self.assertEqual(result['conditional_iou'],1)
+        self.assertEqual(result['ignored_predicted_pixels'],8)
+        prediction = visible.copy(); prediction[2:6,8:10] = True
+        result = measure_visible_target(prediction,truth,visible,1)
+        self.assertEqual(result['false_positive_pixels'],8)
+        self.assertEqual(result['conditional_iou'],.5)
+        self.assertEqual(result['conditional_recall'],1)
+        result = measure_visible_target(truth & ~visible,truth,visible,1)
+        self.assertEqual(result['conditional_iou'],0)
+        self.assertIsNone(result['conditional_precision'])
+
+    def test_visible_fragment_survives_filter_and_unobserved_score_is_undefined(self):
+        truth = np.zeros((8,10),bool); truth[0:4,2:6] = True
+        visible = np.zeros_like(truth); visible[1,3] = True
+        result = measure_visible_target(truth,truth,visible,8)
+        self.assertEqual(result['visible_truth_pixels'],1)
+        self.assertEqual(result['conditional_iou'],1)
+        self.assertTrue(result['touches_frame_border'])
+        result = measure_visible_target(truth,truth,np.zeros_like(truth),8)
+        for field in ('conditional_iou','conditional_recall','conditional_precision'):
+            self.assertIsNone(result[field])
+        prediction = np.zeros_like(truth); prediction[4:8,6:10] = True
+        result = measure_visible_target(prediction,truth,np.zeros_like(truth),8)
+        self.assertEqual(result['false_positive_pixels'],16)
+        self.assertIsNone(result['conditional_iou'])
+        with self.assertRaises(ValueError):
+            measure_visible_target(truth,truth,visible.astype(float))
+        with self.assertRaises(ValueError):
+            measure_visible_target(truth,truth,visible,0)
+
     def test_height_matrix_rejects_confounded_camera_size_and_range(self):
         asset = json.loads((ROOT/'assets/scenarios/parallax-height-v1.json').read_text())
         validate_factors(asset)

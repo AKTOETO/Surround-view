@@ -10,7 +10,7 @@ import numpy as np
 ROOT = Path(__file__).resolve().parents[2]
 sys.path[:0] = [str(ROOT/'tools'), str(Path(__file__).resolve().parent)]
 from carrier_lateral import run as native_run
-from object_metrics import remove_small, target_mask
+from object_metrics import remove_small, target_mask, measure_visible_target
 from server_boundary import audit_budget, audited_rgba
 from temporal_seam_stability import _verified, load_sequence
 
@@ -187,14 +187,78 @@ def main():
     parser.add_argument('--inputs', type=Path, required=True)
     parser.add_argument('--run-binaries', type=Path)
     parser.add_argument('--output', type=Path, required=True)
+    parser.add_argument('--visibility-baseline', type=Path,
+                        help='Verify this historical full-mask baseline and emit conditional visibility follow-up')
     args = parser.parse_args()
+    if args.visibility_baseline and args.run_binaries:
+        parser.error('--visibility-baseline reuses historical trials; omit --run-binaries')
     master, root, inputs = (p.resolve() for p in (args.plan,args.root,args.inputs))
     if args.run_binaries:
         run(master,root,inputs,args.run_binaries.resolve())
     result = audit(master,root,inputs)
+    if args.visibility_baseline:
+        result = visibility_followup(result,args.visibility_baseline.resolve(),root,inputs)
     args.output.parent.mkdir(parents=True,exist_ok=True)
     write(args.output,result)
-    print('Audited',sum(len(c['audit']['cases'][0]['audit']['results']) for c in result['cases']),'quality conditions')
+    print('Audited',len(result['results']) if 'results' in result else
+          sum(len(c['audit']['cases'][0]['audit']['results']) for c in result['cases']),'quality conditions')
+
+
+def verify_historical_results(current, historical):
+    # Extending the metric module changes its file digest, even though the old
+    # metrics are unchanged. Exempt exactly these two code digests; compare all
+    # numerical values, inputs, native hashes and other code/protocol digests.
+    a, b = json.loads(json.dumps(current)), json.loads(json.dumps(historical))
+    for value in (a,b):
+        value.pop('analyzer_sha256')
+        for entry in value['cases']:
+            entry['audit']['cases'][0]['audit']['metric_code_sha256'].pop('object_metrics.py')
+    if a != b:
+        raise ValueError('historical full-mask baseline does not reproduce')
+
+
+def visibility_followup(current, baseline_path, root, inputs):
+    historical = json.loads(baseline_path.read_text())
+    verify_historical_results(current,historical)
+    results = []
+    for entry in current['cases']:
+        cid = entry['id']
+        case = entry['audit']['cases'][0]
+        capture = inputs/cid/'seed101-capture'
+        truth = json.loads((capture/'paired_truth.json').read_text())
+        target = truth['diagnostic_target']
+        masks = []
+        for frame in truth['frames']:
+            labels = np.load(_verified(capture,frame['objects'],truth['sha256']),allow_pickle=False)
+            bits = np.load(_verified(capture,frame['visibility'],truth['sha256']),allow_pickle=False)
+            masks.append((labels == truth['objects'][target['object_name']],bits != 0))
+        # audit() intentionally compacts reports; restore them only after checking
+        # their frozen digest, for the shared audited RGBA reader.
+        reports = {}
+        aliases = {'dome_floor_v1':'dome_floor','cylinder_floor_v1':'cylinder_floor','cube_floor_v1':'cube_floor'}
+        for carrier,digest in case['audit']['native_report_sha256'].items():
+            path = root/cid/'native/seed101'/aliases.get(carrier,carrier)/'report.json'
+            if sha(path) != digest:
+                raise ValueError('native report changed after audit')
+            reports[carrier] = json.loads(path.read_text())
+        case['audit']['native_reports'] = reports
+        for row in case['audit']['results']:
+            rgba = audited_rgba(case,row,root/cid/'native')
+            expected, visible = masks[row['truth_index']]
+            metric = measure_visible_target(target_mask(rgba[...,:3],target['chroma_threshold']),
+                                            expected,visible,target['min_component_pixels'])
+            results.append({k:row[k] for k in ('carrier','truth_index','frame_index','mode','boundary','rgba_sha256')} |
+                           {'case':cid,'full_mask_iou':row['quality']['target']['iou'],'visible_target':metric})
+    protocol = ROOT/'docs/research/PARALLAX_VISIBILITY_PROTOCOL.md'
+    return {'schema_version':1,'experiment':'E-STITCH-parallax-visibility-01',
+            'baseline_sha256':sha(baseline_path),'protocol_sha256':sha(protocol),
+            'analyzer_sha256':sha(Path(__file__)),'metric_code_sha256':sha(ROOT/'tools/object_metrics.py'),
+            'historical_analyzer_sha256':historical['analyzer_sha256'],
+            'historical_metric_code_sha256':historical['cases'][0]['audit']['cases'][0]['audit']['metric_code_sha256'],
+            'source_fingerprint':current['source_fingerprint'],'results':results,
+            'limitations':['same native outputs; no new trials or independent holdout',
+                           'visibility is direct-surface ray support, not pixel correspondence',
+                           'frame-border contact flags possible clipping; does not prove full object extent']}
 
 
 if __name__ == '__main__':
