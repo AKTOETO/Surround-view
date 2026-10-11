@@ -1026,3 +1026,7 @@ cmp docs/validation/baselines/carrier_positions_v1.json artifacts/carrier-inspec
 ### Проверка вклада камер
 
 Разработчик может передать `RenderInspectionRequest{true, true, true}` для одновременного carrier/source/hybrid-fusion capture; результат находится в `RenderInspection::fusion`. Поддерживаемые режимы, матрицы и стоимость: [[engineering/RENDERING#Opt-in fusion contributions]]. Проверка C++ core: `build/sv-fusion-boundary-tests`; полная команда сборки и native/wire parity: [[validation/CARRIER_POSITIONS#Расширение: вклад камер после смешивания]]. Это внутренний API; клиентская команда capture пока отсутствует.
+
+### Проверка соответствия source sample реальной поверхности Blender
+
+Соберите `cmake --build build --target sv-correspondence-probe -j4`. Test binary принимает `CONFIG MANIFEST OUTPUT_DIRECTORY`, читает первый набор кадров и пишет ordinary RGBA/actual carrier XYZ/source UV/status с SHA256 и переносимым little-endian layout. Для повторения исторического опыта и readonly audit используйте [[validation/SOURCE_CORRESPONDENCE#Проверки и воспроизведение]]. Независимый Blender ray oracle запускается отдельно и восстанавливает ранее активную сцену. Это исследовательский инструмент; remote capture через sv-client-lib ещё предстоит добавить.

@@ -2210,20 +2210,13 @@ end note
 
 ```plantuml
 @startuml
-rectangle "Проецированные samples
-RGB / validity / edge weights" as Samples
-rectangle "Швы / нормировка
-weights до сглаживания" as Seam
-rectangle "Smoothing + remask
-blend_weights" as Smooth
-rectangle "Пирамиды
-level_weights + Laplacian colors" as Pyramid
-rectangle "Обычное смешивание
-reconstruction + clamp" as Color
-rectangle "Opt-in capture
-четыре reconstructed C_i" as Capture
-rectangle "Server composition
-coverage / fallback / ego" as Compose
+rectangle "Проецированные samples\nRGB / validity / edge weights" as Samples
+rectangle "Швы / нормировка\nweights до сглаживания" as Seam
+rectangle "Smoothing + remask\nblend_weights" as Smooth
+rectangle "Пирамиды\nlevel_weights + Laplacian colors" as Pyramid
+rectangle "Обычное смешивание\nreconstruction + clamp" as Color
+rectangle "Opt-in capture\nчетыре reconstructed C_i" as Capture
+rectangle "Server composition\ncoverage / fallback / ego" as Compose
 Samples --> Seam
 Seam --> Smooth
 Smooth --> Pyramid
@@ -2243,3 +2236,59 @@ end note
 Проверка на full-support constant fixture с весами 1:2:3:4 и цветами 0.25:0.5:0.75:1 даёт вклады 0.025, 0.1, 0.225, 0.4 и сумму 0.75. Для 16 combinations mode/boundary/seam solver проверяются сохранность обычного результата, нормировка коэффициентов и восстановление итогового цвета с допуском 2e-6. Отдельный fixture с двумя неперекрывающимися половинами показывает перенос multiband вклада за границу локальной validity. Это ожидаемое свойство пространственного фильтра: локальная допустимость проекции сама по себе не определяет полный цветовой вклад.
 
 Указанное разложение фиксирует уже выбранные швы. Оно не оценивает counterfactual влияние камеры при повторном решении seam optimization и не является локальным соответствием поверхности. После fusion server может заменить значение fallback или ego overlay. Диагностический payload и CPU allocations значительны; overhead измеряется отдельно. Для GPU-only basic modes capture пока отклоняется явно. Форматы и условия повторения: [[engineering/RENDERING#Opt-in fusion contributions]], [[validation/CARRIER_POSITIONS#Расширение: вклад камер после смешивания]]. Следующая задача — связать фактическую source sample с независимой scene surface и предоставить bounded capture через server/client-lib.
+
+## 4.62. Независимое сопоставление native source sample с поверхностью сцены
+
+Чтобы локализовать raised-object failure предыдущих серий, выполнен первый source-surface correspondence audit на прежнем случае `rig101-near-z080`: первый кадр, true calibration, четыре fisheye inputs800×800, output640×360, пять carriers, default `edge_feather/color`. Target — box0.4×0.4×0.4m с центром(2.4,2.3,0.8)m. Его независимая visible surface находится на высоте0.6–1.0m. Это локализующий опыт на уже изученной сцене; он не заменяет подтверждающую выборку.
+
+Native C++ probe получает carrier positions и source sample UV из того же `Renderer`, который использует сервер. Blender по сохранённым recipes/seed восстанавливает отдельную сцену с теми же монтажными perturbations, дорогой и target. Nearest opaque virtual rays дают точки именно видимой поверхности объекта, а не его центра. Независимые source rays строятся через subpixel UV, фактически выбранные shader. Исходная открытая Blender-сцена восстановлена после проверки.
+
+Критерии воспроизведения: полный binary direct-target mask совпал побитно с прежним (178 pixels), visibility bits совпали на этих178 pixels, четыре исходных кадра/configs проверены по hashes. Ordinary native RGBA совпал с archived server baseline hashes для всех пяти carriers. Таким образом, исследуется прежний вывод, а diagnostic capture не меняет картину.
+
+![Независимый target и пять native server outputs](figures/experiments/source_correspondence_views.png)
+
+Рисунок4.86 — Увеличенный фрагмент первого кадра: cyan contour — independent scene target, orange — raw magenta RGB proxy. В серверном выводе объект отсутствует в ожидаемом ROI, но присутствует ниже как растянутые области, обрезанные нижней границей самого кадра. Python только оформляет сохранённые Blender/native images.
+
+| Область | Pixels / source pairs | Недопустимая проекция | Допустимый ray → road | Допустимый ray → target |
+|---|---:|---:|---:|---:|
+| Весь target | 178 / 712 | 534 | 178 | 0 |
+| Source-visible target | 76 / 304 | 228 | 76 | 0 |
+| Interior, две cross erosions | 102 / 408 | 306 | 102 | 0 |
+| Source-visible interior | 48 / 192 | 144 | 48 | 0 |
+
+Таблица4.62 — Source-surface classification. Каждая строка получена отдельно для каждого из пяти носителей. Пары не являются независимыми статистическими повторениями; это pixels × cameras одного кадра. Из178 target pixels только76 имеют доступную source visibility, поэтому основной интерпретируемый вывод сохраняется отдельно на этих76 и на48 visible interior pixels.
+
+Во всех target pixels допустима только camera3, и её edge weight равен1. Все её rays через выбранные native UV попадают в дорогу, включая visible interior. У остальных камер проекция carrier point оказывается behind camera либо вне angle support. Отсутствие target в expected ROI уже проявляется до seam/fusion stage; локальное перевзвешивание допустимых samples не может дать отсутствующее соответствие поверхности.
+
+![Расстояние до поверхности и смещение source sample](figures/experiments/source_correspondence_errors.png)
+
+Рисунок4.87 — Median и min/max расстояния от actual carrier point до independent scene point и UV displacement для76 source-visible pixels. Интервалы — observed extrema одного fixture, не доверительные интервалы. Median spatial distance составляет1.345–1.348m, median source displacement203.819–203.997px.
+
+Для plane/dome/cylinder/cube carrier Z в ROI равна0, для bowl —0.000132–0.003856m. Native point не описывает поднятую поверхность target. Независимая double projection самого carrier point отличается от сохранённой GPU projection максимум на0.0000898 source pixel; при этом UV displacement между правильной scene surface и выбранным carrier point достигает171.597–240.195px на source-visible ROI. Наблюдаемый разрыв определяется выбором другой 3D surface; optical arithmetic residual в этой выборке существенно меньше.
+
+![Фактические лучи для одного visible target pixel](figures/experiments/source_correspondence_rays.png)
+
+Рисунок4.88 — Output pixel(316,211), plane carrier: virtual ray пересекает target раньше пола; source camera3 видит правильную точку по другому лучу. Луч по фактическому native UV попадает в carrier/road point. Показаны реальные scene hits и native positions; не hypothetical ray через центр объекта.
+
+```plantuml
+@startuml
+participant "Native C++ Renderer" as Native
+participant "Frozen input capture" as Inputs
+participant "Blender scene rays" as Truth
+participant "Read-only audit" as Audit
+Inputs -> Native : четыре fisheye images + прежний config
+Native -> Audit : ordinary RGBA + carrier XYZ + source UV/status
+Inputs -> Truth : scene recipe / seed / target / true rig
+Truth -> Truth : virtual nearest target surface
+Truth -> Truth : source nearest surface at native UV
+Truth -> Audit : surface points / identity / visibility
+Audit -> Audit : hashes + archived baseline parity
+Audit -> Audit : invalid / no hit / wrong object / wrong point / match
+@enduml
+```
+
+Рисунок4.89 — Реализованная цепочка независимого audit. Blender используется как исследовательский geometric oracle; продуктовая проекция остаётся в native code.
+
+Локализованный механизм: virtual ray должен встретить поднятый объект, но серверный carrier intersection располагается около пола за ним. Source projection корректно выбирает другой луч и поверхность дороги. Замена формы enclosure не изменяет floor hit в данном ROI. Это подтверждает ограничение данного carrier-based baseline для этого объекта/view, но пока не доказывает причины всех historical zero-IoU cases, работу multiband либо универсальное преимущество альтернативной геометрии.
+
+План/проверки/данные: [[validation/SOURCE_CORRESPONDENCE]], baseline `source_correspondence_v1.json`. Три known-answer audit tests прошли, повторный read-only audit побитно воспроизводится. Следующие controls — второй кадр/ground/height и соответствие displaced pixels, hybrid contributions на тех же rays, затем bounded server/library diagnostic API и проверяемое уменьшение geometric failure. Реальные камеры и Аврора в этом опыте отсутствуют.

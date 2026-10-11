@@ -158,3 +158,5 @@ MPLCONFIGDIR=/tmp/sv-matplotlib python3 docs/diploma/plot_carrier_positions.py -
 §4.60 описывает native source projection/validity capture, проверку на двух GLES backends и ограничения дальнейшего correspondence analysis; диаграмма4.84 встроена как PlantUML.
 
 §4.61 описывает capture hybrid fusion contributions, known-answer reconstruction и диаграмму4.85; определения локальных weights и нелокальных вкладов разделены.
+
+§4.62 содержит первый native source-surface correspondence pilot: локализация выбора дороги вместо поднятого объекта на одном historical frame; три подписанных графика/readback comparison и PlantUML diagram4.89. Данные и ограничения: [[validation/SOURCE_CORRESPONDENCE]].

@@ -140,3 +140,7 @@ GPU execution time измерять асинхронными timer queries, CPU 
 ## E-CARRIER-positions-pilot-01 — 11.10.2026
 
 Первый native measurement layer actual-carrier correspondence: opt-in positions из depth-tested mesh,1343 selected rays/backend против независимого C++ triangle-intersection oracle. NVIDIA/Mesa GTest6/6; допуск5mm/0.002px fixture-specific после явно сохранённого pilot1mm failure.360 recorded hashes/280 actual RGBA на40 native conditions прежние. Baseline/ограничения: [[validation/CARRIER_POSITIONS]], план `configs/research/carrier-positions-plan.json`. Это инженерная валидация инструмента, не quality ranking или завершённая source-surface correspondence study.
+
+## Source-surface localization, первый кадр
+
+§4.62 / [[validation/SOURCE_CORRESPONDENCE]] фиксирует первый native/Blender correspondence audit для rig101-near-z080 и пяти carriers. После проверки historical mask/visibility/RGBA подтверждено: на76 source-visible target pixels camera3 sample выбирает road; carrier-to-scene gap около1.35m median, source UV gap около204px median, native optical residual<0.00009px. Это local carrier-height limitation в одном edge-feather кадре, не quality ranking и не подтверждающая серия. Следующие controls — independent frame/height/displaced source samples и hybrid fusion, bounded native diagnostic delivery.

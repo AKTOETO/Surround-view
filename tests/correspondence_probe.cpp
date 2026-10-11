@@ -3,6 +3,7 @@
 #include "sv/renderer.hpp"
 #include "sv/report.hpp"
 #include "sv/vision.hpp"
+#include <charconv>
 #include <cstring>
 #include <fstream>
 #include <iostream>
@@ -60,10 +61,10 @@ int main(int argc, char **argv)
 {
     try
     {
-        if (argc != 4)
+        if (argc != 4 && argc != 5)
         {
             throw std::runtime_error(
-                "usage: sv-correspondence-probe CONFIG MANIFEST OUTPUT_DIRECTORY");
+                "usage: sv-correspondence-probe CONFIG MANIFEST OUTPUT_DIRECTORY [FRAME_INDEX]");
         }
         const auto config = sv::load_config(argv[1]);
         const auto rows = sv::load_manifest(argv[2], config);
@@ -71,15 +72,31 @@ int main(int argc, char **argv)
         {
             throw std::runtime_error("empty replay manifest");
         }
+        uint64_t frame_index = 0;
+        if (argc == 5)
+        {
+            const std::string text = argv[4];
+            const auto parsed =
+                std::from_chars(text.data(), text.data() + text.size(), frame_index);
+            if (parsed.ec != std::errc{} || parsed.ptr != text.data() + text.size())
+            {
+                throw std::invalid_argument("invalid frame index");
+            }
+        }
+        if (frame_index >= rows.size())
+        {
+            throw std::out_of_range("frame index outside manifest");
+        }
+        const auto &row = rows.at(frame_index);
         const std::filesystem::path directory = argv[3];
         std::filesystem::create_directories(directory);
         sv::FrameSet frames;
         boost::json::array inputs;
         for (int camera = 0; camera < 4; ++camera)
         {
-            const auto &path = rows.front().paths[camera];
+            const auto &path = row.paths[camera];
             auto image = std::make_shared<sv::Image>(sv::read_image(path));
-            frames.frames[camera] = sv::Frame{camera, 0, 0, rows.front().scenario_ns, image};
+            frames.frames[camera] = sv::Frame{camera, frame_index, 0, row.scenario_ns, image};
             inputs.emplace_back(boost::json::object{
                 {"camera_id", camera}, {"path", path.string()}, {"sha256", sv::file_sha256(path)}});
         }
@@ -111,14 +128,15 @@ int main(int argc, char **argv)
         sv::write_json(
             directory / "report.json",
             boost::json::object{{"schema_version", 1},
-                                {"scope", "first_manifest_frame_native_correspondence"},
+                                {"scope", "selected_manifest_frame_native_correspondence"},
                                 {"source_revision", sv::source_revision},
                                 {"source_fingerprint", sv::source_fingerprint},
                                 {"config_sha256", sv::file_sha256(argv[1])},
                                 {"manifest_sha256", sv::file_sha256(argv[2])},
                                 {"config", config.effective},
                                 {"device", renderer.device()},
-                                {"scenario_timestamp_ns", std::to_string(rows.front().scenario_ns)},
+                                {"frame_index", frame_index},
+                                {"scenario_timestamp_ns", std::to_string(row.scenario_ns)},
                                 {"normal_output_unchanged", true},
                                 {"inputs", inputs},
                                 {"products", products}});
