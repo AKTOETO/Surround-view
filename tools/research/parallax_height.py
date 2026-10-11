@@ -428,7 +428,10 @@ def main():
     parser.add_argument('--reference-root', type=Path)
     parser.add_argument('--reference-inputs', type=Path)
     parser.add_argument('--output-resolution-pair', action='store_true', help='Verify frozen reference and pair output resolutions')
+    parser.add_argument('--sensor-resolution-pair', action='store_true', help='Verify frozen reference and pair fisheye resolutions')
     args = parser.parse_args()
+    if args.sensor_resolution_pair and (args.visibility_baseline or args.sampling_baseline or args.output_resolution_pair):
+        parser.error('sensor-resolution comparison excludes other follow-ups')
     if args.output_resolution_pair and (args.visibility_baseline or args.sampling_baseline):
         parser.error('output-resolution comparison excludes other follow-ups')
     if args.sampling_baseline and (args.visibility_baseline or not args.reference_root or not args.reference_inputs):
@@ -447,6 +450,9 @@ def main():
     if args.output_resolution_pair:
         from parallax_output import output_followup
         result = output_followup(result,root,inputs)
+    if args.sensor_resolution_pair:
+        from sensor_sampling import sensor_followup
+        result = sensor_followup(result,root,inputs)
     args.output.parent.mkdir(parents=True,exist_ok=True)
     write(args.output,result)
     print('Audited',len(result['results']) if 'results' in result else

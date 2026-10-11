@@ -14,12 +14,55 @@ from object_metrics import measure_target, measure_target_support, projected_obj
 from object_stitch import interleaved_orders, load_objects
 from diagnostic_motion import frame_positions, position_for_capture, validate_captured_positions
 from parallax_height import ray_ground, object_position, validate_factors, verify_historical_results, box_frame_bounds, verify_rig_pair, verify_sampling_design, pair_sampling_rows
+from blender.camera_sampling import resample_config
+from blender.visibility import projects_inside
+from sensor_sampling import validate_sensor_design
 from parallax_output import validate_output_design, normalized_config, normalized_metrics, deltas, canonical_truth
 from server_boundary import (quality as server_quality, timestamp as server_timestamp, audit_study,
     check_mesh_budget, validate_refinement_plan, refinement_difference, audit_refinement, audit_spatial)
 
 
 class ObjectMetricTests(unittest.TestCase):
+    def test_sensor_resolution_design_rejects_other_changes(self):
+        low = json.loads((ROOT/'configs/research/parallax-output-plan.json').read_text())
+        high = json.loads((ROOT/'configs/research/parallax-sensor-plan.json').read_text())
+        a = json.loads((ROOT/low['inputs_plan']).read_text())
+        b = json.loads((ROOT/high['inputs_plan']).read_text())
+        validate_sensor_design(low,high,a,b)
+        for field,value in [('triangles_max',9999),('output',[320,180])]:
+            wrong = json.loads(json.dumps(high));wrong[field] = value
+            with self.assertRaises(ValueError): validate_sensor_design(low,wrong,a,b)
+        for field,value in [('fisheye_resolution',[801,800]),('virtual_camera',dict(b['cases'][0]['virtual_camera'],distance_m=11))]:
+            wrong = json.loads(json.dumps(b));wrong['cases'][0][field] = value
+            with self.assertRaises(ValueError): validate_sensor_design(low,high,a,wrong)
+
+    def test_sensor_intrinsics_scale_and_angular_support(self):
+        config = json.loads((ROOT/'tests/data/object_stitch_v1/config.json').read_text())
+        original = json.loads(json.dumps(config))
+        high = resample_config(config)
+        self.assertEqual(config,original)
+        expected = json.loads(json.dumps(config))
+        for camera in expected['cameras']:
+            camera['resolution'] = dict(width=800,height=800)
+            camera['projection'].update(fx=256,fy=256,cx=399.5,cy=399.5)
+        self.assertEqual(high,expected)
+        # Sample rays across and beyond the angular boundary, in vehicle coordinates.
+        for low,scaled in zip(config['cameras'],high['cameras']):
+            inverse = np.linalg.inv(low['T_camera_from_vehicle'])
+            for theta in (0,.5,1.479,1.48,1.481,1.55):
+                for phi in np.linspace(0,2*np.pi,17):
+                    local = np.array([np.sin(theta)*np.cos(phi),np.sin(theta)*np.sin(phi),np.cos(theta),1.])
+                    point = (inverse @ local)[:3]
+                    self.assertEqual(projects_inside(low,point),projects_inside(scaled,point))
+                    u = 128*theta*np.cos(phi)+199.5
+                    new_u = 256*theta*np.cos(phi)+399.5
+                    self.assertAlmostEqual((u+.5)/400,(new_u+.5)/800)
+        for field,value in [('fx',129),('alpha',.1),('k',[.01,0,0,0]),('theta_max_rad',1.6)]:
+            wrong = json.loads(json.dumps(config));wrong['cameras'][0]['projection'][field] = value
+            with self.assertRaises(ValueError): resample_config(wrong)
+        wrong = json.loads(json.dumps(config));wrong['cameras'][0]['resolution']['width'] = 401
+        with self.assertRaises(ValueError): resample_config(wrong)
+
     def test_output_resolution_design_rejects_confounders(self):
         low = json.loads((ROOT/'configs/research/parallax-sampling-plan.json').read_text())
         high = json.loads((ROOT/'configs/research/parallax-output-plan.json').read_text())
