@@ -43,6 +43,71 @@ def plot_optimizer(path, output):
     plt.close(fig)
 
 
+def plot_budget(data, args):
+    carriers = list(data['cases'][0]['resources'])
+    profiles = [(m,b) for m in ('multi_band','graph_cut_multi_band') for b in ('zero','normalized')]
+    labels, errors, ious = [], [], []
+    for case in data['cases']:
+        for carrier in carriers:
+            labels.append(f"seed{case['seed']} / {carrier.replace('_floor_v1','')}")
+            groups = [[r for r in case['audit']['results'] if r['carrier'] == carrier
+                       and (r['mode'],r['boundary']) == profile] for profile in profiles]
+            errors.append([np.mean([r['quality']['linear_mae'] for r in group]) for group in groups])
+            ious.append([np.mean([r['quality']['target']['iou'] for r in group]) for group in groups])
+    fig, axes = plt.subplots(1,2,figsize=(14,10),sharey=True)
+    for ax, values, title, cmap in zip(axes,(errors,ious),
+            ('Linear RGB MAE (lower is better)','Coded-target IoU (higher is better)'),('magma_r','viridis')):
+        im = ax.imshow(values,aspect='auto',cmap=cmap)
+        ax.set_xticks(range(4),[m.replace('graph_cut_','GC ').replace('multi_band','MB')+' / '+b for m,b in profiles],rotation=25,ha='right')
+        ax.set_yticks(range(len(labels)),labels)
+        ax.set_title(title)
+        for y,row in enumerate(values):
+            for x,value in enumerate(row):
+                ax.text(x,y,f'{value:.4f}',ha='center',va='center',color='white',
+                        bbox=dict(facecolor='black',alpha=.35,edgecolor='none',pad=1))
+        fig.colorbar(im,ax=ax,shrink=.6)
+    fig.suptitle('Fixed-budget carrier screen: means of two adjacent frames per scene/profile')
+    fig.tight_layout()
+    args.output.mkdir(parents=True,exist_ok=True)
+    fig.savefig(args.output/'carrier_budget_metrics.png',dpi=150);plt.close(fig)
+    resources = data['cases'][0]['resources']
+    fig, axes = plt.subplots(1,3,figsize=(13,4))
+    for ax,field,ceiling in zip(axes,('triangles','vertices','buffer_bytes'),
+            ('triangles_max','vertices_max','buffer_bytes_max')):
+        ax.bar(range(len(carriers)),[resources[c][field] for c in carriers])
+        ax.axhline(data['plan'][ceiling],color='red',linestyle='--',label='shared ceiling')
+        ax.set_xticks(range(len(carriers)),[c.replace('_floor_v1','') for c in carriers],rotation=30)
+        ax.set_title(field);ax.legend()
+    fig.suptitle('Actual active carrier buffers; textures, driver overhead and ego mesh excluded')
+    fig.tight_layout();fig.savefig(args.output/'carrier_budget_resources.png',dpi=150);plt.close(fig)
+    # First seed and first profile are selected by the frozen plan, not image quality.
+    case = data['cases'][0]
+    report = case['audit']
+    for name,digest in report['fixture_sha256'].items():
+        if hashlib.sha256((args.fixture/name).read_bytes()).hexdigest() != digest:
+            raise ValueError('budget view fixture hash mismatch')
+    cfg,_,truths,_,stamps,_ = load_sequence(args.fixture,args.capture or args.fixture,'any')
+    fig,axes = plt.subplots(len(stamps),6,figsize=(20,7),squeeze=False)
+    carrier_ids = {'dome_floor_v1':'dome_floor','cylinder_floor_v1':'cylinder_floor','cube_floor_v1':'cube_floor'}
+    for t,stamp in enumerate(stamps):
+        axes[t,0].imshow(truths[t]);axes[t,0].set_title(f'Direct truth / frame {t}')
+        for column,carrier in enumerate(carriers,1):
+            native = report['native_reports'][carrier]
+            frame = next(b['frame_index'] for b in native['frame_baselines'] if
+                         b['metadata']['inputs'][0]['source_timestamp_ns'] == str(stamp))
+            sample = next(s for s in native['samples'] if s['frame_index'] == frame and
+                          s['variant'] == 0 and not s['warmup'])
+            path = args.captures_root/f"seed{case['seed']}"/carrier_ids.get(carrier,carrier)/sample['rgba_file']
+            payload = path.read_bytes()
+            if hashlib.sha256(payload).hexdigest() != sample['rgba_sha256']:
+                raise ValueError('budget native RGBA hash mismatch')
+            axes[t,column].imshow(np.frombuffer(payload,np.uint8).reshape(cfg['output']['height'],cfg['output']['width'],4))
+            axes[t,column].set_title(carrier)
+    for ax in axes.flat:ax.set_axis_off()
+    fig.suptitle(f"Seed{case['seed']}: actual server multi_band/zero, common mesh ceilings")
+    fig.tight_layout();fig.savefig(args.output/'carrier_budget_views.png',dpi=150);plt.close(fig)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--report', type=Path,
@@ -54,6 +119,9 @@ def main():
     parser.add_argument('--capture', type=Path)
     args = parser.parse_args()
     report = json.loads(args.report.read_text())
+    if report.get('experiment') == 'E-STITCH-carrier-budget-01':
+        plot_budget(report,args)
+        return
     study = report.get('cases')
     if study:
         pairs = [dict(p,seed=c['seed']) for c in study for p in c['audit']['paired_differences']]

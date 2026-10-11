@@ -186,9 +186,36 @@ def audit(fixture, capture, report_paths, comparison='pyramid_boundary'):
                            'paused sequence has no history/cursor reset and is not sustained FPS']}
 
 
+def verify_capture_case(case, root):
+    from blender.scenario import validate
+    seed = case['scenario']['seed']
+    capture = root/f'seed{seed}-capture'
+    info = json.loads((capture/'capture.json').read_text())
+    truth = json.loads((capture/'paired_truth.json').read_text())
+    scripts = dict(info['script_sha256'])
+    scripts.update({'paired_truth.py':truth['script_sha256'],
+                    'visibility.py':truth['visibility_script_sha256'],
+                    'geometry_truth.py':truth['geometry_script_sha256'],
+                    'diagnostic_motion.py':truth['diagnostic_motion_script_sha256']})
+    for name,digest in scripts.items():
+        if hashlib.sha256((Path(__file__).resolve().parents[1]/'blender'/name).read_bytes()).hexdigest() != digest:
+            raise ValueError('recorded capture helper does not match source')
+    if info['scenario_recipe'] != validate(case['scenario']):
+        raise ValueError('scene recipe differs from frozen plan')
+    if {k:truth['diagnostic_target'][k] for k in case['target']} != case['target']:
+        raise ValueError('diagnostic target differs from frozen plan')
+    if (info['face_size'] != case['capture']['face_size']
+            or len(info['frames']) != case['capture']['frames']
+            or info['config']['output'] != {'width':case['capture']['width'],'height':case['capture']['height']}):
+        raise ValueError('capture dimensions differ from plan')
+    expected_stamps = [str(round(n*case['capture']['frame_step']*1e9/info['fps']))
+                       for n in range(case['capture']['frames'])]
+    if [frame['scenario_timestamp_ns'] for frame in info['frames']] != expected_stamps:
+        raise ValueError('capture frame spacing differs from plan')
+
+
 def audit_study(plan_path, root):
     """Verify all predeclared procedural cases; no process launch or rendering."""
-    from blender.scenario import validate
     plan_path, root = Path(plan_path), Path(root)
     plan = json.loads(plan_path.read_text())
     if plan.get('schema_version') != 1 or len(plan.get('cases',[])) != 3:
@@ -206,29 +233,8 @@ def audit_study(plan_path, root):
         if seed in seeds:
             raise ValueError('unique study seeds required')
         seeds.add(seed)
+        verify_capture_case(case, root)
         capture = root/f'seed{seed}-capture'
-        info = json.loads((capture/'capture.json').read_text())
-        truth = json.loads((capture/'paired_truth.json').read_text())
-        scripts = dict(info['script_sha256'])
-        scripts.update({'paired_truth.py':truth['script_sha256'],
-                        'visibility.py':truth['visibility_script_sha256'],
-                        'geometry_truth.py':truth['geometry_script_sha256'],
-                        'diagnostic_motion.py':truth['diagnostic_motion_script_sha256']})
-        for name,digest in scripts.items():
-            if hashlib.sha256((Path(__file__).resolve().parents[1]/'blender'/name).read_bytes()).hexdigest() != digest:
-                raise ValueError('recorded capture helper does not match source')
-        if info['scenario_recipe'] != validate(case['scenario']):
-            raise ValueError('scene recipe differs from frozen plan')
-        if {k:truth['diagnostic_target'][k] for k in case['target']} != case['target']:
-            raise ValueError('diagnostic target differs from frozen plan')
-        if (info['face_size'] != case['capture']['face_size']
-                or len(info['frames']) != case['capture']['frames']
-                or info['config']['output'] != {'width':case['capture']['width'],'height':case['capture']['height']}):
-            raise ValueError('capture dimensions differ from plan')
-        expected_stamps = [str(round(n*case['capture']['frame_step']*1e9/info['fps']))
-                           for n in range(case['capture']['frames'])]
-        if [frame['scenario_timestamp_ns'] for frame in info['frames']] != expected_stamps:
-            raise ValueError('capture frame spacing differs from plan')
         result = audit(root/f'seed{seed}-inputs',capture,
                        [root/f'seed{seed}-run/dome_floor/report.json'],'seam_solver')
         cases.append({'id':case['id'],'seed':seed,'audit':result})
@@ -242,6 +248,96 @@ def audit_study(plan_path, root):
                            'two frames per instance; no sustained latency or temporal-history test']}
 
 
+def check_mesh_budget(metadata, plan):
+    resources = metadata['mesh_resources']
+    active, resident = resources['active'], resources['resident']
+    if resources['scope'] != 'carrier_position_index_buffers' or active != resident:
+        raise ValueError('fresh carrier buffers required; inactive resident allocations present')
+    if (any(type(v) is not int or v < 0 for v in active.values())
+            or active['triangles'] != metadata['mesh_triangles']
+            or active['indices'] != 3*active['triangles']
+            or active['vertex_buffer_bytes'] != 12*active['vertices']
+            or active['index_buffer_bytes'] != 4*active['indices']
+            or active['buffer_bytes'] != active['vertex_buffer_bytes']+active['index_buffer_bytes']
+            or not plan['triangles_min'] <= active['triangles'] <= plan['triangles_max']
+            or active['vertices'] > plan['vertices_max']
+            or active['buffer_bytes'] > plan['buffer_bytes_max']):
+        raise ValueError('carrier mesh resource accounting or budget violation')
+    return active
+
+
+def audit_budget(plan_path, root, inputs_root):
+    plan_path, root, inputs_root = Path(plan_path), Path(root), Path(inputs_root)
+    repository = Path(__file__).resolve().parents[2]
+    plan = json.loads(plan_path.read_text())
+    provenance = json.loads((root/'provenance.json').read_text())
+    if provenance['plan_sha256'] != hashlib.sha256(plan_path.read_bytes()).hexdigest():
+        raise ValueError('budget plan changed after freeze')
+    input_path = repository/plan['inputs_plan']
+    scenario_path = repository/plan['scenario']
+    if (provenance['inputs_plan_sha256'] != hashlib.sha256(input_path.read_bytes()).hexdigest()
+            or provenance['scenario_sha256'] != hashlib.sha256(scenario_path.read_bytes()).hexdigest()):
+        raise ValueError('budget input plan/scenario changed after freeze')
+    cases = json.loads(input_path.read_text())['cases']
+    input_provenance = json.loads((inputs_root/'provenance.json').read_text())
+    if input_provenance['plan_sha256'] != provenance['inputs_plan_sha256']:
+        raise ValueError('capture input plan differs')
+    scenario = json.loads(scenario_path.read_text())
+    output, fingerprints = [], set()
+    for seed in plan['seeds']:
+        case = next(c for c in cases if c['scenario']['seed'] == seed)
+        verify_capture_case(case, inputs_root)
+        paths = [root/f'seed{seed}'/c['id']/'report.json' for c in plan['carriers']]
+        result = audit(inputs_root/f'seed{seed}-inputs', inputs_root/f'seed{seed}-capture', paths)
+        resources = {}
+        for carrier, report in result['native_reports'].items():
+            fingerprints.add(report['catalog']['source_fingerprint'])
+            # The runner canonicalizes optional fusion defaults; validate explicit scenario fields.
+            actual = report['scenario']
+            for name in ('frames','capture_frames','warmup','repeats','seed'):
+                if actual[name] != scenario[name]:
+                    raise ValueError('scenario differs from frozen budget plan')
+            if len(actual['variants']) != len(scenario['variants']):
+                raise ValueError('budget scenario variant count mismatch')
+            for variant, frozen in zip(actual['variants'], scenario['variants']):
+                canonical = dict(diagnostic='color',edge_width_px=24.0,angle_power=2.0,
+                                 pyramid_levels=4,smoothness_weight=0.1,**frozen)
+                if variant != canonical:
+                    raise ValueError('budget profile differs from plan')
+            expected = next(c['surface'] for c in plan['carriers'] if
+                            c['id'] == {'dome_floor_v1':'dome_floor','cylinder_floor_v1':'cylinder_floor',
+                                        'cube_floor_v1':'cube_floor'}.get(carrier,carrier))
+            if report['initial_state']['surface'] != expected:
+                raise ValueError('carrier geometry differs from frozen budget plan')
+            metas = [b['metadata'] for b in report['frame_baselines']]+[s['metadata'] for s in report['samples']]
+            values = [check_mesh_budget(m, plan) for m in metas]
+            if any(v != values[0] for v in values):
+                raise ValueError('carrier allocation changed during run')
+            if any([m['width'],m['height']] != plan['output'] for m in metas):
+                raise ValueError('budget output dimensions differ')
+            resources[carrier] = values[0]
+        differences = []
+        for row in result['results']:
+            reference = next(r for r in result['results'] if r['carrier'] == 'dome_floor_v1'
+                             and (r['truth_index'],r['mode'],r['boundary']) ==
+                                 (row['truth_index'],row['mode'],row['boundary']))
+            differences.append({k:row[k] for k in ('carrier','truth_index','mode','boundary')} |
+                {'linear_mae_delta':row['quality']['linear_mae']-reference['quality']['linear_mae'],
+                 'target_iou_delta':row['quality']['target']['iou']-reference['quality']['target']['iou']})
+        result['limitations'] = [l for l in result['limitations'] if not l.startswith('carriers have unequal')]
+        output.append({'seed':seed,'resources':resources,'carrier_minus_dome':differences,'audit':result})
+    if len(fingerprints) != 1:
+        raise ValueError('mixed native source fingerprints in budget series')
+    protocol = repository/'docs/research/CARRIER_BUDGET_PROTOCOL.md'
+    return {'schema_version':1,'experiment':plan['experiment'],'plan':plan,'provenance':provenance,
+            'protocol_sha256':hashlib.sha256(protocol.read_bytes()).hexdigest(),
+            'cases':output,'source_fingerprint':fingerprints.pop(),
+            'limitations':['near-equal active triangle counts, shared ceilings; not equal total memory or work',
+                           'three previously inspected instances of one procedural family; exploratory',
+                           'fixed carrier order, no thermal/frequency control; no speed ranking',
+                           'true calibration, two-frame clips, coded-object truth only']}
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--fixture',type=Path)
@@ -249,10 +345,17 @@ if __name__ == '__main__':
     parser.add_argument('--report',type=Path,action='append')
     parser.add_argument('--output',type=Path,required=True)
     parser.add_argument('--comparison',choices=('pyramid_boundary','seam_solver'),default='pyramid_boundary')
+    parser.add_argument('--budget-plan',type=Path)
+    parser.add_argument('--budget-root',type=Path)
+    parser.add_argument('--inputs-root',type=Path)
     parser.add_argument('--study-plan',type=Path)
     parser.add_argument('--study-root',type=Path)
     args = parser.parse_args()
-    if args.study_plan:
+    if args.budget_plan:
+        if not args.budget_root or not args.inputs_root or args.study_plan or args.fixture or args.report or args.capture:
+            parser.error('budget audit requires --budget-root and --inputs-root only')
+        result = audit_budget(args.budget_plan,args.budget_root,args.inputs_root)
+    elif args.study_plan:
         if not args.study_root or args.fixture or args.report or args.capture:
             parser.error('study requires --study-root and excludes single-fixture arguments')
         result = audit_study(args.study_plan,args.study_root)

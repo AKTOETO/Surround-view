@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "experiment": "E-STITCH-carrier-budget-01",
+  "inputs_plan": "assets/scenarios/seam-generalization-v1.json",
+  "seeds": [
+    101,
+    102,
+    103
+  ],
+  "scenario": "configs/research/boundary-sequence.json",
+  "triangles_min": 3190,
+  "triangles_max": 3210,
+  "vertices_max": 1810,
+  "buffer_bytes_max": 60500,
+  "output": [
+    320,
+    180
+  ],
+  "carriers": [
+    {
+      "id": "plane",
+      "surface": {
+        "type": "rectangular_bowl_v1",
+        "flat_half_length_m": 2.6,
+        "flat_half_width_m": 1.2,
+        "outer_half_length_m": 14.0,
+        "outer_half_width_m": 14.0,
+        "corner_height_m": 0,
+        "uniform_cells": [
+          32,
+          45
+        ]
+      }
+    },
+    {
+      "id": "bowl",
+      "surface": {
+        "type": "rectangular_bowl_v1",
+        "flat_half_length_m": 2.6,
+        "flat_half_width_m": 1.2,
+        "outer_half_length_m": 14.0,
+        "outer_half_width_m": 14.0,
+        "corner_height_m": 1.5,
+        "uniform_cells": [
+          32,
+          45
+        ]
+      }
+    },
+    {
+      "id": "dome_floor",
+      "surface": {
+        "type": "dome_floor_v1",
+        "dome_radius_m": 14.0,
+        "dome_latitude_cells": 14,
+        "dome_longitude_cells": 64,
+        "floor_radial_cells": 12
+      }
+    },
+    {
+      "id": "cylinder_floor",
+      "surface": {
+        "type": "cylinder_floor_v1",
+        "radius_m": 14.0,
+        "height_m": 14.0,
+        "vertical_cells": 10,
+        "angular_cells": 64,
+        "floor_radial_cells": 8
+      }
+    },
+    {
+      "id": "cube_floor",
+      "surface": {
+        "type": "cube_floor_v1",
+        "half_extent_m": 14.0,
+        "height_m": 14.0,
+        "face_cells": 16
+      }
+    }
+  ]
+}

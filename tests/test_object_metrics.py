@@ -13,10 +13,30 @@ sys.path[:0] = [str(ROOT/'tools'), str(ROOT/'tools/research'), str(ROOT/'tools/b
 from object_metrics import measure_target, measure_target_support, projected_object_ids, target_mask
 from object_stitch import interleaved_orders, load_objects
 from diagnostic_motion import frame_positions, position_for_capture, validate_captured_positions
-from server_boundary import quality as server_quality, timestamp as server_timestamp, audit_study
+from server_boundary import quality as server_quality, timestamp as server_timestamp, audit_study, check_mesh_budget
 
 
 class ObjectMetricTests(unittest.TestCase):
+    def test_budget_audit_rejects_retained_buffers_and_false_counts(self):
+        plan = dict(triangles_min=32, triangles_max=32, vertices_max=25, buffer_bytes_max=684)
+        active = dict(vertices=25,indices=96,triangles=32,vertex_buffer_bytes=300,
+                      index_buffer_bytes=384,buffer_bytes=684)
+        metadata = dict(mesh_triangles=32, mesh_resources=dict(scope='carrier_position_index_buffers',
+                        active=active,resident=dict(active)))
+        self.assertEqual(check_mesh_budget(metadata,plan),active)
+        metadata['mesh_resources']['resident']['buffer_bytes'] += 12
+        with self.assertRaisesRegex(ValueError,'inactive resident'):
+            check_mesh_budget(metadata,plan)
+        metadata['mesh_resources']['resident'] = dict(active)
+        for field in active:
+            wrong = json.loads(json.dumps(metadata))
+            wrong['mesh_resources']['active'][field] += 1
+            wrong['mesh_resources']['resident'] = dict(wrong['mesh_resources']['active'])
+            with self.assertRaises(ValueError):
+                check_mesh_budget(wrong,plan)
+        with self.assertRaisesRegex(ValueError,'budget violation'):
+            check_mesh_budget(metadata,dict(plan,vertices_max=24))
+
     def test_study_rejects_changed_freeze_before_reading_results(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
