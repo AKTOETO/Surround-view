@@ -13,10 +13,60 @@ sys.path[:0] = [str(ROOT/'tools'), str(ROOT/'tools/research'), str(ROOT/'tools/b
 from object_metrics import measure_target, measure_target_support, projected_object_ids, target_mask
 from object_stitch import interleaved_orders, load_objects
 from diagnostic_motion import frame_positions, position_for_capture, validate_captured_positions
-from server_boundary import quality as server_quality, timestamp as server_timestamp, audit_study, check_mesh_budget
+from server_boundary import quality as server_quality, timestamp as server_timestamp, audit_study, check_mesh_budget, validate_refinement_plan, refinement_difference, audit_refinement
 
 
 class ObjectMetricTests(unittest.TestCase):
+    def test_refinement_plan_rejects_changed_shape_and_nonincreasing_axes(self):
+        master = json.loads((ROOT/'configs/research/carrier-refinement-plan.json').read_text())
+        validate_refinement_plan(master)
+        wrong = json.loads(json.dumps(master))
+        wrong['levels'][2]['plan']['carriers'][1]['surface']['corner_height_m'] = 2
+        with self.assertRaisesRegex(ValueError,'physical carrier shape'):
+            validate_refinement_plan(wrong)
+        wrong = json.loads(json.dumps(master))
+        wrong['levels'][2]['plan']['carriers'][0]['surface']['uniform_cells'][0] = 32
+        with self.assertRaisesRegex(ValueError,'strictly increase'):
+            validate_refinement_plan(wrong)
+        wrong = json.loads(json.dumps(master))
+        wrong['levels'][0]['plan']['output'] = [640,360]
+        with self.assertRaisesRegex(ValueError,'inputs/scenario/output'):
+            validate_refinement_plan(wrong)
+        wrong = json.loads(json.dumps(master))
+        wrong['levels'][2]['plan']['carriers'][0]['surface']['uniform_cells'] = [64]
+        with self.assertRaisesRegex(ValueError,'strictly increase'):
+            validate_refinement_plan(wrong)
+
+    def test_refinement_rejects_changed_master_before_loading_results(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root/'provenance.json').write_text(json.dumps(dict(master_plan_sha256='0'*64)))
+            with self.assertRaisesRegex(ValueError,'master plan changed'):
+                audit_refinement(ROOT/'configs/research/carrier-refinement-plan.json',root,root)
+
+    def test_refinement_pixel_metric_known_answer_and_mask(self):
+        reference = np.zeros((2,2,4),np.uint8)
+        reference[...,3] = 255
+        actual = reference.copy()
+        actual[0,0,:3] = 255
+        actual[1,1,0] = 255
+        roi = np.array([[True,True],[False,False]])
+        measured = refinement_difference(actual,reference,roi)
+        self.assertEqual(measured['roi_pixels'],2)
+        self.assertEqual(measured['full_frame_changed_pixel_fraction'],.5)
+        self.assertEqual(measured['roi_changed_pixel_fraction'],.5)
+        self.assertEqual(measured['roi_max_rgb8_channel_delta'],255)
+        self.assertEqual(measured['roi_linear_mae_to_fine'],.5)
+        self.assertEqual(refinement_difference(reference,reference,roi)['roi_linear_mae_to_fine'],0)
+        for bad in (roi.astype(float),np.zeros_like(roi)):
+            with self.assertRaises(ValueError):
+                refinement_difference(actual,reference,bad)
+        with self.assertRaises(ValueError):
+            refinement_difference(actual.astype(float),reference,roi)
+        actual[0,1,3] = 0
+        with self.assertRaises(ValueError):
+            refinement_difference(actual,reference,roi)
+
     def test_budget_audit_rejects_retained_buffers_and_false_counts(self):
         plan = dict(triangles_min=32, triangles_max=32, vertices_max=25, buffer_bytes_max=684)
         active = dict(vertices=25,indices=96,triangles=32,vertex_buffer_bytes=300,

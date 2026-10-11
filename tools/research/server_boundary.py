@@ -266,7 +266,7 @@ def check_mesh_budget(metadata, plan):
     return active
 
 
-def audit_budget(plan_path, root, inputs_root):
+def audit_budget(plan_path, root, inputs_root, protocol_name='CARRIER_BUDGET_PROTOCOL.md'):
     plan_path, root, inputs_root = Path(plan_path), Path(root), Path(inputs_root)
     repository = Path(__file__).resolve().parents[2]
     plan = json.loads(plan_path.read_text())
@@ -328,7 +328,7 @@ def audit_budget(plan_path, root, inputs_root):
         output.append({'seed':seed,'resources':resources,'carrier_minus_dome':differences,'audit':result})
     if len(fingerprints) != 1:
         raise ValueError('mixed native source fingerprints in budget series')
-    protocol = repository/'docs/research/CARRIER_BUDGET_PROTOCOL.md'
+    protocol = repository/'docs/research'/protocol_name
     return {'schema_version':1,'experiment':plan['experiment'],'plan':plan,'provenance':provenance,
             'protocol_sha256':hashlib.sha256(protocol.read_bytes()).hexdigest(),
             'cases':output,'source_fingerprint':fingerprints.pop(),
@@ -338,6 +338,136 @@ def audit_budget(plan_path, root, inputs_root):
                            'true calibration, two-frame clips, coded-object truth only']}
 
 
+CELL_FIELDS = {'uniform_cells','dome_latitude_cells','dome_longitude_cells',
+               'floor_radial_cells','vertical_cells','angular_cells','face_cells'}
+
+
+def validate_refinement_plan(master):
+    levels = master['levels']
+    if master['schema_version'] != 1 or [l['id'] for l in levels] != ['coarse','medium','fine']:
+        raise ValueError('three ordered refinement levels required')
+    medium = levels[1]['plan']
+    for level in levels:
+        plan = level['plan']
+        for key in ('seeds','inputs_plan','scenario','output'):
+            if plan[key] != medium[key]:
+                raise ValueError('refinement inputs/scenario/output differ')
+        if [c['id'] for c in plan['carriers']] != [c['id'] for c in medium['carriers']]:
+            raise ValueError('refinement carrier matrix differs')
+        for current, reference in zip(plan['carriers'],medium['carriers']):
+            shape = lambda s: {k:v for k,v in s.items() if k not in CELL_FIELDS}
+            if shape(current['surface']) != shape(reference['surface']):
+                raise ValueError('physical carrier shape changed during refinement')
+    for before,after in zip(levels,levels[1:]):
+        for c,d in zip(before['plan']['carriers'],after['plan']['carriers']):
+            a,b = c['surface'],d['surface']
+            if a.keys() != b.keys():
+                raise ValueError('carrier cell fields differ')
+            for key in CELL_FIELDS & a.keys():
+                x = a[key] if isinstance(a[key],list) else [a[key]]
+                y = b[key] if isinstance(b[key],list) else [b[key]]
+                if (not x or len(x) != len(y) or any(type(v) is not int or v <= 0 for v in x+y)
+                        or any(j <= i for i,j in zip(x,y))):
+                    raise ValueError('all carrier cell axes must strictly increase')
+
+
+def refinement_difference(actual, reference, roi):
+    actual, reference, roi = map(np.asarray,(actual,reference,roi))
+    if (actual.dtype != np.uint8 or reference.dtype != np.uint8
+            or actual.shape != reference.shape or actual.ndim != 3 or actual.shape[-1] != 4
+            or roi.dtype != bool or roi.shape != actual.shape[:2] or not roi.any()
+            or not (actual[...,3] == 255).all() or not (reference[...,3] == 255).all()):
+        raise ValueError('opaque RGBA8 and nonempty matching boolean ROI required')
+    delta = np.abs(actual[...,:3].astype(np.int16)-reference[...,:3].astype(np.int16))
+    return {'roi_pixels':int(roi.sum()),
+            'full_frame_changed_pixel_fraction':float(np.any(actual != reference,axis=-1).mean()),
+            'roi_changed_pixel_fraction':float(np.any(delta,axis=-1)[roi].mean()),
+            'roi_max_rgb8_channel_delta':int(delta[roi].max()),
+            'roi_linear_mae_to_fine':float(np.abs(linear(actual[...,:3]/255.)-
+                                                        linear(reference[...,:3]/255.))[roi].mean())}
+
+
+def audited_rgba(case, row, run_root):
+    native = case['audit']['native_reports'][row['carrier']]
+    variant = next(n for n,v in enumerate(native['scenario']['variants']) if
+                   (v['mode'],v['pyramid_boundary']) == (row['mode'],row['boundary']))
+    sample = next(s for s in native['samples'] if s['frame_index'] == row['frame_index']
+                  and s['variant'] == variant and not s['warmup'])
+    carrier_id = {'dome_floor_v1':'dome_floor','cylinder_floor_v1':'cylinder_floor',
+                  'cube_floor_v1':'cube_floor'}.get(row['carrier'],row['carrier'])
+    payload = (run_root/f"seed{case['seed']}"/carrier_id/sample['rgba_file']).read_bytes()
+    if hashlib.sha256(payload).hexdigest() != row['rgba_sha256']:
+        raise ValueError('refinement RGBA changed after audit')
+    meta = sample['metadata']
+    return np.frombuffer(payload,np.uint8).reshape(meta['height'],meta['width'],4)
+
+
+def audit_refinement(plan_path, root, inputs_root):
+    repository = Path(__file__).resolve().parents[2]
+    plan_path, root, inputs_root = map(Path,(plan_path,root,inputs_root))
+    master = json.loads(plan_path.read_text())
+    validate_refinement_plan(master)
+    provenance = json.loads((root/'provenance.json').read_text())
+    if provenance['master_plan_sha256'] != hashlib.sha256(plan_path.read_bytes()).hexdigest():
+        raise ValueError('refinement master plan changed after freeze')
+    baseline_path = repository/master['medium_baseline']
+    if hashlib.sha256(baseline_path.read_bytes()).hexdigest() != master['medium_baseline_sha256']:
+        raise ValueError('immutable medium baseline changed')
+    baseline = json.loads(baseline_path.read_text())
+    levels, run_roots = {}, {}
+    for level in master['levels']:
+        name = level['id']
+        run_root = repository/level['reused_root'] if 'reused_root' in level else root/name
+        derived = repository/level['reused_plan'] if 'reused_plan' in level else run_root/'plan.json'
+        if json.loads(derived.read_text()) != level['plan']:
+            raise ValueError('derived refinement plan differs from master')
+        levels[name] = audit_budget(derived,run_root,inputs_root,'CARRIER_REFINEMENT_PROTOCOL.md')
+        run_roots[name] = run_root
+    if len({l['source_fingerprint'] for l in levels.values()}) != 1:
+        raise ValueError('refinement requires matching native implementations')
+    for current,previous in zip(levels['medium']['cases'],baseline['cases']):
+        if (current['seed'] != previous['seed'] or any(current['audit'][k] != previous['audit'][k]
+                for k in ('native_report_sha256','native_config_sha256','fixture_sha256','capture_sha256'))):
+            raise ValueError('reused medium inputs/reports differ from pinned baseline')
+    comparisons = []
+    for index,medium in enumerate(levels['medium']['cases']):
+        seed = medium['seed']
+        _,_,_,rois,_,_ = load_sequence(inputs_root/f'seed{seed}-inputs',inputs_root/f'seed{seed}-capture','any')
+        cases = {name:l['cases'][index] for name,l in levels.items()}
+        for row in medium['audit']['results']:
+            key = lambda r: tuple(r[k] for k in ('carrier','truth_index','mode','boundary'))
+            rows = {name:next(r for r in c['audit']['results'] if key(r) == key(row))
+                    for name,c in cases.items()}
+            resources = [cases[n]['resources'][row['carrier']] for n in ('coarse','medium','fine')]
+            if any(b['triangles'] <= a['triangles'] or b['buffer_bytes'] <= a['buffer_bytes']
+                   for a,b in zip(resources,resources[1:])):
+                raise ValueError('actual refinement resources must strictly increase')
+            images = {name:audited_rgba(c,rows[name],run_roots[name]) for name,c in cases.items()}
+            result = dict(seed=seed,**{k:row[k] for k in ('carrier','truth_index','mode','boundary')})
+            for before,after in (('coarse','medium'),('medium','fine')):
+                a,b = rows[before]['quality'],rows[after]['quality']
+                result[after+'_minus_'+before] = dict(linear_mae_delta=b['linear_mae']-a['linear_mae'],
+                    target_iou_delta=b['target']['iou']-a['target']['iou'])
+            for name in ('coarse','medium'):
+                result[name+'_to_fine'] = refinement_difference(images[name],images['fine'],rois[row['truth_index']])
+            comparisons.append(result)
+    # Preserve audited metrics and hash references without duplicating full native reports in Git.
+    for level in levels.values():
+        for case in level['cases']:
+            del case['audit']['native_reports']
+        level['limitations'] = ['within-carrier refinement; cross-carrier equal budgets not asserted',
+                                'raw native reports and RGBA remain in artifacts for complete re-audit']
+    protocol = repository/'docs/research/CARRIER_REFINEMENT_PROTOCOL.md'
+    return {'schema_version':1,'experiment':master['experiment'],'plan':master,'provenance':provenance,
+            'protocol_sha256':hashlib.sha256(protocol.read_bytes()).hexdigest(),
+            'analyzer_sha256':hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+            'source_fingerprint':levels['medium']['source_fingerprint'],
+            'levels':levels,'comparisons':comparisons,
+            'limitations':['finite fine reference is not scene truth or asymptotic convergence',
+                           'previously inspected street instances, two adjacent frames, coded-target truth',
+                           'fixed level/carrier order, no timing ranking or full memory equality']}
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--fixture',type=Path)
@@ -345,13 +475,19 @@ if __name__ == '__main__':
     parser.add_argument('--report',type=Path,action='append')
     parser.add_argument('--output',type=Path,required=True)
     parser.add_argument('--comparison',choices=('pyramid_boundary','seam_solver'),default='pyramid_boundary')
+    parser.add_argument('--refinement-plan',type=Path)
+    parser.add_argument('--refinement-root',type=Path)
     parser.add_argument('--budget-plan',type=Path)
     parser.add_argument('--budget-root',type=Path)
     parser.add_argument('--inputs-root',type=Path)
     parser.add_argument('--study-plan',type=Path)
     parser.add_argument('--study-root',type=Path)
     args = parser.parse_args()
-    if args.budget_plan:
+    if args.refinement_plan:
+        if not args.refinement_root or not args.inputs_root or args.budget_plan or args.study_plan or args.fixture or args.report or args.capture:
+            parser.error('refinement audit requires --refinement-root and --inputs-root only')
+        result = audit_refinement(args.refinement_plan,args.refinement_root,args.inputs_root)
+    elif args.budget_plan:
         if not args.budget_root or not args.inputs_root or args.study_plan or args.fixture or args.report or args.capture:
             parser.error('budget audit requires --budget-root and --inputs-root only')
         result = audit_budget(args.budget_plan,args.budget_root,args.inputs_root)
@@ -364,6 +500,7 @@ if __name__ == '__main__':
             parser.error('single audit requires --fixture and --report')
         result = audit(args.fixture,args.capture or args.fixture,args.report,args.comparison)
     args.output.write_text(json.dumps(result,indent=2,allow_nan=False)+'\n')
-    reports = [c['audit'] for c in result['cases']] if 'cases' in result else [result]
+    reports = ([c['audit'] for l in result['levels'].values() for c in l['cases']] if 'levels' in result
+               else [c['audit'] for c in result['cases']] if 'cases' in result else [result])
     print(json.dumps({'conditions':sum(len(r['results']) for r in reports),
                       'pairs':sum(len(r['paired_differences']) for r in reports)}))
