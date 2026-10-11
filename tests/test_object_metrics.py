@@ -13,12 +13,50 @@ sys.path[:0] = [str(ROOT/'tools'), str(ROOT/'tools/research'), str(ROOT/'tools/b
 from object_metrics import measure_target, measure_target_support, projected_object_ids, target_mask, spatial_rois, spatial_errors, measure_visible_target
 from object_stitch import interleaved_orders, load_objects
 from diagnostic_motion import frame_positions, position_for_capture, validate_captured_positions
-from parallax_height import ray_ground, object_position, validate_factors, verify_historical_results
+from parallax_height import ray_ground, object_position, validate_factors, verify_historical_results, box_frame_bounds, verify_rig_pair
 from server_boundary import (quality as server_quality, timestamp as server_timestamp, audit_study,
     check_mesh_budget, validate_refinement_plan, refinement_difference, audit_refinement, audit_spatial)
 
 
 class ObjectMetricTests(unittest.TestCase):
+    def test_full_box_projection_known_bounds_and_clipping(self):
+        case = {'target':{'center_m':[0,0,0],'size_m':[2,2,2]},
+                'capture':{'width':320,'height':180},
+                'virtual_camera':{'azimuth_rad':0,'elevation_rad':0,'distance_m':10,
+                                  'fov_y_rad':np.pi/2,'clip_m':[.1,20]}}
+        bounds = box_frame_bounds(case,np.eye(4))
+        np.testing.assert_allclose(bounds['bounds_px'],[149.5,79.5,169.5,99.5])
+        self.assertAlmostEqual(bounds['minimum_margin_px'],80)
+        self.assertEqual(bounds['depth_range_m'],[9,11])
+        case['target']['center_m'] = [0,100,0]
+        self.assertLess(box_frame_bounds(case,np.eye(4))['minimum_margin_px'],0)
+        case['target']['center_m'] = [9.95,0,0]
+        with self.assertRaisesRegex(ValueError,'near/far'):
+            box_frame_bounds(case,np.eye(4))
+        case['target']['center_m'] = [0,0,0];case['virtual_camera']['clip_m'][1] = 10
+        with self.assertRaisesRegex(ValueError,'near/far'):
+            box_frame_bounds(case,np.eye(4))
+
+    def test_framed_matrix_and_mount_pair_reject_confounders(self):
+        asset = json.loads((ROOT/'assets/scenarios/parallax-framed-v1.json').read_text())
+        validate_factors(asset)
+        wrong = json.loads(json.dumps(asset));wrong['cases'].pop()
+        with self.assertRaises(ValueError): validate_factors(wrong)
+        wrong = json.loads(json.dumps(asset))
+        for case in wrong['cases'][6:]: case['virtual_camera']['distance_m'] += 1
+        with self.assertRaises(ValueError): validate_factors(wrong)
+        wrong = json.loads(json.dumps(asset))
+        for case in wrong['cases']: case['virtual_camera']['target_m'] = [0,0,0]
+        with self.assertRaisesRegex(ValueError,'server-supported view'):
+            validate_factors(wrong)
+        cfg = json.loads((ROOT/'tests/data/object_stitch_v1/config.json').read_text())
+        other = json.loads(json.dumps(cfg))
+        other['cameras'][0]['T_camera_from_vehicle'][0][3] += .1
+        verify_rig_pair((cfg,['0'],[np.eye(4).tolist()]),(other,['0'],[np.eye(4).tolist()]))
+        other['cameras'][0]['projection']['fx'] += 1
+        with self.assertRaisesRegex(ValueError,'extrinsics'):
+            verify_rig_pair((cfg,['0'],[np.eye(4).tolist()]),(other,['0'],[np.eye(4).tolist()]))
+
     def test_visibility_followup_rejects_changed_results_and_native_hash(self):
         baseline = json.loads((ROOT/'docs/validation/baselines/parallax_height_v1.json').read_text())
         current = json.loads(json.dumps(baseline))
