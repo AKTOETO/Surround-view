@@ -442,9 +442,9 @@ Renderer::~Renderer() = default;
 Image Renderer::render(const FrameSet &set, const View &view, RenderInspection *inspection,
                        RenderInspectionRequest request)
 {
-    if (request.carrier_positions && !inspection)
+    if ((request.carrier_positions || request.source_projections) && !inspection)
     {
-        throw std::invalid_argument("carrier positions require an inspection destination");
+        throw std::invalid_argument("render inspection requires an inspection destination");
     }
     if (inspection)
     {
@@ -693,12 +693,13 @@ Image Renderer::render(const FrameSet &set, const View &view, RenderInspection *
         // The regular output and its timing measurements above are already complete.
         const GLboolean dither = glIsEnabled(GL_DITHER);
         glDisable(GL_DITHER);
-        const auto geometry_pass = [&](int mode)
+        const auto geometry_pass = [&](int mode, int camera = 0)
         {
             glClearColor(0, 0, 0, 0);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             glUseProgram(i.prog);
             glUniform1i(glGetUniformLocation(i.prog, "inspection_regions"), mode);
+            glUniform1i(glGetUniformLocation(i.prog, "inspection_camera"), camera);
             draw_carrier();
             glUniform1i(glGetUniformLocation(i.prog, "inspection_regions"), 0);
             glUseProgram(i.vehicle_program);
@@ -723,6 +724,10 @@ Image Renderer::render(const FrameSet &set, const View &view, RenderInspection *
                 unpack_coordinate(geometry_pass(axis + 2), inspection->carrier_regions,
                                   inspection->carrier_positions, axis);
             }
+        }
+        if (request.source_projections)
+        {
+            inspect_sources(*inspection, c.width, c.height, geometry_pass);
         }
         if (dither)
         {

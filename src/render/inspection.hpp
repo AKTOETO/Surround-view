@@ -1,4 +1,5 @@
 #pragma once
+#include "sv/render_inspection.hpp"
 #include <cstring>
 #include <limits>
 #include <opencv2/core.hpp>
@@ -24,7 +25,27 @@ inline void unpack_coordinate(const cv::Mat &packed, const cv::Mat &regions, cv:
                                   (uint32_t(bytes[2]) << 16) | (uint32_t(bytes[3]) << 24);
             float value;
             std::memcpy(&value, &bits, sizeof(value));
-            positions.at<cv::Vec3f>(y, x)[axis] = value;
+            positions.ptr<float>(y)[x * positions.channels() + axis] = value;
+        }
+    }
+}
+} // namespace sv
+
+namespace sv
+{
+template <class Pass>
+void inspect_sources(RenderInspection &inspection, int width, int height, Pass pass)
+{
+    for (int camera = 0; camera < 4; ++camera)
+    {
+        auto &source = inspection.source_projections[camera];
+        source.pixels = cv::Mat(height, width, CV_32FC2,
+                                cv::Scalar::all(std::numeric_limits<float>::quiet_NaN()));
+        cv::extractChannel(pass(7, camera), source.status, 0);
+        for (int axis = 0; axis < 2; ++axis)
+        {
+            unpack_coordinate(pass(5 + axis, camera), inspection.carrier_regions, source.pixels,
+                              axis);
         }
     }
 }

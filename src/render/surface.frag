@@ -14,6 +14,7 @@ uniform float dome_radius;
 uniform int fusion_mode, diagnostic_mode;
 uniform int sample_camera;
 uniform int inspection_regions;
+uniform int inspection_camera;
 uniform float edge_width_px, angle_power;
 
 vec3 camera_color(int i)
@@ -44,8 +45,56 @@ vec3 encode(vec3 x)
                step(vec3(.0031308), x));
 }
 
+// Shared by normal rendering and diagnostic captures: no second projection model.
+int source_projection(int i, out vec2 px, out float theta)
+{
+    px = vec2(0);
+    theta = 0.0;
+    if (available[i] == 0) { return 2; }
+    vec3 p = (pose[i] * vec4(world, 1)).xyz;
+    if (p.z <= limits[i].y)
+    {
+        return 3;
+    }
+    vec2 ab = p.xy / p.z;
+    float r = length(ab);
+    theta = atan(r);
+    if (theta > limits[i].x)
+    {
+        return 4;
+    }
+    float t2 = theta * theta;
+    vec4 k = distortion[i];
+    float td = theta * (1.0 + t2 * (k.x + t2 * (k.y + t2 * (k.z + t2 * k.w))));
+    px = intrinsics[i].xy * ab * (r > 1e-12 ? td / r : 1.0) + intrinsics[i].zw;
+    if (any(lessThan(px, vec2(0))) || any(greaterThan(px, sizes[i] - 1.0)))
+    {
+        return 5;
+    }
+    return 1;
+}
+
+vec4 pack_float(float value)
+{
+    uint bits = floatBitsToUint(value);
+    return vec4(uvec4(bits, bits >> 8u, bits >> 16u, bits >> 24u) & uvec4(255u)) / 255.0;
+}
+
 void main()
 {
+    if (inspection_regions >= 5)
+    {
+        vec2 px;
+        float theta;
+        int status = source_projection(inspection_camera, px, theta);
+        if (surface_mode == 0 && abs(world.x) <= vehicle.x && abs(world.y) <= vehicle.y)
+        {
+            status = 6;
+        }
+        color = inspection_regions == 7 ? vec4(float(status) / 255.0, 0, 0, 1)
+            : pack_float(status == 1 ? px[inspection_regions - 5] : uintBitsToFloat(0x7fc00000u));
+        return;
+    }
     if (inspection_regions >= 2)
     {
         // Pack one perspective-interpolated float into RGBA8. No float FBO extension.
@@ -81,25 +130,9 @@ void main()
         {
             continue;
         }
-        vec3 p = (pose[i] * vec4(world, 1)).xyz;
-        if (p.z <= limits[i].y)
-        {
-            continue;
-        }
-        vec2 ab = p.xy / p.z;
-        float r = length(ab), theta = atan(r);
-        if (theta > limits[i].x)
-        {
-            continue;
-        }
-        float t2 = theta * theta;
-        vec4 k = distortion[i];
-        float td = theta * (1.0 + t2 * (k.x + t2 * (k.y + t2 * (k.z + t2 * k.w))));
-        vec2 px = intrinsics[i].xy * ab * (r > 1e-12 ? td / r : 1.0) + intrinsics[i].zw;
-        if (any(lessThan(px, vec2(0))) || any(greaterThan(px, sizes[i] - 1.0)))
-        {
-            continue;
-        }
+        vec2 px;
+        float theta;
+        if (source_projection(i, px, theta) != 1) { continue; }
         vec2 uv = (px + .5) / sizes[i];
         observed++;
         vec3 x;

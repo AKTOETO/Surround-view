@@ -15,9 +15,27 @@ enum class CarrierRegion : unsigned char
     vehicle_model = 5
 };
 
+enum class SourceProjectionStatus : unsigned char
+{
+    no_carrier = 0,
+    valid = 1,
+    unavailable = 2,
+    behind_camera = 3,
+    outside_angle = 4,
+    outside_image = 5,
+    vehicle_footprint = 6
+};
+
+struct SourceProjectionInspection
+{
+    cv::Mat pixels; // CV_32FC2, source pixel centres; NaN unless valid.
+    cv::Mat status; // CV_8UC1, SourceProjectionStatus; no scene-occlusion test.
+};
+
 struct RenderInspectionRequest
 {
-    bool carrier_positions = false; // Opt-in: three extra RGBA8 passes/readbacks.
+    bool carrier_positions = false;  // Opt-in: three extra RGBA8 passes/readbacks.
+    bool source_projections = false; // Opt-in: twelve extra passes/readbacks.
 };
 
 // Explicit, render-thread-only capture for numerical inspection. Not a wire subscription.
@@ -30,6 +48,7 @@ struct RenderInspection
     // CV_32FC3, vehicle metres, top-left. NaN for background/ego; empty unless requested.
     // Perspective-interpolated actual mesh positions, not ideal-surface intersections.
     cv::Mat carrier_positions;
+    std::array<SourceProjectionInspection, 4> source_projections;
     cv::Mat carrier_regions; // CV_8UC1, top-left; CarrierRegion IDs, including ego geometry.
 };
 } // namespace sv

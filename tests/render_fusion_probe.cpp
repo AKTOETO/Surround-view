@@ -65,7 +65,8 @@ int main(int argc, char **argv)
                     settings.diagnostic = diagnostic;
                     renderer.set_fusion(settings);
                     sv::RenderInspection inspection;
-                    const auto actual = renderer.render(set, config.view, &inspection, {true});
+                    const auto actual =
+                        renderer.render(set, config.view, &inspection, {true, true});
                     if (inspection.carrier_positions.type() != CV_32FC3 ||
                         inspection.carrier_positions.size() !=
                             cv::Size(config.width, config.height))
@@ -84,6 +85,27 @@ int main(int argc, char **argv)
                     for (int c = 0; c < 4; ++c)
                     {
                         const auto name = "camera" + std::to_string(c);
+                        const auto &source = inspection.source_projections[c];
+                        matrix(directory / (name + "-source-pixels.f32"), source.pixels);
+                        matrix(directory / (name + "-source-status.u8"), source.status);
+                        for (int y = 0; y < config.height; ++y)
+                        {
+                            for (int x = 0; x < config.width; ++x)
+                            {
+                                const auto region = inspection.carrier_regions.at<uchar>(y, x);
+                                // Inspection always depth-masks ego, even in diagnostic views.
+                                if (region == 0 || region == 5)
+                                {
+                                    continue;
+                                }
+                                const bool valid = source.status.at<uchar>(y, x) == 1;
+                                if (valid != (inspection.samples->validity[c].at<uchar>(y, x) != 0))
+                                {
+                                    throw std::runtime_error(
+                                        "source projection/sample validity mismatch");
+                                }
+                            }
+                        }
                         matrix(directory / (name + "-linear.f32"), inspection.samples->colors[c]);
                         matrix(directory / (name + "-valid.u8"), inspection.samples->validity[c]);
                         matrix(directory / (name + "-edge.f32"),

@@ -285,7 +285,7 @@ install(FILES packaging/licenses/OpenCV-Apache-2.0.txt packaging/licenses/GLM-co
 if(BUILD_TESTING AND SV_GTEST_TESTS)
   find_package(GTest CONFIG REQUIRED)
   if(SV_GPU)
-    add_executable(sv-carrier-inspection-tests tests/render_correspondence_tests.cpp)
+    add_executable(sv-carrier-inspection-tests tests/render_correspondence_tests.cpp tests/render_source_inspection_tests.cpp)
     target_link_libraries(sv-carrier-inspection-tests PRIVATE sv-render GTest::gtest_main)
     target_compile_definitions(sv-carrier-inspection-tests PRIVATE SV_TEST_CONFIG="${PROJECT_SOURCE_DIR}/configs/synthetic.json")
     add_test(NAME carrier_inspection COMMAND sv-carrier-inspection-tests)
