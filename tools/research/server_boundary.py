@@ -204,6 +204,9 @@ def verify_capture_case(case, root):
         raise ValueError('scene recipe differs from frozen plan')
     if {k:truth['diagnostic_target'][k] for k in case['target']} != case['target']:
         raise ValueError('diagnostic target differs from frozen plan')
+    if 'virtual_camera' in case and any(record['config']['virtual_camera'] != case['virtual_camera']
+                                        for record in (info, truth)):
+        raise ValueError('virtual camera differs from frozen capture plan')
     if (info['face_size'] != case['capture']['face_size']
             or len(info['frames']) != case['capture']['frames']
             or info['config']['output'] != {'width':case['capture']['width'],'height':case['capture']['height']}):
