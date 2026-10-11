@@ -15,6 +15,62 @@ sys.path.insert(0, str(ROOT/'tools'))
 from temporal_seam_stability import load_sequence
 
 
+def plot_lateral(data, args):
+    profiles = [(m,b) for m in ('multi_band','graph_cut_multi_band') for b in ('zero','normalized')]
+    carriers = list(data['cases'][0]['resources'])
+    ids = {'dome_floor_v1':'dome_floor','cylinder_floor_v1':'cylinder_floor','cube_floor_v1':'cube_floor'}
+    labels, floor, shell, iou = [], [], [], []
+    fig, axes = plt.subplots(6, 6, figsize=(20, 15))
+    for index,case in enumerate(data['cases']):
+        seed = case['seed']
+        cfg,_,truths,_,_,_ = load_sequence(args.inputs_root/f'seed{seed}-inputs', args.inputs_root/f'seed{seed}-capture', 'any')
+        for t,truth in enumerate(truths):
+            axes[2*index+t,0].imshow(truth)
+            axes[2*index+t,0].set_title(f'Direct truth: seed{seed}, frame{t}')
+        for column,carrier in enumerate(carriers,1):
+            rows = [r for r in case['audit']['results'] if r['carrier'] == carrier]
+            labels.append(f'seed{seed} / {ids.get(carrier,carrier)}')
+            groups = [[r for r in rows if (r['mode'],r['boundary']) == p] for p in profiles]
+            for field,values in (('common_floor',floor),('common_shell',shell)):
+                values.append([np.mean([r['carrier_region_quality'][field]['linear_mae']
+                                       if r['carrier_region_quality'][field]['linear_mae'] is not None else np.nan
+                                       for r in group]) for group in groups])
+            iou.append([np.mean([r['quality']['target']['iou'] for r in group]) for group in groups])
+            directory = args.captures_root/f'seed{seed}'/ids.get(carrier,carrier)
+            report_path = directory/'report.json'
+            if hashlib.sha256(report_path.read_bytes()).hexdigest() != case['audit']['native_report_sha256'][carrier]:
+                raise ValueError('lateral native report checksum mismatch')
+            native = json.loads(report_path.read_text())
+            for t in range(2):
+                row = next(r for r in rows if r['truth_index'] == t and (r['mode'],r['boundary']) == profiles[0])
+                variant = next(n for n,v in enumerate(native['scenario']['variants']) if (v['mode'],v['pyramid_boundary']) == profiles[0])
+                sample = next(s for s in native['samples'] if s['frame_index'] == row['frame_index'] and s['variant'] == variant and not s['warmup'])
+                payload = (directory/sample['rgba_file']).read_bytes()
+                if hashlib.sha256(payload).hexdigest() != row['rgba_sha256']:
+                    raise ValueError('lateral RGBA checksum mismatch')
+                rgba = np.frombuffer(payload,np.uint8).reshape(cfg['output']['height'],cfg['output']['width'],4)
+                axes[2*index+t,column].imshow(rgba)
+                axes[2*index+t,column].set_title(ids.get(carrier,carrier))
+    for ax in axes.flat: ax.set_axis_off()
+    fig.suptitle('Lateral view: all six frames / fixed multi_band-zero profile; independent direct RGB at left')
+    fig.tight_layout()
+    args.output.mkdir(parents=True,exist_ok=True)
+    fig.savefig(args.output/'carrier_lateral_views.png',dpi=150);plt.close(fig)
+    fig, axes = plt.subplots(1,3,figsize=(17,10),sharey=True)
+    for ax,values,title,cmap in zip(axes,(floor,shell,iou),
+            ('Common-floor linear MAE','Common-shell linear MAE','Coded-target IoU'),('magma_r','magma_r','viridis')):
+        im = ax.imshow(values,aspect='auto',cmap=cmap)
+        ax.set_xticks(range(4),[m.replace('graph_cut_','GC ').replace('multi_band','MB')+' / '+b for m,b in profiles],rotation=30,ha='right')
+        ax.set_yticks(range(len(labels)),labels);ax.set_title(title)
+        for y,row in enumerate(values):
+            for x,v in enumerate(row):
+                ax.text(x,y,f'{v:.4f}' if np.isfinite(v) else 'undefined',ha='center',va='center',color='white',
+                        bbox=dict(facecolor='black',alpha=.35,edgecolor='none',pad=1))
+        fig.colorbar(im,ax=ax,shrink=.6)
+    fig.suptitle('Same support across carriers: arithmetic means of two adjacent frames; exploratory')
+    fig.tight_layout();fig.savefig(args.output/'carrier_lateral_metrics.png',dpi=150);plt.close(fig)
+
+
 def plot_coverage(data, args):
     from matplotlib.colors import ListedColormap, BoundaryNorm
     palette = ['#20242b', '#80b1d3', '#fdb462', '#b3de69', '#bc80bd', '#fb8072']
@@ -263,6 +319,9 @@ def main():
     parser.add_argument('--inputs-root', type=Path, default=ROOT/'artifacts/seam-generalization-v1')
     args = parser.parse_args()
     report = json.loads(args.report.read_text())
+    if report.get('experiment') == 'E-STITCH-carrier-lateral-01':
+        plot_lateral(report, args)
+        return
     if report.get('experiment') == 'E-STITCH-carrier-coverage-01':
         plot_coverage(report, args)
         return
