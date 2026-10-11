@@ -138,3 +138,11 @@ MPLCONFIGDIR=/tmp/sv-matplotlib python3 docs/diploma/plot_server_boundary.py --r
 ```
 
 Raw обеих серий необходимы; independent high-resolution truth не получается resize прежнего. Политики high8/high32pixels заданы заранее: [[research/PARALLAX_OUTPUT_PROTOCOL]], [[validation/PARALLAX_OUTPUT]].
+
+§4.58 — fisheye400→800 при cubemap512/output640×360 и прежнем angular support. Рисунки4.79–4.80:
+
+```bash
+MPLCONFIGDIR=/tmp/sv-matplotlib python3 docs/diploma/plot_server_boundary.py --report docs/validation/baselines/parallax_sensor_v1.json --captures-root artifacts/parallax-sensor-v1 --inputs-root artifacts/parallax-sensor-inputs-v1 --reference-root artifacts/parallax-output-v1
+```
+
+Нужны raw обеих серий. Все480 pairs/960 cube faces и unchanged independent truth проверены; повторный paired audit побитно совпал. План/результаты: [[research/PARALLAX_SENSOR_PROTOCOL]], [[validation/PARALLAX_SENSOR]]. Native source correspondence/triangle-hit пока остаётся следующим этапом.

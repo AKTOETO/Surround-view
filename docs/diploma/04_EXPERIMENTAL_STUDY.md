@@ -1992,3 +1992,83 @@ Pyramid levels, fusion/seam параметры и suppression bands RGB ROI со
 Linear RGB MAE выросла478 раз и снизилась2 раза, $\Delta$=−0.00007758…+0.00308372. Это не изолированная оценка ухудшения fusion: masks/ROI boundary widths и pyramid support фиксированы в pixels, то есть continuous support между разрешениями различается. Object-space failure сохраняется при обоих выходных растрах и обоих area policies; недостаточное output320×180 разрешение не является достаточным объяснением нулевого raised overlap. Совместно с cubemap control §4.56 это сужает, но не завершает разделение причин: остаются fisheye input resolution/filtering, source-surface correspondence, реальный triangle-hit носителя, модель сцены и optical-height/baseline. Ни universal carrier ranking, ни пригодность на Авроре пока не подтверждены.
 
 Read-only paired audit побитно воспроизводит baseline `parallax_output_v1.json`. CTest object_metrics/blender_fixture/render_fusion_parity/render_modes:4/4,6.21s; первоначальная несовместимость legacy test fixture исправлена явным modern provenance field в unit-test setup, actual study requirements не ослаблялись. Known-answer controls проверяют dimensions/plan confounders, нормализацию площади/дистанции, semantic ID preservation, undefined deltas и noise cutoff8→32. Blender вернулся к исходной Scene. Команды/source hashes/deviations: [[validation/PARALLAX_OUTPUT]], [[engineering/USAGE#Чувствительность к выходному разрешению]].
+
+## 4.58. Чувствительность к дискретизации входных fisheye-изображений
+
+После отдельных проверок cubemap (§4.56) и выходного растра (§4.57) остаётся вопрос: объясняется ли потеря поднятого объекта недостаточным разрешением входного fisheye-изображения? Для проверки выполнен парный опыт 400×400→800×800 при прежних cubemap512 и output640×360. Протокол [[research/PARALLAX_SENSOR_PROTOCOL]] и точный reference summary SHA256 закреплены до захвата и анализа качества. Это синтетическая передискретизация тех же наблюдений, а не модель нового физического сенсора: исходная детализация каждой грани cubemap по-прежнему512×512.
+
+Для масштаба $s=2$ используются преобразования
+
+$$
+f'_x=s f_x,\qquad f'_y=s f_y,\qquad
+c'_x=s(c_x+\tfrac12)-\tfrac12,\qquad
+c'_y=s(c_y+\tfrac12)-\tfrac12.
+$$
+
+Из $f_x=f_y=128$ и $c_x=c_y=199.5$ получены256 и399.5. Полупиксельная поправка сохраняет нормализованную координату центра: $(u'+1/2)/800=(u+1/2)/400$. Коэффициенты fisheye-дисторсии, angular bound1.48rad, extrinsics, номинальная калибровка в физических координатах и движение не меняются. При нулевой дисторсии радиус углового круга $f\theta_{max}$ равен189.44px и378.88px. Оба круга строго внутри своих сеток центров пикселей: минимальный запас10.06px и20.62px. Поэтому прямоугольное обрезание сенсора не меняет непрерывное поле зрения; переснятый independent visibility должен оставаться прежним. Это проверяется по реальным RGB/ID/visibility, а не только по формуле.
+
+```plantuml
+@startuml
+left to right direction
+rectangle "12 прежних сцен\n2 mounts × 2 poses\nнеизменные cubemap512" as world
+rectangle "Fisheye400\nfx=fy=128\ncx=cy=199.5" as low
+rectangle "Fisheye800\nfx=fy=256\ncx=cy=399.5" as high
+rectangle "sv-server\n5 носителей × 4 профиля\noutput640×360" as server
+rectangle "Independent direct truth\nRGB + object-ID + visibility\nпобитное равенство серий" as truth
+rectangle "480 keyed pairs\nfull/conditional IoU\ncentroid, pixels, RGB MAE" as audit
+world --> low
+world --> high
+world --> truth
+low --> server : reference series
+high --> server : fresh native processes
+server --> audit : RGBA + hashes + reports
+truth --> audit
+note bottom of high
+Удвоение raster не добавляет
+новых наблюдений Blender-сцены.
+end note
+@enduml
+```
+
+Рисунок4.78 — парный контроль дискретизации fisheye. Пять носителей используют общий medium mesh budget; обе серии исполняются теми же C++ binaries на том же фактическом GLES backend. Python выполняет независимый аудит и построение метрик, а весь fusion/rendering выполняет сервер. Source-edge настройки сохраняют численные значения в pixels, поэтому это full-pipeline sensitivity, а не изолированное сравнение интерполяционного фильтра.
+
+Полная серия включает60 новых процессов сервера,4320 samples,3360 measurement RGBA и480 quality conditions. Проверены960 фактически экспортированных source cube faces обеих серий. Их decoded RGB и статические PNG metadata совпадают; собственные manifest SHA256 каждой серии проверены отдельно. Прямые RGB, object-ID и raw source-visibility maps также совпали побитно. Нормализация только terminal numeric Blender suffixes сохраняет numeric IDs/semantic base names и original tables. Эти правила заданы заранее; дополнительных отклонений от протокола нет. Actual optics error нового capture не превышает0.000047768px при допуске0.001px.
+
+В обеих сериях использованы прежние бинарники с source fingerprint `601a3878ba99e6bc953756bbc0c40e969fdb0c89c5d7487349332b7960ac87f4`. Фактический backend — OpenGL ES3/NVIDIA Corporation/NVIDIA GeForce RTX5070Ti/PCIe/SSE2; fusion выполняется на CPU. Переменная `LIBGL_ALWAYS_SOFTWARE` сама по себе не означает, что этот backend стал Mesa. Во время native trials не запускались Blender capture, сборка, тесты или построение графиков. Это проверка качества Linux-прототипа, а не измерение производительности целевой Авроры.
+
+![Прямой эталон и серверные кадры при двух разрешениях fisheye](figures/experiments/parallax_sensor_views.png)
+
+Рисунок4.79 — все12 factors, первая из двух поз. Слева независимый direct truth; в центре native dome/multi_band/zero при fisheye400 и800; справа абсолютная sRGB-разность без усиления, шкала0…1. Выходы обеих серий имеют640×360, resize для численного сравнения или отображения разности не применяется. Низкий контраст правой колонки отражает малые RGB-изменения, а не идентичность кадров: все480 RGBA hashes различаются. Один фиксированный профиль показан для сопоставимости иллюстраций, остальные включены в полную таблицу метрик.
+
+| Показатель | Fisheye400×400 | Fisheye800×800 |
+|---|---:|---:|
+| Raised full IoU=0 |320/320 |320/320 |
+| Raised conditional IoU=0 |320/320 |320/320 |
+| Conditional IoU undefined |0/480 |0/480 |
+| Отсутствует predicted centroid |240/480 |240/480 |
+| Full IoU объекта на земле, диапазон |0.051701…0.327966 |0.049245…0.310287 |
+| Near-z080 centroid distance / output height |0.284821…0.331941 |0.286687…0.330917 |
+
+Суммарное число coded chroma pixels четырёх source cameras положительно в каждой позе. High/low отношение3.94051…4.07524 близко к ожидаемому росту площади сетки в4 раза. Это цифровые отсчёты тех же наблюдений, а не новые независимые данные. Source presence или ray visibility не устанавливают correspondence между конкретной поверхностью объекта и тем output pixel, куда сервер помещает её текстуру.
+
+| Метрика, разность800−400 | Уменьшение | Равенство | Увеличение | Undefined |
+|---|---:|---:|---:|---:|
+| Full IoU |130 |320 |30 |0 |
+| Conditional IoU |102 |320 |58 |0 |
+| Predicted pixels |200 |241 |39 |0 |
+| Centroid distance, px |88 |0 |152 |240 |
+| Linear RGB MAE |55 |0 |425 |0 |
+
+Уменьшение IoU означает ухудшение; уменьшение centroid distance/MAE — улучшение. Predicted area сама по себе не является quality criterion. Таблица включает все зависимые poses/profiles/carriers, а не независимые экспериментальные реплики. Undefined pattern centroid совпадает в обеих сериях и не заменяется нулём.
+
+Все320 raised full и conditional overlaps остались нулевыми. Для ground controls направления смешаны: full IoU30 улучшений/130 ухудшений, $\Delta$=−0.0176794…+0.0103852; conditional IoU58 улучшений/102 ухудшения, $\Delta$=−0.0191068…+0.0092946. Near-z080 surviving coded components остаются смещёнными на28.7–33.1% высоты кадра. Centroid distance уменьшилась88 раз и выросла152, $\Delta$=−0.372481…+1.019286px. Наличие component без overlap не означает восстановления положения объекта.
+
+![Полные парные изменения качества при увеличении fisheye растра](figures/experiments/parallax_sensor_metrics.png)
+
+Рисунок4.80 — все12 factors×5 carriers×4 profiles; средние двух зависимых poses. Панели: full IoU, conditional IoU и linear RGB MAE, разности800−400. Шкалы симметричны и независимы по метрикам. Прямой эталон/output ROI прежние, ни один carrier или профиль не исключён. Положительный RGB MAE delta означает ухудшение, положительный IoU delta — улучшение; цвет не задаёт единого направления качества между панелями.
+
+Linear RGB MAE выросла425 раз и снизилась55, $\Delta$=−0.000058709…+0.000874567. При одинаковом output/direct truth это парное наблюдение всего заданного pipeline. Однако source-edge настройки остаются в pixels, поэтому их угловой support меняется вместе с входной сеткой. Результат не выделяет отдельно влияние source interpolation, edge weighting, fusion или геометрии.
+
+В рамках этого опыта удвоение только входного fisheye raster недостаточно для устранения поднятого объекта. Совместно с §4.56–4.57 это ослабляет объяснение проблемы одним низким разрешением, но не доказывает сходимость, исключительное влияние геометрии или универсальное превосходство носителя. Исследование ограничено одним flat world family, двумя mounts, двумя зависимыми poses и кодированной мишенью. Следующий этап — native source-surface correspondence и triangle-hit: установить действительную точку носителя и соответствующую выборку каждой камеры, отделить геометрическое несоответствие от source visibility/filtering; затем расширить optical-height/baseline и независимые natural scenes.
+
+Read-only paired audit повторно совпал побитно с baseline `parallax_sensor_v1.json`. CTest object_metrics/blender_fixture/render_fusion_parity/render_modes:4/4,5.97s; object_metrics содержит39 known-answer tests, включая intrinsics/angular support, plan confounders и отклонение повреждённых cube pixels/metadata/checksums. Активная пользовательская Scene восстановлена и проверена через MCP. Все пары, raw/native hashes и ограничения: [[validation/PARALLAX_SENSOR]]. Команды воспроизведения: [[engineering/USAGE#Чувствительность к разрешению fisheye]].

@@ -955,3 +955,17 @@ MPLCONFIGDIR=/tmp/sv-matplotlib python3 docs/diploma/plot_server_boundary.py --r
 ```
 
 Изображения справа640×360 получены сервером; low output увеличивается nearest-neighbor только для display difference, не для scores/truth. Centroid сравнивается как distance/output-height, predicted area как доля кадра. Report содержит high8px и high32px component policies;32px эквивалентны прежним8px по площади. Null сохраняются. Между captures сравниваются decoded cube/fisheye RGB и статические PNG metadata; файловые hashes проверяются внутри каждой серии (Blender меняет Date/Camera/Scene/RenderTime). Протокол и явное уточнение приёмки: [[research/PARALLAX_OUTPUT_PROTOCOL]], [[validation/PARALLAX_OUTPUT]].
+
+## Чувствительность к разрешению fisheye
+
+После [[engineering/BLENDER#Fisheye800 при прежнем поле зрения]] выполните новую серию. Для полного парного аудита сохраните raw outputs и inputs предыдущего output-resolution опыта; их пути и summary SHA256 закреплены в `configs/research/parallax-sensor-plan.json`.
+
+```bash
+python3 tools/research/parallax_height.py --plan configs/research/parallax-sensor-plan.json --root artifacts/parallax-sensor-v1 --inputs artifacts/parallax-sensor-inputs-v1 --run-binaries build --output artifacts/parallax-sensor-v1/summary.json
+python3 tools/research/parallax_height.py --plan configs/research/parallax-sensor-plan.json --root artifacts/parallax-sensor-v1 --inputs artifacts/parallax-sensor-inputs-v1 --sensor-resolution-pair --output artifacts/parallax-sensor-v1/paired.json
+MPLCONFIGDIR=/tmp/sv-matplotlib python3 docs/diploma/plot_server_boundary.py --report artifacts/parallax-sensor-v1/paired.json --captures-root artifacts/parallax-sensor-v1 --inputs-root artifacts/parallax-sensor-inputs-v1 --reference-root artifacts/parallax-output-v1
+```
+
+Первая команда требует нового native root; для повторного аудита уже завершённой серии исключите `--run-binaries`. При повторном capture/trial используйте новые каталоги и новый runtime plan с соответствующим reference. Не запускайте Blender/build/tests/plots одновременно с измерениями.
+
+Сервер выполняет весь rendering/fusion. Python здесь проверяет эксперимент и строит независимые метрики/иллюстрации. Audit требует одинаковые binaries/device, decoded cube RGB/static metadata, independent direct RGB/ID/visibility и позы. Меняются только camera resolution400→800 и pixel-center intrinsics. Выход640×360 и angular bound прежние; `null` сохраняется. Параметры source-edge остаются в pixels: это full-pipeline sensitivity, а не чистая ablation фильтра. [[research/PARALLAX_SENSOR_PROTOCOL]].

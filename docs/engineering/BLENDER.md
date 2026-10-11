@@ -287,3 +287,18 @@ capture_study(root/'assets/scenarios/parallax-output-v1.json', root/'artifacts/p
 ```
 
 Используется прежний неизменённый driver/helpers. Новый direct RGB/ID/visibility вычисляется заново для новых pixel centers; нельзя resize старый truth. Дождаться `state=complete` в progress и остановить capture перед native trials. Сравнение принимает только побитно прежние source camera RGB. Blender PNG содержит переменные Date/Camera/Scene/RenderTime: file hashes могут различаться при одинаковом содержимом, но manifest checks не отключаются. Подсчёт cube faces идёт по фактическим `frames[].cameras[].faces`, исключая overview; этот exporter сохраняет5 нужных граней на камеру. [[engineering/USAGE#Чувствительность к выходному разрешению]], [[research/PARALLAX_OUTPUT_PROTOCOL]].
+
+## Fisheye800 при прежнем поле зрения
+
+Recipe `assets/scenarios/parallax-sensor-v1.json` сохраняет мир, монтаж, cubemap512 и выход640×360 предыдущей серии. В Blender Python Console:
+
+```python
+from pathlib import Path
+import sys
+root = Path('/home/bogdan/prog/MAI/surround-view')
+sys.path.insert(0, str(root/'tools/blender'))
+from parallax_sensor import capture_sensor_study
+capture_sensor_study(root/'assets/scenarios/parallax-sensor-v1.json', root/'artifacts/parallax-sensor-inputs-v1')
+```
+
+Нужен новый выходной каталог. Дождитесь `progress.json: state=complete`, затем остановите Blender capture перед серверными измерениями. `camera_sampling.py` удваивает focal lengths в pixels и переводит principal point по правилу центров пикселей; actual/nominal extrinsics и angular bound сохраняются. Прямые RGB/ID/visibility снимаются заново. Это синтетическая передискретизация прежних cubemap512, а не более детальный физический сенсор. Проверки равенства эталонов и source cubes: [[research/PARALLAX_SENSOR_PROTOCOL]]. Native команды: [[engineering/USAGE#Чувствительность к разрешению fisheye]].
