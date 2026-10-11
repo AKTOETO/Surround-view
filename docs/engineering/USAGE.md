@@ -775,3 +775,60 @@ MPLCONFIGDIR=/tmp/sv-matplotlib python3 docs/diploma/plot_server_boundary.py --r
 ```
 
 Аудитор требует все120 условий, actual metadata/budget consistency, frozen profiles/recipes/hashes и успешный settings restore. Сравнение ограничено mesh position/index payload; оно не уравнивает full memory, raster work или spatial density и не ранжирует скорость носителей. Для изменения бюджета/геометрии создать новую версию plan/protocol/output, а не перезаписывать опубликованный baseline.
+
+### Чувствительность к плотности сетки
+
+Frozen plan `configs/research/carrier-refinement-plan.json`, протокол [[research/CARRIER_REFINEMENT_PROTOCOL]], результаты [[validation/CARRIER_REFINEMENT]]. Medium использует прежние raw reports/RGBA в `artifacts/carrier-budget-v1`, проверяемые по закреплённому SHA256 baseline. Coarse/fine создаются отдельно; физические размеры и inputs не менять.
+
+Подготовка новых derived plans/configs/provenance (без обработки видеокадров):
+
+```sh
+python3 - <<'PY'
+from pathlib import Path
+import hashlib, json
+root = Path('artifacts/carrier-refinement-v1')
+path = Path('configs/research/carrier-refinement-plan.json')
+master = json.loads(path.read_text())
+sha = lambda p: hashlib.sha256(Path(p).read_bytes()).hexdigest()
+root.mkdir(parents=True, exist_ok=True)
+(root/'provenance.json').write_text(json.dumps(dict(master_plan_sha256=sha(path)), indent=2)+'\n')
+for level in master['levels']:
+    if 'reused_root' in level:
+        continue
+    out = root/level['id']
+    out.mkdir(exist_ok=True)
+    plan = level['plan']
+    derived = out/'plan.json'
+    derived.write_text(json.dumps(plan, indent=2)+'\n')
+    (out/'provenance.json').write_text(json.dumps(dict(plan_sha256=sha(derived),
+        inputs_plan_sha256=sha(plan['inputs_plan']), scenario_sha256=sha(plan['scenario'])), indent=2)+'\n')
+    for seed in plan['seeds']:
+        for carrier in plan['carriers']:
+            run = out/f'seed{seed}'/carrier['id']
+            run.mkdir(parents=True, exist_ok=True)
+            cfg = json.loads(Path(f'artifacts/seam-generalization-v1/seed{seed}-inputs/config.json').read_text())
+            cfg['surface'] = carrier['surface']
+            (run/'config.json').write_text(json.dumps(cfg, indent=2)+'\n')
+PY
+```
+
+Запустить fresh server и native runner для каждой комбинации coarse/fine × seeds101/102/103 × пять carriers, тем же способом, что в предыдущем разделе. Например, первая комбинация, терминал1:
+
+```sh
+SV_EGL_PLATFORM=surfaceless __EGL_VENDOR_LIBRARY_FILENAMES=/usr/share/glvnd/egl_vendor.d/50_mesa.json build/sv-server --config artifacts/carrier-refinement-v1/coarse/seed101/plane/config.json --manifest artifacts/seam-generalization-v1/seed101-inputs/manifest.json --ipc-dir /tmp/sv-refinement-example --trace artifacts/carrier-refinement-v1/coarse/seed101/plane/trace.jsonl
+```
+
+Терминал2:
+
+```sh
+build/svctl --unix /tmp/sv-refinement-example --timeout-ms 10000 research configs/research/boundary-sequence.json artifacts/carrier-refinement-v1/coarse/seed101/plane/report.json
+```
+
+Завершить сервер через Ctrl+C, затем перейти к следующей комбинации в порядке master plan. Не выполнять build/CTest/Blender capture параллельно. При наличии сохранённых medium originals и всех30 новых reports:
+
+```sh
+python3 tools/research/server_boundary.py --refinement-plan configs/research/carrier-refinement-plan.json --refinement-root artifacts/carrier-refinement-v1 --inputs-root artifacts/seam-generalization-v1 --output artifacts/carrier-refinement-v1/audit.json
+MPLCONFIGDIR=/tmp/sv-matplotlib python3 docs/diploma/plot_server_boundary.py --report artifacts/carrier-refinement-v1/audit.json --captures-root artifacts/carrier-refinement-v1 --fixture artifacts/seam-generalization-v1/seed101-inputs --capture artifacts/seam-generalization-v1/seed101-capture
+```
+
+Аудитор требует360 условий с120 pinned medium reuse, совпадающий native fingerprint, hashes, shape invariance, строго возрастающие cells/resources и корректный restore. Если medium originals отсутствуют или требуется новая сборка, создать новую версию полной серии/plan с новым закреплённым medium baseline: текущий протокол не допускает незаметной подмены прежних samples. Compact tracked audit сохраняет metrics/hash references; large raw reports/RGBA нужны для re-audit и не дублируются в Git. Fine output — finite reference для sensitivity, direct Blender RGB/object-ID остаётся независимым truth. Универсальный convergence/acceptance threshold и speed ranking из этой серии не следуют.

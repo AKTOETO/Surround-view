@@ -1485,3 +1485,53 @@ $$B_{mesh}=3N_v\operatorname{sizeof}(float)+N_i\operatorname{sizeof}(unsigned),\
 *Рисунок 4.54 — первый заранее заданный seed101 и профиль multi_band/zero, оба кадра: direct Blender RGB и actual server RGBA пяти носителей. Близость результатов замкнутых surfaces согласуется с общей плоскостью пола в этих ракурсах; ground/shell coverage ещё не измерена, вытягивание поднятого блока сохраняется.*
 
 Дополнительные60 boundary пар показали уменьшение RGB MAE у normalized во всех60 случаях и ухудшение target IoU в16. Это расширяет предыдущий textured screen, но не обосновывает универсальный выбор normalized. Timings сохранены, однако фиксированный carrier order и отсутствие thermal/frequency контроля не позволяют ранжировать скорость. Необходимо продолжить budget convergence, разделить ground/raised/shell ROI, добавить верхние/боковые views, новые scene families и natural-object truth. Полный raw audit и ограничения: [[validation/CARRIER_BUDGET]].
+
+## 4.49. Чувствительность к плотности сетки носителя
+
+После общего mesh-budget screen (§4.48) проверено сгущение каждого носителя coarse/medium/fine. Форма поверхности и camera/input/view/fusion параметры неизменны; cells по каждой оси приблизительно удваиваются. Minimum dome latitude8 и integer rounding нарушают точный factor2; triangle counts между carriers на крайних уровнях не равны. Это within-carrier sensitivity, не новое ранжирование carriers. Протокол заморожен до coarse/fine output: [[research/CARRIER_REFINEMENT_PROTOCOL]].
+
+| Носитель | Triangles coarse / medium / fine | Position/index bytes coarse / medium / fine |
+|---|---:|---:|
+| plane | 864 / 3196 / 12144 | 16068 / 58512 / 220500 |
+| bowl | 864 / 3196 / 12144 | 16068 / 58512 / 220500 |
+| dome_floor_v1 | 832 / 3200 / 13056 | 15384 / 58392 / 236568 |
+| cylinder_floor_v1 | 768 / 3200 / 13056 | 14616 / 59160 / 238104 |
+| cube_floor_v1 | 840 / 3208 / 12552 | 16392 / 60168 / 230664 |
+
+Проверены360 условий: три уровня × пять carriers × три street instances × два кадра × четыре profiles. Из них240 новые,120 medium повторно использованы после SHA256 проверки pinned baseline и source fingerprint. Все3240 samples и2520 measurement RGBA прошли provenance/layout/hash/restore/resource audit. Product C++ не менялся: trials выполняет прежний native server/runner, исследовательский analyzer только читает отчёты.
+
+Две оценки разделены. Для дискретизации h и finite reference f:
+
+$$D(h,f)=\frac{1}{3|\Omega|}\sum_{p\in\Omega}\sum_{c=1}^{3}|L(I_h(p,c))-L(I_f(p,c))|.$$
+
+Ω — общий any-camera ROI, L — sRGB→linear transfer. D измеряет изменение output, не сценовую ошибку. Отдельная ΔMAE=MAE(I_f,I_truth)−MAE(I_m,I_truth) использует independent direct Blender RGB. Fine не является truth или доказательством асимптотической сходимости; acceptable threshold для автомобиля не задан.
+
+| Носитель | Linear difference coarse→fine | Linear difference medium→fine | Max medium/fine RGB8 delta в ROI | Medium ближе к fine |
+|---|---:|---:|---:|---:|
+| plane | 3.144e-07…2.267e-06 | 2.372e-07…6.201e-07 | 2 | 22/24 |
+| bowl | 6.641e-04…8.501e-04 | 1.469e-04…2.022e-04 | 72 | 24/24 |
+| dome_floor_v1 | 3.957e-06…1.118e-05 | 1.424e-06…5.296e-06 | 6 | 24/24 |
+| cylinder_floor_v1 | 1.254e-06…5.159e-06 | 5.119e-07…2.163e-06 | 2 | 24/24 |
+| cube_floor_v1 | 2.997e-07…7.840e-07 | 1.396e-07…6.015e-07 | 1 | 24/24 |
+
+![Output sensitivity и ошибки относительно независимого truth](figures/experiments/carrier_refinement_metrics.png)
+
+*Рисунок 4.55 —24 парных conditions на carrier: difference coarse/fine и medium/fine, signed truth RGB MAE differences, coded IoU differences. Отрицательная RGB-разность означает улучшение, положительная IoU-разность — улучшение. Точки profiles/соседних кадров не являются независимыми clips.*
+
+Medium ближе к fine в118/120 пар; полного byte-level совпадения нет. Bowl существенно чувствительнее: medium/fine linear difference1.469e−4…2.022e−4, отличаются8.286…10.086% ROI pixels, локальный RGB8 channel delta до72. Для остальных carriers максимум1–6. Следовательно, средний error не должен скрывать локальные изменения. Причина малых plane/cube differences отдельно не локализована.
+
+| Носитель | Δ truth RGB MAE fine−medium | RGB лучше / хуже | IoU лучше / хуже |
+|---|---:|---:|---:|
+| plane | -1.091e-07…+7.516e-08 | 8 / 16 | 0 / 0 |
+| bowl | -1.130e-04…-4.833e-05 | 24 / 0 | 3 / 8 |
+| dome_floor_v1 | -2.905e-06…-8.823e-07 | 24 / 0 | 2 / 0 |
+| cylinder_floor_v1 | -1.424e-06…-6.596e-08 | 24 / 0 | 2 / 0 |
+| cube_floor_v1 | -2.556e-07…+1.792e-07 | 12 / 12 | 0 / 2 |
+
+Fine уменьшает RGB MAE относительно direct truth в92/120 conditions и увеличивает в28. Coded IoU улучшается в7, ухудшается в10 и совпадает в103. В частности, bowl улучшает RGB MAE во24/24 парах, но ухудшает IoU в8. Численная устойчивость output и физическая точность silhouette — разные свойства: более плотная surrogate surface сохраняет ограничения самой формы.
+
+![Три плотности сетки и усиленная разница medium/fine](figures/experiments/carrier_refinement_views.png)
+
+*Рисунок 4.56 —первый seed101, первый кадр и профиль multi_band/zero для всех пяти carriers: direct RGB, coarse, medium, fine и абсолютная RGB8-разность medium/fine, усиленная×8 с clipping. Последний столбец — диагностическое изображение, не scene RGB. Изображения выбраны по порядку плана, а не по качеству.*
+
+Серия ограничена тремя просмотренными экземплярами одной street family и двумя близкими позами; high-angle views и shell ROI ещё не проверены. Сгущение не устраняет вытягивание поднятого target. Скорость не ранжируется из-за fixed level order/thermal и reuse medium. Для выбора нужны ground/raised/shell ROI, spatial density, разные views/resolutions, новые scene families/long clips и целевой стенд. Raw paths, compact baseline и подробности: [[validation/CARRIER_REFINEMENT]].
