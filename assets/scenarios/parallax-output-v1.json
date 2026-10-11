@@ -1,0 +1,710 @@
+{
+  "schema_version": 2,
+  "ground_size_m": [
+    100,
+    100
+  ],
+  "rig_seeds": [
+    101,
+    104
+  ],
+  "projection_margin_px": 8,
+  "cases": [
+    {
+      "id": "rig101-near-z020",
+      "scenario": {
+        "schema_version": 1,
+        "seed": 101,
+        "split": "validation",
+        "world": {
+          "building_spacing_m": 8,
+          "building_height_m": [
+            4,
+            7
+          ],
+          "near_obstacle_jitter_m": 0.4
+        },
+        "mounts": {
+          "yaw_deg": 3,
+          "pitch_deg": 3,
+          "along_body_m": 0.1
+        }
+      },
+      "target": {
+        "center_m": [
+          2.4,
+          2.3,
+          0.2
+        ],
+        "size_m": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "linear_rgb": [
+          1,
+          0,
+          1
+        ],
+        "chroma_threshold": 0.15,
+        "min_component_pixels": 8
+      },
+      "capture": {
+        "frames": 2,
+        "face_size": 512,
+        "frame_step": 6,
+        "width": 640,
+        "height": 360,
+        "source_ids": false
+      },
+      "virtual_camera": {
+        "azimuth_rad": 0.8,
+        "elevation_rad": 0.6,
+        "distance_m": 10.0,
+        "fov_y_rad": 1.6,
+        "clip_m": [
+          0.1,
+          100.0
+        ]
+      }
+    },
+    {
+      "id": "rig101-near-z080",
+      "scenario": {
+        "schema_version": 1,
+        "seed": 101,
+        "split": "validation",
+        "world": {
+          "building_spacing_m": 8,
+          "building_height_m": [
+            4,
+            7
+          ],
+          "near_obstacle_jitter_m": 0.4
+        },
+        "mounts": {
+          "yaw_deg": 3,
+          "pitch_deg": 3,
+          "along_body_m": 0.1
+        }
+      },
+      "target": {
+        "center_m": [
+          2.4,
+          2.3,
+          0.8
+        ],
+        "size_m": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "linear_rgb": [
+          1,
+          0,
+          1
+        ],
+        "chroma_threshold": 0.15,
+        "min_component_pixels": 8
+      },
+      "capture": {
+        "frames": 2,
+        "face_size": 512,
+        "frame_step": 6,
+        "width": 640,
+        "height": 360,
+        "source_ids": false
+      },
+      "virtual_camera": {
+        "azimuth_rad": 0.8,
+        "elevation_rad": 0.6,
+        "distance_m": 10.0,
+        "fov_y_rad": 1.6,
+        "clip_m": [
+          0.1,
+          100.0
+        ]
+      }
+    },
+    {
+      "id": "rig101-near-z140",
+      "scenario": {
+        "schema_version": 1,
+        "seed": 101,
+        "split": "validation",
+        "world": {
+          "building_spacing_m": 8,
+          "building_height_m": [
+            4,
+            7
+          ],
+          "near_obstacle_jitter_m": 0.4
+        },
+        "mounts": {
+          "yaw_deg": 3,
+          "pitch_deg": 3,
+          "along_body_m": 0.1
+        }
+      },
+      "target": {
+        "center_m": [
+          2.4,
+          2.3,
+          1.4
+        ],
+        "size_m": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "linear_rgb": [
+          1,
+          0,
+          1
+        ],
+        "chroma_threshold": 0.15,
+        "min_component_pixels": 8
+      },
+      "capture": {
+        "frames": 2,
+        "face_size": 512,
+        "frame_step": 6,
+        "width": 640,
+        "height": 360,
+        "source_ids": false
+      },
+      "virtual_camera": {
+        "azimuth_rad": 0.8,
+        "elevation_rad": 0.6,
+        "distance_m": 10.0,
+        "fov_y_rad": 1.6,
+        "clip_m": [
+          0.1,
+          100.0
+        ]
+      }
+    },
+    {
+      "id": "rig101-far-z020",
+      "scenario": {
+        "schema_version": 1,
+        "seed": 101,
+        "split": "validation",
+        "world": {
+          "building_spacing_m": 8,
+          "building_height_m": [
+            4,
+            7
+          ],
+          "near_obstacle_jitter_m": 0.4
+        },
+        "mounts": {
+          "yaw_deg": 3,
+          "pitch_deg": 3,
+          "along_body_m": 0.1
+        }
+      },
+      "target": {
+        "center_m": [
+          4.8,
+          4.6,
+          0.2
+        ],
+        "size_m": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "linear_rgb": [
+          1,
+          0,
+          1
+        ],
+        "chroma_threshold": 0.15,
+        "min_component_pixels": 8
+      },
+      "capture": {
+        "frames": 2,
+        "face_size": 512,
+        "frame_step": 6,
+        "width": 640,
+        "height": 360,
+        "source_ids": false
+      },
+      "virtual_camera": {
+        "azimuth_rad": 0.8,
+        "elevation_rad": 0.6,
+        "distance_m": 10.0,
+        "fov_y_rad": 1.6,
+        "clip_m": [
+          0.1,
+          100.0
+        ]
+      }
+    },
+    {
+      "id": "rig101-far-z080",
+      "scenario": {
+        "schema_version": 1,
+        "seed": 101,
+        "split": "validation",
+        "world": {
+          "building_spacing_m": 8,
+          "building_height_m": [
+            4,
+            7
+          ],
+          "near_obstacle_jitter_m": 0.4
+        },
+        "mounts": {
+          "yaw_deg": 3,
+          "pitch_deg": 3,
+          "along_body_m": 0.1
+        }
+      },
+      "target": {
+        "center_m": [
+          4.8,
+          4.6,
+          0.8
+        ],
+        "size_m": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "linear_rgb": [
+          1,
+          0,
+          1
+        ],
+        "chroma_threshold": 0.15,
+        "min_component_pixels": 8
+      },
+      "capture": {
+        "frames": 2,
+        "face_size": 512,
+        "frame_step": 6,
+        "width": 640,
+        "height": 360,
+        "source_ids": false
+      },
+      "virtual_camera": {
+        "azimuth_rad": 0.8,
+        "elevation_rad": 0.6,
+        "distance_m": 10.0,
+        "fov_y_rad": 1.6,
+        "clip_m": [
+          0.1,
+          100.0
+        ]
+      }
+    },
+    {
+      "id": "rig101-far-z140",
+      "scenario": {
+        "schema_version": 1,
+        "seed": 101,
+        "split": "validation",
+        "world": {
+          "building_spacing_m": 8,
+          "building_height_m": [
+            4,
+            7
+          ],
+          "near_obstacle_jitter_m": 0.4
+        },
+        "mounts": {
+          "yaw_deg": 3,
+          "pitch_deg": 3,
+          "along_body_m": 0.1
+        }
+      },
+      "target": {
+        "center_m": [
+          4.8,
+          4.6,
+          1.4
+        ],
+        "size_m": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "linear_rgb": [
+          1,
+          0,
+          1
+        ],
+        "chroma_threshold": 0.15,
+        "min_component_pixels": 8
+      },
+      "capture": {
+        "frames": 2,
+        "face_size": 512,
+        "frame_step": 6,
+        "width": 640,
+        "height": 360,
+        "source_ids": false
+      },
+      "virtual_camera": {
+        "azimuth_rad": 0.8,
+        "elevation_rad": 0.6,
+        "distance_m": 10.0,
+        "fov_y_rad": 1.6,
+        "clip_m": [
+          0.1,
+          100.0
+        ]
+      }
+    },
+    {
+      "id": "rig104-near-z020",
+      "scenario": {
+        "schema_version": 1,
+        "seed": 104,
+        "split": "validation",
+        "world": {
+          "building_spacing_m": 8,
+          "building_height_m": [
+            4,
+            7
+          ],
+          "near_obstacle_jitter_m": 0.4
+        },
+        "mounts": {
+          "yaw_deg": 3,
+          "pitch_deg": 3,
+          "along_body_m": 0.1
+        }
+      },
+      "target": {
+        "center_m": [
+          2.4,
+          2.3,
+          0.2
+        ],
+        "size_m": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "linear_rgb": [
+          1,
+          0,
+          1
+        ],
+        "chroma_threshold": 0.15,
+        "min_component_pixels": 8
+      },
+      "capture": {
+        "frames": 2,
+        "face_size": 512,
+        "frame_step": 6,
+        "width": 640,
+        "height": 360,
+        "source_ids": false
+      },
+      "virtual_camera": {
+        "azimuth_rad": 0.8,
+        "elevation_rad": 0.6,
+        "distance_m": 10.0,
+        "fov_y_rad": 1.6,
+        "clip_m": [
+          0.1,
+          100.0
+        ]
+      }
+    },
+    {
+      "id": "rig104-near-z080",
+      "scenario": {
+        "schema_version": 1,
+        "seed": 104,
+        "split": "validation",
+        "world": {
+          "building_spacing_m": 8,
+          "building_height_m": [
+            4,
+            7
+          ],
+          "near_obstacle_jitter_m": 0.4
+        },
+        "mounts": {
+          "yaw_deg": 3,
+          "pitch_deg": 3,
+          "along_body_m": 0.1
+        }
+      },
+      "target": {
+        "center_m": [
+          2.4,
+          2.3,
+          0.8
+        ],
+        "size_m": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "linear_rgb": [
+          1,
+          0,
+          1
+        ],
+        "chroma_threshold": 0.15,
+        "min_component_pixels": 8
+      },
+      "capture": {
+        "frames": 2,
+        "face_size": 512,
+        "frame_step": 6,
+        "width": 640,
+        "height": 360,
+        "source_ids": false
+      },
+      "virtual_camera": {
+        "azimuth_rad": 0.8,
+        "elevation_rad": 0.6,
+        "distance_m": 10.0,
+        "fov_y_rad": 1.6,
+        "clip_m": [
+          0.1,
+          100.0
+        ]
+      }
+    },
+    {
+      "id": "rig104-near-z140",
+      "scenario": {
+        "schema_version": 1,
+        "seed": 104,
+        "split": "validation",
+        "world": {
+          "building_spacing_m": 8,
+          "building_height_m": [
+            4,
+            7
+          ],
+          "near_obstacle_jitter_m": 0.4
+        },
+        "mounts": {
+          "yaw_deg": 3,
+          "pitch_deg": 3,
+          "along_body_m": 0.1
+        }
+      },
+      "target": {
+        "center_m": [
+          2.4,
+          2.3,
+          1.4
+        ],
+        "size_m": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "linear_rgb": [
+          1,
+          0,
+          1
+        ],
+        "chroma_threshold": 0.15,
+        "min_component_pixels": 8
+      },
+      "capture": {
+        "frames": 2,
+        "face_size": 512,
+        "frame_step": 6,
+        "width": 640,
+        "height": 360,
+        "source_ids": false
+      },
+      "virtual_camera": {
+        "azimuth_rad": 0.8,
+        "elevation_rad": 0.6,
+        "distance_m": 10.0,
+        "fov_y_rad": 1.6,
+        "clip_m": [
+          0.1,
+          100.0
+        ]
+      }
+    },
+    {
+      "id": "rig104-far-z020",
+      "scenario": {
+        "schema_version": 1,
+        "seed": 104,
+        "split": "validation",
+        "world": {
+          "building_spacing_m": 8,
+          "building_height_m": [
+            4,
+            7
+          ],
+          "near_obstacle_jitter_m": 0.4
+        },
+        "mounts": {
+          "yaw_deg": 3,
+          "pitch_deg": 3,
+          "along_body_m": 0.1
+        }
+      },
+      "target": {
+        "center_m": [
+          4.8,
+          4.6,
+          0.2
+        ],
+        "size_m": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "linear_rgb": [
+          1,
+          0,
+          1
+        ],
+        "chroma_threshold": 0.15,
+        "min_component_pixels": 8
+      },
+      "capture": {
+        "frames": 2,
+        "face_size": 512,
+        "frame_step": 6,
+        "width": 640,
+        "height": 360,
+        "source_ids": false
+      },
+      "virtual_camera": {
+        "azimuth_rad": 0.8,
+        "elevation_rad": 0.6,
+        "distance_m": 10.0,
+        "fov_y_rad": 1.6,
+        "clip_m": [
+          0.1,
+          100.0
+        ]
+      }
+    },
+    {
+      "id": "rig104-far-z080",
+      "scenario": {
+        "schema_version": 1,
+        "seed": 104,
+        "split": "validation",
+        "world": {
+          "building_spacing_m": 8,
+          "building_height_m": [
+            4,
+            7
+          ],
+          "near_obstacle_jitter_m": 0.4
+        },
+        "mounts": {
+          "yaw_deg": 3,
+          "pitch_deg": 3,
+          "along_body_m": 0.1
+        }
+      },
+      "target": {
+        "center_m": [
+          4.8,
+          4.6,
+          0.8
+        ],
+        "size_m": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "linear_rgb": [
+          1,
+          0,
+          1
+        ],
+        "chroma_threshold": 0.15,
+        "min_component_pixels": 8
+      },
+      "capture": {
+        "frames": 2,
+        "face_size": 512,
+        "frame_step": 6,
+        "width": 640,
+        "height": 360,
+        "source_ids": false
+      },
+      "virtual_camera": {
+        "azimuth_rad": 0.8,
+        "elevation_rad": 0.6,
+        "distance_m": 10.0,
+        "fov_y_rad": 1.6,
+        "clip_m": [
+          0.1,
+          100.0
+        ]
+      }
+    },
+    {
+      "id": "rig104-far-z140",
+      "scenario": {
+        "schema_version": 1,
+        "seed": 104,
+        "split": "validation",
+        "world": {
+          "building_spacing_m": 8,
+          "building_height_m": [
+            4,
+            7
+          ],
+          "near_obstacle_jitter_m": 0.4
+        },
+        "mounts": {
+          "yaw_deg": 3,
+          "pitch_deg": 3,
+          "along_body_m": 0.1
+        }
+      },
+      "target": {
+        "center_m": [
+          4.8,
+          4.6,
+          1.4
+        ],
+        "size_m": [
+          0.4,
+          0.4,
+          0.4
+        ],
+        "linear_rgb": [
+          1,
+          0,
+          1
+        ],
+        "chroma_threshold": 0.15,
+        "min_component_pixels": 8
+      },
+      "capture": {
+        "frames": 2,
+        "face_size": 512,
+        "frame_step": 6,
+        "width": 640,
+        "height": 360,
+        "source_ids": false
+      },
+      "virtual_camera": {
+        "azimuth_rad": 0.8,
+        "elevation_rad": 0.6,
+        "distance_m": 10.0,
+        "fov_y_rad": 1.6,
+        "clip_m": [
+          0.1,
+          100.0
+        ]
+      }
+    }
+  ]
+}
