@@ -1735,3 +1735,58 @@ $$Q=C+t(P-C),\qquad t=\frac{C_z}{C_z-P_z}.$$
 Итого160/240 условий имеют нулевой IoU: ни один исследованный profile/carrier не восстановил поднятый target в этой постановке. Это воспроизводимый отрицательный результат, согласующийся с ограничением единой поверхности при параллаксе. Он не доказывает бесполезность всех носителей или fusion: проверены фиксированные shapes/budgets и один rig. Различия near/far нельзя объявлять чистым эффектом расстояния: меняются projected size, source visibility и clipping. Центроид также не заменяет IoU —две симметричные ложные копии способны дать верный центр при нулевом пересечении, что проверяется отдельным контрольным тестом.
 
 Все30 native запусков дали2160 samples/1680 measurement captures;240 quality conditions проверены по hashes, input/config/pose equality, budgets и restore metadata. Product fingerprint совпадает с §4.52; код продукта в этом опыте не менялся. Generated inputs/reports остаются в artifacts, рецепт и generator воспроизводят мир без LFS. Источники данных, команды и ограничения: [[research/PARALLAX_HEIGHT_PROTOCOL]], [[validation/PARALLAX_HEIGHT]]. Следующие шаги —полностью помещающиеся в кадр targets, object IoU на source-visible support, другие rig baselines/mounts/views/resolutions и natural-object correspondence, затем целевая аппаратная проверка. Финальное исследовательское заключение пока не закрыто.
+
+## 4.54. Отделение ненаблюдаемой поверхности от ошибки силуэта
+
+Full-frame IoU предыдущего опыта сравнивала результат с полным direct target, хотя исходным камерам видны не все его грани. Для проверки влияния этого ограничения те же240 native outputs переоценены в E-STITCH-parallax-visibility-01. Новые frames, seeds и timing trials не добавлялись. Historical baseline сохранён; перед новым расчётом полностью воспроизведены прежние числовые результаты и hashes исходных данных. Из проверки equality исключены только digests расширенных analyzer/object_metrics.py; обе версии digests явно записаны. Это предотвращает незаметную замену старого результата новой метрикой.
+
+Пусть $P$ —coded RGB prediction, $T$ —independent direct target mask, $A$ —any-camera visibility direct surface. Обе object masks проходят прежний component filter до ограничения support. Определим $V=T\cap A$ и $U=T\setminus A$. Predictions внутри $U$ игнорируются; все predictions вне полного target остаются ложными:
+
+$$TP=|P\cap V|,\qquad FN=|V\setminus P|,\qquad FP=|P\setminus T|,$$
+
+$$IoU_{visible}=\frac{TP}{TP+FP+FN},\qquad Recall_{visible}=\frac{TP}{|V|}.$$
+
+При пустом $V$ scores неопределены независимо от количества ложных positives. Precision также неопределена при $TP+FP=0$. Повторная фильтрация после visibility restriction не выполняется: иначе маленький, но наблюдаемый фрагмент большого объекта был бы ошибочно удалён. Ограничение evaluation только положительными visible pixels тоже неверно для этой задачи: оно скрывало бы растянутые ложные изображения вне target.
+
+```plantuml
+@startuml
+collections "Historical native RGBA + full-mask baseline" as H
+collections "Independent direct ID + visibility" as D
+participant "Reproduce historical audit" as A
+participant "Conditional object metric" as M
+H -> A : reports, hashes, previous numerical results
+A -> A : reject changed measurements
+D -> M : T, A; filter T before restriction
+A -> M : RGB prediction P
+M -> M : V = T intersect A; U = T minus A
+M -> M : ignore P in U; retain false positives outside T
+M -> M : empty V => undefined scores
+@enduml
+```
+
+Рисунок4.66 — процедура conditional оценки на исторических серверных outputs. Visibility не выводится из RGB результата или формы носителя.
+
+![Direct RGB, наблюдаемая поверхность и серверный результат](figures/experiments/parallax_visibility_views.png)
+
+Рисунок4.67 — все шесть factors, первый pose, заранее выбранный dome/multi_band/zero. Зелёная часть independent target mask видима хотя бы одной source camera, оранжевая исключена из conditional scores. Чёрный фон маски означает отсутствие target, а не отсутствие исходных видеокадров.
+
+| Фактор | Visible target pixels | Conditional IoU min…max | Conditional recall min…max |
+|---|---:|---:|---:|
+| near-z020 | 20–26 | 0…0.003906 | 0…0.038462 |
+| near-z080 | 15–19 | 0 | 0 |
+| near-z140 | 2–5 | 0 | 0 |
+| far-z020 | 237–327 | 0.276151…0.668675 | 0.544304…1 |
+| far-z080 | 241–350 | 0 | 0 |
+| far-z140 | 24–28 | 0 | 0 |
+
+Таблица — диапазоны по всем carriers/profiles/двум poses каждого фактора; число условий не является числом независимых сцен.
+
+Conditional IoU ниже прежней full-mask IoU в80 условиях и совпадает в160. Формула не гарантирует такое направление изменения для других данных: одновременно меняются intersection и denominator. Near-z020 имеет лишь0–0.0039 совпадения на visible support против прежних0.037–0.088 на полной маске. Следовательно, существенная часть прежнего overlap относилась к unobserved surface, а не подтверждала восстановление наблюдаемой поверхности. Все160 raised-object условий остаются с нулевым IoU и recall при непустом visible support.
+
+![Полная и условная IoU на всех исторических условиях](figures/experiments/parallax_visibility_metrics.png)
+
+Рисунок4.68 — полная factor/carrier/profile matrix, средние двух зависимых poses, единая шкала0…1. Численные ограничения visibility не превращаются в скрытый выбор лучших cases.
+
+Отдельный border-contact flag сработал для far-z020 первого pose:20/40 условий этого фактора; второй pose края не касается. False flag не доказывает полноту геометрии объекта. По-прежнему нельзя интерпретировать near/far как чистый эффект дистанции: меняются projected size, visibility и clipping. Ray-visible point не гарантирует достаточного sampling или correspondence; новая метрика не отделяет все причины ошибки geometry/fusion и не заменяет natural-object исследование.
+
+Known-answer tests проверяют perfect-visible reconstruction, ignored predictions, ghost penalty, пустой support, сохранение tiny fragments и contact с границей. Изменение historical IoU или native RGBA hash отвергается. Воспроизведение и baseline: [[validation/PARALLAX_VISIBILITY]], определения: [[research/PARALLAX_VISIBILITY_PROTOCOL]]. Следующий capture должен иметь целиком попадающий в кадр target и дополнительные независимые rig/scene параметры; окончательное заключение и hardware проверка остаются открытыми.

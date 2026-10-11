@@ -891,3 +891,14 @@ MPLCONFIGDIR=/tmp/sv-matplotlib python3 docs/diploma/plot_server_boundary.py --r
 ```
 
 Сохранённый checked-in baseline: [[validation/PARALLAX_HEIGHT]]. Python здесь является research harness/oracle, не продуктовым API или реализацией сшивки.
+
+### Оценка только наблюдаемой поверхности объекта
+
+Для тех же native результатов используйте `--visibility-baseline` вместо новых запусков:
+
+```sh
+python3 tools/research/parallax_height.py --plan configs/research/parallax-height-plan.json --root artifacts/parallax-height-v1 --inputs artifacts/parallax-height-inputs-v1 --visibility-baseline docs/validation/baselines/parallax_height_v1.json --output artifacts/parallax-height-v1/visibility-audit.json
+MPLCONFIGDIR=/tmp/sv-matplotlib python3 docs/diploma/plot_server_boundary.py --report artifacts/parallax-height-v1/visibility-audit.json --captures-root artifacts/parallax-height-v1 --inputs-root artifacts/parallax-height-inputs-v1
+```
+
+Сначала проверяются все прежние числовые результаты и data hashes; только code digests расширенных analyzer/object_metrics.py сохраняются как новые. Historical baseline не перезаписывается. Conditional report сравнивается с `docs/validation/baselines/parallax_visibility_v1.json`; `--run-binaries` в этом режиме запрещён. Метрика и ограничения: [[validation/PARALLAX_VISIBILITY]]. Новых Blender captures не требуется; fully framed targets остаются отдельным следующим опытом.
