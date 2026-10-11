@@ -2155,3 +2155,49 @@ Actual backends — NVIDIA GeForce RTX5070Ti/PCIe/SSE2 и Mesa llvmpipe(LLVM22.1
 Пилотный baseline `carrier_positions_v1.json` сохраняет native/code/binary/XML/config hashes, оба native report hashes каждой compatibility пары, actual device и численные остатки. Повторный read-only audit совпал побитно. Source implementation зафиксирована d3751e7, plan476ec4f до native parity trials; raw generated root `artifacts/carrier-inspection-v1` и references не подменяют предыдущую480-condition study. Новый fingerprint `df708cec09fb3602e5bfdb5064d0202dd31f93e3d491b0a3cee5ad1c274df1f1` означает другую сборку: равенство40 tested conditions нельзя распространять на все прежние или будущие режимы.
 
 Получение точки носителя завершает только первый участок измерительной цепочки. Далее нужны source-camera UV/validity/contributing support, соответствующая independent scene surface, triangle identity/coverage и typed sv-server/sv-client-lib diagnostic workflow. Выборка1343 rays не является exhaustive boundary test, один controlled world не даёт universal ranking, а целевая Аврора не проверена. Исследование основной причины raised-object failure остаётся открытым. Полные условия и команды: [[validation/CARRIER_POSITIONS]], [[engineering/USAGE#Фактические координаты носителя]].
+
+## 4.60. Диагностика выборки исходных камер в серверном рендерере
+
+После получения точки носителя (§4.59) добавлен следующий участок измерительной цепочки: фактическая проекция этой точки в каждую входную камеру. Основной shader и диагностические проходы вызывают одну функцию fisheye projection. Это позволяет проверять промежуточный результат реализации; независимый CPU расчёт используется только в тесте. При допустимой проекции сохраняются координаты центра исходного пикселя $(u_i,v_i)$; текстурная выборка использует $((u_i+0.5)/W_i,(v_i+0.5)/H_i)$.
+
+```plantuml
+@startuml
+participant "C++ render caller" as Caller
+participant Renderer
+participant "Surface shader" as Shader
+participant "GLES readback" as Readback
+Caller -> Renderer : FrameSet + view + source_projections request
+Renderer -> Shader : обычный render / hybrid samples
+Shader -> Shader : source_projection(camera, world)
+Shader --> Renderer : обычный результат
+loop четыре камеры × U, V, status
+  Renderer -> Shader : отдельный depth-tested inspection pass
+  Shader -> Shader : та же source_projection(camera, world)
+  Shader -> Readback : RGBA8 packed float / status
+  Readback --> Renderer : матрицы с top-left origin
+end
+Renderer --> Caller : RGBA + четыре SourceProjectionInspection
+note over Caller, Renderer
+Внутренний render-thread API.
+Сетевой delivery ещё не реализован.
+end note
+@enduml
+```
+
+Рисунок 4.84 — Реализованный порядок захвата координат исходных камер. Диагностические проходы выполняются после получения обычного результата и требуют отдельного учёта затрат.
+
+| Причина | Интерпретация для локализации ошибки |
+|---|---|
+| Нет носителя / ego occlusion | Исходную камеру для данного output pixel анализировать нельзя |
+| Нет кадра | Проблема доступности входа, а не fisheye calibration |
+| Точка за камерой | Не выполнено ограничение camera Z |
+| Выход за угол обзора | Нарушена область применимости fisheye projection |
+| Выход за изображение | Оптическая проекция не попала в доступный raster |
+| Footprint кузова | Участок исключён из текстурирования явно |
+| Допустимая проекция | Можно исследовать выбранную точку источника и её дальнейший вклад |
+
+Таблица 4.60 — Категории diagnostic status. Последняя категория не доказывает соответствие реальной поверхности: камера может видеть другой объект на том же луче. Также она не гарантирует ненулевой вес смешивания.
+
+На синтетическом плоском fixture проверены все категории; координаты допустимых выборок сопоставлены с независимым double CPU projection при ненулевых коэффициентах distortion. Принят инженерный допуск 0.01 source pixel для этого fixture. Совместно с прежними geometry tests получено 7/7 успешных GTest cases на Mesa и NVIDIA. Для пяти carriers и 18 комбинаций hybrid fusion/diagnostic/boundary проверено совпадение validity с sample masks вне background/ego; composition и plane wire parity сохранены. Подробные команды и границы применимости: [[validation/CARRIER_POSITIONS#Расширение: координаты исходных камер]].
+
+Расширение требует 12 дополнительных readback passes и 36 bytes/output pixel сохраняемых source matrices. Оно пока предназначено для явного локального capture. Ни накладные расходы, ни качество сшивки этой проверкой не измерены. Следующий участок — contributing support, независимая source-scene surface и передача ограниченного diagnostic capture через сервер и клиентскую библиотеку. Причина raised-object failure пока не установлена.

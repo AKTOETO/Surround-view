@@ -53,3 +53,21 @@ Actual devices: NVIDIA GeForce RTX5070Ti/PCIe/SSE2 и Mesa llvmpipe (LLVM22.1.8,
 Повторный read-only audit совпал с первым побитно. `plot_carrier_positions.py` только проверяет готовые native outputs и рисует графики; rendering/intersection oracle выполняются C++. Raw generated artifacts не добавляются в Git/LFS; tracked baseline и подписанные рисунки — воспроизводимые свидетельства. Команды: [[engineering/USAGE#Фактические координаты носителя]], диплом §4.59/рисунки4.81–4.83.
 
 Открыты correspondence с source/scene surfaces, contributing weights/UV и triangle identity/coverage, экспорт через sv-server/sv-client-lib, отдельный учёт diagnostic overhead, exhaustive boundary/near/far cases, независимые scenes/mounts и Аврора. Пилот не объясняет пока причину нулевого raised-object IoU и не ранжирует носители/алгоритмы.
+
+## Расширение: координаты исходных камер
+
+Следующий программный шаг добавляет native opt-in `source_projections`; формат и коды: [[engineering/RENDERING#Opt-in source projections]]. Это инженерная проверка диагностического API, не новая серия качества и не продолжение исторического baseline `carrier_positions_v1.json` с прежними hashes.
+
+`tests/render_source_inspection_tests.cpp` создаёт четыре камеры над плоскостью. Первая имеет ненулевую fisheye distortion; остальные задают отрицательную глубину, узкую угловую область и заведомый выход за изображение. Координаты каждого допустимого output pixel проверяются независимой double CPU функцией `sv::project` с допуском 0.01 source pixel. Допуск является fixture-specific assertion, а не измеренным максимумом для всех камер. Проверяются все семь статусов, NaN, запрос без destination, отсутствие кадров после предыдущего валидного набора, очистка capture и равенство обычного RGBA до/после inspection.
+
+Результат 11.10.2026: GTest **7/7** на Mesa llvmpipe и NVIDIA RTX 5070 Ti, включая прежние пять carrier fixtures и triangle oracle. `render_fusion_parity` проверяет четыре камеры в 18 комбинациях fusion/diagnostic/boundary на каждом из пяти carriers: source validity совпадает с реальными hybrid samples вне background/ego. Проверка full composition, сохранности RGBA/resources и plane wire parity проходит. Обе целевые CTest-группы прошли (2/2).
+
+```sh
+cmake --build build --target sv-carrier-inspection-tests sv-render-fusion-probe sv-server -j4
+__EGL_VENDOR_LIBRARY_FILENAMES=/usr/share/glvnd/egl_vendor.d/50_mesa.json ctest --test-dir build -R '^(carrier_inspection|render_fusion_parity)$' --output-on-failure
+__EGL_VENDOR_LIBRARY_FILENAMES=/usr/share/glvnd/egl_vendor.d/10_nvidia.json EGL_PLATFORM=surfaceless build/sv-carrier-inspection-tests
+```
+
+Требуются доступ к GPU для NVIDIA и разрешённый Unix socket для integration. Первые запуски в sandbox остановились соответственно на EGL initialization и socket bind; после запуска с необходимым доступом проверки прошли.
+
+Native fusion probe дополнительно экспортирует `cameraN-source-pixels.f32` (H×W×2, float32 в native byte order тестовой машины) и `cameraN-source-status.u8` (H×W). Эти тестовые файлы не являются переносимым wire-контрактом. Передача через server/client-lib, triangle ID, scene-surface truth, contributing support, измерение overhead и boundary-focused optical tests остаются открытыми. Исторические 40-condition archived RGBA comparisons заново не запускались; текущая проверка равенства относится к включению/выключению capture в новой сборке.

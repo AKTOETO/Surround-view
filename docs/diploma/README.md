@@ -154,3 +154,5 @@ MPLCONFIGDIR=/tmp/sv-matplotlib python3 docs/diploma/plot_carrier_positions.py -
 ```
 
 Нужны generated position exports; source script хранится рядом с главой. Full read-only audit и команды native probe/GTest: [[engineering/USAGE#Фактические координаты носителя]], [[validation/CARRIER_POSITIONS]]. Source/scene correspondence и wire channel остаются следующим этапом.
+
+§4.60 описывает native source projection/validity capture, проверку на двух GLES backends и ограничения дальнейшего correspondence analysis; диаграмма4.84 встроена как PlantUML.

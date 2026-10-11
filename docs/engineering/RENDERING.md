@@ -165,4 +165,22 @@ python3 tools/compare_visibility.py \
 
 Четвёртый аргумент `Renderer::render` — `RenderInspectionRequest`; при `carrier_positions=true` capture также сохраняет CV_32FC3 координаты perspective-interpolated actual mesh в vehicle metres/top-left raster. Background/ego получают NaN, footprint сохраняет geometric position. Запрос требует непустого inspection destination. Координаты получены тремя дополнительными depth-tested RGBA8 passes через float-bit packing; float-color framebuffer extension для этого пути не нужен. Integer precision highp, dithering выключен. Без явного запроса positions пусты.
 
-Inspection сохраняет прежнюю geometry policy с ego model также для weights/coverage diagnostic views; не следует автоматически приравнивать этот слой к final diagnostic RGB/depth. Обычный RGBA завершается до diagnostic passes, regular stage timers не являются полной оценкой их overhead. Матрицы владеют памятью, вызовы остаются render-thread-only. Первый native accuracy/parity pilot: [[validation/CARRIER_POSITIONS]], команды/export layout: [[engineering/USAGE#Фактические координаты носителя]]. Source UV/contributing support, scene correspondence и typed wire workflow — следующие расширения.
+Inspection сохраняет прежнюю geometry policy с ego model также для weights/coverage diagnostic views; не следует автоматически приравнивать этот слой к final diagnostic RGB/depth. Обычный RGBA завершается до diagnostic passes, regular stage timers не являются полной оценкой их overhead. Матрицы владеют памятью, вызовы остаются render-thread-only. Первый native accuracy/parity pilot: [[validation/CARRIER_POSITIONS]], команды/export layout: [[engineering/USAGE#Фактические координаты носителя]]. Source projection добавлена следующим расширением ниже; contributing support, scene correspondence и typed wire workflow остаются открытыми.
+
+### Opt-in source projections
+
+`RenderInspectionRequest::source_projections=true` сохраняет четыре `SourceProjectionInspection`: `pixels` (CV_32FC2, координаты центров пикселей исходной камеры) и `status` (CV_8UC1). Начало всех output matrices — top-left. Для texture lookup координаты преобразуются как `(pixels + 0.5) / source_size`. При недопустимой выборке обе координаты NaN. При выключенном запросе обе матрицы пусты, включая повторное использование inspection destination.
+
+| Status | Значение |
+|---|---|
+| 0 `no_carrier` | Фон или перекрытие моделью автомобиля; различаются по carrier_regions |
+| 1 `valid` | Кадр присутствует, проекция проходит геометрические ограничения |
+| 2 `unavailable` | Нет входного кадра камеры |
+| 3 `behind_camera` | Camera Z ≤ z_epsilon |
+| 4 `outside_angle` | theta > theta_max |
+| 5 `outside_image` | Центр выборки вне [0,width−1] × [0,height−1] |
+| 6 `vehicle_footprint` | Участок пола, исключённый под кузовом |
+
+Приоритет: background/ego depth, footprint, отсутствие кадра, Z, угол, границы. Проекция использует общую с основным shader функцию, а не повторный CPU расчёт. Значения получаются 12 дополнительными RGBA8 passes/readbacks (U, V, status для каждой камеры); сохраняемый payload — 36 bytes/output pixel, без transient readback/region buffers. Carrier XYZ запрашивается независимо. Внутренняя geometry policy всегда включает ego, даже если final weights/coverage view его не рисует. Поэтому допустимость hybrid sample сравнивается только вне background/ego.
+
+`valid` не означает отсутствие перекрытия объектом сцены и не означает ненулевой вклад после seam/weight/pyramid policy. Это ещё не source-scene correspondence. API render-thread-only; сетевого продукта и клиентского метода пока нет. Стоимость captures не включена в завершённые до них regular stage timings; end-to-end render call становится дороже. Проверки и ограничения: [[validation/CARRIER_POSITIONS#Расширение: координаты исходных камер]].

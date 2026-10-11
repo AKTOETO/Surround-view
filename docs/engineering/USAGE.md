@@ -1018,3 +1018,7 @@ cmp docs/validation/baselines/carrier_positions_v1.json artifacts/carrier-inspec
 ```
 
 Для него нужны frozen reference reports/RGBA/configs `parallax-sensor-*`, архивы executables/XML/test-provenance, неизменённые code/plan hashes. При новом capture/build/backend создавайте новую версию опыта; не подменяйте historical baseline. Условия и пределы пилота: [[validation/CARRIER_POSITIONS]]; ближайший дальнейший этап: [[planning/ROADMAP#Ближайший исследовательский этап: source correspondence и triangle-hit]].
+
+### Проверка координат исходных камер
+
+Для разработчика: `RenderInspectionRequest::source_projections=true` включает локальный capture четырёх source pixel/status matrices. Проверка: `ctest --test-dir build -R '^(carrier_inspection|render_fusion_parity)$' --output-on-failure` после сборки `sv-carrier-inspection-tests`, `sv-render-fusion-probe`, `sv-server`. Нужны GLES и доступ к Unix socket. Форматы, коды отказа и команды выбора Mesa/NVIDIA: [[engineering/RENDERING#Opt-in source projections]], [[validation/CARRIER_POSITIONS#Расширение: координаты исходных камер]]. Пока это внутренний C++ API и тестовый export; CLI команды удалённого capture нет.
