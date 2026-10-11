@@ -160,3 +160,9 @@ python3 tools/compare_visibility.py \
 ## Учёт бюджета носителя
 
 `Renderer::mesh_resources()` и frame `mesh_resources` содержат `scope=carrier_position_index_buffers`, объекты `active`/`resident` с vertices, indices, triangles, vertex_buffer_bytes, index_buffer_bytes, buffer_bytes. Active учитывает текущую surface; resident также учитывает неактивные carrier meshes, остающиеся после переключений. Это payload размеров `glBufferData` для float3 positions/unsigned indices, а не full GPU memory или RSS; textures/FBO/depth/ego/CPU capacity/driver overhead исключены. Для чистых resource comparisons запускайте новый server process на carrier. Known-answer counts/retained buffers и live Unix/TCP metadata проверены; первая budget series: [[validation/CARRIER_BUDGET]].
+
+### Opt-in carrier positions
+
+Четвёртый аргумент `Renderer::render` — `RenderInspectionRequest`; при `carrier_positions=true` capture также сохраняет CV_32FC3 координаты perspective-interpolated actual mesh в vehicle metres/top-left raster. Background/ego получают NaN, footprint сохраняет geometric position. Запрос требует непустого inspection destination. Координаты получены тремя дополнительными depth-tested RGBA8 passes через float-bit packing; float-color framebuffer extension для этого пути не нужен. Integer precision highp, dithering выключен. Без явного запроса positions пусты.
+
+Inspection сохраняет прежнюю geometry policy с ego model также для weights/coverage diagnostic views; не следует автоматически приравнивать этот слой к final diagnostic RGB/depth. Обычный RGBA завершается до diagnostic passes, regular stage timers не являются полной оценкой их overhead. Матрицы владеют памятью, вызовы остаются render-thread-only. Первый native accuracy/parity pilot: [[validation/CARRIER_POSITIONS]], команды/export layout: [[engineering/USAGE#Фактические координаты носителя]]. Source UV/contributing support, scene correspondence и typed wire workflow — следующие расширения.

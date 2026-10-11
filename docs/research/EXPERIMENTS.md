@@ -136,3 +136,7 @@ GPU execution time измерять асинхронными timer queries, CPU 
 ## E-STITCH-parallax-sensor-01 — 11.10.2026
 
 Парный fisheye400→800 контроль завершён:480 пар при cubemap512/output640×360, прежних angular support, independent direct RGB/ID/visibility, source cubes и binaries/device.320 raised full/conditional IoU остались0; ground full IoU30 улучшений/130 ухудшений. Frozen protocol: [[research/PARALLAX_SENSOR_PROTOCOL]], проверенные результаты/ограничения: [[validation/PARALLAX_SENSOR]]. Это один synthetic world family с двумя mounts/зависимыми poses, не подтверждение сходимости или universal ranking. Далее native correspondence/triangle-hit, optical-height/baseline и independent natural scenes.
+
+## E-CARRIER-positions-pilot-01 — 11.10.2026
+
+Первый native measurement layer actual-carrier correspondence: opt-in positions из depth-tested mesh,1343 selected rays/backend против независимого C++ triangle-intersection oracle. NVIDIA/Mesa GTest6/6; допуск5mm/0.002px fixture-specific после явно сохранённого pilot1mm failure.360 recorded hashes/280 actual RGBA на40 native conditions прежние. Baseline/ограничения: [[validation/CARRIER_POSITIONS]], план `configs/research/carrier-positions-plan.json`. Это инженерная валидация инструмента, не quality ranking или завершённая source-surface correspondence study.

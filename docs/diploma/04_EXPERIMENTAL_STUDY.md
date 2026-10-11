@@ -2072,3 +2072,86 @@ Linear RGB MAE выросла425 раз и снизилась55, $\Delta$=−0.0
 В рамках этого опыта удвоение только входного fisheye raster недостаточно для устранения поднятого объекта. Совместно с §4.56–4.57 это ослабляет объяснение проблемы одним низким разрешением, но не доказывает сходимость, исключительное влияние геометрии или универсальное превосходство носителя. Исследование ограничено одним flat world family, двумя mounts, двумя зависимыми poses и кодированной мишенью. Следующий этап — native source-surface correspondence и triangle-hit: установить действительную точку носителя и соответствующую выборку каждой камеры, отделить геометрическое несоответствие от source visibility/filtering; затем расширить optical-height/baseline и независимые natural scenes.
 
 Read-only paired audit повторно совпал побитно с baseline `parallax_sensor_v1.json`. CTest object_metrics/blender_fixture/render_fusion_parity/render_modes:4/4,5.97s; object_metrics содержит39 known-answer tests, включая intrinsics/angular support, plan confounders и отклонение повреждённых cube pixels/metadata/checksums. Активная пользовательская Scene восстановлена и проверена через MCP. Все пары, raw/native hashes и ограничения: [[validation/PARALLAX_SENSOR]]. Команды воспроизведения: [[engineering/USAGE#Чувствительность к разрешению fisheye]].
+
+## 4.59. Native диагностика точки фактического носителя
+
+Три последовательных sampling controls (§4.56–4.58) сохранили нулевой overlap поднятых объектов. Для следующего исследования недостаточно сравнить финальные RGB или пересечь луч с идеальной сферой: сервер использует треугольную аппроксимацию, а видимая точка зависит от depth test и ego geometry. Поэтому реализован первый измерительный слой — получение координаты фактически растеризованного carrier mesh. Это инструмент локализации причины, а не новый алгоритм сшивки и не устранение ранее обнаруженного raised-object failure.
+
+Render-thread API принимает явный `RenderInspectionRequest::carrier_positions`. Обычный кадр завершается первым; далее выполняются region pass и три дополнительных прохода координат. Используются те же vertex/index buffers и MVP. На поверхности GLSL varying `world` содержит координату в системе автомобиля. Для screen-space barycentric weights $\lambda_i$ и clip coordinates $w_i$ perspective-correct interpolation записывается как
+
+$$
+\mathbf p(x,y)=
+\frac{\sum_{i=0}^{2}\lambda_i(x,y)\,\mathbf p_i/w_i}
+     {\sum_{i=0}^{2}\lambda_i(x,y)/w_i}.
+$$
+
+Это точка треугольной сетки с фактической конечной точностью GPU interpolation/rasterization. Она не обязана лежать на аналитической сфере даже при dome carrier. Подмена её ideal-surface intersection внесла бы ошибку в последующий correspondence audit ещё до сравнения с камерами.
+
+```plantuml
+@startuml
+participant "Native caller /\nsv-carrier-probe" as caller
+participant "Renderer\nrender thread" as renderer
+participant "GLES carrier + ego\nexisting buffers/MVP" as gpu
+participant "RenderInspection\nowned OpenCV matrices" as data
+caller -> renderer : FrameSet, View, positions request
+renderer -> gpu : regular pipeline / RGBA capture
+renderer -> renderer : finish regular stage measurements
+renderer -> gpu : depth-tested region pass
+ gpu --> renderer : region IDs, top-left
+loop X, Y, Z (explicit request only)
+ renderer -> gpu : clear depth, draw same geometry\npack float bits into RGBA8
+ gpu --> renderer : packed coordinate bytes
+ renderer -> data : decode float; NaN for background/ego
+end
+renderer --> caller : ordinary Image + inspection data
+caller -> caller : write f32 + region mask + hashes/report
+note over caller,data
+Local native API/export implemented.
+Typed sv-client-lib diagnostic channel is a next step.
+end note
+@enduml
+```
+
+Рисунок4.81 — фактическая последовательность получения координат. Обычный кадр возвращается без изменений. Координатные passes включаются только явным запросом; их overhead не следует смешивать с уже завершёнными regular stage timers. В probe `FrameSet` пуст, поэтому показан геометрический слой без изображений камер. Native fusion integration tests отдельно запрашивают positions при входных PNG frames синтетического fixture.
+
+Каждая float32 координата кодируется по битам в четыре byte-компонента RGBA8. Для битового представления $B$ байт $b_j=(B\gg8j)\ \&\ 255$, $j=0,1,2,3$. CPU восстанавливает $B$ и интерпретирует его как float. Это не квантование координат до256 уровней: RGBA8 служит переносчиком исходных float bits. Dithering выключен; uint arithmetic highp. Такой export использует обычный RGBA8 framebuffer, не вводя требование дополнительного float-color attachment. Восстановление little-endian файла явно задаётся порядком байтов и не зависит от host byte order.
+
+Контракт результата: H×W×3 float32, X/Y/Z в метрах системы автомобиля, top-left origin. Background и ego model получают NaN по region mask; нулевая координата является допустимой точкой и не заменяет invalid marker. Footprint region3 сохраняет координату carrier mesh, но не означает наблюдаемую camera texture. Отдельный inspection geometry layer включает ego model также при weight/coverage diagnostic views; его depth policy не следует автоматически отождествлять с окончательным diagnostic RGB. Пилот геометрической точности использует color view.
+
+![Карты фактических координат пяти носителей](figures/experiments/carrier_positions_fields.png)
+
+Рисунок4.82 — native export пяти medium носителей при640×360 и прежнем view rig101-near-z080. Слева depth-tested region IDs с легендой; в центре высота фактической точки; справа расстояние от начала координат автомобиля в XY. В координатных панелях белый цвет означает NaN. Source frames не используются: изображение не является визуализацией мира или оценки качества сшивки. На замкнутых носителях2376 invalid pixels принадлежат ego model, а не дыре в shell; вывод относится к одному ракурсу.
+
+| Носитель | Finite carrier pixels | Invalid background/ego pixels |
+|---|---:|---:|
+| Plane |138362 |92038 |
+| Bowl |146275 |84125 |
+| Dome-floor |228024 |2376 |
+| Cylinder-floor |228024 |2376 |
+| Cube-floor |228024 |2376 |
+
+Координатный payload одного640×360 кадра равен $640\cdot360\cdot3\cdot4=2764800$bytes. Это дополнение к region mask и transient readbacks; перенос через клиентский канал потребует отдельного bounded capture и учёта overhead. Геометрическое заполнение кадра само по себе не гарантирует наличие валидной текстуры или правильное положение объекта сцены.
+
+Независимая проверка выполнена в C++ с GTest. Double-precision Möller–Trumbore oracle выбирает ближайшее пересечение луча с фактическими треугольниками; алгоритм не использует данные GPU inspection. Генератор сетки общий с renderer, поэтому независимость относится к intersection/interpolation validation, а не к построению mesh. Один known-answer test проверяет shared edge, nearest-depth, parallel, behind и no-hit. Пять carrier fixtures проверяют всего1343 выбранных rays на каждом backend; дополнительно обратная проекция проверяется для каждого finite carrier pixel в160×100 raster. Проверены signed coordinates, invalid NaN, очистка устаревших matrices после region-only запроса и обновление поверхности. Для coarse dome отдельно подтверждено расхождение с идеальной сферой: использовать её вместо треугольного oracle было бы неверно.
+
+| Носитель | Rays/backend | NVIDIA max axis error, mm | Mesa max axis error, mm | NVIDIA max reprojection, px | Mesa max reprojection, px |
+|---|---:|---:|---:|---:|---:|
+| Plane |189 |2.268140 |0.006261 |0.00190219 |0.00004888 |
+| Bowl |200 |1.315981 |0.006536 |0.00192299 |0.00004827 |
+| Dome-floor |318 |1.738945 |0.011885 |0.00193208 |0.00014332 |
+| Cylinder-floor |318 |1.738945 |0.004749 |0.00193208 |0.00004139 |
+| Cube-floor |318 |2.268140 |0.006261 |0.00190219 |0.00004888 |
+
+Actual backends — NVIDIA GeForce RTX5070Ti/PCIe/SSE2 и Mesa llvmpipe(LLVM22.1.8,256bits). GL_SUBPIXEL_BITS=8 у обоих; эта capability сама по себе не объясняет различие численных остатков. Конкретный вклад raster/interpolation implementation не изолирован. Меньшая ошибка Mesa относительно идеального CPU ray не является доказательством её превосходства в surround-quality или FPS.
+
+![Погрешность native carrier positions относительно независимого oracle](figures/experiments/carrier_positions_errors.png)
+
+Рисунок4.83 — максимальные axis errors по выбранным rays и reprojection errors по всем finite pixels. Шкалы логарифмические; fixtures160×100/coarse mesh и views фиксированы. Максимумы не являются доверительными интервалами или гарантиями для других разрешений/дистанций. Accuracy medium640×360 export этой таблицей не измерена.
+
+Первый pilot threshold1mm не прошёл на NVIDIA: максимальное расхождение2.268140mm. После этого инженерные fixture bounds заданы как5mm по оси и0.002px для обратной проекции; оба backend проходят6/6 GTest cases. Изменение допуска сохранено в plan и не выдано за заранее зарегистрированный quality criterion. Finite raster precision является существенным фактором будущего correspondence audit: нельзя заранее требовать побитного совпадения координат GPU с идеальным double CPU ray.
+
+Отдельно проведён compatibility screen обычного сервера на прежних800px inputs и640×360 output. Пять fresh native servers дали360 recorded samples, включая280 stored measurement RGBA для40 условий —пять carriers, четыре fusion/boundary profiles, две poses одного case. Все360 recorded RGBA hashes и280 actual files совпали с reference. Config/scenario/device/catalog прежние, кроме ожидаемых source revision/fingerprint новой сборки. Дополнительно native fusion probe запрашивает positions во всех18mode/diagnostic/boundary cases на каждом carrier и проверяет сохранность composition/resources и plane wire parity; расширенная integration группа прошла за1.77s.
+
+Пилотный baseline `carrier_positions_v1.json` сохраняет native/code/binary/XML/config hashes, оба native report hashes каждой compatibility пары, actual device и численные остатки. Повторный read-only audit совпал побитно. Source implementation зафиксирована d3751e7, plan476ec4f до native parity trials; raw generated root `artifacts/carrier-inspection-v1` и references не подменяют предыдущую480-condition study. Новый fingerprint `df708cec09fb3602e5bfdb5064d0202dd31f93e3d491b0a3cee5ad1c274df1f1` означает другую сборку: равенство40 tested conditions нельзя распространять на все прежние или будущие режимы.
+
+Получение точки носителя завершает только первый участок измерительной цепочки. Далее нужны source-camera UV/validity/contributing support, соответствующая independent scene surface, triangle identity/coverage и typed sv-server/sv-client-lib diagnostic workflow. Выборка1343 rays не является exhaustive boundary test, один controlled world не даёт universal ranking, а целевая Аврора не проверена. Исследование основной причины raised-object failure остаётся открытым. Полные условия и команды: [[validation/CARRIER_POSITIONS]], [[engineering/USAGE#Фактические координаты носителя]].

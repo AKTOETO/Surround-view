@@ -969,3 +969,52 @@ MPLCONFIGDIR=/tmp/sv-matplotlib python3 docs/diploma/plot_server_boundary.py --r
 Первая команда требует нового native root; для повторного аудита уже завершённой серии исключите `--run-binaries`. При повторном capture/trial используйте новые каталоги и новый runtime plan с соответствующим reference. Не запускайте Blender/build/tests/plots одновременно с измерениями.
 
 Сервер выполняет весь rendering/fusion. Python здесь проверяет эксперимент и строит независимые метрики/иллюстрации. Audit требует одинаковые binaries/device, decoded cube RGB/static metadata, independent direct RGB/ID/visibility и позы. Меняются только camera resolution400→800 и pixel-center intrinsics. Выход640×360 и angular bound прежние; `null` сохраняется. Параметры source-edge остаются в pixels: это full-pipeline sensitivity, а не чистая ablation фильтра. [[research/PARALLAX_SENSOR_PROTOCOL]].
+
+## Фактические координаты носителя
+
+Сборка диагностического native probe и GTest:
+
+```bash
+cmake -S . -B build -DSV_GPU=ON -DBUILD_TESTING=ON -DSV_GTEST_TESTS=ON
+cmake --build build -j4
+ctest --test-dir build -R 'carrier_inspection|render_modes|render_fusion_parity' --output-on-failure
+EGL_PLATFORM=surfaceless build/sv-carrier-probe configs/synthetic.json artifacts/carrier-positions-demo --positions
+```
+
+Используйте новый каталог для каждого сохранённого опыта. Probe читает конфигурацию и рендерит геометрию без input frames. Файл `carrier-positions.f32` имеет shape(H,W,3), little-endian float32, порядок X/Y/Z, метры в системе автомобиля, top-left raster. `report.json` содержит SHA256, dimensions, payload size и scope. Background/ego обозначены NaN, а не нулевой точкой автомобиля; сверяйте также `carrier-regions.u8`. Footprint region3 имеет позицию carrier mesh и не означает наличие camera texture. Без `--positions` сохраняется обычный region-only export.
+
+Для явного выбора двух backends на Linux:
+
+```bash
+__EGL_VENDOR_LIBRARY_FILENAMES=/usr/share/glvnd/egl_vendor.d/10_nvidia.json EGL_PLATFORM=surfaceless build/sv-carrier-inspection-tests --gtest_output=xml:artifacts/carrier-tests/nvidia.xml
+__EGL_VENDOR_LIBRARY_FILENAMES=/usr/share/glvnd/egl_vendor.d/50_mesa.json LIBGL_ALWAYS_SOFTWARE=1 EGL_PLATFORM=surfaceless build/sv-carrier-inspection-tests --gtest_output=xml:artifacts/carrier-tests/mesa.xml
+```
+
+Пути vendor JSON зависят от установленного GLVND. NVIDIA требует доступа к GPU; integration parity требует bind Unix IPC. Ошибки EGL initialization/bind в ограниченной песочнице требуют запуска с соответствующим доступом. Читайте фактический device из результатов: одна `LIBGL_ALWAYS_SOFTWARE` не фиксирует vendor.
+
+Render-thread API для native потребителя:
+
+```cpp
+sv::RenderInspection inspection;
+sv::RenderInspectionRequest request;
+request.carrier_positions = true;
+auto frame = renderer.render(frames, view, &inspection, request);
+// inspection.carrier_positions: CV_32FC3; three extra diagnostic passes are opt-in.
+```
+
+Данные владеют памятью через OpenCV. Диагностика выполняется после обычного frame capture и его stage timers; три дополнительных passes/readbacks имеют overhead, который пока не опубликован отдельно и должен учитываться при будущем wire workflow. На этом этапе API доступен внутри renderer и через локальный probe; клиентская команда/канал будут следующим расширением sv-server/sv-client-lib.
+
+Восстановление рисунков §4.59 при сохранённых native exports:
+
+```bash
+MPLCONFIGDIR=/tmp/sv-matplotlib python3 docs/diploma/plot_carrier_positions.py --report docs/validation/baselines/carrier_positions_v1.json --root artifacts/carrier-inspection-v1
+```
+
+Полный read-only повтор аудита сохранённого опыта:
+
+```bash
+MPLCONFIGDIR=/tmp/sv-matplotlib python3 docs/diploma/plot_carrier_positions.py --root artifacts/carrier-inspection-v1 --output-report artifacts/carrier-inspection-v1/reaudit.json
+cmp docs/validation/baselines/carrier_positions_v1.json artifacts/carrier-inspection-v1/reaudit.json
+```
+
+Для него нужны frozen reference reports/RGBA/configs `parallax-sensor-*`, архивы executables/XML/test-provenance, неизменённые code/plan hashes. При новом capture/build/backend создавайте новую версию опыта; не подменяйте historical baseline. Условия и пределы пилота: [[validation/CARRIER_POSITIONS]]; ближайший дальнейший этап: [[planning/ROADMAP#Ближайший исследовательский этап: source correspondence и triangle-hit]].

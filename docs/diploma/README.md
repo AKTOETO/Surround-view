@@ -146,3 +146,11 @@ MPLCONFIGDIR=/tmp/sv-matplotlib python3 docs/diploma/plot_server_boundary.py --r
 ```
 
 Нужны raw обеих серий. Все480 pairs/960 cube faces и unchanged independent truth проверены; повторный paired audit побитно совпал. План/результаты: [[research/PARALLAX_SENSOR_PROTOCOL]], [[validation/PARALLAX_SENSOR]]. Native source correspondence/triangle-hit пока остаётся следующим этапом.
+
+§4.59 — native actual-carrier positions и независимый triangle-intersection pilot. Рисунки4.82–4.83:
+
+```bash
+MPLCONFIGDIR=/tmp/sv-matplotlib python3 docs/diploma/plot_carrier_positions.py --report docs/validation/baselines/carrier_positions_v1.json --root artifacts/carrier-inspection-v1
+```
+
+Нужны generated position exports; source script хранится рядом с главой. Full read-only audit и команды native probe/GTest: [[engineering/USAGE#Фактические координаты носителя]], [[validation/CARRIER_POSITIONS]]. Source/scene correspondence и wire channel остаются следующим этапом.
