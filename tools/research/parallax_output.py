@@ -2,6 +2,7 @@
 import copy
 import hashlib
 import json
+import re
 from pathlib import Path
 
 import numpy as np
@@ -30,6 +31,22 @@ def validate_output_design(low_plan, high_plan, low_asset, high_asset):
                 raise ValueError('only output dimensions may change, with fixed cubemap512')
     if plans[0] != plans[1] or assets[0] != assets[1]:
         raise ValueError('output experiment changed a non-output factor')
+
+
+def canonical_truth(truth):
+    """Ignore only Blender's numeric name suffix; preserve numeric ID/type relations."""
+    keys = ('objects','diagnostic_target','source_visibility','ego_object_ids','script_sha256',
+            'visibility_script_sha256','geometry_script_sha256','diagnostic_motion_script_sha256','frames')
+    value = {k:copy.deepcopy(truth[k]) for k in keys}
+    objects = value['objects']
+    if len(set(objects.values())) != len(objects):
+        raise ValueError('duplicate truth object IDs')
+    value['objects'] = {str(i):re.sub(r'\.\d+$','',name) for name,i in objects.items()}
+    target = value['diagnostic_target']
+    target['object_id'] = objects[target.pop('object_name')]
+    visibility = value['source_visibility']
+    visibility['ignored_render_helper_ids'] = sorted(objects[n] for n in visibility.pop('ignored_render_helpers'))
+    return value
 
 
 def normalized_config(config, dimensions):
@@ -109,11 +126,10 @@ def output_followup(current, high_root, high_inputs):
                 masks.append((expected,bits!=0))
                 counts.append({'truth_index':index,'target_pixels':int(expected.sum()),
                                'visible_target_pixels':int((expected & (bits!=0)).sum())})
-            stable_truth = {k:truth[k] for k in ('objects','diagnostic_target','source_visibility','ego_object_ids',
-                            'script_sha256','visibility_script_sha256','geometry_script_sha256',
-                            'diagnostic_motion_script_sha256','frames')}
+            stable_truth = canonical_truth(truth)
             stable_truth['config'] = normalized_config(truth['config'],dimensions)
             truth_controls.append({'stable':stable_truth,'counts':counts,'files_sha256':truth['sha256'],
+                                   'object_table':truth['objects'],
                                    'decoded_direct_rgb_sha256':hashlib.sha256(np.asarray(direct).tobytes()).hexdigest()})
             binaries.append([json.loads((root/cid/f'native/seed{seed}'/c['id']/'invocation.json').read_text())['binary_sha256']
                              for c in low['plan']['carriers']])
@@ -176,7 +192,8 @@ def output_followup(current, high_root, high_inputs):
             'native_report_sha256':{level:{c['id']:c['audit']['cases'][0]['audit']['native_report_sha256']
                                           for c in summary['cases']} for level,summary in (('low',low),('high',current))},
             'controls':controls,'results':results,
-            'protocol_deviations':['raw PNG hashes differ in Blender Date/Camera/Scene/RenderTime metadata; decoded cube pixels and remaining PNG metadata must match'],
+            'protocol_deviations':['Blender object numeric suffixes differ; numeric ID-to-base-name, target/helper/ego IDs and all other truth setup must match',
+                                   'raw PNG hashes differ in Blender Date/Camera/Scene/RenderTime metadata; decoded cube pixels and remaining PNG metadata must match'],
             'limitations':['fixed source pixels; output-resolution sensitivity of full pipeline, not isolated rasterizer',
                            'fixed pixel-unit algorithm parameters and RGB ROI bands change physical support',
                            '8px high primary and32px area-scaled secondary; retain undefined transitions',

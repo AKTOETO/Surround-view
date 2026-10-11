@@ -14,7 +14,7 @@ from object_metrics import measure_target, measure_target_support, projected_obj
 from object_stitch import interleaved_orders, load_objects
 from diagnostic_motion import frame_positions, position_for_capture, validate_captured_positions
 from parallax_height import ray_ground, object_position, validate_factors, verify_historical_results, box_frame_bounds, verify_rig_pair, verify_sampling_design, pair_sampling_rows
-from parallax_output import validate_output_design, normalized_config, normalized_metrics, deltas
+from parallax_output import validate_output_design, normalized_config, normalized_metrics, deltas, canonical_truth
 from server_boundary import (quality as server_quality, timestamp as server_timestamp, audit_study,
     check_mesh_budget, validate_refinement_plan, refinement_difference, audit_refinement, audit_spatial)
 
@@ -39,6 +39,33 @@ class ObjectMetricTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,'actual output'): normalized_config(cfg,(320,180))
         cfg['cameras'][0]['resolution']['width'] += 1
         with self.assertRaisesRegex(ValueError,'fisheye'): normalized_config(cfg,(640,360))
+
+    def test_truth_identity_normalization_preserves_ids_and_semantics(self):
+        a = json.loads((ROOT/'tests/data/object_stitch_v1/paired_truth.json').read_text())
+        # Legacy fixture predates this mandatory field in the modern study.
+        a['diagnostic_motion_script_sha256'] = 'known-answer-motion-digest'
+        b = json.loads(json.dumps(a))
+        import re
+        mapping = {name:re.sub(r'\.\d+$','',name)+f'.{1000+i}' for i,name in enumerate(a['objects'])}
+        b['objects'] = {mapping[n]:i for n,i in a['objects'].items()}
+        b['diagnostic_target']['object_name'] = mapping[a['diagnostic_target']['object_name']]
+        b['source_visibility']['ignored_render_helpers'] = [mapping[n] for n in a['source_visibility']['ignored_render_helpers']]
+        self.assertEqual(canonical_truth(a),canonical_truth(b))
+        name = b['diagnostic_target']['object_name']
+        b['objects']['Wrong semantic type.999'] = b['objects'].pop(name)
+        b['diagnostic_target']['object_name'] = 'Wrong semantic type.999'
+        self.assertNotEqual(canonical_truth(a),canonical_truth(b))
+        b = json.loads(json.dumps(a));b['source_visibility']['tolerance_m'] *= 2
+        self.assertNotEqual(canonical_truth(a),canonical_truth(b))
+
+    def test_area_scaled_component_policy_preserves_relative_noise_cutoff(self):
+        truth = np.zeros((16,16),bool);truth[8:10,8:12] = True
+        predicted = truth.copy();predicted[0,:7] = True
+        high_truth = truth.repeat(2,axis=0).repeat(2,axis=1)
+        high_predicted = predicted.repeat(2,axis=0).repeat(2,axis=1)
+        self.assertEqual(measure_target(predicted,truth,8)['iou'],1)
+        self.assertEqual(measure_target(high_predicted,high_truth,32)['iou'],1)
+        self.assertAlmostEqual(measure_target(high_predicted,high_truth,8)['iou'],32/60)
 
     def test_output_metrics_normalize_pixels_and_keep_undefined(self):
         row = {'quality':{'target':{'iou':.5,'predicted_pixels':576},'linear_mae':.02},
