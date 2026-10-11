@@ -111,7 +111,7 @@ std::vector<cv::Mat> normalized_pyramid(const cv::Mat &image, const cv::Mat &val
 } // namespace
 
 cv::Mat multiband(const FusionSamples &samples, const cv::Mat &weights, unsigned levels,
-                  const std::string &boundary)
+                  const std::string &boundary, FusionInspection *inspection)
 {
     std::array<std::vector<cv::Mat>, 4> colors, masks;
     std::vector<cv::Mat> planes;
@@ -131,9 +131,19 @@ cv::Mat multiband(const FusionSamples &samples, const cv::Mat &weights, unsigned
         }
     }
     std::vector<cv::Mat> blended;
+    std::array<std::vector<cv::Mat>, 4> contributions;
     for (size_t level = 0; level < colors[0].size(); ++level)
     {
         cv::Mat layer = cv::Mat::zeros(colors[0][level].size(), CV_32FC3);
+        cv::Mat normalized;
+        if (inspection)
+        {
+            normalized = cv::Mat::zeros(layer.size(), CV_32FC4);
+            for (auto &camera : contributions)
+            {
+                camera.push_back(cv::Mat::zeros(layer.size(), CV_32FC3));
+            }
+        }
         for (int y = 0; y < layer.rows; ++y)
         {
             for (int x = 0; x < layer.cols; ++x)
@@ -149,15 +159,45 @@ cv::Mat multiband(const FusionSamples &samples, const cv::Mat &weights, unsigned
                 if (total > 1e-6)
                 {
                     layer.at<cv::Vec3f>(y, x) = sum / total;
+                    if (inspection)
+                    {
+                        for (int c = 0; c < 4; ++c)
+                        {
+                            const float coefficient = masks[c][level].at<float>(y, x) / total;
+                            normalized.at<cv::Vec4f>(y, x)[c] = coefficient;
+                            // Preserve the signed Laplacian contribution, not a local opacity.
+                            contributions[c].back().at<cv::Vec3f>(y, x) =
+                                (masks[c][level].at<float>(y, x) *
+                                 colors[c][level].at<cv::Vec3f>(y, x)) /
+                                total;
+                        }
+                    }
                 }
             }
         }
         blended.push_back(layer);
+        if (inspection)
+        {
+            inspection->level_weights.push_back(normalized);
+        }
     }
     auto result = blended.back();
     for (int level = static_cast<int>(blended.size()) - 2; level >= 0; --level)
     {
         result = blended[level] + resize_linear(result, blended[level].size());
+    }
+    if (inspection)
+    {
+        for (int c = 0; c < 4; ++c)
+        {
+            auto contribution = contributions[c].back();
+            for (int level = static_cast<int>(contributions[c].size()) - 2; level >= 0; --level)
+            {
+                contribution = contributions[c][level] +
+                               resize_linear(contribution, contributions[c][level].size());
+            }
+            inspection->camera_contributions[c] = contribution;
+        }
     }
     cv::max(result, 0, result);
     cv::min(result, 1, result);

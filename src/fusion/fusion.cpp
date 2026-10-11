@@ -4,8 +4,13 @@
 
 namespace sv
 {
-FusionResult fuse_research(const FusionSamples &samples, const Fusion &settings)
+FusionResult fuse_research(const FusionSamples &samples, const Fusion &settings,
+                           FusionInspection *inspection)
 {
+    if (inspection)
+    {
+        *inspection = {};
+    }
     const auto size = samples.colors[0].size();
     if (size.empty() || size.area() > 262144 || settings.pyramid_levels < 1 ||
         settings.pyramid_levels > 8 || !std::isfinite(settings.smoothness_weight) ||
@@ -104,23 +109,40 @@ FusionResult fuse_research(const FusionSamples &samples, const Fusion &settings)
             }
         }
     }
+    if (inspection)
+    {
+        inspection->blend_weights = blend_weights;
+    }
     cv::Mat color;
     if (band)
     {
         color = fusion_detail::multiband(samples, blend_weights, settings.pyramid_levels,
-                                         settings.pyramid_boundary);
+                                         settings.pyramid_boundary, inspection);
     }
     else
     {
         color = cv::Mat::zeros(size, CV_32FC3);
+        if (inspection)
+        {
+            inspection->level_weights.push_back(weights);
+            for (auto &contribution : inspection->camera_contributions)
+            {
+                contribution = cv::Mat::zeros(size, CV_32FC3);
+            }
+        }
         for (int y = 0; y < size.height; ++y)
         {
             for (int x = 0; x < size.width; ++x)
             {
                 for (int c = 0; c < 4; ++c)
                 {
-                    color.at<cv::Vec3f>(y, x) +=
+                    const auto contribution =
                         weights.at<cv::Vec4f>(y, x)[c] * samples.colors[c].at<cv::Vec3f>(y, x);
+                    color.at<cv::Vec3f>(y, x) += contribution;
+                    if (inspection)
+                    {
+                        inspection->camera_contributions[c].at<cv::Vec3f>(y, x) = contribution;
+                    }
                 }
             }
         }

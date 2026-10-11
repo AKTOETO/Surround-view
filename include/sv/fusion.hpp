@@ -3,6 +3,7 @@
 #include "sv/seam_optimizer.hpp"
 #include <opencv2/core.hpp>
 #include <optional>
+#include <vector>
 
 namespace sv
 {
@@ -20,5 +21,13 @@ struct FusionResult
     std::optional<seam::Summary> seam_optimization;
 };
 
-FusionResult fuse_research(const FusionSamples &, const Fusion &);
+// Opt-in diagnostic data from the actual fusion operations, before final color clamping.
+struct FusionInspection
+{
+    cv::Mat blend_weights; // CV_32FC4; after optional seam smoothing, before pyramid reduction.
+    std::vector<cv::Mat> level_weights; // CV_32FC4 normalized coefficients, fine to coarse.
+    std::array<cv::Mat, 4> camera_contributions; // CV_32FC3 signed linear RGB at full resolution.
+};
+
+FusionResult fuse_research(const FusionSamples &, const Fusion &, FusionInspection * = nullptr);
 } // namespace sv

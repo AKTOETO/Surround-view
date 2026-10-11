@@ -34,8 +34,9 @@ struct SourceProjectionInspection
 
 struct RenderInspectionRequest
 {
-    bool carrier_positions = false;  // Opt-in: three extra RGBA8 passes/readbacks.
-    bool source_projections = false; // Opt-in: twelve extra passes/readbacks.
+    bool carrier_positions = false;    // Opt-in: three extra RGBA8 passes/readbacks.
+    bool source_projections = false;   // Opt-in: twelve extra passes/readbacks.
+    bool fusion_contributions = false; // Hybrid research modes only; no extra GLES passes.
 };
 
 // Explicit, render-thread-only capture for numerical inspection. Not a wire subscription.
@@ -43,6 +44,7 @@ struct RenderInspectionRequest
 struct RenderInspection
 {
     std::optional<FusionSamples> samples;
+    std::optional<FusionInspection> fusion;
     Image fallback_rgba;
     cv::Mat ego_rgba; // CV_8UC4, top-left origin; empty for diagnostic views.
     // CV_32FC3, vehicle metres, top-left. NaN for background/ego; empty unless requested.

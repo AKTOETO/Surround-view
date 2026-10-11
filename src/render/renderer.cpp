@@ -442,13 +442,18 @@ Renderer::~Renderer() = default;
 Image Renderer::render(const FrameSet &set, const View &view, RenderInspection *inspection,
                        RenderInspectionRequest request)
 {
-    if ((request.carrier_positions || request.source_projections) && !inspection)
+    if ((request.carrier_positions || request.source_projections || request.fusion_contributions) &&
+        !inspection)
     {
         throw std::invalid_argument("render inspection requires an inspection destination");
     }
     if (inspection)
     {
         *inspection = {};
+    }
+    if (request.fusion_contributions && !research_fusion(impl_->config.fusion.mode))
+    {
+        throw std::invalid_argument("fusion contributions require a hybrid research mode");
     }
     auto &i = *impl_;
     auto &c = i.config;
@@ -645,7 +650,12 @@ Image Renderer::render(const FrameSet &set, const View &view, RenderInspection *
         }
         i.timing.layer_readback_cpu_ms = (now_ns() - layer_start) / 1e6;
         const auto fusion_start = now_ns();
-        const auto fused = fuse_research(samples, c.fusion);
+        FusionInspection *fusion_inspection = nullptr;
+        if (request.fusion_contributions)
+        {
+            fusion_inspection = &inspection->fusion.emplace();
+        }
+        const auto fused = fuse_research(samples, c.fusion, fusion_inspection);
         i.timing.seam_optimization = fused.seam_optimization;
         for (int y = 0; y < c.height; ++y)
         {

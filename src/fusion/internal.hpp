@@ -10,5 +10,5 @@ cv::Mat cut_weights(const FusionSamples &, const std::array<cv::Mat, 4> &, doubl
 cv::Mat multilabel_weights(const FusionSamples &, const std::array<cv::Mat, 4> &, double,
                            seam::Summary &);
 cv::Mat multiband(const FusionSamples &, const cv::Mat &weights, unsigned levels,
-                  const std::string &boundary);
+                  const std::string &boundary, FusionInspection *inspection);
 } // namespace sv::fusion_detail
