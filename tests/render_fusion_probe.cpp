@@ -65,7 +65,14 @@ int main(int argc, char **argv)
                     settings.diagnostic = diagnostic;
                     renderer.set_fusion(settings);
                     sv::RenderInspection inspection;
-                    const auto actual = renderer.render(set, config.view, &inspection);
+                    const auto actual = renderer.render(set, config.view, &inspection, {true});
+                    if (inspection.carrier_positions.type() != CV_32FC3 ||
+                        inspection.carrier_positions.size() !=
+                            cv::Size(config.width, config.height))
+                    {
+                        throw std::runtime_error(
+                            "missing carrier positions during hybrid inspection");
+                    }
                     if (!inspection.samples)
                     {
                         throw std::runtime_error("missing projected samples");
