@@ -62,3 +62,15 @@ MPLCONFIGDIR=/tmp/sv-matplotlib python3 docs/diploma/plot_server_boundary.py
 ```
 
 Для actual views требуются сохранённые RGBA в `artifacts/server-boundary-v2`; воспроизведение их нативным runner описано в [[engineering/USAGE#Многокадровый native эксперимент и RGBA capture]]. Две позы и все четыре profiles показаны без выбора лучшего изображения по результату.
+
+§3.32/§4.46 добавляют native multilabel solver, exhaustive global-gap counterexample и первый actual server screen: [[validation/MULTILABEL_SEAM]]. Рисунки воспроизводятся тем же скриптом:
+
+```sh
+MPLCONFIGDIR=/tmp/sv-matplotlib python3 docs/diploma/plot_server_boundary.py --report docs/validation/baselines/server_seam_v1.json --captures-root artifacts/server-seam-v3 --optimizer-report docs/validation/baselines/seam_optimizer_v1.json
+```
+
+§4.47 — frozen follow-up на трёх новых экземплярах улицы и отклонениях монтажа,24 server conditions. Рецепт и ограничения: [[research/SEAM_GENERALIZATION_PROTOCOL]], результаты: [[validation/MULTILABEL_SEAM#Новые сцены и отклонения монтажа]]. Воспроизведение рисунков4.50–4.51 после capture/native run:
+
+```sh
+MPLCONFIGDIR=/tmp/sv-matplotlib python3 docs/diploma/plot_server_boundary.py --report docs/validation/baselines/seam_generalization_v1.json --captures-root artifacts/seam-generalization-v1/seed101-run --fixture artifacts/seam-generalization-v1/seed101-inputs --capture artifacts/seam-generalization-v1/seed101-capture
+```

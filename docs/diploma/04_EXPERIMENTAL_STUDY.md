@@ -1370,6 +1370,41 @@ IoU контрольного объекта определяется как $|M_
 
 Восстановление подтверждено для fusion/surface/pause всех шести запусков; восстановленный RGBA совпал с baseline последнего кадра. Cursor/history не возвращаются, что явно отражено в отчёте. Пять carriers имеют разные mesh budgets, поэтому эти числа нельзя использовать для выбора лучшего носителя. Девять кадров покрывают 0…800 ms одной прежней траектории; этот опыт не заменяет длинные continuous clips, temporal-history/flicker анализ или photometric compensation. Для окончательного вывода нужны новые сцены/mount seeds и holdout, multilabel seam, равные budgets и целевая платформа.
 
+## 4.46 Многометочная оптимизация швов: exact moves и фактическая цена
+
+Следующий исследовательский этап добавляет optional native alpha-expansion. Базовый `binary_pairs` оптимизирует отдельные exactly-two-camera компоненты и использует centrality fallback при 3/4 overlaps; новый вариант задаёт одну weighted Potts energy на общей observed области. Label — ID доступной камеры, unary штрафует малое расстояние до её validity boundary, соседние разные labels получают label-independent penalty, зависящий от локального RGB disagreement. Single-camera anchors включены и фиксированы. Полные формулы/квантизация/маски приведены в [[validation/MULTILABEL_SEAM]].
+
+[Boykov, Veksler, Zabih (2001)](https://www.cs.cornell.edu/rdz/Papers/BVZ-pami01-final.pdf) обосновывают large-move graph-cut оптимизацию metric energies. Здесь каждый alpha move сохраняет старую метку или назначает alpha; submodular binary energy решается exact min-cut. Полная задача с несколькими метками в общем случае остаётся приближённой. В реализации принимается только strictly lower integer energy, порядок alpha фиксирован, production budget — восемь sweeps. Равные costs разрешаются по ID; permutation invariance этого кандидата не заявляется.
+
+Проверены две разные группы seeded small graphs. На первой 128 six-node graphs все 512 expansion moves совпали с exhaustive перебором 64 subsets. На второй 128 graphs перебраны все 4096 labelings: global optimum достигнут в 125 случаях. Во всех 128 default budget8 подтвердил local convergence, но это не гарантия для большого output. На худшем графе energy уменьшилась77→60 и дальнейший alpha move не улучшает её, тогда как global optimum равен52. Следовательно, корректность каждого min-cut не позволяет называть весь solver точным глобальным.
+
+![Контрпример global optimum](figures/experiments/seam_optimizer_counterexample.png)
+
+*Рисунок 4.47 — Один сохранённый known-answer graph: alpha-expansion остановился при60, exhaustive optimum52. Цвет/подпись вершины — camera label, числа на рёбрах — Potts weights. Unary table, unavailable labels и обе assignments опубликованы в raw GTest JSON; это математический контроль, не реальная сцена.*
+
+Hand-computed production controls дополнительно соединяют single-camera anchors через overlap трёх/четырёх камер: minimum energy5667/5750. Недоступные labels не выбираются, empty pixels имеют нулевые weights. Проверка total capacities отклоняет graph, где отдельные costs допустимы, но общая source saturation могла бы переполнить int64. Полная Linux regression51/51; tests доказывают software свойства, не улучшение perceptual quality.
+
+До визуального опыта зафиксирован [[research/MULTILABEL_SEAM_PROTOCOL]]. Две прежние позы/dome, оба graph-cut modes × два solvers, boundary zero, λ0.1, levels4: восемь условий, два warmup и семь randomized measurement blocks. Получены72 samples/56 native RGBA. Independent audit проверил hashes, inputs/settings/calibration, полноту matrix и restore fusion/surface/pause. Source fingerprint сохранён; Blender dataset прежний, не holdout. В отличие от нового candidate legacy имеет другую energy, поэтому здесь сравниваются два полных image pipelines, а не два minimizers одной objective.
+
+| Поза / режим | Δ linear RGB MAE | Δ coded target IoU | Δ median fusion CPU, ms |
+|---|---:|---:|---:|
+| 0 / graph_cut_seam | +0.000000322 | 0 | +339.188 |
+| 0 / graph_cut_multi_band | −0.000006732 | +0.002409056 | +336.756 |
+| 1 / graph_cut_seam | +0.000000016 | 0 | +334.471 |
+| 1 / graph_cut_multi_band | +0.000004603 | 0 | +343.651 |
+
+Разность определяется как alpha_expansion−binary_pairs. RGB уменьшилась только в одной паре, IoU улучшилась в одной и не изменилась в трёх. Все четыре alpha условия подтвердили convergence за два sweeps и четыре accepted moves на54402 nodes/108126 edges. Это observed nodes, не число пикселей с 3/4 available cameras. Energy является surrogate seam criterion до Gaussian smoothing/pyramid, не независимой quality metric.
+
+![Разности двух seam solvers](figures/experiments/server_seam_metrics.png)
+
+*Рисунок 4.48 — Все четыре заранее заданные пары: small RGB/IoU effects и большой CPU overhead. Семь повторов — измерения одной paused input пары, не независимые сцены.*
+
+![Direct truth и production outputs seam solvers](figures/experiments/server_seam_views.png)
+
+*Рисунок 4.49 — Обе позы и четыре actual server outputs рядом с direct Blender truth. Новый optimizer не устраняет ошибку carrier geometry для поднятой мишени. Скрипт plot_server_boundary.py строит все рисунки из сохранённых baselines/captures без изменения product renderer.*
+
+Измеренная цена нового пути составляет дополнительно334–344ms на кадр на Linux/AMD integrated Mesa. Graph строится на всей observed области с fixed anchors; это неприемлемо как обоснование realtime режима автомобильного экрана. Candidate оставлен переключаемым исследовательским вариантом, default сохранён. Следующий инженерный опыт может удалить fixed nodes с сохранением exact objective и проверить parity/cost; следующий quality опыт обязан использовать новые scene/mount instances, затем natural-object truth и равные carrier budgets. Blender MCP восстановлен, новые procedural cases заранее зафиксированы в [[research/SEAM_GENERALIZATION_PROTOCOL]]. Окончательное преимущество multilabel по качеству пока не установлено.
+
 ## Предварительные выводы по четвёртой главе
 
 1. **Экспериментальная инфраструктура сшивки:** реализованы offline-варианты fusion и carrier matrix; исправленные binary graph-cut и output proxies проверены на fixtures, добавлены парный 3-frame Blender clip (§4.25), статический coded-object screen (§4.28) и девятикадровый moving-target screen (§4.39). Эти результаты уточняют failure modes в конкретных synthetic scenes; качество методов на holdout scenes и естественная object-correspondence ghost truth пока не подтверждены.
@@ -1389,3 +1424,21 @@ IoU контрольного объекта определяется как $|M_
 [S59]: https://developer.auroraos.ru/doc/sdk/tools/mb2
 [S60]: https://developer.auroraos.ru/doc/software_development/guidelines/rpm_requirements/spec_requirements
 [S68]: https://doi.org/10.1109/ICIP.2019.8803453
+
+## 4.47. Проверка многометочных швов на новых сценах и монтажных отклонениях
+
+После фиксации протокола [[research/SEAM_GENERALIZATION_PROTOCOL]] получены три новых экземпляра процедурной улицы: низкий блок, столб и поднятый короб, seeds101–103. Параметры зданий и препятствий различаются; камеры имеют yaw/pitch отклонения до ±3° и смещение вдоль кузова до ±0.1m. Сервер использует истинную изменённую калибровку. Это позволяет отделить поведение сшивки от ошибки оценки монтажа; сравнение nominal/estimated calibration ещё требуется. Генератор семейства улицы общий, поэтому независимость от типа мира не установлена.
+
+Четыре заранее выбранных профиля сравниваются на двух кадрах каждого экземпляра:24 условия,216 samples с warmup,168 сохранённых measurement RGBA. Параметры, пороги объекта и порядок randomized blocks не выбирались по полученным результатам. Read-only аудит проверяет provenance, временные интервалы и hashes входов, direct RGB/object-ID/visibility truth, actual runtime settings, повторяемость output и восстановление настроек. Полная таблица12 пар и native reports: [[validation/MULTILABEL_SEAM#Новые сцены и отклонения монтажа]].
+
+![Парные различия на трёх новых экземплярах улицы](figures/experiments/seam_generalization_metrics.png)
+
+*Рисунок 4.50 — alpha_expansion минус binary_pairs на seeds101–103: RGB MAE, coded-target IoU и медианная CPU-задержка сшивки. Ноль обозначает отсутствие различия; для MAE и задержки предпочтительна отрицательная разность, для IoU — положительная.*
+
+RGB MAE уменьшилась в4/12 пар и выросла в8/12; IoU улучшилась в2, ухудшилась в2 и не изменилась в8. Все12 alpha условий завершились с подтверждённой local convergence за два sweeps. Но median fusion CPU выросла на769.489–957.757ms. Эти числа относятся к Linux/Mesa запуску без параллельной сборки, CTest и Blender capture, а не к Aurora или GPU-реализации solver. Разброс между старой и новой серией нельзя объяснять только сценой без контроля частот и thermal.
+
+![Прямой Blender вид и выходы сервера для первого заранее выбранного экземпляра](figures/experiments/seam_generalization_views.png)
+
+*Рисунок 4.51 — seed101, два заранее заданных кадра: слева прямой Blender RGB, далее четыре серверных профиля. Выбран первый экземпляр по протоколу, а не лучший результат. Вытягивание магентового блока показывает геометрическую ошибку поверхности-носителя, сохраняющуюся при истинной калибровке.*
+
+Снижение Potts energy не доказывает улучшения изображения. Существующий носитель не восстанавливает глубину поднятых объектов, а многометочный solver не устраняет эту неоднозначность. На данном наборе оснований заменить default binary_pairs нет. Вывод ограничен тремя экземплярами одного генератора и короткими последовательностями: нельзя считать12 пар независимыми clips или переносить coded-object IoU на естественные ghost trails. Для завершения исследования остаются разные семейства сцен, длинные clips, natural-object correspondence, calibration ablation и равные бюджеты носителей. Скрипт рисунков — `plot_server_boundary.py`; raw отчёт — `validation/baselines/seam_generalization_v1.json`.

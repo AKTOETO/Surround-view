@@ -123,3 +123,7 @@ GTest/CTest `client_release_budget` с TCP mock проверяет случай 
 ### Replay step в исследовательском lease
 
 `step()` сохраняет прежний wire-запрос без token. `step(lease_id)` добавляет token и допускается внутри active replay experiment; перед этим проверить hello capability `experiment_step_v1`. Token не разрешает другим владельцам мутации. Source ACK и frame для его state_revision подтверждают переход, но не обещают seek назад или reset history. Общий C++ runner поддерживает `frames`, typed capture consumer и per-frame baselines; callback вызывается только для measurement frames. Ошибка callback прерывает опыт с попыткой восстановления fusion/surface/pause: [[validation/RESEARCH_RUNTIME]].
+
+### Выбор multilabel seam solver
+
+`FusionSettings::seam_solver` хранит binary_pairs по умолчанию; configure_fusion опускает этот default и явно сериализует alpha_expansion. Проверить catalog v4 перед alpha. Значение доступно общему C++ runner и simulator adapter; сервер единолично валидирует и выполняет solver. Метаданные кадра seam_optimization передаются библиотекой без пересчёта; клиент может видеть convergence, но не трактовать integer energy как качество сшивки: [[validation/MULTILABEL_SEAM]].

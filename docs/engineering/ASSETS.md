@@ -136,3 +136,7 @@ sha256sum assets/demo/urban_street_01_1k.hdr \
 ## Blueprint диагностической мишени
 
 `assets/scenarios/object-stitch-v1.json` — авторский procedural план улицы seed 15, автомобиля, номинальных камер и emission cuboid. `tools/blender/diagnostic.py` дополняет общий генератор сцены; внешние изображения/модели не используются. Мир воспроизводится скриптами, `.blend` не требует Git LFS. Компактные производные RGB/ID в `tests/data/object_stitch_v1` являются тестовым fixture; raw capture и пробные позиции остаются в `artifacts/`. Происхождение, ограничения и полный протокол: [[validation/OBJECT_STITCH]].
+
+## Новые procedural cases для seam study
+
+`assets/scenarios/seam-generalization-v1.json` — авторский recipe трёх новых seeded world/mount/target instances (101/102/103). Все meshes/materials создаются checked-in `tools/blender/scene.py`/`diagnostic.py`; внешний .blend, художественные downloads и Git LFS не нужны. Рецепт включает правила окружения, физические target размеры и bounds отклонений камер. Frozen исследовательские условия: [[research/SEAM_GENERALIZATION_PROTOCOL]]. Scientific captures/inputs/reports находятся в игнорируемом `artifacts/seam-generalization-v1`; их provenance содержит recipe/generator hashes. Это generated measurement data, не дополнительные художественные ассеты. Реальный Blender world остаётся отдельной сценой; исходная active scene не удаляется.

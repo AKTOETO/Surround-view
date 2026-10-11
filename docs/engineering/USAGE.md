@@ -687,3 +687,40 @@ python3 tools/research/server_boundary.py --fixture tests/data/object_stitch_v1 
 Runner делает один защищённый step, если начальная пауза застала stale/NO_INPUT; затем перед каждым следующим кадром восстанавливает исходные fusion/surface и делает step. Варианты одного кадра обязаны использовать одинаковые inputs/frame_set_id. Cancel и ошибка capture вызывают cleanup. `restored=true`, `restore_scope=fusion_surface_pause_only` подтверждают только fusion/surface/pause. `cursor_restored=false`: позиция replay и история не возвращаются. Для независимого повторного старта перезапустите сервер с исходным manifest. На конце записи без loop можно получить ошибку step; runner не подменяет её повтором прежнего кадра.
 
 Дополнительная девятикадровая серия требует сохранённых `artifacts/object-stitch-motion-inputs` и `artifacts/object-stitch-motion-capture`; запустите сервер с config/manifest из первого каталога и используйте `configs/research/boundary-motion-sequence.json`. Для audit задайте `--fixture artifacts/object-stitch-motion-inputs --capture artifacts/object-stitch-motion-capture`. Полная matrix пяти carriers запускалась последовательно с отдельным server config/report для каждого; менять разрешение/virtual view перед данным audit нельзя. Результаты и ограничения: [[validation/SERVER_BOUNDARY]].
+
+### Сравнение binary и multilabel seam solvers
+
+Используйте тот же tracked fixture/server из многокадрового примера, свежий report path и каталог config рядом с отчётом:
+
+```sh
+build/svctl --unix /tmp/sv-boundary-example research configs/research/multilabel-sequence.json artifacts/boundary-example/seam-report.json
+python3 tools/research/server_boundary.py --fixture tests/data/object_stitch_v1 --report artifacts/boundary-example/seam-report.json --comparison seam_solver --output artifacts/boundary-example/seam-audit.json
+```
+
+Сценарий запускает оба graph-cut режима × binary_pairs/alpha_expansion на двух кадрах, zero boundary, два warmup/семь measured blocks. Alpha — дорогой CPU research path; первый опыт на Linux/Mesa добавляет сотни миллисекунд, поэтому его нельзя считать realtime конфигурацией автомобиля. Через typed library задайте `FusionSettings::seam_solver="alpha_expansion"`; через simulator загрузите actual fusion snapshot и добавьте seam_solver. GUI пока использует прежний JSON adapter; удобный selector/form остаётся в TODO. Обычный multi_band не использует seam solver.
+
+Новый сервер объявляет catalog v4. Default бинарный field в snapshot может отсутствовать, это не потеря конфигурации. Неизвестные solver names отклоняются сервером; omission в full configure_fusion возвращает binary_pairs. Energy/convergence отражаются в frame.seam_optimization, raw reports и independent audit. Данные, параметры и ограничения: [[validation/MULTILABEL_SEAM]].
+
+### Новые procedural seam cases
+
+Генерация трёх frozen сцен и конвертация описаны в [[engineering/BLENDER#Восстановление новых frozen seam scenes]]. После получения inputs запускайте native сервер с **actual** config/manifest каждого seed. Для seed101:
+
+```sh
+mkdir -p artifacts/seam-generalization-v1/seed101-run/dome_floor
+cp artifacts/seam-generalization-v1/seed101-inputs/config.json artifacts/seam-generalization-v1/seed101-run/dome_floor/config.json
+SV_EGL_PLATFORM=surfaceless build/sv-server --config artifacts/seam-generalization-v1/seed101-run/dome_floor/config.json --manifest artifacts/seam-generalization-v1/seed101-inputs/manifest.json --ipc-dir /tmp/sv-seam101 --trace artifacts/seam-generalization-v1/seed101-run/dome_floor/trace.jsonl
+```
+
+Другой терминал:
+
+```sh
+build/svctl --unix /tmp/sv-seam101 --timeout-ms 10000 research configs/research/multilabel-sequence.json artifacts/seam-generalization-v1/seed101-run/dome_floor/report.json
+```
+
+Остановите сервер штатно и повторите для102/103 с новыми путями/socket directories. Не совмещайте timing trials со сборкой, CTest или Blender renders. После всех трёх записей независимый audit проверяет frozen plan, generator/capture hashes, poses/timestamps, full matrix, actual settings/optimization diagnostics и последний baseline restore:
+
+```sh
+python3 tools/research/server_boundary.py --study-plan assets/scenarios/seam-generalization-v1.json --study-root artifacts/seam-generalization-v1 --output artifacts/seam-generalization-v1/audit.json
+```
+
+Audit только читает данные, не запускает продукты. При новой генерации используйте новый study root и пути reports/captures; пример root исходного опыта приведён для объяснения структуры. Неполная трёхcase серия не объявляется завершённой. Физические camera tests и независимые типы окружения этим протоколом не заменены.

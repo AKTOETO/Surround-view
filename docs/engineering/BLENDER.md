@@ -181,3 +181,42 @@ python3 tools/configurator.py calibrate-images --dataset artifacts/board-data \
 ## Независимые IDs входных камер и диагностическая мишень
 
 `tools/blender/diagnostic.py:build_diagnostic` создаёт изолированную улицу по `assets/scenarios/object-stitch-v1.json`. `capture_paired(..., source_ids=True)` дополнительно сохраняет четыре uint16 object-ID карты на кадр и hashes в paired metadata. `geometry_truth.py` объединяет ray helper для direct/source truth, пропуская hide-render helpers. Exporter ограничен equidistant zero-skew opaque optics; не моделирует RGB filtering/transparency. Двухкадровый Blender regression и восстановление camera state описаны в [[validation/OBJECT_STITCH]]. Там же команды захвата, конвертации и численного воспроизведения.
+
+## Восстановление новых frozen seam scenes
+
+MCP проверен 11.10.2026: Blender5.2.2 LTS, addon1.8, protocol13. Новые recipes находятся в `assets/scenarios/seam-generalization-v1.json`; они воспроизводят meshes/world/camera offsets без .blend и LFS. В Blender console/MCP используйте существующие generators (укажите абсолютный путь своего checkout и свежий output directory):
+
+```python
+import bpy, json, sys, hashlib
+from pathlib import Path
+root = Path('/home/bogdan/prog/MAI/surround-view')
+sys.path.insert(0, str(root/'tools/blender'))
+from diagnostic import build_diagnostic
+from paired_truth import capture_paired
+plan_path = root/'assets/scenarios/seam-generalization-v1.json'
+plan = json.loads(plan_path.read_text())
+output = root/'artifacts/seam-repeat'
+output.mkdir(exist_ok=False)
+sources = ['scene.py','scenario.py','rig.py','diagnostic.py','diagnostic_motion.py','paired_truth.py','visibility.py']
+(output/'provenance.json').write_text(json.dumps({
+    'plan_sha256': hashlib.sha256(plan_path.read_bytes()).hexdigest(),
+    'generator_sha256': {n:hashlib.sha256((root/'tools/blender'/n).read_bytes()).hexdigest() for n in sources},
+    'blender_version': bpy.app.version_string}, indent=2)+'\n')
+original = bpy.context.window.scene
+try:
+    for case in plan['cases']:
+        variant = build_diagnostic(case)
+        bpy.context.window.scene = variant
+        seed = case['scenario']['seed']
+        capture_paired(variant, output/f'seed{seed}-capture', **case['capture'])
+finally:
+    bpy.context.window.scene = original
+```
+
+Каждый capture каталог должен быть новым. Внешний `artifacts/seam-repeat` создаётся в приведённом коде; не подмешивайте файлы прежней серии. Для исследовательского provenance перед capture также сохраните SHA-256 recipe/generator файлов и версию Blender; автоматический read-only study audit требует provenance.json из исходного опыта. World builder не удаляет пользовательскую сцену. Конвертация после завершения capture:
+
+```sh
+python3 tools/blender/convert.py --capture artifacts/seam-generalization-v1/seed101-capture --output artifacts/seam-generalization-v1/seed101-inputs --image-format png
+```
+
+Повторите для seeds102/103. Используйте **actual perturbed config** из inputs, а не nominal-config, если цель — сравнение сшивки при известной калибровке. Это не испытание восстановления параметров calibration solver. Research matrix/ограничения: [[research/SEAM_GENERALIZATION_PROTOCOL]].

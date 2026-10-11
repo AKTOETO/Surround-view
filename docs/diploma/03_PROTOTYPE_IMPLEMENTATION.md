@@ -852,3 +852,39 @@ stop
 *Рисунок 3.31 — Жизненный цикл многокадрового native опыта. Исключение capture/progress или отмена выходят в общий cleanup; стрелки основного пути не обещают восстановления cursor/history.*
 
 CLI создаёт отдельную свежую папку raw RGBA и сохраняет ссылки/hashes в samples. Report включает per-frame baseline и summaries; старый однофреймовый сценарий работает с defaults. Между кадрами исходная fusion/surface возвращаются перед step, поэтому следующий baseline не зависит от последнего случайного варианта. Watchdog защищает настройки, но lease не хранит replay cursor/history: состояние после опыта не тождественно состоянию до него по всем параметрам. Tests проверяют Unix/TCP, hash capture, отмену после перехода, исключение consumer и stale NO_INPUT preparation. Контракт и проверки: [[engineering/PROTOCOL_SCENARIOS]], [[validation/RESEARCH_RUNTIME]]; полученные исследовательские результаты — §4.45.
+
+### 3.32. Многометочная сшивка как серверный вариант
+
+Ограничение exactly-two-camera cut устранено для нового optional кандидата: fusion.seam_solver=alpha_expansion строит weighted Potts energy на общей observed области, включая single-camera anchors и 3/4-camera overlaps. Прежний binary_pairs сохранён по умолчанию для воспроизводимости. Solver не запускается в клиенте; configure проходит общие revision/lease/config validation. Catalogv4 перечисляет варианты и sweep limit. Native optimizer отделён от построения image graph: `seam_optimizer.cpp` работает с integer unary/edges, `multilabel.cpp` преобразует validity/colors/distances в эту задачу.
+
+```plantuml
+@startuml
+participant "Клиент через sv-client-lib" as C
+participant "sv-server / ConfigStore" as S
+participant "Renderer + image graph builder" as R
+participant "Native Potts optimizer" as O
+C -> S : configure_fusion(seam_solver, revision, lease_id)
+S -> S : Validate / temporary apply
+S --> C : ACK + actual fusion/revision
+S -> R : Render согласованного FrameSet
+R -> R : Четыре projected RGB/validity layers
+R -> R : Unary costs + 4-neighbor weighted graph
+R -> O : Quantized energy / available labels / sweep limit8
+loop До convergence либо восьми sweeps
+  O -> O : alpha0..3 / exact binary min-cut moves
+  O -> O : Принять только strictly lower energy
+end
+O --> R : Labels / energy / convergence summary
+opt graph_cut_multi_band
+  R -> R : Blur hard weights / pyramid blend
+end
+R --> S : Final RGBA / solver diagnostics
+S --> C : Frame с actual settings / seam_optimization
+@enduml
+```
+
+*Рисунок 3.32 — Место нового solver в серверном pipeline. Convergence относится к hard labels, последующие image blend stages не минимизируют эту energy.*
+
+Публичные logical structs содержат unary/edge graph, результат и компактную summary; graph algorithm не зависит от Qt. Hard constraints исключают invalid camera labels. Все capacities int64, min-cut reduction использует удвоенную energy без половинного округления. До max-flow проверяется общий capacity bound, включая повторные forbidden costs; это закрывает overflow, который нельзя обнаружить проверкой одного edge. Флаги/energy передаются через renderer в metadata, сбрасываются на новом кадре и не остаются после возврата к legacy mode.
+
+Typed FusionSettings, scenario parser, simulator adapter и native CLI сохраняют optional solver. Полная Linux suite51/51; отдельные tests сравнивают exact moves с exhaustive oracle, сохраняют global gap и проверяют unavailable labels/anchors. Формулы и отрицательные результаты: [[validation/MULTILABEL_SEAM]], §4.46. Friendly GUI selector и independent quality qualification остаются следующими задачами.

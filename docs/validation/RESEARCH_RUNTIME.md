@@ -112,3 +112,9 @@ Catalog v3 и C++ scenario runner дополнены `pyramid_boundary=zero|norm
 Реальный исследовательский запуск: 76 условий, 684 samples, 532 captured measurement frames, все шесть запусков восстановили настройки. Independent direct-view audit и отрицательные результаты описаны в [[validation/SERVER_BOUNDARY]]. Это short paused sequence, не continuous-stream performance/temporal-history квалификация. Произвольный seek, durable checkpoint, reset history и GUI сценариев остаются открытыми.
 
 Итоговая Linux регрессия 11.10.2026: полная сборка успешна; CTest **50/50**, 29.12 s. Первый прогон нового NO_INPUT теста выявил пропущенное поле schema_version в тестовом scenario; после исправления fixture отдельно прошёл replay_ipc и затем вся suite. Это не обнаруженный дефект server schema validation.
+
+## Multilabel candidate, catalog v4
+
+Typed library/scenario/GUI adapter поддерживают optional seam_solver. Unix/TCP live native GUI-adapter test применяет graph_cut_multi_band + normalized + alpha_expansion, проверяет snapshot и прежний stale-revision/restore flow. CLI sequential capture regression переключает binary/alpha, проверяет одинаковые inputs, solver setting и монотонную energy/sweep budget actual frame diagnostics; legacy frames не сохраняют старые alpha stats. Schema/core отвергают unknown solver. Legacy default mathematical parity suites сохранены; новые alpha controls используют exhaustive graph oracle ([[validation/MULTILABEL_SEAM]]).
+
+После total-capacity guard финальная полная сборка успешна, CTest **51/51**, 22.54 s. Нативный GTest содержит шесть случаев, в том числе 512 exhaustive moves и 128 complete label enumerations; это не 512 независимых визуальных сцен. Синтетический over-limit graph отклоняется до max-flow, runtime перегрузка и RSS/thermal на target ещё не квалифицированы.

@@ -4,6 +4,8 @@
 
 ## Реализовано и проверено
 
+Дополнение 11.10.2026: catalog v4 и optional alpha_expansion для двух graph-cut modes. Native weighted-Potts optimizer, convergence telemetry и 512 exhaustive moves проверены; 125/128 small graphs достигли global optimum. Прежний visual screen и24 условия на трёх новых frozen procedural instances дали неоднозначные quality эффекты и дорогой CPU путь (на новых данных +769–958ms median fusion CPU); default binary_pairs сохранён: [[validation/MULTILABEL_SEAM]]. Полная регрессия51/51, 22.54s; Blender MCP снова доступен.
+
 Дополнение 11.10.2026: native runner поддерживает последовательные paused frame sets и RGBA capture, owner lease step и подготовку stale baseline. Проверены cancel/capture failure после перехода; 76 исследовательских условий на прежних Blender fixtures и все шесть settings restores прошли independent audit. Результаты не дают универсального преимущества normalized: [[validation/SERVER_BOUNDARY]]. Полная регрессия — 50/50, 29.12 s.
 
 Дополнение 11.10.2026: Client::release проверяет размер сообщения до post/queue budget, сервер отклоняет release с непустым binary payload закрытием data connection. Проверены synchronous reject, доступность правильного release при насыщении command queue и живой control после malformed data packet: [[validation/CLIENT_SMOKE]].

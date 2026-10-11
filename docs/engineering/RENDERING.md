@@ -24,7 +24,7 @@
 | `edge_feather` | Вес b, нормированная сумма | Усреднение не исправляет параллакс |
 | `angular_feather` | Вес b × a | Предпочтение оси камеры — эвристика, не измеренная карта качества |
 | `seam_distance_feather` | Нормированные расстояния EDT до границы validity | Screen-space расстояние зависит от view |
-| `graph_cut_seam` | Binary s-t cut в exactly-two-camera overlap | Для 3+ centrality fallback с равными ties |
+| `graph_cut_seam` | Default binary_pairs: s-t cut в exactly-two overlap; optional alpha_expansion: joint weighted Potts | Legacy 3+ centrality ties сохранены; новый bounded solver исследовательский |
 | `multi_band` | Laplacian colors / Gaussian edge masks | Не восстанавливает глубину и не устраняет ghost автоматически |
 | `graph_cut_multi_band` | Cut mask → Gaussian sigma 2 → pyramid blend | Те же ограничения cut, дополнительная CPU стоимость |
 | `hard_best_angle` | Единственная валидная камера с максимальным a | Резкий шов; при равенстве выбирается меньший ID |
@@ -152,3 +152,7 @@ python3 tools/compare_visibility.py \
 `Renderer::render(set, view, RenderInspection*)` позволяет явно сохранить actual projected linear RGB/validity/edge weights, базовый fallback RGBA и ego overlay. Тип объявлен в `sv/render_inspection.hpp`. По умолчанию pointer=nullptr: capture не выполняется. Матрицы принадлежат OpenCV через reference counting; API вызывается на render thread и не является сетевой subscription. Для трёх local GPU modes samples отсутствуют. Полный raster oracle и реальный SV01 parity используют этот путь: [[validation/NATIVE_FUSION]].
 
 В multiband RGB вне validity обнуляется перед Gaussian filtering; проверена независимость output от hidden invalid RGB. Это явная конвенция продолжения изображения, а не восстановление наблюдений. На границах она может давать тёмные полосы; исследование других способов продолжения/нормированного сглаживания остаётся отдельной задачей. `weights` для graph_cut_multi_band показывает исходную cut mask до smoothing; она не является полной картой вкладов всех частотных уровней.
+
+### Многометочный seam solver
+
+`fusion.seam_solver=binary_pairs|alpha_expansion` применяется в graph_cut_seam и graph_cut_multi_band. Catalog v4 объявляет integer_potts_v1 и восемь sweeps. Default field binary_pairs может отсутствовать в snapshot для совместимости; optional alpha передаётся явно. Global observed graph включает anchors и 3/4-camera overlaps; masks unavailable labels запрещены. В multi-band output Gaussian blur/pyramid следуют после hard labels. Actual frame содержит seam_optimization с convergence/energy, но energy не является RGB quality score. Формулы, budgets, tie policy и проверенные отрицательные результаты: [[validation/MULTILABEL_SEAM]].
