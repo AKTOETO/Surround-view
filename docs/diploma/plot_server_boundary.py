@@ -82,35 +82,40 @@ def plot_visibility(data, args):
 
 
 def plot_sampling(data, args):
+    output_study = data['experiment'] == 'E-STITCH-parallax-output-paired-01'
+    prefix = 'parallax_output' if output_study else 'parallax_sampling'
+    difference = '640x360 minus 320x180' if output_study else '512 minus 256'
     profiles = [(m,b) for m in ('multi_band','graph_cut_multi_band') for b in ('zero','normalized')]
     cases = list(dict.fromkeys(r['case'] for r in data['results']))
     carriers = list(dict.fromkeys(r['carrier'] for r in data['results']))
-    labels, metrics = [], {k:[] for k in ('full_iou','conditional_iou','linear_mae')}
+    fields = ('full_iou','conditional_iou','full_iou_area_scaled','centroid_distance_over_height') if output_study else ('full_iou','conditional_iou','linear_mae')
+    labels, metrics = [], {k:[] for k in fields}
     for cid in cases:
         for carrier in carriers:
             labels.append(cid+' / '+carrier.replace('_floor_v1',''))
             groups = [[r for r in data['results'] if r['case']==cid and r['carrier']==carrier
                        and (r['mode'],r['boundary'])==p] for p in profiles]
             for field in metrics:
-                metrics[field].append([np.mean([r['delta'][field] if r['delta'][field] is not None
+                source, key = ('delta_area_scaled','full_iou') if field=='full_iou_area_scaled' else ('delta',field)
+                metrics[field].append([np.mean([r[source][key] if r[source][key] is not None
                                                 else np.nan for r in g]) for g in groups])
     args.output.mkdir(parents=True,exist_ok=True)
-    fig,axes = plt.subplots(1,3,figsize=(20,24),sharey=True)
+    fig,axes = plt.subplots(1,len(fields),figsize=(6.7*len(fields) if output_study else 20,24),sharey=True)
     for ax,(field,values) in zip(axes,metrics.items()):
         values = np.asarray(values)
         maximum = max(float(np.nanmax(np.abs(values))),1e-9)
         im = ax.imshow(values,vmin=-maximum,vmax=maximum,cmap='coolwarm',aspect='auto')
         ax.set_yticks(range(len(labels)),labels,fontsize=8)
         ax.set_xticks(range(4),['MB-zero','MB-normalized','GC MB-zero','GC MB-normalized'],rotation=25,ha='right')
-        ax.set_title(field+' / 512 minus 256')
+        ax.set_title(field+' / '+difference)
         for y,row in enumerate(values):
             for x,v in enumerate(row):
                 label = (f'{v:+.1e}' if field=='linear_mae' else f'{v:+.4f}') if np.isfinite(v) else 'undefined'
                 ax.text(x,y,label,ha='center',va='center',fontsize=7,
                         bbox=dict(facecolor='white',alpha=.7,edgecolor='none',pad=1))
         fig.colorbar(im,ax=ax,shrink=.5)
-    fig.suptitle('Cubemap sampling only; all 480 pairs, means of two dependent poses')
-    fig.tight_layout(rect=(0,0,1,.98));fig.savefig(args.output/'parallax_sampling_metrics.png',dpi=150);plt.close(fig)
+    fig.suptitle(('Output-resolution sensitivity' if output_study else 'Cubemap sampling only')+'; all 480 pairs, means of two dependent poses')
+    fig.tight_layout(rect=(0,0,1,.98));fig.savefig(args.output/(prefix+'_metrics.png'),dpi=150);plt.close(fig)
     fig,axes = plt.subplots(len(cases),4,figsize=(14,2.5*len(cases)))
     from PIL import Image
     for index,cid in enumerate(cases):
@@ -133,14 +138,19 @@ def plot_sampling(data, args):
             payload = (directory/sample['rgba_file']).read_bytes()
             if hashlib.sha256(payload).hexdigest() != row[level+'_rgba_sha256']:
                 raise ValueError('sampling RGBA changed')
-            rgb = np.frombuffer(payload,np.uint8).reshape(180,320,4)[...,:3]
+            h,w = (360,640) if output_study and level=='high' else (180,320)
+            rgb = np.frombuffer(payload,np.uint8).reshape(h,w,4)[...,:3]
             rendered.append(rgb);axes[index,column].imshow(rgb)
-            axes[index,column].set_title(('256' if level=='low' else '512')+' / native dome MB-zero')
+            title = (f'{w}x{h}' if output_study else '256' if level=='low' else '512')
+            axes[index,column].set_title(title+' / native dome MB-zero')
+        if output_study:
+            # Display difference only: never resize independent truth or numerical metrics.
+            rendered[0] = np.asarray(Image.fromarray(rendered[0]).resize((640,360),Image.Resampling.NEAREST))
         axes[index,3].imshow(np.abs(rendered[1].astype(float)-rendered[0])/255.,vmin=0,vmax=1)
-        axes[index,3].set_title('Absolute sRGB difference / scale 0..1')
+        axes[index,3].set_title(('Nearest-upsampled low vs high' if output_study else 'Absolute sRGB difference')+' / scale 0..1')
     for ax in axes.flat: ax.set_axis_off()
-    fig.suptitle('All factors, first pose, fixed dome/multi_band/zero; unchanged direct truth')
-    fig.tight_layout(rect=(0,0,1,.98));fig.savefig(args.output/'parallax_sampling_views.png',dpi=150);plt.close(fig)
+    fig.suptitle('All factors, first pose, fixed dome/multi_band/zero; '+('independent high-resolution truth' if output_study else 'unchanged direct truth'))
+    fig.tight_layout(rect=(0,0,1,.98));fig.savefig(args.output/(prefix+'_views.png'),dpi=150);plt.close(fig)
 
 
 def plot_parallax(data, args):
@@ -518,7 +528,7 @@ def main():
     parser.add_argument('--inputs-root', type=Path, default=ROOT/'artifacts/seam-generalization-v1')
     args = parser.parse_args()
     report = json.loads(args.report.read_text())
-    if report.get('experiment') == 'E-STITCH-parallax-sampling-paired-01':
+    if report.get('experiment') in ('E-STITCH-parallax-sampling-paired-01','E-STITCH-parallax-output-paired-01'):
         plot_sampling(report,args)
         return
     if report.get('experiment') == 'E-STITCH-parallax-visibility-01':
