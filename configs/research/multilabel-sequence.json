@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "frames": 2,
+  "capture_frames": true,
+  "warmup": 2,
+  "repeats": 7,
+  "seed": 20261013,
+  "variants": [
+    {"mode": "graph_cut_seam", "seam_solver": "binary_pairs"},
+    {"mode": "graph_cut_seam", "seam_solver": "alpha_expansion"},
+    {"mode": "graph_cut_multi_band", "seam_solver": "binary_pairs"},
+    {"mode": "graph_cut_multi_band", "seam_solver": "alpha_expansion"}
+  ]
+}

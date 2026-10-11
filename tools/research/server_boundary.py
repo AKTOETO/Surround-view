@@ -48,7 +48,12 @@ def timestamp(metadata):
     return stamps.pop()
 
 
-def audit(fixture, capture, report_paths):
+def audit(fixture, capture, report_paths, comparison='pyramid_boundary'):
+    if comparison not in ('pyramid_boundary', 'seam_solver'):
+        raise ValueError('unsupported comparison')
+    seam = comparison == 'seam_solver'
+    modes = ('graph_cut_seam', 'graph_cut_multi_band') if seam else ('multi_band', 'graph_cut_multi_band')
+    policies = ('binary_pairs', 'alpha_expansion') if seam else ('zero', 'normalized')
     fixture, capture = Path(fixture).resolve(), Path(capture).resolve()
     cfg, _, truths, rois, stamps, _ = load_sequence(fixture, capture, 'any')
     paired = json.loads((capture/'paired_truth.json').read_text())
@@ -80,9 +85,13 @@ def audit(fixture, capture, report_paths):
         if len(baselines) != len(stamps) or {timestamp(b['metadata']) for b in baselines} != set(by_stamp):
             raise ValueError('each direct-truth frame must occur once')
         variants = native['scenario']['variants']
-        profiles = {(v['mode'],v['pyramid_boundary']) for v in variants}
-        if len(variants) != 4 or profiles != {(m,b) for m in ('multi_band','graph_cut_multi_band') for b in ('zero','normalized')}:
-            raise ValueError('complete four-profile boundary matrix required')
+        profiles = {(v['mode'],v.get(comparison,policies[0])) for v in variants}
+        if len(variants) != 4 or profiles != {(m,b) for m in modes for b in policies}:
+            raise ValueError('complete four-profile comparison matrix required')
+        if seam and any(v['pyramid_boundary'] != 'zero' for v in variants):
+            raise ValueError('seam comparison requires fixed zero boundary')
+        if not seam and any(v.get('seam_solver','binary_pairs') != 'binary_pairs' for v in variants):
+            raise ValueError('boundary comparison requires legacy seam solver')
         if len(native['samples']) != len(stamps)*4*(native['scenario']['warmup']+native['scenario']['repeats']):
             raise ValueError('incomplete trial matrix')
         for frame_index, baseline in enumerate(baselines):
@@ -95,6 +104,7 @@ def audit(fixture, capture, report_paths):
                 digests = set()
                 measured = []
                 rgb = None
+                optimization = None
                 for sample in samples:
                     meta = sample['metadata']
                     if (meta['health'] != 'READY' or meta['inputs'] != baseline['metadata']['inputs']
@@ -108,6 +118,16 @@ def audit(fixture, capture, report_paths):
                             or meta['pixel_format'] != 'RGBA8' or meta['row_origin'] != 'top_left'):
                         raise ValueError('unexpected capture layout')
                     digests.add(sample['rgba_sha256'])
+                    if settings.get('seam_solver','binary_pairs') == 'alpha_expansion':
+                        stats = meta['seam_optimization']
+                        if (stats['implementation'] != 'integer_potts_v1' or stats['max_sweeps'] != 8
+                                or not 1 <= stats['sweeps'] <= 8
+                                or not 0 <= stats['final_energy'] <= stats['initial_energy']
+                                or stats['nodes'] <= 0 or stats['edges'] < 0):
+                            raise ValueError('invalid seam optimization telemetry')
+                        if optimization is not None and stats != optimization:
+                            raise ValueError('nonrepeatable seam optimization')
+                        optimization = stats
                     if sample['warmup']:
                         continue
                     filename = (path.parent/sample['rgba_file']).resolve()
@@ -128,6 +148,8 @@ def audit(fixture, capture, report_paths):
                 rows.append({'carrier':carrier, 'frame_index':frame_index, 'truth_index':truth_index,
                              'scenario_timestamp_ns':stamp, 'mode':settings['mode'],
                              'boundary':settings['pyramid_boundary'], 'rgba_sha256':next(iter(digests)),
+                             'seam_solver':settings.get('seam_solver','binary_pairs'),
+                             'seam_optimization':optimization,
                              'quality':quality(rgb,truths[truth_index],rois[truth_index],targets[truth_index],
                                                target['chroma_threshold'],target['min_component_pixels']),
                              'stage_samples_ms':measured})
@@ -135,16 +157,18 @@ def audit(fixture, capture, report_paths):
         hashes[carrier] = hashlib.sha256(path.read_bytes()).hexdigest()
         config_hashes[carrier] = hashlib.sha256((path.parent/'config.json').read_bytes()).hexdigest()
     pairs = []
-    for zero in (r for r in rows if r['boundary'] == 'zero'):
+    axis = 'seam_solver' if seam else 'boundary'
+    for zero in (r for r in rows if r[axis] == policies[0]):
         normalized = next(r for r in rows if r['carrier'] == zero['carrier'] and
-                          r['frame_index'] == zero['frame_index'] and r['mode'] == zero['mode'] and r['boundary'] == 'normalized')
+                          r['frame_index'] == zero['frame_index'] and r['mode'] == zero['mode'] and r[axis] == policies[1])
         pairs.append({'carrier':zero['carrier'], 'truth_index':zero['truth_index'], 'mode':zero['mode'],
                       'linear_mae_delta':normalized['quality']['linear_mae']-zero['quality']['linear_mae'],
                       'target_iou_delta':normalized['quality']['target']['iou']-zero['quality']['target']['iou'],
                       'fusion_cpu_p50_delta_ms':float(np.median([s['fusion_cpu'] for s in normalized['stage_samples_ms']])-
                                                     np.median([s['fusion_cpu'] for s in zero['stage_samples_ms']]))})
-    protocol = Path(__file__).resolve().parents[2]/'docs/research/SERVER_BOUNDARY_PROTOCOL.md'
-    return {'schema_version':1, 'experiment':'E-STITCH-server-boundary-01',
+    protocol = Path(__file__).resolve().parents[2]/'docs/research'/('MULTILABEL_SEAM_PROTOCOL.md' if seam else 'SERVER_BOUNDARY_PROTOCOL.md')
+    return {'schema_version':1, 'experiment':'E-STITCH-server-seam-01' if seam else 'E-STITCH-server-boundary-01',
+            'comparison':comparison, 'difference':policies[1]+' minus '+policies[0],
             'protocol_sha256':hashlib.sha256(protocol.read_bytes()).hexdigest(),
             'fixture_sha256':{name:hashlib.sha256((fixture/name).read_bytes()).hexdigest()
                               for name in ('config.json','manifest.json','ground_truth.json')},
@@ -162,13 +186,81 @@ def audit(fixture, capture, report_paths):
                            'paused sequence has no history/cursor reset and is not sustained FPS']}
 
 
+def audit_study(plan_path, root):
+    """Verify all predeclared procedural cases; no process launch or rendering."""
+    from blender.scenario import validate
+    plan_path, root = Path(plan_path), Path(root)
+    plan = json.loads(plan_path.read_text())
+    if plan.get('schema_version') != 1 or len(plan.get('cases',[])) != 3:
+        raise ValueError('complete three-case frozen study required')
+    provenance = json.loads((root/'provenance.json').read_text())
+    if provenance['plan_sha256'] != hashlib.sha256(plan_path.read_bytes()).hexdigest():
+        raise ValueError('capture plan hash mismatch')
+    for name, digest in provenance['generator_sha256'].items():
+        if hashlib.sha256((Path(__file__).resolve().parents[1]/'blender'/name).read_bytes()).hexdigest() != digest:
+            raise ValueError('capture generator changed after freeze')
+    cases = []
+    seeds = set()
+    for case in plan['cases']:
+        seed = case['scenario']['seed']
+        if seed in seeds:
+            raise ValueError('unique study seeds required')
+        seeds.add(seed)
+        capture = root/f'seed{seed}-capture'
+        info = json.loads((capture/'capture.json').read_text())
+        truth = json.loads((capture/'paired_truth.json').read_text())
+        scripts = dict(info['script_sha256'])
+        scripts.update({'paired_truth.py':truth['script_sha256'],
+                        'visibility.py':truth['visibility_script_sha256'],
+                        'geometry_truth.py':truth['geometry_script_sha256'],
+                        'diagnostic_motion.py':truth['diagnostic_motion_script_sha256']})
+        for name,digest in scripts.items():
+            if hashlib.sha256((Path(__file__).resolve().parents[1]/'blender'/name).read_bytes()).hexdigest() != digest:
+                raise ValueError('recorded capture helper does not match source')
+        if info['scenario_recipe'] != validate(case['scenario']):
+            raise ValueError('scene recipe differs from frozen plan')
+        if {k:truth['diagnostic_target'][k] for k in case['target']} != case['target']:
+            raise ValueError('diagnostic target differs from frozen plan')
+        if (info['face_size'] != case['capture']['face_size']
+                or len(info['frames']) != case['capture']['frames']
+                or info['config']['output'] != {'width':case['capture']['width'],'height':case['capture']['height']}):
+            raise ValueError('capture dimensions differ from plan')
+        expected_stamps = [str(round(n*case['capture']['frame_step']*1e9/info['fps']))
+                           for n in range(case['capture']['frames'])]
+        if [frame['scenario_timestamp_ns'] for frame in info['frames']] != expected_stamps:
+            raise ValueError('capture frame spacing differs from plan')
+        result = audit(root/f'seed{seed}-inputs',capture,
+                       [root/f'seed{seed}-run/dome_floor/report.json'],'seam_solver')
+        cases.append({'id':case['id'],'seed':seed,'audit':result})
+    protocol = Path(__file__).resolve().parents[2]/'docs/research/SEAM_GENERALIZATION_PROTOCOL.md'
+    return {'schema_version':1,'experiment':'E-STITCH-seam-generalization-01',
+            'comparison':'seam_solver','difference':'alpha_expansion minus binary_pairs',
+            'protocol_sha256':hashlib.sha256(protocol.read_bytes()).hexdigest(),
+            'plan':plan,'provenance':provenance,'cases':cases,
+            'limitations':['three new instances of one procedural street family; no real images',
+                           'exact perturbed calibration used; not calibration solver validation',
+                           'two frames per instance; no sustained latency or temporal-history test']}
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--fixture',type=Path,required=True)
+    parser.add_argument('--fixture',type=Path)
     parser.add_argument('--capture',type=Path)
-    parser.add_argument('--report',type=Path,action='append',required=True)
+    parser.add_argument('--report',type=Path,action='append')
     parser.add_argument('--output',type=Path,required=True)
+    parser.add_argument('--comparison',choices=('pyramid_boundary','seam_solver'),default='pyramid_boundary')
+    parser.add_argument('--study-plan',type=Path)
+    parser.add_argument('--study-root',type=Path)
     args = parser.parse_args()
-    result = audit(args.fixture,args.capture or args.fixture,args.report)
+    if args.study_plan:
+        if not args.study_root or args.fixture or args.report or args.capture:
+            parser.error('study requires --study-root and excludes single-fixture arguments')
+        result = audit_study(args.study_plan,args.study_root)
+    else:
+        if not args.fixture or not args.report or args.study_root:
+            parser.error('single audit requires --fixture and --report')
+        result = audit(args.fixture,args.capture or args.fixture,args.report,args.comparison)
     args.output.write_text(json.dumps(result,indent=2,allow_nan=False)+'\n')
-    print(json.dumps({'conditions':len(result['results']), 'pairs':len(result['paired_differences'])}))
+    reports = [c['audit'] for c in result['cases']] if 'cases' in result else [result]
+    print(json.dumps({'conditions':sum(len(r['results']) for r in reports),
+                      'pairs':sum(len(r['paired_differences']) for r in reports)}))

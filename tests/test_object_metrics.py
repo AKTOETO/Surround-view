@@ -13,10 +13,20 @@ sys.path[:0] = [str(ROOT/'tools'), str(ROOT/'tools/research'), str(ROOT/'tools/b
 from object_metrics import measure_target, measure_target_support, projected_object_ids, target_mask
 from object_stitch import interleaved_orders, load_objects
 from diagnostic_motion import frame_positions, position_for_capture, validate_captured_positions
-from server_boundary import quality as server_quality, timestamp as server_timestamp
+from server_boundary import quality as server_quality, timestamp as server_timestamp, audit_study
 
 
 class ObjectMetricTests(unittest.TestCase):
+    def test_study_rejects_changed_freeze_before_reading_results(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            plan = root/'plan.json'
+            plan.write_bytes((ROOT/'assets/scenarios/seam-generalization-v1.json').read_bytes())
+            (root/'provenance.json').write_text(json.dumps(dict(plan_sha256='0'*64,
+                                                              generator_sha256={})))
+            with self.assertRaisesRegex(ValueError,'plan hash mismatch'):
+                audit_study(plan,root)
+
     def setUp(self):
         self.truth = np.zeros((32,48), bool)
         self.truth[8:24,8:12] = True

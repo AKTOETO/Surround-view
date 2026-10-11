@@ -1,0 +1,90 @@
+{
+  "tests": 6,
+  "failures": 0,
+  "disabled": 0,
+  "errors": 0,
+  "timestamp": "2026-10-11T00:55:44Z",
+  "time": "0.013s",
+  "name": "AllTests",
+  "testsuites": [
+    {
+      "name": "SeamOptimizer",
+      "tests": 6,
+      "failures": 0,
+      "disabled": 0,
+      "errors": 0,
+      "timestamp": "2026-10-11T00:55:44Z",
+      "time": "0.013s",
+      "testsuite": [
+        {
+          "name": "EveryExpansionMatchesExhaustiveBinaryMoves",
+          "file": "\/home\/bogdan\/prog\/MAI\/surround-view\/tests\/seam_optimizer_tests.cpp",
+          "line": 56,
+          "status": "RUN",
+          "result": "COMPLETED",
+          "timestamp": "2026-10-11T00:55:44Z",
+          "time": "0.002s",
+          "classname": "SeamOptimizer",
+          "graphs": "128",
+          "moves": "512"
+        },
+        {
+          "name": "ConvergedEnergyAndGlobalEnumeration",
+          "file": "\/home\/bogdan\/prog\/MAI\/surround-view\/tests\/seam_optimizer_tests.cpp",
+          "line": 97,
+          "status": "RUN",
+          "result": "COMPLETED",
+          "timestamp": "2026-10-11T00:55:44Z",
+          "time": "0.008s",
+          "classname": "SeamOptimizer",
+          "graphs": "128",
+          "global_matches": "125",
+          "maximum_global_gap": "8",
+          "eight_sweep_converged": "128",
+          "one_sweep_incomplete": "121",
+          "worst_case": "{\"trial\":121,\"unary\":[[9,24,3,10],[3,-1,5,16],[14,8,1,13],[2,21,8,-1],[-1,8,18,26],[14,3,30,17]],\"edges\":[[0,1,0],[1,2,10],[2,3,17],[3,4,7],[4,5,3],[5,0,17],[0,3,6]],\"labels\":[0,0,0,0,1,0],\"global_labels\":[2,2,2,2,1,1],\"energy\":60,\"global_energy\":52,\"accepted_energies\":[77,60]}"
+        },
+        {
+          "name": "BinaryIsGlobalAndDisconnectedConstraintsRemainValid",
+          "file": "\/home\/bogdan\/prog\/MAI\/surround-view\/tests\/seam_optimizer_tests.cpp",
+          "line": 170,
+          "status": "RUN",
+          "result": "COMPLETED",
+          "timestamp": "2026-10-11T00:55:44Z",
+          "time": "0.001s",
+          "classname": "SeamOptimizer"
+        },
+        {
+          "name": "EqualCostsHaveDeterministicLabelOrderRatherThanUniformTies",
+          "file": "\/home\/bogdan\/prog\/MAI\/surround-view\/tests\/seam_optimizer_tests.cpp",
+          "line": 191,
+          "status": "RUN",
+          "result": "COMPLETED",
+          "timestamp": "2026-10-11T00:55:44Z",
+          "time": "0s",
+          "classname": "SeamOptimizer"
+        },
+        {
+          "name": "ProductionFusionSelectsOnlyAvailableCameraAndPreservesEmptyPixels",
+          "file": "\/home\/bogdan\/prog\/MAI\/surround-view\/tests\/seam_optimizer_tests.cpp",
+          "line": 197,
+          "status": "RUN",
+          "result": "COMPLETED",
+          "timestamp": "2026-10-11T00:55:44Z",
+          "time": "0.001s",
+          "classname": "SeamOptimizer"
+        },
+        {
+          "name": "ProductionThreeAndFourCameraOverlapRespectSingleCameraAnchors",
+          "file": "\/home\/bogdan\/prog\/MAI\/surround-view\/tests\/seam_optimizer_tests.cpp",
+          "line": 237,
+          "status": "RUN",
+          "result": "COMPLETED",
+          "timestamp": "2026-10-11T00:55:44Z",
+          "time": "0s",
+          "classname": "SeamOptimizer"
+        }
+      ]
+    }
+  ]
+}
