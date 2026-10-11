@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "scope": "isolated_planar_geometry_known_answer_control_no_rgb_truth",
+  "native_root": "artifacts/source-correspondence-controls-v1/rig101-near-z020",
+  "truth_path": "artifacts/parallax-sensor-inputs-v1/rig101-near-z020/seed101-capture/paired_truth.json",
+  "output_root": "artifacts/planar-correspondence-v1",
+  "frames": [
+    0,
+    1
+  ],
+  "carriers": [
+    "plane",
+    "bowl",
+    "dome_floor",
+    "cylinder_floor",
+    "cube_floor"
+  ],
+  "plane_half_extent_m": 100,
+  "planar_tolerance_m": 0.0001,
+  "uv_tolerance_px": 0.01,
+  "frozen_files": {
+    "artifacts/source-correspondence-controls-v1/rig101-near-z020/frame0/direct-mask.npy": "8de5d6dcf7ec1d4be9ce8635f457c8fa26cc060514bad25f092d36f58a33fb98",
+    "artifacts/source-correspondence-controls-v1/rig101-near-z020/frame0/scene-truth.json": "f79af57e4c33f615c36d4094f92d5fb12f11dda3441c1b2f7bcfccb0b8254a44",
+    "artifacts/source-correspondence-controls-v1/rig101-near-z020/frame1/direct-mask.npy": "7f8ec8fa73ebae15f1c6ac3d028480306484bd5d7b78c7e1f64eab4a121b72a9",
+    "artifacts/source-correspondence-controls-v1/rig101-near-z020/frame1/scene-truth.json": "3ac7b0c6234d07f0c8a663ddc9b06e807cafd3a4fccf6351f4771fee4aae7bf2",
+    "artifacts/source-correspondence-controls-v1/rig101-near-z020/frame1/native/plane/report.json": "81347976d439144c7ce9cc906b479ed979c20537e82e296b902313aecc6e2f1b",
+    "artifacts/source-correspondence-controls-v1/rig101-near-z020/frame1/native/bowl/report.json": "5083e448aa726cff828a1e2a4237e22b810c306471597ab97c58510bc25e82bb",
+    "artifacts/source-correspondence-controls-v1/rig101-near-z020/frame1/native/dome_floor/report.json": "1cf0bbada277b67f19b589336bb29c47322bb86f2e3821698069392fc15fca84",
+    "artifacts/source-correspondence-controls-v1/rig101-near-z020/frame1/native/cylinder_floor/report.json": "ff175a152cdd1e79d3df6b9f7f7273ce705de72c22ddb01c4db2720f804d350d",
+    "artifacts/source-correspondence-controls-v1/rig101-near-z020/frame1/native/cube_floor/report.json": "7e5ab819a5471b7cec55ecf21692959200feffee3d70d5a2a360df808c66b485",
+    "artifacts/source-correspondence-controls-v1/rig101-near-z020/frame0/native/plane/report.json": "9d2b6e9418fad4c22d89e2292baed9b0941df00c6ad8b49065b5df19ae6440af",
+    "artifacts/source-correspondence-controls-v1/rig101-near-z020/frame0/native/bowl/report.json": "9e760f5a786a04a711bae06c05fe88fe35e38b2d0ac4149bd692a3a0c63b460d",
+    "artifacts/source-correspondence-controls-v1/rig101-near-z020/frame0/native/dome_floor/report.json": "98c6359d8cc403a88658fd02f0ac6c3a0f9eb14df9509d5f126be2ebd14db423",
+    "artifacts/source-correspondence-controls-v1/rig101-near-z020/frame0/native/cylinder_floor/report.json": "1ec410ac75e160dd9ea4c40c3d0993da5fcd69098c625c3291dc6cc698b8f366",
+    "artifacts/source-correspondence-controls-v1/rig101-near-z020/frame0/native/cube_floor/report.json": "35189eca2a8e144eb73cf775f2175a4c5c155548bcd36196dc3b1c31363b1f25",
+    "artifacts/parallax-sensor-inputs-v1/rig101-near-z020/seed101-capture/paired_truth.json": "ff04b197ed3529b0d3fee935941b309ef804292660907d780b5be1fe63f877ee",
+    "docs/validation/baselines/source_correspondence_controls_v1.json": "5c6ba1077a80907551fe65ea0098a395c6332600d1083aa379b40dbb544e27e2",
+    "tools/blender/source_surface_controls.py": "6bd3d9f7913453199ebf2d844e5b1786219e9af8c76fa7bda8006f408baca7cd",
+    "tools/blender/paired_truth.py": "8a6139ca15abb51ba237e5f8647982a7e31ab95daae9e6d25dbe792bd6fb69ba"
+  },
+  "limitations": [
+    "Geometry-only oracle scene with one Z=0 plane; archived RGB belongs to the earlier box scene and is not planar RGB truth",
+    "ROI is preselected earlier z020 target mask, not a new plane-wide coverage study",
+    "Two correlated frames of one seed, no turns, no holdout or physical/Aurora claims",
+    "Exact planar tolerance is required only for plane/dome/cylinder/cube floor; bowl is curved and retained as a descriptive comparison",
+    "No ego/occluders, bilinear footprint, triangle identity or fusion quality assessment"
+  ]
+}

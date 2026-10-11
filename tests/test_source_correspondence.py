@@ -10,6 +10,7 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools/research'))
 from source_correspondence import classify, load_product, project
 from source_correspondence_controls import transform_points
+from planar_correspondence import intersect_plane
 
 
 class SourceCorrespondenceTests(unittest.TestCase):
@@ -49,6 +50,16 @@ class SourceCorrespondenceTests(unittest.TestCase):
         self.assertGreater(np.linalg.norm(expected - vehicle), 1)
         with self.assertRaises(ValueError):
             transform_points(np.eye(3), vehicle)
+
+    def test_planar_oracle_known_hits_and_rejected_rays(self):
+        origin = np.array([1., 2., 3.])
+        directions = np.array([[0., 0., -1.], [1., -2., -3.]])
+        np.testing.assert_allclose(intersect_plane(origin, directions), [[1, 2, 0], [2, 0, 0]])
+        np.testing.assert_allclose(intersect_plane(origin, directions * 7), [[1, 2, 0], [2, 0, 0]])
+        for ray, message in [([1, 0, 0], 'parallel'), ([0, 0, 1], 'behind'),
+                             ([0, float('nan'), -1], 'finite')]:
+            with self.assertRaisesRegex(ValueError, message):
+                intersect_plane(origin, ray)
 
     def test_layout_checksum_and_payload_size_are_enforced(self):
         with tempfile.TemporaryDirectory() as directory:
