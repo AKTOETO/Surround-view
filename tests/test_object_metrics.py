@@ -13,11 +13,58 @@ sys.path[:0] = [str(ROOT/'tools'), str(ROOT/'tools/research'), str(ROOT/'tools/b
 from object_metrics import measure_target, measure_target_support, projected_object_ids, target_mask, spatial_rois, spatial_errors
 from object_stitch import interleaved_orders, load_objects
 from diagnostic_motion import frame_positions, position_for_capture, validate_captured_positions
+from parallax_height import ray_ground, object_position, validate_factors
 from server_boundary import (quality as server_quality, timestamp as server_timestamp, audit_study,
     check_mesh_budget, validate_refinement_plan, refinement_difference, audit_refinement, audit_spatial)
 
 
 class ObjectMetricTests(unittest.TestCase):
+    def test_height_matrix_rejects_confounded_camera_size_and_range(self):
+        asset = json.loads((ROOT/'assets/scenarios/parallax-height-v1.json').read_text())
+        validate_factors(asset)
+        for field in ('range','size','view','height'):
+            wrong = json.loads(json.dumps(asset))
+            case = wrong['cases'][1]
+            if field == 'range': case['target']['center_m'][0] += .1
+            elif field == 'size': case['target']['size_m'][0] += .1
+            elif field == 'view': case['virtual_camera']['azimuth_rad'] += .1
+            else: case['target']['center_m'][2] = .3
+            with self.assertRaises(ValueError):
+                validate_factors(wrong)
+
+    def test_ground_ray_known_intersections_and_invalid_directions(self):
+        ground = ray_ground([2, 1, 1], [5, 4, 0])
+        np.testing.assert_allclose(ground['intersection_m'], [5, 4, 0])
+        self.assertEqual(ground['xy_displacement_m'], 0)
+        raised = ray_ground([2, 1, 1], [5, 4, .5])
+        np.testing.assert_allclose(raised['intersection_m'], [8, 7, 0])
+        self.assertAlmostEqual(raised['xy_displacement_m'], np.sqrt(18))
+        for height, status in [(1, 'parallel'), (1.5, 'behind')]:
+            result = ray_ground([0, 0, 1], [0, 4, height])
+            self.assertEqual(result['status'], status)
+            self.assertIsNone(result['intersection_m'])
+            self.assertIsNone(result['xy_displacement_m'])
+        a = ray_ground([0, 0, 1], [0, 4, .5])
+        b = ray_ground([1, 0, 1], [0, 4, .5])
+        self.assertAlmostEqual(np.linalg.norm(np.array(a['intersection_m'])-b['intersection_m']), 1)
+        for center, point in [([0, 0, 0], [0, 0, 0]), ([0, 1], [0, 0, 0]),
+                              ([0, 0, 1], [0, np.nan, 0])]:
+            with self.assertRaises(ValueError):
+                ray_ground(center, point)
+
+    def test_centroid_missing_and_symmetric_copies_are_not_localization_success(self):
+        truth = np.zeros((20, 30), bool)
+        truth[8:12, 13:17] = True
+        rgb = np.zeros((20, 30, 3))
+        self.assertIsNone(object_position(rgb, truth, .5, 2)['centroid_distance_px'])
+        rgb[truth] = [1, 0, 1]
+        self.assertEqual(object_position(rgb, truth, .5, 2)['centroid_distance_px'], 0)
+        rgb[:] = 0
+        rgb[8:12, 3:7] = [1, 0, 1]
+        rgb[8:12, 23:27] = [1, 0, 1]
+        self.assertEqual(object_position(rgb, truth, .5, 2)['centroid_distance_px'], 0)
+        self.assertEqual(np.count_nonzero(target_mask(rgb, .5) & truth), 0)
+
     def test_spatial_rejects_modified_pinned_baseline_before_reading_captures(self):
         plan = json.loads((ROOT/'configs/research/spatial-roi-plan.json').read_text())
         plan['baseline_sha256'] = '0'*64
