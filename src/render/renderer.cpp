@@ -681,6 +681,34 @@ Image Renderer::render(const FrameSet &set, const View &view, RenderInspection *
         i.timing.gpu_draw_ms.reset();
         i.timing.gpu_timer_status = "hybrid_total_not_measured";
     }
+    if (inspection)
+    {
+        // Separate depth-tested geometry pass; never feed region IDs into image fusion.
+        // The regular output and its timing measurements above are already complete.
+        const GLboolean dither = glIsEnabled(GL_DITHER);
+        glDisable(GL_DITHER);
+        glClearColor(0, 0, 0, 1);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glUseProgram(i.prog);
+        glUniform1i(glGetUniformLocation(i.prog, "inspection_regions"), 1);
+        draw_carrier();
+        glUniform1i(glGetUniformLocation(i.prog, "inspection_regions"), 0);
+        glUseProgram(i.vehicle_program);
+        matrix(i.vehicle_program, "mvp", view.mvp(double(c.width) / c.height));
+        glUniform1i(glGetUniformLocation(i.vehicle_program, "inspection_regions"), 1);
+        glBindVertexArray(i.vehicle_vao);
+        glDrawArrays(GL_TRIANGLES, 0, i.vehicle_vertices);
+        glUniform1i(glGetUniformLocation(i.vehicle_program, "inspection_regions"), 0);
+        cv::Mat bottom(c.height, c.width, CV_8UC4), top;
+        glReadPixels(0, 0, c.width, c.height, GL_RGBA, GL_UNSIGNED_BYTE, bottom.data);
+        cv::flip(bottom, top, 0);
+        cv::extractChannel(top, inspection->carrier_regions, 0);
+        if (dither)
+        {
+            glEnable(GL_DITHER);
+        }
+        check("carrier inspection readback");
+    }
     return out;
 }
 

@@ -85,6 +85,7 @@ int main(int argc, char **argv)
                     bytes(directory / "actual.rgba", actual.pixels.data(), actual.pixels.size());
                     bytes(directory / "fallback.rgba", inspection.fallback_rgba.pixels.data(),
                           inspection.fallback_rgba.pixels.size());
+                    matrix(directory / "carrier-regions.u8", inspection.carrier_regions);
                     if (!inspection.ego_rgba.empty())
                     {
                         matrix(directory / "ego.rgba", inspection.ego_rgba);

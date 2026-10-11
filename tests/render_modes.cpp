@@ -1,3 +1,4 @@
+#include "sv/render_inspection.hpp"
 #include "sv/render_validation.hpp"
 #include "sv/renderer.hpp"
 #include <iostream>
@@ -5,6 +6,68 @@
 
 namespace
 {
+void carrier_regions(sv::Config config)
+{
+    config.width = 160;
+    config.height = 100;
+    config.fusion.mode = "edge_feather";
+    config.fusion.diagnostic = "color";
+    config.surface.A = config.surface.B = config.surface.enclosure_radius = 14;
+    config.surface.enclosure_height = 14;
+    config.view.distance = 8.5;
+    config.view.elevation = .35;
+    config.view.fov = 1.6;
+    for (const auto *type :
+         {"rectangular_bowl_v1", "dome_floor_v1", "cylinder_floor_v1", "cube_floor_v1"})
+    {
+        config.surface.type = type;
+        config.surface.H = 0;
+        sv::Renderer renderer(config);
+        sv::RenderInspection inspection;
+        const auto captured = renderer.render({}, config.view, &inspection);
+        const auto plain = renderer.render({}, config.view);
+        const auto &regions = inspection.carrier_regions;
+        std::array<size_t, 6> counts{};
+        if (regions.type() != CV_8UC1 || regions.rows != config.height ||
+            regions.cols != config.width || captured.pixels != plain.pixels)
+        {
+            throw std::runtime_error("carrier inspection changed output/layout");
+        }
+        for (int y = 0; y < regions.rows; ++y)
+        {
+            for (int x = 0; x < regions.cols; ++x)
+            {
+                const auto id = regions.at<uchar>(y, x);
+                if (id >= counts.size())
+                {
+                    throw std::runtime_error("unknown carrier region ID");
+                }
+                ++counts[id];
+            }
+        }
+        const bool plane = config.surface.type == "rectangular_bowl_v1";
+        if (!counts[1] || !counts[5] || counts[4] ||
+            (plane ? (!counts[0] || counts[2]) : (counts[0] || !counts[2])) ||
+            regions.at<uchar>(0, config.width / 2) != (plane ? 0 : 2) ||
+            regions.at<uchar>(config.height - 1, config.width / 2) != 1)
+        {
+            throw std::runtime_error(std::string("carrier geometry oracle mismatch: ") + type);
+        }
+        // A fresh inspection clears old matrices and IDs after a surface change.
+        if (plane)
+        {
+            auto bowl = config.surface;
+            bowl.H = 1.5;
+            renderer.set_surface(bowl);
+            renderer.render({}, config.view, &inspection);
+            if (!cv::countNonZero(inspection.carrier_regions == 4))
+            {
+                throw std::runtime_error("raised bowl missing from inspection");
+            }
+        }
+    }
+}
+
 void mesh_budgets(sv::Config config)
 {
     sv::Surface surface;
@@ -69,6 +132,7 @@ int main(int argc, char **argv)
         sv::qualify_fusion_modes(config);
         sv::qualify_enclosure_coverage(config);
         mesh_budgets(config);
+        carrier_regions(config);
         std::cout << "GPU fusion color/coverage oracles and 36 enclosure orbits passed\n";
         return 0;
     }

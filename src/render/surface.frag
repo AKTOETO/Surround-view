@@ -12,6 +12,7 @@ uniform int surface_mode;
 uniform float dome_radius;
 uniform int fusion_mode, diagnostic_mode;
 uniform int sample_camera;
+uniform int inspection_regions;
 uniform float edge_width_px, angle_power;
 
 vec3 camera_color(int i)
@@ -44,6 +45,16 @@ vec3 encode(vec3 x)
 
 void main()
 {
+    if (inspection_regions != 0)
+    {
+        int region = surface_mode == 1 ? 2 : (world.z > 1e-6 ? 4 : 1);
+        if (surface_mode == 0 && abs(world.x) <= vehicle.x && abs(world.y) <= vehicle.y)
+        {
+            region = 3;
+        }
+        color = vec4(float(region) / 255.0, 0, 0, 1);
+        return;
+    }
     if (surface_mode == 0 && abs(world.x) <= vehicle.x && abs(world.y) <= vehicle.y)
     {
         if (sample_camera >= 0) { color = vec4(0); return; }
