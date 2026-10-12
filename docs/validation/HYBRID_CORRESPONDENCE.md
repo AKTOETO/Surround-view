@@ -108,3 +108,5 @@ Matched hybrid attribution pilot завершён, но исправление h
 Следующий bounded four-texel контроль прежних edge mismatches выполнен: [[validation/SOURCE_FOOTPRINT]], §4.68.1024/1164 neighboring target support,140 upstream RGB-center residual. Новые hybrid domains этим опытом не классифицированы.
 
 Upstream footprint follow-up прежних edge residuals выполнен: [[validation/CUBE_FOOTPRINT]], §4.69.135 cube-center/5 area-only support, RGB reconstruction0LSB. Новые hybrid proxy coordinates пока требуют отдельного truth.
+
+Follow-up новых hybrid domains выполнен: [[validation/HYBRID_DOMAIN]], §4.70. Все547 unique coordinates/1227 condition pixels получили independent virtual/source/texel labels; local target central-ray support0,698 texel support/529 без него. Full spatial origin signed bands не установлен.

@@ -99,3 +99,5 @@ print(cube_footprint.capture(root,root/'artifacts/cube-footprint-repeat-plan.jso
 ## Дальше
 
 Bounded support attribution прежних1164 edge mismatches завершён на заявленных уровнях:1024 neighboring fisheye-center support (§4.68),135 cube-center support и5 cube-area-grid-only support. Полная причинная реконструкция Eevee filter не выполнена и не нужна для признания ограничения central-ray labels. Следующий приоритет — независимая scene truth на новых hybrid proxy coordinates (§4.67), затем проверяемая mitigation height/occlusion failure на unchanged inputs. Новые сцены/optics, convergence area grid при отрицательных результатах, triangle coverage, GPU-only attribution и physical/Aurora испытания остаются отдельными задачами.
+
+Следующий new-hybrid-domain pilot выполнен: [[validation/HYBRID_DOMAIN]], §4.70. Scene truth расширена на все новые coordinates данной серии; далее server-side mitigation height/occlusion. Exact Eevee/pyramid causal fractions остаются отдельными ограничениями.

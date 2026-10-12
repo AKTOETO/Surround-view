@@ -174,3 +174,5 @@ Matched hybrid pilot завершён:60 conditions на прежних frames/�
 Four-texel diagnostic follow-up выполнен без изменения native renderer:1164 mismatches,1024 neighboring target support/140 upstream RGB-center residual;320 controls,11/11 tests, CTest1/1. [[validation/SOURCE_FOOTPRINT]].
 
 Cube footprint follow-up выполнен без изменения product renderer:140 residual pixels,135 cube-center/5 area-only support;256 source RGB texel reconstruct0LSB;13 tests/CTest1/1, identical requests и reaudit. [[validation/CUBE_FOOTPRINT]].
+
+Новые hybrid proxy coordinates размечены:547 unique frame/carrier pixels/1227 condition memberships;640 archive anchors exact. Local source center target support0,698 texel support/529 без него;15 tests/CTest1/1, побитный audit. Product renderer не менялся. [[validation/HYBRID_DOMAIN]].

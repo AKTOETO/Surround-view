@@ -158,3 +158,5 @@ GPU execution time измерять асинхронными timer queries, CPU 
 §4.68 / [[validation/SOURCE_FOOTPRINT]]: все1164 point-ray/RGB mismatches проверены четырьмя texel centers;1024 neighboring target support,140 residual chroma без center target. Дополнительно320 controls,11 known-answer tests и побитный reaudit. Далее actual cubemap→fisheye footprint attribution остатка и новые hybrid domains.
 
 §4.69 / [[validation/CUBE_FOOTPRINT]]:140 residuals→256 unique source texel/592 cube texel, RGB0LSB;135 center/5 area-only support, area rays8×8. Далее новые hybrid domains и mitigation; exact Eevee sample weights не установлены.
+
+§4.70 / [[validation/HYBRID_DOMAIN]]: новые hybrid domains размечены independent virtual/source/texel rays,547 coordinates/1227 memberships,640 exact anchors.698 local texel support/529 без него,179 locally-invalid contributing pixels.15 controls/CTest1/1/identical reaudit. Далее server-side height/occlusion mitigation; полный pyramid origin trace остаётся отдельным diagnostic control.

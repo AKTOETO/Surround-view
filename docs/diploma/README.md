@@ -174,3 +174,5 @@ MPLCONFIGDIR=/tmp/sv-matplotlib python3 docs/diploma/plot_carrier_positions.py -
 §4.68: four-texel контроль1164 point-ray/RGB mismatches,1024 neighboring target support/140 residual; таблица4.69, рисунки4.105–4.107. [[validation/SOURCE_FOOTPRINT]].
 
 §4.69: actual cube→fisheye RGB reconstruction256 texel с ошибкой0LSB;140 residual pixels разделены на135 cube-center support/5 area-only. Таблица4.70, рисунки4.108–4.110. [[validation/CUBE_FOOTPRINT]].
+
+§4.70: independent Blender truth на547 новых frame/carrier coordinates/1227 condition pixels;640 exact archive anchors, local texel/nonlocal contribution analysis. Таблица4.71, рисунки4.111–4.113. [[validation/HYBRID_DOMAIN]].

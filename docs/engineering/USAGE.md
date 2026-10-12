@@ -1044,3 +1044,5 @@ Matched hybrid diagnostic capture: `build/sv-render-fusion-probe CONFIG MANIFEST
 Read-only four-texel audit и изображения: `MPLCONFIGDIR=/tmp/sv-matplotlib python3 docs/diploma/plot_source_footprint.py --output-report artifacts/source-footprint-v1/reaudit.json`; сравнить с `docs/validation/baselines/source_footprint_v1.json`. Предпосылки, Blender replay и ограничения: [[validation/SOURCE_FOOTPRINT#Воспроизведение]].
 
 Read-only cube footprint audit: `MPLCONFIGDIR=/tmp/sv-matplotlib python3 docs/diploma/plot_cube_footprint.py --output-report artifacts/cube-footprint-v1/reaudit.json`; сравнить с `docs/validation/baselines/cube_footprint_v1.json`. Frozen requests, Blender replay и ограничения: [[validation/CUBE_FOOTPRINT#Воспроизведение и проверки]].
+
+Read-only новых hybrid domains: `MPLCONFIGDIR=/tmp/sv-matplotlib python3 docs/diploma/plot_hybrid_domain.py --output-report artifacts/hybrid-domain-v1-final/reaudit.json`; сравнить с `docs/validation/baselines/hybrid_domain_v1.json`. Inputs/Blender replay и precision control: [[validation/HYBRID_DOMAIN#Воспроизведение]].

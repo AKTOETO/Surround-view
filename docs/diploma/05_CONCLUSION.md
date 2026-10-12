@@ -85,3 +85,5 @@ Matched hybrid follow-up §4.67 проверил60 native условий с exac
 Four-texel follow-up §4.68:1024 из1164 прежних RGB/point-ray mismatches имеют положительно взвешенный соседний target-center texel. У140 chroma присутствует без target texel-center hits; причина upstream filtering требует отдельного опыта. Это не улучшение изображения и не устранение height failure. [[validation/SOURCE_FOOTPRINT]].
 
 §4.69 проследил140 остаточных pixels до actual cube PNG:256 source texel реконструируются точно;135 output pixels имеют cube-center target support,5 — только support внутри площади cube pixel. Это не causal Eevee filter reconstruction и не устранение height failure. [[validation/CUBE_FOOTPRINT]].
+
+§4.70 расширил independent scene labels на все новые hybrid domains серии:1227 condition pixels/547 unique coordinates. Virtual rays выбирают road, source central target support0;698 имеют neighboring target texel support,529 остаются без него. Signed nonlocal contributions отделены от local weights. Это не устранение height failure; следующий приоритет — проверяемая server-side mitigation. [[validation/HYBRID_DOMAIN]].

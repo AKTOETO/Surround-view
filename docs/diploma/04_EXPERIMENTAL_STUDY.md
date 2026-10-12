@@ -2802,3 +2802,69 @@ Blender oracle повторно подтвердил road hit всех выбр�
 Прошли13 known-answer controls, CTest1/1; repeated read-only audit побитно совпал, requests повторно сгенерированы идентично. Рисунки строятся скриптом `plot_cube_footprint.py` рядом с главой. Product renderer не менялся, новые speed/quality преимущества не заявляются.
 
 Следующий приоритет — source-surface truth для новых hybrid proxy pixels §4.67 и проверяемое уменьшение height/occlusion failure на прежних inputs с независимым virtual truth. Positive-area support не означает correct surface correspondence с carrier или виртуальной камерой. Независимые сцены, реальные камеры и Aurora нужны для внешней валидности результатов.
+
+## 4.70. Независимая разметка новых hybrid domains
+
+### 4.70.1. Пробел предыдущего опыта и выборка
+
+В §4.67 hybrid outputs содержали новые chroma pixels вне прежних expected-target/edge-proxy ray domains. Разметка соседних координат не была перенесена на них. После source/cube footprint controls (§§4.68–4.69) проведён новый independent Blender ray capture: все1227 condition pixels,547 unique frame/carrier coordinates,60 прежних условий, два коррелированных frames/пять carriers. Native inputs, outputs и fusion settings не менялись.
+
+Для каждого условия определён domain $D=P_{\rm hybrid}\setminus(P_{\rm edge}\cup M_{\rm expected})$, где $P$ — прежний raw magenta proxy. Внутри frame/carrier используется union domains всех шести variants. Counts/selection/UV/status/carrier coordinates регенерируются из native files с checksums. План `configs/research/hybrid-domain-plan.json`, baseline `hybrid_domain_v1.json`, подробности: [[validation/HYBRID_DOMAIN]].
+
+```plantuml
+@startuml
+participant "Archived native hybrid RGB" as RGB
+participant "Domain selection" as Domain
+participant "Independent Blender scene" as Scene
+participant "Captured signed contributions" as Bands
+participant "Audit" as Audit
+RGB -> Domain : chroma proxy minus prior edge/expected domains
+Domain -> Domain : union547 coordinates, retain1227 condition memberships
+Domain -> Scene : virtual/source rays and four texel centers
+Scene --> Audit : nearest surface kinds / world hits
+Bands -> Audit : local blend weights + signed RGB
+Audit -> Audit : local target support separately from nonlocal contribution
+Scene -> Audit :640 archive anchor pairs, legacy precision replay
+@enduml
+```
+
+Рисунок4.111 — Разделение независимой scene truth, sampling support и signed contributions. Labels не переносятся из ближайшего прежнего pixel.
+
+### 4.70.2. Контроль арифметики повторения лучей
+
+Первый replay anchors не прошёл прежний1e−5m tolerance: double inverse дал1.033758325e−5m относительно archived float32 operation order на проверенном anchor. Повтор исторической последовательности дал0m. В successful capture новые rays остались double, а640 archive anchor pairs повторялись исходной арифметикой и дали точное совпадение kinds/hits. Допуск не расширен; failed attempt сохранён отдельно. Это воспроизводимость исторической процедуры, а не доказательство физической точности такого масштаба.
+
+На каждом новом pixel сохранены virtual nearest surface, source central hits и source texel-center kinds/weights. Требование positive texel weight отличается от local fusion weight: graph-cut может не выбирать камеру, имеющую target texel. Поэтому labels не объявляются причинными RGB fractions.
+
+### 4.70.3. Измеренные результаты
+
+| Метод / boundary | Новые pixels | Target в source texel centers | Нет target center/texel | Locally-invalid camera contributes | Zero-local-weight camera contributes |
+|---|---:|---:|---:|---:|---:|
+| seam_distance_feather / zero | 131 | 102 | 29 | 0 | 0 |
+| graph_cut_seam / zero | 369 | 234 | 135 | 0 | 0 |
+| multi_band / zero | 16 | 10 | 6 | 6 | 6 |
+| graph_cut_multi_band / zero | 264 | 171 | 93 | 0 | 132 |
+| multi_band / normalized | 183 | 10 | 173 | 173 | 173 |
+| graph_cut_multi_band / normalized | 264 | 171 | 93 | 0 | 132 |
+
+Таблица4.71 — Новые condition pixels, суммарно по двум frames/пяти carriers. Local source central-ray target support равен0 во всех rows; значения разных столбцов могут относиться к пересекающимся выборкам и не складываются.
+
+![Локальная поддержка и вклад пирамиды](figures/experiments/hybrid_domain_counts.png)
+
+Рисунок4.112 — Слева positive source texel-center target support, справа отдельно locally-invalid camera contributions и zero-local-fusion-weight contributions. Threshold1e−6 применяется к max abs signed linear RGB, не opacity.
+
+Все1227 virtual rays выбирают road, central source rays не выбирают target. У698 condition pixels target найден в соседних positive-weight texel centers, у529 не найден ни там, ни в центральной source выборке. Последние529 не объявляются false positives: upstream filtering и spatial pyramid dependency остаются возможными механизмами, требующими причинного trace.
+
+Multiband/zero имеет locally-invalid contribution на6/16 новых pixels, normalized — на173/183. Max magnitude0.134707 и0.192117 linear RGB. Cut+MB на данной выборке не имеет locally-invalid camera contribution, однако132 pixels каждой boundary имеют contribution камеры с нулевым local fusion weight. Это разные виды нелокальности. Равные агрегированные counts не устанавливают одинаковые pixel sets/причинность.
+
+![Actual RGB с новой независимой разметкой](figures/experiments/hybrid_domain_rgb.png)
+
+Рисунок4.113 — Actual native plane/frame0 outputs шести вариантов. Отмечены только новые chroma coordinates: зелёные circles — target в positive-weight source texel centers, cyan — без local source center/texel target. Оба labels относятся к геометрической поддержке sampling, не качеству или происхождению всего цвета.
+
+Source/virtual same-road point match при2cm имеется у1840 source pairs; он может сосуществовать с filtered target color. Point correspondence не эквивалентен RGB surface identity, как показали §§4.68–4.69. Ни одна из новых метрик не свидетельствует о восстановлении expected target, где raw proxy overlap остаётся0 (§4.67).
+
+### 4.70.4. Вывод и следующий этап
+
+Независимая local scene truth получена для всей ранее неразмеченной части60-condition серии;15 known-answer controls, CTest1/1 и побитный reaudit прошли. Это завершает bounded attribution pilot, но не полный causal trace multiband spatial dependencies или generalization на новые сцены.
+
+Следующий главный этап — проверяемая server-side mitigation height/occlusion failure. Для неё нужны фиксированная постановка, неизменные RGB inputs, independent virtual truth и раздельная оценка ошибок позиции, visibility и RGB. Oracle-depth/height control, если используется, должен быть явно помечен как дополнительная информация для верхней границы, а не алгоритм восстановления из четырёх RGB cameras. Исследование natural-object/holdout и physical/Aurora validation остаётся необходимым.
