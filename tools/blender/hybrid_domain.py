@@ -104,8 +104,16 @@ def capture(root,plan_path):
                     st=matrix(native,products[f'camera{i}-status.u8'])
                     for n,(y,x) in enumerate(anchor_xy):
                         if st[y,x,0]!=1:continue
-                        kind,hit=cast(camera_pose[:3,3],camera_pose[:3,:3]@fisheye_ray(uv[y,x],camera['projection']))
+                        # Preserve historical float32 operation order for archive replay only.
+                        optics=camera['projection'];u,v=uv[y,x]
+                        aa,bb=(u-optics['cx'])/optics['fx'],(v-optics['cy'])/optics['fy']
+                        theta=np.hypot(aa,bb);scale=np.sin(theta)/theta if theta>1e-14 else 1.
+                        ray=np.array([aa*scale,bb*scale,np.cos(theta)])
+                        kind,hit=cast(camera_pose[:3,3],camera_pose[:3,:3]@ray)
                         if kind!=old_kinds[n,i]:raise ValueError('anchor kind differs')
+                        if kind==0:
+                            if not np.isnan(hit).all() or not np.isnan(old_hits[n,i]).all():raise ValueError('no-hit sentinel differs')
+                            checks+=1;continue
                         error=float(np.linalg.norm(hit-old_hits[n,i]))
                         if not np.isfinite(error) or error>plan['anchor_hit_tolerance_m']:raise ValueError('anchor hit differs')
                         max_error=max(max_error,error);checks+=1

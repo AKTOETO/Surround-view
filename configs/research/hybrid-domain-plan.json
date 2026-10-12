@@ -47,7 +47,7 @@
   "displaced_root": "artifacts/displaced-correspondence-v1",
   "binary_path": "build/sv-render-fusion-probe",
   "binary_sha256": "f72d131c8b71835d3df1961ac422144bf6b2c5ad271b3ab2c9c575e5c4604c2c",
-  "output_root": "artifacts/hybrid-domain-v1",
+  "output_root": "artifacts/hybrid-domain-v1-final",
   "chroma_threshold": 0.15,
   "rgba_tolerance_lsb": 1,
   "band_tolerance_linear_rgb": 2e-06,
@@ -125,7 +125,7 @@
     "artifacts/hybrid-domain-requests-v1.json": "8de9718d3d95d076f4e2b3dbfae5c4665871afb28fecdf45ba67af2344aba4be",
     "configs/research/hybrid-correspondence-plan.json": "89c5410bcf20d392d1051c8d825636f43722994e9bb6fa6cdd64d0c8c89be39a",
     "tools/research/hybrid_domain_audit.py": "8d7ac29277ba2d2ae306f820102cadbb8435564bd161d4b8efd0d3fd2bb37107",
-    "tools/blender/hybrid_domain.py": "2019c3a82efdb6978e483b9daf8c0d5d22af94e1a099caf8ff01f69b06a54e80",
+    "tools/blender/hybrid_domain.py": "d70a778524c46ea15bf81258b268375183ae95642390ee707c55192a8738fdf4",
     "tools/research/source_footprint_audit.py": "bac573f94a90ce9fb09792d387adf8a076b73e30056e03e6baf57779b13295ee",
     "tools/research/cube_footprint_audit.py": "4225f506ebd58640a853af09e80b90f194186652f35a5d2d243bd56eb568c7bc"
   },
@@ -133,7 +133,8 @@
     "All new chroma coordinates outside previous edge/expected-target domains, output-conditioned proxy, no independent segmentation/recall or quality ranking",
     "547 unique frame/carrier coordinates,1227 repeated condition pixels; two correlated frames/one rig/five correlated carriers",
     "Local central/texel surface identity does not establish origin of nonlocal signed pyramid color; no full spatial pyramid dependency trace",
-    "No new server capture, changed product rendering, mitigation, performance, physical cameras or Aurora"
+    "No new server capture, changed product rendering, mitigation, performance, physical cameras or Aurora",
+    "New rays use independent double inverse; archive anchors preserve historical float32 operation order; initial failed capture retained separately"
   ],
   "hybrid_root": "artifacts/hybrid-correspondence-v1",
   "hybrid_baseline": "docs/validation/baselines/hybrid_correspondence_v1.json",
