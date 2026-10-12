@@ -1,0 +1,158 @@
+{
+  "schema_version": 1,
+  "scope": "native_supplied_box_surface_footprint_preservation_pilot",
+  "frames": [
+    0,
+    1
+  ],
+  "variants": [
+    "plane",
+    "plane_center",
+    "plane_fp0",
+    "plane_fp1",
+    "plane_sf0",
+    "plane_sf1",
+    "local_100",
+    "local_center",
+    "local_fp0",
+    "local_fp1",
+    "local_sf0",
+    "local_sf1"
+  ],
+  "truth_path": "artifacts/parallax-sensor-inputs-v1/rig101-near-z080/seed101-capture/paired_truth.json",
+  "manifest": "artifacts/parallax-sensor-inputs-v1/rig101-near-z080/seed101-inputs/manifest.json",
+  "manifest_sha256": "298e789999336b13a91dcc5aa573c785aa43afcf9d553156f53519533cefd7ec",
+  "reference_root": "artifacts/source-correspondence-controls-v1/rig101-near-z080",
+  "config_root": "artifacts/box-surface-visibility-configs-v1",
+  "output_root": "artifacts/box-surface-visibility-v1",
+  "binary_sha256": "72ff6e4dbbfcc2b075dc150778b517c9735d5fc1b654cb6f459d886930726fbe",
+  "source_revision": "2ca07ca5b4c78d5bdc912d6693ffd601013fc1ac",
+  "chroma_threshold": 0.15,
+  "global_output_sha256": {},
+  "historical_output_sha256": {
+    "plane": {
+      "0": "3a062c73511aa9d237ac2b398cccc0470ded29a31d7ceb9401ae66611bca2418",
+      "1": "b7df8a736d5747beede4ef3b2fad76a3c4e3dd68d05176b99a39b69115f8346c"
+    },
+    "plane_center": {
+      "0": "d0ba2bbacdf1da065feaed49aed3e10f84d6566db1c86192ed5c78904f7072b0",
+      "1": "f5489b0c189bd6f2007781d2e0eb238cd907a98a3bc4be1efaec53034d0751f3"
+    },
+    "plane_fp0": {
+      "0": "9fca22c52ba92b07a378ea10f49d5fe629dc8a04dc9df21369423ad526cc5f7d",
+      "1": "f1ccf258aa3077793185fb191b64573cd57aa6613053872b1d7c9e3163665e5e"
+    },
+    "plane_fp1": {
+      "0": "fb4899c243deeb43b06e91126f36c3b955d12ba53bc8b5beca2c5b160a3cc052",
+      "1": "9ced0d0406e2200fdd885a3ae2d78105f255e505120fd76f5d17007eec9dc836"
+    },
+    "local_100": {
+      "0": "3aa7d2cf2601b35bcc99d8a5f65ce2a11738ac778d8d8dd5a695f2ab18a9e06d",
+      "1": "3ecdb9f3fa258162a70ad7d24201f56c77581fa2e3e3802d18d723f20123f508"
+    },
+    "local_center": {
+      "0": "c5b3ee3507abde0df97139ffcc75eabf397c09a4b98de36f3bc068a6ba18ad0b",
+      "1": "7e33c7a3d77cf102013efd6ec33826513eab201bf3d10177b1ef170be3f18879"
+    },
+    "local_fp0": {
+      "0": "807b7de9ce3dd99d800abebdaaf9cd4b9feca1022eba9a55be40efa2df73b147",
+      "1": "5bed3e3b7c7ebb84283977d53f15f1d9d381f15b1814ac5f23431b2e9a647d79"
+    },
+    "local_fp1": {
+      "0": "cddfa729cc1cff7cbe2a8dd0e766000b8f215c93fa6920d6f5c221e367323c55",
+      "1": "f31406fca9dcf70cede09c9185d6bb2ce4335bb15888609ec6fe82234183318f"
+    }
+  },
+  "supplied_geometry": {
+    "source": "Known previously explored Blender nominal opaque cube bounds and saved vehicle poses",
+    "world_min_m": [
+      2.2,
+      2.1,
+      0.6
+    ],
+    "world_max_m": [
+      2.6,
+      2.5,
+      1.0
+    ],
+    "tolerance_m": 0.02,
+    "selection": "Single predeclared metre bias, no capture-driven tuning; geometry height/control kept from previous plan"
+  },
+  "policies": [
+    "center",
+    "bilinear_radial_v1 guard0/1",
+    "bilinear_box_surface_v1 guard0/1"
+  ],
+  "neighbor_inset_m": 1e-05,
+  "surface_membership_epsilon_m": 1e-05,
+  "selection": "All16 preceding controls and8 box-surface candidates, two carriers/two frames, no quality-driven tuning",
+  "primary_gates": [
+    "For each local candidate/frame: preserve center source-visible proxy hits",
+    "Do not increase source-visible target pixels without source",
+    "Reduce outside proxy count compared with center",
+    "Do not increase fixed-road linear RGB MAE compared with center"
+  ],
+  "frozen_files": {
+    "artifacts/parallax-sensor-inputs-v1/rig101-near-z080/seed101-capture/paired_truth.json": "cc9c5f54261a19501514e40d9800cfadee1f37993881e4afc90605bd737b18ab",
+    "artifacts/parallax-sensor-inputs-v1/rig101-near-z080/seed101-inputs/manifest.json": "298e789999336b13a91dcc5aa573c785aa43afcf9d553156f53519533cefd7ec",
+    "tools/research/local_support.py": "36fda14a36d051bc611531622ed67543859dc9f5a33197d50aaa7fb26e36ac96",
+    "tools/research/reference_height.py": "9741112a0a68137105c14e27233ed10b4359ef1bcdcac451ad3ba5d239d9a88a",
+    "tools/research/source_correspondence.py": "723e6899ee98327454c77636663ae61e3533617e0bd9b848543520230b47fbef",
+    "tools/research/source_correspondence_controls.py": "61fbc71b0bd604cb3e89df9dbcc4adc368f8df77d58b73943e33e5a8f2e58935",
+    "tools/research/displaced_correspondence.py": "ac55ca8cdace67684549b7132fbf6c60a6a33babe069e703e5021df6685bf65f",
+    "src/core/math.cpp": "79ea706e21efa39605ef63709e5585199e13c79952c38bc64995df2a871b8f5e",
+    "src/core/config.cpp": "ced0f7999e500e6bc39f0d58a02b0cefd46938d3b8657381926e067e7a50d58a",
+    "include/sv/math.hpp": "e8b8702955272ef1b96dc80829ffa5593adeedd66dab80a2f71c0b648256ef23",
+    "src/render/surface.frag": "fa666130d1f13f8b85f1d2087e9ae82b2327b6f9cbf26d288c3585eedce7e928",
+    "src/render/renderer.cpp": "ba51199d515ca2a2cf3dfa3343acc8b59cd1f7b5997ac360e03824ca9212b1da",
+    "tests/correspondence_probe.cpp": "724cf59de2a95cff20e3c20c62ab072b21d33c783382820972ebab0ac2a71865",
+    "docs/diploma/plot_local_support.py": "7ea6617024b67d21501b256b2419fb141a8f08908e6ad1a2d73450a52af67f66",
+    "artifacts/source-correspondence-controls-v1/rig101-near-z080/frame0/direct-points.npy": "747120cb53ffca668c97be6818e1f4dc2317a515b977a2807b746790d7fae901",
+    "artifacts/source-correspondence-controls-v1/rig101-near-z080/frame0/native/plane/output.rgba": "3a062c73511aa9d237ac2b398cccc0470ded29a31d7ceb9401ae66611bca2418",
+    "artifacts/source-correspondence-controls-v1/rig101-near-z080/frame1/direct-points.npy": "4d235fa79fb9ff020ce90d6aa8af7cb389064960ef66bf73b58d3554e1187050",
+    "artifacts/source-correspondence-controls-v1/rig101-near-z080/frame1/native/plane/output.rgba": "b7df8a736d5747beede4ef3b2fad76a3c4e3dd68d05176b99a39b69115f8346c",
+    "tools/research/source_visibility.py": "39c19b8b13a908feff773ebe0803dae1dee49b1d972956a4671a61a480ccd7d9",
+    "docs/diploma/plot_source_visibility.py": "660bad9b30049971f9a9dc6675c28dcbfaac69806584f5e58a9b6a98c60ad2de",
+    "include/sv/render_inspection.hpp": "d2bc1e62fcf67027f14771c64d268b7731e551a7c25c763013c732ba4606df7b",
+    "tools/research/filter_visibility.py": "2067369fd290208af4b23b6b28a56dbf6233569ba243de2b8aa075b5c636045b",
+    "docs/diploma/plot_filter_visibility.py": "f74ac8f387649e32388e1b2254d882f341b991e206f5ea244f31b1480cbff60e",
+    "configs/research/source-visibility-plan.json": "eca1d46be80aa054e40f10afe3cbe5b59fad3131154eda5b61ee4ca4605e9728",
+    "docs/validation/baselines/source_visibility_v1.json": "d4ccde809265fd62785b80f4b965489bb7bbfe188e36b35d15c62de305dc33b7",
+    "tools/research/box_surface_visibility.py": "34b21c9b9d2c5e506ae0d2fb928c52146c46cccb9ba40fc0299445ae379c0842",
+    "docs/diploma/plot_box_surface_visibility.py": "b3df2a69bbc92ea793bc6e043b801b14bd815de5468b2b86cc405a89725ac11e",
+    "configs/research/filter-visibility-plan.json": "0a3409d18613cc828ed0bc4bc4e7d007d63edb6b0e063261d40bd85ae8e4a84a",
+    "docs/validation/baselines/filter_visibility_v1.json": "b96d88a142750e2e4a9f50162e0e262d169bd773cf01e755481a7050f06e11d7",
+    "artifacts/box-surface-visibility-configs-v1/frame0-plane.json": "f32913f89f55faf15b829523ede1a87df554216df1e99d4d86677c39a4825585",
+    "artifacts/box-surface-visibility-configs-v1/frame0-plane_center.json": "8c75268e48d1d5b788a19c4f59594bd6be4f70b209732daaf6e5b4ddbe189238",
+    "artifacts/box-surface-visibility-configs-v1/frame0-plane_fp0.json": "b2acb397ed8fd015b83b77606e0699057ac99f3db74977ef08d06015494fecf1",
+    "artifacts/box-surface-visibility-configs-v1/frame0-plane_fp1.json": "bf40b87da87c31f807c81c91115e2f2c749b228455586ab47f1464a4c3ad306b",
+    "artifacts/box-surface-visibility-configs-v1/frame0-plane_sf0.json": "6104800f859e3b66ab41d1683ce1acea60f442b060b6b5ff9c9b7912ce44ae6c",
+    "artifacts/box-surface-visibility-configs-v1/frame0-plane_sf1.json": "0139d19a8227ea7f87c0507dca732d01b33af97c1497b99a124697b9744739ce",
+    "artifacts/box-surface-visibility-configs-v1/frame0-local_100.json": "07f0ec5c349857facddbc09209b3cdde1ed2c071b7ea44d2460bb6fa99c47e1a",
+    "artifacts/box-surface-visibility-configs-v1/frame0-local_center.json": "1cd105122bc3358a16c347199280de855150fa8bffc7c4f9124932a57cc49a42",
+    "artifacts/box-surface-visibility-configs-v1/frame0-local_fp0.json": "8622f623481107bc95511ce53675199655abc4c409658b1988493d68fa18d01c",
+    "artifacts/box-surface-visibility-configs-v1/frame0-local_fp1.json": "9df1f0cd31847f3fa36b89b0af141fc5faa6bb8579c9de0c65d3a20170d97b53",
+    "artifacts/box-surface-visibility-configs-v1/frame0-local_sf0.json": "095f021770471030e5e1f6f4aaf74c2dec17fdbf7d829f1b0a060d323dc9ccac",
+    "artifacts/box-surface-visibility-configs-v1/frame0-local_sf1.json": "0797e49f910197bc4224c31f02aa50faf094afb95049982e8650e4a59d1d8df8",
+    "artifacts/box-surface-visibility-configs-v1/frame1-plane.json": "f32913f89f55faf15b829523ede1a87df554216df1e99d4d86677c39a4825585",
+    "artifacts/box-surface-visibility-configs-v1/frame1-plane_center.json": "71f7fb7aad0a4079e37f25801e8b9f60b89b91b64bc82156b4752f3ab6a28d07",
+    "artifacts/box-surface-visibility-configs-v1/frame1-plane_fp0.json": "a4f8f50066e8620ed76c677ef57aadb0b6efde48166bcc8c131d1271596324b1",
+    "artifacts/box-surface-visibility-configs-v1/frame1-plane_fp1.json": "c9da80d33611d73cdcd5f15704626deb1c56e3e7da2dc79d8f0fa7fe617ed114",
+    "artifacts/box-surface-visibility-configs-v1/frame1-plane_sf0.json": "457381715346d83ae6c53e67af290e754b98d486480164096ed69b148ba64600",
+    "artifacts/box-surface-visibility-configs-v1/frame1-plane_sf1.json": "749a5eb7447bf7d7db11cc1172bfc108f3a4770fbd377a3deca6f69f46925281",
+    "artifacts/box-surface-visibility-configs-v1/frame1-local_100.json": "786f86db68ffa137b6ab989562e06a64e5467c537dfa2ed50075d837dfa26707",
+    "artifacts/box-surface-visibility-configs-v1/frame1-local_center.json": "9b874880854d57e3597b9aab0bbeabd8d7c4183122f69ac9ffb56003fee9ca93",
+    "artifacts/box-surface-visibility-configs-v1/frame1-local_fp0.json": "cc3df79e388c49298e56cdda4bb43c3e33b7099264cd3c61bc2de8ba74f219fc",
+    "artifacts/box-surface-visibility-configs-v1/frame1-local_fp1.json": "d1dafb4af689ac7b17cd286d4c33e4127761739a24bfa60d871bac74894e18e3",
+    "artifacts/box-surface-visibility-configs-v1/frame1-local_sf0.json": "1aa54db0feee8a783ee205211d921919dfd9f16dca2ce0332f71aa6383b4047a",
+    "artifacts/box-surface-visibility-configs-v1/frame1-local_sf1.json": "a2f749fee02a5b4787f7af6c377e059400bfadfc70b4debaecae5f374456c4e3"
+  },
+  "limitations": [
+    "Single known supplied opaque AABB and two previously explored correlated frames; no independent holdout",
+    "L-infinity surface membership band10um is a numerical convention, not geometry uncertainty",
+    "Outside finite box surface band, radial footprint approximation is unchanged; no general surface/depth correspondence",
+    "Box endpoint support exemption is not independent neighbor surface reconstruction; hidden faces still central-ray rejected",
+    "Zero-distortion equidistant optics; guard1 not exact Eevee kernel; endpoint bias20mm fixed before capture",
+    "Chroma proxy not natural semantic segmentation; no physical/Aurora or equal-budget overhead study"
+  ]
+}
