@@ -1,0 +1,261 @@
+{
+  "schema_version": 1,
+  "scope": "native_local_support_contract_known_answer_not_scene_quality",
+  "date": "2026-10-13",
+  "source_revision": "c1e25ade5faf1cfe871d6a4e7d86e7b8856083db",
+  "source_fingerprint": "b0f56e80c1eaedfbff85aa8f77b3f13af3079c01dede8631489b43b86153b408",
+  "working_tree_modified": true,
+  "binary_sha256": "9468cf63b320e3ea82c74ac5761ccb5d229488ebd7303aec2473eb688aaf88ca",
+  "new_support_tests": 11,
+  "backends": [
+    {
+      "backend": "mesa",
+      "tests": 21,
+      "failures": 0,
+      "xml_sha256": "8fe5df5e2471803a90aaeda49612b3bd65f775b1614d545ff40ac6cc3af4f5b6",
+      "cases": [
+        {
+          "suite": "CarrierIntersectionOracle",
+          "name": "SharedEdgeAndNearestDepth",
+          "parameter": null
+        },
+        {
+          "suite": "SourceInspection",
+          "name": "ShaderCoordinatesAndRejectionsMatchIndependentProjection",
+          "parameter": null
+        },
+        {
+          "suite": "SourceInspection",
+          "name": "SuppliedBoxRejectsOnlyBlockedSourceSegmentsAndRestoresOutput",
+          "parameter": null
+        },
+        {
+          "suite": "RenderSupportContract",
+          "name": "RequiresDestinationAndColorView",
+          "parameter": null
+        },
+        {
+          "suite": "RenderSupportContract",
+          "name": "PositiveWeightDoesNotGuaranteeGpuFusionAboveThreshold",
+          "parameter": null
+        },
+        {
+          "suite": "RenderSupportContract",
+          "name": "ZeroWeightsAndHardSelectionHaveDifferentOutputPaths",
+          "parameter": null
+        },
+        {
+          "suite": "RenderSupportContract",
+          "name": "FusionReturnsActualPostSmoothingBaseWeightsWithoutFullInspection",
+          "parameter": null
+        },
+        {
+          "suite": "Carriers/CarrierInspection",
+          "name": "PerspectivePointsMatchActualTrianglesAndPreserveOutput/0",
+          "parameter": "\"plane\""
+        },
+        {
+          "suite": "Carriers/CarrierInspection",
+          "name": "PerspectivePointsMatchActualTrianglesAndPreserveOutput/1",
+          "parameter": "\"raised_plane\""
+        },
+        {
+          "suite": "Carriers/CarrierInspection",
+          "name": "PerspectivePointsMatchActualTrianglesAndPreserveOutput/2",
+          "parameter": "\"local_patch\""
+        },
+        {
+          "suite": "Carriers/CarrierInspection",
+          "name": "PerspectivePointsMatchActualTrianglesAndPreserveOutput/3",
+          "parameter": "\"bowl\""
+        },
+        {
+          "suite": "Carriers/CarrierInspection",
+          "name": "PerspectivePointsMatchActualTrianglesAndPreserveOutput/4",
+          "parameter": "\"dome_floor_v1\""
+        },
+        {
+          "suite": "Carriers/CarrierInspection",
+          "name": "PerspectivePointsMatchActualTrianglesAndPreserveOutput/5",
+          "parameter": "\"cylinder_floor_v1\""
+        },
+        {
+          "suite": "Carriers/CarrierInspection",
+          "name": "PerspectivePointsMatchActualTrianglesAndPreserveOutput/6",
+          "parameter": "\"cube_floor_v1\""
+        },
+        {
+          "suite": "Algorithms/RenderSupport",
+          "name": "CountsMatchSourceValidityAndActualWeightsWithoutChangingOutput/0",
+          "parameter": "\"edge_feather\""
+        },
+        {
+          "suite": "Algorithms/RenderSupport",
+          "name": "CountsMatchSourceValidityAndActualWeightsWithoutChangingOutput/1",
+          "parameter": "\"angular_feather\""
+        },
+        {
+          "suite": "Algorithms/RenderSupport",
+          "name": "CountsMatchSourceValidityAndActualWeightsWithoutChangingOutput/2",
+          "parameter": "\"hard_best_angle\""
+        },
+        {
+          "suite": "Algorithms/RenderSupport",
+          "name": "CountsMatchSourceValidityAndActualWeightsWithoutChangingOutput/3",
+          "parameter": "\"seam_distance_feather\""
+        },
+        {
+          "suite": "Algorithms/RenderSupport",
+          "name": "CountsMatchSourceValidityAndActualWeightsWithoutChangingOutput/4",
+          "parameter": "\"graph_cut_seam\""
+        },
+        {
+          "suite": "Algorithms/RenderSupport",
+          "name": "CountsMatchSourceValidityAndActualWeightsWithoutChangingOutput/5",
+          "parameter": "\"multi_band\""
+        },
+        {
+          "suite": "Algorithms/RenderSupport",
+          "name": "CountsMatchSourceValidityAndActualWeightsWithoutChangingOutput/6",
+          "parameter": "\"graph_cut_multi_band\""
+        }
+      ]
+    },
+    {
+      "backend": "nvidia",
+      "tests": 21,
+      "failures": 0,
+      "xml_sha256": "7b2d39e08dc63d947b752fce747bfcfdea211aa40c4d958df3f96469c46c9d83",
+      "cases": [
+        {
+          "suite": "CarrierIntersectionOracle",
+          "name": "SharedEdgeAndNearestDepth",
+          "parameter": null
+        },
+        {
+          "suite": "SourceInspection",
+          "name": "ShaderCoordinatesAndRejectionsMatchIndependentProjection",
+          "parameter": null
+        },
+        {
+          "suite": "SourceInspection",
+          "name": "SuppliedBoxRejectsOnlyBlockedSourceSegmentsAndRestoresOutput",
+          "parameter": null
+        },
+        {
+          "suite": "RenderSupportContract",
+          "name": "RequiresDestinationAndColorView",
+          "parameter": null
+        },
+        {
+          "suite": "RenderSupportContract",
+          "name": "PositiveWeightDoesNotGuaranteeGpuFusionAboveThreshold",
+          "parameter": null
+        },
+        {
+          "suite": "RenderSupportContract",
+          "name": "ZeroWeightsAndHardSelectionHaveDifferentOutputPaths",
+          "parameter": null
+        },
+        {
+          "suite": "RenderSupportContract",
+          "name": "FusionReturnsActualPostSmoothingBaseWeightsWithoutFullInspection",
+          "parameter": null
+        },
+        {
+          "suite": "Carriers/CarrierInspection",
+          "name": "PerspectivePointsMatchActualTrianglesAndPreserveOutput/0",
+          "parameter": "\"plane\""
+        },
+        {
+          "suite": "Carriers/CarrierInspection",
+          "name": "PerspectivePointsMatchActualTrianglesAndPreserveOutput/1",
+          "parameter": "\"raised_plane\""
+        },
+        {
+          "suite": "Carriers/CarrierInspection",
+          "name": "PerspectivePointsMatchActualTrianglesAndPreserveOutput/2",
+          "parameter": "\"local_patch\""
+        },
+        {
+          "suite": "Carriers/CarrierInspection",
+          "name": "PerspectivePointsMatchActualTrianglesAndPreserveOutput/3",
+          "parameter": "\"bowl\""
+        },
+        {
+          "suite": "Carriers/CarrierInspection",
+          "name": "PerspectivePointsMatchActualTrianglesAndPreserveOutput/4",
+          "parameter": "\"dome_floor_v1\""
+        },
+        {
+          "suite": "Carriers/CarrierInspection",
+          "name": "PerspectivePointsMatchActualTrianglesAndPreserveOutput/5",
+          "parameter": "\"cylinder_floor_v1\""
+        },
+        {
+          "suite": "Carriers/CarrierInspection",
+          "name": "PerspectivePointsMatchActualTrianglesAndPreserveOutput/6",
+          "parameter": "\"cube_floor_v1\""
+        },
+        {
+          "suite": "Algorithms/RenderSupport",
+          "name": "CountsMatchSourceValidityAndActualWeightsWithoutChangingOutput/0",
+          "parameter": "\"edge_feather\""
+        },
+        {
+          "suite": "Algorithms/RenderSupport",
+          "name": "CountsMatchSourceValidityAndActualWeightsWithoutChangingOutput/1",
+          "parameter": "\"angular_feather\""
+        },
+        {
+          "suite": "Algorithms/RenderSupport",
+          "name": "CountsMatchSourceValidityAndActualWeightsWithoutChangingOutput/2",
+          "parameter": "\"hard_best_angle\""
+        },
+        {
+          "suite": "Algorithms/RenderSupport",
+          "name": "CountsMatchSourceValidityAndActualWeightsWithoutChangingOutput/3",
+          "parameter": "\"seam_distance_feather\""
+        },
+        {
+          "suite": "Algorithms/RenderSupport",
+          "name": "CountsMatchSourceValidityAndActualWeightsWithoutChangingOutput/4",
+          "parameter": "\"graph_cut_seam\""
+        },
+        {
+          "suite": "Algorithms/RenderSupport",
+          "name": "CountsMatchSourceValidityAndActualWeightsWithoutChangingOutput/5",
+          "parameter": "\"multi_band\""
+        },
+        {
+          "suite": "Algorithms/RenderSupport",
+          "name": "CountsMatchSourceValidityAndActualWeightsWithoutChangingOutput/6",
+          "parameter": "\"graph_cut_multi_band\""
+        }
+      ]
+    }
+  ],
+  "regression": {
+    "passed": 9,
+    "failed": 0,
+    "ctest_names": [
+      "core",
+      "render_modes",
+      "source_correspondence",
+      "native_fusion_parity",
+      "render_fusion_parity",
+      "replay_ipc",
+      "client_transports",
+      "fusion_boundary",
+      "research_scenarios"
+    ]
+  },
+  "wire_support_export": false,
+  "effective_multiband_support": false,
+  "implementation_commit": "63d2cd6758382caa1fe5dc2a3b85591860310f60",
+  "test_sources_sha256": {
+    "tests/render_support_tests.cpp": "a21e3a797b583993a6f37211ea35614ac876316aac08d1411b176f8ed16345c4",
+    "tests/render_correspondence_tests.cpp": "21db75248f4417ab44a080a3e7ddb5bf626e258b08cd7d1f79f98567774bf5ed",
+    "tests/render_source_inspection_tests.cpp": "bdf62da71fc6432902a9b5319579b886d64d310b5b7c4441a52c30809ef947ee"
+  }
+}

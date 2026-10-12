@@ -233,3 +233,33 @@ The mode is selected through existing `Client::configure_surface` with the whole
 `source_occlusion_box.support_tolerance_m` is optional and valid only with `mode=bilinear_box_surface_v1`: finite value in[0,0.05]m, default0.00001m. It changes support membership alone; it does not expand the occluder, alter `tolerance_m`, remove central-ray rejection or change neighbor inset. A larger band explicitly assumes more geometry uncertainty and can exempt incorrect surfaces. The old fixed-band catalog key is replaced by the default/range keys. Omitted field preserves previous pixels; other modes reject the field to avoid silent no-op configuration. Apply and restore via existing full-surface `Client::configure_surface` and revision checks.
 
 76-condition sensitivity и команды повторения: [[validation/VISIBILITY_SENSITIVITY]]. Nominal support_tolerance_m=0.001/tolerance_m=0.02/guard1 сохраняет76/76 и69/69, но robustness к±5mm Z bounds error не подтверждена. Это developmental profile, default center не изменён.
+
+
+### Native маска локальной поддержки
+
+`RenderInspectionRequest::support=true` возвращает `RenderInspection::support` (`render_support_v1`). Это опциональный результат C++ renderer; сервер пока не экспортирует его по SV01 и `sv-client-lib` не объявляет соответствующую capability. Пример вызова:
+
+```cpp
+sv::RenderInspection diagnostic;
+sv::RenderInspectionRequest request;
+request.support = true;
+auto rgba = renderer.render(frames, view, &diagnostic, request);
+const cv::Mat &mask = diagnostic.support;
+```
+
+Маска CV_8UC4 имеет размеры final RGBA и top-left origin. Здесь порядок каналов **RGBA по контракту**, не обычный BGR OpenCV. Это integer data, а не цвет: визуализировать нужно через явную палитру. Без запроса матрица пустая, включая повторное использование destination.
+
+| Канал | Значение |
+|---|---|
+| R | Eligible camera count, 0–4; projection/availability/source-occlusion checks |
+| G | Positive local weight count, 0–4; для hard_best_angle выбранная камера даёт 1 |
+| B | RenderSupportPath: 0 background, 1 vehicle_footprint, 2 vehicle_model, 3 gpu_fallback, 4 gpu_fusion, 5 hybrid_fallback, 6 hybrid_fusion |
+| A | 0 background; 255 для depth-tested geometry |
+
+На background/ego R=G=0. `vehicle_footprint` — procedural footprint rectangular carrier; `vehicle_model` — видимая depth-tested модель. Запрос без destination или при `fusion.diagnostic != color` отклоняется `invalid_argument`: depth/ego semantics диагностических RGB views здесь не смешиваются с final color.
+
+GLES проход использует тот же `source_projection` и формулы весов, что normal render, с отключённым dithering; RGB samples не считываются. Для weighted GPU modes G считает строго положительные веса **до** проверки суммы `>1e-6`. Поэтому G>0 ещё допускает B=gpu_fallback. Hard mode выбирает одну eligible камеру и при нулевом angle score. Hybrid counts берутся из actual sample validity и `FusionResult::blend_weights` после seam smoothing, до pyramid reduction; `weights` остаются прежними decision weights. Hybrid composition выбирает fusion по eligibility count, поэтому B=hybrid_fusion допустим при G=0. B описывает фактическую ветку, не гарантированную поддержку цветом.
+
+Маска занимает 4 bytes/output pixel; hybrid временно хранит ещё 4 bytes/pixel для counts. Относительно существующей region inspection добавляется один RGBA8 pass/readback; запрос только support всё равно выполняет region pass, то есть всего два прохода после normal render. Readback требует временного RGBA8 буфера. Возвращаемые actual blend weights удерживают reference-counted 16 bytes/pixel уже вычисленной матрицы, без её копирования и без allocations signed bands. `RenderTiming::inspection_cpu_ms` измеряет geometry inspection/readbacks и merge; заполнение hybrid counts входит в `fusion_cpu_ms`. Это CPU wall time, не отдельный GPU timer; поле пока не передаётся сервером. Cost при полном resolution следует измерить отдельно.
+
+Ни R, ни G не являются scene observability/correspondence. Для multiband локальные base weights не описывают spatial/signed contribution конечного пикселя. Формат не меняет fallback policy и не объявляет reconstruction наблюдением. Known-answer проверки и команды: [[validation/RENDER_SUPPORT]].

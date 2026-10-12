@@ -1,5 +1,7 @@
 # Состояние прототипа и границы подтверждения
 
+Дополнение 13.10.2026: opt-in native local-support mask разделяет eligible camera count, positive local weights и actual output path; 11 новых tests, 21/21 Mesa и NVIDIA, выбранная регрессия9/9. RGBA unchanged, wire delivery ещё не реализована: [[validation/RENDER_SUPPORT]], §4.79.
+
 Редакция 10.10.2026, Linux-профиль 0.6.x. Это карта фактически реализованного прототипа, а не объявление завершения всех MUST из [[requirements/SYSTEM]]. Рабочий профиль — `linux-prototype-v1`; его JSON намеренно уже полной проектной схемы из [[requirements/CONFIGURATION]]. Совпадение `schema_version: 1` означает версию этого явно именованного профиля, а не взаимозаменяемость всех полей прежнего YAML-примера.
 
 ## Реализовано и проверено

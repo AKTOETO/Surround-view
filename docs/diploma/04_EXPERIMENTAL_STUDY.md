@@ -3584,3 +3584,72 @@ $$IoU_{visible\ only}\le\frac{|T\cap V|}{|T|}=\frac{76}{178}=0.426966\quad\text{
 Текущий fallback opaque и предназначен для отображения, не является восстановленной scene surface. Coverage диагностирует sample eligibility; независимая observability mask является исследовательским эталоном. Проект [[architecture/UNSUPPORTED_SURFACES]] разделяет camera eligibility, positive-weight support и physical correspondence. Предлагаются отдельные typed support diagnostics через сервер/library, с общей frame/config/input identity и явной unsupported semantics; это ещё не реализованный API.
 
 Independent23/23 и CTest1/1 прошли; disjoint/exhaustive categories сверены с каждой primary строкой, center имеет0 footprint losses; second JSON identical. Tracked report [[validation/baselines/visibility_failure_v1.json]], воспроизведение [[validation/VISIBILITY_FAILURE]]. Два correlated frames/один known target не дают general reconstruction conclusion. Дальше native support export/unsupported policy и решение geometry uncertainty, затем независимые appearance/scene/pose trials, overhead и physical/Aurora acceptance.
+
+
+## 4.79. Native диагностика локальной поддержки изображения
+
+Stage-level audit §4.78 показал необходимость различать отсутствие camera sample, потерю после weighting и opaque fallback. Для этого добавлен опциональный результат того же C++ renderer, который формирует кадр сервера: `RenderInspection::support`, запрос `RenderInspectionRequest::support`. Здесь проверяется контракт native реализации; это не новый quality benchmark и не доказательство устранения geometric mismatch. Реализация и воспроизведение: [[engineering/RENDERING#Native маска локальной поддержки]], [[validation/RENDER_SUPPORT]].
+
+### 4.79.1. Определение измеряемых величин
+
+Для output pixel $p$ и камеры $i$ определены:
+
+$$E(p)=\sum_{i=0}^{3}\mathbf{1}[eligible_i(p)],\qquad
+P(p)=\sum_{i=0}^{3}\mathbf{1}[w_i^{base}(p)>0].$$
+
+Eligibility учитывает доступность кадра, проекцию и настроенный source-occlusion predicate, но не знает истинную scene surface. Для GPU feather используются локальные ненормированные веса; для hybrid — actual base weights после optional seam smoothing, до reduction пирамиды. Для hard_best_angle $P=1$ при выбранной камере, независимо от нулевого edge weight. В ego/background counts принудительно нулевые.
+
+Отдельный код $B(p)$ фиксирует **фактически выбранную ветку** final composition. В weighted GLES fusion используется условие $\sum_i w_i>10^{-6}$: положительные малые веса ещё совместимы с fallback. Hybrid выбирает fused result по $E>0$, поэтому допускает $P=0$ при выбранной fusion branch. Это наблюдение о существующем алгоритме, а не новая политика заполнения.
+
+| Поле CV_8UC4 | Значение | Чего оно не доказывает |
+|---|---|---|
+| R: E | Eligible camera count, 0–4 | Совпадение выбранного sample с истинной поверхностью |
+| G: P | Positive local base-weight count, 0–4 | Полный вклад в multiband output pixel |
+| B: path | Background/footprint/ego/GPU fallback/GPU fusion/hybrid fallback/hybrid fusion | Физическую достоверность выбранного цвета |
+| A | Raster geometry 255, background 0 | Confidence или opacity наблюдения |
+
+Таблица4.81 — Native формат render_support_v1. Integer channels требуют явной палитры; порядок RGBA не следует заменять обычным OpenCV BGR.
+
+Для multiband локальные веса не описывают всю spatial/signed зависимость (§4.61, §4.62). Маска не является confidence или source-depth truth и не переименовывает interpolation в наблюдение. Физическая observability по-прежнему требует независимого scene/source-surface эталона.
+
+### 4.79.2. Реализация без изменения обычного кадра
+
+GLES mask pass повторно использует `source_projection` и формулы весов основного shader. Dithering выключен; RGB texture lookup для этого прохода не нужен. Hybrid берёт counts из actual samples и возвращаемых `FusionResult::blend_weights`, поэтому graph-cut decision weights не подменяют сглаженные base weights. Полный capture signed bands для маски не требуется. Depth-tested footprint/ego/background получают отдельные path codes. Запрос разрешён только для color view, чтобы не смешивать разные ego/depth policies диагностических RGB views.
+
+```plantuml
+@startuml
+participant "Caller / render thread" as Caller
+participant "C++ Renderer" as Renderer
+participant "GLES raster" as GPU
+participant "Native hybrid fusion" as Fusion
+Caller -> Renderer: render(frames, view, inspection, support=true)
+Renderer -> GPU: normal color render / readback
+opt hybrid mode
+  Renderer -> GPU: per-camera sample layers
+  GPU --> Renderer: actual validity + sampled color
+  Renderer -> Fusion: fuse_research(samples, settings)
+  Fusion --> Renderer: color + actual base weights
+  Renderer -> Renderer: counts + actual composition branch
+end
+Renderer -> GPU: region + support passes, depth test, no dithering
+GPU --> Renderer: raster domains / GPU eligibility and weights
+Renderer -> Renderer: merge hybrid counts; preserve ego/background codes
+Renderer --> Caller: unchanged final RGBA + support matrix
+note over Caller,Renderer
+Same render invocation; no wire subscription yet.
+Local support is not scene correspondence.
+end note
+@enduml
+```
+
+Рисунок4.139 — Реализованная native последовательность получения маски. Будущая доставка через sv-client-lib показана отдельно в [[architecture/UNSUPPORTED_SURFACES]].
+
+Сохраняемая маска требует4 bytes/output pixel, hybrid counts дополнительно4 bytes/pixel временно. Относительно существующей region inspection добавлен один RGBA8 pass/readback; support-only request выполняет всего два geometry passes. CPU wall time этих passes/merge выделен в `inspection_cpu_ms`, заполнение hybrid counts входит в fusion_cpu_ms. Возврат actual base weights удерживает уже вычисленный ref-counted buffer, не создавая копию или full contribution capture. Измерение overhead на полном исследовательском raster остаётся отдельным опытом.
+
+### 4.79.3. Проверки и оставшиеся ограничения
+
+На Linux Mesa llvmpipe и NVIDIA RTX5070Ti прошли21/21 GTest на каждом backend. Добавлены11 tests: семь режимов fusion и четыре contract controls. Black source frames подтверждают независимость support от яркости. Проверены missing input, invalid projection, ego/background, отсутствие stale mask после выключения запроса, zero weights, hard selection и threshold fallback. Для graph_cut_multi_band actual returned weights равны full inspection и отличаются от decision weights после smoothing. Degenerate-intrinsics/threshold fixtures обходят public bounds намеренно и служат только known-answer arithmetic controls.
+
+Final RGBA до/во время/после capture совпал побайтно, дополнительных source uploads нет. Полная сборка прошла; выбранная серверная/численная регрессия9/9 также прошла. Tracked baseline [[validation/baselines/render_support_v1.json]] хранит имена tests, source fingerprint, binary/XML hashes. Seven-algorithm mask fixture использует плоскость96×64; прежние seven-carrier geometry tests в том же бинарнике не заменяют отдельную matched mask matrix по геометриям и occlusion perturbations.
+
+Этот этап закрывает native разделение eligibility/local weights/output path. Он не закрывает typed server/library delivery, effective multiband support, uncertainty occluder geometry или независимую natural-appearance проверку. Следующий программный этап — экспорт маски через сервер и sv-client-lib с общей frame/config/input identity, limits и rejection tests; затем matched captures, overhead и holdout. Аврора остаётся отдельной аппаратной проверкой.
