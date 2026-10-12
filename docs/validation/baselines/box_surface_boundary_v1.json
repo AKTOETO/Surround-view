@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "phase": "post_hoc_readonly_missing_source_visible_pixel",
+  "plan_sha256": "9444a0564d776b2167a2a317fcb995c6a49c8689ebb9c60aad84ac933ee8cd7f",
+  "report_sha256": "10155dde731c74707029c59bb1f413d733efdb498d579c44f5164133c4dafadf",
+  "selection": "Independent visible target pixels retained by local_center but missing local_sf1 proxy; no parameter changes or recapture",
+  "rows": [
+    {
+      "frame": 0,
+      "y": 211,
+      "x": 318,
+      "carrier_vehicle": [
+        2.5060343742370605,
+        2.500159502029419,
+        0.9992018938064575
+      ],
+      "carrier_world": [
+        2.5060343742370605,
+        2.500159502029419,
+        0.9992018938064575
+      ],
+      "truth_world": [
+        2.5059595108032227,
+        2.499999761581421,
+        0.9990718960762024
+      ],
+      "nearest_finite_face_linf_m": 0.0001595020294189453,
+      "geometry_error_m": 0.00021913683926738948,
+      "center_status": [
+        4,
+        3,
+        3,
+        1
+      ],
+      "candidate_status": [
+        4,
+        3,
+        3,
+        7
+      ],
+      "source_visibility_bits": 8
+    }
+  ]
+}
