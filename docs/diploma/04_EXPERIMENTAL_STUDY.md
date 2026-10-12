@@ -3653,3 +3653,65 @@ end note
 Final RGBA до/во время/после capture совпал побайтно, дополнительных source uploads нет. Полная сборка прошла; выбранная серверная/численная регрессия9/9 также прошла. Tracked baseline [[validation/baselines/render_support_v1.json]] хранит имена tests, source fingerprint, binary/XML hashes. Seven-algorithm mask fixture использует плоскость96×64; прежние seven-carrier geometry tests в том же бинарнике не заменяют отдельную matched mask matrix по геометриям и occlusion perturbations.
 
 Этот этап закрывает native разделение eligibility/local weights/output path. Он не закрывает typed server/library delivery, effective multiband support, uncertainty occluder geometry или независимую natural-appearance проверку. Следующий программный этап — экспорт маски через сервер и sv-client-lib с общей frame/config/input identity, limits и rejection tests; затем matched captures, overhead и holdout. Аврора остаётся отдельной аппаратной проверкой.
+
+
+## 4.80. Передача native local-support через сервер и клиентскую библиотеку
+
+После native проверки §4.79 добавлен исследовательский канал в реальный серверный pipeline. Цель этого этапа — обеспечить воспроизводимое получение фактических диагностических данных из работающего сервера через ту же библиотеку, которой пользуются клиентские приложения. Алгоритмы остаются в C++ renderer; Python используется только для orchestration интеграционных проверок, а не для формирования продуктового кадра. Exact protocol и результаты: [[engineering/PROTOCOL_IMPLEMENTED#Выбор data product: output_selection_v1 / render_support_v1]], [[validation/OUTPUT_PRODUCTS]].
+
+### 4.80.1. Контракт и ответственность компонентов
+
+HELLO capabilities output_selection_v1/render_support_v1 разрешают discovery каталога и выбор одного data product: final_frame либо render_support_v1. Command configure_output применяется render thread между вызовами renderer, повышает state_revision и applied_command_id, но не config_revision: это temporary output selection, не изменение калибровки или persisted config. Read-only output_catalog не повышает revisions. Маска требует color diagnostic; несовместимое изменение fusion/selector отвергается до публикации snapshot.
+
+| Компонент | Ответственность | Проверяемая граница |
+|---|---|---|
+| Native renderer | Actual eligibility/base weights/output path, depth-tested ego/background | Формат и RGBA parity §4.79 |
+| Server render thread | Проверить product/color/lease, сформировать selected payload и provenance | Shared frame/config/input identity, reject без mutation |
+| Server data channel | Generation-bound publication, bounded slot и release timeout | Старый продукт не попадает в новое соединение |
+| sv-client-lib transport | Проверить frame limits/schema/identities/pixel values до callback | Unknown/malformed product вызывает protocol error |
+| RenderSupportView | Owning immutable Message, typed at(x,y), bounds и provenance | Без копирования payload; release не уничтожает локальное владение |
+| Example client | Выбор product, release старого кадра, палитра/анализ по смыслу каналов | Counts не интерпретируются как scene confidence |
+
+Таблица4.82 — Реализованное распределение ответственности при доставке native support data.
+
+Type11 сохраняет размеры, RGBA8/top-left/stride и исходные frame_id/frame_set_id/config_revision/state_revision/applied_command_id/inputs. Для маски добавлена support_schema и inspection_cpu_ms. Это integer payload, не фотография; локальные counts и path codes заданы в §4.79. Native renderer всё ещё вычисляет обычный цвет, но сервер отправляет только выбранный продукт. Parallel final/support delivery, полный ConfigService и multiple active clients этим изменением не реализованы.
+
+### 4.80.2. Согласование сессии, ACK и release
+
+ACK идёт по control, data channel независим: прежний in-flight кадр может прийти после ACK. Клиент обязан release-ить его, затем ожидать нужный output_product при state_revision не меньше ACK revision. При experiment lease не idle selector менять нельзя, поскольку он не включён в baseline snapshot; catalog остаётся read-only. Selection сбрасывается в final_frame при новом data attachment, не записывается на диск и не воспроизводится библиотекой автоматически после reconnect.
+
+При реализации выявлена возможность перепривязать подготовленную/queued публикацию к новому active data connection. Теперь render сохраняет generation, publish проверяет её до enqueue и на IO executor, а reservation хранит generation владельца. Отброшенная старая публикация освобождает только свой slot, не reservation новой generation.
+
+```plantuml
+@startuml
+participant "Render thread" as R
+participant "IO executor" as IO
+participant "Old client / generation G" as Old
+participant "New client / generation G+1" as New
+R -> R: begin render support for G
+Old -> IO: disconnect
+New -> IO: attach data; generation G+1
+R -> IO: publish(payload, expected_generation=G)
+IO -> IO: generation mismatch: discard
+note over R,IO
+Old reservation is released only if still owned by G.
+No old payload is stamped with the new session ID.
+end note
+R -> R: observe G+1; reset product=final_frame
+R -> IO: publish final_frame for G+1
+IO --> New: type11 + new session identity
+New -> IO: type22 release
+@enduml
+```
+
+Рисунок4.140 — Защита от доставки старого диагностического продукта новому подключению. Проверка generation выполняется также перед enqueue; диаграмма показывает обе стадии как одну логическую операцию публикации.
+
+Схема штатного выбора/release и explicit reject приведена в сценарии С12 [[engineering/PROTOCOL_SCENARIOS]]. Библиотека не связана с OpenCV/Qt; render-support enum и schema вынесены в общий protocol слой, а typed view — в клиентский. Сервер не зависит от клиентской библиотеки для формирования данных.
+
+### 4.80.3. Результаты проверки и пределы вывода
+
+Полная Mesa CTest suite прошла55/55 за28.02s. Новые проверки включают пять native C++ decoder/view tests и три live integration tests. На NVIDIA те же три integration tests прошли отдельно; это не полная suite на втором backend. Для семи fusion modes маска, полученная по wire, побайтно совпала с direct native renderer при тех же source/config/view. Проверены Unix/TCP loopback, сохранение paused inputs/frame_set/upload_count, config/state identities, invalid products и color conflict, lease guard, возврат исходного RGBA и отсутствие записи config. Десять немедленных reconnect после selector ACK не доставили mask в новую generation. Held mask использует прежний release timeout, не блокируя control.
+
+CPU-profile consumer/decoder собираются, decoder test проходит; ldd не показывает OpenCV/Qt зависимостей consumer. Installed external CMake consumer также проверен прежним transport test. Tracked [[validation/baselines/output_products_v1.json]] хранит implementation/build revision, native fingerprint, hashes binaries/tests/CTest logs и ограничения matrix.
+
+Это protocol/implementation verification на одном generated frame96×64, default zero pyramid и binary_pairs, а не новое доказательство качества source-surface reconstruction. Local weights по-прежнему не являются effective signed/nonlocal multiband support. Следующие работы: user-friendly GUI selector/palette, отдельный overhead benchmark на исследовательском raster, matched geometry/occlusion captures, natural/nonuniform appearance и independent correspondence holdout; real cameras/two-host/Aurora требуют отдельного стенда.

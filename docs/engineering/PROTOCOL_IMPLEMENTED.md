@@ -4,7 +4,7 @@
 
 ## Транспорт и кадрирование
 
-Полный каталог 18 команд и 11 сценариев подключения, применения, обработки кадров и отказов с PlantUML: [[engineering/PROTOCOL_SCENARIOS]]. Сценарии описывают текущий код; проектируемые API остаются отдельно.
+Полный каталог 20 команд и 12 сценариев подключения, применения, обработки кадров и отказов с PlantUML: [[engineering/PROTOCOL_SCENARIOS]]. Сценарии описывают текущий код; проектируемые API остаются отдельно.
 
 Один логический клиент использует две независимые stream-связи: control и data. Поддерживаются Unix domain sockets либо TCP; транспорт выбирается только конфигурацией endpoint/listeners. Клиентская библиотека сама не переключается на другой транспорт. UDP, TLS, несколько одновременных клиентов и control-only пока отсутствуют. Серверная сторона ограничена одной сессией: второй клиент не образует независимое пространство состояния.
 
@@ -15,7 +15,7 @@
 | 1 | Клиент → сервер: hello; на control `{role:"control"}`, на data `{role:"data", session_id, data_token}` |
 | 2 | Сервер → клиент: hello_ack с `session_id`, `data_token`, `profile`, `capabilities` |
 | 3 | Библиотека → callback: локальное событие потери ожидающей команды (`session_lost`); отдельный wire error пока не реализован |
-| 11 | Сервер → клиент по data: финальный RGBA8 кадр и provenance/timing metadata |
+| 11 | Сервер → клиент по data: выбранный RGBA8 продукт (final_frame или integer render_support_v1) и provenance/timing metadata |
 | 20 | Клиент → сервер по control: команда с монотонным в рамках сессии `command_id`, `type` и параметрами |
 | 21 | Сервер → клиент по control: ACK/reject с `accepted`, `reason`, `state_revision` и результатом операции |
 | 22 | Клиент → сервер по data: release с `session_id`, `frame_id`, `buffer_token`; binary payload обязан быть пустым |
@@ -26,7 +26,7 @@ Handshake объявляет `fusion_runtime_v1`. Это первый реали
 
 | Команда / поле | Контракт |
 |---|---|
-| `fusion_catalog` | Read-only ACK с `fusion_catalog`: version=3, modes, diagnostics, пределы параметров, temporary persistence, backend/GL device и server source revision/fingerprint |
+| `fusion_catalog` | Read-only ACK с `fusion_catalog`: version=4, modes, diagnostics, пределы параметров, temporary persistence, backend/GL device и server source revision/fingerprint |
 | `configure_fusion` | Обязательные `base_config_revision` (decimal string) и `fusion` (object); полностью заменяет fusion-секцию, пропущенные необязательные поля получают defaults |
 | `fusion.mode` | `edge_feather`, `hard_best_angle`, `angular_feather`, `seam_distance_feather`, `graph_cut_seam`, `multi_band`, `graph_cut_multi_band` |
 | `fusion.diagnostic` | `color` (default), `coverage`, `weights` |
@@ -250,4 +250,25 @@ The mode is selected through existing `Client::configure_surface` with the whole
 `source_occlusion_box.support_tolerance_m` is optional and valid only with `mode=bilinear_box_surface_v1`: finite value in[0,0.05]m, default0.00001m. It changes support membership alone; it does not expand the occluder, alter `tolerance_m`, remove central-ray rejection or change neighbor inset. A larger band explicitly assumes more geometry uncertainty and can exempt incorrect surfaces. The old fixed-band catalog key is replaced by the default/range keys. Omitted field preserves previous pixels; other modes reject the field to avoid silent no-op configuration. Apply and restore via existing full-surface `Client::configure_surface` and revision checks.
 
 
-Native `render_support_v1` ([[validation/RENDER_SUPPORT]]) пока существует только как C++ render inspection. Это не SV01 capability или тип сетевого сообщения; подписку, frame/config/input identity и typed sv-client-lib decoding ещё требуется реализовать. Не считать `coverage` view эквивалентом доставки этой маски.
+## Выбор data product: output_selection_v1 / render_support_v1
+
+Handshake объявляет обе capabilities. Существующий type11/22 framing не меняется: data channel передаёт **один выбранный продукт**, с теми же правилами bounded slot/release timeout250ms. Default — final_frame; отсутствие output_product у старого сервера также означает final_frame. Unknown product в новом клиенте вызывает protocol error до пользовательского callback.
+
+| Команда / поле | Контракт |
+|---|---|
+| output_catalog | Read-only ACK с version1, products=[final_frame,render_support_v1], default, selection, persistence, requirements и render_support_schema |
+| configure_output | Обязательный product string из каталога; применяется между render calls, требует attached data channel |
+| ACK/state.output_product | Текущий выбранный продукт; accepted configure_output увеличивает state_revision и applied_command_id, config_revision не меняется |
+| type11.output_product | final_frame либо render_support_v1; RGBA8, top_left, stride=width*4 |
+| type11.support_schema | Только у render_support_v1: version1, channels=[eligible_camera_count,positive_local_weight_count,render_support_path,raster_geometry], scope=local_base_weights_not_scene_visibility |
+| type11.inspection_cpu_ms | Только у маски: CPU wall time geometry inspection/readbacks/merge, не GPU elapsed; hybrid count construction входит в fusion_cpu_ms |
+
+Маска содержит ровно width*height*4 bytes, не изображение для прямого display. Значения и B-path enum: [[engineering/RENDERING#Native маска локальной поддержки]]. Вместе с ней передаются session_id, frame_id, frame_set_id, state_revision, config_revision, applied_command_id, buffer_token, полный fusion/surface и inputs[4]. Используемые inputs содержат calibration_id, sequence_id и release_timestamp_ns вместе с прежней source provenance. Это identity той же render invocation; второй final-frame пакет параллельно не отправляется. Обычный цвет по-прежнему вычисляется внутри renderer — выбор маски пока не является оптимизацией вычислений.
+
+render_support_v1 требует fusion.diagnostic=color. Несовместимый configure_output или configure_fusion отклоняется с render_support_requires_color **до mutation**, сохраняя settings/revisions. Unknown/malformed product отклоняется; точный exception reason parser не фиксирован. Пока experiment lease active/restoring/failed, configure_output запрещён, в том числе owner с lease_id: selector не входит в lease snapshot. output_catalog доступен read-only. Для исследования выбрать продукт до acquire; fusion/surface можно менять в пределах обычных lease правил и color restriction.
+
+Selection ephemeral и привязана к data generation: новый data attachment сбрасывает её в final_frame. Ничего не записывается на диск. Публикация привязана к generation, в которой начат render; старый пакет не может быть перепривязан к новой сессии, а освобождение старого slot не снимает reservation нового generation. В текущем Linux profile остаётся одна активная control/data pair, не multi-client subscription service.
+
+ACK на control не отзывает уже опубликованный старый продукт. Клиент всегда release-ит такой пакет и фильтрует новые данные по output_product и state_revision>=ACK; frame_id остаётся монотонным и продукт не имеет собственного счётчика. При reconnect библиотека не воспроизводит configure_output: приложение проверяет HELLO capabilities и выбирает маску заново. Older server явно отвергнет неизвестную команду; не считать coverage view эквивалентом маски.
+
+Typed API: Client::output_catalog(), Client::configure_output(OutputProduct), RenderSupportView(shared_ptr<const Message>). View сохраняет owning immutable Message без копии payload, даёт bounds-checked at(x,y) и message() с исходной provenance. Transport проверяет schema, shapes, limits, identities и все pixel codes до callback; view повторно валидирует пакет при construction. validate_output_product для legacy/final выполняет только classification/schema check: общая frame validation остаётся в transport. Unit/integration и native/wire parity: [[validation/OUTPUT_PRODUCTS]].

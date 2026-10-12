@@ -1,6 +1,6 @@
 # Сценарии взаимодействия sv-server и sv-client-lib
 
-Сверено с кодом 10.10.2026. Это каталог **реализованных** взаимодействий SV01, а не обещание полного ConfigService. Формат сообщений, параметры и ограничения: [[engineering/PROTOCOL_IMPLEMENTED]]. Целевые расширения: [[architecture/CLIENT_SERVER_MODEL]], [[requirements/PROTOCOL]]. Любое клиентское приложение выполняет описанные операции через `sv-client-lib`; конфигурационный файл изменяет только сервер.
+Сверено с кодом 13.10.2026. Это каталог **реализованных** взаимодействий SV01, а не обещание полного ConfigService. Формат сообщений, параметры и ограничения: [[engineering/PROTOCOL_IMPLEMENTED]]. Целевые расширения: [[architecture/CLIENT_SERVER_MODEL]], [[requirements/PROTOCOL]]. Любое клиентское приложение выполняет описанные операции через `sv-client-lib`; конфигурационный файл изменяет только сервер.
 
 ## Границы и обозначения
 
@@ -10,12 +10,14 @@
 
 ## Полный каталог текущих операций
 
-Все 18 серверных команд передаются как type 20; результат — type 21. Typed API перечислен там, где он есть; остальные доступны через `command(type, parameters)`. Наличие generic API не означает поддержку неизвестной команды сервером.
+Все 20 серверных команд передаются как type 20; результат — type 21. Typed API перечислен там, где он есть; остальные доступны через `command(type, parameters)`. Наличие generic API не означает поддержку неизвестной команды сервером.
 
 | Команда | Запрос помимо command_id/type | Успешный результат / сценарий |
 |---|---|---|
 | `state` | Нет | Snapshot, revisions, lease; С02 |
-| `fusion_catalog` | Нет | Каталог fusion версии 3, capabilities параметров; С02 |
+| `fusion_catalog` | Нет | Каталог fusion версии 4, capabilities параметров; С02 |
+| `output_catalog` | Нет | Каталог продуктов/формат маски; С12 |
+| `configure_output` | `product=final_frame/render_support_v1` | Выбор одного data product до следующего render; С12 |
 | `surface_catalog` | Нет | Типы носителей и описание plane; С02 |
 | `orbit` | `azimuth_delta_rad`, `elevation_delta_rad` | Допустимый view; С03 |
 | `zoom` | `distance_delta_m` | Допустимая дистанция; С03 |
@@ -243,7 +245,7 @@ Stopped --> [*]
 | С08, С10 | `client_release_budget`, `client_command_order` |
 | С11 | `client_lifecycle` и cleanup остальных library suites |
 
-Названия — точки входа проверок, а не утверждение о полном покрытии всех ветвей. Длительный overload, два физических узла, fuzz decoder, cancellation/ACK races и fault injection persistence ещё требуют расширения. Multi-session, control-only, subscriptions/intermediate products, общий persistent ConfigService и UDP находятся в TODO; не добавлять их в список текущих возможностей без реализации и тестов.
+Названия — точки входа проверок, а не утверждение о полном покрытии всех ветвей. Длительный overload, два физических узла, fuzz decoder, cancellation/ACK races и fault injection persistence ещё требуют расширения. Multi-session, control-only, parallel subscriptions/остальные intermediate products (один выбранный support product реализован в С12), общий persistent ConfigService и UDP находятся в TODO; не добавлять их в список текущих возможностей без реализации и тестов.
 
 ### С06а. Несколько paused frame sets и capture
 
@@ -288,3 +290,50 @@ R --> UI : report + restored scope / cursor_restored=false
 *Рисунок С06а — Последовательное сравнение вариантов на одних входах каждого кадра. Capture consumer не управляет fusion; исключение вызывает тот же cleanup, что cancel.*
 
 Восстановленный image hash сравнивается с baseline последнего пройденного кадра. Cursor/history не восстанавливаются; новый READY после stale preparation также продвигает позицию. Lease не является полной транзакцией replay. Ограничения и тесты: [[validation/RESEARCH_RUNTIME]], опыт: [[validation/SERVER_BOUNDARY]].
+
+
+## С12. Выбор и получение local-support mask
+
+Предусловия: HELLO capabilities output_selection_v1/render_support_v1, data ready, color diagnostic, experiment lease idle. Полный формат и пределы — [[engineering/PROTOCOL_IMPLEMENTED#Выбор data product: output_selection_v1 / render_support_v1]].
+
+```plantuml
+@startuml
+actor "Приложение" as A
+participant "sv-client-lib" as L
+participant "sv-server control/render thread" as S
+participant "Data channel" as D
+A -> L: output_catalog()
+L -> S: type20 output_catalog
+S --> L: type21 catalog (read-only)
+A -> L: configure_output(RenderSupport)
+L -> S: type20 configure_output {product: render_support_v1}
+alt data not ready / non-color / lease conflict / unknown product
+  S --> L: type21 accepted=false; unchanged revisions
+else accepted
+  S -> S: select product; increment state_revision
+  S --> L: type21 ACK revision R
+  opt previously published frame
+    D --> L: type11 old product/revision
+    L --> A: validated Message
+    A -> L: release old frame
+  end
+  S -> S: render RGBA + native support, same inputs/config
+  S -> D: generation-bound publish of support only
+  D --> L: type11 mask + schema + frame/config/input identity
+  L -> L: validate dimensions, schema, identities, pixels
+  L --> A: owning immutable Message
+  A -> A: RenderSupportView; consume / palette
+  A -> L: release(header)
+  L -> D: type22 session/frame/token
+end
+note over S,D
+New data generation defaults to final_frame.
+Old-generation publication is discarded.
+No parallel final/support subscriptions yet.
+end note
+@enduml
+```
+
+Рисунок — Реализованный сценарий выбора support product с сохранением bounded release semantics.
+
+После ACK приложение может увидеть старый in-flight продукт: release обязателен, затем ожидать output_product=render_support_v1 и state_revision>=R. При восстановлении final_frame повторить configure_output; конфиг на диске не меняется. Не путать sample eligibility или local base weights с scene visibility и полным multiband contribution. Tests: [[validation/OUTPUT_PRODUCTS]].

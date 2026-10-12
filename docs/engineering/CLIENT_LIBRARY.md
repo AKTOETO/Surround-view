@@ -127,3 +127,10 @@ GTest/CTest `client_release_budget` с TCP mock проверяет случай 
 ### Выбор multilabel seam solver
 
 `FusionSettings::seam_solver` хранит binary_pairs по умолчанию; configure_fusion опускает этот default и явно сериализует alpha_expansion. Проверить catalog v4 перед alpha. Значение доступно общему C++ runner и simulator adapter; сервер единолично валидирует и выполняет solver. Метаданные кадра seam_optimization передаются библиотекой без пересчёта; клиент может видеть convergence, но не трактовать integer energy как качество сшивки: [[validation/MULTILABEL_SEAM]].
+
+
+## Типизированные output products
+
+Client::output_catalog() и configure_output(OutputProduct::FinalFrame/RenderSupport) управляют session-local selector. RenderSupportView(shared_ptr<const Message>) проверяет формат и предоставляет at(x,y), width/height и исходный message() с provenance без копирования payload. Новые публичные headers client_output.hpp/output_product.hpp/render_support.hpp устанавливаются вместе с svClient CMake package; OpenCV/Qt зависимости у этой части библиотеки нет. CPU-profile consumer и installed external consumer проверены.
+
+Выбор mask требует color view, data ready и idle lease; неизвестные products/неверная schema или pixel values приводят к явной ошибке. Старый final_frame без output_product остаётся совместимым. У type11 render_support_v1 те же release/token правила, что у изображения; сохранять owning pointer после release допустимо. Пример запуска и API: [[engineering/USAGE#Диагностика локальной поддержки через сервер]]. Exact wire contract: [[engineering/PROTOCOL_IMPLEMENTED#Выбор data product: output_selection_v1 / render_support_v1]]. Пока это один выбранный продукт и одна активная сессия, а не parallel multi-client subscription service. GUI mask palette и общий typed registry geometry/source diagnostics остаются открыты.

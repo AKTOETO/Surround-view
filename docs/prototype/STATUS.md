@@ -1,6 +1,8 @@
 # Состояние прототипа и границы подтверждения
 
-Дополнение 13.10.2026: opt-in native local-support mask разделяет eligible camera count, positive local weights и actual output path; 11 новых tests, 21/21 Mesa и NVIDIA, выбранная регрессия9/9. RGBA unchanged, wire delivery ещё не реализована: [[validation/RENDER_SUPPORT]], §4.79.
+Дополнение 13.10.2026: native local-support mask доставляется через SV01 output_selection_v1/render_support_v1 и typed RenderSupportView. Unix/TCP, parity семи алгоритмов, отказ несовместимых настроек и reconnect проверены; полная Mesa-регрессия55/55, NVIDIA wire tests3/3. GUI palette и parallel products пока отсутствуют: [[validation/OUTPUT_PRODUCTS]], §4.80.
+
+Дополнение 13.10.2026: opt-in native local-support mask разделяет eligible camera count, positive local weights и actual output path; 11 новых tests, 21/21 Mesa и NVIDIA, выбранная регрессия9/9. RGBA unchanged; доставка по wire добавлена следующим этапом §4.80: [[validation/RENDER_SUPPORT]], §4.79.
 
 Редакция 10.10.2026, Linux-профиль 0.6.x. Это карта фактически реализованного прототипа, а не объявление завершения всех MUST из [[requirements/SYSTEM]]. Рабочий профиль — `linux-prototype-v1`; его JSON намеренно уже полной проектной схемы из [[requirements/CONFIGURATION]]. Совпадение `schema_version: 1` означает версию этого явно именованного профиля, а не взаимозаменяемость всех полей прежнего YAML-примера.
 
@@ -14,7 +16,7 @@
 
 Дополнение 11.10.2026: parser калибровочных команд принимает конечные XYZ/UV в integer/double представлении, camera_id проверяет до сужения типа. Устранён воспроизведённый дефект выбора другой камеры по большому ID. Native boundary tests и два эквивалентных wire calibration requests проверены; полная регрессия 50/50: [[validation/CALIBRATION_PROVENANCE]].
 
-Текущий SV01 описан каталогом 18 команд и 11 сценариев с условиями отказа и шестью диаграммами: [[engineering/PROTOCOL_SCENARIOS]]. Исправлен wire order конкурентных command callers в библиотеке; новый тест восьми отправителей/256 команд и полная регрессия 49/49 прошли: [[validation/CLIENT_SMOKE]]. Это не поддержка нескольких клиентских сессий сервером.
+Текущий SV01 описан каталогом 20 команд и 12 сценариев с условиями отказа и семью диаграммами: [[engineering/PROTOCOL_SCENARIOS]]. Исправлен wire order конкурентных command callers в библиотеке; новый тест восьми отправителей/256 команд и полная регрессия 49/49 прошли: [[validation/CLIENT_SMOKE]]. Это не поддержка нескольких клиентских сессий сервером.
 
 | Работа | Свидетельство | Оставшееся ограничение |
 |---|---|---|
@@ -97,7 +99,7 @@ QQuickImageProvider заменяет проектный QQuickItem/QSGTexture. �
 
 Зафиксирована целевая модель [[architecture/CLIENT_SERVER_MODEL]]: server-owned config, несколько сессий, per-session view/subscriptions, intermediate products, optional final output и подробные pipeline spans. Это ещё не текущие capabilities. GUI перенесён в `examples/sv-client`, есть touch-oriented controls и server diagnostics; `svctl` предоставляет текущие операции без Qt. Installed consumer находится в `tests/fixtures/client-consumer`. `sv-simulator` — Qt 6 GUI с endpoint discovery, telemetry и keyboard-driven visual world; генерация live frames и calibration observations, а также редактор камер ещё не реализованы.
 
-`ConfigStore` атомарно хранит revisioned config; calibration jobs привязаны к control session, имеют validation gate, cancel/ownership, stale revision rejection и строят renderer до atomic persistence/apply. Пороговые значения 3 px RMSE / 8 px max предварительны и требуют физической серии. Это не typed ConfigService: общие read/update/validate/status API, frame-boundary transaction и idempotent retry остаются открытыми. Сервер односессионный, публикует legacy final output; multi-session, per-session subscriptions/intermediate products и полный trace плановые. Полный список — в корневом TODO. Protobuf/C++20 не добавлены; причины и условия пересмотра — [[architecture/DECISIONS]].
+`ConfigStore` атомарно хранит revisioned config; calibration jobs привязаны к control session, имеют validation gate, cancel/ownership, stale revision rejection и строят renderer до atomic persistence/apply. Пороговые значения 3 px RMSE / 8 px max предварительны и требуют физической серии. Это не typed ConfigService: общие read/update/validate/status API, frame-boundary transaction и idempotent retry остаются открытыми. Сервер односессионный, публикует один выбранный продукт final_frame/render_support_v1; multi-session, per-session subscriptions/intermediate products и полный trace плановые. Полный список — в корневом TODO. Protobuf/C++20 не добавлены; причины и условия пересмотра — [[architecture/DECISIONS]].
 
 Результаты первого этапа: 14/14 Release и 10/10 CPU ASan/UBSan, Qt 5 build/offscreen smoke, CLI Unix/TCP и installed consumer — [[validation/CLIENT_RESTRUCTURE]].
 

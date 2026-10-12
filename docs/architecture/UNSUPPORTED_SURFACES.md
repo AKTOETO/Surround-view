@@ -1,6 +1,6 @@
 # Политика unsupported surfaces
 
-Статус: native local-support mask реализована и проверена по [[validation/RENDER_SUPPORT]]. Доставка через wire/typed client API и новая политика заполнения пока являются проектом. Обычный RGBA и существующий wire contract сохранены.
+Статус: native local-support mask реализована ([[validation/RENDER_SUPPORT]]), доставка одного выбранного продукта через wire/typed client API реализована ([[validation/OUTPUT_PRODUCTS]]). Новая политика заполнения и parallel subscriptions пока являются проектом. Обычный RGBA и существующий wire contract сохранены.
 
 ## Что существует
 
@@ -18,41 +18,35 @@ Server shader использует camera eligibility и веса fusion. При
 
 `RenderInspectionRequest::support=true` возвращает `RenderInspection::support` в том же вызове renderer, что final RGBA. Формат `render_support_v1`: top-left CV_8UC4, R — число eligible cameras, G — число положительных локальных весов, B — фактически выбранная ветка output, A — признак raster geometry. Коды и ограничения: [[engineering/RENDERING#Native маска локальной поддержки]]. Запрос разрешён только для `diagnostic=color`; ego/background получают нулевые counts. Hybrid использует actual post-smoothing base weights и отдельные path codes. Это не scene visibility, не confidence и не effective multiband support.
 
-Known-answer и RGBA parity проверены для семи алгоритмов на Mesa/NVIDIA. Отдельные controls различают zero weights, hard selection и fallback threshold. Путь маски не требует capture всех signed bands. Исторические frozen collectors/plans не менялись. Следующий этап — доставка в серверную сессию и библиотеку, с проверкой identities, limits и отказов.
+Known-answer и RGBA parity проверены для семи алгоритмов на Mesa/NVIDIA. Отдельные controls различают zero weights, hard selection и fallback threshold. Путь маски не требует capture всех signed bands. Исторические frozen collectors/plans не менялись. Сетевой этап выполнен с проверкой identities, limits и отказов: [[validation/OUTPUT_PRODUCTS]].
 
-## Предлагаемый сетевой этап
+## Реализованный сетевой этап
 
-Передавать native маску как явно рекламируемый diagnostic product через server и sv-client-lib, с форматом, размерами, frame/input/config identifiers и правилами unsupported capability. Native кодирование зафиксировано; имена сетевых команд, подписки и wire framing ещё не реализованы. Client сможет показывать unsupported region отдельным стилем, а исследования — считать его без сегментации fallback RGB. Отдельно учитывать ego/background/carrier policy и отмену final-frame subscription; существующий протокол пока не реализует эту схему.
+HELLO объявляет output_selection_v1/render_support_v1. Client::output_catalog() получает read-only contract; Client::configure_output(OutputProduct::RenderSupport) выбирает маску вместо обычного кадра. Общий type11 несёт integer RGBA8, schema и прежнюю frame/config/input identity; RenderSupportView сохраняет owning Message без копирования payload. Release type22 и bounded slot сохраняются. Native render по-прежнему вычисляет обычный кадр, но отправляется только выбранный продукт. Подробная последовательность: [[engineering/PROTOCOL_SCENARIOS#С12. Выбор и получение local-support mask]].
+
+Selection временная, привязана к data generation и сбрасывается при новом attachment. Старый prepared/queued продукт не публикуется в новую generation. После ACK возможен прежний in-flight пакет: его нужно release-ить и ожидать нужные output_product/state_revision. Пока lease не idle, configure_output запрещён: selector не входит в lease snapshot. Non-color diagnostic несовместим с mask и отклоняется до mutation. Конфиг на диске не меняется. Linux profile по-прежнему имеет одну активную control/data pair.
 
 ```plantuml
 @startuml
-participant "sv-server renderer" as Render
-participant "sv-server session
-(proposed diagnostics)" as Server
-participant "sv-client-lib
-(proposed typed products)" as Lib
-participant "example client" as Client
-Client -> Lib: subscribe requested diagnostic products
-Lib -> Server: capability-checked request
-Server -> Render: render with support export
-Render --> Server: RGBA + eligibility + positive support
-shared frame/config/input identity
-Server --> Lib: requested products / explicit unsupported error
-Lib --> Client: typed data with provenance
-Client -> Client: display fallback as unsupported
-separately from observed image
-note over Server,Client
-This sequence is a proposed extension.
-Existing coverage view replaces color;
-parallel typed products are not implemented.
+component "Example client" as Client
+component "sv-client-lib\nRenderSupportView" as Lib
+component "sv-server\nproduct selection" as Server
+component "Native renderer\nRGBA + local support" as Render
+Client --> Lib : typed API / owning Message
+Lib <--> Server : SV01 Unix/TCP\ncommands, selected product, release
+Server --> Render : support opt-in, color view
+Render --> Server : same-render mask + timing
+note bottom of Server
+One selected product; generation-bound publication.
+Parallel products / multiple active clients remain pending.
 end note
 @enduml
 ```
 
-Рисунок — Предлагаемая доставка support diagnostics; наличие диаграммы не означает реализованного протокола.
+Рисунок — Реализованный путь локальной поддержки. GUI palette и одновременные subscriptions ещё не реализованы.
 
 ## Проверки до включения
 
-Native known-answer проверки no-input, projection invalid, eligible-but-zero-weight, positive support, ego/background и RGBA parity выполнены; supplied-box predicate использует ту же функцию проекции shader. Расширить matched captures на occlusion/geometry perturbations и измерить overhead при исследовательских разрешениях. Для wire ещё нужны форматы/limits/revision identity, typed library acceptance/rejection и сценарий восстановления настроек. Никакой pixel mask без source-depth evidence не называть truth observability. Для новых reconstruction/temporal policies нужны отдельные capabilities, data provenance, invalidation/history tests и независимые scene/pose controls.
+Native known-answer проверки no-input, projection invalid, eligible-but-zero-weight, positive support, ego/background и RGBA parity выполнены; supplied-box predicate использует ту же функцию проекции shader. Расширить matched captures на occlusion/geometry perturbations и измерить overhead при исследовательских разрешениях. Wire форматы/limits/revision identity, typed library acceptance/rejection, native/wire parity семи алгоритмов, восстановление final_frame и reconnect проверены на Mesa/NVIDIA. Дальше нужны matched geometry/occlusion matrix, GUI palette/selector и отдельный overhead benchmark. Никакой pixel mask без source-depth evidence не называть truth observability. Для новых reconstruction/temporal policies нужны отдельные capabilities, data provenance, invalidation/history tests и независимые scene/pose controls.
 
-Для multiband signed/nonlocal contributions локальный positive base weight не равен поддержке конечного pixel: требуется отдельное определение effective support по уровням/доменам и соответствующие oracle tests. Предлагаемая base-weight mask должна называться и интерпретироваться именно как локальная маска; переносить на неё semantic confidence или финальную observed validity всех алгоритмов нельзя. Audit §4.78 относится к edge_feather, не устанавливает это определение для hybrid paths.
+Для multiband signed/nonlocal contributions локальный positive base weight не равен поддержке конечного pixel: требуется отдельное определение effective support по уровням/доменам и соответствующие oracle tests. Реализованная base-weight mask должна называться и интерпретироваться именно как локальная маска; переносить на неё semantic confidence или финальную observed validity всех алгоритмов нельзя. Audit §4.78 относится к edge_feather, не устанавливает это определение для hybrid paths.

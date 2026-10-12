@@ -1103,3 +1103,33 @@ The mode is selected through existing `Client::configure_surface` with the whole
 `source_occlusion_box.support_tolerance_m` is optional and valid only with `mode=bilinear_box_surface_v1`: finite value in[0,0.05]m, default0.00001m. It changes support membership alone; it does not expand the occluder, alter `tolerance_m`, remove central-ray rejection or change neighbor inset. A larger band explicitly assumes more geometry uncertainty and can exempt incorrect surfaces. The old fixed-band catalog key is replaced by the default/range keys. Omitted field preserves previous pixels; other modes reject the field to avoid silent no-op configuration. Apply and restore via existing full-surface `Client::configure_surface` and revision checks.
 
 76-condition sensitivity и команды повторения: [[validation/VISIBILITY_SENSITIVITY]]. Nominal support_tolerance_m=0.001/tolerance_m=0.02/guard1 сохраняет76/76 и69/69, но robustness к±5mm Z bounds error не подтверждена. Это developmental profile, default center не изменён.
+
+
+## Диагностика локальной поддержки через сервер
+
+После подготовки и запуска фотографической улицы командами выше можно получить маску из того же renderer через C++ клиентскую библиотеку:
+
+```sh
+build/sv-client-probe --unix /tmp/sv-street --frames 1 --support
+# Для сервера с явно настроенными TCP listeners:
+build/sv-client-probe --tcp 127.0.0.1 47000 47001 --frames 1 --support
+```
+
+probe — пример/проверочный consumer sv-client-lib: запрашивает catalog, выбирает render_support_v1, release-ит прежние in-flight кадры и выводит JSON headers с eligible_pixels/positive_local_weight_pixels. Это counts по raster, не число независимо наблюдаемых scene points. В текущем профиле одна активная control/data pair; использовать probe как текущий клиент сервера. Требуется color diagnostic и idle experiment lease. После отключения probe новое подключение снова получает final_frame. GUI selector/palette пока не добавлены.
+
+В собственном клиенте после ready и проверки HELLO capabilities:
+
+```cpp
+client.output_catalog();
+const auto command_id = client.configure_output(sv::client::OutputProduct::RenderSupport);
+// Wait for accepted ACK and then matching product/state_revision; release old frames.
+// For a delivered owning shared_ptr<const sv::Message> named message:
+sv::client::RenderSupportView mask(message);
+const auto pixel = mask.at(0, 0); // bounds checked; counts/path/geometry
+client.release(mask.message().header);
+// mask keeps the immutable payload alive even after release.
+// To return to color on the same connection:
+client.configure_output(sv::client::OutputProduct::FinalFrame);
+```
+
+Integer RGBA channels нельзя напрямую показывать как фотографию. Использовать палитру по path/counts, отдельно выделять ego/background. Маска не является confidence, scene visibility или полным multiband contribution. Формат, ограничения и handling ошибок: [[engineering/PROTOCOL_IMPLEMENTED#Выбор data product: output_selection_v1 / render_support_v1]], проверки: [[validation/OUTPUT_PRODUCTS]].

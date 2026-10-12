@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-13",
+  "scope": "wire_local_support_contract_not_scene_quality",
+  "implementation_commit": "040beda2fc428ec21c70b2fc52b87ae198352266",
+  "build_source_revision": "80a4ee699158e8f9679317584c3f866b540dae15",
+  "source_fingerprint": "7f020ba67fa8c10c8d779e886f8f26579bfc2d4910de4d7255742cfc221c25aa",
+  "built_from_modified_tree": true,
+  "mesa_full_ctest": {
+    "passed": 55,
+    "failed": 0,
+    "wall_seconds": 28.02,
+    "log_sha256": "812df7361f98d9e1f7af31a6827aa7f8d4704b2bc5d119de2ad93c0194e4d599"
+  },
+  "nvidia_integrations": {
+    "passed": 3,
+    "failed": 0,
+    "wall_seconds": 3.555,
+    "command": "__EGL_VENDOR_LIBRARY_FILENAMES=/usr/share/glvnd/egl_vendor.d/10_nvidia.json EGL_PLATFORM=surfaceless python3 tests/test_output_products.py build configs/synthetic.json"
+  },
+  "cpu_client_output": {
+    "passed_ctest": 1,
+    "gtest_cases": 5,
+    "log_sha256": "941ee05109ee967524d064d99154a968f59156b4ecea196a6a1d3dc057435f9d",
+    "opencv_or_qt_link_dependency": false
+  },
+  "native_wire_parity": {
+    "algorithms": [
+      "edge_feather",
+      "angular_feather",
+      "hard_best_angle",
+      "seam_distance_feather",
+      "graph_cut_seam",
+      "multi_band",
+      "graph_cut_multi_band"
+    ],
+    "width": 96,
+    "height": 64,
+    "frames": 1,
+    "byte_exact": true,
+    "pyramid_boundary": "zero",
+    "scene_quality_oracle": false
+  },
+  "transport_tests": [
+    "Unix",
+    "TCP_loopback"
+  ],
+  "pending_reconnect_cycles_per_run": 10,
+  "test_sources_sha256": {
+    "tests/test_output_products.py": "909a0bb45c8ce89d12710eec5e5733d9e9b4ad9a3906b3f8f03acc465143ff48",
+    "tests/client_output_tests.cpp": "0841d5a89749427f8fb9b05df047c6ff83d7b27baf437d3b4d05f393d2995022",
+    "tests/support_wire_probe.cpp": "247fadb63d031966ef84309014c27a9296523264996afc3d0c6f63b812b99bb2",
+    "tests/fixtures/client-consumer/main.cpp": "e47fe87de44cc500c2c54b958223ceb78f246207b2d766e34b47e1dbe15cdd54",
+    "tests/experiment_lease_tests.cpp": "42ea3496930ffec48c4468273dc1daf9a536ea8a2113bdab059dac1e39bb2ea8"
+  },
+  "binaries_sha256": {
+    "build/sv-server": "c9487bb6f12788047a35c0669a428a625984432b096a064c8c486047677c8ea3",
+    "build/sv-client-probe": "966b7ca0094bc148466d3e64b1e759c1258d7d7bb0160155430392fe6a98bde1",
+    "build/sv-support-wire-probe": "537fe597fcd184ae6653f7594efd72ff8a989648cdabf2a6dfb8ba389bcbed40",
+    "build/sv-client-output-tests": "f1a095d3dc78d669fb447489dc7739167ca999425eb0ce5134bc73fa8347c4c9"
+  },
+  "parallel_products": false,
+  "multiple_active_client_pairs": false,
+  "gui_palette": false
+}

@@ -237,7 +237,7 @@ The mode is selected through existing `Client::configure_surface` with the whole
 
 ### Native маска локальной поддержки
 
-`RenderInspectionRequest::support=true` возвращает `RenderInspection::support` (`render_support_v1`). Это опциональный результат C++ renderer; сервер пока не экспортирует его по SV01 и `sv-client-lib` не объявляет соответствующую capability. Пример вызова:
+`RenderInspectionRequest::support=true` возвращает `RenderInspection::support` (`render_support_v1`). Это опциональный результат C++ renderer; его сетевой экспорт реализован через output_selection_v1/render_support_v1 и типизированный sv-client-lib: [[validation/OUTPUT_PRODUCTS]]. Пример вызова:
 
 ```cpp
 sv::RenderInspection diagnostic;
@@ -260,6 +260,8 @@ const cv::Mat &mask = diagnostic.support;
 
 GLES проход использует тот же `source_projection` и формулы весов, что normal render, с отключённым dithering; RGB samples не считываются. Для weighted GPU modes G считает строго положительные веса **до** проверки суммы `>1e-6`. Поэтому G>0 ещё допускает B=gpu_fallback. Hard mode выбирает одну eligible камеру и при нулевом angle score. Hybrid counts берутся из actual sample validity и `FusionResult::blend_weights` после seam smoothing, до pyramid reduction; `weights` остаются прежними decision weights. Hybrid composition выбирает fusion по eligibility count, поэтому B=hybrid_fusion допустим при G=0. B описывает фактическую ветку, не гарантированную поддержку цветом.
 
-Маска занимает 4 bytes/output pixel; hybrid временно хранит ещё 4 bytes/pixel для counts. Относительно существующей region inspection добавляется один RGBA8 pass/readback; запрос только support всё равно выполняет region pass, то есть всего два прохода после normal render. Readback требует временного RGBA8 буфера. Возвращаемые actual blend weights удерживают reference-counted 16 bytes/pixel уже вычисленной матрицы, без её копирования и без allocations signed bands. `RenderTiming::inspection_cpu_ms` измеряет geometry inspection/readbacks и merge; заполнение hybrid counts входит в `fusion_cpu_ms`. Это CPU wall time, не отдельный GPU timer; поле пока не передаётся сервером. Cost при полном resolution следует измерить отдельно.
+Маска занимает 4 bytes/output pixel; hybrid временно хранит ещё 4 bytes/pixel для counts. Относительно существующей region inspection добавляется один RGBA8 pass/readback; запрос только support всё равно выполняет region pass, то есть всего два прохода после normal render. Readback требует временного RGBA8 буфера. Возвращаемые actual blend weights удерживают reference-counted 16 bytes/pixel уже вычисленной матрицы, без её копирования и без allocations signed bands. `RenderTiming::inspection_cpu_ms` измеряет geometry inspection/readbacks и merge; заполнение hybrid counts входит в `fusion_cpu_ms`. Это CPU wall time, не отдельный GPU timer; поле передаётся в header выбранного support product. Cost при полном resolution следует измерить отдельно.
+
+При support-only capture текущий hybrid RenderInspection также удерживает samples/ego и копию fallback_rgba; приведённые 4 bytes/pixel относятся к самой маске, а не ко всему inspection или пиковому RSS. Эти затраты следует включить в overhead benchmark.
 
 Ни R, ни G не являются scene observability/correspondence. Для multiband локальные base weights не описывают spatial/signed contribution конечного пикселя. Формат не меняет fallback policy и не объявляет reconstruction наблюдением. Known-answer проверки и команды: [[validation/RENDER_SUPPORT]].
