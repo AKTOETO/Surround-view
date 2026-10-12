@@ -4,6 +4,7 @@ import numpy as np
 from PIL import Image
 
 from source_correspondence import sha,verified,load_product,describe
+from source_correspondence_controls import transform_points
 
 
 def chroma_mask(rgb, threshold=.15):
@@ -38,6 +39,7 @@ def collect(root,plan_path):
     scene=json.loads(scene_path.read_text())
     if scene['plan_sha256']!=sha(plan_path):raise ValueError('scene plan differs')
     verified(root/'tools/blender/displaced_correspondence.py',scene['helper_sha256'])
+    archived=json.loads((root/plan['input_root']/'seed101-capture/paired_truth.json').read_text())
     rows=[]
     for record in scene['records']:
         frame,carrier=record['frame_index'],record['carrier']
@@ -46,6 +48,10 @@ def collect(root,plan_path):
         if metadata['frame_index']!=frame or not metadata['normal_output_unchanged']:
             raise ValueError('native capture differs')
         products={p['file']:load_product(native,p) for p in metadata['products']}
+        fusion=metadata['config'].get('fusion',{})
+        if fusion.get('mode','edge_feather')!='edge_feather' or fusion.get('diagnostic','color')!='color':
+            raise ValueError('edge_feather color fixture required')
+        width=fusion.get('edge_width_px',24) # Native Fusion default for the frozen binary.
         rgb=products['output.rgba'][...,:3]
         selected=chroma_mask(rgb,plan['chroma_threshold'])
         directory=output/f'frame{frame}'/carrier
@@ -67,7 +73,6 @@ def collect(root,plan_path):
             colors[valid,i]=bilinear_rgb(image,pixels)
             edge=np.minimum(np.minimum(pixels[:,0],pixels[:,1]),
                             np.minimum(image.shape[1]-1-pixels[:,0],image.shape[0]-1-pixels[:,1]))
-            width=metadata['config']['fusion']['edge_width_px']
             weights[valid,i]=np.clip(edge/width,0,1)
         total=weights.sum(axis=1)
         if np.any(total<=1e-6):raise ValueError('chroma proxy has no weighted sample')
@@ -77,6 +82,19 @@ def collect(root,plan_path):
         source_target=(kinds==1)&(status==1)
         target_mass=(weights*source_target).sum(axis=1)
         hits=arrays['source-hits.npy'];direct=arrays['virtual-points.npy']
+        ego=np.asarray(archived['frames'][frame]['T_world_from_vehicle'])
+        carrier_points=transform_points(ego,products['carrier-positions.f32'][y,x])
+        blocked=np.zeros(status.shape,bool);occlusion_gap=[];ray_residual=[]
+        for i,camera in enumerate(metadata['config']['cameras']):
+            chosen=source_target[:,i]
+            pose=ego@np.linalg.inv(camera['T_camera_from_vehicle'])
+            origin=pose[:3,3];to_carrier=carrier_points[chosen]-origin
+            to_hit=hits[chosen,i]-origin
+            length=np.linalg.norm(to_carrier,axis=-1);along=np.sum(to_hit*to_carrier,axis=-1)/length
+            gap=length-along;occlusion_gap.extend(gap)
+            ray_residual.extend(np.linalg.norm(to_hit-to_carrier*(along/length)[:,None],axis=-1))
+            blocked[chosen,i]=gap>0
+
         distances=np.linalg.norm(hits-direct[:,None,:],axis=-1)
         same=(kinds==virtual_kinds[:,None])&(status==1)&(kinds!=0)
         matched=same&(distances<=plan['surface_match_tolerance_m'])
@@ -91,12 +109,17 @@ def collect(root,plan_path):
                        'target_ray_weight_mass':describe(target_mass[roi]),
                        'surface_match_weight_mass':describe(near_match[roi]),
                        'source_target_to_virtual_distance_m':describe(distances[roi][source_target[roi]]),
+                       'target_hits_before_carrier':int(blocked[roi].sum()),
+                       'target_pairs_by_camera':[int(source_target[roi,i].sum()) for i in range(4)],
                        'bilinear_rgb_reconstruction_abs_lsb':describe(error[roi].ravel())}
         rows.append({'frame_index':frame,'carrier':carrier,'native_report_sha256':record['native_report_sha256'],
                      'scene_record':record,'proxy_pixels':len(y),'expected_target_overlap_pixels':int((~displaced).sum()),
-                     'device':metadata['device'],'output_sha256':sha(native/'output.rgba'),'rois':sub})
+                     'device':metadata['device'],'output_sha256':sha(native/'output.rgba'),
+                     'target_hit_before_carrier_gap_m':describe(occlusion_gap),
+                     'target_hit_to_carrier_ray_residual_m':describe(ray_residual),'rois':sub})
     expected=[(f,c) for f in plan['frames'] for c in plan['carriers']]
     if [(r['frame_index'],r['carrier']) for r in rows]!=expected:raise ValueError('capture cases differ')
     return {'schema_version':1,'scope':plan['scope'],'plan_sha256':sha(plan_path),'collector_sha256':sha(__file__),
             'helper_sha256':scene['helper_sha256'],'scene_truth_sha256':sha(scene_path),'blender_version':scene['blender_version'],
-            'binary_sha256':plan['binary_sha256'],'rows':rows,'limitations':plan['limitations']}
+            'binary_sha256':plan['binary_sha256'],
+            'native_default_definition_sha256':sha(root/'include/sv/config.hpp'),'native_default_edge_width_px':24,'rows':rows,'limitations':plan['limitations']}
