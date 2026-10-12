@@ -32,7 +32,9 @@ def main():
     axes[1].plot(x,[r['backends'][0]['uniform_rounding_only_uv_px']['max'] for r in rows],'^:',color='#438632',label='Float32 MVP rounding only')
     for ax,label in zip(axes,['Max source-to-plane gap / mm','Max source UV gap / px','Max output reprojection gap / px']):
         ax.set_yscale('log');ax.set_xticks(x,labels,fontsize=8);ax.set_ylabel(label);ax.grid(axis='y',alpha=.3);ax.legend(fontsize=7)
-    fig.suptitle('Same archived binary / inputs; exact floor ROI; double analytical plane oracle\n8/8 Mesa and 5/8 NVIDIA strict pass; no RGB quality or timing ranking')
+    passes=[sum(r['backends'][i]['strict_pass'] for r in rows) for i in range(2)]
+    fig.suptitle('Same archived binary / inputs; exact floor ROI; double analytical plane oracle\n'
+                 f'{passes[1]}/{len(rows)} Mesa and {passes[0]}/{len(rows)} NVIDIA strict pass; no RGB quality or timing ranking')
     fig.tight_layout(rect=(0,0,1,.88));args.figures.mkdir(parents=True,exist_ok=True)
     fig.savefig(args.figures/'planar_precision_backends.png',dpi=150);plt.close(fig)
 

@@ -1,0 +1,1337 @@
+{
+  "schema_version": 1,
+  "scope": "paired_backend_planar_precision_and_uniform_rounding_partial_model",
+  "plan_sha256": "c94324ca178b8290ac2edffc93f23777ae7e87272577eeb011357a1cba44fb90",
+  "collector_sha256": "a22bcc8ab59d9313a8b488bfeae0f916a66807e954c8e0cee6ac2f00eeec361f",
+  "binary_sha256": "d9f3349d5a03dfbace41615ac07b609d37bfacd2a4d94def0e79b008bf59f115",
+  "invocations_sha256": "bfe7c29d6f9cd4beb13f39593dd0359b1cb70474dc5f0a80f695c9e1ff5abe4e",
+  "rows": [
+    {
+      "frame_index": 0,
+      "carrier": "plane",
+      "pixels": 166,
+      "planar_geometry_required": true,
+      "source_validity_equal": true,
+      "rgba_hash_equal": false,
+      "paired_carrier_distance_m": {
+        "min": 1.635558328416664e-05,
+        "p50": 4.9984380893874913e-05,
+        "max": 7.839332101866603e-05
+      },
+      "mvp_rounding_only_plane_m": {
+        "min": 4.339498186529179e-08,
+        "p50": 5.0974565595730794e-08,
+        "max": 5.8195089292657974e-08
+      },
+      "T_world_from_vehicle": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "backends": [
+        {
+          "backend": "nvidia",
+          "device": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+          "report_sha256": "9d2b6e9418fad4c22d89e2292baed9b0941df00c6ad8b49065b5df19ae6440af",
+          "normal_rgba_sha256": "557cab335ad33bb0b7549ccace13f5f7ddf7913968d07d4b381962fd19ef4954",
+          "valid_pairs": 249,
+          "strict_pass": true,
+          "carrier_to_ideal_plane_m": {
+            "min": 1.6552440273434247e-05,
+            "p50": 5.025453647764897e-05,
+            "max": 7.790963907284983e-05
+          },
+          "source_to_ideal_plane_m": {
+            "min": 1.7176841379945455e-05,
+            "p50": 5.086598825975048e-05,
+            "max": 7.797708942094953e-05
+          },
+          "correct_vs_native_uv_px": {
+            "min": 0.0015732754741404936,
+            "p50": 0.004908179044289925,
+            "max": 0.007406853232140793
+          },
+          "optical_residual_px": {
+            "min": 1.5282043279725022e-06,
+            "p50": 2.599470003567871e-05,
+            "max": 7.428675143875155e-05
+          },
+          "native_output_reprojection_px": {
+            "min": 0.0003984354609398122,
+            "p50": 0.0010889599103306793,
+            "max": 0.0018793567269706408
+          },
+          "rounded_mvp_output_reprojection_px": {
+            "min": 0.0003989474029599752,
+            "p50": 0.0010890184088474262,
+            "max": 0.001879493789718057
+          },
+          "uniform_rounding_only_uv_px": {
+            "min": 3.1034020659767175e-06,
+            "p50": 3.6889348150835066e-06,
+            "max": 5.062125398261971e-06
+          }
+        },
+        {
+          "backend": "mesa",
+          "device": "llvmpipe (LLVM 22.1.8, 256 bits)",
+          "report_sha256": "7c0d3e069ab9e7996b016bfb52334492681d418d82fdca141e0498166c0e9a1d",
+          "normal_rgba_sha256": "66492c58457e6ad0621f89bb60a2ab3971a7703387d4a909606a73ae5743d0aa",
+          "valid_pairs": 249,
+          "strict_pass": true,
+          "carrier_to_ideal_plane_m": {
+            "min": 5.778704579776827e-08,
+            "p50": 6.200142560734474e-07,
+            "max": 1.9181144916177056e-06
+          },
+          "source_to_ideal_plane_m": {
+            "min": 2.1111831004497084e-07,
+            "p50": 3.0329175950363663e-06,
+            "max": 5.230030861582657e-06
+          },
+          "correct_vs_native_uv_px": {
+            "min": 1.4579717196603439e-05,
+            "p50": 0.00030945617088692055,
+            "max": 0.0005883348976604515
+          },
+          "optical_residual_px": {
+            "min": 9.972735698173142e-06,
+            "p50": 0.0003036303798987179,
+            "max": 0.00045768421967058937
+          },
+          "native_output_reprojection_px": {
+            "min": 1.1431034423723194e-06,
+            "p50": 1.3636916738367662e-05,
+            "max": 3.971086514478667e-05
+          },
+          "rounded_mvp_output_reprojection_px": {
+            "min": 7.777975717545253e-07,
+            "p50": 1.3722266896182628e-05,
+            "max": 3.998857772686915e-05
+          },
+          "uniform_rounding_only_uv_px": {
+            "min": 3.1034020659767175e-06,
+            "p50": 3.6889348150835066e-06,
+            "max": 5.062125398261971e-06
+          }
+        }
+      ]
+    },
+    {
+      "frame_index": 0,
+      "carrier": "bowl",
+      "pixels": 166,
+      "planar_geometry_required": false,
+      "source_validity_equal": true,
+      "rgba_hash_equal": false,
+      "paired_carrier_distance_m": {
+        "min": 1.7358634067932144e-06,
+        "p50": 4.6599590859841555e-05,
+        "max": 8.240659371949732e-05
+      },
+      "mvp_rounding_only_plane_m": {
+        "min": 4.339498186529179e-08,
+        "p50": 5.0974565595730794e-08,
+        "max": 5.8195089292657974e-08
+      },
+      "T_world_from_vehicle": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "backends": [
+        {
+          "backend": "nvidia",
+          "device": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+          "report_sha256": "9e760f5a786a04a711bae06c05fe88fe35e38b2d0ac4149bd692a3a0c63b460d",
+          "normal_rgba_sha256": "fc0bde6b740021a3fe1bfa98b35ecbf651e50a10be6c488c31a2225599495e74",
+          "valid_pairs": 249,
+          "strict_pass": false,
+          "carrier_to_ideal_plane_m": {
+            "min": 0.0030145236051583365,
+            "p50": 0.005820782752648134,
+            "max": 0.010885894424133478
+          },
+          "source_to_ideal_plane_m": {
+            "min": 0.005695646340770226,
+            "p50": 0.013305154819101493,
+            "max": 0.029196199353623775
+          },
+          "correct_vs_native_uv_px": {
+            "min": 0.40228686586562007,
+            "p50": 0.8043083744414015,
+            "max": 1.4884049903686107
+          },
+          "optical_residual_px": {
+            "min": 2.0173480606656366e-06,
+            "p50": 2.5302142870102887e-05,
+            "max": 7.821980384136637e-05
+          },
+          "native_output_reprojection_px": {
+            "min": 3.81222403557668e-05,
+            "p50": 0.001024398170187416,
+            "max": 0.001628364248463177
+          },
+          "rounded_mvp_output_reprojection_px": {
+            "min": 3.762596806422646e-05,
+            "p50": 0.0010239244788787976,
+            "max": 0.0016275295419239343
+          },
+          "uniform_rounding_only_uv_px": {
+            "min": 3.1034020659767175e-06,
+            "p50": 3.6889348150835066e-06,
+            "max": 5.062125398261971e-06
+          }
+        },
+        {
+          "backend": "mesa",
+          "device": "llvmpipe (LLVM 22.1.8, 256 bits)",
+          "report_sha256": "91e32d7e0d2c3bf6adfb4930d863d6288cab7631d8546e63af30dfcb46498543",
+          "normal_rgba_sha256": "c7e55615c9810665b697d1cde144ad47131d1c261cb777a30779b2bd7b37333f",
+          "valid_pairs": 249,
+          "strict_pass": false,
+          "carrier_to_ideal_plane_m": {
+            "min": 0.0030143061301745005,
+            "p50": 0.005851296512065265,
+            "max": 0.010866361820329082
+          },
+          "source_to_ideal_plane_m": {
+            "min": 0.005688056166244588,
+            "p50": 0.013328590243520039,
+            "max": 0.029183637152725418
+          },
+          "correct_vs_native_uv_px": {
+            "min": 0.40199355092951466,
+            "p50": 0.8063455666080105,
+            "max": 1.4872795143472566
+          },
+          "optical_residual_px": {
+            "min": 4.2609110872622755e-06,
+            "p50": 0.0003038966524763166,
+            "max": 0.00045401374305776605
+          },
+          "native_output_reprojection_px": {
+            "min": 1.7286414439318575e-06,
+            "p50": 1.9963293657591847e-05,
+            "max": 5.26700636555755e-05
+          },
+          "rounded_mvp_output_reprojection_px": {
+            "min": 1.9782651257743632e-06,
+            "p50": 2.0447248274173914e-05,
+            "max": 5.306667408621466e-05
+          },
+          "uniform_rounding_only_uv_px": {
+            "min": 3.1034020659767175e-06,
+            "p50": 3.6889348150835066e-06,
+            "max": 5.062125398261971e-06
+          }
+        }
+      ]
+    },
+    {
+      "frame_index": 0,
+      "carrier": "dome_floor",
+      "pixels": 166,
+      "planar_geometry_required": true,
+      "source_validity_equal": true,
+      "rgba_hash_equal": false,
+      "paired_carrier_distance_m": {
+        "min": 1.633167266845703e-05,
+        "p50": 5.351516119844746e-05,
+        "max": 8.298199827549979e-05
+      },
+      "mvp_rounding_only_plane_m": {
+        "min": 4.339498186529179e-08,
+        "p50": 5.0974565595730794e-08,
+        "max": 5.8195089292657974e-08
+      },
+      "T_world_from_vehicle": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "backends": [
+        {
+          "backend": "nvidia",
+          "device": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+          "report_sha256": "98c6359d8cc403a88658fd02f0ac6c3a0f9eb14df9509d5f126be2ebd14db423",
+          "normal_rgba_sha256": "d5a385bd6119fa368c48ae1903ecd32878c941989ca309134c0b3c066f80d0aa",
+          "valid_pairs": 249,
+          "strict_pass": false,
+          "carrier_to_ideal_plane_m": {
+            "min": 1.6785692044476452e-05,
+            "p50": 5.3401874327300995e-05,
+            "max": 8.267845410484689e-05
+          },
+          "source_to_ideal_plane_m": {
+            "min": 1.696482140654715e-05,
+            "p50": 5.515056500762399e-05,
+            "max": 8.251855066196099e-05
+          },
+          "correct_vs_native_uv_px": {
+            "min": 0.0020643343349428297,
+            "p50": 0.0041881133354439055,
+            "max": 0.01015916600430641
+          },
+          "optical_residual_px": {
+            "min": 1.435728192825992e-06,
+            "p50": 2.5089499584879033e-05,
+            "max": 7.557514378777122e-05
+          },
+          "native_output_reprojection_px": {
+            "min": 0.0003762612448769205,
+            "p50": 0.001063621521124485,
+            "max": 0.0018036734786566883
+          },
+          "rounded_mvp_output_reprojection_px": {
+            "min": 0.0003764949383760499,
+            "p50": 0.0010635744484270532,
+            "max": 0.0018040944311794912
+          },
+          "uniform_rounding_only_uv_px": {
+            "min": 3.1034020659767175e-06,
+            "p50": 3.6889348150835066e-06,
+            "max": 5.062125398261971e-06
+          }
+        },
+        {
+          "backend": "mesa",
+          "device": "llvmpipe (LLVM 22.1.8, 256 bits)",
+          "report_sha256": "fd679f49824ba5983185121ffc0129f369a9f151418389d7ef79337cdd5ecf3f",
+          "normal_rgba_sha256": "8b98fb44a9a954f8e27207875ca84615fc9c6290197cdafca4fe749e5a096114",
+          "valid_pairs": 249,
+          "strict_pass": true,
+          "carrier_to_ideal_plane_m": {
+            "min": 4.345206004336086e-08,
+            "p50": 5.783054644807811e-07,
+            "max": 1.384318137554911e-06
+          },
+          "source_to_ideal_plane_m": {
+            "min": 2.2381352836872565e-07,
+            "p50": 2.8566304091712514e-06,
+            "max": 4.554959936435135e-06
+          },
+          "correct_vs_native_uv_px": {
+            "min": 1.5097928662622492e-05,
+            "p50": 0.00027873805849922673,
+            "max": 0.0005053449263505552
+          },
+          "optical_residual_px": {
+            "min": 7.112526292855156e-06,
+            "p50": 0.0003001187811991406,
+            "max": 0.0004313052954619332
+          },
+          "native_output_reprojection_px": {
+            "min": 8.711004915496931e-07,
+            "p50": 1.1923294285482651e-05,
+            "max": 3.323873946283728e-05
+          },
+          "rounded_mvp_output_reprojection_px": {
+            "min": 6.599143846371908e-07,
+            "p50": 1.2153673759390612e-05,
+            "max": 3.3071800333335035e-05
+          },
+          "uniform_rounding_only_uv_px": {
+            "min": 3.1034020659767175e-06,
+            "p50": 3.6889348150835066e-06,
+            "max": 5.062125398261971e-06
+          }
+        }
+      ]
+    },
+    {
+      "frame_index": 0,
+      "carrier": "cylinder_floor",
+      "pixels": 166,
+      "planar_geometry_required": true,
+      "source_validity_equal": true,
+      "rgba_hash_equal": false,
+      "paired_carrier_distance_m": {
+        "min": 4.5112170482752845e-05,
+        "p50": 6.744596612406895e-05,
+        "max": 8.884931594366208e-05
+      },
+      "mvp_rounding_only_plane_m": {
+        "min": 4.339498186529179e-08,
+        "p50": 5.0974565595730794e-08,
+        "max": 5.8195089292657974e-08
+      },
+      "T_world_from_vehicle": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "backends": [
+        {
+          "backend": "nvidia",
+          "device": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+          "report_sha256": "1ec410ac75e160dd9ea4c40c3d0993da5fcd69098c625c3291dc6cc698b8f366",
+          "normal_rgba_sha256": "ddecbd4335a607884a88371c091257183f954cb686f2e358ef40a14102f061dd",
+          "valid_pairs": 249,
+          "strict_pass": false,
+          "carrier_to_ideal_plane_m": {
+            "min": 4.5806889338490534e-05,
+            "p50": 6.713695714368395e-05,
+            "max": 8.833357825516175e-05
+          },
+          "source_to_ideal_plane_m": {
+            "min": 4.599295734071403e-05,
+            "p50": 6.679561938062017e-05,
+            "max": 8.847858918374646e-05
+          },
+          "correct_vs_native_uv_px": {
+            "min": 0.0023806820877224945,
+            "p50": 0.005324566694117433,
+            "max": 0.011142748759324174
+          },
+          "optical_residual_px": {
+            "min": 8.980724930827665e-07,
+            "p50": 2.4324948775472917e-05,
+            "max": 7.374272130361873e-05
+          },
+          "native_output_reprojection_px": {
+            "min": 0.0009574917839483745,
+            "p50": 0.0013522566976295202,
+            "max": 0.0018234468112268884
+          },
+          "rounded_mvp_output_reprojection_px": {
+            "min": 0.0009582419263052603,
+            "p50": 0.0013528676690030316,
+            "max": 0.0018239415037535624
+          },
+          "uniform_rounding_only_uv_px": {
+            "min": 3.1034020659767175e-06,
+            "p50": 3.6889348150835066e-06,
+            "max": 5.062125398261971e-06
+          }
+        },
+        {
+          "backend": "mesa",
+          "device": "llvmpipe (LLVM 22.1.8, 256 bits)",
+          "report_sha256": "73285557592dc64c0cfb742380c56fd3814523d3d792fb1b9563754c0d83676a",
+          "normal_rgba_sha256": "fb57542b7b9b63e46868b487bb609e6f686c095a2246c0e18c9b15ac688a19e6",
+          "valid_pairs": 249,
+          "strict_pass": true,
+          "carrier_to_ideal_plane_m": {
+            "min": 6.954928832724674e-08,
+            "p50": 5.669069325460419e-07,
+            "max": 1.584544059326502e-06
+          },
+          "source_to_ideal_plane_m": {
+            "min": 6.994479946589678e-08,
+            "p50": 3.012718362810374e-06,
+            "max": 5.3485645698186925e-06
+          },
+          "correct_vs_native_uv_px": {
+            "min": 6.396834111545707e-06,
+            "p50": 0.00031188001422200585,
+            "max": 0.000560392275370537
+          },
+          "optical_residual_px": {
+            "min": 1.16463345402642e-06,
+            "p50": 0.0002936829218482643,
+            "max": 0.0004487010263375932
+          },
+          "native_output_reprojection_px": {
+            "min": 1.5800302013468018e-06,
+            "p50": 1.2151846917156623e-05,
+            "max": 3.680468579944921e-05
+          },
+          "rounded_mvp_output_reprojection_px": {
+            "min": 1.9742312202102796e-06,
+            "p50": 1.2014759360603613e-05,
+            "max": 3.6985134396289784e-05
+          },
+          "uniform_rounding_only_uv_px": {
+            "min": 3.1034020659767175e-06,
+            "p50": 3.6889348150835066e-06,
+            "max": 5.062125398261971e-06
+          }
+        }
+      ]
+    },
+    {
+      "frame_index": 0,
+      "carrier": "cube_floor",
+      "pixels": 166,
+      "planar_geometry_required": true,
+      "source_validity_equal": true,
+      "rgba_hash_equal": false,
+      "paired_carrier_distance_m": {
+        "min": 3.440587533987127e-05,
+        "p50": 6.71593843435403e-05,
+        "max": 9.990876424126327e-05
+      },
+      "mvp_rounding_only_plane_m": {
+        "min": 4.339498186529179e-08,
+        "p50": 5.0974565595730794e-08,
+        "max": 5.8195089292657974e-08
+      },
+      "T_world_from_vehicle": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "backends": [
+        {
+          "backend": "nvidia",
+          "device": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+          "report_sha256": "35189eca2a8e144eb73cf775f2175a4c5c155548bcd36196dc3b1c31363b1f25",
+          "normal_rgba_sha256": "975c84fad160ed929fa90c9e56fd8a91ddc9f99510e618dfbe1e01156570bff7",
+          "valid_pairs": 249,
+          "strict_pass": false,
+          "carrier_to_ideal_plane_m": {
+            "min": 3.4737312577284046e-05,
+            "p50": 6.723130619129928e-05,
+            "max": 0.00010010355500090336
+          },
+          "source_to_ideal_plane_m": {
+            "min": 3.4624286374182634e-05,
+            "p50": 6.990990760938276e-05,
+            "max": 0.00010007202877502572
+          },
+          "correct_vs_native_uv_px": {
+            "min": 0.0021233097200945273,
+            "p50": 0.005096143613514892,
+            "max": 0.010461154877892469
+          },
+          "optical_residual_px": {
+            "min": 8.834718623866823e-07,
+            "p50": 2.5804310069881225e-05,
+            "max": 7.432077435997384e-05
+          },
+          "native_output_reprojection_px": {
+            "min": 0.0006177367148796168,
+            "p50": 0.001303243703481846,
+            "max": 0.0017750121391856156
+          },
+          "rounded_mvp_output_reprojection_px": {
+            "min": 0.0006186350773607585,
+            "p50": 0.0013041987047863347,
+            "max": 0.0017757670351316224
+          },
+          "uniform_rounding_only_uv_px": {
+            "min": 3.1034020659767175e-06,
+            "p50": 3.6889348150835066e-06,
+            "max": 5.062125398261971e-06
+          }
+        },
+        {
+          "backend": "mesa",
+          "device": "llvmpipe (LLVM 22.1.8, 256 bits)",
+          "report_sha256": "552101b905662c643e0746f7bdb078089961af258e4608edde6d723d736ed89b",
+          "normal_rgba_sha256": "bc9311610c64fdeb7ef05c1e18006f331eabd88e5e3c794985f7f11fd7ee9ab3",
+          "valid_pairs": 249,
+          "strict_pass": true,
+          "carrier_to_ideal_plane_m": {
+            "min": 4.078374900887636e-08,
+            "p50": 6.968579275098338e-07,
+            "max": 1.5348765299596369e-06
+          },
+          "source_to_ideal_plane_m": {
+            "min": 2.1111831004497084e-07,
+            "p50": 3.0309541595374353e-06,
+            "max": 5.073409282547039e-06
+          },
+          "correct_vs_native_uv_px": {
+            "min": 1.4579717196603439e-05,
+            "p50": 0.00030940895295268356,
+            "max": 0.000511805441643256
+          },
+          "optical_residual_px": {
+            "min": 4.868525290753178e-06,
+            "p50": 0.0003038193964954967,
+            "max": 0.00044218836901301214
+          },
+          "native_output_reprojection_px": {
+            "min": 8.931928326083201e-07,
+            "p50": 1.564271376603839e-05,
+            "max": 3.0397285774501167e-05
+          },
+          "rounded_mvp_output_reprojection_px": {
+            "min": 4.82684402479047e-07,
+            "p50": 1.6448971564480468e-05,
+            "max": 2.9598791145333202e-05
+          },
+          "uniform_rounding_only_uv_px": {
+            "min": 3.1034020659767175e-06,
+            "p50": 3.6889348150835066e-06,
+            "max": 5.062125398261971e-06
+          }
+        }
+      ]
+    },
+    {
+      "frame_index": 1,
+      "carrier": "plane",
+      "pixels": 161,
+      "planar_geometry_required": true,
+      "source_validity_equal": true,
+      "rgba_hash_equal": false,
+      "paired_carrier_distance_m": {
+        "min": 9.821572348300833e-06,
+        "p50": 4.4999414967605844e-05,
+        "max": 6.735778151778504e-05
+      },
+      "mvp_rounding_only_plane_m": {
+        "min": 4.2237090509304664e-08,
+        "p50": 5.0351943646240616e-08,
+        "max": 5.785133796646336e-08
+      },
+      "T_world_from_vehicle": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.4
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "backends": [
+        {
+          "backend": "nvidia",
+          "device": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+          "report_sha256": "81347976d439144c7ce9cc906b479ed979c20537e82e296b902313aecc6e2f1b",
+          "normal_rgba_sha256": "185caf40ca3e14d1196af235d0fd4f8630b4b485dcb09c91a3b7ae8e3e5d7653",
+          "valid_pairs": 161,
+          "strict_pass": true,
+          "carrier_to_ideal_plane_m": {
+            "min": 1.053300726702524e-05,
+            "p50": 4.5261117690347484e-05,
+            "max": 6.782265339439384e-05
+          },
+          "source_to_ideal_plane_m": {
+            "min": 1.030472213799583e-05,
+            "p50": 4.5278020276171214e-05,
+            "max": 6.770661902042847e-05
+          },
+          "correct_vs_native_uv_px": {
+            "min": 0.0012889303688954775,
+            "p50": 0.005129542942841819,
+            "max": 0.007458553380249752
+          },
+          "optical_residual_px": {
+            "min": 1.5282043279725022e-06,
+            "p50": 2.9182562342918585e-05,
+            "max": 8.076200857597864e-05
+          },
+          "native_output_reprojection_px": {
+            "min": 0.0001985734157417394,
+            "p50": 0.001000586082774676,
+            "max": 0.0015812344841173325
+          },
+          "rounded_mvp_output_reprojection_px": {
+            "min": 0.00019844934586256112,
+            "p50": 0.0010005109242049977,
+            "max": 0.0015815712326854952
+          },
+          "uniform_rounding_only_uv_px": {
+            "min": 3.5015465802707382e-06,
+            "p50": 4.035146549369599e-06,
+            "max": 4.842370949337015e-06
+          }
+        },
+        {
+          "backend": "mesa",
+          "device": "llvmpipe (LLVM 22.1.8, 256 bits)",
+          "report_sha256": "3378f1f750cb6baf1b85aca4e86714d3357f22972f76ee5b4e31fe945ee2a5d4",
+          "normal_rgba_sha256": "95f298627e4a86a8d9d26248acb0997f280c11d8ec6ad1881f492e300bf5fbd8",
+          "valid_pairs": 161,
+          "strict_pass": true,
+          "carrier_to_ideal_plane_m": {
+            "min": 7.128516793160637e-08,
+            "p50": 8.674233672645093e-07,
+            "max": 1.9172765917809887e-06
+          },
+          "source_to_ideal_plane_m": {
+            "min": 8.053534509388461e-08,
+            "p50": 2.6431936641861747e-06,
+            "max": 6.372250427863831e-06
+          },
+          "correct_vs_native_uv_px": {
+            "min": 9.841776579748049e-06,
+            "p50": 0.00028416978120510914,
+            "max": 0.0007496439055370208
+          },
+          "optical_residual_px": {
+            "min": 7.64720386196891e-06,
+            "p50": 0.0002797273331251666,
+            "max": 0.0005732653306967447
+          },
+          "native_output_reprojection_px": {
+            "min": 1.451775699394662e-06,
+            "p50": 1.7447949214224516e-05,
+            "max": 4.30249830641774e-05
+          },
+          "rounded_mvp_output_reprojection_px": {
+            "min": 2.096526583032651e-06,
+            "p50": 1.6971941368554625e-05,
+            "max": 4.336737963463297e-05
+          },
+          "uniform_rounding_only_uv_px": {
+            "min": 3.5015465802707382e-06,
+            "p50": 4.035146549369599e-06,
+            "max": 4.842370949337015e-06
+          }
+        }
+      ]
+    },
+    {
+      "frame_index": 1,
+      "carrier": "bowl",
+      "pixels": 161,
+      "planar_geometry_required": false,
+      "source_validity_equal": true,
+      "rgba_hash_equal": false,
+      "paired_carrier_distance_m": {
+        "min": 1.984083837669459e-06,
+        "p50": 2.6763815185404383e-05,
+        "max": 5.885337668587454e-05
+      },
+      "mvp_rounding_only_plane_m": {
+        "min": 4.2237090509304664e-08,
+        "p50": 5.0351943646240616e-08,
+        "max": 5.785133796646336e-08
+      },
+      "T_world_from_vehicle": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.4
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "backends": [
+        {
+          "backend": "nvidia",
+          "device": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+          "report_sha256": "5083e448aa726cff828a1e2a4237e22b810c306471597ab97c58510bc25e82bb",
+          "normal_rgba_sha256": "6c6be07c60a8465ba0d9bbfb58c0a2f9a6dca42e58d5bec17f06edc3b8766d85",
+          "valid_pairs": 161,
+          "strict_pass": false,
+          "carrier_to_ideal_plane_m": {
+            "min": 0.003048182684564225,
+            "p50": 0.0060219463844788665,
+            "max": 0.011079968281315706
+          },
+          "source_to_ideal_plane_m": {
+            "min": 0.005047320823153915,
+            "p50": 0.0113396229003068,
+            "max": 0.023539733424313432
+          },
+          "correct_vs_native_uv_px": {
+            "min": 0.4664455158720986,
+            "p50": 0.8117224786671833,
+            "max": 1.3224673357975165
+          },
+          "optical_residual_px": {
+            "min": 2.2767655706518408e-06,
+            "p50": 2.7121527183811552e-05,
+            "max": 7.821980384136637e-05
+          },
+          "native_output_reprojection_px": {
+            "min": 2.520363425990491e-05,
+            "p50": 0.0005887034216293972,
+            "max": 0.0012625961843024398
+          },
+          "rounded_mvp_output_reprojection_px": {
+            "min": 2.621509484325405e-05,
+            "p50": 0.0005883320324461933,
+            "max": 0.0012625834347981986
+          },
+          "uniform_rounding_only_uv_px": {
+            "min": 3.5015465802707382e-06,
+            "p50": 4.035146549369599e-06,
+            "max": 4.842370949337015e-06
+          }
+        },
+        {
+          "backend": "mesa",
+          "device": "llvmpipe (LLVM 22.1.8, 256 bits)",
+          "report_sha256": "5ba6afa74fbf00014e21c44a77355c190a2b6ac378609dd0a8b2ea706cd38acb",
+          "normal_rgba_sha256": "8b07d6e57aa3383678e7d26b446142f0c9f0430e3684d65c3a2fa4f09fc5bced",
+          "valid_pairs": 161,
+          "strict_pass": false,
+          "carrier_to_ideal_plane_m": {
+            "min": 0.003034346900776918,
+            "p50": 0.006024549138098363,
+            "max": 0.011076377350349926
+          },
+          "source_to_ideal_plane_m": {
+            "min": 0.005012469938685426,
+            "p50": 0.011364382699572883,
+            "max": 0.023508987674029393
+          },
+          "correct_vs_native_uv_px": {
+            "min": 0.46399860272813637,
+            "p50": 0.8109503168307175,
+            "max": 1.3238327269330945
+          },
+          "optical_residual_px": {
+            "min": 4.2609110872622755e-06,
+            "p50": 0.00027293914821642295,
+            "max": 0.0007523820857130008
+          },
+          "native_output_reprojection_px": {
+            "min": 1.0084077554220433e-06,
+            "p50": 1.1976634819641314e-05,
+            "max": 3.17704126315499e-05
+          },
+          "rounded_mvp_output_reprojection_px": {
+            "min": 1.926436000633455e-06,
+            "p50": 1.1463644414201297e-05,
+            "max": 3.21057472315035e-05
+          },
+          "uniform_rounding_only_uv_px": {
+            "min": 3.5015465802707382e-06,
+            "p50": 4.035146549369599e-06,
+            "max": 4.842370949337015e-06
+          }
+        }
+      ]
+    },
+    {
+      "frame_index": 1,
+      "carrier": "dome_floor",
+      "pixels": 161,
+      "planar_geometry_required": true,
+      "source_validity_equal": true,
+      "rgba_hash_equal": false,
+      "paired_carrier_distance_m": {
+        "min": 2.5344243113067932e-06,
+        "p50": 3.463311804807745e-05,
+        "max": 7.513041782658547e-05
+      },
+      "mvp_rounding_only_plane_m": {
+        "min": 4.2237090509304664e-08,
+        "p50": 5.0351943646240616e-08,
+        "max": 5.785133796646336e-08
+      },
+      "T_world_from_vehicle": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.4
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "backends": [
+        {
+          "backend": "nvidia",
+          "device": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+          "report_sha256": "1cf0bbada277b67f19b589336bb29c47322bb86f2e3821698069392fc15fca84",
+          "normal_rgba_sha256": "c378b645626e5f4001b7763dc1449758732e561bdca6503fd5875bb1bf2c3cfd",
+          "valid_pairs": 161,
+          "strict_pass": true,
+          "carrier_to_ideal_plane_m": {
+            "min": 1.5783748835070283e-06,
+            "p50": 3.453897765327389e-05,
+            "max": 7.504742861872472e-05
+          },
+          "source_to_ideal_plane_m": {
+            "min": 9.094645524873313e-07,
+            "p50": 3.466838197927694e-05,
+            "max": 7.544954946780757e-05
+          },
+          "correct_vs_native_uv_px": {
+            "min": 6.282926321039705e-05,
+            "p50": 0.003692484850852426,
+            "max": 0.007494266888941532
+          },
+          "optical_residual_px": {
+            "min": 1.7420285694767466e-06,
+            "p50": 2.8172149888127155e-05,
+            "max": 6.998437685231398e-05
+          },
+          "native_output_reprojection_px": {
+            "min": 2.7311115701988124e-05,
+            "p50": 0.0007412465335898847,
+            "max": 0.0012463386488417425
+          },
+          "rounded_mvp_output_reprojection_px": {
+            "min": 2.6518722495869297e-05,
+            "p50": 0.0007409283582962552,
+            "max": 0.0012458533975047345
+          },
+          "uniform_rounding_only_uv_px": {
+            "min": 3.5015465802707382e-06,
+            "p50": 4.035146549369599e-06,
+            "max": 4.842370949337015e-06
+          }
+        },
+        {
+          "backend": "mesa",
+          "device": "llvmpipe (LLVM 22.1.8, 256 bits)",
+          "report_sha256": "2f0d5222de14d62f5df9e1f26993beef138b6c19a1584ce43d9f0fa43b4e837e",
+          "normal_rgba_sha256": "f8cac8aad77dc8f9f1442a25885df70443896edd8a1703f35f64f7925642938a",
+          "valid_pairs": 161,
+          "strict_pass": true,
+          "carrier_to_ideal_plane_m": {
+            "min": 5.999633289457177e-08,
+            "p50": 6.834562081432597e-07,
+            "max": 1.4581493989312328e-06
+          },
+          "source_to_ideal_plane_m": {
+            "min": 1.9710324447307852e-07,
+            "p50": 2.3746802291144795e-06,
+            "max": 5.5513554266233584e-06
+          },
+          "correct_vs_native_uv_px": {
+            "min": 2.7523754474821384e-05,
+            "p50": 0.00026255842148385956,
+            "max": 0.0005723404672889586
+          },
+          "optical_residual_px": {
+            "min": 7.112526292855156e-06,
+            "p50": 0.0002761733598325252,
+            "max": 0.0005588841948021384
+          },
+          "native_output_reprojection_px": {
+            "min": 9.774144525653929e-07,
+            "p50": 1.3046363969201134e-05,
+            "max": 2.6574491232060552e-05
+          },
+          "rounded_mvp_output_reprojection_px": {
+            "min": 1.6473919050600591e-06,
+            "p50": 1.3579933367464657e-05,
+            "max": 2.6919383405073634e-05
+          },
+          "uniform_rounding_only_uv_px": {
+            "min": 3.5015465802707382e-06,
+            "p50": 4.035146549369599e-06,
+            "max": 4.842370949337015e-06
+          }
+        }
+      ]
+    },
+    {
+      "frame_index": 1,
+      "carrier": "cylinder_floor",
+      "pixels": 161,
+      "planar_geometry_required": true,
+      "source_validity_equal": true,
+      "rgba_hash_equal": false,
+      "paired_carrier_distance_m": {
+        "min": 3.996623490820639e-06,
+        "p50": 5.0074995670001954e-05,
+        "max": 8.015661296667531e-05
+      },
+      "mvp_rounding_only_plane_m": {
+        "min": 4.2237090509304664e-08,
+        "p50": 5.0351943646240616e-08,
+        "max": 5.785133796646336e-08
+      },
+      "T_world_from_vehicle": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.4
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "backends": [
+        {
+          "backend": "nvidia",
+          "device": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+          "report_sha256": "ff175a152cdd1e79d3df6b9f7f7273ce705de72c22ddb01c4db2720f804d350d",
+          "normal_rgba_sha256": "6b300a8632476a219315532970d860b53b2e1b5f6ade00f76594e0cdc4c9a25b",
+          "valid_pairs": 161,
+          "strict_pass": true,
+          "carrier_to_ideal_plane_m": {
+            "min": 3.4259593517770984e-06,
+            "p50": 5.081687695123875e-05,
+            "max": 8.046626417505317e-05
+          },
+          "source_to_ideal_plane_m": {
+            "min": 3.192637496544571e-06,
+            "p50": 5.0777358195310705e-05,
+            "max": 8.070121368513519e-05
+          },
+          "correct_vs_native_uv_px": {
+            "min": 0.0002713486822878303,
+            "p50": 0.005297789691154535,
+            "max": 0.009320587081656647
+          },
+          "optical_residual_px": {
+            "min": 1.0461600133995784e-06,
+            "p50": 2.7311006511239705e-05,
+            "max": 6.781037554184967e-05
+          },
+          "native_output_reprojection_px": {
+            "min": 5.6480246706548644e-05,
+            "p50": 0.0010282140977008088,
+            "max": 0.0015936235231804778
+          },
+          "rounded_mvp_output_reprojection_px": {
+            "min": 5.568442523479105e-05,
+            "p50": 0.0010291252534892165,
+            "max": 0.001594274153563341
+          },
+          "uniform_rounding_only_uv_px": {
+            "min": 3.5015465802707382e-06,
+            "p50": 4.035146549369599e-06,
+            "max": 4.842370949337015e-06
+          }
+        },
+        {
+          "backend": "mesa",
+          "device": "llvmpipe (LLVM 22.1.8, 256 bits)",
+          "report_sha256": "457a59613c9a5ac8c4a2c37c186ae0491208c57de875d2774e6b2cfcb9179d5b",
+          "normal_rgba_sha256": "334295b3d40dd2a1dde3331e1be4f226e8315539e37ffc1ffaee125e5536c994",
+          "valid_pairs": 161,
+          "strict_pass": true,
+          "carrier_to_ideal_plane_m": {
+            "min": 1.3465731937215889e-07,
+            "p50": 1.0786926834556931e-06,
+            "max": 2.6696973576007828e-06
+          },
+          "source_to_ideal_plane_m": {
+            "min": 3.645149732831647e-07,
+            "p50": 2.740604105013801e-06,
+            "max": 5.3600554958673225e-06
+          },
+          "correct_vs_native_uv_px": {
+            "min": 3.381935149275411e-05,
+            "p50": 0.00030162296694720485,
+            "max": 0.0006112720286642286
+          },
+          "optical_residual_px": {
+            "min": 1.16463345402642e-06,
+            "p50": 0.0002783318251845606,
+            "max": 0.0005398181452534211
+          },
+          "native_output_reprojection_px": {
+            "min": 2.7764470141973704e-06,
+            "p50": 2.3389335245952315e-05,
+            "max": 4.708304911140744e-05
+          },
+          "rounded_mvp_output_reprojection_px": {
+            "min": 2.6073255272894714e-06,
+            "p50": 2.340075752358242e-05,
+            "max": 4.7450118652771054e-05
+          },
+          "uniform_rounding_only_uv_px": {
+            "min": 3.5015465802707382e-06,
+            "p50": 4.035146549369599e-06,
+            "max": 4.842370949337015e-06
+          }
+        }
+      ]
+    },
+    {
+      "frame_index": 1,
+      "carrier": "cube_floor",
+      "pixels": 161,
+      "planar_geometry_required": true,
+      "source_validity_equal": true,
+      "rgba_hash_equal": false,
+      "paired_carrier_distance_m": {
+        "min": 1.953323408088181e-05,
+        "p50": 4.5643304474651814e-05,
+        "max": 6.90472952555865e-05
+      },
+      "mvp_rounding_only_plane_m": {
+        "min": 4.2237090509304664e-08,
+        "p50": 5.0351943646240616e-08,
+        "max": 5.785133796646336e-08
+      },
+      "T_world_from_vehicle": [
+        [
+          1.0,
+          0.0,
+          0.0,
+          0.4
+        ],
+        [
+          0.0,
+          1.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          1.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ],
+      "backends": [
+        {
+          "backend": "nvidia",
+          "device": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+          "report_sha256": "7e5ab819a5471b7cec55ecf21692959200feffee3d70d5a2a360df808c66b485",
+          "normal_rgba_sha256": "570b160a3ef6fdae62aa4e0f843d97d14fab682336267b490a69c804654fbb66",
+          "valid_pairs": 161,
+          "strict_pass": true,
+          "carrier_to_ideal_plane_m": {
+            "min": 1.9245687976203756e-05,
+            "p50": 4.689605071018429e-05,
+            "max": 6.890965295463021e-05
+          },
+          "source_to_ideal_plane_m": {
+            "min": 1.9305506628168507e-05,
+            "p50": 4.684679113978479e-05,
+            "max": 6.891511862391627e-05
+          },
+          "correct_vs_native_uv_px": {
+            "min": 0.0011068706178060908,
+            "p50": 0.004423738951361197,
+            "max": 0.006958279371864089
+          },
+          "optical_residual_px": {
+            "min": 8.834718623866823e-07,
+            "p50": 2.6729457393555866e-05,
+            "max": 8.14121470736703e-05
+          },
+          "native_output_reprojection_px": {
+            "min": 0.00035058742728941617,
+            "p50": 0.0008958723804769773,
+            "max": 0.0012302000165802976
+          },
+          "rounded_mvp_output_reprojection_px": {
+            "min": 0.0003514553351604659,
+            "p50": 0.0008963685311013804,
+            "max": 0.0012304933663789203
+          },
+          "uniform_rounding_only_uv_px": {
+            "min": 3.5015465802707382e-06,
+            "p50": 4.035146549369599e-06,
+            "max": 4.842370949337015e-06
+          }
+        },
+        {
+          "backend": "mesa",
+          "device": "llvmpipe (LLVM 22.1.8, 256 bits)",
+          "report_sha256": "a4e146c7c92f501ab0763cb9565153736f73c77180097cae9d5937e06024c8a9",
+          "normal_rgba_sha256": "cc77d69a0ef887c9157526ff0f767aa894e09a554083975d8b3e65b8162a5e49",
+          "valid_pairs": 161,
+          "strict_pass": true,
+          "carrier_to_ideal_plane_m": {
+            "min": 1.1462307421511132e-07,
+            "p50": 1.38124410768976e-06,
+            "max": 2.4114178284228357e-06
+          },
+          "source_to_ideal_plane_m": {
+            "min": 2.1111831004497084e-07,
+            "p50": 2.5373413025266266e-06,
+            "max": 6.265485367011434e-06
+          },
+          "correct_vs_native_uv_px": {
+            "min": 1.4579717196603439e-05,
+            "p50": 0.00027383843813369175,
+            "max": 0.0006790970075329458
+          },
+          "optical_residual_px": {
+            "min": 2.2821968017124763e-06,
+            "p50": 0.0002834865539626727,
+            "max": 0.0005607590336261106
+          },
+          "native_output_reprojection_px": {
+            "min": 2.2315939642060984e-06,
+            "p50": 3.0097928251069844e-05,
+            "max": 4.393077982560043e-05
+          },
+          "rounded_mvp_output_reprojection_px": {
+            "min": 1.975164372449789e-06,
+            "p50": 3.0442994750287826e-05,
+            "max": 4.426301478314769e-05
+          },
+          "uniform_rounding_only_uv_px": {
+            "min": 3.5015465802707382e-06,
+            "p50": 4.035146549369599e-06,
+            "max": 4.842370949337015e-06
+          }
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "One earlier seed/view, two correlated frames, fixed small ROI; no universal precision guarantee",
+    "Only backend changes: archived identical binary, configs, input frames; old NVIDIA captures versus new Mesa llvmpipe, not randomized timing or quality trial",
+    "Double MVP reconstruction follows inspected C++ formulas, not captured GPU uniforms; float32 rounding model excludes vertex arithmetic, raster quantization and interpolation",
+    "Geometry only; no planar RGB truth, physical cameras or Aurora",
+    "Keep original Blender-referenced strict failures; new precision analysis uses double analytical plane and reports its own pass flags"
+  ]
+}
