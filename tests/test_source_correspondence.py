@@ -17,6 +17,7 @@ from hybrid_correspondence import reconstruct_rgba
 from source_footprint_audit import footprint,selected_pixels
 from cube_footprint_audit import cube_sample,cube_ray,fisheye_ray
 from hybrid_domain_audit import new_domain,support_metrics
+from reference_height import mask_scores
 
 
 class SourceCorrespondenceTests(unittest.TestCase):
@@ -154,6 +155,17 @@ class SourceCorrespondenceTests(unittest.TestCase):
         self.assertEqual(m['zero_local_weight_contributing_pixels'],2)
         empty=support_metrics(kinds[:0],texels[:0],tw[:0],valid[:0],weights[:0],contributions[:0],1e-6)
         self.assertEqual(empty['pixels'],0)
+
+    def test_height_ablation_scores_keep_outside_proxy_in_union(self):
+        expected=np.array([True,True,False,False])
+        predicted=np.array([True,False,True,True])
+        score=mask_scores(predicted,expected)
+        self.assertEqual(score['intersection_pixels'],1)
+        self.assertEqual(score['outside_expected_pixels'],2)
+        self.assertEqual(score['raw_recall'],.5)
+        self.assertEqual(score['raw_iou'],.25)
+        empty=mask_scores(np.zeros(4,bool),np.zeros(4,bool))
+        self.assertIsNone(empty['raw_iou']);self.assertIsNone(empty['raw_recall'])
 
     def test_signed_contribution_composition_clips_then_applies_visibility_and_ego(self):
         contributions = np.zeros((1, 3, 4, 3), np.float32)
