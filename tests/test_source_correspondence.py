@@ -11,6 +11,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools/research'))
 from source_correspondence import classify, load_product, project
 from source_correspondence_controls import transform_points
 from planar_correspondence import intersect_plane
+from planar_precision import plane_from_mvp,reproject
 
 
 class SourceCorrespondenceTests(unittest.TestCase):
@@ -60,6 +61,13 @@ class SourceCorrespondenceTests(unittest.TestCase):
                              ([0, float('nan'), -1], 'finite')]:
             with self.assertRaisesRegex(ValueError, message):
                 intersect_plane(origin, ray)
+
+    def test_mvp_plane_roundtrip_known_identity(self):
+        pixels = np.array([[0, 0], [1, 3], [2, 2]])
+        hits = plane_from_mvp(np.eye(4), pixels, 4, 3)
+        np.testing.assert_allclose(hits[:, 2], 0)
+        np.testing.assert_allclose(reproject(np.eye(4), hits, 4, 3), pixels[:, ::-1], atol=1e-15)
+        np.testing.assert_allclose(hits[0], [-.75, 2 / 3, 0])
 
     def test_layout_checksum_and_payload_size_are_enforced(self):
         with tempfile.TemporaryDirectory() as directory:
