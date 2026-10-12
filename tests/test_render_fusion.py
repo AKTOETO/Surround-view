@@ -141,6 +141,60 @@ class RenderFusionParity(unittest.TestCase):
             _, stderr = server.communicate(timeout=5)
             self.assertIn(server.returncode, [0, -15], stderr)
 
+    def test_selected_manifest_frame_color_only_and_invalid_indices(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            cfg, _ = self.fixture(directory)
+            cfg['surface'].update(type='rectangular_bowl_v1', corner_height_m=0)
+            config = directory/'config.json'
+            config.write_text(json.dumps(cfg))
+            manifest_path = directory/'manifest.json'
+            manifest = json.loads(manifest_path.read_text())
+            paths = []
+            for camera in cfg['cameras']:
+                size = camera['resolution']
+                image = np.full((size['height'], size['width'], 3), [75, 95, 115], dtype=np.uint8)
+                name = f"second{camera['id']}.ppm"
+                Image.fromarray(image).save(directory/name)
+                manifest['sha256'][name] = hashlib.sha256((directory/name).read_bytes()).hexdigest()
+                paths.append(name)
+            manifest['frames'].append(dict(paths=paths, scenario_timestamp_ns='200000000', offset_ns=[0]*4))
+            manifest_path.write_text(json.dumps(manifest))
+            for arguments in [['-1'], ['2'], ['1x'], ['18446744073709551616'], ['--color-only', '--color-only']]:
+                with self.subTest(arguments=arguments):
+                    output = directory/'rejected'
+                    result = subprocess.run([str(PROBE), str(config), str(manifest_path), str(output), *arguments],
+                                            capture_output=True, text=True, timeout=10)
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertFalse(output.exists())
+            output = directory/'selected'
+            subprocess.run([str(PROBE), str(config), str(manifest_path), str(output), '1', '--color-only'],
+                           check=True, capture_output=True, timeout=40)
+            index = json.loads((output/'index.json').read_text())
+            self.assertEqual(index['frame_index'], 1)
+            self.assertEqual(index['scenario_timestamp_ns'], '200000000')
+            self.assertTrue(index['color_only'])
+            self.assertEqual(len(index['cases']), 6)
+            self.assertTrue(index['normal_output_unchanged'])
+            encoded = np.array([75, 95, 115])/255
+            expected = np.where(encoded <= .04045, encoded/12.92, ((encoded+.055)/1.055)**2.4)
+            for camera, source in enumerate(index['inputs']):
+                self.assertEqual(Path(source['path']).name, paths[camera])
+                self.assertEqual(source['sha256'], manifest['sha256'][paths[camera]])
+            for case in index['cases']:
+                self.assertEqual(case['diagnostic'], 'color')
+                self.assertEqual(case['settings']['mode'], case['mode'])
+                run = output/case['directory']
+                self.assertIn('carrier-positions.f32', case['files'])
+                for name, descriptor in case['files'].items():
+                    self.assertEqual((run/name).stat().st_size, descriptor['bytes'])
+                    self.assertEqual(hashlib.sha256((run/name).read_bytes()).hexdigest(), descriptor['sha256'])
+                for camera in range(4):
+                    valid = np.fromfile(run/f'camera{camera}-valid.u8', np.uint8) != 0
+                    colors = np.fromfile(run/f'camera{camera}-linear.f32', '<f4').reshape(-1, 3)
+                    self.assertGreater(valid.sum(), 0)
+                    np.testing.assert_allclose(colors[valid], np.broadcast_to(expected, colors[valid].shape), atol=2e-6)
+
     def test_all_carriers_full_composition_and_plane_wire_parity(self):
         surfaces = json.loads((ROOT/'configs/research/carrier-screen.json').read_text())['variants']
         with tempfile.TemporaryDirectory(prefix='sv-raster-parity-') as td:

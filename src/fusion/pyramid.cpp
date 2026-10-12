@@ -179,6 +179,9 @@ cv::Mat multiband(const FusionSamples &samples, const cv::Mat &weights, unsigned
         if (inspection)
         {
             inspection->level_weights.push_back(normalized);
+            inspection->level_contributions.push_back(
+                {contributions[0].back(), contributions[1].back(), contributions[2].back(),
+                 contributions[3].back()});
         }
     }
     auto result = blended.back();

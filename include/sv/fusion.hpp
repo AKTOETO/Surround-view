@@ -26,6 +26,8 @@ struct FusionInspection
 {
     cv::Mat blend_weights; // CV_32FC4; after optional seam smoothing, before pyramid reduction.
     std::vector<cv::Mat> level_weights; // CV_32FC4 normalized coefficients, fine to coarse.
+    // Signed weighted bands at native level dimensions, fine to coarse. Opt-in only.
+    std::vector<std::array<cv::Mat, 4>> level_contributions;
     std::array<cv::Mat, 4> camera_contributions; // CV_32FC3 signed linear RGB at full resolution.
 };
 

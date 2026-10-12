@@ -147,6 +147,10 @@ FusionResult fuse_research(const FusionSamples &samples, const Fusion &settings,
             }
         }
     }
+    if (inspection && !band)
+    {
+        inspection->level_contributions.push_back(inspection->camera_contributions);
+    }
     return {color, weights, optimization};
 }
 } // namespace sv

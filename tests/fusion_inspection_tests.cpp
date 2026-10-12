@@ -56,6 +56,16 @@ TEST(FusionInspection, ContributionsReconstructAllResearchModesWithoutChangingOu
                 const bool band =
                     settings.mode == "multi_band" || settings.mode == "graph_cut_multi_band";
                 EXPECT_EQ(inspection.level_weights.size(), band ? 4U : 1U);
+                ASSERT_EQ(inspection.level_contributions.size(), inspection.level_weights.size());
+                for (size_t level = 0; level < inspection.level_contributions.size(); ++level)
+                {
+                    for (const auto &band : inspection.level_contributions[level])
+                    {
+                        EXPECT_EQ(band.type(), CV_32FC3);
+                        EXPECT_EQ(band.size(), inspection.level_weights[level].size());
+                        EXPECT_TRUE(cv::checkRange(band));
+                    }
+                }
                 cv::Mat sum = cv::Mat::zeros(samples.colors[0].size(), CV_32FC3);
                 for (const auto &camera : inspection.camera_contributions)
                 {
@@ -114,6 +124,19 @@ TEST(FusionInspection, KnownConstantWeightsAndEmptyCaptureReset)
             1e-7);
     }
     EXPECT_LE(cv::norm(output.color - cv::Scalar::all(.75), cv::NORM_INF), 1e-7);
+    settings.pyramid_levels = 4;
+    sv::fuse_research(samples, settings, &inspection);
+    ASSERT_EQ(inspection.level_contributions.size(), 4U);
+    for (int camera = 0; camera < 4; ++camera)
+    {
+        for (size_t level = 0; level + 1 < inspection.level_contributions.size(); ++level)
+        {
+            EXPECT_LE(cv::norm(inspection.level_contributions[level][camera], cv::NORM_INF), 2e-6);
+        }
+        const auto expected = cv::Scalar::all((camera + 1) * (camera + 1) / 40.f);
+        EXPECT_LE(cv::norm(inspection.level_contributions.back()[camera] - expected, cv::NORM_INF),
+                  2e-6);
+    }
     settings.pyramid_levels = 8;
     sv::fuse_research(samples, settings, &inspection);
     EXPECT_GT(inspection.level_weights.size(), 1U);
@@ -124,6 +147,11 @@ TEST(FusionInspection, KnownConstantWeightsAndEmptyCaptureReset)
     settings.pyramid_levels = 1;
     const auto empty = sv::fuse_research(samples, settings, &inspection);
     ASSERT_EQ(inspection.level_weights.size(), 1U);
+    ASSERT_EQ(inspection.level_contributions.size(), 1U);
+    for (const auto &band : inspection.level_contributions.front())
+    {
+        EXPECT_EQ(cv::norm(band, cv::NORM_INF), 0);
+    }
     EXPECT_EQ(cv::norm(empty.color, cv::NORM_INF), 0);
     EXPECT_EQ(cv::norm(inspection.blend_weights, cv::NORM_INF), 0);
     for (const auto &contribution : inspection.camera_contributions)

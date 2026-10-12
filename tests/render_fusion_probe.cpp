@@ -1,7 +1,11 @@
 #include "sv/build_info.hpp"
+#include "sv/fusion_runtime.hpp"
 #include "sv/render_inspection.hpp"
 #include "sv/renderer.hpp"
+#include "sv/report.hpp"
 #include "sv/vision.hpp"
+#include <algorithm>
+#include <charconv>
 #include <fstream>
 #include <iostream>
 
@@ -31,19 +35,56 @@ int main(int argc, char **argv)
 {
     try
     {
-        if (argc != 4)
+        if (argc < 4 || argc > 6)
         {
-            throw std::runtime_error("usage: probe CONFIG MANIFEST OUTPUT");
+            throw std::runtime_error(
+                "usage: probe CONFIG MANIFEST OUTPUT [FRAME_INDEX] [--color-only]");
         }
         const auto config = sv::load_config(argv[1]);
         const auto rows = sv::load_manifest(argv[2], config);
+        uint64_t frame_index = 0;
+        bool color_only = false;
+        if (argc >= 5)
+        {
+            const std::string argument = argv[4];
+            if (argument == "--color-only")
+            {
+                color_only = true;
+            }
+            else
+            {
+                const auto parsed = std::from_chars(argument.data(),
+                                                    argument.data() + argument.size(), frame_index);
+                if (parsed.ec != std::errc{} || parsed.ptr != argument.data() + argument.size())
+                {
+                    throw std::invalid_argument("invalid frame index");
+                }
+            }
+        }
+        if (argc == 6)
+        {
+            if (color_only || std::string(argv[5]) != "--color-only")
+            {
+                throw std::invalid_argument("expected --color-only after frame index");
+            }
+            color_only = true;
+        }
+        if (frame_index >= rows.size())
+        {
+            throw std::out_of_range("frame index outside manifest");
+        }
+        const auto &row = rows.at(frame_index);
         const std::filesystem::path output = argv[3];
         std::filesystem::create_directories(output);
         sv::FrameSet set;
+        boost::json::array inputs;
         for (int c = 0; c < 4; ++c)
         {
-            auto image = std::make_shared<sv::Image>(sv::read_image(rows.front().paths[c]));
-            set.frames[c] = sv::Frame{c, 0, 0, 0, image};
+            auto image = std::make_shared<sv::Image>(sv::read_image(row.paths[c]));
+            set.frames[c] = sv::Frame{c, frame_index, 0, row.scenario_ns, image};
+            inputs.emplace_back(boost::json::object{{"camera_id", c},
+                                                    {"path", row.paths[c].string()},
+                                                    {"sha256", sv::file_sha256(row.paths[c])}});
         }
         sv::Renderer renderer(config);
         boost::json::array cases;
@@ -59,6 +100,10 @@ int main(int argc, char **argv)
                 }
                 for (const auto *diagnostic : {"color", "weights", "coverage"})
                 {
+                    if (color_only && std::string(diagnostic) != "color")
+                    {
+                        continue;
+                    }
                     auto settings = config.fusion;
                     settings.mode = mode;
                     settings.pyramid_boundary = boundary;
@@ -91,11 +136,21 @@ int main(int argc, char **argv)
                     for (size_t level = 0; level < inspection.fusion->level_weights.size(); ++level)
                     {
                         const auto &weights = inspection.fusion->level_weights[level];
+                        boost::json::array bands;
+                        for (int camera = 0; camera < 4; ++camera)
+                        {
+                            const auto name = "level" + std::to_string(level) + "-camera" +
+                                              std::to_string(camera) + "-band.f32";
+                            matrix(directory / name,
+                                   inspection.fusion->level_contributions.at(level)[camera]);
+                            bands.emplace_back(name);
+                        }
                         fusion_levels.emplace_back(boost::json::object{
                             {"file", "level" + std::to_string(level) + "-weights.f32"},
                             {"width", weights.cols},
                             {"height", weights.rows},
-                            {"channels", 4}});
+                            {"channels", 4},
+                            {"contributions", bands}});
                         matrix(directory / ("level" + std::to_string(level) + "-weights.f32"),
                                inspection.fusion->level_weights[level]);
                     }
@@ -134,6 +189,7 @@ int main(int argc, char **argv)
                     bytes(directory / "fallback.rgba", inspection.fallback_rgba.pixels.data(),
                           inspection.fallback_rgba.pixels.size());
                     matrix(directory / "carrier-regions.u8", inspection.carrier_regions);
+                    matrix(directory / "carrier-positions.f32", inspection.carrier_positions);
                     if (!inspection.ego_rgba.empty())
                     {
                         matrix(directory / "ego.rgba", inspection.ego_rgba);
@@ -145,12 +201,30 @@ int main(int argc, char **argv)
                     {
                         throw std::runtime_error("inspection changed output/resources");
                     }
+                    std::vector<std::filesystem::path> paths;
+                    for (const auto &entry : std::filesystem::directory_iterator(directory))
+                    {
+                        if (entry.is_regular_file())
+                        {
+                            paths.push_back(entry.path());
+                        }
+                    }
+                    std::sort(paths.begin(), paths.end());
+                    boost::json::object files;
+                    for (const auto &path : paths)
+                    {
+                        files[path.filename().string()] =
+                            boost::json::object{{"sha256", sv::file_sha256(path)},
+                                                {"bytes", std::filesystem::file_size(path)}};
+                    }
                     cases.emplace_back(boost::json::object{
                         {"mode", mode},
                         {"diagnostic", diagnostic},
                         {"boundary", boundary},
                         {"directory", directory.filename().string()},
                         {"fusion_levels", fusion_levels},
+                        {"settings", sv::fusion_settings(settings)},
+                        {"files", files},
                         {"contribution_scope", "signed_linear_rgb_pre_clamp_pre_composition"}});
                 }
             }
@@ -163,6 +237,13 @@ int main(int argc, char **argv)
                            {"float_endian",
                             *reinterpret_cast<const unsigned char *>(&endian) ? "little" : "big"},
                            {"origin", "top_left"},
+                           {"frame_index", frame_index},
+                           {"scenario_timestamp_ns", std::to_string(row.scenario_ns)},
+                           {"config_sha256", sv::file_sha256(argv[1])},
+                           {"manifest_sha256", sv::file_sha256(argv[2])},
+                           {"inputs", inputs},
+                           {"normal_output_unchanged", true},
+                           {"color_only", color_only},
                            {"cases", cases},
                            {"device", renderer.device()},
                            {"config", config.effective},
