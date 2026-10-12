@@ -20,9 +20,21 @@ from hybrid_domain_audit import new_domain,support_metrics
 from reference_height import mask_scores
 from local_support import vehicle_center
 from source_visibility import blocked_by_faces
+from visibility_residual import select_pixels
 
 
 class SourceCorrespondenceTests(unittest.TestCase):
+    def test_visibility_residual_selection_includes_all_visible_controls(self):
+        rgb = np.array([[[255, 0, 255], [255, 0, 255], [0, 0, 0]],
+                        [[0, 0, 0], [255, 0, 255], [0, 0, 0]]], np.uint8)
+        target = np.array([[False, True, True], [False, True, False]])
+        visible = np.array([[False, True, True], [False, False, False]])
+        coordinates, residual = select_pixels(rgb, target, visible, .15)
+        np.testing.assert_array_equal(coordinates, [[0, 0], [0, 1], [0, 2]])
+        np.testing.assert_array_equal(residual, [True, False, False])
+        empty, _ = select_pixels(np.zeros_like(rgb), target, np.zeros_like(visible), .15)
+        self.assertEqual(empty.shape, (0, 2))
+
     def test_supplied_box_face_oracle_segments_and_endpoint_bias(self):
         lo, hi = [0, 0, 0], [1, 1, 1]
         points = [[.5, .5, 0], [.5, .5, 1], [2, .5, 0], [.5, .5, 2], [.5, .5, 1.01]]
