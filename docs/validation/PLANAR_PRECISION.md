@@ -85,3 +85,5 @@ python3 docs/diploma/plot_planar_precision.py \
 ## Что остаётся
 
 Малый precision residual теперь измерен отдельно и не требует повторения прежних resolution sweeps. Actual triangle/vertex/clip precision attribution остаётся инженерным follow-up; планарные RGB/bilinear tests — отдельным quality control. Следующий основной исследовательский шаг — соответствие **смещённых target pixels** реальным source surfaces и hybrid level contributions, затем проверяемое уменьшение height/parallax failure. Независимые сцены и физический/Aurora стенд нужны для полного заключения.
+
+Следующий displaced edge-feather source-surface этап выполнен: [[validation/DISPLACED_CORRESPONDENCE]]. Он объясняет foreground occlusion передcarrier и сохраняет ray/RGB mismatches; hybrid matched capture остаётся следующим отдельным опытом.

@@ -2500,3 +2500,74 @@ Audit -> Audit : actual point optical projection residual
 Этот малый остаток не объясняет hundreds-of-pixels displacement поднятого target в §§4.62–4.63. Основной исследовательский приоритет возвращается к displaced target pixels, source-surface attribution и hybrid contributions, затем к проверке mitigation. Planar RGB/bilinear fixture и triangle precision attribution сохраняются как отдельные controls; физические камеры и Аврора по-прежнему не проверены.
 
 Семь known-answer tests, CTest source_correspondence1/1 и C++ GTest группа carrier_inspection на Mesa прошли. Повторный read-only audit побитно воспроизвёл baseline. Исправлена совместимость collector с установленной NumPy (`vstack` вместо удалённого `row_stack`), добавлен known-answer target-center test; native Renderer и captured inputs не изменялись.
+
+## 4.66. Источник растянутого изображения объекта вне его ожидаемого положения
+
+Предыдущие опыты показали отсутствие raised target в expected ROI и отделили это от малого backend precision residual. Следующий вопрос — откуда появляются большие смещённые участки target texture на дороге. Для case rig101-near-z080 исследованы frames0/1 и пять carriers на прежних native UV/status/carrier XYZ/RGBA. Выборка определяется raw magenta proxy \(\min(R,B)-G>0.15\), без component filtering. Это output-conditioned exploratory attribution, не independent ghost segmentation или оценка recall. Данные и ограничения: [[validation/DISPLACED_CORRESPONDENCE]].
+
+### 4.66.1. Измерительная цепочка и критерий перекрытия
+
+Для каждого выбранного pixel независимый Blender oracle на той же сцене определяет nearest virtual surface и nearest source surface по фактическому native UV. При source target hit дополнительно измеряется, расположен ли он перед native carrier point по camera ray. Пусть \(C\) — source camera origin, \(P\) — actual carrier point, \(H\) — nearest source hit:
+
+\[
+u=\frac{P-C}{\|P-C\|},\qquad
+ g=\|P-C\|-(H-C)\cdot u,\qquad
+ r_\perp=\|(H-C)-[(H-C)\cdot u]u\|.
+\]
+
+Положительный \(g\) при малом \(r_\perp\) означает, что source ray встречает поверхность раньше используемой carrier point. Это scene visibility точки, отдельная от native projection validity, которая проверяет front/angle/image support.
+
+```plantuml
+@startuml
+participant "Ordinary native RGB" as RGB
+participant "Frozen native UV / carrier XYZ" as Native
+participant "Independent Blender scene" as Scene
+participant "Read-only attribution" as Audit
+RGB -> Audit : raw chroma proxy pixel coordinates
+Native -> Scene : actual subpixel source UV + true rig
+Scene -> Audit : source nearest hit / identity
+Scene -> Audit : virtual nearest hit / identity
+Native -> Audit : camera origin + actual carrier point
+Audit -> Audit : source hit before carrier? gap / transverse residual
+Audit -> Audit : expected ROI overlap / target-ray support
+RGB -> Audit : actual input RGB
+Audit -> Audit : bilinear → linearize → edge blend → encode
+@enduml
+```
+
+Рисунок4.98 — Реализованная attribution цепочка. RGB-conditioned coordinates не используются как источник geometric surface identity.
+
+### 4.66.2. Сопоставление displaced pixels с поверхностями
+
+| Frame | Carriers | Proxy / displaced pixels | Target point-ray pixels | RGB proxy без target ray | Target pairs: camera0 / camera3 |
+|---|---|---:|---:|---:|---:|
+| 0 | plane/dome/cylinder/cube, каждый | 4843 / 4843 | 4651 | 192 | 619 / 4032 |
+| 0 | bowl | 6261 / 6261 | 6130 | 131 | 1778 / 4352 |
+| 1 | plane/dome/cylinder/cube, каждый | 5373 / 5373 | 5322 | 51 | 0 / 5322 |
+| 1 | bowl | 5595 / 5595 | 5534 | 61 | 0 / 5534 |
+
+Таблица4.66 — Цветовая выборка и independent source target hits. Строки с четырьмя carriers справедливы для каждого отдельно; cameras1/2 не дают target hits. Frames и pixels коррелированы.
+
+Всего исследовано52720 proxy pixels и105440 допустимых source pairs. Во всех10 условиях все proxy pixels находятся вне expected target mask; nearest virtual hit — road. Из них51556 pixels имеют source target hit, который во всех случаях находится перед native carrier point: min longitudinal gap2.017m, max transverse residual1.005e−6m. Для plane в frame0 это4651/4843, в frame1 —5322/5373. Target source samples приходят отcamera0/3 в первом кадре, отcamera3 во втором.
+
+![Actual RGB и source-surface support](figures/experiments/displaced_source_support.png)
+
+Рисунок4.99 — Сохранённый native RGB: green overlay — хотя бы один source point-ray пересекает target; orange — magenta proxy без target point-ray hit; cyan — independent expected target mask. Изображения оформлены из raw artifacts, новый RGB renderer не используется. Часть растяжения обрезана нижней границей самого output frame.
+
+На каждом выбранном pixel допустимы два samples. Target ray при наличии имеет normalized edge weight0.5, другой ray видит road. Для plane/dome/cylinder/cube median weight, соответствующий virtual scene surface в пределах2cm, равен0.5; для bowl —0, поскольку и road sample выбирает другую road point. Совпадение surface identity road не означает совпадения позиции.
+
+![Фактическое перекрытие source ray объектом](figures/experiments/displaced_occlusion_ray.png)
+
+Рисунок4.100 — Actual output pixel(297,332), plane/frame0, camera3. Source ray встречает target перед carrier point на дороге. Пунктир показывает перекрытый участок до carrier; native point и nearest virtual road hit почти совпадают. Box outline соответствует сохранённым target dimensions/pose, а не условному центровому лучу.
+
+Сопоставление с §4.62 выявляет две стороны одного geometric limitation: в ожидаемом положении target carrier projection видит road; в смещённом положении virtual ray видит road, но source ray перекрыт target перед носителем. Поэтому foreground texture переносится на floor. Local validity и seam weights не устанавливают правильное scene correspondence и сами по себе не возвращают объект в правильное 3D положение.
+
+### 4.66.3. RGB reconstruction и оставшиеся несогласованности
+
+1164 pixels суммарно имеют magenta proxy без target point-ray hit. Они оставлены в отчёте: point sample не равен bilinear footprint, а прежний synthetic camera RGB уже содержит cubemap→fisheye resampling/AA. Нельзя автоматически объявлять их false positives или объяснять все только одним bilinear filter без дальнейшей проверки.
+
+Отдельный photometric control реконструирует source samples из исходных RGB по native UV: clamped bilinear sampling в encoded RGB, sRGB linearization, normalized edge blend и encode. Max channel error против native output0.783889 RGB8 LSB, median0.156–0.177 LSB по десяти условиям. Это согласованность color calculation, не доказательство принадлежности RGB одной поверхности и не exact bit parity. В fixture нет явного fusion блока; разрешён native default edge_feather/color/edge_width24px, definition hash записан в baseline.
+
+Восемь known-answer tests и CTest1/1 прошли; повторный audit побитно совпал с baseline. План/ray helper зафиксированы до capture, occlusion-gap decomposition и default resolution уточнены при аудите. Renderer и исходные кадры не менялись. Это локализация edge-feather failure, а не его исправление или обобщение на независимые сцены.
+
+Следующий опыт должен захватить hybrid level weights/signed contributions на тех же inputs/config/frames. Старый hybrid raster320×180/400×400 относится к другой сцене/rig и не является matched comparison текущего640×360/800×800 fixture. Four-texel footprint и resampling mismatch, independent natural-object scenes, mitigation и physical/Aurora validation остаются открытыми.
