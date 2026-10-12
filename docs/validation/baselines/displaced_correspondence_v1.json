@@ -1,0 +1,1131 @@
+{
+  "schema_version": 1,
+  "scope": "output_chroma_conditioned_displaced_target_source_surface_attribution",
+  "plan_sha256": "99be4e21d46725cc203de5f7fc6ac3f9538d62f0d226e05807b438a80fe8377b",
+  "collector_sha256": "ac55ca8cdace67684549b7132fbf6c60a6a33babe069e703e5021df6685bf65f",
+  "helper_sha256": "a73b9063a284c1ef8646c9ea13b9c669995390b98ec01df24d12f786c8fb0575",
+  "scene_truth_sha256": "e383fa1ac3285725107c5ff11c4d8d34a71c998566c2b7245b2edac08404725b",
+  "blender_version": "5.2.2 LTS",
+  "binary_sha256": "d9f3349d5a03dfbace41615ac07b609d37bfacd2a4d94def0e79b008bf59f115",
+  "native_default_definition_sha256": "70b8e21779e838f13a179c827369497c0b2005ed32ab7ee9b6e154d50ed6369a",
+  "native_default_edge_width_px": 24,
+  "rows": [
+    {
+      "frame_index": 0,
+      "carrier": "plane",
+      "native_report_sha256": "1ed7fdc09a785f5edad10ec200a9e4398272bde351e084a6990064ea795c4552",
+      "scene_record": {
+        "frame_index": 0,
+        "carrier": "plane",
+        "native_report_sha256": "1ed7fdc09a785f5edad10ec200a9e4398272bde351e084a6990064ea795c4552",
+        "files": {
+          "pixels.npy": "faa134fcad31c64812abc1920d49001be9b49ebc8a699621bc726ada436bdad2",
+          "virtual-points.npy": "0006e2e199d47bf04e7608b425ed5d162f3704002ce1c86d67b4bd069c427760",
+          "virtual-kinds.npy": "d190d643867dbe35a6aa39af470fa89e66c8527f1894be74ba36bd05deda14a0",
+          "source-hits.npy": "ed3ef7c781a85ce7295ed5a0fc3a75b0f9124683fba744fec8f9694fd107e87c",
+          "source-kinds.npy": "229f6cbef4d784cbd0a9f4c5549e78c9bb8066057d3af6c950f7cb96b8a581b6"
+        }
+      },
+      "proxy_pixels": 4843,
+      "expected_target_overlap_pixels": 0,
+      "device": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+      "output_sha256": "3a062c73511aa9d237ac2b398cccc0470ded29a31d7ceb9401ae66611bca2418",
+      "target_hit_before_carrier_gap_m": {
+        "min": 2.485325860394946,
+        "p50": 3.819954937946238,
+        "max": 5.598653836897141
+      },
+      "target_hit_to_carrier_ray_residual_m": {
+        "min": 2.0134639870400413e-09,
+        "p50": 2.0451597495627965e-07,
+        "max": 9.676722554600913e-07
+      },
+      "rois": {
+        "all_proxy": {
+          "pixels": 4843,
+          "valid_source_pairs": 9686,
+          "virtual_kind_counts": {
+            "2": 4843
+          },
+          "source_kind_counts": {
+            "1": 4651,
+            "2": 5035
+          },
+          "pixels_with_target_source_ray": 4651,
+          "target_ray_weight_mass": {
+            "min": 0.0,
+            "p50": 0.5,
+            "max": 0.5
+          },
+          "surface_match_weight_mass": {
+            "min": 0.5,
+            "p50": 0.5,
+            "max": 1.0
+          },
+          "source_target_to_virtual_distance_m": {
+            "min": 2.485364829278919,
+            "p50": 3.819983174893821,
+            "max": 5.59864883690645
+          },
+          "target_hits_before_carrier": 4651,
+          "target_pairs_by_camera": [
+            619,
+            0,
+            0,
+            4032
+          ],
+          "bilinear_rgb_reconstruction_abs_lsb": {
+            "min": 3.729364235027788e-05,
+            "p50": 0.15636537641540826,
+            "max": 0.7513216642094278
+          }
+        },
+        "displaced_proxy": {
+          "pixels": 4843,
+          "valid_source_pairs": 9686,
+          "virtual_kind_counts": {
+            "2": 4843
+          },
+          "source_kind_counts": {
+            "1": 4651,
+            "2": 5035
+          },
+          "pixels_with_target_source_ray": 4651,
+          "target_ray_weight_mass": {
+            "min": 0.0,
+            "p50": 0.5,
+            "max": 0.5
+          },
+          "surface_match_weight_mass": {
+            "min": 0.5,
+            "p50": 0.5,
+            "max": 1.0
+          },
+          "source_target_to_virtual_distance_m": {
+            "min": 2.485364829278919,
+            "p50": 3.819983174893821,
+            "max": 5.59864883690645
+          },
+          "target_hits_before_carrier": 4651,
+          "target_pairs_by_camera": [
+            619,
+            0,
+            0,
+            4032
+          ],
+          "bilinear_rgb_reconstruction_abs_lsb": {
+            "min": 3.729364235027788e-05,
+            "p50": 0.15636537641540826,
+            "max": 0.7513216642094278
+          }
+        }
+      }
+    },
+    {
+      "frame_index": 0,
+      "carrier": "bowl",
+      "native_report_sha256": "e6b7a4d712e3bac9a5f198039114686747911459d0f87ae0c966ea1f143a9cfd",
+      "scene_record": {
+        "frame_index": 0,
+        "carrier": "bowl",
+        "native_report_sha256": "e6b7a4d712e3bac9a5f198039114686747911459d0f87ae0c966ea1f143a9cfd",
+        "files": {
+          "pixels.npy": "4f97461340c2530443759c92c263d70a0416ca63ba42cda8ebd2a7f58e3c82d3",
+          "virtual-points.npy": "b44f14e1b5dca95a150c035a0c968a55f8bf1344ae25b2d86f3644573fd6ee57",
+          "virtual-kinds.npy": "aca9a6158dbb82289739e79c7a82d072d71573d81ee26bab1648d3de38fe420d",
+          "source-hits.npy": "e0e9259b1639e38298dc91edcf376f86031b7ec6506d0e6d6197359ebc34b88b",
+          "source-kinds.npy": "7dbed70addae8c8bff9139d7c604549b6395d68a8c7f423326e1031509385138"
+        }
+      },
+      "proxy_pixels": 6261,
+      "expected_target_overlap_pixels": 0,
+      "device": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+      "output_sha256": "531f2d052113dd1ef235bf3bfb201d8c3b3075b8a84b0c44e8e77a998a15da55",
+      "target_hit_before_carrier_gap_m": {
+        "min": 2.3544493487798706,
+        "p50": 3.9812639599705877,
+        "max": 5.602915084976332
+      },
+      "target_hit_to_carrier_ray_residual_m": {
+        "min": 5.85906560245848e-09,
+        "p50": 2.0216083485335572e-07,
+        "max": 9.880128162306352e-07
+      },
+      "rois": {
+        "all_proxy": {
+          "pixels": 6261,
+          "valid_source_pairs": 12522,
+          "virtual_kind_counts": {
+            "2": 6261
+          },
+          "source_kind_counts": {
+            "1": 6130,
+            "2": 6392
+          },
+          "pixels_with_target_source_ray": 6130,
+          "target_ray_weight_mass": {
+            "min": 0.0,
+            "p50": 0.5,
+            "max": 0.5
+          },
+          "surface_match_weight_mass": {
+            "min": 0.0,
+            "p50": 0.0,
+            "max": 0.0
+          },
+          "source_target_to_virtual_distance_m": {
+            "min": 2.3471190754527567,
+            "p50": 3.9825881069648004,
+            "max": 5.682302784485812
+          },
+          "target_hits_before_carrier": 6130,
+          "target_pairs_by_camera": [
+            1778,
+            0,
+            0,
+            4352
+          ],
+          "bilinear_rgb_reconstruction_abs_lsb": {
+            "min": 6.851819875919318e-06,
+            "p50": 0.1623434182210417,
+            "max": 0.7838890925306146
+          }
+        },
+        "displaced_proxy": {
+          "pixels": 6261,
+          "valid_source_pairs": 12522,
+          "virtual_kind_counts": {
+            "2": 6261
+          },
+          "source_kind_counts": {
+            "1": 6130,
+            "2": 6392
+          },
+          "pixels_with_target_source_ray": 6130,
+          "target_ray_weight_mass": {
+            "min": 0.0,
+            "p50": 0.5,
+            "max": 0.5
+          },
+          "surface_match_weight_mass": {
+            "min": 0.0,
+            "p50": 0.0,
+            "max": 0.0
+          },
+          "source_target_to_virtual_distance_m": {
+            "min": 2.3471190754527567,
+            "p50": 3.9825881069648004,
+            "max": 5.682302784485812
+          },
+          "target_hits_before_carrier": 6130,
+          "target_pairs_by_camera": [
+            1778,
+            0,
+            0,
+            4352
+          ],
+          "bilinear_rgb_reconstruction_abs_lsb": {
+            "min": 6.851819875919318e-06,
+            "p50": 0.1623434182210417,
+            "max": 0.7838890925306146
+          }
+        }
+      }
+    },
+    {
+      "frame_index": 0,
+      "carrier": "dome_floor",
+      "native_report_sha256": "84bc0f711f3728e284caac0eba9e8c1972ec8314ff268f6feac8c311d5116b9c",
+      "scene_record": {
+        "frame_index": 0,
+        "carrier": "dome_floor",
+        "native_report_sha256": "84bc0f711f3728e284caac0eba9e8c1972ec8314ff268f6feac8c311d5116b9c",
+        "files": {
+          "pixels.npy": "faa134fcad31c64812abc1920d49001be9b49ebc8a699621bc726ada436bdad2",
+          "virtual-points.npy": "0006e2e199d47bf04e7608b425ed5d162f3704002ce1c86d67b4bd069c427760",
+          "virtual-kinds.npy": "d190d643867dbe35a6aa39af470fa89e66c8527f1894be74ba36bd05deda14a0",
+          "source-hits.npy": "745469e3c22a23dff8871b0378d5766a823b5c224b98c85ac48d81a9dadba1d2",
+          "source-kinds.npy": "229f6cbef4d784cbd0a9f4c5549e78c9bb8066057d3af6c950f7cb96b8a581b6"
+        }
+      },
+      "proxy_pixels": 4843,
+      "expected_target_overlap_pixels": 0,
+      "device": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+      "output_sha256": "2efe44c5a31ef287e22b36867f858ea12275df1aa53f6d47127b16fceeff38ef",
+      "target_hit_before_carrier_gap_m": {
+        "min": 2.4853948045851113,
+        "p50": 3.8199640820873704,
+        "max": 5.598649680909043
+      },
+      "target_hit_to_carrier_ray_residual_m": {
+        "min": 1.682518467814339e-09,
+        "p50": 2.023844777382985e-07,
+        "max": 9.390212652384421e-07
+      },
+      "rois": {
+        "all_proxy": {
+          "pixels": 4843,
+          "valid_source_pairs": 9686,
+          "virtual_kind_counts": {
+            "2": 4843
+          },
+          "source_kind_counts": {
+            "1": 4651,
+            "2": 5035
+          },
+          "pixels_with_target_source_ray": 4651,
+          "target_ray_weight_mass": {
+            "min": 0.0,
+            "p50": 0.5,
+            "max": 0.5
+          },
+          "surface_match_weight_mass": {
+            "min": 0.5,
+            "p50": 0.5,
+            "max": 1.0
+          },
+          "source_target_to_virtual_distance_m": {
+            "min": 2.485378812675803,
+            "p50": 3.819984553248294,
+            "max": 5.598649119682168
+          },
+          "target_hits_before_carrier": 4651,
+          "target_pairs_by_camera": [
+            619,
+            0,
+            0,
+            4032
+          ],
+          "bilinear_rgb_reconstruction_abs_lsb": {
+            "min": 8.94766114356571e-06,
+            "p50": 0.15627767397705838,
+            "max": 0.7182586607526389
+          }
+        },
+        "displaced_proxy": {
+          "pixels": 4843,
+          "valid_source_pairs": 9686,
+          "virtual_kind_counts": {
+            "2": 4843
+          },
+          "source_kind_counts": {
+            "1": 4651,
+            "2": 5035
+          },
+          "pixels_with_target_source_ray": 4651,
+          "target_ray_weight_mass": {
+            "min": 0.0,
+            "p50": 0.5,
+            "max": 0.5
+          },
+          "surface_match_weight_mass": {
+            "min": 0.5,
+            "p50": 0.5,
+            "max": 1.0
+          },
+          "source_target_to_virtual_distance_m": {
+            "min": 2.485378812675803,
+            "p50": 3.819984553248294,
+            "max": 5.598649119682168
+          },
+          "target_hits_before_carrier": 4651,
+          "target_pairs_by_camera": [
+            619,
+            0,
+            0,
+            4032
+          ],
+          "bilinear_rgb_reconstruction_abs_lsb": {
+            "min": 8.94766114356571e-06,
+            "p50": 0.15627767397705838,
+            "max": 0.7182586607526389
+          }
+        }
+      }
+    },
+    {
+      "frame_index": 0,
+      "carrier": "cylinder_floor",
+      "native_report_sha256": "005015b6afa954c4462d8e08a6984fc7b67ca96a343ce0c99404df1c97cacbad",
+      "scene_record": {
+        "frame_index": 0,
+        "carrier": "cylinder_floor",
+        "native_report_sha256": "005015b6afa954c4462d8e08a6984fc7b67ca96a343ce0c99404df1c97cacbad",
+        "files": {
+          "pixels.npy": "faa134fcad31c64812abc1920d49001be9b49ebc8a699621bc726ada436bdad2",
+          "virtual-points.npy": "0006e2e199d47bf04e7608b425ed5d162f3704002ce1c86d67b4bd069c427760",
+          "virtual-kinds.npy": "d190d643867dbe35a6aa39af470fa89e66c8527f1894be74ba36bd05deda14a0",
+          "source-hits.npy": "3e48adfb98328fcb65cf42cbc953c7926d9383c99046200fb7cd0fe200ca0f33",
+          "source-kinds.npy": "229f6cbef4d784cbd0a9f4c5549e78c9bb8066057d3af6c950f7cb96b8a581b6"
+        }
+      },
+      "proxy_pixels": 4843,
+      "expected_target_overlap_pixels": 0,
+      "device": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+      "output_sha256": "ceb74a1101e2526ebdf2b8b7bb96ec533b6c292b0197d50d004ce57cf8c19602",
+      "target_hit_before_carrier_gap_m": {
+        "min": 2.4853757298150607,
+        "p50": 3.8199637022738133,
+        "max": 5.598641544536331
+      },
+      "target_hit_to_carrier_ray_residual_m": {
+        "min": 4.976484261283691e-09,
+        "p50": 1.9996572663384303e-07,
+        "max": 9.593028470750348e-07
+      },
+      "rois": {
+        "all_proxy": {
+          "pixels": 4843,
+          "valid_source_pairs": 9686,
+          "virtual_kind_counts": {
+            "2": 4843
+          },
+          "source_kind_counts": {
+            "1": 4651,
+            "2": 5035
+          },
+          "pixels_with_target_source_ray": 4651,
+          "target_ray_weight_mass": {
+            "min": 0.0,
+            "p50": 0.5,
+            "max": 0.5
+          },
+          "surface_match_weight_mass": {
+            "min": 0.5,
+            "p50": 0.5,
+            "max": 1.0
+          },
+          "source_target_to_virtual_distance_m": {
+            "min": 2.4853716081189026,
+            "p50": 3.819984553248294,
+            "max": 5.598648623695525
+          },
+          "target_hits_before_carrier": 4651,
+          "target_pairs_by_camera": [
+            619,
+            0,
+            0,
+            4032
+          ],
+          "bilinear_rgb_reconstruction_abs_lsb": {
+            "min": 2.0644102391997876e-06,
+            "p50": 0.15646586562928633,
+            "max": 0.69915719945908
+          }
+        },
+        "displaced_proxy": {
+          "pixels": 4843,
+          "valid_source_pairs": 9686,
+          "virtual_kind_counts": {
+            "2": 4843
+          },
+          "source_kind_counts": {
+            "1": 4651,
+            "2": 5035
+          },
+          "pixels_with_target_source_ray": 4651,
+          "target_ray_weight_mass": {
+            "min": 0.0,
+            "p50": 0.5,
+            "max": 0.5
+          },
+          "surface_match_weight_mass": {
+            "min": 0.5,
+            "p50": 0.5,
+            "max": 1.0
+          },
+          "source_target_to_virtual_distance_m": {
+            "min": 2.4853716081189026,
+            "p50": 3.819984553248294,
+            "max": 5.598648623695525
+          },
+          "target_hits_before_carrier": 4651,
+          "target_pairs_by_camera": [
+            619,
+            0,
+            0,
+            4032
+          ],
+          "bilinear_rgb_reconstruction_abs_lsb": {
+            "min": 2.0644102391997876e-06,
+            "p50": 0.15646586562928633,
+            "max": 0.69915719945908
+          }
+        }
+      }
+    },
+    {
+      "frame_index": 0,
+      "carrier": "cube_floor",
+      "native_report_sha256": "b018066ebb4cc2c2cfc0e58ae827c482d736eb3fb0c1b7199a50c1ebdfd69633",
+      "scene_record": {
+        "frame_index": 0,
+        "carrier": "cube_floor",
+        "native_report_sha256": "b018066ebb4cc2c2cfc0e58ae827c482d736eb3fb0c1b7199a50c1ebdfd69633",
+        "files": {
+          "pixels.npy": "faa134fcad31c64812abc1920d49001be9b49ebc8a699621bc726ada436bdad2",
+          "virtual-points.npy": "0006e2e199d47bf04e7608b425ed5d162f3704002ce1c86d67b4bd069c427760",
+          "virtual-kinds.npy": "d190d643867dbe35a6aa39af470fa89e66c8527f1894be74ba36bd05deda14a0",
+          "source-hits.npy": "3472140b0f2392cd695816dcdf79f10abbc99bbef4d1c8633dd4cb5cccf98298",
+          "source-kinds.npy": "229f6cbef4d784cbd0a9f4c5549e78c9bb8066057d3af6c950f7cb96b8a581b6"
+        }
+      },
+      "proxy_pixels": 4843,
+      "expected_target_overlap_pixels": 0,
+      "device": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+      "output_sha256": "f6426f9fb8990336e0316a509de47c4980658713425a9f7ddc32651e691044e3",
+      "target_hit_before_carrier_gap_m": {
+        "min": 2.4853686376412374,
+        "p50": 3.819991303196738,
+        "max": 5.59863331856621
+      },
+      "target_hit_to_carrier_ray_residual_m": {
+        "min": 3.35972817088938e-09,
+        "p50": 2.0036546259587348e-07,
+        "max": 1.00418262382912e-06
+      },
+      "rois": {
+        "all_proxy": {
+          "pixels": 4843,
+          "valid_source_pairs": 9686,
+          "virtual_kind_counts": {
+            "2": 4843
+          },
+          "source_kind_counts": {
+            "1": 4651,
+            "2": 5035
+          },
+          "pixels_with_target_source_ray": 4651,
+          "target_ray_weight_mass": {
+            "min": 0.0,
+            "p50": 0.5,
+            "max": 0.5
+          },
+          "surface_match_weight_mass": {
+            "min": 0.5,
+            "p50": 0.5,
+            "max": 1.0
+          },
+          "source_target_to_virtual_distance_m": {
+            "min": 2.4853629283638643,
+            "p50": 3.819971170406659,
+            "max": 5.598648282141148
+          },
+          "target_hits_before_carrier": 4651,
+          "target_pairs_by_camera": [
+            619,
+            0,
+            0,
+            4032
+          ],
+          "bilinear_rgb_reconstruction_abs_lsb": {
+            "min": 2.9472942429720206e-05,
+            "p50": 0.15592701251890162,
+            "max": 0.6946347260473544
+          }
+        },
+        "displaced_proxy": {
+          "pixels": 4843,
+          "valid_source_pairs": 9686,
+          "virtual_kind_counts": {
+            "2": 4843
+          },
+          "source_kind_counts": {
+            "1": 4651,
+            "2": 5035
+          },
+          "pixels_with_target_source_ray": 4651,
+          "target_ray_weight_mass": {
+            "min": 0.0,
+            "p50": 0.5,
+            "max": 0.5
+          },
+          "surface_match_weight_mass": {
+            "min": 0.5,
+            "p50": 0.5,
+            "max": 1.0
+          },
+          "source_target_to_virtual_distance_m": {
+            "min": 2.4853629283638643,
+            "p50": 3.819971170406659,
+            "max": 5.598648282141148
+          },
+          "target_hits_before_carrier": 4651,
+          "target_pairs_by_camera": [
+            619,
+            0,
+            0,
+            4032
+          ],
+          "bilinear_rgb_reconstruction_abs_lsb": {
+            "min": 2.9472942429720206e-05,
+            "p50": 0.15592701251890162,
+            "max": 0.6946347260473544
+          }
+        }
+      }
+    },
+    {
+      "frame_index": 1,
+      "carrier": "plane",
+      "native_report_sha256": "bdf3ddd6ed1bd85328b7404cffa2bc6418d1a96ae4392d37f21bda7a9ceb7bf7",
+      "scene_record": {
+        "frame_index": 1,
+        "carrier": "plane",
+        "native_report_sha256": "bdf3ddd6ed1bd85328b7404cffa2bc6418d1a96ae4392d37f21bda7a9ceb7bf7",
+        "files": {
+          "pixels.npy": "a77159ddabc9e189e39e11923b93036596c99db59e036ddf077dd4a55da4f1e3",
+          "virtual-points.npy": "6d817a9b9ea241974a800fe33bf683e02ded5d390522be2ce1ae0e4ede2555d6",
+          "virtual-kinds.npy": "ee56c941f2dc3b493aa98b634d63ac589ac2988398f2271fbb3e778ae7ce8a20",
+          "source-hits.npy": "f742f1c8298136530009eba7ea676c5380b6bcc9d6f6603b1e89497d4bf0604d",
+          "source-kinds.npy": "062dcdc7959ea5690da1ce51dbeef0a67f0c77130345b7916f3d8a429c219d07"
+        }
+      },
+      "proxy_pixels": 5373,
+      "expected_target_overlap_pixels": 0,
+      "device": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+      "output_sha256": "b7df8a736d5747beede4ef3b2fad76a3c4e3dd68d05176b99a39b69115f8346c",
+      "target_hit_before_carrier_gap_m": {
+        "min": 2.1146427300503055,
+        "p50": 3.7982362280039776,
+        "max": 4.6590369485523615
+      },
+      "target_hit_to_carrier_ray_residual_m": {
+        "min": 2.363023987108085e-09,
+        "p50": 1.7576115473901418e-07,
+        "max": 9.128666879683014e-07
+      },
+      "rois": {
+        "all_proxy": {
+          "pixels": 5373,
+          "valid_source_pairs": 10746,
+          "virtual_kind_counts": {
+            "2": 5373
+          },
+          "source_kind_counts": {
+            "1": 5322,
+            "2": 5424
+          },
+          "pixels_with_target_source_ray": 5322,
+          "target_ray_weight_mass": {
+            "min": 0.0,
+            "p50": 0.5,
+            "max": 0.5
+          },
+          "surface_match_weight_mass": {
+            "min": 0.5,
+            "p50": 0.5,
+            "max": 1.0
+          },
+          "source_target_to_virtual_distance_m": {
+            "min": 2.114623768265062,
+            "p50": 3.7982595973978173,
+            "max": 4.659057807375645
+          },
+          "target_hits_before_carrier": 5322,
+          "target_pairs_by_camera": [
+            0,
+            0,
+            0,
+            5322
+          ],
+          "bilinear_rgb_reconstruction_abs_lsb": {
+            "min": 3.729364235027788e-05,
+            "p50": 0.16354735306610735,
+            "max": 0.6465103582575011
+          }
+        },
+        "displaced_proxy": {
+          "pixels": 5373,
+          "valid_source_pairs": 10746,
+          "virtual_kind_counts": {
+            "2": 5373
+          },
+          "source_kind_counts": {
+            "1": 5322,
+            "2": 5424
+          },
+          "pixels_with_target_source_ray": 5322,
+          "target_ray_weight_mass": {
+            "min": 0.0,
+            "p50": 0.5,
+            "max": 0.5
+          },
+          "surface_match_weight_mass": {
+            "min": 0.5,
+            "p50": 0.5,
+            "max": 1.0
+          },
+          "source_target_to_virtual_distance_m": {
+            "min": 2.114623768265062,
+            "p50": 3.7982595973978173,
+            "max": 4.659057807375645
+          },
+          "target_hits_before_carrier": 5322,
+          "target_pairs_by_camera": [
+            0,
+            0,
+            0,
+            5322
+          ],
+          "bilinear_rgb_reconstruction_abs_lsb": {
+            "min": 3.729364235027788e-05,
+            "p50": 0.16354735306610735,
+            "max": 0.6465103582575011
+          }
+        }
+      }
+    },
+    {
+      "frame_index": 1,
+      "carrier": "bowl",
+      "native_report_sha256": "324a135e2a9effeeaffbcc33cf073b7f7ec5449e6d85420b1cd7c35c188c81ed",
+      "scene_record": {
+        "frame_index": 1,
+        "carrier": "bowl",
+        "native_report_sha256": "324a135e2a9effeeaffbcc33cf073b7f7ec5449e6d85420b1cd7c35c188c81ed",
+        "files": {
+          "pixels.npy": "e93d985438cd1255be88e30bf019e2023e0b57aacf82baa62096595ee97c0f3a",
+          "virtual-points.npy": "befb9cfcd03c15c5278f68e34e9ab377b831b7acb788d9aefdf6ce40ac892cd1",
+          "virtual-kinds.npy": "0621250859ea6ddc96ecda4987937f52b5e4ed181cf818e57d251208fbcadade",
+          "source-hits.npy": "6b4163a34d058deef1a097f65c67287d482ac4ca5da62114047845e6b53074e1",
+          "source-kinds.npy": "aa50adbbb0e1e96d5044387ddc76cf6c9dfdc9a40e57e92b35da25fb69526c8a"
+        }
+      },
+      "proxy_pixels": 5595,
+      "expected_target_overlap_pixels": 0,
+      "device": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+      "output_sha256": "cde2156e5ae21cc4c4c63934fe7d6245b038c02f2b9581b9a9765eaf64269347",
+      "target_hit_before_carrier_gap_m": {
+        "min": 2.0174473943926614,
+        "p50": 3.7954765837535667,
+        "max": 4.663991059568495
+      },
+      "target_hit_to_carrier_ray_residual_m": {
+        "min": 7.269396050459524e-10,
+        "p50": 1.7555559685275662e-07,
+        "max": 8.438692081663361e-07
+      },
+      "rois": {
+        "all_proxy": {
+          "pixels": 5595,
+          "valid_source_pairs": 11190,
+          "virtual_kind_counts": {
+            "2": 5595
+          },
+          "source_kind_counts": {
+            "1": 5534,
+            "2": 5656
+          },
+          "pixels_with_target_source_ray": 5534,
+          "target_ray_weight_mass": {
+            "min": 0.0,
+            "p50": 0.5,
+            "max": 0.5
+          },
+          "surface_match_weight_mass": {
+            "min": 0.0,
+            "p50": 0.0,
+            "max": 0.0
+          },
+          "source_target_to_virtual_distance_m": {
+            "min": 2.0104821605690812,
+            "p50": 3.788594033527649,
+            "max": 4.666568679529931
+          },
+          "target_hits_before_carrier": 5534,
+          "target_pairs_by_camera": [
+            0,
+            0,
+            0,
+            5534
+          ],
+          "bilinear_rgb_reconstruction_abs_lsb": {
+            "min": 2.0481683463913214e-05,
+            "p50": 0.17706848030201172,
+            "max": 0.6779454338212076
+          }
+        },
+        "displaced_proxy": {
+          "pixels": 5595,
+          "valid_source_pairs": 11190,
+          "virtual_kind_counts": {
+            "2": 5595
+          },
+          "source_kind_counts": {
+            "1": 5534,
+            "2": 5656
+          },
+          "pixels_with_target_source_ray": 5534,
+          "target_ray_weight_mass": {
+            "min": 0.0,
+            "p50": 0.5,
+            "max": 0.5
+          },
+          "surface_match_weight_mass": {
+            "min": 0.0,
+            "p50": 0.0,
+            "max": 0.0
+          },
+          "source_target_to_virtual_distance_m": {
+            "min": 2.0104821605690812,
+            "p50": 3.788594033527649,
+            "max": 4.666568679529931
+          },
+          "target_hits_before_carrier": 5534,
+          "target_pairs_by_camera": [
+            0,
+            0,
+            0,
+            5534
+          ],
+          "bilinear_rgb_reconstruction_abs_lsb": {
+            "min": 2.0481683463913214e-05,
+            "p50": 0.17706848030201172,
+            "max": 0.6779454338212076
+          }
+        }
+      }
+    },
+    {
+      "frame_index": 1,
+      "carrier": "dome_floor",
+      "native_report_sha256": "f6985ac9f9f1563b0725e66096789a91fedb2974ec400c1b2c0e2e324ee5464d",
+      "scene_record": {
+        "frame_index": 1,
+        "carrier": "dome_floor",
+        "native_report_sha256": "f6985ac9f9f1563b0725e66096789a91fedb2974ec400c1b2c0e2e324ee5464d",
+        "files": {
+          "pixels.npy": "a77159ddabc9e189e39e11923b93036596c99db59e036ddf077dd4a55da4f1e3",
+          "virtual-points.npy": "6d817a9b9ea241974a800fe33bf683e02ded5d390522be2ce1ae0e4ede2555d6",
+          "virtual-kinds.npy": "ee56c941f2dc3b493aa98b634d63ac589ac2988398f2271fbb3e778ae7ce8a20",
+          "source-hits.npy": "ff908d5939f66d2514e6ef32a0e08cef3e6d73b0576779037dcb7aa6aa8d4bf3",
+          "source-kinds.npy": "062dcdc7959ea5690da1ce51dbeef0a67f0c77130345b7916f3d8a429c219d07"
+        }
+      },
+      "proxy_pixels": 5373,
+      "expected_target_overlap_pixels": 0,
+      "device": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+      "output_sha256": "1a08dbc640df3ce1e87b9e10e12517eb4e06833068d3598c38adf5c1b856b327",
+      "target_hit_before_carrier_gap_m": {
+        "min": 2.1147267776226566,
+        "p50": 3.7982604434232288,
+        "max": 4.659033893666932
+      },
+      "target_hit_to_carrier_ray_residual_m": {
+        "min": 9.426483541422696e-10,
+        "p50": 1.7351941904773228e-07,
+        "max": 7.647219148672786e-07
+      },
+      "rois": {
+        "all_proxy": {
+          "pixels": 5373,
+          "valid_source_pairs": 10746,
+          "virtual_kind_counts": {
+            "2": 5373
+          },
+          "source_kind_counts": {
+            "1": 5322,
+            "2": 5424
+          },
+          "pixels_with_target_source_ray": 5322,
+          "target_ray_weight_mass": {
+            "min": 0.0,
+            "p50": 0.5,
+            "max": 0.5
+          },
+          "surface_match_weight_mass": {
+            "min": 0.5,
+            "p50": 0.5,
+            "max": 1.0
+          },
+          "source_target_to_virtual_distance_m": {
+            "min": 2.1146815346558587,
+            "p50": 3.7982656691282504,
+            "max": 4.659057528035202
+          },
+          "target_hits_before_carrier": 5322,
+          "target_pairs_by_camera": [
+            0,
+            0,
+            0,
+            5322
+          ],
+          "bilinear_rgb_reconstruction_abs_lsb": {
+            "min": 8.94766114356571e-06,
+            "p50": 0.16352780394453248,
+            "max": 0.6504945816881786
+          }
+        },
+        "displaced_proxy": {
+          "pixels": 5373,
+          "valid_source_pairs": 10746,
+          "virtual_kind_counts": {
+            "2": 5373
+          },
+          "source_kind_counts": {
+            "1": 5322,
+            "2": 5424
+          },
+          "pixels_with_target_source_ray": 5322,
+          "target_ray_weight_mass": {
+            "min": 0.0,
+            "p50": 0.5,
+            "max": 0.5
+          },
+          "surface_match_weight_mass": {
+            "min": 0.5,
+            "p50": 0.5,
+            "max": 1.0
+          },
+          "source_target_to_virtual_distance_m": {
+            "min": 2.1146815346558587,
+            "p50": 3.7982656691282504,
+            "max": 4.659057528035202
+          },
+          "target_hits_before_carrier": 5322,
+          "target_pairs_by_camera": [
+            0,
+            0,
+            0,
+            5322
+          ],
+          "bilinear_rgb_reconstruction_abs_lsb": {
+            "min": 8.94766114356571e-06,
+            "p50": 0.16352780394453248,
+            "max": 0.6504945816881786
+          }
+        }
+      }
+    },
+    {
+      "frame_index": 1,
+      "carrier": "cylinder_floor",
+      "native_report_sha256": "51a1b677c18a259b60f6ae9bd7e8194550efe154c1ed793782612f4dbf672a88",
+      "scene_record": {
+        "frame_index": 1,
+        "carrier": "cylinder_floor",
+        "native_report_sha256": "51a1b677c18a259b60f6ae9bd7e8194550efe154c1ed793782612f4dbf672a88",
+        "files": {
+          "pixels.npy": "a77159ddabc9e189e39e11923b93036596c99db59e036ddf077dd4a55da4f1e3",
+          "virtual-points.npy": "6d817a9b9ea241974a800fe33bf683e02ded5d390522be2ce1ae0e4ede2555d6",
+          "virtual-kinds.npy": "ee56c941f2dc3b493aa98b634d63ac589ac2988398f2271fbb3e778ae7ce8a20",
+          "source-hits.npy": "51f7018d081b751b799c637cf3a82dc8eba82010ffb1b1671d4075c24035f4ad",
+          "source-kinds.npy": "062dcdc7959ea5690da1ce51dbeef0a67f0c77130345b7916f3d8a429c219d07"
+        }
+      },
+      "proxy_pixels": 5373,
+      "expected_target_overlap_pixels": 0,
+      "device": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+      "output_sha256": "572ea3cc60139dd2c6107e392453ac072503e161f88feb8c40e0725048bb1c72",
+      "target_hit_before_carrier_gap_m": {
+        "min": 2.1146438206726335,
+        "p50": 3.798256516472745,
+        "max": 4.65903481222864
+      },
+      "target_hit_to_carrier_ray_residual_m": {
+        "min": 1.2890335777555406e-09,
+        "p50": 1.713373042362761e-07,
+        "max": 8.426438881518791e-07
+      },
+      "rois": {
+        "all_proxy": {
+          "pixels": 5373,
+          "valid_source_pairs": 10746,
+          "virtual_kind_counts": {
+            "2": 5373
+          },
+          "source_kind_counts": {
+            "1": 5322,
+            "2": 5424
+          },
+          "pixels_with_target_source_ray": 5322,
+          "target_ray_weight_mass": {
+            "min": 0.0,
+            "p50": 0.5,
+            "max": 0.5
+          },
+          "surface_match_weight_mass": {
+            "min": 0.5,
+            "p50": 0.5,
+            "max": 1.0
+          },
+          "source_target_to_virtual_distance_m": {
+            "min": 2.114622984674503,
+            "p50": 3.798266463287532,
+            "max": 4.659054972554222
+          },
+          "target_hits_before_carrier": 5322,
+          "target_pairs_by_camera": [
+            0,
+            0,
+            0,
+            5322
+          ],
+          "bilinear_rgb_reconstruction_abs_lsb": {
+            "min": 2.0125780991975262e-05,
+            "p50": 0.1635572943810928,
+            "max": 0.6214560640517846
+          }
+        },
+        "displaced_proxy": {
+          "pixels": 5373,
+          "valid_source_pairs": 10746,
+          "virtual_kind_counts": {
+            "2": 5373
+          },
+          "source_kind_counts": {
+            "1": 5322,
+            "2": 5424
+          },
+          "pixels_with_target_source_ray": 5322,
+          "target_ray_weight_mass": {
+            "min": 0.0,
+            "p50": 0.5,
+            "max": 0.5
+          },
+          "surface_match_weight_mass": {
+            "min": 0.5,
+            "p50": 0.5,
+            "max": 1.0
+          },
+          "source_target_to_virtual_distance_m": {
+            "min": 2.114622984674503,
+            "p50": 3.798266463287532,
+            "max": 4.659054972554222
+          },
+          "target_hits_before_carrier": 5322,
+          "target_pairs_by_camera": [
+            0,
+            0,
+            0,
+            5322
+          ],
+          "bilinear_rgb_reconstruction_abs_lsb": {
+            "min": 2.0125780991975262e-05,
+            "p50": 0.1635572943810928,
+            "max": 0.6214560640517846
+          }
+        }
+      }
+    },
+    {
+      "frame_index": 1,
+      "carrier": "cube_floor",
+      "native_report_sha256": "718a7c5e28caff7b4b21196134524247629f9324b79df60a4959ec930f8091d2",
+      "scene_record": {
+        "frame_index": 1,
+        "carrier": "cube_floor",
+        "native_report_sha256": "718a7c5e28caff7b4b21196134524247629f9324b79df60a4959ec930f8091d2",
+        "files": {
+          "pixels.npy": "a77159ddabc9e189e39e11923b93036596c99db59e036ddf077dd4a55da4f1e3",
+          "virtual-points.npy": "6d817a9b9ea241974a800fe33bf683e02ded5d390522be2ce1ae0e4ede2555d6",
+          "virtual-kinds.npy": "ee56c941f2dc3b493aa98b634d63ac589ac2988398f2271fbb3e778ae7ce8a20",
+          "source-hits.npy": "0808b347cb46708ce7b74603fb249f69e00e9252468899caabf26335dd672e56",
+          "source-kinds.npy": "062dcdc7959ea5690da1ce51dbeef0a67f0c77130345b7916f3d8a429c219d07"
+        }
+      },
+      "proxy_pixels": 5373,
+      "expected_target_overlap_pixels": 0,
+      "device": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+      "output_sha256": "877a0a6124945124934d9d061424ac631ae228f04db8b9a84e621265335c5866",
+      "target_hit_before_carrier_gap_m": {
+        "min": 2.1146634582219623,
+        "p50": 3.798257177962431,
+        "max": 4.659085659699683
+      },
+      "target_hit_to_carrier_ray_residual_m": {
+        "min": 2.403523509418317e-09,
+        "p50": 1.743304273486069e-07,
+        "max": 9.096207858900264e-07
+      },
+      "rois": {
+        "all_proxy": {
+          "pixels": 5373,
+          "valid_source_pairs": 10746,
+          "virtual_kind_counts": {
+            "2": 5373
+          },
+          "source_kind_counts": {
+            "1": 5322,
+            "2": 5424
+          },
+          "pixels_with_target_source_ray": 5322,
+          "target_ray_weight_mass": {
+            "min": 0.0,
+            "p50": 0.5,
+            "max": 0.5
+          },
+          "surface_match_weight_mass": {
+            "min": 0.5,
+            "p50": 0.5,
+            "max": 1.0
+          },
+          "source_target_to_virtual_distance_m": {
+            "min": 2.114670047625324,
+            "p50": 3.798249339577544,
+            "max": 4.6590748110919105
+          },
+          "target_hits_before_carrier": 5322,
+          "target_pairs_by_camera": [
+            0,
+            0,
+            0,
+            5322
+          ],
+          "bilinear_rgb_reconstruction_abs_lsb": {
+            "min": 5.991989013409693e-06,
+            "p50": 0.163277183926688,
+            "max": 0.662097248367246
+          }
+        },
+        "displaced_proxy": {
+          "pixels": 5373,
+          "valid_source_pairs": 10746,
+          "virtual_kind_counts": {
+            "2": 5373
+          },
+          "source_kind_counts": {
+            "1": 5322,
+            "2": 5424
+          },
+          "pixels_with_target_source_ray": 5322,
+          "target_ray_weight_mass": {
+            "min": 0.0,
+            "p50": 0.5,
+            "max": 0.5
+          },
+          "surface_match_weight_mass": {
+            "min": 0.5,
+            "p50": 0.5,
+            "max": 1.0
+          },
+          "source_target_to_virtual_distance_m": {
+            "min": 2.114670047625324,
+            "p50": 3.798249339577544,
+            "max": 4.6590748110919105
+          },
+          "target_hits_before_carrier": 5322,
+          "target_pairs_by_camera": [
+            0,
+            0,
+            0,
+            5322
+          ],
+          "bilinear_rgb_reconstruction_abs_lsb": {
+            "min": 5.991989013409693e-06,
+            "p50": 0.163277183926688,
+            "max": 0.662097248367246
+          }
+        }
+      }
+    }
+  ],
+  "limitations": [
+    "Output-conditioned magenta proxy, no component filtering; cannot measure recall or independent ghost segmentation",
+    "Point-ray scene identity is not bilinear/antialiased RGB surface identity; CPU bilinear reconstruction is a separate photometric consistency control",
+    "Two correlated frames of one earlier seed and true calibration, edge_feather only",
+    "No hybrid contribution or GPU-only weighting attribution in this series",
+    "No physical cameras, Aurora or independent natural-object generalization"
+  ]
+}
