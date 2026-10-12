@@ -12,6 +12,7 @@ from source_correspondence import classify, load_product, project
 from source_correspondence_controls import transform_points
 from planar_correspondence import intersect_plane
 from planar_precision import plane_from_mvp,reproject,view_projection
+from displaced_correspondence import bilinear_rgb,chroma_mask
 
 
 class SourceCorrespondenceTests(unittest.TestCase):
@@ -75,6 +76,14 @@ class SourceCorrespondenceTests(unittest.TestCase):
                   'output': {'width': 4, 'height': 4}}
         matrix = view_projection(config)
         np.testing.assert_allclose(reproject(matrix, np.array([[0., 0., 0.]]), 4, 4), [[1.5, 1.5]])
+
+    def test_bilinear_samples_centers_fractional_and_clamped_border(self):
+        image = np.array([[[255, 0, 0], [0, 255, 0]], [[0, 0, 255], [255, 255, 255]]], dtype=np.uint8)
+        values = bilinear_rgb(image, np.array([[0, 0], [.5, .5], [1, 1], [1.8, 0]]))
+        np.testing.assert_allclose(values, [[1, 0, 0], [.5, .5, .5], [1, 1, 1], [0, 1, 0]])
+        np.testing.assert_array_equal(chroma_mask(np.array([[[255, 0, 255], [255, 255, 255]]])), [[True, False]])
+        with self.assertRaises(ValueError):
+            bilinear_rgb(image, np.array([[float('nan'), 0]]))
 
     def test_layout_checksum_and_payload_size_are_enforced(self):
         with tempfile.TemporaryDirectory() as directory:

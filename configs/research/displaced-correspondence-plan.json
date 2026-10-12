@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "scope": "output_chroma_conditioned_displaced_target_source_surface_attribution",
+  "case": "rig101-near-z080",
+  "input_root": "artifacts/parallax-sensor-inputs-v1/rig101-near-z080",
+  "native_root": "artifacts/source-correspondence-controls-v1/rig101-near-z080",
+  "output_root": "artifacts/displaced-correspondence-v1",
+  "frames": [
+    0,
+    1
+  ],
+  "carriers": [
+    "plane",
+    "bowl",
+    "dome_floor",
+    "cylinder_floor",
+    "cube_floor"
+  ],
+  "chroma_threshold": 0.15,
+  "surface_match_tolerance_m": 0.02,
+  "binary_path": "artifacts/source-correspondence-controls-v1/sv-correspondence-probe",
+  "binary_sha256": "d9f3349d5a03dfbace41615ac07b609d37bfacd2a4d94def0e79b008bf59f115",
+  "frozen_files": {
+    "artifacts/parallax-sensor-inputs-v1/rig101-near-z080/plan.json": "db270390c30bad4759f3f6fc0c9a00d7ecce6f1eed4a0808790aa5e0ffa3f398",
+    "artifacts/parallax-sensor-inputs-v1/rig101-near-z080/seed101-capture/paired_truth.json": "cc9c5f54261a19501514e40d9800cfadee1f37993881e4afc90605bd737b18ab",
+    "artifacts/parallax-sensor-inputs-v1/rig101-near-z080/seed101-inputs/manifest.json": "298e789999336b13a91dcc5aa573c785aa43afcf9d553156f53519533cefd7ec",
+    "artifacts/parallax-sensor-v1/rig101-near-z080/native/seed101/plane/config.json": "328207a6a513bd12815707d75316dd4390335367e5c457be26d0f04d02b0e322",
+    "artifacts/parallax-sensor-v1/rig101-near-z080/native/seed101/plane/report.json": "17c29e021c0d0184f49f4524274b4e7b8be07ee204168f1d426e8dee4e0f4052",
+    "artifacts/parallax-sensor-v1/rig101-near-z080/native/seed101/bowl/config.json": "380a07c2cbd82a91705f3e907f04bae7a0c50ca2e06ca34bb86dc5952c79a1ff",
+    "artifacts/parallax-sensor-v1/rig101-near-z080/native/seed101/bowl/report.json": "256e513c9d347f51bd153f2d57fdea51cb925fbe35a5a7d21d371943b0cfc770",
+    "artifacts/parallax-sensor-v1/rig101-near-z080/native/seed101/dome_floor/config.json": "d631bca5bbb20b1dc10560c86b1cbc9d9a35076062a9441e42471c8b64b2f87a",
+    "artifacts/parallax-sensor-v1/rig101-near-z080/native/seed101/dome_floor/report.json": "02d9410df7d460294eccec9d60fdf79f44f50a42a177b13010bbfdd3d6b30669",
+    "artifacts/parallax-sensor-v1/rig101-near-z080/native/seed101/cylinder_floor/config.json": "1cae390f3036aa566d9caf3140a4e4969cc2026b8cdd17f4e4197384fa885eec",
+    "artifacts/parallax-sensor-v1/rig101-near-z080/native/seed101/cylinder_floor/report.json": "17a1f220afdfbcfdd6e1f3d2be72725891d9bda0d40bb9e4d59835016e147cd7",
+    "artifacts/parallax-sensor-v1/rig101-near-z080/native/seed101/cube_floor/config.json": "44a43688820e6d2cce68f25635421f3c8dca4ea5f5c21a345d01c56756e51d26",
+    "artifacts/parallax-sensor-v1/rig101-near-z080/native/seed101/cube_floor/report.json": "769d5441ad5bc3786074c9a859068d87348768bf19957988070798d38ae901c1",
+    "assets/scenarios/parallax-sensor-v1.json": "cf679acfae308d1815f2e4ae9bcb91f90bf0eaa39f6ca5532e576b173e65952a",
+    "artifacts/source-correspondence-controls-v1/rig101-near-z080/frame0/direct-mask.npy": "6d5fadf66daeb396b9d1e6050a59cfb5d3747f037b5e23ac2d46027ea0667b50",
+    "artifacts/source-correspondence-controls-v1/rig101-near-z080/frame1/direct-mask.npy": "f31d7fd9ab7addb10a86668f4e58458c3b631650056970699c88978afef86e1e",
+    "artifacts/source-correspondence-controls-v1/rig101-near-z080/frame1/native/plane/report.json": "bdf3ddd6ed1bd85328b7404cffa2bc6418d1a96ae4392d37f21bda7a9ceb7bf7",
+    "artifacts/source-correspondence-controls-v1/rig101-near-z080/frame1/native/bowl/report.json": "324a135e2a9effeeaffbcc33cf073b7f7ec5449e6d85420b1cd7c35c188c81ed",
+    "artifacts/source-correspondence-controls-v1/rig101-near-z080/frame1/native/dome_floor/report.json": "f6985ac9f9f1563b0725e66096789a91fedb2974ec400c1b2c0e2e324ee5464d",
+    "artifacts/source-correspondence-controls-v1/rig101-near-z080/frame1/native/cylinder_floor/report.json": "51a1b677c18a259b60f6ae9bd7e8194550efe154c1ed793782612f4dbf672a88",
+    "artifacts/source-correspondence-controls-v1/rig101-near-z080/frame1/native/cube_floor/report.json": "718a7c5e28caff7b4b21196134524247629f9324b79df60a4959ec930f8091d2",
+    "artifacts/source-correspondence-controls-v1/rig101-near-z080/frame0/native/plane/report.json": "1ed7fdc09a785f5edad10ec200a9e4398272bde351e084a6990064ea795c4552",
+    "artifacts/source-correspondence-controls-v1/rig101-near-z080/frame0/native/bowl/report.json": "e6b7a4d712e3bac9a5f198039114686747911459d0f87ae0c966ea1f143a9cfd",
+    "artifacts/source-correspondence-controls-v1/rig101-near-z080/frame0/native/dome_floor/report.json": "84bc0f711f3728e284caac0eba9e8c1972ec8314ff268f6feac8c311d5116b9c",
+    "artifacts/source-correspondence-controls-v1/rig101-near-z080/frame0/native/cylinder_floor/report.json": "005015b6afa954c4462d8e08a6984fc7b67ca96a343ce0c99404df1c97cacbad",
+    "artifacts/source-correspondence-controls-v1/rig101-near-z080/frame0/native/cube_floor/report.json": "b018066ebb4cc2c2cfc0e58ae827c482d736eb3fb0c1b7199a50c1ebdfd69633",
+    "tools/blender/source_surface_controls.py": "6bd3d9f7913453199ebf2d844e5b1786219e9af8c76fa7bda8006f408baca7cd",
+    "docs/validation/baselines/source_correspondence_controls_v1.json": "5c6ba1077a80907551fe65ea0098a395c6332600d1083aa379b40dbb544e27e2",
+    "src/render/surface.frag": "0908c67221313eb8474bd249c8af1a6cb73206eb906190b277890f31ee20deeb"
+  },
+  "limitations": [
+    "Output-conditioned magenta proxy, no component filtering; cannot measure recall or independent ghost segmentation",
+    "Point-ray scene identity is not bilinear/antialiased RGB surface identity; CPU bilinear reconstruction is a separate photometric consistency control",
+    "Two correlated frames of one earlier seed and true calibration, edge_feather only",
+    "No hybrid contribution or GPU-only weighting attribution in this series",
+    "No physical cameras, Aurora or independent natural-object generalization"
+  ]
+}
