@@ -1,0 +1,519 @@
+{
+  "schema_version": 1,
+  "scope": "isolated_planar_geometry_known_answer_control_no_rgb_truth",
+  "plan_sha256": "6d34ebf02355a849260a527a12173fd82f79c172fd29fc4a00017a944f30e10e",
+  "collector_sha256": "c45ca82c82aabf8894573868d6d07fcfbaa50f56072420501e1b2d413d7756b4",
+  "helper_sha256": "b85341017ea8eb932964040252697f41a4639337fd2f0d4b1d2d4c71633740cf",
+  "scene_truth_sha256": "97d8bf0c7892ccb9764513bf98686837eab8a929d15458b6381c3304e84cc062",
+  "blender_version": "5.2.2 LTS",
+  "exact_planar_controls_passed": false,
+  "rows": [
+    {
+      "frame_index": 0,
+      "carrier": "plane",
+      "pixels": 166,
+      "source_pairs": 664,
+      "valid_pairs": 249,
+      "planar_geometry_required": true,
+      "planar_tolerances_passed": true,
+      "source_matches_002m": 249,
+      "carrier_regions": {
+        "1": 166
+      },
+      "carrier_to_plane_m": {
+        "min": 1.707982510430557e-05,
+        "p50": 5.053878875813594e-05,
+        "max": 7.80561455017842e-05
+      },
+      "source_to_direct_plane_m": {
+        "min": 1.793574972472653e-05,
+        "p50": 5.150834623543405e-05,
+        "max": 8.043650677133418e-05
+      },
+      "correct_vs_native_uv_px": {
+        "min": 0.0015681450776115658,
+        "p50": 0.004923187585778913,
+        "max": 0.00742003483093755
+      },
+      "native_optical_residual_px": {
+        "min": 1.5282043279725022e-06,
+        "p50": 2.599470003567871e-05,
+        "max": 7.428675143875155e-05
+      },
+      "carrier_projection_vs_plane_uv_px": {
+        "min": 0.001590284078370377,
+        "p50": 0.004913267359707416,
+        "max": 0.007410229824190501
+      },
+      "blender_analytic_direct_m": {
+        "min": 7.654641309819397e-08,
+        "p50": 5.273440026775965e-07,
+        "max": 1.3868406935432411e-06
+      },
+      "blender_analytic_source_m": {
+        "min": 2.2871210368626327e-08,
+        "p50": 4.079028518473082e-06,
+        "max": 1.6047683911581326e-05
+      },
+      "native_report_sha256": "9d2b6e9418fad4c22d89e2292baed9b0941df00c6ad8b49065b5df19ae6440af",
+      "normal_rgba_sha256": "557cab335ad33bb0b7549ccace13f5f7ddf7913968d07d4b381962fd19ef4954"
+    },
+    {
+      "frame_index": 0,
+      "carrier": "bowl",
+      "pixels": 166,
+      "source_pairs": 664,
+      "valid_pairs": 249,
+      "planar_geometry_required": false,
+      "planar_tolerances_passed": false,
+      "source_matches_002m": 196,
+      "carrier_regions": {
+        "4": 166
+      },
+      "carrier_to_plane_m": {
+        "min": 0.0030146038192605537,
+        "p50": 0.0058210536579155325,
+        "max": 0.010886407812435925
+      },
+      "source_to_direct_plane_m": {
+        "min": 0.005700869939177899,
+        "p50": 0.013306999433562105,
+        "max": 0.02919134518683678
+      },
+      "correct_vs_native_uv_px": {
+        "min": 0.40229361902936167,
+        "p50": 0.8042266762346211,
+        "max": 1.4884225847329378
+      },
+      "native_optical_residual_px": {
+        "min": 2.0173480606656366e-06,
+        "p50": 2.5302142870102887e-05,
+        "max": 7.821980384136637e-05
+      },
+      "carrier_projection_vs_plane_uv_px": {
+        "min": 0.40227291646056734,
+        "p50": 0.804202197460607,
+        "max": 1.4884272715409617
+      },
+      "blender_analytic_direct_m": {
+        "min": 7.654641309819397e-08,
+        "p50": 5.273440026775965e-07,
+        "max": 1.3868406935432411e-06
+      },
+      "blender_analytic_source_m": {
+        "min": 2.226734820483334e-08,
+        "p50": 4.4426019771499065e-06,
+        "max": 1.4269414338317622e-05
+      },
+      "native_report_sha256": "9e760f5a786a04a711bae06c05fe88fe35e38b2d0ac4149bd692a3a0c63b460d",
+      "normal_rgba_sha256": "fc0bde6b740021a3fe1bfa98b35ecbf651e50a10be6c488c31a2225599495e74"
+    },
+    {
+      "frame_index": 0,
+      "carrier": "dome_floor",
+      "pixels": 166,
+      "source_pairs": 664,
+      "valid_pairs": 249,
+      "planar_geometry_required": true,
+      "planar_tolerances_passed": false,
+      "source_matches_002m": 249,
+      "carrier_regions": {
+        "1": 166
+      },
+      "carrier_to_plane_m": {
+        "min": 1.6933594610812735e-05,
+        "p50": 5.335082664954541e-05,
+        "max": 8.226822999592312e-05
+      },
+      "source_to_direct_plane_m": {
+        "min": 1.6894946812865304e-05,
+        "p50": 5.422647008306551e-05,
+        "max": 8.41948468486925e-05
+      },
+      "correct_vs_native_uv_px": {
+        "min": 0.002092243174857691,
+        "p50": 0.004195399531545076,
+        "max": 0.01006392708742033
+      },
+      "native_optical_residual_px": {
+        "min": 1.435728192825992e-06,
+        "p50": 2.5089499584879033e-05,
+        "max": 7.557514378777122e-05
+      },
+      "carrier_projection_vs_plane_uv_px": {
+        "min": 0.0020749299581980544,
+        "p50": 0.004199714585928836,
+        "max": 0.010061859388240528
+      },
+      "blender_analytic_direct_m": {
+        "min": 7.654641309819397e-08,
+        "p50": 5.273440026775965e-07,
+        "max": 1.3868406935432411e-06
+      },
+      "blender_analytic_source_m": {
+        "min": 3.4943662556788125e-08,
+        "p50": 4.100777215273921e-06,
+        "max": 1.5102772591662362e-05
+      },
+      "native_report_sha256": "98c6359d8cc403a88658fd02f0ac6c3a0f9eb14df9509d5f126be2ebd14db423",
+      "normal_rgba_sha256": "d5a385bd6119fa368c48ae1903ecd32878c941989ca309134c0b3c066f80d0aa"
+    },
+    {
+      "frame_index": 0,
+      "carrier": "cylinder_floor",
+      "pixels": 166,
+      "source_pairs": 664,
+      "valid_pairs": 249,
+      "planar_geometry_required": true,
+      "planar_tolerances_passed": false,
+      "source_matches_002m": 249,
+      "carrier_regions": {
+        "1": 166
+      },
+      "carrier_to_plane_m": {
+        "min": 4.5680651334895195e-05,
+        "p50": 6.693526595229547e-05,
+        "max": 8.841472617814963e-05
+      },
+      "source_to_direct_plane_m": {
+        "min": 4.2068551232629784e-05,
+        "p50": 6.626921498213409e-05,
+        "max": 8.841480654286303e-05
+      },
+      "correct_vs_native_uv_px": {
+        "min": 0.0023216063813646165,
+        "p50": 0.005305626983210151,
+        "max": 0.011026851843897453
+      },
+      "native_optical_residual_px": {
+        "min": 8.980724930827665e-07,
+        "p50": 2.4324948775472917e-05,
+        "max": 7.374272130361873e-05
+      },
+      "carrier_projection_vs_plane_uv_px": {
+        "min": 0.002317481786498552,
+        "p50": 0.0053063623883607995,
+        "max": 0.01104617497254274
+      },
+      "blender_analytic_direct_m": {
+        "min": 7.654641309819397e-08,
+        "p50": 5.273440026775965e-07,
+        "max": 1.3868406935432411e-06
+      },
+      "blender_analytic_source_m": {
+        "min": 1.4498419149380207e-08,
+        "p50": 4.317824379735453e-06,
+        "max": 1.4650879923500933e-05
+      },
+      "native_report_sha256": "1ec410ac75e160dd9ea4c40c3d0993da5fcd69098c625c3291dc6cc698b8f366",
+      "normal_rgba_sha256": "ddecbd4335a607884a88371c091257183f954cb686f2e358ef40a14102f061dd"
+    },
+    {
+      "frame_index": 0,
+      "carrier": "cube_floor",
+      "pixels": 166,
+      "source_pairs": 664,
+      "valid_pairs": 249,
+      "planar_geometry_required": true,
+      "planar_tolerances_passed": false,
+      "source_matches_002m": 249,
+      "carrier_regions": {
+        "1": 166
+      },
+      "carrier_to_plane_m": {
+        "min": 3.429748839063235e-05,
+        "p50": 6.696657509036382e-05,
+        "max": 9.970030999335276e-05
+      },
+      "source_to_direct_plane_m": {
+        "min": 3.266769575119754e-05,
+        "p50": 6.798901986174612e-05,
+        "max": 0.00010188935903342314
+      },
+      "correct_vs_native_uv_px": {
+        "min": 0.0020831543656210094,
+        "p50": 0.005099477618801261,
+        "max": 0.010465409982920166
+      },
+      "native_optical_residual_px": {
+        "min": 8.834718623866823e-07,
+        "p50": 2.5804310069881225e-05,
+        "max": 7.432077435997384e-05
+      },
+      "carrier_projection_vs_plane_uv_px": {
+        "min": 0.0020804429073652815,
+        "p50": 0.005100909046920282,
+        "max": 0.010456194079208314
+      },
+      "blender_analytic_direct_m": {
+        "min": 7.654641309819397e-08,
+        "p50": 5.273440026775965e-07,
+        "max": 1.3868406935432411e-06
+      },
+      "blender_analytic_source_m": {
+        "min": 1.842725255543336e-08,
+        "p50": 4.5225151718060226e-06,
+        "max": 1.836715035165692e-05
+      },
+      "native_report_sha256": "35189eca2a8e144eb73cf775f2175a4c5c155548bcd36196dc3b1c31363b1f25",
+      "normal_rgba_sha256": "975c84fad160ed929fa90c9e56fd8a91ddc9f99510e618dfbe1e01156570bff7"
+    },
+    {
+      "frame_index": 1,
+      "carrier": "plane",
+      "pixels": 161,
+      "source_pairs": 644,
+      "valid_pairs": 161,
+      "planar_geometry_required": true,
+      "planar_tolerances_passed": true,
+      "source_matches_002m": 161,
+      "carrier_regions": {
+        "1": 161
+      },
+      "carrier_to_plane_m": {
+        "min": 9.781149449303171e-06,
+        "p50": 4.507423517576214e-05,
+        "max": 6.760373840327576e-05
+      },
+      "source_to_direct_plane_m": {
+        "min": 7.1813084992547195e-06,
+        "p50": 4.431844833421196e-05,
+        "max": 6.738858013632541e-05
+      },
+      "correct_vs_native_uv_px": {
+        "min": 0.001164177564166331,
+        "p50": 0.0051134426270489225,
+        "max": 0.007453178697498984
+      },
+      "native_optical_residual_px": {
+        "min": 1.5282043279725022e-06,
+        "p50": 2.9182562342918585e-05,
+        "max": 8.076200857597864e-05
+      },
+      "carrier_projection_vs_plane_uv_px": {
+        "min": 0.0011912516962609974,
+        "p50": 0.005115453990593048,
+        "max": 0.0074430870671181
+      },
+      "blender_analytic_direct_m": {
+        "min": 4.424289824838962e-08,
+        "p50": 5.160945326491131e-07,
+        "max": 1.443356766539998e-06
+      },
+      "blender_analytic_source_m": {
+        "min": 2.4564728373010365e-08,
+        "p50": 5.92369803839261e-06,
+        "max": 1.8240712366891117e-05
+      },
+      "native_report_sha256": "81347976d439144c7ce9cc906b479ed979c20537e82e296b902313aecc6e2f1b",
+      "normal_rgba_sha256": "185caf40ca3e14d1196af235d0fd4f8630b4b485dcb09c91a3b7ae8e3e5d7653"
+    },
+    {
+      "frame_index": 1,
+      "carrier": "bowl",
+      "pixels": 161,
+      "source_pairs": 644,
+      "valid_pairs": 161,
+      "planar_geometry_required": false,
+      "planar_tolerances_passed": false,
+      "source_matches_002m": 144,
+      "carrier_regions": {
+        "4": 161
+      },
+      "carrier_to_plane_m": {
+        "min": 0.0030483267991570024,
+        "p50": 0.006021723838831044,
+        "max": 0.011079530905571493
+      },
+      "source_to_direct_plane_m": {
+        "min": 0.0050558803789924524,
+        "p50": 0.011339732352953984,
+        "max": 0.023540358095976523
+      },
+      "correct_vs_native_uv_px": {
+        "min": 0.4664642112936178,
+        "p50": 0.8118388409034976,
+        "max": 1.3223484512389239
+      },
+      "native_optical_residual_px": {
+        "min": 2.2767655706518408e-06,
+        "p50": 2.7121527183811552e-05,
+        "max": 7.821980384136637e-05
+      },
+      "carrier_projection_vs_plane_uv_px": {
+        "min": 0.4664423204819089,
+        "p50": 0.811848443826738,
+        "max": 1.3223442606061993
+      },
+      "blender_analytic_direct_m": {
+        "min": 4.424289824838962e-08,
+        "p50": 5.160945326491131e-07,
+        "max": 1.443356766539998e-06
+      },
+      "blender_analytic_source_m": {
+        "min": 3.911997290440754e-08,
+        "p50": 6.072588745955717e-06,
+        "max": 1.932140497835347e-05
+      },
+      "native_report_sha256": "5083e448aa726cff828a1e2a4237e22b810c306471597ab97c58510bc25e82bb",
+      "normal_rgba_sha256": "6c6be07c60a8465ba0d9bbfb58c0a2f9a6dca42e58d5bec17f06edc3b8766d85"
+    },
+    {
+      "frame_index": 1,
+      "carrier": "dome_floor",
+      "pixels": 161,
+      "source_pairs": 644,
+      "valid_pairs": 161,
+      "planar_geometry_required": true,
+      "planar_tolerances_passed": true,
+      "source_matches_002m": 161,
+      "carrier_regions": {
+        "1": 161
+      },
+      "carrier_to_plane_m": {
+        "min": 9.404698812924146e-07,
+        "p50": 3.476103637214393e-05,
+        "max": 7.552800299000694e-05
+      },
+      "source_to_direct_plane_m": {
+        "min": 5.969993603491266e-06,
+        "p50": 3.51311616824804e-05,
+        "max": 6.893596057343665e-05
+      },
+      "correct_vs_native_uv_px": {
+        "min": 1.8960658802320607e-05,
+        "p50": 0.003688030692199303,
+        "max": 0.0075137560959442455
+      },
+      "native_optical_residual_px": {
+        "min": 1.7420285694767466e-06,
+        "p50": 2.8172149888127155e-05,
+        "max": 6.998437685231398e-05
+      },
+      "carrier_projection_vs_plane_uv_px": {
+        "min": 6.416481011523575e-05,
+        "p50": 0.0037029664687205574,
+        "max": 0.0075416540851450204
+      },
+      "blender_analytic_direct_m": {
+        "min": 4.424289824838962e-08,
+        "p50": 5.160945326491131e-07,
+        "max": 1.443356766539998e-06
+      },
+      "blender_analytic_source_m": {
+        "min": 4.434998493644246e-08,
+        "p50": 6.081935622129212e-06,
+        "max": 1.9544574557576773e-05
+      },
+      "native_report_sha256": "1cf0bbada277b67f19b589336bb29c47322bb86f2e3821698069392fc15fca84",
+      "normal_rgba_sha256": "c378b645626e5f4001b7763dc1449758732e561bdca6503fd5875bb1bf2c3cfd"
+    },
+    {
+      "frame_index": 1,
+      "carrier": "cylinder_floor",
+      "pixels": 161,
+      "source_pairs": 644,
+      "valid_pairs": 161,
+      "planar_geometry_required": true,
+      "planar_tolerances_passed": true,
+      "source_matches_002m": 161,
+      "carrier_regions": {
+        "1": 161
+      },
+      "carrier_to_plane_m": {
+        "min": 2.8966630902360904e-06,
+        "p50": 5.107202553584598e-05,
+        "max": 8.123296068965692e-05
+      },
+      "source_to_direct_plane_m": {
+        "min": 3.520208134706831e-06,
+        "p50": 5.0499311987463207e-05,
+        "max": 8.526323079115908e-05
+      },
+      "correct_vs_native_uv_px": {
+        "min": 0.00023979222320863003,
+        "p50": 0.005294422443194905,
+        "max": 0.009351278574115265
+      },
+      "native_optical_residual_px": {
+        "min": 1.0461600133995784e-06,
+        "p50": 2.7311006511239705e-05,
+        "max": 6.781037554184967e-05
+      },
+      "carrier_projection_vs_plane_uv_px": {
+        "min": 0.0002462245421912281,
+        "p50": 0.005284973345035806,
+        "max": 0.009339754132626185
+      },
+      "blender_analytic_direct_m": {
+        "min": 4.424289824838962e-08,
+        "p50": 5.160945326491131e-07,
+        "max": 1.443356766539998e-06
+      },
+      "blender_analytic_source_m": {
+        "min": 3.8039784249777747e-08,
+        "p50": 5.6200010619427095e-06,
+        "max": 1.6645478205335757e-05
+      },
+      "native_report_sha256": "ff175a152cdd1e79d3df6b9f7f7273ce705de72c22ddb01c4db2720f804d350d",
+      "normal_rgba_sha256": "6b300a8632476a219315532970d860b53b2e1b5f6ade00f76594e0cdc4c9a25b"
+    },
+    {
+      "frame_index": 1,
+      "carrier": "cube_floor",
+      "pixels": 161,
+      "source_pairs": 644,
+      "valid_pairs": 161,
+      "planar_geometry_required": true,
+      "planar_tolerances_passed": true,
+      "source_matches_002m": 161,
+      "carrier_regions": {
+        "1": 161
+      },
+      "carrier_to_plane_m": {
+        "min": 1.9136577805350056e-05,
+        "p50": 4.7040058160978824e-05,
+        "max": 6.974086182469884e-05
+      },
+      "source_to_direct_plane_m": {
+        "min": 2.2996272230881512e-05,
+        "p50": 5.0078260394664704e-05,
+        "max": 8.069720508241302e-05
+      },
+      "correct_vs_native_uv_px": {
+        "min": 0.0010528482817549153,
+        "p50": 0.004377405477033201,
+        "max": 0.00700102735456607
+      },
+      "native_optical_residual_px": {
+        "min": 8.834718623866823e-07,
+        "p50": 2.6729457393555866e-05,
+        "max": 8.14121470736703e-05
+      },
+      "carrier_projection_vs_plane_uv_px": {
+        "min": 0.001055687079989251,
+        "p50": 0.00437823148459174,
+        "max": 0.006968171214666121
+      },
+      "blender_analytic_direct_m": {
+        "min": 4.424289824838962e-08,
+        "p50": 5.160945326491131e-07,
+        "max": 1.443356766539998e-06
+      },
+      "blender_analytic_source_m": {
+        "min": 5.74056762232785e-08,
+        "p50": 5.999642753705515e-06,
+        "max": 2.0300495093944905e-05
+      },
+      "native_report_sha256": "7e5ab819a5471b7cec55ecf21692959200feffee3d70d5a2a360df808c66b485",
+      "normal_rgba_sha256": "570b160a3ef6fdae62aa4e0f843d97d14fab682336267b490a69c804654fbb66"
+    }
+  ],
+  "limitations": [
+    "Geometry-only oracle scene with one Z=0 plane; archived RGB belongs to the earlier box scene and is not planar RGB truth",
+    "ROI is preselected earlier z020 target mask, not a new plane-wide coverage study",
+    "Two correlated frames of one seed, no turns, no holdout or physical/Aurora claims",
+    "Exact planar tolerance is required only for plane/dome/cylinder/cube floor; bowl is curved and retained as a descriptive comparison",
+    "No ego/occluders, bilinear footprint, triangle identity or fusion quality assessment"
+  ]
+}
