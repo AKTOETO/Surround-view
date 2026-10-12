@@ -176,3 +176,5 @@ MPLCONFIGDIR=/tmp/sv-matplotlib python3 docs/diploma/plot_carrier_positions.py -
 §4.69: actual cube→fisheye RGB reconstruction256 texel с ошибкой0LSB;140 residual pixels разделены на135 cube-center support/5 area-only. Таблица4.70, рисунки4.108–4.110. [[validation/CUBE_FOOTPRINT]].
 
 §4.70: independent Blender truth на547 новых frame/carrier coordinates/1227 condition pixels;640 exact archive anchors, local texel/nonlocal contribution analysis. Таблица4.71, рисунки4.111–4.113. [[validation/HYBRID_DOMAIN]].
+
+§4.71: native runtime reference_height_m;8 supplied-height captures, target/road tradeoff. Таблица4.72, рисунки4.114–4.116. [[validation/REFERENCE_HEIGHT]].

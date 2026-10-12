@@ -2868,3 +2868,72 @@ Source/virtual same-road point match при2cm имеется у1840 source pair
 Независимая local scene truth получена для всей ранее неразмеченной части60-condition серии;15 known-answer controls, CTest1/1 и побитный reaudit прошли. Это завершает bounded attribution pilot, но не полный causal trace multiband spatial dependencies или generalization на новые сцены.
 
 Следующий главный этап — проверяемая server-side mitigation height/occlusion failure. Для неё нужны фиксированная постановка, неизменные RGB inputs, independent virtual truth и раздельная оценка ошибок позиции, visibility и RGB. Oracle-depth/height control, если используется, должен быть явно помечен как дополнительная информация для верхней границы, а не алгоритм восстановления из четырёх RGB cameras. Исследование natural-object/holdout и physical/Aurora validation остаётся необходимым.
+
+## 4.71. Серверный контроль заданной высоты опорной поверхности
+
+### 4.71.1. Проверяемое изменение геометрии
+
+После §§4.62–4.70 установлено, что mixing и central-ray diagnostics не устраняют displacement raised target. Для первого ограниченного server-side control добавлена заданная высота `reference_height_m` прямоугольного носителя. Используется прежний native renderer; доступен runtime configure_surface через sv-client-lib. Это не depth estimation: высота задаётся клиентом, а0.8m уже известна из исследованной сцены.
+
+\[
+z(x,y)=h+\frac{H}{2}(d_x^2+d_y^2).
+\]
+
+При H=0 весь носитель — plane на z=h. Default h0 сохраняет старую геометрию. Поле optional, finite[0,5]m; другие types его не принимают. Clearance учитывает h+H; region inspection определяет curvature относительно h. Native implementation9ede8af, frozen plan9f6a91a; [[validation/REFERENCE_HEIGHT]].
+
+```plantuml
+@startuml
+actor Client
+participant "sv-client-lib" as Lib
+participant "sv-server config/runtime" as Server
+participant Renderer
+Client -> Lib : configure_surface(base_revision, full surface)
+Lib -> Server : reference_height_m + existing geometry fields
+Server -> Server : validate bounds / view clearance / revision
+Server -> Renderer : prepare new mesh, publish between renders
+Renderer -> Renderer : project unchanged camera RGB onto shifted support
+Renderer --> Client : output + applied surface / revision
+note over Renderer : Assumed height is supplied; no RGB depth estimator
+@enduml
+```
+
+Рисунок4.114 — Изменение высоты выполняет сервер. Temporary runtime update не сохраняет исходный config на диск; persistent ConfigService остаётся отдельной задачей.
+
+### 4.71.2. Зафиксированный парный опыт
+
+Frames0/1 × h0,0.4,0.8,1.2m — восемь новых NVIDIA captures, plane/edge_feather, прежние RGB/calibration/virtual camera. Native binary/source fingerprint и file hashes сохранены. Независимые virtual RGB, object-ID target/road masks, world points и source visibility взяты из прежнего Blender capture. При h0 обе ordinary RGBA совпали с архивными hashes; inspection не меняет кадр.
+
+Raw proxy сохраняет outside pixels в полной IoU. Target distance измеряется между native carrier и direct virtual target points, а road RGB MAE — на фиксированном independent road ROI с явным сохранением coverage counts. Это end-to-end road error с непокрытыми pixels, а не texture-only score на изменяемой области.
+
+| Кадр | h, м | Proxy hits / expected | Raw IoU | Proxy вне expected | Carrier/target median, м | Road linear RGB MAE |
+|---:|---:|---:|---:|---:|---:|---:|
+| 0 | 0.0 | 0/178 | 0.000000 | 4843 | 1.348128 | 0.029184 |
+| 0 | 0.4 | 0/178 | 0.000000 | 9127 | 0.779794 | 0.037895 |
+| 0 | 0.8 | 175/178 | 0.017556 | 9790 | 0.237932 | 0.121100 |
+| 0 | 1.2 | 0/178 | 0.000000 | 2273 | 0.356025 | 0.249403 |
+| 1 | 0.0 | 0/172 | 0.000000 | 5373 | 1.371721 | 0.030401 |
+| 1 | 0.4 | 0/172 | 0.000000 | 7106 | 0.783439 | 0.034518 |
+| 1 | 0.8 | 168/172 | 0.034554 | 4690 | 0.243733 | 0.115435 |
+| 1 | 1.2 | 0/172 | 0.000000 | 0 | 0.387058 | 0.247508 |
+
+Таблица4.72 — Четыре заранее заданные высоты, два correlated frames. Полные метрики и SHA находятся в `reference_height_v1.json`; raw proxy не является независимой semantic segmentation.
+
+### 4.71.3. Улучшение target alignment и ухудшение дороги
+
+![Actual native RGB при разных заданных высотах](figures/experiments/reference_height_rgb.png)
+
+Рисунок4.115 — Independent Blender RGB и actual native frames при h0/0.4/0.8/1.2m. Cyan contour — expected target. При h0.8 proxy достигает expected position, но большие растянутые копии и искажение ground остаются.
+
+При h0.8 proxy recall175/178 и168/172, source-visible hits73/76 и67/69. Median carrier/target distance снижается с1.348/1.372m до0.238/0.244m, но не становится нулевой: одна плоскость не описывает объёмный объект. Visible-point projection median снижается с203.997/246.327px до30.636/34.672px. Это geometric diagnostic, не correct source-surface identity.
+
+![Геометрические и фотометрические последствия высоты](figures/experiments/reference_height_metrics.png)
+
+Рисунок4.116 — Raw expected proxy recall, полная raw IoU, median carrier/target distance и fixed-road linear RGB MAE. Улучшение одного target metric не обозначается улучшением всей сцены.
+
+Outside proxy при h0.8 составляет9790/4690 pixels, полная raw IoU лишь0.017556/0.034554. Road MAE выросла с0.029184/0.030401 до0.121100/0.115435. При h1.2 expected hits снова0, хотя projection error scalar в source-visible ROI ещё ниже. Глобальная высота не исправляет visibility и нарушает floor assumption; для общей mitigation она недостаточна.
+
+### 4.71.4. Проверки и дальнейшая разработка
+
+Полная CMake сборка, CTest7/7, independent controls16/16 прошли; carrier GTest8/8 на Mesa и NVIDIA. Runtime integration проверяет новый catalog field, изменение surface/revision/mesh, сохранение input/upload counters, отказ недопустимых heights и восстановление старого кадра/config. Reaudit побитно воспроизводит baseline. Для raised plane constant varyings учтён float32 interpolation tolerance1e−6m, default z0 сохраняет1e−7m; это не physical accuracy claim.
+
+Получен работающий серверный исследовательский параметр и отрицательный результат глобальной коррекции. Следующий этап — spatial/depth-informed geometry и visibility с явным контрактом дополнительной информации. Oracle-depth control может показывать верхнюю границу при известной сцене, но его нельзя называть восстановлением из четырёх RGB cameras. Успешная mitigation, natural-object/holdout и physical/Aurora trials пока не завершены.

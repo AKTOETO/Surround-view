@@ -160,3 +160,5 @@ GPU execution time измерять асинхронными timer queries, CPU 
 §4.69 / [[validation/CUBE_FOOTPRINT]]:140 residuals→256 unique source texel/592 cube texel, RGB0LSB;135 center/5 area-only support, area rays8×8. Далее новые hybrid domains и mitigation; exact Eevee sample weights не установлены.
 
 §4.70 / [[validation/HYBRID_DOMAIN]]: новые hybrid domains размечены independent virtual/source/texel rays,547 coordinates/1227 memberships,640 exact anchors.698 local texel support/529 без него,179 locally-invalid contributing pixels.15 controls/CTest1/1/identical reaudit. Далее server-side height/occlusion mitigation; полный pyramid origin trace остаётся отдельным diagnostic control.
+
+§4.71 / [[validation/REFERENCE_HEIGHT]]:8 native supplied-height conditions, h0 exact old RGBA; h0.8 target alignment улучшен, road MAE≈4× и ghosts остаются. Runtime configure_surface/catalog работают; дальше spatial/depth-informed geometry с явным дополнительным input, без скрытого использования truth.

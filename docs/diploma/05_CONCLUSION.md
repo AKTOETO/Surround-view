@@ -87,3 +87,5 @@ Four-texel follow-up §4.68:1024 из1164 прежних RGB/point-ray mismatche
 §4.69 проследил140 остаточных pixels до actual cube PNG:256 source texel реконструируются точно;135 output pixels имеют cube-center target support,5 — только support внутри площади cube pixel. Это не causal Eevee filter reconstruction и не устранение height failure. [[validation/CUBE_FOOTPRINT]].
 
 §4.70 расширил independent scene labels на все новые hybrid domains серии:1227 condition pixels/547 unique coordinates. Virtual rays выбирают road, source central target support0;698 имеют neighboring target texel support,529 остаются без него. Signed nonlocal contributions отделены от local weights. Это не устранение height failure; следующий приоритет — проверяемая server-side mitigation. [[validation/HYBRID_DOMAIN]].
+
+§4.71 реализовал runtime assumed support height и проверил0/0.4/0.8/1.2m. При h0.8 proxy достигает175/178 и168/172 expected pixels, но raw IoU0.0176/0.0346 и road error≈4× показывают недостаточность глобальной коррекции. Это supplied-height control, не RGB depth estimator и не завершённая mitigation. [[validation/REFERENCE_HEIGHT]].
