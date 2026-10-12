@@ -3715,3 +3715,86 @@ New -> IO: type22 release
 CPU-profile consumer/decoder собираются, decoder test проходит; ldd не показывает OpenCV/Qt зависимостей consumer. Installed external CMake consumer также проверен прежним transport test. Tracked [[validation/baselines/output_products_v1.json]] хранит implementation/build revision, native fingerprint, hashes binaries/tests/CTest logs и ограничения matrix.
 
 Это protocol/implementation verification на одном generated frame96×64, default zero pyramid и binary_pairs, а не новое доказательство качества source-surface reconstruction. Local weights по-прежнему не являются effective signed/nonlocal multiband support. Следующие работы: user-friendly GUI selector/palette, отдельный overhead benchmark на исследовательском raster, matched geometry/occlusion captures, natural/nonuniform appearance и independent correspondence holdout; real cameras/two-host/Aurora требуют отдельного стенда.
+
+## 4.81. Неопределённость центральной окклюзии при ошибках supplied geometry
+
+### 4.81.1. Исследовательский вопрос и модель
+
+Аудит §4.78 показал600 central visible-loss memberships в54 surface outputs. Простое увеличение surface band не устраняет центральный отказ: этот тест выполняется первым. Здесь исследуется более узкий вопрос: какие отказы сохраняются при всех допустимых ошибках supplied AABB, а какие зависят от неизвестного положения её границ? Используются actual raster carrier points и прежние camera origins; неопределённость carrier mesh, поз камер и фильтрации RGB в этот опыт не включена.
+
+План `configs/research/visibility-uncertainty-plan.json` сохранён commit `cefea5e` до новых вычислений, но после прежних результатов. Это post-hoc exploratory analysis всех18 center controls, шесть радиусов0/0.5/1/2/5/10mm,108 condition/radius rows. Новые сцены и native renders не создавались. Первичные данные и методика: [[validation/VISIBILITY_SENSITIVITY]], независимое stage partition: [[validation/VISIBILITY_FAILURE]], новый полный отчёт: [[validation/VISIBILITY_UNCERTAINTY]], [[validation/baselines/visibility_uncertainty_v1.json]].
+
+Для box $B=[l,h]$ с максимальной ошибкой каждой координаты грани $u$ определены erosion и dilation:
+
+$$B^-_u=[l+u,h-u],\qquad B^+_u=[l-u,h+u],\qquad B^-_u\subseteq B'\subseteq B^+_u.$$
+
+Включение выполняется для всех допустимых непустых axis-aligned boxes $B'$, включая translations с $\|\Delta\|_\infty\le u$. Пересечение с eroded box гарантирует blocking, отсутствие пересечения с dilated box гарантирует clear ray. Остальные rays имеют статус ambiguous. Проверяется отрезок
+
+$$S_b(o,p)=\{o+t(p-o):0\le t<1-b/\|p-o\|\},$$
+
+где $b$ — исходный endpoint bias. При $\|p-o\|\le b$ отрезок пуст. Отрицательная ширина erosion означает пустое множество; нулевая — замкнутый degenerate box. Это достаточные сертификаты: ambiguity не означает существование clear translated box, а отдельные возможные исходы rays не обязательно реализуются одним общим box.
+
+Для baseline-eligible camera set $E(p)$ нижняя гарантия доступности имеет вид
+
+$$G_u(p)=\bigvee_{i\in E(p)}\left[S_b(o_i,p)\cap B^+_u=\varnothing\right],$$
+
+а верхняя граница —
+
+$$U_u(p)=\bigvee_{i\in E(p)}\left[S_b(o_i,p)\cap B^-_u=\varnothing\right].$$
+
+В точной арифметике $G_u(p)\le A_{B'}(p)\le U_u(p)$ для любого допустимого $B'$. Это границы **геометрической eligibility**, не output color и не scene-surface correspondence. В double six-face implementation сохраняется прежний1e-10m допуск на другие координаты грани; вычисление не использует directed rounding и не является формально гарантированной floating-point interval arithmetic. Математическое включение и его численная реализация различаются; known-answer/enclosure tests подтверждают выбранные controls, не все возможные tangencies.
+
+```plantuml
+@startuml
+start
+:Actual carrier point + baseline-eligible cameras;
+:Supplied box, endpoint bias b, error bound u;
+:Intersect truncated rays with eroded and dilated box;
+if (At least one ray misses dilated box?) then (yes)
+  :Guaranteed central eligibility;
+else (no)
+  if (Every eligible ray hits eroded box?) then (yes)
+    :Definitely centrally unavailable;
+  else (no)
+    :Ambiguous-only eligibility;
+    :Require explicit policy or more geometry;
+  endif
+endif
+:Footprint, weighting and RGB still require separate checks;
+stop
+@enduml
+```
+
+Рисунок4.141 — Достаточная классификация central eligibility для pixels с непустым baseline camera set. При отсутствии baseline source неопределённость box не создаёт новый источник; схема является исследовательским анализом, а не новым серверным режимом.
+
+### 4.81.2. Измеренные границы и цена снятия центрального отказа
+
+Таблица4.83 — Результаты при ошибке граней5mm, пары значений frame0/frame1. Последний столбец измеряется в camera-point pairs; остальные — в independent source-visible target pixels.
+
+| Supplied box / bias | Native eligibility | Guaranteed clear | Optimistic bound | Potential central recovery | New nominal-reference blocked pairs |
+|---|---:|---:|---:|---:|---:|
+| nominal /0mm |49/33|0/0|76/69|27/36|11/1|
+| nominal /2mm |75/69|0/0|76/69|1/0|11/1|
+| nominal /20mm |76/69|3/3|76/69|0/0|10/1|
+| Z+5mm /20mm |5/4|3/3|76/69|71/65|7/0|
+| Z−5mm /20mm |76/69|76/69|76/69|0/0|9/3|
+
+В Z+5mm control при uncertainty≤1mm верхняя граница остаётся5/4; при2mm —5/5, при5mm —76/69. Все71/65 прежние central losses становятся потенциально снимаемыми при5mm, однако guaranteed clear сохраняется только для3/3 pixels. Точный threshold между2 и5mm не исследовался. Увеличение uncertainty расширяет диапазон допустимых исходов и ослабляет гарантию; оно не повышает точность знания сцены.
+
+![Границы central eligibility](figures/experiments/visibility_uncertainty_bounds.png)
+
+Рисунок4.142 — Нижняя гарантия и оптимистическая верхняя граница eligibility на прежних actual carrier points. Между кривыми — ambiguous-only pixels; соединение шести измеренных точек не означает измерения промежуточных порогов. Чёрная линия — independent source-visible target count.
+
+По18 controls при5mm потенциально снимаются все200 central loss memberships. Из1305 source-visible condition-pixel memberships180 имеют guaranteed eligibility,1125 остаются ambiguous-only. Это повторные условия на двух связанных кадрах, не независимая статистическая выборка. Newly admitted pairs, blocked nominal box при fixed2mm reference bias, составляют93. Reference построен на actual carrier points, а не independent scene-depth truth, поэтому это diagnostic risk, не measured false-accept rate.
+
+![Potential recovery и reference-risk](figures/experiments/visibility_uncertainty_tradeoff.png)
+
+Рисунок4.143 — Возможное снятие central losses и новые reference-blocked pairs при accept-all-ambiguity5mm. Разные единицы счёта не образуют precision/recall; ноль reference-blocked pairs не доказывает правильный выбор поверхности.
+
+Для nominal20mm frame0 optimistic eligibility на hidden target возрастает24→32 из102 pixels, frame1 —0→1 из103. Это дополнительные samples без доказанного наблюдения corresponding target surface. Uniform coded RGB может совпадать при выборе другой точки; ни восстановление скрытой поверхности, ни устранение ghosts по этим числам не следуют.
+
+### 4.81.3. Проверяемость и следующий этап
+
+Collector проверяет pinned primary/sensitivity/truth hashes и consumed products, matched camera/carrier geometry, native center status vs independent face oracle и прежние loss counts. Семь unit tests включают27 translated и100 face-perturbed boxes на200 rays при трёх biases, known-answer endpoint/origin controls, degenerate erosion, monotonicity, категории pixels и invalid inputs. Дополнительно23 прежних correspondence tests прошли; CTest2/2. Повторный108-row JSON побайтно идентичен. Скрипт [[diploma/plot_visibility_uncertainty.py]] расположен рядом с главой; команды и требования к ignored raw captures — [[validation/VISIBILITY_UNCERTAINTY]].
+
+Закрыт bounded uncertainty audit, но robust mitigation не получена. Простое принятие всех ambiguous rays имеет потенциал восстановления eligibility и одновременно ослабляет rejection посторонних поверхностей. Следующий этап — native uncertainty-aware кандидат с явной ambiguous/unsupported policy и matched RGBA captures, общими gates visible preservation/outside/road/reference blocking и отдельной проверкой footprint stage. После этого требуется independent nonuniform/natural-object holdout. Радиус должен быть обоснован доступной геометрией или оценён по sensors; его подбор на прежнем marker не подтверждает generalization. Серверные defaults сохранены; физические камеры, target Aurora и overhead этим анализом не проверены.

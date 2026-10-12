@@ -71,3 +71,5 @@ cmp artifacts/visibility-failure-v1/reaudit.json docs/validation/baselines/visib
 ```
 
 Tracked JSON: [[validation/baselines/visibility_failure_v1.json]]. Raw primary products остаются в `artifacts/visibility-sensitivity-v1`; post-hoc reports — `artifacts/visibility-failure-v1`. Raw не входят в Git; повторение требует этих inputs. Один known target/два кадра, constant coded color и отсутствие holdout остаются ограничениями. General reconstruction/uncertainty mitigation и аппаратная приёмка не закрыты.
+
+Продолжение: [[validation/VISIBILITY_UNCERTAINTY]] проверяет bounded central uncertainty отдельно на18 center controls; native local-support mask и wire delivery реализованы последующими этапами [[validation/RENDER_SUPPORT]], [[validation/OUTPUT_PRODUCTS]]. Исторические результаты этого audit не пересчитаны.
