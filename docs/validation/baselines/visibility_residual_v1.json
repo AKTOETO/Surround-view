@@ -1,0 +1,279 @@
+{
+  "schema_version": 1,
+  "scope": "independent_Blender_visibility_residual_center_and_four_texel_attribution",
+  "plan_sha256": "70eef90c730a16e9781f6ef372dec82094fb6b428be5732809084a3ce0c6c884",
+  "collector_sha256": "e4799a224e647697b75d0c51a5034569525b673b14d524c3f277ed2706cc139c",
+  "scene_truth_sha256": "8eb3b511ba06e95dc454223392586a177cea28c8b247767fcb60cab3acb0ab9a",
+  "blender_version": "5.2.2 LTS",
+  "rows": [
+    {
+      "frame": 0,
+      "variant": "plane_occluded",
+      "native_report_sha256": "28ada983d096ee58648095b1db8db97bcc719b2aadfaa81f96666c3ee18c163d",
+      "scene_record": {
+        "frame": 0,
+        "variant": "plane_occluded",
+        "native_report_sha256": "28ada983d096ee58648095b1db8db97bcc719b2aadfaa81f96666c3ee18c163d",
+        "files": {
+          "pixels.npy": "306812e9bb1f97411f16156621c5d846d563039116c9930dccc199bd76d8db5e",
+          "residual.npy": "0299b6bddf1094cefe7ea766b2802e68a3445e2fec9a013e39628c1942dc8d54",
+          "virtual-kinds.npy": "44982b7daeeabf673dbc59ea402b93401c3fe02b6898f2b3283aaa6306656902",
+          "center-kinds.npy": "4ed5a4ffd10492f93ce6eff7b6e51e3013d18eaf7c541355ba102a264a4ad680",
+          "center-hits.npy": "c08c8f8ac650b5555fbfd8673c3fd4c77ab7347064dc5cca07715b872a33f724",
+          "texels.npy": "51325ad824762422bf97c1a3e32fc68a1f26db7058136d0a3ff876228cfd4d44",
+          "weights.npy": "89de039a1c17892af107972b6596a95bb45250f71944c92024579dc9e4d6a846",
+          "texel-kinds.npy": "3977ce394c355fc53fab85479741951767be40462e20b8c66bcf8273108f9244"
+        }
+      },
+      "residual": {
+        "pixels": 192,
+        "virtual_target_pixels": 0,
+        "virtual_road_pixels": 192,
+        "positive_weight_target_center_pixels": 0,
+        "positive_weight_target_texel_pixels": 164,
+        "colored_texel_without_target_center_texel_pixels": 28,
+        "positive_weight_chroma_texel_pixels": 192,
+        "no_weighted_source_pixels": 0
+      },
+      "control": {
+        "pixels": 76,
+        "virtual_target_pixels": 76,
+        "virtual_road_pixels": 0,
+        "positive_weight_target_center_pixels": 0,
+        "positive_weight_target_texel_pixels": 0,
+        "colored_texel_without_target_center_texel_pixels": 0,
+        "positive_weight_chroma_texel_pixels": 0,
+        "no_weighted_source_pixels": 0
+      },
+      "rgba_reconstruction_error_lsb": {
+        "min": 0.0,
+        "p50": 0.20530888674550596,
+        "max": 0.5801582197251349
+      },
+      "residual_carrier_to_source_road_hit_distance_m": {
+        "min": 2.421438694000244e-08,
+        "p50": 2.100085956776813e-06,
+        "max": 1.9182261046414506e-05
+      },
+      "residual_source_road_pairs": 384,
+      "posthoc_geometry": {
+        "residual_pixels_with_source_road_hit_distance_over_2cm": 0,
+        "target_center_pairs": []
+      }
+    },
+    {
+      "frame": 0,
+      "variant": "local_100_occluded",
+      "native_report_sha256": "1b6a43218dad59d7f139cb60a63ec5807c361b470499f28babf36c5659cca77e",
+      "scene_record": {
+        "frame": 0,
+        "variant": "local_100_occluded",
+        "native_report_sha256": "1b6a43218dad59d7f139cb60a63ec5807c361b470499f28babf36c5659cca77e",
+        "files": {
+          "pixels.npy": "b98d340f3d54c67582dce4ec36e91c7af8ef26389f0467cb6654573a0c9263a9",
+          "residual.npy": "a1cf264dba079b8fb2cc9b158d1eed80d5992059e1559a438f1815ca911e4e38",
+          "virtual-kinds.npy": "2126bc4291e1c43567791e3f9e143bdd4187e128cd3eecd053589dceab6b93d4",
+          "center-kinds.npy": "e40bd2f862a971c8d96098700a9639dfd71ca8ef7b4d990320cb7a33f90c1d07",
+          "center-hits.npy": "81326cd53512e277d58a569677de81ad69314f62a5a66bd7b9d936dbbe8953d4",
+          "texels.npy": "94a96acb0ca5a58b05099558306290c8d4300164bb7a103d35a9c6d1e1aad14a",
+          "weights.npy": "1fd2ddc0f49b771e376b47898fd12d853769240a4bc686eb65b932c7231769ee",
+          "texel-kinds.npy": "9bb3fcde92a9f5c6a8d1825df340f124205bce8bd7b1317b0e8a135d4dec8e85"
+        }
+      },
+      "residual": {
+        "pixels": 198,
+        "virtual_target_pixels": 0,
+        "virtual_road_pixels": 198,
+        "positive_weight_target_center_pixels": 2,
+        "positive_weight_target_texel_pixels": 169,
+        "colored_texel_without_target_center_texel_pixels": 29,
+        "positive_weight_chroma_texel_pixels": 198,
+        "no_weighted_source_pixels": 0
+      },
+      "control": {
+        "pixels": 76,
+        "virtual_target_pixels": 76,
+        "virtual_road_pixels": 0,
+        "positive_weight_target_center_pixels": 76,
+        "positive_weight_target_texel_pixels": 76,
+        "colored_texel_without_target_center_texel_pixels": 0,
+        "positive_weight_chroma_texel_pixels": 76,
+        "no_weighted_source_pixels": 0
+      },
+      "rgba_reconstruction_error_lsb": {
+        "min": 0.0,
+        "p50": 0.22880776221283128,
+        "max": 0.5801582197251349
+      },
+      "residual_carrier_to_source_road_hit_distance_m": {
+        "min": 2.421438694000244e-08,
+        "p50": 2.281223270166264e-06,
+        "max": 9.242960660188992
+      },
+      "residual_source_road_pairs": 389,
+      "posthoc_geometry": {
+        "residual_pixels_with_source_road_hit_distance_over_2cm": 4,
+        "target_center_pairs": [
+          {
+            "pixel_yx": [
+              207,
+              309
+            ],
+            "camera": 3,
+            "carrier_vehicle_m": [
+              2.60119366645813,
+              2.100821018218994,
+              0.9940295219421387
+            ],
+            "source_hit_world_m": [
+              2.599377155303955,
+              2.0999999046325684,
+              0.9941328167915344
+            ],
+            "carrier_minus_hit_range_m": 0.0019961487967075087,
+            "supplied_box_blocked_at_zero_tolerance": true,
+            "supplied_box_blocked_at_configured_tolerance": false
+          },
+          {
+            "pixel_yx": [
+              208,
+              309
+            ],
+            "camera": 3,
+            "carrier_vehicle_m": [
+              2.6095316410064697,
+              2.108137607574463,
+              0.9523423910140991
+            ],
+            "source_hit_world_m": [
+              2.591583490371704,
+              2.0999999046325684,
+              0.9536957740783691
+            ],
+            "carrier_minus_hit_range_m": 0.01975322671978086,
+            "supplied_box_blocked_at_zero_tolerance": true,
+            "supplied_box_blocked_at_configured_tolerance": false
+          }
+        ]
+      }
+    },
+    {
+      "frame": 1,
+      "variant": "plane_occluded",
+      "native_report_sha256": "0b113a6da78b9900e8233c4ca8a5cff0c77ced6a453b3b680373eaccb6954274",
+      "scene_record": {
+        "frame": 1,
+        "variant": "plane_occluded",
+        "native_report_sha256": "0b113a6da78b9900e8233c4ca8a5cff0c77ced6a453b3b680373eaccb6954274",
+        "files": {
+          "pixels.npy": "997911b1a3d5004587296de79baa29fc284f3ad5eba925bedcb8cd4df8a000f2",
+          "residual.npy": "6bf92863589238bdee376c39b6be46503fea9a223c1083eb11c99e54b39877a0",
+          "virtual-kinds.npy": "cafbfd51116976c34a9ea321587a2b79ab26e388cff2e19796fd1625ea2617f8",
+          "center-kinds.npy": "5baed211b461f7321c0ed928018c0d121acae26173572871cd199d10e2debd95",
+          "center-hits.npy": "3ae575b9a3710f2ee94d8bcd6a5fbe89e16f73eda399e57ef560e903042c9656",
+          "texels.npy": "778c998d451fd171f5c654b0be4ba14a2fef100dc9e34f2fcbff3adfd571f588",
+          "weights.npy": "805ba782490689bedeed507718b81eb8fce4a332b7fa7780214eea441936410b",
+          "texel-kinds.npy": "dd165775dbcdbf9b3ceab64edfe88f77ef782ac76fc401a4e4eea734f3c1b61b"
+        }
+      },
+      "residual": {
+        "pixels": 51,
+        "virtual_target_pixels": 0,
+        "virtual_road_pixels": 51,
+        "positive_weight_target_center_pixels": 0,
+        "positive_weight_target_texel_pixels": 49,
+        "colored_texel_without_target_center_texel_pixels": 2,
+        "positive_weight_chroma_texel_pixels": 51,
+        "no_weighted_source_pixels": 0
+      },
+      "control": {
+        "pixels": 69,
+        "virtual_target_pixels": 69,
+        "virtual_road_pixels": 0,
+        "positive_weight_target_center_pixels": 0,
+        "positive_weight_target_texel_pixels": 0,
+        "colored_texel_without_target_center_texel_pixels": 0,
+        "positive_weight_chroma_texel_pixels": 0,
+        "no_weighted_source_pixels": 0
+      },
+      "rgba_reconstruction_error_lsb": {
+        "min": 0.0,
+        "p50": 0.20535540580750222,
+        "max": 0.6465103582575011
+      },
+      "residual_carrier_to_source_road_hit_distance_m": {
+        "min": 2.57923830511364e-07,
+        "p50": 2.5737206681924506e-06,
+        "max": 1.6498576175718295e-05
+      },
+      "residual_source_road_pairs": 102,
+      "posthoc_geometry": {
+        "residual_pixels_with_source_road_hit_distance_over_2cm": 0,
+        "target_center_pairs": []
+      }
+    },
+    {
+      "frame": 1,
+      "variant": "local_100_occluded",
+      "native_report_sha256": "172a1e9330126107dc20564bbae4bac7b8475518f59befb23ad38256e262e52b",
+      "scene_record": {
+        "frame": 1,
+        "variant": "local_100_occluded",
+        "native_report_sha256": "172a1e9330126107dc20564bbae4bac7b8475518f59befb23ad38256e262e52b",
+        "files": {
+          "pixels.npy": "cec043ce972cdab1bf7fa6a7a6ddf30d4970abe7428dbd1518bfc5a615c433d6",
+          "residual.npy": "ba7f7665c1841526e91a9e568fca6cd54fc090552185281e2e6a85d4f8e95e4c",
+          "virtual-kinds.npy": "0aa13c03b0023d0f4366ea7a2149887b750e678c3724e2074945cd96f1f21c2e",
+          "center-kinds.npy": "a8a78be42e82dd55f1e7534b9d6517aa7cc1b4c87c630f1da67995d6d9be9320",
+          "center-hits.npy": "de8fe34a5df3fba8a2b71ce0eb02caa6d2c3206f08e2aa128a564260bd623abd",
+          "texels.npy": "29803cd775ba070b98ea7fe97dcb91d4a95691143471083cbf03401c4bcbd7b4",
+          "weights.npy": "ef0f58baec996880e351558371d0b2e36ac6021adaa28798c83a5aed7e22a523",
+          "texel-kinds.npy": "b0df49e888f54d2e6e23966d78da9cdb0bfa17808f0468f89cc714c43f8fcf79"
+        }
+      },
+      "residual": {
+        "pixels": 56,
+        "virtual_target_pixels": 0,
+        "virtual_road_pixels": 56,
+        "positive_weight_target_center_pixels": 0,
+        "positive_weight_target_texel_pixels": 50,
+        "colored_texel_without_target_center_texel_pixels": 6,
+        "positive_weight_chroma_texel_pixels": 56,
+        "no_weighted_source_pixels": 0
+      },
+      "control": {
+        "pixels": 69,
+        "virtual_target_pixels": 69,
+        "virtual_road_pixels": 0,
+        "positive_weight_target_center_pixels": 69,
+        "positive_weight_target_texel_pixels": 69,
+        "colored_texel_without_target_center_texel_pixels": 0,
+        "positive_weight_chroma_texel_pixels": 69,
+        "no_weighted_source_pixels": 0
+      },
+      "rgba_reconstruction_error_lsb": {
+        "min": 0.0,
+        "p50": 0.2260481957064968,
+        "max": 0.7734834402799606
+      },
+      "residual_carrier_to_source_road_hit_distance_m": {
+        "min": 2.57923830511364e-07,
+        "p50": 2.8922843198220715e-06,
+        "max": 3.3935506684403616
+      },
+      "residual_source_road_pairs": 107,
+      "posthoc_geometry": {
+        "residual_pixels_with_source_road_hit_distance_over_2cm": 5,
+        "target_center_pairs": []
+      }
+    }
+  ],
+  "limitations": [
+    "Conditional selection on observed residual color from previously explored fixture; no holdout/algorithm ranking",
+    "Source texel-center ray support is not exact Eevee/cubemap pixel filter identity",
+    "Known scene reconstruction, two correlated frames and two carriers; no new RGB/rendered outputs or native product change",
+    "Output fusion reconstruction allowed predeclared 2LSB bound for GPU interpolation/raster rounding; not exact causal filter reconstruction"
+  ],
+  "posthoc_scope": "Descriptive geometry drill-down after primary frozen audit; no native counterfactual rendering or threshold optimization",
+  "figure_and_detail_script_sha256": "49e689273d58c073665d50bc667590345d03c85a197f65dbb5a493bfe514128b"
+}
