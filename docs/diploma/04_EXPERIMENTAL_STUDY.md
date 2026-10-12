@@ -3307,3 +3307,87 @@ Local center сохраняет76/76 и69/69 видимых target pixels; guard
 Независимый six-face oracle даёт0 status mismatches на2591739 prior-valid camera-point pairs; geometry и retained UV exact. Это согласие двух реализаций одного объявленного predicate, не доказательство качества. Начальные tangent failures привели к явной10µm interior-конвенции до freeze; скрытого исключения failed pixels нет. Full build и CTest7/7 успешны, carrier GTest10/10 на NVIDIA/Mesa и independent20/20; repeated report совпадает побитно.
 
 Результат показывает недостаточность консервативного any-neighbor rejection с central radial range на выбранной сцене. Постоянная дальность не различает соседнюю грань того же объекта и occluder; surface-consistent вариант требует отдельной causal проверки. В данном опыте он не реализован и его эффективность не установлена. Known AABB не является RGB depth estimator; два correlated frames не заменяют independent scene families, uncertainty, natural objects и physical/Aurora trials. Следующий шаг — сохранить видимый объект при surface-aware footprint policy, затем оценить tolerance/geometry sensitivity и overhead. Это отрицательный исследовательский результат, а не завершение general mitigation.
+
+
+## 4.76. Сохранение видимой поверхности supplied box при footprint visibility
+
+### 4.76.1. Проверяемая коррекция правила
+
+§4.75 показал, что any-neighbor rejection удаляет видимый объект вместе с остатками. В новом native кандидате введён явный support contract: central-visible carrier point на поверхности известного box сохраняется. Это проверка bounded hypothesis о поддерживаемом объекте; произвольная scene identity не восстанавливается.
+
+Новый native mode `surface.source_occlusion_box.mode="bilinear_box_surface_v1"` сохраняет центральный sample на видимой поверхности supplied opaque box. Сначала выполняется прежняя central-ray occlusion: скрытая грань никогда не получает exemption. Если central ray не blocked, принадлежность actual carrier point конечной грани box проверяется в фиксированной полосе10µm по L∞ расстоянию. Внутренние точки и продолжения граней вне этой численной полосы exemption не получают. Вне полосы применяется неизменный radial footprint guard0/1. `center` остаётся default.
+
+Для box $B=[b_{min},b_{max}]$ и шести конечных граней $F_k$:
+
+$$S(P)=\left[\min_{k=1}^{6}\inf_{Q\in F_k}\|P-Q\|_\infty\le10^{-5}\,\mathrm m\right].$$
+
+Пусть $O_c$ — прежний central blocking, $O_r$ — radial policy (§4.75). Тогда:
+
+$$O_{box}=O_c\lor\bigl(O_r\land\neg S(P)\bigr).$$
+
+Это bounded known-object support exemption, а не восстановление принадлежности каждого соседнего луча произвольной поверхности. Numerical band10µm независим от configurable endpoint bias20mm. Прежний neighbor inset10µm, zero-distortion equidistant optics, source status7 и ограничения guard0/1 сохранены. Каталог публикует mode и read-only `box_surface_membership_epsilon_m`; переключение через existing full-surface `Client::configure_surface` с revision, сервер владеет config. Отдельных GUI controls для нового режима ещё нет.
+
+```plantuml
+@startuml
+start
+:Actual carrier point / camera UV;
+if (Central ray blocked?) then (да)
+  :Reject / status7;
+else (нет)
+  if (On finite supplied box face
+within numerical 10µm band?) then (да)
+    :Preserve central sample;
+  else (нет)
+    :Apply radial footprint guard0/1;
+  endif
+endif
+:Fuse retained samples;
+:Independent target / source visibility truth;
+:Evaluate preservation AND outside
+AND unsupported AND road error;
+stop
+@enduml
+```
+
+Рисунок4.129 — Последовательность box-surface policy. Exemption применяется после central occlusion и ограничен конечными гранями известного box.
+
+### 4.76.2. Парная проверка и результаты
+
+Frozen до capture matrix содержит24 native conditions: прежние16 controls и восемь box-surface вариантов. Source RGB и independent truth прежние; все16 historical RGBA hashes совпали. Native source revision2ca07ca, checksums и полная24-row таблица: [[validation/BOX_SURFACE_VISIBILITY]], [[validation/baselines/box_surface_visibility_v1.json]].
+
+| Frame | Вариант | Outside | Full IoU | Visible hits | Visible без source | Full target без source | Road MAE |
+|---|---|---:|---:|---:|---:|---:|---:|
+| 0 | `local_100` | 4922 | 0.034902 | 76/76 | 0 | 0 | 0.029305 |
+| 0 | `local_center` | 198 | 0.215426 | 76/76 | 0 | 78 | 0.020982 |
+| 0 | `local_fp0` | 30 | 0.072115 | 12/76 | 64 | 144 | 0.020838 |
+| 0 | `local_fp1` | 1 | 0.011173 | 2/76 | 74 | 163 | 0.020771 |
+| 0 | `local_sf0` | 30 | 0.375000 | 75/76 | 1 | 81 | 0.020838 |
+| 0 | `local_sf1` | 1 | 0.418994 | 75/76 | 1 | 90 | 0.020771 |
+| 1 | `local_100` | 5449 | 0.030600 | 69/69 | 0 | 0 | 0.030615 |
+| 1 | `local_center` | 56 | 0.302632 | 69/69 | 0 | 103 | 0.020858 |
+| 1 | `local_fp0` | 6 | 0.056180 | 10/69 | 59 | 162 | 0.020813 |
+| 1 | `local_fp1` | 0 | 0.011628 | 2/69 | 67 | 170 | 0.020802 |
+| 1 | `local_sf0` | 6 | 0.387640 | 69/69 | 0 | 103 | 0.020813 |
+| 1 | `local_sf1` | 0 | 0.401163 | 69/69 | 0 | 103 | 0.020802 |
+
+Таблица4.77 — Local carrier и все шесть policies. Visible subset76/69 независим от outputs; unsupported visible отделён от полного target. Plane во всех12 условиях имеет0 target proxy hits. Метрики не используют component filtering; road ROI включает fallback.
+
+![Box surface actual RGB](figures/experiments/box_surface_visibility_rgb.png)
+
+Рисунок4.130 — Actual native outputs center/radial guard1/box-surface guard1 и independent Blender truth. Cyan contour задаёт target; изображения показывают возвращение полезного marker при удалении displaced copies.
+
+![Box surface joint quality metrics](figures/experiments/box_surface_visibility_metrics.png)
+
+Рисунок4.131 — Сравнение center, radial4/16 и box-surface4/16 по нескольким критериям. Уменьшение road error и outside оценивается совместно с сохранением видимой части объекта.
+
+Guard1 на local уменьшает outside198→1 и56→0, повышает full IoU0.215426→0.418994 и0.302632→0.401163, сохраняет75/76 и69/69 source-visible pixels. Road MAE уменьшается, но первый кадр **не проходит заранее заданный строгий preservation gate**: один visible pixel становится unsupported. Guard0 имеет тот же пропуск. Из четырёх local candidate/frame comparisons все четыре критерия одновременно проходят только два (frame1 guard0/1). Это улучшение относительно radial-кандидата, не завершённая general mitigation и не основание заменить default.
+
+Заранее объявленные gates не ослаблены до75/76: строгое сохранение и отсутствие новых visible unsupported выполнены для второго кадра, но не для первого. Road MAE совпадает у sf и соответствующего radial: exemption в этом опыте меняет target samples, не road ROI. Нельзя трактовать full IoU≈0.4 как восстановление всех граней: source-visible subset меньше полного target, unsupported full target90/103 при guard1 остаётся.
+
+### 4.76.3. Граничный отказ и дальнейшая проверка
+
+В отдельном **post-hoc** разборе найден один pixel frame0(y,x)=(211,318), camera3. Carrier point=(2.506034374,2.500159502,0.999201894)m выходит за finite box face на0.159502mm по L∞. Independent scene point=(2.505959511,2.499999762,0.999071896)m; общая разность0.219137mm. При numerical membership band0.01mm exemption не применяется, центрально допустимый sample становится status7. Эти данные сохранены отдельно: [[validation/baselines/box_surface_boundary_v1.json]]. Параметры после primary report не менялись.
+
+Отказ показывает чувствительность exact supplied-surface recognition к carrier/scene discrepancy. Конкретный вклад mesh/raster/calibration в этот pixel ещё не разделён. Увеличить epsilon по одному наблюдению означало бы смешать numerical convention и geometry uncertainty. Следующий frozen paired опыт должен варьировать допуски и геометрию с контролями road/interior/hidden-face и preservation, а не только устранять один pixel.
+
+Independent oracle даёт0 status mismatches на4319565 camera-point pairs; carrier/retained UV exact, full build/CTest7/7, carrier GTest10/10 Mesa/NVIDIA и independent21/21 успешны, reaudit identical. Shared ordinary/hybrid validity и inspection parity проверяются отдельно. Численное согласие не закрывает strict quality gate. Два correlated frames одного известного box остаются ограничением; independent scene families, natural objects, realistic geometry, overhead и physical/Aurora проверки нужны для полноценного заключения.
