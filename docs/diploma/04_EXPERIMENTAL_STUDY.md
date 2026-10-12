@@ -2432,3 +2432,71 @@ Direct Blender/analytical plane residual не превышает1.444µm; source
 Контроль отделяет большой объёмный correspondence failure предыдущих опытов от малого остатка на действительно плоской поверхности. Он не устраняет height/parallax limitation и не проверяет RGB resampling, bilinear footprint, multiband либо occlusion. Требуются отдельное объяснение3 strict failures, planar RGB fixture и дальнейший displaced/hybrid attribution. Реальные камеры/Аврора и независимые scene families остаются за пределами опыта.
 
 Пять known-answer audit tests и CTest1/1 прошли, повторный read-only audit совпал побитно. После добавления запрета повторной записи выходного каталога Blender rays повторены: все14 NPY arrays совпали побитно с первым capture; исходная active scene восстановлена. Это подтверждение воспроизводимости измерений, а не успешного прохождения всех заранее заданных geometric criteria.
+
+## 4.65. Парная проверка точности planar correspondence на NVIDIA и Mesa
+
+Три строгих failure §4.64 требуют отделить геометрическое ограничение носителя от малого численного остатка. Для этого выполнены10 новых native captures на Mesa llvmpipe с тем же архивным C++ binary, configs, manifests и camera inputs, что у прежних10 NVIDIA captures. Повторяются frames0/1 и пять carriers, ROI166/161 pixels. Зафиксированы executable/shader/input hashes и actual devices. План создан до новых captures; подробности — [[validation/PLANAR_PRECISION]]. Это geometry/precision follow-up без planar RGB truth, timing ranking или независимого holdout.
+
+### 4.65.1. Разделение матрицы, положения точки и оптической проекции
+
+Double look-at/perspective MVP независимо восстановлена по формулам native `View::mvp`. Unprojection и analytic plane intersection совпали с отдельной virtual-ray construction в пределах1e−10m. Native carrier positions повторно projected в output pixel grid; это проверяет согласованность rasterized point с выбранным идеальным pixel center.
+
+Второй контроль округляет MVP до float32, после чего inverse/unprojection снова вычисляются в double. Так изолируется только matrix-upload rounding:
+
+\[
+M_f=\operatorname{float64}(\operatorname{float32}(M)),\qquad
+\Delta P_M=\|P(M_f)-P(M)\|.
+\]
+
+Модель намеренно не воспроизводит vertex arithmetic, clipping, raster quantization и perspective interpolation. Она не является CPU реализацией GPU rasterizer. Actual GPU uniforms не захвачены; реконструкция основана на проверенных формулах и зафиксированном native source.
+
+```plantuml
+@startuml
+participant "Frozen C++ binary / inputs" as Inputs
+participant "NVIDIA archived capture" as NV
+participant "Mesa llvmpipe capture" as Mesa
+participant "Read-only precision audit" as Audit
+Inputs -> NV : те же config / frame / shader files
+Inputs -> Mesa : те же config / frame / shader files
+NV -> Audit : carrier XYZ + source UV/status
+Mesa -> Audit : carrier XYZ + source UV/status
+Audit -> Audit : проверить hashes / frame / camera validity
+Audit -> Audit : double MVP ↔ independent plane ray
+Audit -> Audit : float32 MVP rounding only
+Audit -> Audit : native carrier → output pixel residual
+Audit -> Audit : actual point optical projection residual
+@enduml
+```
+
+Рисунок4.96 — Парный backend control и разделение измерений. Изменение backend не объявляется изменением алгоритма сшивки.
+
+### 4.65.2. Измерения и строгие исходы
+
+| Frame / carrier | NVIDIA max UV, px | Mesa max UV, px | NVIDIA / Mesa strict pass |
+|---|---:|---:|---|
+| 0 / plane | 0.007407 | 0.000588 | yes / yes |
+| 0 / dome_floor | 0.010159 | 0.000505 | NO / yes |
+| 0 / cylinder_floor | 0.011143 | 0.000560 | NO / yes |
+| 0 / cube_floor | 0.010461 | 0.000512 | NO / yes |
+| 1 / plane | 0.007459 | 0.000750 | yes / yes |
+| 1 / dome_floor | 0.007494 | 0.000572 | yes / yes |
+| 1 / cylinder_floor | 0.009321 | 0.000611 | yes / yes |
+| 1 / cube_floor | 0.006958 | 0.000679 | yes / yes |
+
+Таблица4.65 — Max source UV gap в fixed floor ROI. Strict pass требует одновременно прежние0.1mm и0.01px. NVIDIA5/8, Mesa8/8; bowl не включён как неплоский carrier. Здесь oracle — double analytic plane, поэтому числа слегка отличаются от Blender-referenced §4.64, который сохранён без замены.
+
+![Парный precision control на двух backend](figures/experiments/planar_precision_backends.png)
+
+Рисунок4.97 — Max source distance, source UV gap и output reprojection residual. Треугольники среднего графика — модель только float32 MVP rounding. Логарифмические оси не являются confidence intervals. Сравнение относится к одной camera/scene family и малому заранее выбранному ROI.
+
+На exact-floor условиях max source distance равен0.100072mm для NVIDIA и0.006372mm для Mesa; max UV gap —0.011143 и0.000750px. Native carrier reprojection в output grid даёт максимум0.00187936px и0.00004708px соответственно. Optical residual actual carrier point, напротив, меньше на NVIDIA:0.00008141px против0.00057327px Mesa. Следовательно, optical arithmetic residual и geometric sampling residual не должны сводиться к одному числу.
+
+Модель float32 uniform rounding даёт max plane displacement5.82e−8m и max UV shift5.063e−6px. Она существенно меньше observed NVIDIA residual и одинакова для carriers одного frame; одна эта причина не объясняет carrier-dependent strict failures. Source validity совпала во всех10 парных условиях. Normal RGBA не меняется из-за inspection внутри каждого capture, но NVIDIA/Mesa output hashes различаются во всех10 парах: межbackend побитная RGB equivalence не подтверждена и не требуется для данного geometry control.
+
+### 4.65.3. Интерпретация и следующий шаг
+
+Наблюдения подтверждают зависимость малого planar residual от backend при одинаковом binary/config/inputs и исключают модель **только uniform rounding** как достаточное объяснение. Они ещё не устанавливают конкретную ошибку rasterizer/интерполятора: для этого нужны actual vertex/clip/triangle data и отдельная precision ablation. Нельзя объявлять прежние strict failures исправленными, увеличивать tolerance после результата или вводить CPU point correction без проверки shader/RGBA parity.
+
+Этот малый остаток не объясняет hundreds-of-pixels displacement поднятого target в §§4.62–4.63. Основной исследовательский приоритет возвращается к displaced target pixels, source-surface attribution и hybrid contributions, затем к проверке mitigation. Planar RGB/bilinear fixture и triangle precision attribution сохраняются как отдельные controls; физические камеры и Аврора по-прежнему не проверены.
+
+Семь known-answer tests, CTest source_correspondence1/1 и C++ GTest группа carrier_inspection на Mesa прошли. Повторный read-only audit побитно воспроизвёл baseline. Исправлена совместимость collector с установленной NumPy (`vstack` вместо удалённого `row_stack`), добавлен known-answer target-center test; native Renderer и captured inputs не изменялись.

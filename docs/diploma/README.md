@@ -164,3 +164,5 @@ MPLCONFIGDIR=/tmp/sv-matplotlib python3 docs/diploma/plot_carrier_positions.py -
 §4.63: height/second-frame source-surface controls,20 native captures, явные world/vehicle transforms, таблица outcomes и рисунки4.90–4.92. [[validation/SOURCE_CORRESPONDENCE_CONTROLS]]. Ground-contact target объёмный; planar known-answer control остаётся открытым.
 
 §4.64 — isolated planar geometry control, analytical/Blender oracle,10 carrier/frame условий, таблица strict failures и рисунки4.93–4.95. [[validation/PLANAR_CORRESPONDENCE]].
+
+§4.65 — paired NVIDIA/Mesa precision follow-up:10 новых native captures,7 known-answer controls, таблица исходов и рисунки4.96–4.97. [[validation/PLANAR_PRECISION]].

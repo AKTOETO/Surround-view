@@ -67,3 +67,5 @@ Audit новой серии: `python3 docs/diploma/plot_planar_correspondence.py
 - RGB planar fixture с соответствующими camera inputs/direct truth, bilinear footprint и boundary control; данный опыт этого не проверяет.
 - Displaced target RGB attribution и hybrid level contributions; mitigation высотного failure.
 - Triangle identity/coverage, bounded server/library diagnostics, независимые сцены и физический/Aurora стенд.
+
+Первый paired precision/backend follow-up выполнен отдельно: [[validation/PLANAR_PRECISION]]. Он сохраняет исходные3 strict failures, проверяет analytical plane и partial uniform-rounding model; конкретный triangle/raster механизм пока не установлен.
