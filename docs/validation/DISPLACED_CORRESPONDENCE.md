@@ -69,3 +69,5 @@ Audit новой серии: `python3 docs/diploma/plot_displaced_correspondence
 - Проверить four-texel surface footprint и source resampling для1164 point-ray/RGB mismatch pixels; расширить выборку вне output-conditioned proxy и на natural objects.
 - Проверить mitigation height/occlusion failure на неизменных inputs и independent truth. Подавление occluded samples само по себе не восстанавливает target в правильном положении.
 - Triangle precision/coverage, bounded server/library diagnostic delivery, независимые сцены и физический/Aurora стенд остаются открытыми.
+
+Matched hybrid640×360/800×800 follow-up выполнен: [[validation/HYBRID_CORRESPONDENCE]]. Он переиспользует ray identities только после exact source/carrier parity на прежних domains; новые hybrid proxy pixels и four-texel mismatch truth ещё требуют отдельного capture.

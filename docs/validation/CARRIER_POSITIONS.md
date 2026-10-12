@@ -93,3 +93,5 @@ __EGL_VENDOR_LIBRARY_FILENAMES=/usr/share/glvnd/egl_vendor.d/50_mesa.json ctest 
 Пределы проверки: небольшие synthetic fixtures, не реальная scene correspondence; GPU-only contributions, bounded wire capture и оценка overhead остаются открытыми. Исторические baselines/числа качества не пересчитаны этим инженерным шагом.
 
 Результат 11.10.2026: CPU GTest **7/7** (четыре прежние boundary проверки и три contribution проверки); целевые CTest группы native_fusion_parity/render_fusion_parity/carrier_inspection/fusion_boundary **4/4** на Mesa с разрешённым IPC. Это regression validation текущей реализации, а не новая quality серия.
+
+Расширение12.10.2026: `FusionInspection::level_contributions` сохраняет signed weighted RGB bands каждого уровня/камеры. Native probe поддерживает selected manifest frame и color-only mode, записывает carrier XYZ и file hashes. Matched60-condition проверка и per-level/SV01 regressions: [[validation/HYBRID_CORRESPONDENCE]].

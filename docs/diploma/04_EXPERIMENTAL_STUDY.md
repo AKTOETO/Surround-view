@@ -2571,3 +2571,93 @@ Audit -> Audit : bilinear → linearize → edge blend → encode
 Восемь known-answer tests и CTest1/1 прошли; повторный audit побитно совпал с baseline. План/ray helper зафиксированы до capture, occlusion-gap decomposition и default resolution уточнены при аудите. Renderer и исходные кадры не менялись. Это локализация edge-feather failure, а не его исправление или обобщение на независимые сцены.
 
 Следующий опыт должен захватить hybrid level weights/signed contributions на тех же inputs/config/frames. Старый hybrid raster320×180/400×400 относится к другой сцене/rig и не является matched comparison текущего640×360/800×800 fixture. Four-texel footprint и resampling mismatch, independent natural-object scenes, mitigation и physical/Aurora validation остаются открытыми.
+
+## 4.67. Парный hybrid capture: локальная геометрия и нелокальные вклады пирамиды
+
+После displaced edge-feather attribution выполнен matched hybrid follow-up на тех же rig101-near-z080 inputs: frames0/1, пять carriers,800×800 source и640×360 output, true calibration. Исследованы seam distance, binary-pairs graph-cut, multiband и cut+multiband; для последних двух — zero/normalized boundary. Получено60 native условий. Pyramid levels4, smoothness0.1 и edge width24px сохранены; планы, source/binary hashes и raw outputs приведены в [[validation/HYBRID_CORRESPONDENCE]]. Это локализующий опыт одной сцены, не universal ranking.
+
+### 4.67.1. Native capture и независимая реконструкция
+
+Native `FusionInspection` расширен signed weighted bands каждой камеры на каждом уровне. Дополнительные bands доступны только при opt-in capture; normal fusion arithmetic не изменена. Probe выбирает реальный manifest frame и экспортирует effective settings, carrier XYZ, UV/status, normalized level coefficients и signed bands с hashes/bytes. Legacy18-case mode сохранён, новая color-only серия содержит6 variants на frame/carrier.
+
+Во всех60 условиях actual carrier positions/regions и source UV/status совпали с прежним edge capture; hybrid fallback RGBA hashes также совпали. Поэтому прежние independent Blender hits можно использовать на тех же expected/fixed-proxy pixels. Это существенно: перенос ray labels между разными inputs или raster dimensions не был бы парным сравнением.
+
+```plantuml
+@startuml
+participant "Frozen edge capture / Blender hits" as Edge
+participant "Native hybrid Renderer" as Native
+participant "Signed bands / weights" as Bands
+participant "SciPy audit" as Audit
+Edge -> Native : same config / manifest frame / cameras
+Native -> Audit : actual carrier XYZ + source UV/status
+Audit -> Audit : exact parity с frozen edge capture
+Native -> Bands : actual weighted signed bands, fine → coarse
+Bands -> Audit : normalized coefficients + signed RGB
+Audit -> Audit : independent align-endpoint reconstruction
+Native -> Audit : full camera contributions / ordinary RGBA
+Audit -> Audit : sum + clamp + encode + coverage / ego
+Edge -> Audit : ray identities only on прежних pixel domains
+Audit -> Audit : local target weight отдельно от nonlocal contribution
+@enduml
+```
+
+Рисунок4.101 — Matched native/independent audit. Signed contributions не подменяются локальными alpha weights.
+
+Для камеры \(c\) на уровне \(l\) сохраняется \(B_{c,l}\) — взвешенная знаковая RGB полоса. Реконструкция выполняется от coarse к fine:
+
+\[
+C_{c,L}=B_{c,L},\qquad C_{c,l}=B_{c,l}+U_l(C_{c,l+1}),\qquad
+F=\operatorname{clip}_{[0,1]}\left(\sum_c C_{c,0}\right).
+\]
+
+\(U_l\) использует native sizes и совмещение крайних pixel centers. Независимая SciPy reconstruction отличается от captured camera contributions максимум на1.490116119e−8 linear RGB. Sum/clamp/sRGB encode/coverage/ego composition воспроизводят native RGBA в пределах1LSB. Negative bands сохраняются; это не вероятности и не opacity.
+
+### 4.67.2. Видимое изображение и отсутствие восстановления target
+
+| Method / boundary | Plane f0 | Bowl f0 | Plane f1 | Bowl f1 | Expected target overlap, все10 carrier/frame |
+|---|---:|---:|---:|---:|---:|---:|
+| seam_distance_feather / zero | 4095 | 4405 | 5388 | 5603 | 0 |
+| graph_cut_seam / zero | 1039 | 1162 | 3789 | 3927 | 0 |
+| multi_band / zero | 4830 | 6250 | 5374 | 5597 | 0 |
+| graph_cut_multi_band / zero | 1308 | 1458 | 4097 | 4241 | 0 |
+| multi_band / normalized | 4840 | 6310 | 5374 | 5597 | 0 |
+| graph_cut_multi_band / normalized | 1308 | 1458 | 4097 | 4241 | 0 |
+
+Таблица4.67 — Full-frame raw magenta proxy counts. Plane/bowl приведены для компактности; последняя колонка охватывает все пять carriers и оба frames каждого метода. Полные60 строк сохранены в baseline. Proxy без component filtering не является новой independent quality IoU.
+
+![Парные native RGB hybrid variants](figures/experiments/hybrid_correspondence_rgb.png)
+
+Рисунок4.102 — Independent Blender RGB, прежний edge output и шесть actual hybrid outputs, plane/frame0. Cyan contour — expected target mask. Graph-cut сокращает смещённую текстуру в этом кадре, но объект не появляется в ожидаемом месте.
+
+Во всех60 условиях raw target-color overlap с expected target равен0 и local target-ray weight в нём0. Geometry остаётся прежней. Уменьшение displaced pixels нельзя считать восстановлением качества: например, graph-cut на fixed edge proxy имеет median target-ray weight0 в frame0 и1 в frame1. Выбор другого source sample меняет видимый ghost, но не устанавливает правильную высоту или visibility carrier point.
+
+Часть новых hybrid proxy pixels не входит ни в прежний expected target, ни в frozen edge proxy. Их raw counts сохранены, но scene/source identity на этих coordinates ещё не кастовалась. Нельзя автоматически переносить на них labels ближайших старых pixels.
+
+### 4.67.3. Нелокальный вклад при нулевой локальной допустимости
+
+| Plane variant | f0: pixels /76 | f0 max abs linear RGB | f1: pixels /69 | f1 max abs linear RGB |
+|---|---:|---:|---:|---:|
+| seam_distance_feather / zero | 0 | 0.000000000 | 0 | 0.000000000 |
+| graph_cut_seam / zero | 0 | 0.000000000 | 0 | 0.000000000 |
+| multi_band / zero | 76 | 0.001903697 | 29 | 0.000018542 |
+| graph_cut_multi_band / zero | 76 | 0.001437428 | 10 | 0.000011461 |
+| multi_band / normalized | 76 | 0.008976149 | 68 | 0.000396502 |
+| graph_cut_multi_band / normalized | 76 | 0.006959576 | 53 | 0.000361177 |
+
+Таблица4.68 — Source-visible expected target ROI plane: pixels, где locally invalid camera имеет max abs reconstructed contribution>1e−6 linear RGB. Во frame0 ROI76 pixels, во frame1 —69. Это signed pre-clamp contribution, не принадлежность цвета target.
+
+![Nonlocal contribution в expected target ROI](figures/experiments/hybrid_correspondence_nonlocal.png)
+
+Рисунок4.103 — Counts и magnitude nonlocal contributions для plane/bowl. Seam distance/cut локальны, multiband переносит signed color через границы local validity. Разные вертикальные масштабы frame0/frame1 отражают реальные величины, не статистические интервалы.
+
+На frame0 multiband даёт locally-invalid camera contribution на всех76 visible target pixels; max magnitude достигает0.008999 linear RGB при normalized support для bowl. В frame1 counts зависят от boundary/mode: plane MB zero29, normalized68; cut+MB zero10, normalized53. Ненулевой contribution не устанавливает correct surface correspondence и не даёт target-color overlap. Увеличение nonlocal magnitude normalized variant само по себе не является ухудшением RGB quality.
+
+![Масштаб propagated signed bands](figures/experiments/hybrid_correspondence_levels.png)
+
+Рисунок4.104 — Mean absolute signed contribution каждого уровня после propagation к full raster в source-visible expected ROI plane. Magnitudes не складываются в доли результата из-за signed cancellation; они нужны для диагностики распределения масштабов.
+
+### 4.67.4. Проверки и пределы вывода
+
+Прошли C++ fusion GTest7/7, CTest render_fusion_parity/fusion_boundary2/2 и independent correspondence controls9/9. Новый integration control использует отличающиеся RGB второго manifest frame, проверяет timestamp/paths/hashes,6 color cases и отказ malformed/out-of-range индексов до создания output. Native constant-field control проверяет zero fine bands/known coarse values и reset; legacy carrier/full-composition/SV01 regression сохранены. Первый sandbox IPC bind отказ отмечен в validation report; повтор с разрешённым IPC успешен. Read-only audit воспроизводится побитно.
+
+Опыт показывает, что seam/pyramid mixing при неизменной carrier geometry не восстановило expected target proxy в этих60 условиях. Это не утверждение о невозможности любого метода сшивки и не generalization на natural objects. Следующие проверки — source four-texel footprint/resampling mismatch, новые hybrid proxy coordinates и mitigation height/occlusion failure с независимым truth. GPU-only contributions, другие solvers/scenes и bounded server/library diagnostics, physical/Aurora trials остаются отдельными задачами.

@@ -168,3 +168,5 @@ MPLCONFIGDIR=/tmp/sv-matplotlib python3 docs/diploma/plot_carrier_positions.py -
 §4.65 — paired NVIDIA/Mesa precision follow-up:10 новых native captures,7 known-answer controls, таблица исходов и рисунки4.96–4.97. [[validation/PLANAR_PRECISION]].
 
 §4.66 — displaced source-surface attribution на двух frames/пяти carriers, таблица4.66 и рисунки4.98–4.100; foreground source occlusion, bilinear color control и сохранённые ray/RGB mismatch pixels. [[validation/DISPLACED_CORRESPONDENCE]].
+
+§4.67 —60 matched native hybrid conditions, signed per-level capture, independent band/RGBA reconstruction, таблицы4.67–4.68 и рисунки4.101–4.104. [[validation/HYBRID_CORRESPONDENCE]].
