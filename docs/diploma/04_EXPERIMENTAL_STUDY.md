@@ -2359,3 +2359,76 @@ Direct target mask воспроизведён побитно для всех ч�
 В ground-contact ROI proxy даёт11/14 pixels для plane/bowl в frame0 и8/9 в frame1, при нулевых matched surface counts. Для raised ROI proxy равен0 во всех случаях. Таким образом, object ID и цветовая близость сами по себе могут скрывать geometric correspondence error. Повторный кадр подтверждает прежний road-selection mechanism для raised object после translation, но не проверяет его на повороте или независимом клипе.
 
 Четыре known-answer audit tests, CTest1/1 и повторный read-only audit прошли; baseline воспроизведён побитно. Вывод ограничен edge_feather, двумя heights одной сцены и одним seed. Нулевой match для объёмного ground-contact target не доказывает ошибочность planar mapping для плоской мишени. Следующие задачи: настоящий planar control, displaced RGB attribution, hybrid per-level contributions, triangle identity/coverage и проверяемое уменьшение height failure. Без них, независимых сцен и физических испытаний нельзя завершать общий рейтинг методов сшивки или переносить результат на Аврору.
+
+## 4.64. Геометрический контроль на единственной плоскости
+
+Касающийся земли box из §4.63 сохранял высоту0.4m и потому не мог проверить точное плоское соответствие. В новом контрольном опыте Blender scene содержит только квадрат Z=0 размером200×200m. Ego, box и другие occluders отсутствуют. Из ранее сохранённых native measurements взяты actual carrier points и source UV/status для пяти carriers и frames0/1. Повторного native render или capture planar RGB нет: прежние RGB принадлежат сцене с box. Следовательно, опыт проверяет геометрию sampling, а не качество изображения.
+
+### 4.64.1. Known-answer oracle и критерии
+
+Virtual rays проходят через166/161 pixel centers заранее сохранённой z020 mask. Здесь маска задаёт только координаты выборки, а не объект в новой сцене. Независимый Blender nearest hit сопоставляется с аналитическим пересечением:
+
+\[
+t=-\frac{o_z}{d_z},\qquad P=o+td,\quad t>0,\quad |d_z|>10^{-12}.
+\]
+
+Для source rays используются фактические native UV и inverse equidistant optics данного zero-distortion fixture. Collector независимо проверяет direct/source plane hits, world/vehicle transforms и strict native validity. Analytical look-at вычисляется отдельно от Blender helper. Known-answer test проверяет vertical/oblique rays, масштаб direction, отказ parallel/behind/nonfinite cases.
+
+```plantuml
+@startuml
+participant "Frozen native capture" as Native
+participant "Blender: только Z=0" as Blender
+participant "Analytical plane oracle" as Oracle
+participant "Read-only collector" as Audit
+Native -> Blender : virtual pose / pixel centers / actual source UV
+Blender -> Audit : nearest direct/source plane hits
+Native -> Oracle : poses / pixel centers / actual source UV
+Oracle -> Audit : P = o - (o.z / d.z) * d
+Native -> Audit : actual carrier XYZ + status
+Audit -> Audit : Blender ↔ analytical residual
+Audit -> Audit : native carrier ↔ direct plane
+Audit -> Audit : native UV ↔ correct plane UV
+Audit -> Audit : сохранить pass И fail, пороги неизменны
+@enduml
+```
+
+Рисунок4.93 — Изолированный геометрический контроль. Native RGB намеренно не используется как planar truth.
+
+До scene-ray измерений заданы два порога: max source-hit distance0.0001m и max source UV gap0.01px. Оба требуются для plane и floor regions dome/cylinder/cube. Bowl имеет собственную кривизну и служит descriptive comparison. Из10 carrier/frame условий8 являются exact-floor controls. Plan/code зафиксированы до первого capture; отрицательные outcomes сохранены. Проверочный отчёт: [[validation/PLANAR_CORRESPONDENCE]].
+
+### 4.64.2. Измеренные остатки и непрошедшие условия
+
+| Frame | Carrier | Valid pairs | Max source distance, mm | Max UV gap, px | Strict control |
+|---|---|---:|---:|---:|---|
+| 0 | plane | 249 | 0.080437 | 0.007420 | pass |
+| 0 | bowl | 249 | 29.191345 | 1.488423 | curved comparison |
+| 0 | dome_floor | 249 | 0.084195 | 0.010064 | FAIL |
+| 0 | cylinder_floor | 249 | 0.088415 | 0.011027 | FAIL |
+| 0 | cube_floor | 249 | 0.101889 | 0.010465 | FAIL |
+| 1 | plane | 161 | 0.067389 | 0.007453 | pass |
+| 1 | bowl | 161 | 23.540358 | 1.322348 | curved comparison |
+| 1 | dome_floor | 161 | 0.068936 | 0.007514 | pass |
+| 1 | cylinder_floor | 161 | 0.085263 | 0.009351 | pass |
+| 1 | cube_floor | 161 | 0.080697 | 0.007001 | pass |
+
+Таблица4.64 — Максимальные отклонения на заранее выбранном ROI. Valid pairs — пары output pixel/camera, а не независимые повторения. В frame0 их249 на carrier, в frame1 —161; floor region подтверждён native region export.
+
+![Остатки planar control](figures/experiments/planar_control_metrics.png)
+
+Рисунок4.94 — Max surface/UV errors на логарифмической шкале и заранее заданные пороги. Bowl не обязан совпадать с Z=0. У exact-floor carriers5/8 условий проходят оба порога,3/8 не проходят.
+
+Frame0 dome/cylinder/cube превышают UV threshold:0.010064/0.011027/0.010465px. Cube также имеет max source distance0.101889mm против порога0.1mm. Plane проходит оба frames; во frame1 проходят все exact-floor carriers. Отрицательные исходы не превращены в положительные изменением tolerance.
+
+Direct Blender/analytical plane residual не превышает1.444µm; source-ray residual —20.301µm. Native optical projection actual carrier point отличается от independent double calculation максимум на0.000081413px. Основная часть наблюдаемого UV gap уже возникает при проекции actual carrier position вместо direct virtual-plane point. Поэтому дальнейший precision control должен проверять raster-position/virtual-ray согласованность и backend, а не сразу изменять fisheye модель. Конкретный источник остатка пока не доказан.
+
+![Карта carrier-to-plane distance](figures/experiments/planar_control_points.png)
+
+Рисунок4.95 — Actual native carrier points в заранее выбранном output ROI: расстояние до isolated plane truth в миллиметрах. Общая logarithmic color scale показывает различие plane и bowl; это геометрические измерения, не синтезированные RGB изображения.
+
+### 4.64.3. Значение для исследования сшивки
+
+При прежнем критерии surface correspondence2cm все1640 допустимых pairs exact-floor carriers соответствуют прямой plane surface. У bowl —340/410, с max distance29.191/23.540mm и max UV gap1.488/1.322px для frames0/1. Это согласуется с тем, что curved carrier не обязан воспроизводить точную плоскость, но не задаёт общий рейтинг enclosure геометрий.
+
+Контроль отделяет большой объёмный correspondence failure предыдущих опытов от малого остатка на действительно плоской поверхности. Он не устраняет height/parallax limitation и не проверяет RGB resampling, bilinear footprint, multiband либо occlusion. Требуются отдельное объяснение3 strict failures, planar RGB fixture и дальнейший displaced/hybrid attribution. Реальные камеры/Аврора и независимые scene families остаются за пределами опыта.
+
+Пять known-answer audit tests и CTest1/1 прошли, повторный read-only audit совпал побитно. После добавления запрета повторной записи выходного каталога Blender rays повторены: все14 NPY arrays совпали побитно с первым capture; исходная active scene восстановлена. Это подтверждение воспроизводимости измерений, а не успешного прохождения всех заранее заданных geometric criteria.

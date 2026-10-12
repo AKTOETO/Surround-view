@@ -92,4 +92,4 @@ Audit новой серии: `python3 docs/diploma/plot_source_controls.py --pla
 
 ## Следующий проверяемый шаг
 
-Сначала добавить действительно planar target known-answer control, затем attribution для displaced RGB pixels и hybrid fusion на тех же rays, включая bilinear footprint и level contributions. После локализации проверить mitigation при неизменных входах; расширять optical-height/mount/scene families отдельно. Triangle identity/coverage, bounded typed diagnostics, физические камеры и Аврора остаются открытыми.
+Isolated planar geometry known-answer control выполнен отдельно: [[validation/PLANAR_CORRESPONDENCE]];3 strict failure и planar RGB fixture остаются открытыми. Далее attribution для displaced RGB pixels и hybrid fusion на тех же rays, включая bilinear footprint и level contributions. После локализации проверить mitigation при неизменных входах; расширять optical-height/mount/scene families отдельно. Triangle identity/coverage, bounded typed diagnostics, физические камеры и Аврора остаются открытыми.
