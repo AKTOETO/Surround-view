@@ -116,6 +116,10 @@ class SourceCorrespondenceTests(unittest.TestCase):
             for pixel in [[0,0],[511,511],[135.25,398.75]]:
                 actual,uv=cube_sample(cube_ray(face,pixel,512),512)
                 self.assertEqual(actual,face);np.testing.assert_allclose(uv,pixel,atol=1e-12)
+        for ray,face,uv in [([1,.5,.25],'px',[191.5,383.5]),([-1,.5,.25],'nx',[319.5,383.5]),
+                            ([.25,1,.5],'py',[319.5,127.5]),([.25,-1,.5],'ny',[319.5,383.5])]:
+            actual,pixel=cube_sample(ray,512)
+            self.assertEqual(actual,face);np.testing.assert_allclose(pixel,uv)
         self.assertEqual(cube_sample([1,1,1],512)[0],'px')
         for ray in [[0,0,0],[np.nan,0,1]]:
             with self.assertRaises(ValueError):cube_sample(ray,512)
