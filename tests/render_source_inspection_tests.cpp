@@ -359,6 +359,29 @@ TEST(SourceInspection, SuppliedBoxRejectsOnlyBlockedSourceSegmentsAndRestoresOut
         }
         EXPECT_GT(supported, 0);
         EXPECT_GT(outside_rejected, 0);
+        auto hybrid = config.fusion;
+        hybrid.mode = "multi_band";
+        renderer.set_fusion(hybrid);
+        sv::RenderInspection hybrid_inspection;
+        const auto hybrid_image =
+            renderer.render(frames, config.view, &hybrid_inspection, {true, true});
+        EXPECT_EQ(hybrid_image.pixels, renderer.render(frames, config.view).pixels);
+        ASSERT_TRUE(hybrid_inspection.samples);
+        for (int camera = 0; camera < 4; ++camera)
+        {
+            EXPECT_EQ(cv::countNonZero(hybrid_inspection.source_projections[camera].status !=
+                                       after.source_projections[camera].status),
+                      0);
+            for (int y = 0; y < config.height; ++y)
+            {
+                for (int x = 0; x < config.width; ++x)
+                {
+                    EXPECT_EQ(hybrid_inspection.samples->validity[camera].at<uchar>(y, x) != 0,
+                              after.source_projections[camera].status.at<uchar>(y, x) == 1);
+                }
+            }
+        }
+        renderer.set_fusion(config.fusion);
     }
     // Hidden bottom-face endpoints must still be rejected by the central ray.
     surface.reference_height = .6;

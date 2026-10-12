@@ -47,6 +47,8 @@ class SourceCorrespondenceTests(unittest.TestCase):
         points = [[.5,.5,1], [.5,.5,0], [.5,.5,.5], [2,.5,1],
                   [1.000005,.5,1], [1.00002,.5,1]]
         np.testing.assert_array_equal(on_box_surface(points, box), [True,True,False,False,True,False])
+        # Numerical face membership must not silently expand to the20mm endpoint bias.
+        self.assertFalse(on_box_surface([[1.000159502,.5,.999201894]], box)[0])
         camera = {'T_camera_from_vehicle': np.eye(4).tolist(),
                   'resolution': {'width': 8, 'height': 8},
                   'projection': {'k': [0,0,0,0], 'alpha': 0, 'fx': 1, 'fy': 1, 'cx': 0, 'cy': 0}}
