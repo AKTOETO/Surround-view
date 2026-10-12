@@ -1,5 +1,6 @@
 #include "command_parameters.hpp"
 #include "experiment_recovery.hpp"
+#include "output_selection.hpp"
 #include "sv/build_info.hpp"
 #include "sv/calibration_job.hpp"
 #include "sv/config_store.hpp"
@@ -48,7 +49,8 @@ class ServerIO
     asio::signal_set signals;
     std::filesystem::path directory;
     std::thread worker;
-    std::atomic<bool> stop{false}, ready{false}, busy{false};
+    std::atomic<bool> stop{false}, ready{false};
+    std::atomic<uint64_t> busy{0}; // Generation owning the pending/in-flight data slot.
     std::atomic<uint64_t> generation{0};
 
     sv::SessionRegistry sessions;
@@ -71,7 +73,7 @@ class ServerIO
     void deliver(Command cmd);
     std::vector<Command> take();
     void answer(const Command &cmd, sv::Message message);
-    bool publish(sv::Message message);
+    bool publish(sv::Message message, uint64_t expected_generation);
 };
 
 struct Connection : std::enable_shared_from_this<Connection>
@@ -372,6 +374,8 @@ ServerIO::ServerIO(const sv::Connections &n, const std::string &source_type,
                     "runtime_surface_v1",
                     "experiment_lease_v1",
                     "copied_rgba",
+                    "output_selection_v1",
+                    "render_support_v1",
                     "calibrate",
                     "calibration_provenance_v1",
                     "calibration_status",
@@ -533,22 +537,26 @@ void ServerIO::answer(const Command &command, sv::Message message)
                });
 }
 
-bool ServerIO::publish(sv::Message message)
+bool ServerIO::publish(sv::Message message, uint64_t expected_generation)
 {
-    if (!ready || busy.exchange(true))
+    uint64_t free_slot = 0;
+    if (!ready || generation != expected_generation ||
+        !busy.compare_exchange_strong(free_slot, expected_generation))
     {
         return false;
     }
     asio::post(io,
-               [this, message = std::move(message)]() mutable
+               [this, expected_generation, message = std::move(message)]() mutable
                {
-                   if (active_video && !active_video->closed && active_video->hello)
+                   if (generation == expected_generation && active_video &&
+                       !active_video->closed && active_video->hello)
                    {
                        active_video->publish(std::move(message));
                    }
                    else
                    {
-                       busy = false;
+                       auto owner = expected_generation;
+                       busy.compare_exchange_strong(owner, 0);
                    }
                });
     return true;
@@ -686,6 +694,8 @@ int main(int argc, char **argv)
         uint64_t frame_id = 0, sequence = 0, applied_command = 0, state_revision = 0;
         uint64_t last_generation = 0, last_render = 0, source_request = 0;
         bool paused = false, dirty = true;
+        sv::OutputProduct output_product = sv::OutputProduct::FinalFrame;
+        uint64_t output_generation = 0;
         sv::PipelineSpanTracker span_tracker;
         sv::FrameSet last_set;
         sv::ExperimentLease experiment;
@@ -708,6 +718,7 @@ int main(int argc, char **argv)
                 {"distance_m", view.distance},
                 {"fusion_mode", config_store.active()->fusion.mode},
                 {"diagnostic_view", config_store.active()->fusion.diagnostic},
+                {"output_product", sv::output_product_name(output_product)},
                 {"config_revision", std::to_string(config_store.revision())},
                 {"source_type", config_store.active()->source.type},
                 {"experiment_lease", experiment.status()},
@@ -729,6 +740,11 @@ int main(int argc, char **argv)
             const auto generation = network.generation.load();
             if (generation != last_generation && network.ready)
             {
+                if (output_generation != generation)
+                {
+                    output_product = sv::OutputProduct::FinalFrame;
+                    output_generation = generation;
+                }
                 dirty = true;
                 last_generation = generation;
             }
@@ -899,6 +915,26 @@ int main(int argc, char **argv)
                         catalog["source_fingerprint"] = sv::source_fingerprint;
                         extra_res["fusion_catalog"] = std::move(catalog);
                     }
+                    else if (type == "output_catalog")
+                    {
+                        extra_res["output_catalog"] = sv::output_catalog();
+                    }
+                    else if (type == "configure_output")
+                    {
+                        const auto product = sv::parse_output_product(
+                            std::string(m.header.at("product").as_string()));
+                        if (!network.ready)
+                        {
+                            throw std::runtime_error("output_requires_data_channel");
+                        }
+                        if (product == sv::OutputProduct::RenderSupport &&
+                            config_store.active()->fusion.diagnostic != "color")
+                        {
+                            throw std::runtime_error("render_support_requires_color");
+                        }
+                        output_product = product;
+                        output_generation = network.generation.load();
+                    }
                     else if (type == "surface_catalog")
                     {
                         extra_res["surface_catalog"] = boost::json::object{
@@ -970,6 +1006,11 @@ int main(int argc, char **argv)
                         // Full replacement avoids retaining parameters from a previous trial.
                         effective.as_object()["fusion"] = m.header.at("fusion").as_object();
                         auto prepared = sv::parse_config(effective).fusion;
+                        if (output_product == sv::OutputProduct::RenderSupport &&
+                            prepared.diagnostic != "color")
+                        {
+                            throw std::runtime_error("render_support_requires_color");
+                        }
                         if (!config_store.update_runtime_if_revision(effective, revision, reason))
                         {
                             accepted = false;
@@ -1231,10 +1272,10 @@ int main(int argc, char **argv)
                     }
                 }
                 if (accepted && type != "state" && type != "fusion_catalog" &&
-                    type != "surface_catalog" && type != "experiment_acquire" &&
-                    type != "experiment_renew" && type != "experiment_release" &&
-                    type != "calibrate" && type != "calibration_status" &&
-                    type != "apply_calibration")
+                    type != "output_catalog" && type != "surface_catalog" &&
+                    type != "experiment_acquire" && type != "experiment_renew" &&
+                    type != "experiment_release" && type != "calibrate" &&
+                    type != "calibration_status" && type != "apply_calibration")
                 {
                     view = candidate;
                     applied_command = sv::parse_decimal_u64(id);
@@ -1255,9 +1296,19 @@ int main(int argc, char **argv)
             }
             if (dirty && network.ready && !network.busy && now - last_render >= 16000000)
             {
+                const auto render_generation = network.generation.load();
+                if (render_generation != last_generation)
+                {
+                    continue; // Apply/reset the product before rendering for a new attachment.
+                }
                 const auto source_stats = source->stats();
                 auto start = sv::now_ns();
-                auto image = renderer->render(last_set, view);
+                sv::RenderInspection inspection;
+                sv::RenderInspectionRequest inspection_request;
+                inspection_request.support = output_product == sv::OutputProduct::RenderSupport;
+                auto image = renderer->render(last_set, view,
+                                              inspection_request.support ? &inspection : nullptr,
+                                              inspection_request);
                 auto done = sv::now_ns();
                 frame_id++;
                 boost::json::array inputs;
@@ -1343,6 +1394,20 @@ int main(int argc, char **argv)
                      {"upload_count", std::to_string(renderer->uploads())}},
                     std::move(image.pixels)};
 
+                output.header["output_product"] = sv::output_product_name(output_product);
+                if (inspection_request.support)
+                {
+                    const auto &mask = inspection.support;
+                    if (mask.type() != CV_8UC4 || mask.rows != image.height ||
+                        mask.cols != image.width || !mask.isContinuous())
+                    {
+                        throw std::runtime_error("invalid native render support mask");
+                    }
+                    output.payload.assign(mask.data, mask.data + mask.total() * mask.elemSize());
+                    output.header["support_schema"] = sv::render_support_schema();
+                    output.header["inspection_cpu_ms"] = timing.inspection_cpu_ms;
+                }
+
                 if (timing.seam_optimization)
                 {
                     const auto &seam = *timing.seam_optimization;
@@ -1358,7 +1423,7 @@ int main(int argc, char **argv)
                                             {"max_sweeps", 8}};
                 }
                 const auto publish_start = sv::now_ns();
-                const bool published = network.publish(std::move(output));
+                const bool published = network.publish(std::move(output), render_generation);
                 ft.publish_enqueue_ms = static_cast<double>(sv::now_ns() - publish_start) / 1e6;
                 span_tracker.record_frame(ft);
                 record({{"event", "pipeline_span"},

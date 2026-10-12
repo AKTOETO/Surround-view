@@ -1,4 +1,5 @@
 #pragma once
+#include "sv/client_output.hpp"
 #include "sv/protocol.hpp"
 #include <functional>
 #include <memory>
@@ -105,6 +106,17 @@ class Client
     uint64_t fusion_catalog()
     {
         return command("fusion_catalog");
+    }
+
+    uint64_t output_catalog()
+    {
+        return command("output_catalog");
+    }
+
+    // Session-local product selection; rejected while an experiment lease is held.
+    uint64_t configure_output(OutputProduct product)
+    {
+        return command("configure_output", {{"product", output_product_name(product)}});
     }
 
     // Temporary experiment configuration; only the server publishes its snapshot.

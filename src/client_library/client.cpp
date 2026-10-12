@@ -399,6 +399,7 @@ struct Client::Impl
                 parse_decimal_u64(std::string(m.header.at(key).as_string()));
             }
             m.header.at("buffer_token").as_string();
+            validate_output_product(m);
         }
         emit(Event::Kind::Message, {}, std::make_shared<Message>(std::move(m)));
     }

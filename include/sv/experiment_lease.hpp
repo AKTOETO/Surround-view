@@ -123,7 +123,8 @@ class ExperimentLease
                 uint64_t now) const
     {
         if (operation == "state" || operation == "fusion_catalog" ||
-            operation == "surface_catalog" || operation == "calibration_status")
+            operation == "surface_catalog" || operation == "output_catalog" ||
+            operation == "calibration_status")
         {
             return true;
         }

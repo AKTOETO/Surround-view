@@ -21,6 +21,8 @@ TEST(ExperimentLease, OwnershipDeadlineRenewalAndBaseline)
     EXPECT_FALSE(lease.allows("apply_calibration", "owner", id, 100));
     EXPECT_FALSE(lease.allows("orbit", "owner", id, 100));
     EXPECT_TRUE(lease.allows("state", "other", "", 100));
+    EXPECT_TRUE(lease.allows("output_catalog", "other", "", 100));
+    EXPECT_FALSE(lease.allows("configure_output", "owner", id, 100));
     ASSERT_TRUE(lease.renew("owner", id, 200, error));
     EXPECT_FALSE(lease.expired(250000199));
     EXPECT_TRUE(lease.expired(250000200));

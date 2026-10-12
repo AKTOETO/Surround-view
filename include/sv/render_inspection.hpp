@@ -1,6 +1,7 @@
 #pragma once
 #include "sv/frame.hpp"
 #include "sv/fusion.hpp"
+#include "sv/render_support.hpp"
 
 namespace sv
 {
@@ -31,18 +32,6 @@ struct SourceProjectionInspection
 {
     cv::Mat pixels; // CV_32FC2, source pixel centres; NaN unless valid.
     cv::Mat status; // CV_8UC1, SourceProjectionStatus; optional supplied-box occlusion.
-};
-
-// Actual output selection, not scene visibility or reconstruction confidence.
-enum class RenderSupportPath : unsigned char
-{
-    background = 0,
-    vehicle_footprint = 1,
-    vehicle_model = 2,
-    gpu_fallback = 3,
-    gpu_fusion = 4,
-    hybrid_fallback = 5,
-    hybrid_fusion = 6
 };
 
 struct RenderInspectionRequest

@@ -12,7 +12,7 @@ int main(int argc, char **argv)
     {
         sv::client::Options options;
         unsigned frames = 3;
-        bool exercise = false, allow_reconnect = false;
+        bool exercise = false, allow_reconnect = false, support = false;
         for (int i = 1; i < argc; ++i)
         {
             const std::string arg = argv[i];
@@ -61,11 +61,20 @@ int main(int argc, char **argv)
             {
                 exercise = true;
             }
+            else if (arg == "--support")
+            {
+                support = true;
+            }
             else
             {
-                throw std::runtime_error("usage: sv-client-probe --unix DIR|--tcp HOST "
-                                         "CONTROL_PORT DATA_PORT [--frames N --exercise]");
+                throw std::runtime_error(
+                    "usage: sv-client-probe --unix DIR|--tcp HOST "
+                    "CONTROL_PORT DATA_PORT [--frames N --exercise|--support]");
             }
+        }
+        if (support && exercise)
+        {
+            throw std::runtime_error("--support and --exercise are separate probe modes");
         }
         std::mutex mutex;
         std::condition_variable cv;
@@ -86,7 +95,7 @@ int main(int argc, char **argv)
                                       cv.notify_one();
                                   });
         unsigned received = 0, acknowledgements = 0;
-        const unsigned expected_acks = exercise ? 5 : 1;
+        const unsigned expected_acks = exercise ? 5 : support ? 3 : 1;
         const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(15);
         while (received < frames || acknowledgements < expected_acks)
         {
@@ -130,6 +139,11 @@ int main(int argc, char **argv)
                 if (event.detail == "ready")
                 {
                     client.state();
+                    if (support)
+                    {
+                        client.output_catalog();
+                        client.configure_output(sv::client::OutputProduct::RenderSupport);
+                    }
                     if (exercise)
                     {
                         client.pause();
@@ -148,6 +162,28 @@ int main(int argc, char **argv)
             header["message_type"] = event.message->type;
             if (event.message->type == 11)
             {
+                const auto product = sv::client::validate_output_product(*event.message);
+                if (support && product != sv::client::OutputProduct::RenderSupport)
+                {
+                    client.release(event.message->header);
+                    continue; // An old product may already be in flight when the command applies.
+                }
+                if (support)
+                {
+                    const sv::client::RenderSupportView view(event.message);
+                    unsigned eligible = 0, positive = 0;
+                    for (int y = 0; y < view.height(); ++y)
+                    {
+                        for (int x = 0; x < view.width(); ++x)
+                        {
+                            const auto pixel = view.at(x, y);
+                            eligible += pixel.eligible_cameras > 0;
+                            positive += pixel.positive_local_weights > 0;
+                        }
+                    }
+                    header["eligible_pixels"] = eligible;
+                    header["positive_local_weight_pixels"] = positive;
+                }
                 // Consumer retains an owning immutable Message; release does not invalidate it.
                 uint64_t hash = 14695981039346656037ULL;
                 for (auto byte : event.message->payload)
@@ -165,6 +201,11 @@ int main(int argc, char **argv)
             }
             else if (event.message->type == 21)
             {
+                if (support && !header.at("accepted").as_bool())
+                {
+                    throw std::runtime_error("support probe command rejected: " +
+                                             std::string(header.at("reason").as_string()));
+                }
                 ++acknowledgements;
             }
             std::cout << boost::json::serialize(header) << std::endl;
