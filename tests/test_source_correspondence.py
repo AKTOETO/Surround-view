@@ -14,6 +14,7 @@ from planar_correspondence import intersect_plane
 from planar_precision import plane_from_mvp,reproject,view_projection
 from displaced_correspondence import bilinear_rgb,chroma_mask
 from hybrid_correspondence import reconstruct_rgba
+from source_footprint_audit import footprint,selected_pixels
 
 
 class SourceCorrespondenceTests(unittest.TestCase):
@@ -85,6 +86,24 @@ class SourceCorrespondenceTests(unittest.TestCase):
         np.testing.assert_array_equal(chroma_mask(np.array([[[255, 0, 255], [255, 255, 255]]])), [[True, False]])
         with self.assertRaises(ValueError):
             bilinear_rgb(image, np.array([[float('nan'), 0]]))
+
+    def test_footprint_weights_zero_support_and_clamped_duplicates(self):
+        xy,w=footprint(np.array([[.25,.75],[1.8,0],[0,0]]),2,2)
+        np.testing.assert_array_equal(xy[0],[[0,0],[1,0],[0,1],[1,1]])
+        np.testing.assert_allclose(w[0],[.1875,.0625,.5625,.1875])
+        np.testing.assert_allclose(w.sum(axis=1),1)
+        np.testing.assert_array_equal(xy[1,:,0],[1,1,1,1])
+        np.testing.assert_array_equal(w[2],[1,0,0,0])
+        for p in [[[np.nan,0]],[[np.inf,0]]]:
+            with self.assertRaises(ValueError):footprint(p,2,2)
+        with self.assertRaises(ValueError):footprint([[0,0]],0,2)
+
+    def test_footprint_selection_keeps_all_mismatches_and_bounded_controls(self):
+        kinds=np.array([[1,0],[2,2],[1,1],[1,2],[2,2]])
+        status=np.array([[1,0],[1,1],[0,0],[1,1],[1,1]])
+        ids,mismatch=selected_pixels(kinds,status,1)
+        np.testing.assert_array_equal(ids,[0,1,2,4])
+        np.testing.assert_array_equal(mismatch,[False,True,True,True])
 
     def test_signed_contribution_composition_clips_then_applies_visibility_and_ego(self):
         contributions = np.zeros((1, 3, 4, 3), np.float32)
