@@ -24,6 +24,7 @@ from visibility_residual import select_pixels
 from filter_visibility import policy_blocked
 from box_surface_visibility import on_box_surface, policy_blocked as box_policy_blocked
 from visibility_sensitivity import policy_blocked as sensitivity_policy_blocked
+from visibility_failure import loss_partition
 
 
 class SourceCorrespondenceTests(unittest.TestCase):
@@ -41,6 +42,17 @@ class SourceCorrespondenceTests(unittest.TestCase):
         camera['projection']['k'][0] = .01
         with self.assertRaisesRegex(ValueError, 'zero-distortion'):
             policy_blocked(camera, point, [[0,0]], box)
+
+    def test_visible_loss_partition_is_exhaustive_and_disjoint(self):
+        missing = [True,True,True,True,False]
+        before = [[0,0], [1,1], [1,1], [1,1], [1,0]]
+        central = [[0,0], [1,1], [1,0], [0,0], [0,0]]
+        after = [[0,0], [0,0], [0,0], [1,0], [1,0]]
+        np.testing.assert_array_equal(loss_partition(missing,before,central,after),[0,1,2,3,-1])
+        with self.assertRaisesRegex(ValueError,'created a new'):
+            loss_partition([True],[[0,0]],[[0,0]],[[1,0]])
+        with self.assertRaisesRegex(ValueError,'dimensions'):
+            loss_partition([True],[[1,0]],[[0,0]],[[1]])
 
     def test_support_band_is_separate_from_central_endpoint_bias(self):
         camera = {'T_camera_from_vehicle': np.diag([1,-1,-1,1]).tolist(),
