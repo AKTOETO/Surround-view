@@ -486,7 +486,7 @@ Config parse_config(const boost::json::value &value)
         keys(s,
              {"type", "flat_half_length_m", "flat_half_width_m", "outer_half_length_m",
               "outer_half_width_m", "corner_height_m", "uniform_cells"},
-             "surface", {"reference_height_m"});
+             "surface", {"reference_height_m", "local_support_patch"});
         c.surface.a = num(s.at("flat_half_length_m"));
         c.surface.b = num(s.at("flat_half_width_m"));
         c.surface.A = num(s.at("outer_half_length_m"));
@@ -502,6 +502,27 @@ Config parse_config(const boost::json::value &value)
                     c.surface.B > c.surface.b && c.surface.b > c.vehicle_width / 2 + c.margin &&
                     c.surface.H >= 0,
                 "surface: invalid bounds/mask");
+        if (const auto *value = s.if_contains("local_support_patch"))
+        {
+            const auto &patch = value->as_object();
+            keys(patch,
+                 {"center_x_m", "center_y_m", "half_length_m", "half_width_m", "height_m",
+                  "transition_m"},
+                 "surface.local_support_patch");
+            auto &p = c.surface.local_support;
+            p.enabled = true;
+            p.center_x = num(patch.at("center_x_m"));
+            p.center_y = num(patch.at("center_y_m"));
+            p.half_length = num(patch.at("half_length_m"));
+            p.half_width = num(patch.at("half_width_m"));
+            p.height = num(patch.at("height_m"));
+            p.transition = num(patch.at("transition_m"));
+            require(p.half_length >= .01 && p.half_width >= .01 && p.transition >= .01 &&
+                        p.height >= 0 && p.height <= 5 &&
+                        std::abs(p.center_x) + p.half_length + p.transition <= c.surface.A &&
+                        std::abs(p.center_y) + p.half_width + p.transition <= c.surface.B,
+                    "surface.local_support_patch: invalid dimensions/height or outside carrier");
+        }
         const auto &cells = s.at("uniform_cells").as_array();
         require(cells.size() == 2, "surface.uniform_cells");
         c.surface.nx = integer(cells[0], 2, 512);

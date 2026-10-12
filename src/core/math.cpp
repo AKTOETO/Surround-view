@@ -146,16 +146,27 @@ Pixel project(const Camera &c, Vec3 p)
     return z;
 }
 
+double LocalSupportPatch::offset(double x, double y) const
+{
+    if (!enabled)
+    {
+        return 0;
+    }
+    const double dx = std::max(std::abs(x - center_x) - half_length, 0.0);
+    const double dy = std::max(std::abs(y - center_y) - half_width, 0.0);
+    return height * std::max(0.0, 1.0 - std::max(dx, dy) / transition);
+}
+
 Vec3 Surface::point(double x, double y) const
 {
     double dx = std::max(std::abs(x) - a, 0.0) / (A - a),
            dy = std::max(std::abs(y) - b, 0.0) / (B - b);
-    return {x, y, reference_height + H * (dx * dx + dy * dy) / 2};
+    return {x, y, reference_height + H * (dx * dx + dy * dy) / 2 + local_support.offset(x, y)};
 }
 
 Mesh make_mesh(const Surface &s)
 {
-    auto axis = [](double extent, double flat, int n)
+    auto axis = [](double extent, double flat, int n, const LocalSupportPatch &patch, bool x_axis)
     {
         std::vector<double> out;
         for (int i = 0; i <= n; i++)
@@ -164,13 +175,21 @@ Mesh make_mesh(const Surface &s)
         }
         out.push_back(-flat);
         out.push_back(flat);
+        if (patch.enabled)
+        {
+            const double center = x_axis ? patch.center_x : patch.center_y;
+            const double half = x_axis ? patch.half_length : patch.half_width;
+            out.insert(out.end(), {center - half - patch.transition, center - half, center + half,
+                                   center + half + patch.transition});
+        }
         std::sort(out.begin(), out.end());
         out.erase(std::unique(out.begin(), out.end(),
                               [](double a, double b) { return std::abs(a - b) < 1e-10; }),
                   out.end());
         return out;
     };
-    auto xs = axis(s.A, s.a, s.nx), ys = axis(s.B, s.b, s.ny);
+    auto xs = axis(s.A, s.a, s.nx, s.local_support, true),
+         ys = axis(s.B, s.b, s.ny, s.local_support, false);
     Mesh m;
     for (double y : ys)
     {
@@ -354,7 +373,8 @@ bool safe_view(const Surface &surface, const View &view, double clearance)
     const auto eye = view.eye();
     if (surface.type == "rectangular_bowl_v1")
     {
-        return eye.z > surface.reference_height + surface.H + .1;
+        return eye.z > surface.reference_height + surface.H +
+                           (surface.local_support.enabled ? surface.local_support.height : 0) + .1;
     }
     if (eye.z <= clearance)
     {

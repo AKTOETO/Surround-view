@@ -94,6 +94,37 @@ int main(int argc, char **argv)
         low_view.distance = 6;
         low_view.elevation = .5;
         check(!sv::safe_view(raised, low_view), "view below raised support rejected");
+        auto local = surface;
+        local.H = 0;
+        local.local_support = {true, 2.4, 2.3, .2, .2, .8, .2};
+        check(std::abs(local.point(2.4, 2.3).z - .8) < 1e-12, "local plateau");
+        check(std::abs(local.point(2.7, 2.3).z - .4) < 1e-12, "local ramp");
+        check(local.point(0, 0).z == 0 && local.point(2.9, 2.3).z == 0,
+              "ground outside local support unchanged");
+        size_t plateau_vertices = 0;
+        for (const auto &v : sv::make_mesh(local).vertices)
+        {
+            if (std::abs(v.z - .8) < 1e-12)
+            {
+                ++plateau_vertices;
+            }
+        }
+        check(plateau_vertices >= 4, "small local plateau survives coarse grid");
+        auto local_config = config.effective;
+        boost::json::object patch{{"center_x_m", 2.4},  {"center_y_m", 2.3}, {"half_length_m", .2},
+                                  {"half_width_m", .2}, {"height_m", .8},    {"transition_m", .2}};
+        local_config.as_object()["surface"].as_object()["local_support_patch"] = patch;
+        check(sv::parse_config(local_config).surface.local_support.enabled, "local support schema");
+        for (auto field :
+             {"half_length_m", "half_width_m", "transition_m", "height_m", "center_x_m"})
+        {
+            auto invalid = patch;
+            invalid[field] = std::string(field) == "center_x_m" ? 100. : -1.;
+            local_config.as_object()["surface"].as_object()["local_support_patch"] = invalid;
+            rejects([&] { sv::parse_config(local_config); }, "invalid local support patch");
+        }
+        local.local_support.height = 5;
+        check(!sv::safe_view(local, low_view), "view below local support rejected");
         const auto floor = sv::make_floor_mesh(12, 8, 24);
         check(floor.indices.size() == (24 * 3 + 7 * 24 * 6), "disk floor triangulation");
         for (size_t i = 0; i < floor.indices.size(); i += 3)

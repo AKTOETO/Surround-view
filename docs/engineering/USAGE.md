@@ -1048,3 +1048,15 @@ Read-only cube footprint audit: `MPLCONFIGDIR=/tmp/sv-matplotlib python3 docs/di
 Read-only новых hybrid domains: `MPLCONFIGDIR=/tmp/sv-matplotlib python3 docs/diploma/plot_hybrid_domain.py --output-report artifacts/hybrid-domain-v1-final/reaudit.json`; сравнить с `docs/validation/baselines/hybrid_domain_v1.json`. Inputs/Blender replay и precision control: [[validation/HYBRID_DOMAIN#Воспроизведение]].
 
 Заданная высота rectangular carrier доступна через существующий `sv-client-lib::Client::configure_surface`: добавить `reference_height_m` к полной surface object и отправить с актуальной revision. Диапазон/default доступны в `surface_catalog.rectangular_reference_height`. Это temporary исследовательская настройка, не автоматически оценённая глубина. Read-only опыт: `MPLCONFIGDIR=/tmp/sv-matplotlib python3 docs/diploma/plot_reference_height.py --output-report artifacts/reference-height-v1/reaudit.json`. Сборка,8 native captures, provenance и ограничения: [[validation/REFERENCE_HEIGHT#Воспроизведение]]. Frozen historical audits выполнять на соответствующей версии source hashes в отдельном checkout; после изменения renderer не отключать hash checks.
+
+Для локального height control в полной `surface` передать через `Client::configure_surface` вложенный объект:
+
+```json
+"local_support_patch": {
+  "center_x_m": 2.4, "center_y_m": 2.3,
+  "half_length_m": 0.2, "half_width_m": 0.2,
+  "height_m": 0.8, "transition_m": 0.2
+}
+```
+
+Координаты относятся к автомобилю: при движении rig неподвижный мировой объект требует пересчёта центра. Поля и ограничения доступны в `surface_catalog.rectangular_local_support`. Это временная настройка геометрии с заранее известным положением/высотой; библиотека не оценивает их по камерам. Удалить участок — отправить полную surface без этого объекта. Геометрия дороги вне участка сохраняется, но результат RGB и видимость нужно оценивать отдельно. Формула и ограничения mesh: [[engineering/RENDERING]].

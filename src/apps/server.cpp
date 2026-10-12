@@ -913,6 +913,17 @@ int main(int argc, char **argv)
                                  {"maximum", 5.},
                                  {"default", 0.},
                                  {"meaning", "assumed support height; not estimated depth"}}},
+                            {"rectangular_local_support",
+                             boost::json::object{
+                                 {"field", "local_support_patch"},
+                                 {"fields",
+                                  boost::json::array{"center_x_m", "center_y_m", "half_length_m",
+                                                     "half_width_m", "height_m", "transition_m"}},
+                                 {"frame", "vehicle"},
+                                 {"meaning", "supplied local additive height; omit to disable"},
+                                 {"minimum_extent_and_transition_m", .01},
+                                 {"height_range_m", boost::json::array{0., 5.}},
+                                 {"bounds", "plateau and transition must fit inside carrier"}}},
                             {"apply", "prepare buffers then publish between render calls"}};
                     }
                     else if (type == "configure_surface")

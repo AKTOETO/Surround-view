@@ -43,12 +43,22 @@ struct Pixel
 
 Pixel project(const Camera &, Vec3 vehicle_point);
 
+// Supplied vehicle-frame height field, not an RGB-derived depth estimate.
+struct LocalSupportPatch
+{
+    bool enabled = false;
+    double center_x = 0, center_y = 0;
+    double half_length = .2, half_width = .2, height = .8, transition = .2;
+    double offset(double x, double y) const;
+};
+
 struct Surface
 {
     std::string type = "rectangular_bowl_v1";
     double a = 2.6, b = 1.2, A = 6, B = 4.5, H = 1.5;
     // Assumed support height for rectangular carriers; not an estimated scene depth.
     double reference_height = 0;
+    LocalSupportPatch local_support;
     double enclosure_radius = 12, enclosure_height = 12;
     int nx = 32, ny = 32;
     int dome_latitude_cells = 64, dome_longitude_cells = 128, floor_radial_cells = 32;

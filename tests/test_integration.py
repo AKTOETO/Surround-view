@@ -218,10 +218,14 @@ class IntegrationTests(unittest.TestCase):
                     dict(type='cylinder_floor_v1', radius_m=14, height_m=14,
                          vertical_cells=8, angular_cells=32, floor_radial_cells=8),
                     dict(type='cube_floor_v1', half_extent_m=14, height_m=14, face_cells=8)]
+                patch = dict(center_x_m=2.4, center_y_m=2.3, half_length_m=.2,
+                             half_width_m=.2, height_m=.8, transition_m=.2)
+                surfaces.append(dict(flat, local_support_patch=patch))
                 catalog = client.command('surface_catalog')
                 self.assertTrue(catalog['accepted'])
                 self.assertEqual(catalog['surface_catalog']['rectangular_reference_height']['field'],
                                  'reference_height_m')
+                self.assertEqual(catalog['surface_catalog']['rectangular_local_support']['frame'], 'vehicle')
                 builds = int(header['mesh_build_count'])
                 for surface in surfaces:
                     ack = client.command('configure_surface', base_config_revision=revision,
@@ -237,6 +241,8 @@ class IntegrationTests(unittest.TestCase):
                     self.assertNotEqual(pixels, original_pixels)
                 before = client.command('state')
                 for rev, surface in [('0', original_surface), (revision, {'type': 'missing'}),
+                                     (revision, dict(flat, local_support_patch=dict(patch, transition_m=0))),
+                                     (revision, dict(flat, local_support_patch=dict(patch, center_x_m=100))),
                                      (revision, dict(flat, reference_height_m=-1)),
                                      (revision, dict(flat, reference_height_m=5.1)),
                                      (revision, dict(surfaces[2], dome_radius_m=3))]:

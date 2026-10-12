@@ -96,9 +96,15 @@ TEST_P(CarrierInspection, PerspectivePointsMatchActualTrianglesAndPreserveOutput
     auto &surface = config.surface;
     const std::string type = GetParam();
     surface.type =
-        type == "plane" || type == "raised_plane" || type == "bowl" ? "rectangular_bowl_v1" : type;
+        type == "plane" || type == "raised_plane" || type == "local_patch" || type == "bowl"
+            ? "rectangular_bowl_v1"
+            : type;
     surface.H = type == "bowl" ? 1.5 : 0;
     surface.reference_height = type == "raised_plane" ? .8 : 0;
+    if (type == "local_patch")
+    {
+        surface.local_support = {true, 2.4, 2.3, .2, .2, .8, .2};
+    }
     surface.A = surface.B = surface.enclosure_radius = surface.enclosure_height = 14;
     surface.nx = surface.ny = surface.enclosure_cells = 12;
     surface.dome_latitude_cells = 8;
@@ -128,7 +134,7 @@ TEST_P(CarrierInspection, PerspectivePointsMatchActualTrianglesAndPreserveOutput
         }
     }
     const auto inverse = glm::inverse(matrix);
-    int checked = 0, invalid = 0, faceted = 0, negative = 0;
+    int checked = 0, invalid = 0, faceted = 0, negative = 0, patch_hits = 0;
     double max_world_error = 0, max_pixel_error = 0;
     for (int y = 0; y < config.height; ++y)
     {
@@ -151,7 +157,15 @@ TEST_P(CarrierInspection, PerspectivePointsMatchActualTrianglesAndPreserveOutput
                  std::abs((1 - clip.y / clip.w) * config.height / 2 - .5 - y)});
             EXPECT_NEAR((clip.x / clip.w + 1) * config.width / 2 - .5, x, .002);
             EXPECT_NEAR((1 - clip.y / clip.w) * config.height / 2 - .5, y, .002);
-            if (x % 7 != 3 || y % 7 != 2)
+            const bool on_patch = type == "local_patch" && point[2] > 1e-4;
+            patch_hits += on_patch;
+            if (type == "local_patch" &&
+                (std::abs(point[0] - surface.local_support.center_x) > .401 ||
+                 std::abs(point[1] - surface.local_support.center_y) > .401))
+            {
+                EXPECT_NEAR(point[2], 0, 1e-7);
+            }
+            if (!on_patch && (x % 7 != 3 || y % 7 != 2))
             {
                 continue;
             }
@@ -201,6 +215,10 @@ TEST_P(CarrierInspection, PerspectivePointsMatchActualTrianglesAndPreserveOutput
     };
     record("max_axis_error_m", max_world_error);
     record("max_reprojection_error_px", max_pixel_error);
+    if (type == "local_patch")
+    {
+        EXPECT_GT(patch_hits, 0);
+    }
     EXPECT_GT(checked, 100);
     EXPECT_GT(invalid, 0);
     EXPECT_GT(negative, 0);
@@ -225,6 +243,6 @@ TEST_P(CarrierInspection, PerspectivePointsMatchActualTrianglesAndPreserveOutput
 }
 
 INSTANTIATE_TEST_SUITE_P(Carriers, CarrierInspection,
-                         testing::Values("plane", "raised_plane", "bowl", "dome_floor_v1",
-                                         "cylinder_floor_v1", "cube_floor_v1"));
+                         testing::Values("plane", "raised_plane", "local_patch", "bowl",
+                                         "dome_floor_v1", "cylinder_floor_v1", "cube_floor_v1"));
 } // namespace
