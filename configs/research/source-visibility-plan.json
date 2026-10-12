@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "scope": "native_supplied_opaque_box_visibility_control_not_RGB_depth_estimation",
+  "frames": [
+    0,
+    1
+  ],
+  "variants": [
+    "plane",
+    "plane_occluded",
+    "local_100",
+    "local_100_occluded"
+  ],
+  "truth_path": "artifacts/parallax-sensor-inputs-v1/rig101-near-z080/seed101-capture/paired_truth.json",
+  "manifest": "artifacts/parallax-sensor-inputs-v1/rig101-near-z080/seed101-inputs/manifest.json",
+  "manifest_sha256": "298e789999336b13a91dcc5aa573c785aa43afcf9d553156f53519533cefd7ec",
+  "reference_root": "artifacts/source-correspondence-controls-v1/rig101-near-z080",
+  "config_root": "artifacts/source-visibility-configs-v1",
+  "output_root": "artifacts/source-visibility-v1",
+  "binary_sha256": "6a93668610c0eb09a87495e439e3c2aa386546d8914d666438323501bcb54f9d",
+  "source_revision": "4aa653e402e2e2df3228e6d3fb1e55dd41a5acbd",
+  "chroma_threshold": 0.15,
+  "supplied_geometry": {
+    "source": "Known previously explored Blender nominal opaque cube bounds and saved vehicle poses",
+    "world_min_m": [
+      2.2,
+      2.1,
+      0.6
+    ],
+    "world_max_m": [
+      2.6,
+      2.5,
+      1.0
+    ],
+    "tolerance_m": 0.02,
+    "selection": "Single predeclared metre bias, no capture-driven tuning; geometry height/control kept from previous plan"
+  },
+  "global_output_sha256": {},
+  "local_output_sha256": {
+    "0": "3aa7d2cf2601b35bcc99d8a5f65ce2a11738ac778d8d8dd5a695f2ab18a9e06d",
+    "1": "3ecdb9f3fa258162a70ad7d24201f56c77581fa2e3e3802d18d723f20123f508"
+  },
+  "frozen_files": {
+    "artifacts/parallax-sensor-inputs-v1/rig101-near-z080/seed101-capture/paired_truth.json": "cc9c5f54261a19501514e40d9800cfadee1f37993881e4afc90605bd737b18ab",
+    "artifacts/parallax-sensor-inputs-v1/rig101-near-z080/seed101-inputs/manifest.json": "298e789999336b13a91dcc5aa573c785aa43afcf9d553156f53519533cefd7ec",
+    "tools/research/local_support.py": "36fda14a36d051bc611531622ed67543859dc9f5a33197d50aaa7fb26e36ac96",
+    "tools/research/reference_height.py": "9741112a0a68137105c14e27233ed10b4359ef1bcdcac451ad3ba5d239d9a88a",
+    "tools/research/source_correspondence.py": "723e6899ee98327454c77636663ae61e3533617e0bd9b848543520230b47fbef",
+    "tools/research/source_correspondence_controls.py": "61fbc71b0bd604cb3e89df9dbcc4adc368f8df77d58b73943e33e5a8f2e58935",
+    "tools/research/displaced_correspondence.py": "ac55ca8cdace67684549b7132fbf6c60a6a33babe069e703e5021df6685bf65f",
+    "src/core/math.cpp": "79ea706e21efa39605ef63709e5585199e13c79952c38bc64995df2a871b8f5e",
+    "src/core/config.cpp": "cafe98060ebe3e9b99714786b110af65453383d6285b79fb5779f06ec3de07e5",
+    "include/sv/math.hpp": "90e7ac5232e273d5599d34ada18aa7d575ab776e3d580e012b10eeed896901a1",
+    "src/render/surface.frag": "6a0b804d5a6abe1670f068057d9ded9b792abe67c9811eafa407c2c96de2e02d",
+    "src/render/renderer.cpp": "5b4005aefb3fd161f13398aaf5cfa61bc495bf7ecff7365efb0bf86a0f7a93ae",
+    "tests/correspondence_probe.cpp": "724cf59de2a95cff20e3c20c62ab072b21d33c783382820972ebab0ac2a71865",
+    "docs/diploma/plot_local_support.py": "7ea6617024b67d21501b256b2419fb141a8f08908e6ad1a2d73450a52af67f66",
+    "artifacts/source-correspondence-controls-v1/rig101-near-z080/frame0/direct-points.npy": "747120cb53ffca668c97be6818e1f4dc2317a515b977a2807b746790d7fae901",
+    "artifacts/source-correspondence-controls-v1/rig101-near-z080/frame0/native/plane/output.rgba": "3a062c73511aa9d237ac2b398cccc0470ded29a31d7ceb9401ae66611bca2418",
+    "artifacts/source-correspondence-controls-v1/rig101-near-z080/frame1/direct-points.npy": "4d235fa79fb9ff020ce90d6aa8af7cb389064960ef66bf73b58d3554e1187050",
+    "artifacts/source-correspondence-controls-v1/rig101-near-z080/frame1/native/plane/output.rgba": "b7df8a736d5747beede4ef3b2fad76a3c4e3dd68d05176b99a39b69115f8346c",
+    "tools/research/source_visibility.py": "39c19b8b13a908feff773ebe0803dae1dee49b1d972956a4671a61a480ccd7d9",
+    "docs/diploma/plot_source_visibility.py": "660bad9b30049971f9a9dc6675c28dcbfaac69806584f5e58a9b6a98c60ad2de",
+    "include/sv/render_inspection.hpp": "d2bc1e62fcf67027f14771c64d268b7731e551a7c25c763013c732ba4606df7b",
+    "artifacts/source-visibility-configs-v1/frame0-plane.json": "f32913f89f55faf15b829523ede1a87df554216df1e99d4d86677c39a4825585",
+    "artifacts/source-visibility-configs-v1/frame0-plane_occluded.json": "8c75268e48d1d5b788a19c4f59594bd6be4f70b209732daaf6e5b4ddbe189238",
+    "artifacts/source-visibility-configs-v1/frame0-local_100.json": "07f0ec5c349857facddbc09209b3cdde1ed2c071b7ea44d2460bb6fa99c47e1a",
+    "artifacts/source-visibility-configs-v1/frame0-local_100_occluded.json": "1cd105122bc3358a16c347199280de855150fa8bffc7c4f9124932a57cc49a42",
+    "artifacts/source-visibility-configs-v1/frame1-plane.json": "f32913f89f55faf15b829523ede1a87df554216df1e99d4d86677c39a4825585",
+    "artifacts/source-visibility-configs-v1/frame1-plane_occluded.json": "71f7fb7aad0a4079e37f25801e8b9f60b89b91b64bc82156b4752f3ab6a28d07",
+    "artifacts/source-visibility-configs-v1/frame1-local_100.json": "786f86db68ffa137b6ab989562e06a64e5467c537dfa2ed50075d837dfa26707",
+    "artifacts/source-visibility-configs-v1/frame1-local_100_occluded.json": "9b874880854d57e3597b9aab0bbeabd8d7c4183122f69ac9ffb56003fee9ca93"
+  },
+  "limitations": [
+    "Known target geometry supplied, one vehicle-frame opaque AABB; neither full-scene visibility nor RGB-derived depth estimation",
+    "Single previously explored fixture/two correlated frames, true calibration, plane/local top, edge_feather; no holdout/performance/Aurora",
+    "Center-ray visibility excludes blocked surfaces but does not model bilinear/cubemap/Eevee filter footprint or antialiasing",
+    "Tolerance .02m predeclared; no sensitivity/convergence study, general rotation requires explicit vehicle-frame geometry rather than min/max-only transformation",
+    "Raw chroma proxy counts all outside pixels; fixed road ROI includes uncovered/fallback pixels, not independent semantic segmentation"
+  ]
+}

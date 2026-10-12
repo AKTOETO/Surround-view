@@ -19,9 +19,22 @@ from cube_footprint_audit import cube_sample,cube_ray,fisheye_ray
 from hybrid_domain_audit import new_domain,support_metrics
 from reference_height import mask_scores
 from local_support import vehicle_center
+from source_visibility import blocked_by_faces
 
 
 class SourceCorrespondenceTests(unittest.TestCase):
+    def test_supplied_box_face_oracle_segments_and_endpoint_bias(self):
+        lo, hi = [0, 0, 0], [1, 1, 1]
+        points = [[.5, .5, 0], [.5, .5, 1], [2, .5, 0], [.5, .5, 2], [.5, .5, 1.01]]
+        np.testing.assert_array_equal(blocked_by_faces([.5, .5, 2], points, lo, hi, .02),
+                                      [True, False, False, False, False])
+        # Parallel-to-face ray, segment misses; interior origin; translated geometry.
+        self.assertFalse(blocked_by_faces([2, 2, .5], [[3, 2, .5]], lo, hi, .02)[0])
+        np.testing.assert_array_equal(blocked_by_faces([.5, .5, .5], [[.5, .5, .5], [2, 2, 2]], lo, hi, .02),
+                                      [False, True])
+        np.testing.assert_array_equal(blocked_by_faces([10.5, -.5, 4], [[10.5, -.5, 2]],
+                                                      [10, -1, 2], [11, 0, 3], .02), [True])
+
     def test_supplied_local_center_uses_vehicle_frame(self):
         pose = np.array([[0, -1, 0, 4], [1, 0, 0, -3], [0, 0, 1, 1], [0, 0, 0, 1]])
         np.testing.assert_allclose(vehicle_center([2, -2, 4], pose), [1, 2, 3])
