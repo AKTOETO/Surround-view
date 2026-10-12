@@ -11,7 +11,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools/research'))
 from source_correspondence import classify, load_product, project
 from source_correspondence_controls import transform_points
 from planar_correspondence import intersect_plane
-from planar_precision import plane_from_mvp,reproject
+from planar_precision import plane_from_mvp,reproject,view_projection
 
 
 class SourceCorrespondenceTests(unittest.TestCase):
@@ -68,6 +68,13 @@ class SourceCorrespondenceTests(unittest.TestCase):
         np.testing.assert_allclose(hits[:, 2], 0)
         np.testing.assert_allclose(reproject(np.eye(4), hits, 4, 3), pixels[:, ::-1], atol=1e-15)
         np.testing.assert_allclose(hits[0], [-.75, 2 / 3, 0])
+
+    def test_view_projection_places_target_at_output_center(self):
+        config = {'virtual_camera': {'azimuth_rad': 0, 'elevation_rad': np.pi / 4,
+                  'distance_m': 2, 'fov_y_rad': np.pi / 2, 'clip_m': [.1, 100]},
+                  'output': {'width': 4, 'height': 4}}
+        matrix = view_projection(config)
+        np.testing.assert_allclose(reproject(matrix, np.array([[0., 0., 0.]]), 4, 4), [[1.5, 1.5]])
 
     def test_layout_checksum_and_payload_size_are_enforced(self):
         with tempfile.TemporaryDirectory() as directory:

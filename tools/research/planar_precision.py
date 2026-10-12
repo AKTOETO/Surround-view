@@ -15,7 +15,7 @@ def view_projection(config):
     forward=target-eye;forward/=np.linalg.norm(forward)
     up=np.array([0,1,0] if abs(forward[2])>.999999 else [0,0,1],float)
     right=np.cross(forward,up);right/=np.linalg.norm(right)
-    rotation=np.row_stack([right,np.cross(right,forward),-forward])
+    rotation=np.vstack([right,np.cross(right,forward),-forward])
     camera=np.eye(4);camera[:3,:3]=rotation;camera[:3,3]=-rotation@eye
     near,far=view['clip_m'];scale=1/np.tan(view['fov_y_rad']/2)
     projection=np.zeros((4,4));projection[0,0]=scale*config['output']['height']/config['output']['width']
