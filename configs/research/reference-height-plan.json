@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "scope": "native_assumed_reference_height_sensitivity_not_depth_estimation",
+  "frames": [
+    0,
+    1
+  ],
+  "heights_m": [
+    0,
+    0.4,
+    0.8,
+    1.2
+  ],
+  "truth_path": "artifacts/parallax-sensor-inputs-v1/rig101-near-z080/seed101-capture/paired_truth.json",
+  "manifest": "artifacts/parallax-sensor-inputs-v1/rig101-near-z080/seed101-inputs/manifest.json",
+  "manifest_sha256": "298e789999336b13a91dcc5aa573c785aa43afcf9d553156f53519533cefd7ec",
+  "reference_root": "artifacts/source-correspondence-controls-v1/rig101-near-z080",
+  "config_root": "artifacts/reference-height-configs-v1",
+  "output_root": "artifacts/reference-height-v1",
+  "binary_sha256": "50e5b47dd3ef6e6e4912e311e22a2ac3ceefc7df31775b80c32d7b2ae1808c8f",
+  "chroma_threshold": 0.15,
+  "frozen_files": {
+    "artifacts/parallax-sensor-inputs-v1/rig101-near-z080/seed101-capture/paired_truth.json": "cc9c5f54261a19501514e40d9800cfadee1f37993881e4afc90605bd737b18ab",
+    "artifacts/parallax-sensor-inputs-v1/rig101-near-z080/seed101-inputs/manifest.json": "298e789999336b13a91dcc5aa573c785aa43afcf9d553156f53519533cefd7ec",
+    "tools/research/reference_height.py": "9741112a0a68137105c14e27233ed10b4359ef1bcdcac451ad3ba5d239d9a88a",
+    "src/core/math.cpp": "1547e800a6df7645575ec336b62fd41d928ec56805e3bd216628dc3c8f513add",
+    "src/core/config.cpp": "4b8e54f690588e2b4c98c39d2e5a915d7782425a69ec9092a800333b80cfbf43",
+    "include/sv/math.hpp": "d62d3d897930f22798d70854f7079681ac066a4ad9ee7407bb9592aa465661ad",
+    "src/render/surface.frag": "450f4f70b2fd780c8e9aeb67cc577a0fa8323fd1001c9da4b0983cb277458762",
+    "src/render/renderer.cpp": "7aa3acfd729aa6ea0f3cf499a00e0bb0d3b86ee782e16b07e5356517abcfc2ee",
+    "tests/correspondence_probe.cpp": "724cf59de2a95cff20e3c20c62ab072b21d33c783382820972ebab0ac2a71865",
+    "artifacts/reference-height-configs-v1/frame0-h0.0.json": "f32913f89f55faf15b829523ede1a87df554216df1e99d4d86677c39a4825585",
+    "artifacts/reference-height-configs-v1/frame0-h0.4.json": "0d5c4444700eb41b3809d17b43e65cc1109ef8dd58cd3f659f5b0c25df0135e6",
+    "artifacts/reference-height-configs-v1/frame0-h0.8.json": "55e54724156b535ed5d038e2012ed42321b1b67ba45903cf32a82c0d83ee240a",
+    "artifacts/reference-height-configs-v1/frame0-h1.2.json": "14d108d3367304898291aa663bad45837153473c511fa8d970a3aaec13174c43",
+    "artifacts/reference-height-configs-v1/frame1-h0.0.json": "f32913f89f55faf15b829523ede1a87df554216df1e99d4d86677c39a4825585",
+    "artifacts/reference-height-configs-v1/frame1-h0.4.json": "0d5c4444700eb41b3809d17b43e65cc1109ef8dd58cd3f659f5b0c25df0135e6",
+    "artifacts/reference-height-configs-v1/frame1-h0.8.json": "55e54724156b535ed5d038e2012ed42321b1b67ba45903cf32a82c0d83ee240a",
+    "artifacts/reference-height-configs-v1/frame1-h1.2.json": "14d108d3367304898291aa663bad45837153473c511fa8d970a3aaec13174c43",
+    "artifacts/source-correspondence-controls-v1/rig101-near-z080/frame0/direct-points.npy": "747120cb53ffca668c97be6818e1f4dc2317a515b977a2807b746790d7fae901",
+    "artifacts/source-correspondence-controls-v1/rig101-near-z080/frame0/native/plane/output.rgba": "3a062c73511aa9d237ac2b398cccc0470ded29a31d7ceb9401ae66611bca2418",
+    "artifacts/source-correspondence-controls-v1/rig101-near-z080/frame1/direct-points.npy": "4d235fa79fb9ff020ce90d6aa8af7cb389064960ef66bf73b58d3554e1187050",
+    "artifacts/source-correspondence-controls-v1/rig101-near-z080/frame1/native/plane/output.rgba": "b7df8a736d5747beede4ef3b2fad76a3c4e3dd68d05176b99a39b69115f8346c"
+  },
+  "limitations": [
+    "Supplied global support height, not RGB-derived depth or general-purpose height/occlusion mitigation; object center height .8m is already known from explored fixture",
+    "Four predeclared heights,two correlated frames,plane/edge_feather,true calibration,old RGB inputs and independent virtual truth",
+    "Raw output chroma proxy without component filtering, not independent semantic segmentation; ground distortion evaluated separately on fixed road truth ROI",
+    "No natural-object holdout,physical/Aurora tests,performance or depth-aware visibility"
+  ]
+}
