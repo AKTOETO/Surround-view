@@ -15,6 +15,7 @@ from planar_precision import plane_from_mvp,reproject,view_projection
 from displaced_correspondence import bilinear_rgb,chroma_mask
 from hybrid_correspondence import reconstruct_rgba
 from source_footprint_audit import footprint,selected_pixels
+from cube_footprint_audit import cube_sample,cube_ray,fisheye_ray
 
 
 class SourceCorrespondenceTests(unittest.TestCase):
@@ -104,6 +105,26 @@ class SourceCorrespondenceTests(unittest.TestCase):
         ids,mismatch=selected_pixels(kinds,status,1)
         np.testing.assert_array_equal(ids,[0,1,2,4])
         np.testing.assert_array_equal(mismatch,[False,True,True,True])
+
+    def test_cube_projection_faces_centers_edges_and_inverse(self):
+        for face,ray in [('px',[1,0,0]),('nx',[-1,0,0]),('py',[0,1,0]),
+                         ('ny',[0,-1,0]),('pz',[0,0,1]),('nz',[0,0,-1])]:
+            actual,uv=cube_sample(ray,512)
+            self.assertEqual(actual,face)
+            np.testing.assert_allclose(uv,[255.5,255.5])
+            np.testing.assert_allclose(cube_ray(face,uv,512),ray)
+            for pixel in [[0,0],[511,511],[135.25,398.75]]:
+                actual,uv=cube_sample(cube_ray(face,pixel,512),512)
+                self.assertEqual(actual,face);np.testing.assert_allclose(uv,pixel,atol=1e-12)
+        self.assertEqual(cube_sample([1,1,1],512)[0],'px')
+        for ray in [[0,0,0],[np.nan,0,1]]:
+            with self.assertRaises(ValueError):cube_sample(ray,512)
+
+    def test_fisheye_inverse_axis_and_quarter_turn(self):
+        optics=dict(cx=10.,cy=20.,fx=100.,fy=100.,k=[0]*4,alpha=0)
+        np.testing.assert_allclose(fisheye_ray([10,20],optics),[0,0,1])
+        np.testing.assert_allclose(fisheye_ray([10+50*np.pi,20],optics),[1,0,0],atol=1e-15)
+        with self.assertRaises(ValueError):fisheye_ray([10,20],dict(optics,alpha=.1))
 
     def test_signed_contribution_composition_clips_then_applies_visibility_and_ego(self):
         contributions = np.zeros((1, 3, 4, 3), np.float32)
