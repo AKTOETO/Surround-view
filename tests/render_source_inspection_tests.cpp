@@ -132,12 +132,16 @@ bool face_occlusion(sv::Vec3 from, sv::Vec3 to, const sv::SourceOcclusionBox &bo
     const std::array<double, 3> delta{to.x - from.x, to.y - from.y, to.z - from.z};
     const std::array<double, 3> lo{box.minimum.x, box.minimum.y, box.minimum.z};
     const std::array<double, 3> hi{box.maximum.x, box.maximum.y, box.maximum.z};
+    const double length = std::sqrt(sv::dot(to - from, to - from));
+    if (length <= box.tolerance)
+    {
+        return false;
+    }
     if (from.x >= lo[0] && from.x <= hi[0] && from.y >= lo[1] && from.y <= hi[1] &&
         from.z >= lo[2] && from.z <= hi[2])
     {
         return true;
     }
-    const double length = std::sqrt(sv::dot(to - from, to - from));
     for (int axis = 0; axis < 3; ++axis)
     {
         if (std::abs(delta[axis]) < 1e-12)
@@ -169,6 +173,9 @@ bool face_occlusion(sv::Vec3 from, sv::Vec3 to, const sv::SourceOcclusionBox &bo
 
 TEST(SourceInspection, SuppliedBoxRejectsOnlyBlockedSourceSegmentsAndRestoresOutput)
 {
+    const sv::SourceOcclusionBox unit_box{true, {0, 0, 0}, {1, 1, 1}, .02};
+    EXPECT_FALSE(face_occlusion({.5, .5, .5}, {.5, .5, .5}, unit_box));
+    EXPECT_TRUE(face_occlusion({.5, .5, .5}, {2, 2, 2}, unit_box));
     auto config = sv::load_config(SV_TEST_CONFIG);
     config.width = 160;
     config.height = 100;
