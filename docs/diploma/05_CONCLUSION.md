@@ -2,7 +2,7 @@
 aliases: [Заключение диссертации]
 tags: [diploma, conclusion]
 status: preliminary
-updated: 2026-10-11
+updated: 2026-10-12
 ---
 
 # Заключение диссертационного исследования
@@ -89,3 +89,5 @@ Four-texel follow-up §4.68:1024 из1164 прежних RGB/point-ray mismatche
 §4.70 расширил independent scene labels на все новые hybrid domains серии:1227 condition pixels/547 unique coordinates. Virtual rays выбирают road, source central target support0;698 имеют neighboring target texel support,529 остаются без него. Signed nonlocal contributions отделены от local weights. Это не устранение height failure; следующий приоритет — проверяемая server-side mitigation. [[validation/HYBRID_DOMAIN]].
 
 §4.71 реализовал runtime assumed support height и проверил0/0.4/0.8/1.2m. При h0.8 proxy достигает175/178 и168/172 expected pixels, но raw IoU0.0176/0.0346 и road error≈4× показывают недостаточность глобальной коррекции. Это supplied-height control, не RGB depth estimator и не завершённая mitigation. [[validation/REFERENCE_HEIGHT]].
+
+§4.72 добавил локальный supplied height field в native server и проверил8 matched conditions. При известной верхней грани target proxy hits178/178 и172/172, road MAE возрастает лишь на0.41%/0.71%. Но outside4922/5449 и raw IoU0.0349/0.0306 показывают сохранение ложных копий. Геометрия взята из известной сцены; RGB depth estimation не реализована. Следующий необходимый этап — source visibility/occlusion с явным дополнительным input, затем реалистичная геометрия и holdout. [[validation/LOCAL_SUPPORT]].

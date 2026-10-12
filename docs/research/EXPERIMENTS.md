@@ -162,3 +162,5 @@ GPU execution time измерять асинхронными timer queries, CPU 
 §4.70 / [[validation/HYBRID_DOMAIN]]: новые hybrid domains размечены independent virtual/source/texel rays,547 coordinates/1227 memberships,640 exact anchors.698 local texel support/529 без него,179 locally-invalid contributing pixels.15 controls/CTest1/1/identical reaudit. Далее server-side height/occlusion mitigation; полный pyramid origin trace остаётся отдельным diagnostic control.
 
 §4.71 / [[validation/REFERENCE_HEIGHT]]:8 native supplied-height conditions, h0 exact old RGBA; h0.8 target alignment улучшен, road MAE≈4× и ghosts остаются. Runtime configure_surface/catalog работают; дальше spatial/depth-informed geometry с явным дополнительным input, без скрытого использования truth.
+
+§4.72 / [[validation/LOCAL_SUPPORT]]:8 matched native supplied-local-height captures. Plane/global0.8 exact historical RGBA, local1.0 target hits178/178 и172/172, road MAE+0.41–0.71%, outside4922/5449. Позитивное target positioning при известной геометрии; general ghost mitigation не доказана. Далее явный source visibility/depth control и реалистичный источник геометрии.

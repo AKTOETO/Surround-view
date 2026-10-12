@@ -178,3 +178,5 @@ Cube footprint follow-up выполнен без изменения product rend
 Новые hybrid proxy coordinates размечены:547 unique frame/carrier pixels/1227 condition memberships;640 archive anchors exact. Local source center target support0,698 texel support/529 без него;15 tests/CTest1/1, побитный audit. Product renderer не менялся. [[validation/HYBRID_DOMAIN]].
 
 Native rectangular carrier поддерживает optional reference_height_m[0,5]m/default0 через configure_surface/surface_catalog.8-condition supplied-height pilot показал target/road tradeoff; general mitigation не готова. Full build/CTest7/7,carrier GTest8/8 на Mesa/NVIDIA,independent16/16. [[validation/REFERENCE_HEIGHT]].
+
+Native optional local_support_patch добавлен для rectangular carrier: vehicle-frame plateau/transition, runtime configure_surface/catalog, строгие bounds/clearance и restoration.8-condition supplied-geometry pilot: top face возвращает все expected proxy hits, road MAE+0.41–0.71%, но displaced copies остаются. CTest7/7,carrier GTest9/9 Mesa/NVIDIA,independent17/17. Это известная геометрия, не RGB depth estimator; source visibility control остаётся следующим этапом. [[validation/LOCAL_SUPPORT]].

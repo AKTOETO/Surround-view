@@ -1060,3 +1060,5 @@ Read-only новых hybrid domains: `MPLCONFIGDIR=/tmp/sv-matplotlib python3 do
 ```
 
 Координаты относятся к автомобилю: при движении rig неподвижный мировой объект требует пересчёта центра. Поля и ограничения доступны в `surface_catalog.rectangular_local_support`. Это временная настройка геометрии с заранее известным положением/высотой; библиотека не оценивает их по камерам. Удалить участок — отправить полную surface без этого объекта. Геометрия дороги вне участка сохраняется, но результат RGB и видимость нужно оценивать отдельно. Формула и ограничения mesh: [[engineering/RENDERING]].
+
+Парный local-height опыт, native команды, сохранённые результаты и ограничения: [[validation/LOCAL_SUPPORT#Проверки и воспроизведение]]. Рисунки: `MPLCONFIGDIR=/tmp/sv-matplotlib python3 docs/diploma/plot_local_support.py --output-report artifacts/local-support-v1/reaudit.json`. Требуются frozen raw artifacts; Python здесь выполняет только independent audit/plot.

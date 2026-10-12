@@ -3,7 +3,7 @@ aliases:
   - Глава 4. Экспериментальное исследование и тестирование системы
 tags: [diploma, experiments, validation]
 status: draft
-updated: 2026-10-09
+updated: 2026-10-12
 ---
 
 # Глава 4. Экспериментальное исследование и тестирование системы
@@ -2937,3 +2937,100 @@ Outside proxy при h0.8 составляет9790/4690 pixels, полная raw
 Полная CMake сборка, CTest7/7, independent controls16/16 прошли; carrier GTest8/8 на Mesa и NVIDIA. Runtime integration проверяет новый catalog field, изменение surface/revision/mesh, сохранение input/upload counters, отказ недопустимых heights и восстановление старого кадра/config. Reaudit побитно воспроизводит baseline. Для raised plane constant varyings учтён float32 interpolation tolerance1e−6m, default z0 сохраняет1e−7m; это не physical accuracy claim.
 
 Получен работающий серверный исследовательский параметр и отрицательный результат глобальной коррекции. Следующий этап — spatial/depth-informed geometry и visibility с явным контрактом дополнительной информации. Oracle-depth control может показывать верхнюю границу при известной сцене, но его нельзя называть восстановлением из четырёх RGB cameras. Успешная mitigation, natural-object/holdout и physical/Aurora trials пока не завершены.
+
+## 4.72. Локальная заданная геометрия: восстановление положения объекта без подъёма всей дороги
+
+### 4.72.1. Вопрос и явный источник дополнительной информации
+
+Опыт §4.71 показал, что глобальное смещение носителя улучшает положение цветового маркера, но нарушает геометрию дороги. Следующий вопрос: можно ли ограничить коррекцию известной областью около объекта, сохранив основную плоскость z=0? Для проверки в native server добавлен локальный height field, переключаемый через существующий протокол. Исследуемый параметр относится к геометрии, алгоритм слияния edge_feather и входные RGB не изменены.
+
+Дополнительные сведения берутся из уже исследованной Blender-сцены: номинальный центр куба world(2.4,2.3,0.8)m, размер0.4m и поза автомобиля. Это supplied/oracle-informed control. Сервер не восстановил размеры, высоту или положение из четырёх изображений. Для local height использованы два заранее выбранных значения: высота центра0.8m и верхней грани1.0m. Выбор сделан до получения local captures и не является независимой проверкой на неизвестном объекте. Подробный протокол, hashes и raw paths: [[validation/LOCAL_SUPPORT]].
+
+### 4.72.2. Реализация в сервере и контракт применения
+
+В `Surface` выделена логическая подструктура `LocalSupportPatch`. Её параметры задаются в vehicle frame: центр $(c_x,c_y)$, half extents $(l_x,l_y)$, высота $h_p$ и ширина перехода $t$. Для прямоугольного носителя:
+
+$$
+d_x=\max(|x-c_x|-l_x,0),\qquad d_y=\max(|y-c_y|-l_y,0),
+$$
+
+$$
+\Delta z(x,y)=h_p\max\left(0,1-\frac{\max(d_x,d_y)}{t}\right),
+\qquad z_{new}(x,y)=z_{old}(x,y)+\Delta z(x,y).
+$$
+
+На плато offset равен $h_p$, за пределами footprint с переходом равен нулю. В оси mesh включаются координаты обеих границ плато и перехода, чтобы объект размером0.4m не пропадал между узлами основной сетки. Рендерится triangulated mesh с линейной интерполяцией высот вершин; кусочная формула и её угловые изломы не должны ошибочно интерпретироваться как точная analytic surface между любыми вершинами. Height field однозначен по XY: нижнюю поверхность висящего куба и вертикальные боковины он не описывает.
+
+В JSON optional `surface.local_support_patch` содержит шесть полей: center_x_m,center_y_m,half_length_m,half_width_m,height_m,transition_m. Размеры и переход не меньше0.01m, высота[0,5]m, footprint целиком внутри rectangular carrier. Сервер проверяет finite numbers, schema, bounds, revision и безопасную высоту virtual camera; затем подготавливает и публикует mesh. За пределами участка сохраняется геометрия старой дороги; диагностический region4 включает поднятый участок. Отсутствие patch object выключает коррекцию. Существующие настройки без patch сохраняют прежний путь.
+
+```plantuml
+@startuml
+actor "Клиент исследования" as C
+participant "sv-client-lib" as L
+participant "sv-server\nControl + ConfigStore" as S
+participant "Native Renderer" as R
+C -> L: surface_catalog / текущая revision
+L -> S: запрос capabilities и состояния
+S --> L: vehicle-frame fields, bounds, revision
+L --> C: доступные параметры
+C -> L: configure_surface(revision, full surface + patch)
+L -> S: команда протокола
+S -> S: schema / bounds / view / revision
+alt корректные параметры
+  S -> R: подготовить mesh с локальными границами
+  R --> S: готовые buffers
+  S -> S: опубликовать temporary surface между render calls
+  S --> L: accepted + новая revision
+  R -> R: прежние camera RGB -> fusion -> обычный кадр
+  L --> C: результат применения
+else ошибка или stale revision
+  S --> L: rejected, прежняя revision и surface
+  L --> C: причина отказа
+end
+@enduml
+```
+
+Рисунок4.117 — Применение явно заданной локальной геометрии через существующий клиентский API. Параметры изменяет сервер; temporary research command не сохраняет конфигурационный файл на диск. Сам height field исполняется в C++, Python используется для независимого аудита и рисунков.
+
+### 4.72.3. Парный опыт на неизменных RGB
+
+Frozen plan задаёт frames0/1 × plane/global0.8/local0.8/local1.0: восемь native captures на NVIDIA, input800×800/output640×360, true calibration. Local half extents0.2×0.2m и transition0.2m одинаковы во всех local случаях. Поза второго кадра содержит world translation0.4m; поэтому центр участка vehicle XY меняется с(2.4,2.3) на(2.0,2.3). Использована полная inverse pose, включая возможность вращения, с отдельным known-answer test.
+
+Binary, source revision/fingerprint, configs, manifest, входные кадры и продукты связаны SHA. Plane RGBA для обоих кадров побитно совпали с прежними baseline, global0.8 — с §4.71. Ordinary output не меняется от включения inspection; повторный read-only audit побитно воспроизвёл report. Независимые truth masks/points/visibility не генерировались из исследуемого носителя.
+
+| Frame | Носитель | Proxy hits / expected | Raw full IoU | Outside proxy | Fixed-road linear MAE |
+|---:|---|---:|---:|---:|---:|
+| 0 | plane | 0/178 | 0.000000 | 4843 | 0.029184315 |
+| 0 | global0.8 | 175/178 | 0.017556 | 9790 | 0.121100048 |
+| 0 | local0.8 | 125/178 | 0.024601 | 4903 | 0.029279155 |
+| 0 | local1.0 | 178/178 | 0.034902 | 4922 | 0.029304553 |
+| 1 | plane | 0/172 | 0.000000 | 5373 | 0.030400689 |
+| 1 | global0.8 | 168/172 | 0.034554 | 4690 | 0.115435489 |
+| 1 | local0.8 | 118/172 | 0.021053 | 5433 | 0.030572080 |
+| 1 | local1.0 | 172/172 | 0.030600 | 5449 | 0.030615295 |
+
+Таблица4.73 — Raw chroma proxy без connected-component filtering, с учётом всех outside pixels. Это цветовой diagnostic, не semantic segmentation. Road ROI фиксирован по independent truth, включая непокрытые pixels; размеры169447/169513.
+
+![Actual native outputs локального height control](figures/experiments/local_support_rgb.png)
+
+Рисунок4.118 — Independent Blender и actual native RGB для четырёх вариантов. Cyan contour обозначает expected target. Local1.0 возвращает цветовой маркер в ожидаемую область, но большие смещённые копии внизу сохраняются.
+
+### 4.72.4. Положительный результат и оставшееся ограничение
+
+При одинаковой высоте0.8m сравнение global/local показывает меньший road tradeoff локального изменения. Однако local0.8 не описывает верхнюю грань: source-visible hits31/76 и25/69, visible projection median201.419/244.293px. Даже частичное попадание цвета в target ROI не является доказательством корректного соответствия всех поверхностей.
+
+Local1.0 даёт178/178 и172/172 expected proxy hits, включая76/76 и69/69 source-visible pixels. Median visible source-projection error составляет0.004639/0.003396px, maximum0.019034/0.010720px. Эти значения относятся к77/69 camera-point pairs условно видимого subset. На полном target carrier/direct distance median остаётся0.015736/0.020126m, maximum0.130182/0.128747m: боковые поверхности всё ещё представлены приближённо. Успех верхней грани нельзя переносить на весь объёмный объект.
+
+![Объект и дорога при локальной коррекции](figures/experiments/local_support_metrics.png)
+
+Рисунок4.119 — Полная raw IoU, число outside proxy pixels, fixed-road linear RGB MAE и median carrier/direct-target distance. Joint evaluation сохраняет отрицательные результаты, которые скрылись бы при использовании только expected-target recall.
+
+Road MAE local1.0 выросла относительно plane лишь на0.41%/0.71%, в отличие от порядка четырёх раз для global0.8. Road carrier coverage остаётся138052/138058; изменились411/373 road RGB pixels против144483/144489 для global0.8. Неизменная геометрия вне участка не гарантирует побитно прежнего RGB: изменилась topology mesh, участок может закрывать часть дороги, возможен raster rounding.
+
+Ключевой отрицательный результат: outside proxy4922/5449 и полная IoU0.034902/0.030600. Ложные копии не устранены; на frame1 raw IoU local1.0 ниже global0.8. Локальная геометрия помогает воспроизвести положение известного объекта при меньшем нарушении дороги, но сама по себе не решает source visibility/occlusion. Сравнение local1.0 с global0.8 одновременно меняет высоту и footprint; отдельное влияние локальности оценивается только парой local0.8/global0.8.
+
+### 4.72.5. Проверки и следующий необходимый контроль
+
+Полная CMake сборка и Mesa CTest7/7 прошли; после усиления local-ray проверки carrier GTest9/9 прошёл на Mesa/NVIDIA. Независимый double triangle-intersection oracle проверяет также все sampled patch pixels и сохранение z0 вне footprint; native capture сохраняет обычный output. Core тесты проверяют plateau/ramp, small patch grid inclusion, invalid dimensions и view clearance. IPC integration покрывает catalog, применение patch, revisions/mesh counts, unchanged inputs/uploads, rejection и exact restoration исходного кадра/config. Independent audit controls17/17 проверяют в том числе world-to-vehicle conversion.
+
+Следующий этап — отдельный native source visibility/occlusion control с явным дополнительным depth/scene input, чтобы проверить удаление смещённых копий при сохранении ground и target. Затем нужен реалистичный источник геометрии из доступных sensors/RGB, неизвестные натуральные объекты, новые poses/mounts/scenes, convergence и overhead. Текущий контроль не является верхней границей для всех возможных методов: это один ограниченный height field на известном fixture. Полное заключение о mitigation и переносе на physical/Aurora пока не готово.
