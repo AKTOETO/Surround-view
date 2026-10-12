@@ -525,6 +525,8 @@ Image Renderer::render(const FrameSet &set, const View &view, RenderInspection *
     auto draw_carrier = [&]
     {
         const GLint region_location = glGetUniformLocation(i.prog, "surface_mode");
+        glUniform1f(glGetUniformLocation(i.prog, "reference_height"),
+                    c.surface.type == "rectangular_bowl_v1" ? c.surface.reference_height : 0);
         const GLint radius_location = glGetUniformLocation(i.prog, "dome_radius");
         if (c.surface.type != "rectangular_bowl_v1")
         {

@@ -74,6 +74,26 @@ int main(int argc, char **argv)
                  c = mesh.vertices.at(mesh.indices[i + 2]);
             check(sv::cross(b - a, c - a).z > 0, "positive nondegenerate triangles");
         }
+        auto raised = surface;
+        raised.reference_height = .8;
+        check(std::abs(raised.point(0, 0).z - .8) < 1e-12, "raised flat support");
+        check(std::abs(raised.point(raised.A, raised.B).z - raised.H - .8) < 1e-12,
+              "raised bowl support");
+        auto raised_config = config.effective;
+        raised_config.as_object()["surface"].as_object()["reference_height_m"] = .8;
+        check(sv::parse_config(raised_config).surface.reference_height == .8,
+              "reference height config");
+        for (double invalid_height : {-0.1, 5.1})
+        {
+            raised_config.as_object()["surface"].as_object()["reference_height_m"] = invalid_height;
+            rejects([&] { sv::parse_config(raised_config); }, "invalid reference height");
+        }
+        raised.reference_height = 5;
+        raised.H = 0;
+        sv::View low_view;
+        low_view.distance = 6;
+        low_view.elevation = .5;
+        check(!sv::safe_view(raised, low_view), "view below raised support rejected");
         const auto floor = sv::make_floor_mesh(12, 8, 24);
         check(floor.indices.size() == (24 * 3 + 7 * 24 * 6), "disk floor triangulation");
         for (size_t i = 0; i < floor.indices.size(); i += 3)

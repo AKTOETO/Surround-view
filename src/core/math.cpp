@@ -150,7 +150,7 @@ Vec3 Surface::point(double x, double y) const
 {
     double dx = std::max(std::abs(x) - a, 0.0) / (A - a),
            dy = std::max(std::abs(y) - b, 0.0) / (B - b);
-    return {x, y, H * (dx * dx + dy * dy) / 2};
+    return {x, y, reference_height + H * (dx * dx + dy * dy) / 2};
 }
 
 Mesh make_mesh(const Surface &s)
@@ -354,7 +354,7 @@ bool safe_view(const Surface &surface, const View &view, double clearance)
     const auto eye = view.eye();
     if (surface.type == "rectangular_bowl_v1")
     {
-        return eye.z > surface.H + .1;
+        return eye.z > surface.reference_height + surface.H + .1;
     }
     if (eye.z <= clearance)
     {

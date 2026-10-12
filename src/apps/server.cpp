@@ -905,6 +905,14 @@ int main(int argc, char **argv)
                             {"types", boost::json::array{"rectangular_bowl_v1", "dome_floor_v1",
                                                          "cylinder_floor_v1", "cube_floor_v1"}},
                             {"plane", "rectangular_bowl_v1 with corner_height_m=0"},
+                            {"rectangular_reference_height",
+                             boost::json::object{
+                                 {"field", "reference_height_m"},
+                                 {"unit", "m"},
+                                 {"minimum", 0.},
+                                 {"maximum", 5.},
+                                 {"default", 0.},
+                                 {"meaning", "assumed support height; not estimated depth"}}},
                             {"apply", "prepare buffers then publish between render calls"}};
                     }
                     else if (type == "configure_surface")

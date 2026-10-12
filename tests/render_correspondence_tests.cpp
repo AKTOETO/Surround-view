@@ -95,8 +95,10 @@ TEST_P(CarrierInspection, PerspectivePointsMatchActualTrianglesAndPreserveOutput
     config.fusion.diagnostic = "color";
     auto &surface = config.surface;
     const std::string type = GetParam();
-    surface.type = type == "plane" || type == "bowl" ? "rectangular_bowl_v1" : type;
+    surface.type =
+        type == "plane" || type == "raised_plane" || type == "bowl" ? "rectangular_bowl_v1" : type;
     surface.H = type == "bowl" ? 1.5 : 0;
+    surface.reference_height = type == "raised_plane" ? .8 : 0;
     surface.A = surface.B = surface.enclosure_radius = surface.enclosure_height = 14;
     surface.nx = surface.ny = surface.enclosure_cells = 12;
     surface.dome_latitude_cells = 8;
@@ -169,9 +171,11 @@ TEST_P(CarrierInspection, PerspectivePointsMatchActualTrianglesAndPreserveOutput
             EXPECT_NEAR(point[0], hit->x, .005);
             EXPECT_NEAR(point[1], hit->y, .005);
             EXPECT_NEAR(point[2], hit->z, .005);
-            if (type == "plane")
+            if (type == "plane" || type == "raised_plane")
             {
-                EXPECT_NEAR(point[2], 0, 1e-7);
+                // Nonzero constant varyings incur float32 perspective interpolation rounding.
+                EXPECT_NEAR(point[2], surface.reference_height, type == "plane" ? 1e-7 : 1e-6);
+                EXPECT_NE(region, 4);
             }
             if (type == "dome_floor_v1" && region == 2 &&
                 std::sqrt(sv::dot(*hit, *hit)) < surface.enclosure_radius - .01)
@@ -221,6 +225,6 @@ TEST_P(CarrierInspection, PerspectivePointsMatchActualTrianglesAndPreserveOutput
 }
 
 INSTANTIATE_TEST_SUITE_P(Carriers, CarrierInspection,
-                         testing::Values("plane", "bowl", "dome_floor_v1", "cylinder_floor_v1",
-                                         "cube_floor_v1"));
+                         testing::Values("plane", "raised_plane", "bowl", "dome_floor_v1",
+                                         "cylinder_floor_v1", "cube_floor_v1"));
 } // namespace

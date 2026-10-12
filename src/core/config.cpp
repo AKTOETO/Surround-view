@@ -486,12 +486,18 @@ Config parse_config(const boost::json::value &value)
         keys(s,
              {"type", "flat_half_length_m", "flat_half_width_m", "outer_half_length_m",
               "outer_half_width_m", "corner_height_m", "uniform_cells"},
-             "surface");
+             "surface", {"reference_height_m"});
         c.surface.a = num(s.at("flat_half_length_m"));
         c.surface.b = num(s.at("flat_half_width_m"));
         c.surface.A = num(s.at("outer_half_length_m"));
         c.surface.B = num(s.at("outer_half_width_m"));
         c.surface.H = num(s.at("corner_height_m"));
+        if (const auto *height = s.if_contains("reference_height_m"))
+        {
+            c.surface.reference_height = num(*height);
+        }
+        require(c.surface.reference_height >= 0 && c.surface.reference_height <= 5,
+                "surface.reference_height_m: expected [0,5] metres");
         require(c.surface.A > c.surface.a && c.surface.a > c.vehicle_length / 2 + c.margin &&
                     c.surface.B > c.surface.b && c.surface.b > c.vehicle_width / 2 + c.margin &&
                     c.surface.H >= 0,

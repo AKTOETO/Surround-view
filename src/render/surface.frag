@@ -14,6 +14,7 @@ uniform float dome_radius;
 uniform int fusion_mode, diagnostic_mode;
 uniform int sample_camera;
 uniform int inspection_regions;
+uniform float reference_height;
 uniform int inspection_camera;
 uniform float edge_width_px, angle_power;
 
@@ -105,7 +106,7 @@ void main()
     }
     if (inspection_regions == 1)
     {
-        int region = surface_mode == 1 ? 2 : (world.z > 1e-6 ? 4 : 1);
+        int region = surface_mode == 1 ? 2 : (world.z - reference_height > 1e-6 ? 4 : 1);
         if (surface_mode == 0 && abs(world.x) <= vehicle.x && abs(world.y) <= vehicle.y)
         {
             region = 3;

@@ -212,13 +212,16 @@ class IntegrationTests(unittest.TestCase):
                 revision = restored['config_revision']
                 original_surface = state['surface']
                 flat = dict(original_surface, corner_height_m=0)
-                surfaces = [flat,
+                surfaces = [flat, dict(flat, reference_height_m=.8),
                     dict(type='dome_floor_v1', dome_radius_m=14,
                          dome_latitude_cells=16, dome_longitude_cells=32, floor_radial_cells=8),
                     dict(type='cylinder_floor_v1', radius_m=14, height_m=14,
                          vertical_cells=8, angular_cells=32, floor_radial_cells=8),
                     dict(type='cube_floor_v1', half_extent_m=14, height_m=14, face_cells=8)]
-                self.assertTrue(client.command('surface_catalog')['accepted'])
+                catalog = client.command('surface_catalog')
+                self.assertTrue(catalog['accepted'])
+                self.assertEqual(catalog['surface_catalog']['rectangular_reference_height']['field'],
+                                 'reference_height_m')
                 builds = int(header['mesh_build_count'])
                 for surface in surfaces:
                     ack = client.command('configure_surface', base_config_revision=revision,
@@ -234,7 +237,9 @@ class IntegrationTests(unittest.TestCase):
                     self.assertNotEqual(pixels, original_pixels)
                 before = client.command('state')
                 for rev, surface in [('0', original_surface), (revision, {'type': 'missing'}),
-                                     (revision, dict(surfaces[1], dome_radius_m=3))]:
+                                     (revision, dict(flat, reference_height_m=-1)),
+                                     (revision, dict(flat, reference_height_m=5.1)),
+                                     (revision, dict(surfaces[2], dome_radius_m=3))]:
                     ack = client.command('configure_surface', base_config_revision=rev, surface=surface)
                     self.assertFalse(ack['accepted'], ack)
                     self.assertEqual(ack['surface'], before['surface'])
