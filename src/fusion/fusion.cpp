@@ -151,6 +151,6 @@ FusionResult fuse_research(const FusionSamples &samples, const Fusion &settings,
     {
         inspection->level_contributions.push_back(inspection->camera_contributions);
     }
-    return {color, weights, optimization};
+    return {color, weights, optimization, blend_weights};
 }
 } // namespace sv

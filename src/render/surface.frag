@@ -161,7 +161,7 @@ vec4 pack_float(float value)
 
 void main()
 {
-    if (inspection_regions >= 5)
+    if (inspection_regions >= 5 && inspection_regions != 8)
     {
         vec2 px;
         float theta;
@@ -174,7 +174,7 @@ void main()
             : pack_float(status == 1 ? px[inspection_regions - 5] : uintBitsToFloat(0x7fc00000u));
         return;
     }
-    if (inspection_regions >= 2)
+    if (inspection_regions >= 2 && inspection_regions != 8)
     {
         // Pack one perspective-interpolated float into RGBA8. No float FBO extension.
         uint bits = floatBitsToUint(world[inspection_regions - 2]);
@@ -194,6 +194,7 @@ void main()
     }
     if (surface_mode == 0 && abs(world.x) <= vehicle.x && abs(world.y) <= vehicle.y)
     {
+        if (inspection_regions == 8) { color = vec4(0, 0, 1.0 / 255.0, 1); return; }
         if (sample_camera >= 0) { color = vec4(0); return; }
         color = diagnostic_mode == 0 ? vec4(.2, .22, .24, 1) : vec4(1, 0, 1, 1);
         return;
@@ -201,7 +202,7 @@ void main()
     vec3 sum = vec3(0);
     float total = 0.0;
     float best = -1.0;
-    int winner = -1, observed = 0;
+    int winner = -1, observed = 0, positive = 0;
     vec3 selected = vec3(0), contributions = vec3(0);
     for (int i = 0; i < 4; i++)
     {
@@ -214,8 +215,12 @@ void main()
         if (source_projection(i, px, theta) != 1) { continue; }
         vec2 uv = (px + .5) / sizes[i];
         observed++;
-        vec3 x;
-        if (i == 0)
+        vec3 x = vec3(0);
+        if (inspection_regions == 8)
+        {
+            // Support is independent of image brightness; no texture fetch required.
+        }
+        else if (i == 0)
         {
             x = texture(input0, uv).rgb;
         }
@@ -255,11 +260,21 @@ void main()
         {
             w *= angle_weight;
         }
+        if (w > 0.0) { positive++; }
         sum += w * linearize(x);
         contributions += w * camera_color(i);
         total += w;
     }
     if (sample_camera >= 0) { color = vec4(0); return; }
+    if (inspection_regions == 8)
+    {
+        bool hard_selected = fusion_mode == 1 && winner >= 0;
+        bool fused = hard_selected || total > 1e-6;
+        color = vec4(float(observed) / 255.0,
+                     float(hard_selected ? 1 : positive) / 255.0,
+                     float(fused ? 4 : 3) / 255.0, 1);
+        return;
+    }
     if (diagnostic_mode == 1)
     {
         // Display source validity independently from blending weights and fallback.

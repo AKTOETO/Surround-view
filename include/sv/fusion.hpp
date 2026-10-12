@@ -19,6 +19,7 @@ struct FusionResult
     cv::Mat color;   // CV_32FC3
     cv::Mat weights; // CV_32FC4; graph-cut weights before optional smoothing
     std::optional<seam::Summary> seam_optimization;
+    cv::Mat blend_weights; // CV_32FC4; actual local base weights after seam smoothing.
 };
 
 // Opt-in diagnostic data from the actual fusion operations, before final color clamping.

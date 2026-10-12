@@ -442,7 +442,8 @@ Renderer::~Renderer() = default;
 Image Renderer::render(const FrameSet &set, const View &view, RenderInspection *inspection,
                        RenderInspectionRequest request)
 {
-    if ((request.carrier_positions || request.source_projections || request.fusion_contributions) &&
+    if ((request.carrier_positions || request.source_projections || request.fusion_contributions ||
+         request.support) &&
         !inspection)
     {
         throw std::invalid_argument("render inspection requires an inspection destination");
@@ -454,6 +455,10 @@ Image Renderer::render(const FrameSet &set, const View &view, RenderInspection *
     if (request.fusion_contributions && !research_fusion(impl_->config.fusion.mode))
     {
         throw std::invalid_argument("fusion contributions require a hybrid research mode");
+    }
+    if (request.support && impl_->config.fusion.diagnostic != "color")
+    {
+        throw std::invalid_argument("render support requires the color view");
     }
     auto &i = *impl_;
     auto &c = i.config;
@@ -604,6 +609,7 @@ Image Renderer::render(const FrameSet &set, const View &view, RenderInspection *
         }
         check("GPU timer query");
     }
+    cv::Mat hybrid_support;
     if (research_fusion(c.fusion.mode))
     {
         const auto layer_start = now_ns();
@@ -672,6 +678,10 @@ Image Renderer::render(const FrameSet &set, const View &view, RenderInspection *
             fusion_inspection = &inspection->fusion.emplace();
         }
         const auto fused = fuse_research(samples, c.fusion, fusion_inspection);
+        if (request.support)
+        {
+            hybrid_support = cv::Mat::zeros(c.height, c.width, CV_8UC4);
+        }
         i.timing.seam_optimization = fused.seam_optimization;
         for (int y = 0; y < c.height; ++y)
         {
@@ -681,6 +691,20 @@ Image Renderer::render(const FrameSet &set, const View &view, RenderInspection *
                 for (int camera = 0; camera < 4; ++camera)
                 {
                     coverage += samples.validity[camera].at<uchar>(y, x) != 0;
+                }
+                if (request.support)
+                {
+                    const auto weights = fused.blend_weights.at<cv::Vec4f>(y, x);
+                    unsigned char positive = 0;
+                    for (int camera = 0; camera < 4; ++camera)
+                    {
+                        positive += weights[camera] > 0;
+                    }
+                    hybrid_support.at<cv::Vec4b>(y, x) = {
+                        static_cast<unsigned char>(coverage), positive,
+                        static_cast<unsigned char>(coverage ? RenderSupportPath::hybrid_fusion
+                                                            : RenderSupportPath::hybrid_fallback),
+                        255};
                 }
                 auto *pixel = out.pixels.data() + (size_t(y) * c.width + x) * 4;
                 if (coverage)
@@ -717,6 +741,7 @@ Image Renderer::render(const FrameSet &set, const View &view, RenderInspection *
     {
         // Separate depth-tested geometry pass; never feed region IDs into image fusion.
         // The regular output and its timing measurements above are already complete.
+        const auto inspection_start = now_ns();
         const GLboolean dither = glIsEnabled(GL_DITHER);
         glDisable(GL_DITHER);
         const auto geometry_pass = [&](int mode, int camera = 0)
@@ -725,6 +750,7 @@ Image Renderer::render(const FrameSet &set, const View &view, RenderInspection *
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
             glUseProgram(i.prog);
             glUniform1i(glGetUniformLocation(i.prog, "inspection_regions"), mode);
+            glUniform1i(glGetUniformLocation(i.prog, "sample_camera"), -1);
             glUniform1i(glGetUniformLocation(i.prog, "inspection_camera"), camera);
             draw_carrier();
             glUniform1i(glGetUniformLocation(i.prog, "inspection_regions"), 0);
@@ -740,6 +766,25 @@ Image Renderer::render(const FrameSet &set, const View &view, RenderInspection *
             return top;
         };
         cv::extractChannel(geometry_pass(1), inspection->carrier_regions, 0);
+        if (request.support)
+        {
+            inspection->support = geometry_pass(8);
+            if (!hybrid_support.empty())
+            {
+                for (int y = 0; y < c.height; ++y)
+                {
+                    for (int x = 0; x < c.width; ++x)
+                    {
+                        auto &pixel = inspection->support.at<cv::Vec4b>(y, x);
+                        if (pixel[2] == static_cast<unsigned char>(RenderSupportPath::gpu_fallback) ||
+                            pixel[2] == static_cast<unsigned char>(RenderSupportPath::gpu_fusion))
+                        {
+                            pixel = hybrid_support.at<cv::Vec4b>(y, x);
+                        }
+                    }
+                }
+            }
+        }
         if (request.carrier_positions)
         {
             inspection->carrier_positions =
@@ -760,6 +805,7 @@ Image Renderer::render(const FrameSet &set, const View &view, RenderInspection *
             glEnable(GL_DITHER);
         }
         check("carrier inspection readback");
+        i.timing.inspection_cpu_ms = (now_ns() - inspection_start) / 1e6;
     }
     return out;
 }

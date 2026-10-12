@@ -13,6 +13,7 @@ struct RenderTiming
     double fusion_cpu_ms = 0, layer_readback_cpu_ms = 0;
     double upload_cpu_ms = 0;
     double readback_copy_cpu_ms = 0;
+    double inspection_cpu_ms = 0; // Extra inspection passes/readbacks; excludes normal output.
     std::optional<double> gpu_draw_ms;
     std::string gpu_timer_status = "extension_unavailable";
     std::optional<seam::Summary> seam_optimization;
