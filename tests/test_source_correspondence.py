@@ -13,6 +13,7 @@ from source_correspondence_controls import transform_points
 from planar_correspondence import intersect_plane
 from planar_precision import plane_from_mvp,reproject,view_projection
 from displaced_correspondence import bilinear_rgb,chroma_mask
+from hybrid_correspondence import reconstruct_rgba
 
 
 class SourceCorrespondenceTests(unittest.TestCase):
@@ -84,6 +85,17 @@ class SourceCorrespondenceTests(unittest.TestCase):
         np.testing.assert_array_equal(chroma_mask(np.array([[[255, 0, 255], [255, 255, 255]]])), [[True, False]])
         with self.assertRaises(ValueError):
             bilinear_rgb(image, np.array([[float('nan'), 0]]))
+
+    def test_signed_contribution_composition_clips_then_applies_visibility_and_ego(self):
+        contributions = np.zeros((1, 3, 4, 3), np.float32)
+        contributions[0, 0, 0] = [-.25, .25, 1.5]
+        contributions[0, 0, 1] = [.75, .25, -.5]
+        validity = np.zeros((1, 3, 4), bool)
+        validity[0, 0, 0] = True
+        fallback = np.array([[[1, 2, 3, 255], [10, 20, 30, 255], [40, 50, 60, 255]]], np.uint8)
+        ego = np.zeros_like(fallback);ego[0, 2] = [90, 80, 70, 255]
+        actual = reconstruct_rgba(contributions, validity, fallback, ego)
+        np.testing.assert_array_equal(actual, [[[188, 188, 255, 255], [10, 20, 30, 255], [90, 80, 70, 255]]])
 
     def test_layout_checksum_and_payload_size_are_enforced(self):
         with tempfile.TemporaryDirectory() as directory:
