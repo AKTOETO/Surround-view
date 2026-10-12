@@ -164,3 +164,5 @@ GPU execution time измерять асинхронными timer queries, CPU 
 §4.71 / [[validation/REFERENCE_HEIGHT]]:8 native supplied-height conditions, h0 exact old RGBA; h0.8 target alignment улучшен, road MAE≈4× и ghosts остаются. Runtime configure_surface/catalog работают; дальше spatial/depth-informed geometry с явным дополнительным input, без скрытого использования truth.
 
 §4.72 / [[validation/LOCAL_SUPPORT]]:8 matched native supplied-local-height captures. Plane/global0.8 exact historical RGBA, local1.0 target hits178/178 и172/172, road MAE+0.41–0.71%, outside4922/5449. Позитивное target positioning при известной геометрии; general ghost mitigation не доказана. Далее явный source visibility/depth control и реалистичный источник геометрии.
+
+§4.73 / [[validation/SOURCE_VISIBILITY]]:8 native supplied opaque-box visibility captures, paired carrier/retained-UV exact,863913 prior-valid camera pairs/0 oracle mismatches. Outside local4922→198/5449→56, conditional target hits сохранены, но unsupported target78/103. Далее per-pixel residual attribution/filter-aware preservation и geometry uncertainty, затем реалистичный источник depth; general mitigation не закрыта.

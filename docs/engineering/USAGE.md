@@ -1074,3 +1074,5 @@ Read-only новых hybrid domains: `MPLCONFIGDIR=/tmp/sv-matplotlib python3 do
 ```
 
 Применить через `Client::configure_surface` с актуальной revision; допустимые поля доступны в `surface_catalog.rectangular_source_occlusion`. Границы — vehicle-frame XYZ, поэтому при движении автомобиля их нужно пересчитать. Настройка исключает перекрытые источники перед слиянием; сам объём не рисуется, RGB depth estimation не выполняется. Удалить control — отправить полную surface без `source_occlusion_box`. Не подменять этим заранее известным объёмом решение задачи оценки глубины реальной сцены.
+
+Native commands и provenance supplied visibility опыта: [[validation/SOURCE_VISIBILITY#Проверки и воспроизведение]]. Independent audit/plot: `MPLCONFIGDIR=/tmp/sv-matplotlib python3 docs/diploma/plot_source_visibility.py --output-report artifacts/source-visibility-v1/reaudit.json`. Требуются archived raw inputs/products и соответствующие source hashes.

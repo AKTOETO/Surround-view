@@ -3034,3 +3034,107 @@ Road MAE local1.0 выросла относительно plane лишь на0.4
 Полная CMake сборка и Mesa CTest7/7 прошли; после усиления local-ray проверки carrier GTest9/9 прошёл на Mesa/NVIDIA. Независимый double triangle-intersection oracle проверяет также все sampled patch pixels и сохранение z0 вне footprint; native capture сохраняет обычный output. Core тесты проверяют plateau/ramp, small patch grid inclusion, invalid dimensions и view clearance. IPC integration покрывает catalog, применение patch, revisions/mesh counts, unchanged inputs/uploads, rejection и exact restoration исходного кадра/config. Independent audit controls17/17 проверяют в том числе world-to-vehicle conversion.
 
 Следующий этап — отдельный native source visibility/occlusion control с явным дополнительным depth/scene input, чтобы проверить удаление смещённых копий при сохранении ground и target. Затем нужен реалистичный источник геометрии из доступных sensors/RGB, неизвестные натуральные объекты, новые poses/mounts/scenes, convergence и overhead. Текущий контроль не является верхней границей для всех возможных методов: это один ограниченный height field на известном fixture. Полное заключение о mitigation и переносе на physical/Aurora пока не готово.
+
+## 4.73. Проверка видимости источников по явно заданному непрозрачному объёму
+
+### 4.73.1. Гипотеза и границы постановки
+
+Локальный носитель §4.72 улучшил положение известного куба, но сохранил большие смещённые копии. Следующий вопрос: какая часть этих копий исчезнет, если исключить исходные камеры, для которых точка носителя скрыта известным объектом? Для отдельной проверки в сервер добавлен supplied-box visibility control. RGB, calibration, fusion и носитель внутри каждой пары off/on одинаковы; меняется только predicate допустимости источника.
+
+Дополнительный input — nominal opaque AABB известного Blender-куба: world min(2.2,2.1,0.6),max(2.6,2.5,1.0)m, преобразованный в vehicle frame. Это информация о сцене, ранее недоступная системе из одних изображений. Один blocker не является полным scene depth, а использование truth-derived bounds не означает решения задачи RGB depth estimation. Control проверяет пользу корректной видимости при известной геометрии; результаты ограничены этим fixture. Протокол и полный evidence: [[validation/SOURCE_VISIBILITY]].
+
+### 4.73.2. Конечный отрезок, endpoint bias и native pipeline
+
+Для камеры с центром $C$ и точки носителя $P$ рассматривается отрезок:
+
+$$
+X(t)=C+t(P-C),\qquad 0\le t\le1.
+$$
+
+Native shader пересекает три slab-интервала AABB, получая $t_{entry},t_{exit}$ с ограничением[0,1]. При длине $L=\|P-C\|>\varepsilon$ источник исключается, если:
+
+$$
+t_{entry}\le t_{exit},\qquad t_{entry}<1-\frac{\varepsilon}{L}.
+$$
+
+Заранее выбранный допуск $\varepsilon=0.02$m сохраняет endpoint на видимой грани, который иначе мог бы сам себя перекрыть из-за floating point rounding. Parallel axis обрабатывается отдельно. Данный допуск — исследовательский параметр, его физическая обоснованность и sensitivity ещё не проверены. При $L\le\varepsilon$ данный control не исключает источник.
+
+Камерный центр вычисляется из inverse rigid extrinsics. Predicate вызывается после проверки наличия кадра, camera Z, угла и границ исходного изображения, до texture lookup. Он общий для ordinary GPU paths, hybrid sample validity и диагностического source capture. Rejection имеет status7 `supplied_occluder`, UV становится NaN. Carrier geometry и retained UV не меняются. Сам AABB не рисуется, его цвет не подмешивается.
+
+```plantuml
+@startuml
+start
+:Native carrier fragment P;
+:Для каждой настроенной камеры i;
+if (Кадр, Z, угол и bounds допустимы?) then (да)
+  if (Supplied AABB включён?) then (да)
+    :C_i = inverse(camera extrinsics).origin;
+    :Пересечь конечный C_i -> P с AABB;
+    if (Opaque hit раньше P более чем на tolerance?) then (да)
+      :status7; исключить источник;
+    else (нет)
+      :status1; texture lookup;
+    endif
+  else (нет)
+    :status1; texture lookup;
+  endif
+else (нет)
+  :Прежний projection rejection;
+endif
+:GPU fusion либо native hybrid validity/weights;
+if (Допустимых источников нет?) then (да)
+  :Прежний fallback;
+else (нет)
+  :Слияние допустимых samples;
+endif
+:Финальный кадр и opt-in diagnostics;
+stop
+@enduml
+```
+
+Рисунок4.120 — Проверка source visibility до выборки текстуры. Она не создаёт наблюдение скрытой поверхности; случай без источников сохраняется отдельно в метриках.
+
+В `Surface` выделена подструктура `SourceOcclusionBox`; JSON `source_occlusion_box` содержит min_m,max_m,tolerance_m. Bounds finite, ordered, в[-100,100]m, tolerance[0,0.1]m. Через `sv-client-lib::Client::configure_surface` клиент отправляет полную surface и revision; сервер валидирует и временно применяет control. Catalog описывает поля и vehicle frame; отключение — отсутствие объекта. Настройка ограничена rectangular carrier и одним AABB. Текущий общий apply path также перестраивает mesh при visibility-only update; оптимизация и стоимость такого обновления пока не исследованы.
+
+### 4.73.3. Frozen paired matrix и независимая проверка
+
+До captures сохранён plan: frames0/1 × plane,plane+visibility,local1.0,local1.0+visibility. Восемь NVIDIA условий, прежние input800×800/output640×360, edge_feather, true calibration и независимые Blender truth. Local geometry прежняя: plateau1.0m, half extents0.2m, transition0.2m. На втором кадре vehicle x bounds blocker сдвигаются на−0.4m вслед за сохранённой pose. После capture tolerance и bounds не подстраивались.
+
+Native revision `4aa653e402e2e2df3228e6d3fb1e55dd41a5acbd`, executable/config/input/product hashes и invocation logs сохранены. Оба plane и оба local без visibility побитно воспроизвели прежние RGBA. В четырёх off/on парах carrier XYZ/regions и retained UV совпали побитно. Независимый oracle пересекает шесть отдельных rectangle faces, используя double precision и actual carrier positions, вместо повторения native slab algorithm. Проверены863913 ранее допустимых camera-point pairs,20385 rejected,0 status mismatches. Это связанные samples четырёх пар, их количество не является числом независимых экспериментов. Повторный audit побитно совпал.
+
+| Frame | Вариант | Proxy hits / expected | Outside proxy | Raw full IoU | Road linear MAE | Target без источника |
+|---:|---|---:|---:|---:|---:|---:|
+| 0 | plane | 0/178 | 4843 | 0.000000 | 0.029184315 | 0 |
+| 0 | plane + visibility | 0/178 | 192 | 0.000000 | 0.020989785 | 0 |
+| 0 | local1.0 | 178/178 | 4922 | 0.034902 | 0.029304553 | 0 |
+| 0 | local1.0 + visibility | 81/178 | 198 | 0.215426 | 0.020982273 | 78 |
+| 1 | plane | 0/172 | 5373 | 0.000000 | 0.030400689 | 0 |
+| 1 | plane + visibility | 0/172 | 51 | 0.000000 | 0.020843058 | 0 |
+| 1 | local1.0 | 172/172 | 5449 | 0.030600 | 0.030615295 | 0 |
+| 1 | local1.0 + visibility | 69/172 | 56 | 0.302632 | 0.020858322 | 103 |
+
+Таблица4.74 — Совместная оценка цвета, ложных копий, дороги и source support. Raw chroma proxy без component filtering включает все outside pixels; он не является semantic segmentation. Road ROI169447/169513 pixels фиксирован по independent truth, включая uncovered/fallback.
+
+![Actual native RGB с source visibility](figures/experiments/source_visibility_rgb.png)
+
+Рисунок4.121 — Independent Blender и ordinary native frames с visibility off/on для plane и local geometry. Cyan — expected object. Крупные смещённые копии почти исчезают, но остаются тонкие цветовые остатки, а весь виртуально видимый объём не восстанавливается.
+
+### 4.73.4. Уменьшение ложных копий и выявление неподдержанной поверхности
+
+Для local носителя outside proxy снизился4922→198 и5449→56, то есть на95.98%/98.97%. Все source-visible target proxy hits сохранены:76/76 и69/69. Их conditional projection errors и77/69 camera-point pairs не изменились. Road MAE снизилась до0.020982/0.020858, carrier coverage138052/138058 осталась прежней. Это положительный результат конкретного known-geometry visibility control.
+
+Одновременно full expected proxy hits снизились178→81 и172→69. У78/103 expected target pixels после filtering не осталось допустимого источника; road pixels без источника выросли501→524 и501→572. Такие значения считаются по runtime validity на текущем приближённом carrier. Они не подменяют independent source visibility: latter содержит76/178 и69/172 source-visible pixels.
+
+Результат раскрывает ограничение предыдущего опыта:100% expected chroma hits могли возникать и на части куба без корректного source support. Наличие цвета не равнозначно наблюдению соответствующей поверхности. Если в виртуальном ракурсе видна грань, которую не наблюдает ни одна исходная камера, данный pipeline не получает её независимую текстуру. Полное воспроизведение такой грани потребовало бы дополнительного наблюдения, модели/приора или явно обозначенного способа заполнения. В этом исследовании такой механизм не объявляется реализованным.
+
+![Парные показатели source visibility](figures/experiments/source_visibility_metrics.png)
+
+Рисунок4.122 — Raw full IoU, outside proxy count, fixed-road MAE и неизменная carrier/direct distance. IoU выросла до0.215426/0.302632, но её рост необходимо читать совместно с потерей source support части target.
+
+Для plane без local geometry visibility тоже уменьшает outside4843→192 и5373→51, но expected hits остаются0. Корректное исключение перекрытого источника не возвращает отсутствующую объёмную геометрию. Следовательно, geometry и visibility выполняют разные функции; одна не заменяет другую.
+
+### 4.73.5. Тесты, ограничения и следующий контроль
+
+Full build, Mesa CTest7/7, carrier GTest10/10 на Mesa/NVIDIA и independent controls18/18 прошли. Native test сравнивает shader с face oracle, проверяет endpoint preservation на front-facing top plane, rejected hybrid validity, сохранение uploads и exact restoration. Core/IPC покрывают schema/bounds/tolerance, catalog, revision/counters, invalid apply и возврат исходного frame/config. Python выполняет независимую проверку и рисунки, продуктовая логика остаётся в сервере.
+
+Вне expected target остаётся198/56 proxy pixels. Central-ray control не описывает bilinear/cubemap/Eevee footprint; точная причина каждого остатка пока не установлена. Следующий bounded diagnostic — per-pixel attribution остатков, разделение filter support, carrier approximation и неподдержанных target regions; затем обоснованный filter-aware control с preservation tests. Нужны tolerance/geometry uncertainty sensitivity и реалистичный источник depth/geometry, неизвестные natural objects, новые сцены/mounts/poses, overhead и physical/Aurora испытания. Получена проверенная partial mitigation на supplied geometry; универсальность решения и восстановление всего virtual view не доказаны.

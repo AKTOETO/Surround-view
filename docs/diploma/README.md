@@ -180,3 +180,5 @@ MPLCONFIGDIR=/tmp/sv-matplotlib python3 docs/diploma/plot_carrier_positions.py -
 §4.71: native runtime reference_height_m;8 supplied-height captures, target/road tradeoff. Таблица4.72, рисунки4.114–4.116. [[validation/REFERENCE_HEIGHT]].
 
 §4.72: native runtime local_support_patch;8 supplied-geometry captures и joint target/ground evaluation. Таблица4.73, рисунки4.117–4.119. [[validation/LOCAL_SUPPORT]].
+
+§4.73: native runtime source_occlusion_box;8 supplied-visibility captures, уменьшение ложных копий и обнаружение неподдержанного target. Таблица4.74, рисунки4.120–4.122. [[validation/SOURCE_VISIBILITY]].

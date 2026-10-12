@@ -80,3 +80,5 @@ Configs образованы из прежнего frame0-h0.0.json: surface б�
 ## Что остаётся
 
 Следующий контроль: server-side source visibility/occlusion с явно предоставленным depth/scene input, отдельно от geometry patch; проверить сохранение ground и удаление displaced copies при unchanged RGB. Потом — реалистичный способ получения дополнительной геометрии из доступных sensors/RGB, natural objects, новые poses/mounts/scenes, overhead и physical/Aurora. Один supplied patch не является универсальной scene model; sparse patch boundaries и corner triangulation требуют convergence controls. Эти пункты остаются в [[planning/ROADMAP]] и корневом TODO.
+
+Первый supplied opaque-box visibility control из следующего этапа выполнен в [[validation/SOURCE_VISIBILITY]] (§4.73): крупные копии уменьшены, но остатки и неподдержанные target surfaces сохраняются. Реалистичный depth input и general mitigation остаются открытыми.
