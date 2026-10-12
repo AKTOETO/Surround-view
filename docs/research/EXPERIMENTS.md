@@ -156,3 +156,5 @@ GPU execution time измерять асинхронными timer queries, CPU 
 §4.67 / [[validation/HYBRID_CORRESPONDENCE]]:60 matched640×360/800×800 hybrid conditions, six variant/boundary combinations, frames0/1/five carriers. Geometry/source parity и signed band/RGBA reconstruction подтверждены; raw expected target overlap0. Nonlocal contribution при local-invalid camera измерен отдельно. Далее four-texel/resampling/new-proxy truth и mitigation, не новые несопоставимые raster sweeps.
 
 §4.68 / [[validation/SOURCE_FOOTPRINT]]: все1164 point-ray/RGB mismatches проверены четырьмя texel centers;1024 neighboring target support,140 residual chroma без center target. Дополнительно320 controls,11 known-answer tests и побитный reaudit. Далее actual cubemap→fisheye footprint attribution остатка и новые hybrid domains.
+
+§4.69 / [[validation/CUBE_FOOTPRINT]]:140 residuals→256 unique source texel/592 cube texel, RGB0LSB;135 center/5 area-only support, area rays8×8. Далее новые hybrid domains и mitigation; exact Eevee sample weights не установлены.

@@ -172,3 +172,5 @@ MPLCONFIGDIR=/tmp/sv-matplotlib python3 docs/diploma/plot_carrier_positions.py -
 §4.67 —60 matched native hybrid conditions, signed per-level capture, independent band/RGBA reconstruction, таблицы4.67–4.68 и рисунки4.101–4.104. [[validation/HYBRID_CORRESPONDENCE]].
 
 §4.68: four-texel контроль1164 point-ray/RGB mismatches,1024 neighboring target support/140 residual; таблица4.69, рисунки4.105–4.107. [[validation/SOURCE_FOOTPRINT]].
+
+§4.69: actual cube→fisheye RGB reconstruction256 texel с ошибкой0LSB;140 residual pixels разделены на135 cube-center support/5 area-only. Таблица4.70, рисунки4.108–4.110. [[validation/CUBE_FOOTPRINT]].

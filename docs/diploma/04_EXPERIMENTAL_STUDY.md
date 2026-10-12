@@ -2726,3 +2726,79 @@ Audit -> Audit : separate neighbor support from residual filtered color
 Прошли11 known-answer controls, CTest1/1; повторный read-only audit воспроизводит baseline побитно. Встроенный Python Blender не содержит Pillow/SciPy, поэтому геометрический helper отделён от imports RGB audit; дополнительные пакеты в Blender не нужны. Native renderer не менялся, нового speed/quality ranking нет.
 
 Четыре texel объясняют наличие соседнего target support в значительной части прежнего остатка, но не закрывают весь resampling attribution. Следующий контроль должен связать140 residual pixels с actual cube RGB texels/weights и геометрией их pixel support, затем расширить scene truth на новые hybrid pixels. Исправление height/occlusion failure, независимые scenes и physical/Aurora validation остаются необходимыми до общего заключения.
+
+## 4.69. Прослеживание cubemap→fisheye и площади исходного pixel
+
+### 4.69.1. Почему нужно продолжить цепочку sampling
+
+В §4.68 у140 из1164 прежних point-ray/RGB mismatches target отсутствовал даже среди центров четырёх fisheye texel с положительными весами. При этом chroma присутствовала. Следовательно, одного server bilinear footprint недостаточно для установления RGB identity. Проверяется следующая часть цепочки — actual cube PNG→fisheye texel, затем геометрическая поддержка cube pixel.
+
+Выбраны все140 residual output pixels, их256 уникальных source texel и592 уникальных cube texel centers. Исходные кадры, camera calibration, target/ego poses и native outputs не изменены. Frozen plan/code зафиксированы до Blender capture; SHA256/report: [[validation/CUBE_FOOTPRINT]], `configs/research/cube-footprint-plan.json`, `cube_footprint_v1.json`.
+
+```plantuml
+@startuml
+participant "Frozen source UV" as UV
+participant "Fisheye texels" as Fish
+participant "Archived cube PNG" as Cube
+participant "Independent Blender rays" as Rays
+participant "Audit" as Audit
+UV -> Fish : previous positive bilinear weights
+Fish -> Cube : inverse optics, dominant face, four texels
+Cube --> Audit : actual RGB and linear-light weights
+Audit -> Audit : reconstruct all256 fisheye RGB exactly
+Fish -> Rays : repeat fisheye center ray
+Rays --> Audit : road identity
+Cube -> Rays : cube center + stratified 8x8 pixel-area rays
+Rays --> Audit : separate central / area target support
+Audit -> Audit : aggregate to140 original output pixels
+@enduml
+```
+
+Рисунок4.108 — Прослеживание двух последовательных resampling stages. Геометрические labels и actual RGB проверяются раздельно.
+
+### 4.69.2. Независимая фотометрическая и геометрическая проверка
+
+Equidistant ray восстанавливается аналитически. Dominant-axis cube face задаёт basis $B$, $\mathbf q=B\mathbf r$ и координаты $\mathbf p=(\mathbf q_{xy}/q_z+1)N/2-1/2$, где $N=512$. Четыре actual cube RGB texel декодируются в linear light и смешиваются, затем выполняются sRGB encode и RGB8 rounding:
+
+\[
+I_{\rm fish}=Q_8\left(E\left(\sum_jw_jD(I_{{\rm cube},j})\right)\right).
+\]
+
+Для всех256 source texel reconstruction имеет ошибку0LSB. Независимый audit не вызывает прежний converter для sampling; bases/face orientations/roundtrip проверены known-answer тестами. Эти weights не являются server fusion weights или долями RGB от разных поверхностей.
+
+Blender oracle повторно подтвердил road hit всех выбранных fisheye texel centers. Для592 уникальных cube pixels проверены central rays и фиксированная сетка8×8 внутри площади пикселя. Grid samples — геометрический control, а не воспроизведение исторических Eevee AA positions. Исторический capture не хранит полную конфигурацию pixel filter, поэтому точная причинная оценка AA не заявляется.
+
+### 4.69.3. Результаты и пределы объяснения
+
+| Кадр | Носитель | Остаток после fisheye centers | Cube center support | Только area-grid support | Без найденного support |
+|---:|---|---:|---:|---:|---:|
+| 0 | plane | 28 | 27 | 1 | 0 |
+| 0 | bowl | 14 | 13 | 1 | 0 |
+| 0 | dome_floor | 29 | 28 | 1 | 0 |
+| 0 | cylinder_floor | 28 | 27 | 1 | 0 |
+| 0 | cube_floor | 28 | 27 | 1 | 0 |
+| 1 | plane | 2 | 2 | 0 | 0 |
+| 1 | bowl | 5 | 5 | 0 | 0 |
+| 1 | dome_floor | 2 | 2 | 0 | 0 |
+| 1 | cylinder_floor | 2 | 2 | 0 | 0 |
+| 1 | cube_floor | 2 | 2 | 0 | 0 |
+
+Таблица4.70 — Геометрическая поддержка всех140 прежних residual pixels через положительно взвешенные cube samples. Центр и площадь пикселя учитываются раздельно.
+
+![Поддержка на уровне cubemap](figures/experiments/cube_footprint_counts.png)
+
+Рисунок4.109 — 135 pixels имеют cube-center target support,5 — только найденную stratified area support. Отсутствие оставшихся pixels без support относится только к этой выбранной выборке.
+
+Все140 имеют положительно взвешенный chroma cube texel. Пять area-only cases — один frame0 source-camera0 footprint, повторённый на пяти carriers, а не пять независимых сцен. В256 unique requests center support найден у47, grid support у69; это другой знаменатель относительно140 output pixels. Число hits сетки не является измеренной долей filtered RGB.
+
+![Actual cube и fisheye RGB](figures/experiments/cube_footprint_samples.png)
+
+Рисунок4.110 — Первый frozen output pixel с area-only support и первый его colored source request: frame0/camera0/fisheye(42,431). Слева actual fisheye RGB, справа actual cube RGB и четыре centers с interpolation weights, surface kind и grid target hits/64. Центральные rays выбирают road; внутри положительно взвешенного pixel найден target support.
+
+Таким образом, прежние1164 mismatches разделились на1024 с neighboring fisheye-center support,135 с cube-center support и5 с cube-area-grid-only support. Это объяснение наличия поддержки фильтрованного sample, а не восстановление положения target. Точные causal color fractions/Eevee filter weights не установлены. Низкая object IoU и height/parallax limitation остаются исследовательской проблемой.
+
+### 4.69.4. Воспроизводимость и следующий приоритет
+
+Прошли13 known-answer controls, CTest1/1; repeated read-only audit побитно совпал, requests повторно сгенерированы идентично. Рисунки строятся скриптом `plot_cube_footprint.py` рядом с главой. Product renderer не менялся, новые speed/quality преимущества не заявляются.
+
+Следующий приоритет — source-surface truth для новых hybrid proxy pixels §4.67 и проверяемое уменьшение height/occlusion failure на прежних inputs с независимым virtual truth. Positive-area support не означает correct surface correspondence с carrier или виртуальной камерой. Независимые сцены, реальные камеры и Aurora нужны для внешней валидности результатов.

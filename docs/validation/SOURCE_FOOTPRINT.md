@@ -80,3 +80,5 @@ print(source_footprint.capture(root,root/'artifacts/source-footprint-repeat-plan
 ```
 
 Audit копии: `python3 docs/diploma/plot_source_footprint.py --plan artifacts/source-footprint-repeat-plan.json --output-report artifacts/source-footprint-repeat/summary.json --figures artifacts/source-footprint-repeat/figures`. Plan hash меняется ожидаемо; не заменять исторический baseline новым capture автоматически.
+
+Следующий bounded cubemap follow-up выполнен: [[validation/CUBE_FOOTPRINT]], §4.69.135/140 residual pixels имеют cube-center support,5 — area-only;256 source texel RGB воспроизведены точно. Exact Eevee filter fractions по-прежнему не установлены.

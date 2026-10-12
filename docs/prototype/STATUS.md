@@ -172,3 +172,5 @@ Displaced edge-feather attribution выполнен:10 прежних native cap
 Matched hybrid pilot завершён:60 conditions на прежних frames/пяти carriers, exact carrier/source parity, unchanged edge fallback. Native API сохраняет signed per-level bands; SciPy reconstruction≤1.49e−8 linear RGB, composition≤1LSB. Raw expected target overlap0 во всех60; mitigation ещё нет. CTest2/2, GTest7/7, correspondence9/9. [[validation/HYBRID_CORRESPONDENCE]], §4.67.
 
 Four-texel diagnostic follow-up выполнен без изменения native renderer:1164 mismatches,1024 neighboring target support/140 upstream RGB-center residual;320 controls,11/11 tests, CTest1/1. [[validation/SOURCE_FOOTPRINT]].
+
+Cube footprint follow-up выполнен без изменения product renderer:140 residual pixels,135 cube-center/5 area-only support;256 source RGB texel reconstruct0LSB;13 tests/CTest1/1, identical requests и reaudit. [[validation/CUBE_FOOTPRINT]].
