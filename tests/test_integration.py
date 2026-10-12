@@ -226,7 +226,7 @@ class IntegrationTests(unittest.TestCase):
                 surfaces.append(dict(flat, source_occlusion_box=dict(occluder,
                     mode='bilinear_radial_v1', guard_texels=1)))
                 surfaces.append(dict(flat, source_occlusion_box=dict(occluder,
-                    mode='bilinear_box_surface_v1', guard_texels=1)))
+                    mode='bilinear_box_surface_v1', guard_texels=1, support_tolerance_m=.001)))
                 catalog = client.command('surface_catalog')
                 self.assertTrue(catalog['accepted'])
                 self.assertEqual(catalog['surface_catalog']['rectangular_reference_height']['field'],

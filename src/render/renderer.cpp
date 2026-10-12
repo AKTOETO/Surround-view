@@ -520,6 +520,7 @@ Image Renderer::render(const FrameSet &set, const View &view, RenderInspection *
     glUniform3f(glGetUniformLocation(i.prog, "source_box_max"), box.maximum.x, box.maximum.y,
                 box.maximum.z);
     glUniform1f(glGetUniformLocation(i.prog, "source_occlusion_tolerance"), box.tolerance);
+    glUniform1f(glGetUniformLocation(i.prog, "source_support_tolerance"), box.support_tolerance);
     glUniform4iv(glGetUniformLocation(i.prog, "available"), 1, available);
     glUniform1i(glGetUniformLocation(i.prog, "fusion_mode"), c.fusion.mode == "hard_best_angle" ? 1
                                                              : c.fusion.mode == "angular_feather"

@@ -19,7 +19,7 @@ uniform int inspection_camera;
 uniform float edge_width_px, angle_power;
 uniform int source_occlusion_enabled, source_occlusion_policy, source_guard_texels;
 uniform vec3 source_box_min, source_box_max, camera_origin[4];
-uniform float source_occlusion_tolerance;
+uniform float source_occlusion_tolerance, source_support_tolerance;
 
 // Finite segment / opaque AABB. Parameter t is a fraction of camera-to-carrier distance.
 bool segment_occluded(vec3 origin, vec3 endpoint, float inset_m)
@@ -50,10 +50,10 @@ bool segment_occluded(vec3 origin, vec3 endpoint, float inset_m)
     return entry <= exit && entry < 1.0 - source_occlusion_tolerance / distance_m;
 }
 
-// Known supplied box surface, with a fixed numerical membership band (not scene uncertainty).
+// Known supplied box surface with an explicit, independently configured support band.
 bool on_source_box_surface(vec3 point)
 {
-    const float epsilon_m = 1e-5;
+    float epsilon_m = source_support_tolerance;
     if (any(lessThan(point, source_box_min - vec3(epsilon_m))) ||
         any(greaterThan(point, source_box_max + vec3(epsilon_m)))) { return false; }
     vec3 face_distance = min(abs(point - source_box_min), abs(point - source_box_max));

@@ -383,6 +383,24 @@ TEST(SourceInspection, SuppliedBoxRejectsOnlyBlockedSourceSegmentsAndRestoresOut
         }
         renderer.set_fusion(config.fusion);
     }
+    // A displaced support plane is outside the exact band, but can be explicitly
+    // admitted without modifying central endpoint bias or the source images.
+    surface.reference_height = 2.0005;
+    surface.source_occlusion.support_tolerance = 0;
+    renderer.set_surface(surface);
+    sv::RenderInspection exact_support;
+    renderer.render(frames, config.view, &exact_support, {true, true});
+    surface.source_occlusion.support_tolerance = .001;
+    renderer.set_surface(surface);
+    renderer.render(frames, config.view, &after, {true, true});
+    int recovered = 0;
+    for (int camera = 0; camera < 4; ++camera)
+    {
+        recovered += cv::countNonZero((exact_support.source_projections[camera].status == 7) &
+                                      (after.source_projections[camera].status == 1));
+    }
+    EXPECT_GT(recovered, 0);
+    EXPECT_EQ(renderer.uploads(), uploads);
     // Hidden bottom-face endpoints must still be rejected by the central ray.
     surface.reference_height = .6;
     renderer.set_surface(surface);
@@ -406,6 +424,7 @@ TEST(SourceInspection, SuppliedBoxRejectsOnlyBlockedSourceSegmentsAndRestoresOut
     }
     EXPECT_GT(hidden, 0);
     surface.reference_height = 0;
+    surface.source_occlusion.support_tolerance = 1e-5;
     surface.source_occlusion.mode = "bilinear_radial_v1";
     surface.source_occlusion.guard_texels = 1;
     renderer.set_surface(surface);

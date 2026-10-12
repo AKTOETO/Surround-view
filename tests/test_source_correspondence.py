@@ -23,6 +23,7 @@ from source_visibility import blocked_by_faces
 from visibility_residual import select_pixels
 from filter_visibility import policy_blocked
 from box_surface_visibility import on_box_surface, policy_blocked as box_policy_blocked
+from visibility_sensitivity import policy_blocked as sensitivity_policy_blocked
 
 
 class SourceCorrespondenceTests(unittest.TestCase):
@@ -40,6 +41,24 @@ class SourceCorrespondenceTests(unittest.TestCase):
         camera['projection']['k'][0] = .01
         with self.assertRaisesRegex(ValueError, 'zero-distortion'):
             policy_blocked(camera, point, [[0,0]], box)
+
+    def test_support_band_is_separate_from_central_endpoint_bias(self):
+        camera = {'T_camera_from_vehicle': np.diag([1,-1,-1,1]).tolist(),
+                  'resolution': {'width': 64, 'height': 64},
+                  'projection': {'k': [0,0,0,0], 'alpha': 0, 'fx': 30, 'fy': 30, 'cx': 0, 'cy': 0}}
+        camera['T_camera_from_vehicle'][2][3] = 2
+        box = dict(min_m=[1.5,-.1,1], max_m=[1.8,.1,1.2], tolerance_m=.02,
+                   mode='bilinear_box_surface_v1', guard_texels=1, support_tolerance_m=0)
+        point = [[1.6,0,1.2005]]
+        uv = [[30*np.arctan2(1.6,.7995),0]]
+        self.assertTrue(sensitivity_policy_blocked(camera, point, uv, box)[0])
+        box['support_tolerance_m'] = .001
+        self.assertFalse(sensitivity_policy_blocked(camera, point, uv, box)[0])
+        # Large support band cannot bypass a genuinely blocked central ray.
+        self.assertTrue(sensitivity_policy_blocked(camera, [[1.6,0,1]], uv, box)[0])
+        box['support_tolerance_m'] = 1e-5
+        np.testing.assert_array_equal(sensitivity_policy_blocked(camera, point, uv, box),
+                                      box_policy_blocked(camera, point, uv, box))
 
     def test_box_surface_membership_finite_faces_and_hidden_endpoint(self):
         box = dict(min_m=[0,0,0], max_m=[1,1,1], tolerance_m=.02,

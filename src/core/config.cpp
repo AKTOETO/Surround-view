@@ -527,7 +527,7 @@ Config parse_config(const boost::json::value &value)
         {
             const auto &box = value->as_object();
             keys(box, {"min_m", "max_m", "tolerance_m"}, "surface.source_occlusion_box",
-                 {"mode", "guard_texels"});
+                 {"mode", "guard_texels", "support_tolerance_m"});
             const auto &lo = box.at("min_m").as_array();
             const auto &hi = box.at("max_m").as_array();
             require(lo.size() == 3 && hi.size() == 3, "source_occlusion_box: expected XYZ bounds");
@@ -547,6 +547,14 @@ Config parse_config(const boost::json::value &value)
             require(b.mode == "center" || b.mode == "bilinear_radial_v1" ||
                         b.mode == "bilinear_box_surface_v1",
                     "source_occlusion_box.mode: unknown policy");
+            if (const auto *support = box.if_contains("support_tolerance_m"))
+            {
+                require(b.mode == "bilinear_box_surface_v1",
+                        "source_occlusion_box.support_tolerance_m requires box-surface policy");
+                b.support_tolerance = num(*support);
+                require(b.support_tolerance >= 0 && b.support_tolerance <= .05,
+                        "source_occlusion_box.support_tolerance_m: expected [0,0.05] metres");
+            }
             require(b.mode != "center" || b.guard_texels == 0,
                     "source_occlusion_box: guard_texels requires a footprint policy");
             if (b.mode != "center")

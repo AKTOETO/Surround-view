@@ -60,6 +60,7 @@ struct SourceOcclusionBox
     double tolerance = .02;
     std::string mode = "center";
     int guard_texels = 0;
+    double support_tolerance = 1e-5;
 };
 
 struct Surface

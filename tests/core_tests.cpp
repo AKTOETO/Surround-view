@@ -152,6 +152,24 @@ int main(int argc, char **argv)
         check(sv::parse_config(occlusion_config).surface.source_occlusion.mode ==
                   "bilinear_box_surface_v1",
               "box-surface visibility schema");
+        check(sv::parse_config(occlusion_config).surface.source_occlusion.support_tolerance == 1e-5,
+              "support tolerance default preserves previous policy");
+        occluder["support_tolerance_m"] = .001;
+        occlusion_config.as_object()["surface"].as_object()["source_occlusion_box"] = occluder;
+        check(sv::parse_config(occlusion_config).surface.source_occlusion.support_tolerance == .001,
+              "support tolerance is independent from endpoint bias");
+        for (double bad : {-.001, .051})
+        {
+            occluder["support_tolerance_m"] = bad;
+            occlusion_config.as_object()["surface"].as_object()["source_occlusion_box"] = occluder;
+            rejects([&] { sv::parse_config(occlusion_config); }, "invalid support tolerance");
+        }
+        occluder["support_tolerance_m"] = .001;
+        occluder["mode"] = "bilinear_radial_v1";
+        occlusion_config.as_object()["surface"].as_object()["source_occlusion_box"] = occluder;
+        rejects([&] { sv::parse_config(occlusion_config); },
+                "irrelevant support tolerance rejected");
+        occluder["mode"] = "bilinear_box_surface_v1";
         occluder["guard_texels"] = 2;
         occlusion_config.as_object()["surface"].as_object()["source_occlusion_box"] = occluder;
         rejects([&] { sv::parse_config(occlusion_config); }, "excess footprint guard rejected");
