@@ -3219,3 +3219,91 @@ Independent output reconstruction из source RGB, bilinear texture coefficients
 Independent controls19/19, включая полную selection/empty selection, и CTest source_correspondence прошли. Frozen products/scene arrays и повторный audit сверены SHA; detailed report побитно воспроизводится. Product code не менялся. Начальный import collision одноимённых research/Blender modules устранён явным preload research module в capture-команде, до successful capture; план и helper после capture не изменялись.
 
 Следующая разработка — server-side filter-aware visibility policy с сохранением полезного source-visible subset, paired tolerance/geometry uncertainty sensitivity и контролем border erosion/unsupported pixels/road error. Опыт пока не показывает, какой новый policy лучше: он установил, какие разные источники остатка этот policy должен учитывать. Реалистичная оценка depth, natural-object holdout, overhead и physical/Aurora проверка остаются открытыми. Привязка к ранее исследованной сцене не позволяет объявить полный исследовательский вывод о general mitigation.
+
+
+## 4.75. Серверная проверка source footprint и обязательное сохранение объекта
+
+### 4.75.1. Гипотеза и реализация
+
+Предыдущий audit (§4.74) показал, что большинство остатков имеет neighboring texel support. Поэтому исследован native filter-aware кандидат: проверять не только central ray, но и footprint исходной текстуры. Основная логика находится в серверном shader, переключается через протокол и библиотеку; Python выполняет независимую проверку и строит иллюстрации. Проверяемая гипотеза: уменьшение footprint contamination должно сопровождаться сохранением source-visible target. Одного уменьшения outside недостаточно.
+
+В сервер добавлен экспериментальный `surface.source_occlusion_box.mode="bilinear_radial_v1"` и `guard_texels=0/1`. Default `center` сохраняет прежнюю семантику. Настройки доступны через существующий `configure_surface`, каталог и sv-client-lib; отдельный wire command не нужен. При отключённом box фильтрация не выполняется. Для нового режима поддерживается только equidistant optics с нулевыми коэффициентами distortion; неподдерживаемая конфигурация отклоняется сервером.
+
+Пусть $P$ — actual carrier position, $C_i$ — центр камеры, $R_i=\|P-C_i\|$. Для каждого соседнего source texel $j$ строится обратный equidistant ray $q_{i,j}$ и endpoint:
+
+$$P_{i,j}=C_i+R_i\,R_{camera\to vehicle}\,q_{i,j}.$$
+
+Расстояние берётся от центрального carrier point; это **radial approximation**, а не измеренная глубина соседней поверхности. При guard0 проверяются четыре bilinear texel с строго положительными коэффициентами. Guard1 проверяет 4×4 neighborhood. UV ограничиваются границами source raster. Sample отклоняется, если central ray или любой проверяемый сосед блокируется supplied opaque AABB до endpoint с прежним metric bias0.02m. Для соседей box сжат на10µm; центральный closed-box predicate не меняется. Обработка общей validity используется ordinary GPU, hybrid samples и inspection status7; retained UV и positions не меняются.
+
+Inset установлен до frozen capture: исходный тест обнаружил float/double расхождения на точных касаниях ребра. После уточнения interior-контракта независимый double six-face oracle и shader slab test согласованы. Это численная конвенция, не доказательство физической точности10µm. Геометрия box — известный вход из Blender, не результат восстановления по RGB.
+
+```plantuml
+@startuml
+start
+:Actual carrier P → camera UV;
+:Central segment / supplied box;
+if (Central blocked?) then (да)
+  :Reject camera sample / status7;
+else (нет)
+  if (mode = center?) then (да)
+    :Retain sample;
+  else (нет)
+    :Inverse-project positive bilinear texels
+or 4×4 guard neighborhood;
+    :Endpoints at central radial range;
+    if (Any neighbor blocked by inset box?) then (да)
+      :Reject whole sample / status7;
+    else (нет)
+      :Retain sample;
+    endif
+  endif
+endif
+:Fuse retained sources;
+:Joint audit: outside + visible hits
++ unsupported target + road MAE;
+stop
+@enduml
+```
+
+Рисунок4.126 — Реализованная последовательность radial footprint policy и раздельный контроль качества. Отсутствие blocking не устанавливает surface correspondence.
+
+### 4.75.2. Парная матрица и отрицательный результат
+
+Frozen plan содержит16 native captures: два correlated frames, plane/local carrier, off/center/guard0/guard1. Inputs и independent truth прежние; восемь off/center RGBA hashes совпадают с историческими. Native revision8274fdb, binary/config/input checksums и полная таблица сохранены в [[validation/FILTER_VISIBILITY]] и [[validation/baselines/filter_visibility_v1.json]].
+
+| Frame | Носитель / policy | Outside proxy | Full IoU | Visible hits | Target без source | Road MAE |
+|---|---|---:|---:|---:|---:|---:|
+| 0 | `plane` | 4843 | 0.000000 | 0/76 | 0 | 0.029184 |
+| 0 | `plane_center` | 192 | 0.000000 | 0/76 | 0 | 0.020990 |
+| 0 | `plane_fp0` | 28 | 0.000000 | 0/76 | 0 | 0.020846 |
+| 0 | `plane_fp1` | 0 | 0.000000 | 0/76 | 0 | 0.020779 |
+| 0 | `local_100` | 4922 | 0.034902 | 76/76 | 0 | 0.029305 |
+| 0 | `local_center` | 198 | 0.215426 | 76/76 | 78 | 0.020982 |
+| 0 | `local_fp0` | 30 | 0.072115 | 12/76 | 144 | 0.020838 |
+| 0 | `local_fp1` | 1 | 0.011173 | 2/76 | 163 | 0.020771 |
+| 1 | `plane` | 5373 | 0.000000 | 0/69 | 0 | 0.030401 |
+| 1 | `plane_center` | 51 | 0.000000 | 0/69 | 0 | 0.020843 |
+| 1 | `plane_fp0` | 2 | 0.000000 | 0/69 | 0 | 0.020799 |
+| 1 | `plane_fp1` | 0 | 0.000000 | 0/69 | 0 | 0.020784 |
+| 1 | `local_100` | 5449 | 0.030600 | 69/69 | 0 | 0.030615 |
+| 1 | `local_center` | 56 | 0.302632 | 69/69 | 103 | 0.020858 |
+| 1 | `local_fp0` | 6 | 0.056180 | 10/69 | 162 | 0.020813 |
+| 1 | `local_fp1` | 0 | 0.011628 | 2/69 | 170 | 0.020802 |
+
+Таблица4.76 — Совместная оценка radial visibility. Visible denominator76/69 определён independent scene truth; full target178/172. Chroma threshold0.15 применяется без удаления малых компонентов. Road MAE использует фиксированный ROI, включающий fallback/unsupported pixels.
+
+![Native footprint visibility outputs](figures/experiments/filter_visibility_rgb.png)
+
+Рисунок4.127 — Actual native RGB local carrier в сравнении с independent Blender. Cyan обозначает target contour. Guard1 почти удаляет полезный marker вместе с ложными копиями.
+
+![Preservation controls](figures/experiments/filter_visibility_metrics.png)
+
+Рисунок4.128 — Outside, full IoU, source-visible hits и road error при center/guard0/guard1; dashed curves относятся к plane, solid — к local. Улучшение одной метрики сопровождается ухудшением других.
+
+Local center сохраняет76/76 и69/69 видимых target pixels; guard0 —12/76 и10/69, guard1 —2/76 и2/69. Одновременно target без source возрастает78→144→163 и103→162→170. Full IoU падает до0.011173/0.011628. Следовательно, candidate **не проходит preservation gate** и не выбран default. Plane имеет0 target hits во всех вариантах: фильтр visibility не исправляет ошибочную carrier surface.
+
+### 4.75.3. Корректность реализации и границы вывода
+
+Независимый six-face oracle даёт0 status mismatches на2591739 prior-valid camera-point pairs; geometry и retained UV exact. Это согласие двух реализаций одного объявленного predicate, не доказательство качества. Начальные tangent failures привели к явной10µm interior-конвенции до freeze; скрытого исключения failed pixels нет. Full build и CTest7/7 успешны, carrier GTest10/10 на NVIDIA/Mesa и independent20/20; repeated report совпадает побитно.
+
+Результат показывает недостаточность консервативного any-neighbor rejection с central radial range на выбранной сцене. Постоянная дальность не различает соседнюю грань того же объекта и occluder; surface-consistent вариант требует отдельной causal проверки. В данном опыте он не реализован и его эффективность не установлена. Known AABB не является RGB depth estimator; два correlated frames не заменяют independent scene families, uncertainty, natural objects и physical/Aurora trials. Следующий шаг — сохранить видимый объект при surface-aware footprint policy, затем оценить tolerance/geometry sensitivity и overhead. Это отрицательный исследовательский результат, а не завершение general mitigation.

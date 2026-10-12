@@ -184,3 +184,5 @@ MPLCONFIGDIR=/tmp/sv-matplotlib python3 docs/diploma/plot_carrier_positions.py -
 §4.73: native runtime source_occlusion_box;8 supplied-visibility captures, уменьшение ложных копий и обнаружение неподдержанного target. Таблица4.74, рисунки4.120–4.122. [[validation/SOURCE_VISIBILITY]].
 
 §4.74: center/texel/source-RGB атрибуция всех497 visibility residual pixels,290 controls; primary frozen audit и отдельный post-hoc geometry drill-down. Таблица4.75, рисунки4.123–4.125. [[validation/VISIBILITY_RESIDUAL]].
+
+Native radial footprint visibility (bilinear_radial_v1, guard0/1) реализована через configure_surface/catalog и проверена на16 frozen captures (§4.75). Outside local198/56→30/6→1/0, но visible hits76/69→12/10→2/2: preservation gate не пройден, default center сохранён. Oracle0 mismatches/2591739 pairs, full build/CTest7/7, carrier10/10 Mesa/NVIDIA, independent20/20, reaudit identical. Далее surface-consistent footprint/preservation и paired tolerance/geometry uncertainty; general mitigation не закрыта. [[validation/FILTER_VISIBILITY]].

@@ -1089,3 +1089,5 @@ Read-only residual audit прежних source-visibility outputs: `MPLCONFIGDIR
 ```
 
 Через `Client::configure_surface` можно переключать mode и guard без перезапуска. Guard0 проверяет четыре положительных bilinear texels; guard1 расширяет проверку до4×4 соседей. Для возврата к прежнему predicate передать mode=center,guard_texels=0 либо опустить оба поля. Ненулевая дисторсия камер для этого исследовательского варианта запрещена. Это conservative radial-range approximation, которая может обрезать полезную границу; качество требует парного сравнения, а не оценки только исчезнувших ghosts.
+
+Экспериментальный `bilinear_radial_v1` guard0/1 прошёл oracle/parity checks, но потерял большинство видимых target pixels в16-case pilot. Для обычной работы сохранён default `center`; результаты и команды независимого audit: [[validation/FILTER_VISIBILITY]].
