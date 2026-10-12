@@ -2661,3 +2661,68 @@ F=\operatorname{clip}_{[0,1]}\left(\sum_c C_{c,0}\right).
 Прошли C++ fusion GTest7/7, CTest render_fusion_parity/fusion_boundary2/2 и independent correspondence controls9/9. Новый integration control использует отличающиеся RGB второго manifest frame, проверяет timestamp/paths/hashes,6 color cases и отказ malformed/out-of-range индексов до создания output. Native constant-field control проверяет zero fine bands/known coarse values и reset; legacy carrier/full-composition/SV01 regression сохранены. Первый sandbox IPC bind отказ отмечен в validation report; повтор с разрешённым IPC успешен. Read-only audit воспроизводится побитно.
 
 Опыт показывает, что seam/pyramid mixing при неизменной carrier geometry не восстановило expected target proxy в этих60 условиях. Это не утверждение о невозможности любого метода сшивки и не generalization на natural objects. Следующие проверки — source four-texel footprint/resampling mismatch, новые hybrid proxy coordinates и mitigation height/occlusion failure с независимым truth. GPU-only contributions, другие solvers/scenes и bounded server/library diagnostics, physical/Aurora trials остаются отдельными задачами.
+
+## 4.68. Площадь билинейной выборки: почему точечный ray не описывает RGB
+
+### 4.68.1. Проверяемая гипотеза и независимый контроль
+
+В §4.66 остались1164 pixels с magenta RGB, но без target hit у любого допустимого source ray. Проверка §4.67 показала, что seam/multiband не возвращают target в ожидаемое место, и выделила нелокальные вклады. Перед изменением геометрии нужно отделить footprint исходной выборки от ошибки соответствия. В данном опыте проверяется более узкий вопрос: есть ли target hit у центральных лучей четырёх texel, реально участвующих в bilinear sample?
+
+Зафиксированы все1164 прежних mismatches и320 controls — первые32 row-major target-hit pixels каждого carrier/frame. Inputs, UV/status, calibration, native output и scene recipe прежние. Новый Blender capture воспроизвёл центральные ray identities точно, hit coordinates — с tolerance1e−5m. Эта проверка не является допуском для правильности carrier point. Полная процедура и SHA256: [[validation/SOURCE_FOOTPRINT]], plan `configs/research/source-footprint-plan.json`, baseline `source_footprint_v1.json`.
+
+```plantuml
+@startuml
+participant "Frozen native UV/status" as UV
+participant "Four-texel footprint" as Foot
+participant "Independent Blender scene" as Scene
+participant "Actual source RGB" as RGB
+participant "Read-only audit" as Audit
+UV -> Foot : floor UV, fractions, clamp
+Foot -> Scene : rays through four integer centers
+Scene --> Audit : texel surface kinds
+Foot -> RGB : texel coordinates and positive weights
+RGB --> Audit : weighted RGB
+UV -> Scene : repeat archived central ray
+Scene --> Audit : exact kind / hit tolerance control
+Audit -> Audit : separate neighbor support from residual filtered color
+@enduml
+```
+
+Рисунок4.105 — Независимое разделение source sample, четырёх texel centers и RGB. Surface labels не выводятся из цвета.
+
+Для fractional coordinates $(a,b)$ используются веса $(1-a)(1-b)$, $a(1-b)$, $(1-a)b$, $ab$. Только положительные веса участвуют в support; пограничные centers clamp к sensor. Из actual source texels повторно собрана билинейная RGB выборка; расхождение с прежним независимым sampler не превышает2e−15 normalized RGB. Числа относятся к interpolation исходного sRGB sample; дальнейшая linear-light fusion остаётся прежней (§4.66).
+
+### 4.68.2. Измеренные результаты
+
+| Кадр | Носитель | Расхождения | Есть target texel с весом > 0 | Нет target среди texel centers |
+|---:|---|---:|---:|---:|
+| 0 | plane | 192 | 164 | 28 |
+| 0 | bowl | 131 | 117 | 14 |
+| 0 | dome_floor | 192 | 163 | 29 |
+| 0 | cylinder_floor | 192 | 164 | 28 |
+| 0 | cube_floor | 192 | 164 | 28 |
+| 1 | plane | 51 | 49 | 2 |
+| 1 | bowl | 61 | 56 | 5 |
+| 1 | dome_floor | 51 | 49 | 2 |
+| 1 | cylinder_floor | 51 | 49 | 2 |
+| 1 | cube_floor | 51 | 49 | 2 |
+
+Таблица4.69 — Все прежние point-ray/RGB mismatches, без удаления остатка или нового component filtering. Повторяющиеся carriers/два frames коррелированы и не являются независимыми scene trials.
+
+![Четыре texel: соседняя поддержка и остаток](figures/experiments/source_footprint_counts.png)
+
+Рисунок4.106 — 1024 mismatch pixels имеют положительно взвешенный соседний target texel;140 остаются без target texel-center hit. Это классификация поддержки выборки, не улучшение изображения.
+
+1024/1164=87.97% имеют соседний target-center support. Точечный source ray попадал в другую поверхность, но actual bilinear footprint пересекал центры texel, чьи rays выбирают target. Этот результат объясняет ошибочность интерпретации point identity как полной RGB identity; он не устанавливает причинный вклад каждого filtered RGB texel и не исправляет объект в пространстве.
+
+У140/1164=12.03% target не найден ни в одном положительно взвешенном центре texel допустимых cameras. Все эти140 samples при этом имеют положительно взвешенный magenta texel. Следовательно, residual RGB/center mismatch уже есть внутри исходного кадра. Actual cubemap→fisheye resampling и Blender pixel filtering должны быть проверены отдельно; гипотеза об antialiasing пока не подтверждена причинно. Все320 controls имеют и target-center support, и chroma support.
+
+![Actual source texels и геометрические labels](figures/experiments/source_footprint_samples.png)
+
+Рисунок4.107 — Первые row-major representatives двух групп, plane/frame0/camera3. Жёлтый крест — native UV; circles — реальные integer texel centers, подписаны kind и вес. Kind1 означает target, kind2 — road. Справа magenta RGB сохраняется у texel, чьи центральные rays выбирают road; это не новая разметка цвета как поверхности.
+
+### 4.68.3. Вывод и дальнейшая проверка
+
+Прошли11 known-answer controls, CTest1/1; повторный read-only audit воспроизводит baseline побитно. Встроенный Python Blender не содержит Pillow/SciPy, поэтому геометрический helper отделён от imports RGB audit; дополнительные пакеты в Blender не нужны. Native renderer не менялся, нового speed/quality ranking нет.
+
+Четыре texel объясняют наличие соседнего target support в значительной части прежнего остатка, но не закрывают весь resampling attribution. Следующий контроль должен связать140 residual pixels с actual cube RGB texels/weights и геометрией их pixel support, затем расширить scene truth на новые hybrid pixels. Исправление height/occlusion failure, независимые scenes и physical/Aurora validation остаются необходимыми до общего заключения.

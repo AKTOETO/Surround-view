@@ -170,3 +170,5 @@ Precision follow-up:10 Mesa native captures с прежним binary/config/inpu
 Displaced edge-feather attribution выполнен:10 прежних native captures,52720 RGB-conditioned pixels, independent Blender rays. У51556 pixels source target перекрывает carrier point, тогда как virtual surface — road;1164 point-ray/RGB mismatch сохранены. Color reconstruction max0.784 RGB8 LSB. Нового native renderer/capture нет; hybrid matched capture и mitigation ещё нужны. [[validation/DISPLACED_CORRESPONDENCE]], §4.66.
 
 Matched hybrid pilot завершён:60 conditions на прежних frames/пяти carriers, exact carrier/source parity, unchanged edge fallback. Native API сохраняет signed per-level bands; SciPy reconstruction≤1.49e−8 linear RGB, composition≤1LSB. Raw expected target overlap0 во всех60; mitigation ещё нет. CTest2/2, GTest7/7, correspondence9/9. [[validation/HYBRID_CORRESPONDENCE]], §4.67.
+
+Four-texel diagnostic follow-up выполнен без изменения native renderer:1164 mismatches,1024 neighboring target support/140 upstream RGB-center residual;320 controls,11/11 tests, CTest1/1. [[validation/SOURCE_FOOTPRINT]].

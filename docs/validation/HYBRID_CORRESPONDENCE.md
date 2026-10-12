@@ -104,3 +104,5 @@ Audit новой серии: `python3 docs/diploma/plot_hybrid_correspondence.py
 ## Следующий этап
 
 Matched hybrid attribution pilot завершён, но исправление height/occlusion failure не продемонстрировано. Следующий контроль — four-texel surface footprints и source camera resampling для сохранённых point-ray/RGB mismatches, включая новые hybrid proxy pixels. Затем проверяемая mitigation на unchanged inputs/independent truth. Другие scenes/mount seeds/optics, long clips, alpha-expansion, GPU-only contribution capture, triangle precision/coverage и bounded server/library diagnostic delivery остаются открытыми; physical/Aurora validation отсутствует.
+
+Следующий bounded four-texel контроль прежних edge mismatches выполнен: [[validation/SOURCE_FOOTPRINT]], §4.68.1024/1164 neighboring target support,140 upstream RGB-center residual. Новые hybrid domains этим опытом не классифицированы.

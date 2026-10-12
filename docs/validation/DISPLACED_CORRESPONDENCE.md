@@ -71,3 +71,5 @@ Audit новой серии: `python3 docs/diploma/plot_displaced_correspondence
 - Triangle precision/coverage, bounded server/library diagnostic delivery, независимые сцены и физический/Aurora стенд остаются открытыми.
 
 Matched hybrid640×360/800×800 follow-up выполнен: [[validation/HYBRID_CORRESPONDENCE]]. Он переиспользует ray identities только после exact source/carrier parity на прежних domains; новые hybrid proxy pixels и four-texel mismatch truth ещё требуют отдельного capture.
+
+Four-texel follow-up выполнен: [[validation/SOURCE_FOOTPRINT]], §4.68. Все1164 mismatch pixels сохранены:1024 имеют положительный neighboring target texel,140 остаются без target-center support; actual upstream resampling attribution ещё открыт.
