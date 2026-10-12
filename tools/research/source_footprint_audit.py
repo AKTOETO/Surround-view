@@ -1,9 +1,7 @@
 """Independent four-texel audit of frozen point-ray/RGB mismatches; no product renderer."""
 import json
 import numpy as np
-from PIL import Image
 from source_correspondence import sha, verified, load_product, describe
-from displaced_correspondence import bilinear_rgb, chroma_mask
 
 
 def footprint(pixels, width, height):
@@ -26,6 +24,8 @@ def selected_pixels(kinds,status,control_count):
 
 
 def collect(root,plan_path):
+    from PIL import Image
+    from displaced_correspondence import bilinear_rgb, chroma_mask
     plan=json.loads(plan_path.read_text())
     for name,digest in plan['frozen_files'].items():verified(root/name,digest)
     output=root/plan['output_root'];scene_path=output/'scene-truth.json'

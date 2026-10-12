@@ -53,7 +53,7 @@
     "docs/validation/baselines/displaced_correspondence_v1.json": "a0588e0525695b40eb937ae1cfc092dce91deff39f60cdd6172a8d26e731471c",
     "artifacts/displaced-correspondence-v1/scene-truth.json": "e383fa1ac3285725107c5ff11c4d8d34a71c998566c2b7245b2edac08404725b",
     "tools/blender/source_footprint.py": "90d55440d916bee6dbe81fd636df09a8c9d5c565fb5464e1d7f89d4b43e3989b",
-    "tools/research/source_footprint_audit.py": "f9ee44bd60a511b4c8899f8f3c73131d1abab043f177b9e9dac21eb54d9d90e7"
+    "tools/research/source_footprint_audit.py": "eea4ad3a609aaa5949c9eb4562be50a28caf6d9fb18477442ebbad1817e2c128"
   },
   "limitations": [
     "All 1164 earlier RGB/point-ray mismatches plus first32 row-major point-target controls per case; output-conditioned sample, not recall or independent quality ranking",
