@@ -1078,3 +1078,14 @@ Read-only новых hybrid domains: `MPLCONFIGDIR=/tmp/sv-matplotlib python3 do
 Native commands и provenance supplied visibility опыта: [[validation/SOURCE_VISIBILITY#Проверки и воспроизведение]]. Independent audit/plot: `MPLCONFIGDIR=/tmp/sv-matplotlib python3 docs/diploma/plot_source_visibility.py --output-report artifacts/source-visibility-v1/reaudit.json`. Требуются archived raw inputs/products и соответствующие source hashes.
 
 Read-only residual audit прежних source-visibility outputs: `MPLCONFIGDIR=/tmp/sv-matplotlib python3 docs/diploma/plot_visibility_residual.py --output-report artifacts/visibility-residual-v1/reaudit.json`. Нужны archived scene-ray arrays и pinned native/input files. Blender capture-команда с явным preload research module, выборка и ограничения: [[validation/VISIBILITY_RESIDUAL#Воспроизведение и проверки]]. Это диагностический audit/plot, нового режима сервера он не добавляет.
+
+Экспериментальный footprint-aware вариант supplied-box control:
+
+```json
+"source_occlusion_box": {
+  "min_m": [2.2, 2.1, 0.6], "max_m": [2.6, 2.5, 1.0],
+  "tolerance_m": 0.02, "mode": "bilinear_radial_v1", "guard_texels": 0
+}
+```
+
+Через `Client::configure_surface` можно переключать mode и guard без перезапуска. Guard0 проверяет четыре положительных bilinear texels; guard1 расширяет проверку до4×4 соседей. Для возврата к прежнему predicate передать mode=center,guard_texels=0 либо опустить оба поля. Ненулевая дисторсия камер для этого исследовательского варианта запрещена. Это conservative radial-range approximation, которая может обрезать полезную границу; качество требует парного сравнения, а не оценки только исчезнувших ghosts.

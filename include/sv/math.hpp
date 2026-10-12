@@ -58,6 +58,8 @@ struct SourceOcclusionBox
     bool enabled = false;
     Vec3 minimum, maximum;
     double tolerance = .02;
+    std::string mode = "center";
+    int guard_texels = 0;
 };
 
 struct Surface

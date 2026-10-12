@@ -1,5 +1,6 @@
 #include "sv/render_inspection.hpp"
 #include "sv/renderer.hpp"
+#include <algorithm>
 #include <cmath>
 #include <gtest/gtest.h>
 
@@ -249,6 +250,72 @@ TEST(SourceInspection, SuppliedBoxRejectsOnlyBlockedSourceSegmentsAndRestoresOut
     }
     EXPECT_GT(rejected, 0);
     EXPECT_GT(retained, 0);
+    int footprint_rejections = rejected;
+    for (int guard : {0, 1})
+    {
+        surface.source_occlusion.mode = "bilinear_radial_v1";
+        surface.source_occlusion.guard_texels = guard;
+        renderer.set_surface(surface);
+        renderer.render(frames, config.view, &after, {true, true});
+        int current_rejections = 0;
+        for (int camera = 0; camera < 4; ++camera)
+        {
+            const auto inverse = sv::inverse_rigid(config.cameras[camera].T);
+            const auto origin = sv::transform(inverse, {0, 0, 0});
+            const auto &c = config.cameras[camera];
+            for (int y = 0; y < config.height; ++y)
+            {
+                for (int x = 0; x < config.width; ++x)
+                {
+                    const int original = before.source_projections[camera].status.at<uchar>(y, x);
+                    const int status = after.source_projections[camera].status.at<uchar>(y, x);
+                    if (original != 1)
+                    {
+                        EXPECT_EQ(status, original);
+                        continue;
+                    }
+                    const auto p = before.carrier_positions.at<cv::Vec3f>(y, x);
+                    const sv::Vec3 point{p[0], p[1], p[2]};
+                    const double range = std::sqrt(sv::dot(point - origin, point - origin));
+                    const auto uv = before.source_projections[camera].pixels.at<cv::Vec2f>(y, x);
+                    const double bx = std::floor(uv[0]), by = std::floor(uv[1]);
+                    const double fx = uv[0] - bx, fy = uv[1] - by;
+                    bool blocked = face_occlusion(origin, point, surface.source_occlusion);
+                    for (int dy = -guard; dy <= 1 + guard; ++dy)
+                    {
+                        for (int dx = -guard; dx <= 1 + guard; ++dx)
+                        {
+                            if (guard == 0 &&
+                                (dx == 0 ? 1 - fx : fx) * (dy == 0 ? 1 - fy : fy) <= 0)
+                            {
+                                continue;
+                            }
+                            const double u = std::clamp(bx + dx, 0., double(c.width - 1));
+                            const double v = std::clamp(by + dy, 0., double(c.height - 1));
+                            const double a = (u - c.cx) / c.fx, b = (v - c.cy) / c.fy;
+                            const double theta = std::hypot(a, b);
+                            const double scale = theta > 1e-14 ? std::sin(theta) / theta : 1;
+                            const auto ray =
+                                sv::transform(inverse, {a * scale, b * scale, std::cos(theta)}) -
+                                origin;
+                            auto interior = surface.source_occlusion;
+                            interior.minimum = interior.minimum + sv::Vec3{1e-5, 1e-5, 1e-5};
+                            interior.maximum = interior.maximum - sv::Vec3{1e-5, 1e-5, 1e-5};
+                            blocked |= face_occlusion(origin, origin + ray * range, interior);
+                        }
+                    }
+                    EXPECT_EQ(status, blocked ? 7 : 1)
+                        << "guard=" << guard << " camera=" << camera << " pixel=" << x << "," << y
+                        << " uv=" << uv << " point=" << p;
+                    current_rejections += status == 7;
+                }
+            }
+        }
+        EXPECT_GE(current_rejections, footprint_rejections);
+        footprint_rejections = current_rejections;
+    }
+    surface.source_occlusion.mode = "center";
+    surface.source_occlusion.guard_texels = 0;
     // A carrier on the front-facing box top must not self-occlude at its endpoint.
     surface.reference_height = 2;
     renderer.set_surface(surface);
@@ -259,6 +326,8 @@ TEST(SourceInspection, SuppliedBoxRejectsOnlyBlockedSourceSegmentsAndRestoresOut
         EXPECT_GT(cv::countNonZero(source.status == 1), 0);
     }
     surface.reference_height = 0;
+    surface.source_occlusion.mode = "bilinear_radial_v1";
+    surface.source_occlusion.guard_texels = 1;
     renderer.set_surface(surface);
     auto fusion = config.fusion;
     fusion.mode = "multi_band";
@@ -280,7 +349,7 @@ TEST(SourceInspection, SuppliedBoxRejectsOnlyBlockedSourceSegmentsAndRestoresOut
             }
         }
     }
-    EXPECT_EQ(hybrid_rejections, rejected);
+    EXPECT_EQ(hybrid_rejections, footprint_rejections);
     renderer.set_fusion(config.fusion);
     renderer.set_surface(config.surface);
     EXPECT_EQ(plain.pixels, renderer.render(frames, config.view).pixels);

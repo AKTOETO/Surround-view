@@ -223,6 +223,8 @@ class IntegrationTests(unittest.TestCase):
                 surfaces.append(dict(flat, local_support_patch=patch))
                 occluder = dict(min_m=[2.2, 2.1, .6], max_m=[2.6, 2.5, 1.], tolerance_m=.02)
                 surfaces.append(dict(flat, source_occlusion_box=occluder))
+                surfaces.append(dict(flat, source_occlusion_box=dict(occluder,
+                    mode='bilinear_radial_v1', guard_texels=1)))
                 catalog = client.command('surface_catalog')
                 self.assertTrue(catalog['accepted'])
                 self.assertEqual(catalog['surface_catalog']['rectangular_reference_height']['field'],
@@ -246,6 +248,8 @@ class IntegrationTests(unittest.TestCase):
                 for rev, surface in [('0', original_surface), (revision, {'type': 'missing'}),
                                      (revision, dict(flat, local_support_patch=dict(patch, transition_m=0))),
                                      (revision, dict(flat, local_support_patch=dict(patch, center_x_m=100))),
+                                     (revision, dict(flat, source_occlusion_box=dict(occluder, mode='unknown'))),
+                                     (revision, dict(flat, source_occlusion_box=dict(occluder, guard_texels=1))),
                                      (revision, dict(flat, source_occlusion_box=dict(occluder, tolerance_m=-1))),
                                      (revision, dict(flat, source_occlusion_box=dict(occluder, max_m=[0, 0, 0]))),
                                      (revision, dict(flat, reference_height_m=-1)),

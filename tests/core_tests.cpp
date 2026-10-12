@@ -142,6 +142,20 @@ int main(int argc, char **argv)
             occlusion_config.as_object()["surface"].as_object()["source_occlusion_box"] = invalid;
             rejects([&] { sv::parse_config(occlusion_config); }, "invalid source occlusion bounds");
         }
+        occluder["mode"] = "bilinear_radial_v1";
+        occluder["guard_texels"] = 1;
+        occlusion_config.as_object()["surface"].as_object()["source_occlusion_box"] = occluder;
+        check(sv::parse_config(occlusion_config).surface.source_occlusion.guard_texels == 1,
+              "footprint visibility schema");
+        occluder["guard_texels"] = 2;
+        occlusion_config.as_object()["surface"].as_object()["source_occlusion_box"] = occluder;
+        rejects([&] { sv::parse_config(occlusion_config); }, "excess footprint guard rejected");
+        occluder["guard_texels"] = 0;
+        occlusion_config.as_object()["surface"].as_object()["source_occlusion_box"] = occluder;
+        auto &camera_array = occlusion_config.as_object()["cameras"].as_array();
+        camera_array[0].as_object()["projection"].as_object()["k"].as_array()[0] = .001;
+        rejects([&] { sv::parse_config(occlusion_config); },
+                "unsupported footprint optics rejected");
         const auto floor = sv::make_floor_mesh(12, 8, 24);
         check(floor.indices.size() == (24 * 3 + 7 * 24 * 6), "disk floor triangulation");
         for (size_t i = 0; i < floor.indices.size(); i += 3)

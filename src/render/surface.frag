@@ -17,37 +17,70 @@ uniform int inspection_regions;
 uniform float reference_height;
 uniform int inspection_camera;
 uniform float edge_width_px, angle_power;
-uniform int source_occlusion_enabled;
+uniform int source_occlusion_enabled, source_occlusion_policy, source_guard_texels;
 uniform vec3 source_box_min, source_box_max, camera_origin[4];
 uniform float source_occlusion_tolerance;
 
 // Finite segment / opaque AABB. Parameter t is a fraction of camera-to-carrier distance.
-bool source_occluded(int camera)
+bool segment_occluded(vec3 origin, vec3 endpoint, float inset_m)
 {
-    if (source_occlusion_enabled == 0) { return false; }
-    vec3 origin = camera_origin[camera];
-    vec3 direction = world - origin;
+    vec3 direction = endpoint - origin;
     float distance_m = length(direction);
     if (distance_m <= source_occlusion_tolerance) { return false; }
+    vec3 lo = source_box_min + vec3(inset_m), hi = source_box_max - vec3(inset_m);
+    if (any(greaterThanEqual(lo, hi))) { return false; }
     float entry = 0.0, exit = 1.0;
     for (int axis = 0; axis < 3; ++axis)
     {
         if (abs(direction[axis]) < 1e-8)
         {
-            if (origin[axis] < source_box_min[axis] || origin[axis] > source_box_max[axis])
+            if (origin[axis] < lo[axis] || origin[axis] > hi[axis])
             {
                 return false;
             }
         }
         else
         {
-            float a = (source_box_min[axis] - origin[axis]) / direction[axis];
-            float b = (source_box_max[axis] - origin[axis]) / direction[axis];
+            float a = (lo[axis] - origin[axis]) / direction[axis];
+            float b = (hi[axis] - origin[axis]) / direction[axis];
             entry = max(entry, min(a, b));
             exit = min(exit, max(a, b));
         }
     }
     return entry <= exit && entry < 1.0 - source_occlusion_tolerance / distance_m;
+}
+
+// Conservative candidate: neighbouring rays terminate at the central carrier radial range.
+// Parser restricts this inverse to zero-distortion equidistant optics.
+bool source_occluded(int camera, vec2 px)
+{
+    if (source_occlusion_enabled == 0) { return false; }
+    vec3 origin = camera_origin[camera];
+    if (segment_occluded(origin, world, 0.0)) { return true; }
+    if (source_occlusion_policy == 0) { return false; }
+    vec2 base = floor(px), fraction = px - base;
+    float distance_m = length(world - origin);
+    for (int y = -1; y <= 2; ++y)
+    {
+        for (int x = -1; x <= 2; ++x)
+        {
+            if (x < -source_guard_texels || x > 1 + source_guard_texels ||
+                y < -source_guard_texels || y > 1 + source_guard_texels) { continue; }
+            if (source_guard_texels == 0)
+            {
+                float weight = (x == 0 ? 1.0 - fraction.x : fraction.x) *
+                               (y == 0 ? 1.0 - fraction.y : fraction.y);
+                if (weight <= 0.0) { continue; }
+            }
+            vec2 texel = clamp(base + vec2(x, y), vec2(0), sizes[camera] - 1.0);
+            vec2 ab = (texel - intrinsics[camera].zw) / intrinsics[camera].xy;
+            float theta = length(ab);
+            float scale = theta > 1e-12 ? sin(theta) / theta : 1.0;
+            vec3 ray = transpose(mat3(pose[camera])) * vec3(ab * scale, cos(theta));
+            if (segment_occluded(origin, origin + ray * distance_m, 1e-5)) { return true; }
+        }
+    }
+    return false;
 }
 
 vec3 camera_color(int i)
@@ -104,7 +137,7 @@ int source_projection(int i, out vec2 px, out float theta)
     {
         return 5;
     }
-    return source_occluded(i) ? 7 : 1;
+    return source_occluded(i, px) ? 7 : 1;
 }
 
 vec4 pack_float(float value)

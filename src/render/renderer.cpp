@@ -512,6 +512,9 @@ Image Renderer::render(const FrameSet &set, const View &view, RenderInspection *
     }
     const auto &box = c.surface.source_occlusion;
     glUniform1i(glGetUniformLocation(i.prog, "source_occlusion_enabled"), box.enabled);
+    glUniform1i(glGetUniformLocation(i.prog, "source_occlusion_policy"),
+                box.mode == "center" ? 0 : 1);
+    glUniform1i(glGetUniformLocation(i.prog, "source_guard_texels"), box.guard_texels);
     glUniform3f(glGetUniformLocation(i.prog, "source_box_min"), box.minimum.x, box.minimum.y,
                 box.minimum.z);
     glUniform3f(glGetUniformLocation(i.prog, "source_box_max"), box.maximum.x, box.maximum.y,

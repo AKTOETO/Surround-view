@@ -526,7 +526,8 @@ Config parse_config(const boost::json::value &value)
         if (const auto *value = s.if_contains("source_occlusion_box"))
         {
             const auto &box = value->as_object();
-            keys(box, {"min_m", "max_m", "tolerance_m"}, "surface.source_occlusion_box");
+            keys(box, {"min_m", "max_m", "tolerance_m"}, "surface.source_occlusion_box",
+                 {"mode", "guard_texels"});
             const auto &lo = box.at("min_m").as_array();
             const auto &hi = box.at("max_m").as_array();
             require(lo.size() == 3 && hi.size() == 3, "source_occlusion_box: expected XYZ bounds");
@@ -535,6 +536,29 @@ Config parse_config(const boost::json::value &value)
             b.minimum = {num(lo[0]), num(lo[1]), num(lo[2])};
             b.maximum = {num(hi[0]), num(hi[1]), num(hi[2])};
             b.tolerance = num(box.at("tolerance_m"));
+            if (const auto *mode = box.if_contains("mode"))
+            {
+                b.mode = str(*mode);
+            }
+            if (const auto *guard = box.if_contains("guard_texels"))
+            {
+                b.guard_texels = integer(*guard, 0, 1);
+            }
+            require(b.mode == "center" || b.mode == "bilinear_radial_v1",
+                    "source_occlusion_box.mode: unknown policy");
+            require(b.mode != "center" || b.guard_texels == 0,
+                    "source_occlusion_box: guard_texels requires bilinear_radial_v1");
+            if (b.mode == "bilinear_radial_v1")
+            {
+                for (const auto &camera : c.cameras)
+                {
+                    for (double k : camera.k)
+                    {
+                        require(k == 0,
+                                "bilinear_radial_v1 requires zero-distortion equidistant cameras");
+                    }
+                }
+            }
             for (int axis = 0; axis < 3; ++axis)
             {
                 require(num(hi[axis]) > num(lo[axis]) && std::abs(num(lo[axis])) <= 100 &&
