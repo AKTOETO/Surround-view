@@ -16,6 +16,7 @@ from displaced_correspondence import bilinear_rgb,chroma_mask
 from hybrid_correspondence import reconstruct_rgba
 from source_footprint_audit import footprint,selected_pixels
 from cube_footprint_audit import cube_sample,cube_ray,fisheye_ray
+from hybrid_domain_audit import new_domain,support_metrics
 
 
 class SourceCorrespondenceTests(unittest.TestCase):
@@ -129,6 +130,30 @@ class SourceCorrespondenceTests(unittest.TestCase):
         np.testing.assert_allclose(fisheye_ray([10,20],optics),[0,0,1])
         np.testing.assert_allclose(fisheye_ray([10+50*np.pi,20],optics),[1,0,0],atol=1e-15)
         with self.assertRaises(ValueError):fisheye_ray([10,20],dict(optics,alpha=.1))
+
+    def test_new_hybrid_domain_excludes_both_prior_domains(self):
+        proxy=np.array([[True,True,True,False]])
+        actual=new_domain(proxy,np.array([[True,False,False,False]]),np.array([[False,True,False,False]]))
+        np.testing.assert_array_equal(actual,[[False,False,True,False]])
+        with self.assertRaises(ValueError):new_domain(proxy,proxy[:,:2],proxy)
+
+    def test_hybrid_support_distinguishes_zero_texel_weight_invalid_and_nonlocal(self):
+        kinds=np.array([[1,1],[2,2],[2,2]])
+        valid=np.array([[True,False],[True,True],[True,False]])
+        texels=np.zeros((3,2,4),int);texels[1,0,0]=1;texels[2,0,0]=1
+        tw=np.zeros((3,2,4));tw[1,0,0]=.5 # zero-weight target texel in last row excluded
+        weights=np.array([[0.,0.],[.5,.5],[1.,0.]])
+        contributions=np.zeros((3,2,3));contributions[0,0]=.1;contributions[2,1]=-.01
+        m=support_metrics(kinds,texels,tw,valid,weights,contributions,1e-6)
+        self.assertEqual(m['local_target_ray_pixels'],1)
+        self.assertEqual(m['positive_local_fusion_target_ray_pixels'],0)
+        self.assertEqual(m['source_target_texel_pixels'],1)
+        self.assertEqual(m['no_center_but_target_texel_pixels'],1)
+        self.assertEqual(m['no_target_center_or_texel_pixels'],1)
+        self.assertEqual(m['nonlocal_invalid_camera_pixels'],1)
+        self.assertEqual(m['zero_local_weight_contributing_pixels'],2)
+        empty=support_metrics(kinds[:0],texels[:0],tw[:0],valid[:0],weights[:0],contributions[:0],1e-6)
+        self.assertEqual(empty['pixels'],0)
 
     def test_signed_contribution_composition_clips_then_applies_visibility_and_ego(self):
         contributions = np.zeros((1, 3, 4, 3), np.float32)
