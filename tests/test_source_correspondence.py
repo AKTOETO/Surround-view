@@ -18,9 +18,17 @@ from source_footprint_audit import footprint,selected_pixels
 from cube_footprint_audit import cube_sample,cube_ray,fisheye_ray
 from hybrid_domain_audit import new_domain,support_metrics
 from reference_height import mask_scores
+from local_support import vehicle_center
 
 
 class SourceCorrespondenceTests(unittest.TestCase):
+    def test_supplied_local_center_uses_vehicle_frame(self):
+        pose = np.array([[0, -1, 0, 4], [1, 0, 0, -3], [0, 0, 1, 1], [0, 0, 0, 1]])
+        np.testing.assert_allclose(vehicle_center([2, -2, 4], pose), [1, 2, 3])
+        pose = np.eye(4)
+        pose[0, 3] = .4
+        np.testing.assert_allclose(vehicle_center([2.4, 2.3, .8], pose), [2, 2.3, .8])
+
     def test_projection_known_axis_angle_and_behind(self):
         camera = {'T_camera_from_vehicle': np.eye(4).tolist(),
                   'resolution': {'width': 100, 'height': 100},

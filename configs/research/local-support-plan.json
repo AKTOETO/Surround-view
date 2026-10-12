@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "scope": "native_supplied_local_height_control_not_RGB_depth_estimation",
+  "frames": [
+    0,
+    1
+  ],
+  "variants": [
+    "plane",
+    "global_080",
+    "local_080",
+    "local_100"
+  ],
+  "truth_path": "artifacts/parallax-sensor-inputs-v1/rig101-near-z080/seed101-capture/paired_truth.json",
+  "manifest": "artifacts/parallax-sensor-inputs-v1/rig101-near-z080/seed101-inputs/manifest.json",
+  "manifest_sha256": "298e789999336b13a91dcc5aa573c785aa43afcf9d553156f53519533cefd7ec",
+  "reference_root": "artifacts/source-correspondence-controls-v1/rig101-near-z080",
+  "config_root": "artifacts/local-support-configs-v1",
+  "output_root": "artifacts/local-support-v1",
+  "binary_sha256": "66425a424ac336621100db4a8b835510e2befe5108eba04266bc2dca1973182d",
+  "source_revision": "37f26348327c83adb40d7c18eaacac203240b865",
+  "chroma_threshold": 0.15,
+  "supplied_geometry": {
+    "source": "Previously explored Blender fixture nominal target center and size, world-to-vehicle with saved pose",
+    "world_center_m": [
+      2.4,
+      2.3,
+      0.8
+    ],
+    "plateau_half_extent_m": 0.2,
+    "transition_m": 0.2,
+    "heights_m": [
+      0.8,
+      1.0
+    ],
+    "selection": "Center height and top-face height, chosen before local capture; no data-driven search"
+  },
+  "global_output_sha256": {
+    "0": "e156b2705d76c052c69ea5eabb0236672168bcf21633be80062915fd77efb0bc",
+    "1": "4dc3068fe0c3c9618fd6248852c8e9cdc01772a7292c94e8e82b15d700395d17"
+  },
+  "frozen_files": {
+    "artifacts/parallax-sensor-inputs-v1/rig101-near-z080/seed101-capture/paired_truth.json": "cc9c5f54261a19501514e40d9800cfadee1f37993881e4afc90605bd737b18ab",
+    "artifacts/parallax-sensor-inputs-v1/rig101-near-z080/seed101-inputs/manifest.json": "298e789999336b13a91dcc5aa573c785aa43afcf9d553156f53519533cefd7ec",
+    "tools/research/local_support.py": "36fda14a36d051bc611531622ed67543859dc9f5a33197d50aaa7fb26e36ac96",
+    "tools/research/reference_height.py": "9741112a0a68137105c14e27233ed10b4359ef1bcdcac451ad3ba5d239d9a88a",
+    "tools/research/source_correspondence.py": "723e6899ee98327454c77636663ae61e3533617e0bd9b848543520230b47fbef",
+    "tools/research/source_correspondence_controls.py": "61fbc71b0bd604cb3e89df9dbcc4adc368f8df77d58b73943e33e5a8f2e58935",
+    "tools/research/displaced_correspondence.py": "ac55ca8cdace67684549b7132fbf6c60a6a33babe069e703e5021df6685bf65f",
+    "src/core/math.cpp": "79ea706e21efa39605ef63709e5585199e13c79952c38bc64995df2a871b8f5e",
+    "src/core/config.cpp": "563832315fed8ccbdc3674c2cfe6fffdfd2097dfe597a7a63dee029d59aba00e",
+    "include/sv/math.hpp": "d7adcae1641101e215522e3f420fa256bb92c9f890d8493b070017b52034c838",
+    "src/render/surface.frag": "450f4f70b2fd780c8e9aeb67cc577a0fa8323fd1001c9da4b0983cb277458762",
+    "src/render/renderer.cpp": "7aa3acfd729aa6ea0f3cf499a00e0bb0d3b86ee782e16b07e5356517abcfc2ee",
+    "tests/correspondence_probe.cpp": "724cf59de2a95cff20e3c20c62ab072b21d33c783382820972ebab0ac2a71865",
+    "docs/diploma/plot_local_support.py": "7ea6617024b67d21501b256b2419fb141a8f08908e6ad1a2d73450a52af67f66",
+    "artifacts/source-correspondence-controls-v1/rig101-near-z080/frame0/direct-points.npy": "747120cb53ffca668c97be6818e1f4dc2317a515b977a2807b746790d7fae901",
+    "artifacts/source-correspondence-controls-v1/rig101-near-z080/frame0/native/plane/output.rgba": "3a062c73511aa9d237ac2b398cccc0470ded29a31d7ceb9401ae66611bca2418",
+    "artifacts/local-support-configs-v1/frame0-plane.json": "f32913f89f55faf15b829523ede1a87df554216df1e99d4d86677c39a4825585",
+    "artifacts/local-support-configs-v1/frame0-global_080.json": "55e54724156b535ed5d038e2012ed42321b1b67ba45903cf32a82c0d83ee240a",
+    "artifacts/local-support-configs-v1/frame0-local_080.json": "420329e346856aca55ebb3646ba24b8f91a30fbed8c3c8ff307c21e283c4e41b",
+    "artifacts/local-support-configs-v1/frame0-local_100.json": "07f0ec5c349857facddbc09209b3cdde1ed2c071b7ea44d2460bb6fa99c47e1a",
+    "artifacts/source-correspondence-controls-v1/rig101-near-z080/frame1/direct-points.npy": "4d235fa79fb9ff020ce90d6aa8af7cb389064960ef66bf73b58d3554e1187050",
+    "artifacts/source-correspondence-controls-v1/rig101-near-z080/frame1/native/plane/output.rgba": "b7df8a736d5747beede4ef3b2fad76a3c4e3dd68d05176b99a39b69115f8346c",
+    "artifacts/local-support-configs-v1/frame1-plane.json": "f32913f89f55faf15b829523ede1a87df554216df1e99d4d86677c39a4825585",
+    "artifacts/local-support-configs-v1/frame1-global_080.json": "55e54724156b535ed5d038e2012ed42321b1b67ba45903cf32a82c0d83ee240a",
+    "artifacts/local-support-configs-v1/frame1-local_080.json": "ab81773b8a3d2636865e330e99f20520588967f22cea82a5632d7773488326a6",
+    "artifacts/local-support-configs-v1/frame1-local_100.json": "786f86db68ffa137b6ab989562e06a64e5467c537dfa2ed50075d837dfa26707"
+  },
+  "limitations": [
+    "Known scene location, size, pose and height supplied; no RGB-derived estimate or general-purpose mitigation",
+    "Single fixture, two correlated frames, edge_feather, true calibration; center/top-face heights, plateau/transition chosen before capture",
+    "Single-valued triangulated height field cannot reproduce floating cube underside or vertical sidewalls; no depth-aware source visibility",
+    "Raw chroma proxy includes all outside pixels, not independent semantic segmentation; fixed road ROI includes uncovered pixels",
+    "Different local mesh topology can alter raster precision outside footprint; no equal-budget timing or natural-object holdout/physical/Aurora trials"
+  ]
+}
