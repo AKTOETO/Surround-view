@@ -225,12 +225,16 @@ class IntegrationTests(unittest.TestCase):
                 surfaces.append(dict(flat, source_occlusion_box=occluder))
                 surfaces.append(dict(flat, source_occlusion_box=dict(occluder,
                     mode='bilinear_radial_v1', guard_texels=1)))
+                surfaces.append(dict(flat, source_occlusion_box=dict(occluder,
+                    mode='bilinear_box_surface_v1', guard_texels=1)))
                 catalog = client.command('surface_catalog')
                 self.assertTrue(catalog['accepted'])
                 self.assertEqual(catalog['surface_catalog']['rectangular_reference_height']['field'],
                                  'reference_height_m')
                 self.assertEqual(catalog['surface_catalog']['rectangular_local_support']['frame'], 'vehicle')
                 self.assertEqual(catalog['surface_catalog']['rectangular_source_occlusion']['frame'], 'vehicle')
+                self.assertIn('bilinear_box_surface_v1',
+                    catalog['surface_catalog']['rectangular_source_occlusion']['modes'])
                 builds = int(header['mesh_build_count'])
                 for surface in surfaces:
                     ack = client.command('configure_surface', base_config_revision=revision,

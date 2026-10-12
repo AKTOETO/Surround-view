@@ -147,6 +147,11 @@ int main(int argc, char **argv)
         occlusion_config.as_object()["surface"].as_object()["source_occlusion_box"] = occluder;
         check(sv::parse_config(occlusion_config).surface.source_occlusion.guard_texels == 1,
               "footprint visibility schema");
+        occluder["mode"] = "bilinear_box_surface_v1";
+        occlusion_config.as_object()["surface"].as_object()["source_occlusion_box"] = occluder;
+        check(sv::parse_config(occlusion_config).surface.source_occlusion.mode ==
+                  "bilinear_box_surface_v1",
+              "box-surface visibility schema");
         occluder["guard_texels"] = 2;
         occlusion_config.as_object()["surface"].as_object()["source_occlusion_box"] = occluder;
         rejects([&] { sv::parse_config(occlusion_config); }, "excess footprint guard rejected");

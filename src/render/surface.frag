@@ -50,7 +50,18 @@ bool segment_occluded(vec3 origin, vec3 endpoint, float inset_m)
     return entry <= exit && entry < 1.0 - source_occlusion_tolerance / distance_m;
 }
 
-// Conservative candidate: neighbouring rays terminate at the central carrier radial range.
+// Known supplied box surface, with a fixed numerical membership band (not scene uncertainty).
+bool on_source_box_surface(vec3 point)
+{
+    const float epsilon_m = 1e-5;
+    if (any(lessThan(point, source_box_min - vec3(epsilon_m))) ||
+        any(greaterThan(point, source_box_max + vec3(epsilon_m)))) { return false; }
+    vec3 face_distance = min(abs(point - source_box_min), abs(point - source_box_max));
+    return min(face_distance.x, min(face_distance.y, face_distance.z)) <= epsilon_m;
+}
+
+// Neighbouring rays terminate at the central carrier radial range.
+// Policy2 preserves a visible carrier endpoint on the supplied box itself.
 // Parser restricts this inverse to zero-distortion equidistant optics.
 bool source_occluded(int camera, vec2 px)
 {
@@ -58,6 +69,8 @@ bool source_occluded(int camera, vec2 px)
     vec3 origin = camera_origin[camera];
     if (segment_occluded(origin, world, 0.0)) { return true; }
     if (source_occlusion_policy == 0) { return false; }
+    // Never bypass central-ray occlusion: hidden faces remain rejected.
+    if (source_occlusion_policy == 2 && on_source_box_surface(world)) { return false; }
     vec2 base = floor(px), fraction = px - base;
     float distance_m = length(world - origin);
     for (int y = -1; y <= 2; ++y)

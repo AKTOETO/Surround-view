@@ -544,18 +544,20 @@ Config parse_config(const boost::json::value &value)
             {
                 b.guard_texels = integer(*guard, 0, 1);
             }
-            require(b.mode == "center" || b.mode == "bilinear_radial_v1",
+            require(b.mode == "center" || b.mode == "bilinear_radial_v1" ||
+                        b.mode == "bilinear_box_surface_v1",
                     "source_occlusion_box.mode: unknown policy");
             require(b.mode != "center" || b.guard_texels == 0,
-                    "source_occlusion_box: guard_texels requires bilinear_radial_v1");
-            if (b.mode == "bilinear_radial_v1")
+                    "source_occlusion_box: guard_texels requires a footprint policy");
+            if (b.mode != "center")
             {
                 for (const auto &camera : c.cameras)
                 {
                     for (double k : camera.k)
                     {
-                        require(k == 0,
-                                "bilinear_radial_v1 requires zero-distortion equidistant cameras");
+                        require(
+                            k == 0,
+                            "footprint visibility requires zero-distortion equidistant cameras");
                     }
                 }
             }

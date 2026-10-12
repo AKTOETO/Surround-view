@@ -325,6 +325,63 @@ TEST(SourceInspection, SuppliedBoxRejectsOnlyBlockedSourceSegmentsAndRestoresOut
         EXPECT_EQ(cv::countNonZero(source.status == 7), 0);
         EXPECT_GT(cv::countNonZero(source.status == 1), 0);
     }
+    // A supported box face uses the central-ray visibility result; neighbours must not
+    // turn that visible surface into a hole. Outside the box, radial filtering still applies.
+    const auto top_center = after;
+    for (int guard : {0, 1})
+    {
+        surface.source_occlusion.mode = "bilinear_box_surface_v1";
+        surface.source_occlusion.guard_texels = guard;
+        renderer.set_surface(surface);
+        renderer.render(frames, config.view, &after, {true, true});
+        int supported = 0, outside_rejected = 0;
+        for (int camera = 0; camera < 4; ++camera)
+        {
+            for (int y = 0; y < config.height; ++y)
+            {
+                for (int x = 0; x < config.width; ++x)
+                {
+                    const auto p = top_center.carrier_positions.at<cv::Vec3f>(y, x);
+                    const int old = top_center.source_projections[camera].status.at<uchar>(y, x);
+                    const int status = after.source_projections[camera].status.at<uchar>(y, x);
+                    if (old == 1 && p[0] >= 2 && p[0] <= 4 && p[1] >= 1.5 && p[1] <= 3.5)
+                    {
+                        EXPECT_NEAR(p[2], 2, 1e-5);
+                        EXPECT_EQ(status, 1);
+                        ++supported;
+                    }
+                    else if (old == 1 && status == 7)
+                    {
+                        ++outside_rejected;
+                    }
+                }
+            }
+        }
+        EXPECT_GT(supported, 0);
+        EXPECT_GT(outside_rejected, 0);
+    }
+    // Hidden bottom-face endpoints must still be rejected by the central ray.
+    surface.reference_height = .6;
+    renderer.set_surface(surface);
+    renderer.render(frames, config.view, &after, {true, true});
+    int hidden = 0;
+    for (int camera = 0; camera < 4; ++camera)
+    {
+        for (int y = 0; y < config.height; ++y)
+        {
+            for (int x = 0; x < config.width; ++x)
+            {
+                const auto p = after.carrier_positions.at<cv::Vec3f>(y, x);
+                if (p[0] > 2.01 && p[0] < 3.99 && p[1] > 1.51 && p[1] < 3.49 &&
+                    std::abs(p[2] - .6) < 1e-5)
+                {
+                    EXPECT_EQ(after.source_projections[camera].status.at<uchar>(y, x), 7);
+                    ++hidden;
+                }
+            }
+        }
+    }
+    EXPECT_GT(hidden, 0);
     surface.reference_height = 0;
     surface.source_occlusion.mode = "bilinear_radial_v1";
     surface.source_occlusion.guard_texels = 1;

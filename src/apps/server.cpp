@@ -933,9 +933,11 @@ int main(int argc, char **argv)
                                  {"coordinate_range_m", boost::json::array{-100., 100.}},
                                  {"tolerance_range_m", boost::json::array{0., .1}},
                                  {"optional_fields", boost::json::array{"mode", "guard_texels"}},
-                                 {"modes", boost::json::array{"center", "bilinear_radial_v1"}},
+                                 {"modes", boost::json::array{"center", "bilinear_radial_v1",
+                                                              "bilinear_box_surface_v1"}},
                                  {"guard_texels_range", boost::json::array{0, 1}},
                                  {"default_mode", "center"},
+                                 {"box_surface_membership_epsilon_m", 1e-5},
                                  {"footprint_optics", "zero-distortion equidistant only"}}},
                             {"apply", "prepare buffers then publish between render calls"}};
                     }

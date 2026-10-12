@@ -22,6 +22,7 @@ from local_support import vehicle_center
 from source_visibility import blocked_by_faces
 from visibility_residual import select_pixels
 from filter_visibility import policy_blocked
+from box_surface_visibility import on_box_surface, policy_blocked as box_policy_blocked
 
 
 class SourceCorrespondenceTests(unittest.TestCase):
@@ -39,6 +40,36 @@ class SourceCorrespondenceTests(unittest.TestCase):
         camera['projection']['k'][0] = .01
         with self.assertRaisesRegex(ValueError, 'zero-distortion'):
             policy_blocked(camera, point, [[0,0]], box)
+
+    def test_box_surface_membership_finite_faces_and_hidden_endpoint(self):
+        box = dict(min_m=[0,0,0], max_m=[1,1,1], tolerance_m=.02,
+                   mode='bilinear_box_surface_v1', guard_texels=1)
+        points = [[.5,.5,1], [.5,.5,0], [.5,.5,.5], [2,.5,1],
+                  [1.000005,.5,1], [1.00002,.5,1]]
+        np.testing.assert_array_equal(on_box_surface(points, box), [True,True,False,False,True,False])
+        camera = {'T_camera_from_vehicle': np.eye(4).tolist(),
+                  'resolution': {'width': 8, 'height': 8},
+                  'projection': {'k': [0,0,0,0], 'alpha': 0, 'fx': 1, 'fy': 1, 'cx': 0, 'cy': 0}}
+        # Camera above the box: the top is supported and visible, bottom supported but hidden.
+        camera['T_camera_from_vehicle'][2][3] = -2
+        np.testing.assert_array_equal(box_policy_blocked(camera, points[:2], [[0,0],[0,0]], box),
+                                      [False,True])
+        # A central endpoint on the box top is preserved where the radial rule rejects.
+        camera['T_camera_from_vehicle'] = np.diag([1,-1,-1,1]).tolist()
+        camera['T_camera_from_vehicle'][2][3] = 2
+        camera['resolution'] = {'width': 64, 'height': 64}
+        camera['projection']['fx'] = camera['projection']['fy'] = 30
+        narrow = dict(min_m=[1.5,-.1,1], max_m=[1.8,.1,1.2], tolerance_m=.02,
+                      mode='bilinear_box_surface_v1', guard_texels=1)
+        point = [[1.6,0,1.2]]
+        uv = [[30*np.arctan2(1.6,.8),0]]
+        self.assertTrue(policy_blocked(camera, point, uv, dict(narrow, mode='bilinear_radial_v1'))[0])
+        self.assertFalse(box_policy_blocked(camera, point, uv, narrow)[0])
+        # No exemption away from a finite face, including beyond its edge and in its interior.
+        arbitrary = [[0,0,2], [1.6,0,1.1], [2,0,1.2]]
+        radial = dict(narrow, mode='bilinear_radial_v1')
+        np.testing.assert_array_equal(box_policy_blocked(camera, arbitrary, [[.1,0]]*3, narrow),
+                                      policy_blocked(camera, arbitrary, [[.1,0]]*3, radial))
 
     def test_visibility_residual_selection_includes_all_visible_controls(self):
         rgb = np.array([[[255, 0, 255], [255, 0, 255], [0, 0, 0]],

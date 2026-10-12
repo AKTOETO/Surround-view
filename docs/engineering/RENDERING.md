@@ -221,3 +221,9 @@ Rectangular `surface.source_occlusion_box` is an optional supplied opaque AABB i
 Neighbour-ray tests use an interior inset of10µm on the supplied AABB to exclude exact edge/corner tangency from a float/double decision. The central ray retains the original closed-box rule. A box with no remaining interior contributes no neighbour rejection. This numerical convention arose in known-answer tests, before the research captures; it is distinct from the configurable metric endpoint tolerance.
 
 Экспериментальный `bilinear_radial_v1` guard0/1 прошёл oracle/parity checks, но потерял большинство видимых target pixels в16-case pilot. Для обычной работы сохранён default `center`; результаты и команды независимого audit: [[validation/FILTER_VISIBILITY]].
+
+## Supplied box surface preservation (experimental)
+
+`surface.source_occlusion_box.mode="bilinear_box_surface_v1"` adds a bounded alternative to `bilinear_radial_v1`. After the unchanged central occlusion test, a carrier endpoint within10µm (L∞ distance) of any finite supplied-box face retains the central sample. Hidden faces are still rejected. Points outside that surface band use the prior radial footprint test with `guard_texels=0/1`; zero-distortion equidistant optics are required. Interior points and infinite face extensions receive no exemption. This recognizes one known box, not arbitrary scene surfaces or RGB depth. Default remains `center`.
+
+The mode is selected through existing `Client::configure_surface` with the whole surface and current `base_config_revision`; the server validates and publishes it between renders. `surface_catalog.rectangular_source_occlusion.modes` lists it, and read-only `box_surface_membership_epsilon_m=0.00001` declares the fixed numerical band. It is separate from configurable `tolerance_m` (central endpoint bias); clients must not submit the catalog metadata as config fields. No new message/transport is introduced. A GUI control for this mode is still pending.
