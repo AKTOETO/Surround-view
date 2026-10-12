@@ -1,0 +1,119 @@
+{
+  "schema_version": 1,
+  "scope": "native_radial_footprint_visibility_pilot_with_preservation_controls",
+  "frames": [
+    0,
+    1
+  ],
+  "variants": [
+    "plane",
+    "plane_center",
+    "plane_fp0",
+    "plane_fp1",
+    "local_100",
+    "local_center",
+    "local_fp0",
+    "local_fp1"
+  ],
+  "truth_path": "artifacts/parallax-sensor-inputs-v1/rig101-near-z080/seed101-capture/paired_truth.json",
+  "manifest": "artifacts/parallax-sensor-inputs-v1/rig101-near-z080/seed101-inputs/manifest.json",
+  "manifest_sha256": "298e789999336b13a91dcc5aa573c785aa43afcf9d553156f53519533cefd7ec",
+  "reference_root": "artifacts/source-correspondence-controls-v1/rig101-near-z080",
+  "config_root": "artifacts/filter-visibility-configs-v1",
+  "output_root": "artifacts/filter-visibility-v1",
+  "binary_sha256": "e73df634efc5b2c63ca8564ccaec8ff83f8b6e31f546e9066f9cb79d492eb687",
+  "source_revision": "8274fdbf145e3cea7b303941c1911bf95d01b1f5",
+  "chroma_threshold": 0.15,
+  "global_output_sha256": {},
+  "historical_output_sha256": {
+    "plane": {
+      "0": "3a062c73511aa9d237ac2b398cccc0470ded29a31d7ceb9401ae66611bca2418",
+      "1": "b7df8a736d5747beede4ef3b2fad76a3c4e3dd68d05176b99a39b69115f8346c"
+    },
+    "plane_center": {
+      "0": "d0ba2bbacdf1da065feaed49aed3e10f84d6566db1c86192ed5c78904f7072b0",
+      "1": "f5489b0c189bd6f2007781d2e0eb238cd907a98a3bc4be1efaec53034d0751f3"
+    },
+    "local_100": {
+      "0": "3aa7d2cf2601b35bcc99d8a5f65ce2a11738ac778d8d8dd5a695f2ab18a9e06d",
+      "1": "3ecdb9f3fa258162a70ad7d24201f56c77581fa2e3e3802d18d723f20123f508"
+    },
+    "local_center": {
+      "0": "c5b3ee3507abde0df97139ffcc75eabf397c09a4b98de36f3bc068a6ba18ad0b",
+      "1": "7e33c7a3d77cf102013efd6ec33826513eab201bf3d10177b1ef170be3f18879"
+    }
+  },
+  "supplied_geometry": {
+    "source": "Known previously explored Blender nominal opaque cube bounds and saved vehicle poses",
+    "world_min_m": [
+      2.2,
+      2.1,
+      0.6
+    ],
+    "world_max_m": [
+      2.6,
+      2.5,
+      1.0
+    ],
+    "tolerance_m": 0.02,
+    "selection": "Single predeclared metre bias, no capture-driven tuning; geometry height/control kept from previous plan"
+  },
+  "policies": [
+    "center",
+    "bilinear_radial_v1 guard0",
+    "bilinear_radial_v1 guard1"
+  ],
+  "neighbor_inset_m": 1e-05,
+  "selection": "Default off and center controls plus two predeclared footprint policies per carrier/frame, no capture-driven tuning",
+  "frozen_files": {
+    "artifacts/parallax-sensor-inputs-v1/rig101-near-z080/seed101-capture/paired_truth.json": "cc9c5f54261a19501514e40d9800cfadee1f37993881e4afc90605bd737b18ab",
+    "artifacts/parallax-sensor-inputs-v1/rig101-near-z080/seed101-inputs/manifest.json": "298e789999336b13a91dcc5aa573c785aa43afcf9d553156f53519533cefd7ec",
+    "tools/research/local_support.py": "36fda14a36d051bc611531622ed67543859dc9f5a33197d50aaa7fb26e36ac96",
+    "tools/research/reference_height.py": "9741112a0a68137105c14e27233ed10b4359ef1bcdcac451ad3ba5d239d9a88a",
+    "tools/research/source_correspondence.py": "723e6899ee98327454c77636663ae61e3533617e0bd9b848543520230b47fbef",
+    "tools/research/source_correspondence_controls.py": "61fbc71b0bd604cb3e89df9dbcc4adc368f8df77d58b73943e33e5a8f2e58935",
+    "tools/research/displaced_correspondence.py": "ac55ca8cdace67684549b7132fbf6c60a6a33babe069e703e5021df6685bf65f",
+    "src/core/math.cpp": "79ea706e21efa39605ef63709e5585199e13c79952c38bc64995df2a871b8f5e",
+    "src/core/config.cpp": "3b4a207d68e60e8f52b1010927e03ff8cc1abbacf89eea0b1c94e47260cd185d",
+    "include/sv/math.hpp": "e8b8702955272ef1b96dc80829ffa5593adeedd66dab80a2f71c0b648256ef23",
+    "src/render/surface.frag": "1fba2d8e5125f9413b8c4870f38a1f108f5f0c964d86f0bc7872c537e5317e83",
+    "src/render/renderer.cpp": "1362f343adeab13bfba23136ebe5c605383c31a495b0e3ac305a6943736be70e",
+    "tests/correspondence_probe.cpp": "724cf59de2a95cff20e3c20c62ab072b21d33c783382820972ebab0ac2a71865",
+    "docs/diploma/plot_local_support.py": "7ea6617024b67d21501b256b2419fb141a8f08908e6ad1a2d73450a52af67f66",
+    "artifacts/source-correspondence-controls-v1/rig101-near-z080/frame0/direct-points.npy": "747120cb53ffca668c97be6818e1f4dc2317a515b977a2807b746790d7fae901",
+    "artifacts/source-correspondence-controls-v1/rig101-near-z080/frame0/native/plane/output.rgba": "3a062c73511aa9d237ac2b398cccc0470ded29a31d7ceb9401ae66611bca2418",
+    "artifacts/source-correspondence-controls-v1/rig101-near-z080/frame1/direct-points.npy": "4d235fa79fb9ff020ce90d6aa8af7cb389064960ef66bf73b58d3554e1187050",
+    "artifacts/source-correspondence-controls-v1/rig101-near-z080/frame1/native/plane/output.rgba": "b7df8a736d5747beede4ef3b2fad76a3c4e3dd68d05176b99a39b69115f8346c",
+    "tools/research/source_visibility.py": "39c19b8b13a908feff773ebe0803dae1dee49b1d972956a4671a61a480ccd7d9",
+    "docs/diploma/plot_source_visibility.py": "660bad9b30049971f9a9dc6675c28dcbfaac69806584f5e58a9b6a98c60ad2de",
+    "include/sv/render_inspection.hpp": "d2bc1e62fcf67027f14771c64d268b7731e551a7c25c763013c732ba4606df7b",
+    "tools/research/filter_visibility.py": "2067369fd290208af4b23b6b28a56dbf6233569ba243de2b8aa075b5c636045b",
+    "docs/diploma/plot_filter_visibility.py": "f74ac8f387649e32388e1b2254d882f341b991e206f5ea244f31b1480cbff60e",
+    "configs/research/source-visibility-plan.json": "eca1d46be80aa054e40f10afe3cbe5b59fad3131154eda5b61ee4ca4605e9728",
+    "docs/validation/baselines/source_visibility_v1.json": "d4ccde809265fd62785b80f4b965489bb7bbfe188e36b35d15c62de305dc33b7",
+    "artifacts/filter-visibility-configs-v1/frame0-plane.json": "f32913f89f55faf15b829523ede1a87df554216df1e99d4d86677c39a4825585",
+    "artifacts/filter-visibility-configs-v1/frame0-plane_center.json": "8c75268e48d1d5b788a19c4f59594bd6be4f70b209732daaf6e5b4ddbe189238",
+    "artifacts/filter-visibility-configs-v1/frame0-plane_fp0.json": "b2acb397ed8fd015b83b77606e0699057ac99f3db74977ef08d06015494fecf1",
+    "artifacts/filter-visibility-configs-v1/frame0-plane_fp1.json": "bf40b87da87c31f807c81c91115e2f2c749b228455586ab47f1464a4c3ad306b",
+    "artifacts/filter-visibility-configs-v1/frame0-local_100.json": "07f0ec5c349857facddbc09209b3cdde1ed2c071b7ea44d2460bb6fa99c47e1a",
+    "artifacts/filter-visibility-configs-v1/frame0-local_center.json": "1cd105122bc3358a16c347199280de855150fa8bffc7c4f9124932a57cc49a42",
+    "artifacts/filter-visibility-configs-v1/frame0-local_fp0.json": "8622f623481107bc95511ce53675199655abc4c409658b1988493d68fa18d01c",
+    "artifacts/filter-visibility-configs-v1/frame0-local_fp1.json": "9df1f0cd31847f3fa36b89b0af141fc5faa6bb8579c9de0c65d3a20170d97b53",
+    "artifacts/filter-visibility-configs-v1/frame1-plane.json": "f32913f89f55faf15b829523ede1a87df554216df1e99d4d86677c39a4825585",
+    "artifacts/filter-visibility-configs-v1/frame1-plane_center.json": "71f7fb7aad0a4079e37f25801e8b9f60b89b91b64bc82156b4752f3ab6a28d07",
+    "artifacts/filter-visibility-configs-v1/frame1-plane_fp0.json": "a4f8f50066e8620ed76c677ef57aadb0b6efde48166bcc8c131d1271596324b1",
+    "artifacts/filter-visibility-configs-v1/frame1-plane_fp1.json": "c9da80d33611d73cdcd5f15704626deb1c56e3e7da2dc79d8f0fa7fe617ed114",
+    "artifacts/filter-visibility-configs-v1/frame1-local_100.json": "786f86db68ffa137b6ab989562e06a64e5467c537dfa2ed50075d837dfa26707",
+    "artifacts/filter-visibility-configs-v1/frame1-local_center.json": "9b874880854d57e3597b9aab0bbeabd8d7c4183122f69ac9ffb56003fee9ca93",
+    "artifacts/filter-visibility-configs-v1/frame1-local_fp0.json": "cc3df79e388c49298e56cdda4bb43c3e33b7099264cd3c61bc2de8ba74f219fc",
+    "artifacts/filter-visibility-configs-v1/frame1-local_fp1.json": "d1dafb4af689ac7b17cd286d4c33e4127761739a24bfa60d871bac74894e18e3"
+  },
+  "limitations": [
+    "One supplied opaque AABB; no RGB depth or natural-object holdout",
+    "Neighbour ray endpoints at central carrier radial distance approximate footprint visibility, not scene depth correspondence",
+    "Guard1 is conservative 4x4 sampling, not exact Eevee/cubemap filter support",
+    "Endpoint bias .02m and neighbour interior inset10um fixed before capture, zero-distortion equidistant optics only",
+    "Two correlated frames/one fixture, raw proxy not semantic segmentation; preserve source-visible target and report unsupported pixels/road error",
+    "No target/Aurora or equal-budget overhead study"
+  ]
+}

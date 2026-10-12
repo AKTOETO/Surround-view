@@ -21,9 +21,25 @@ from reference_height import mask_scores
 from local_support import vehicle_center
 from source_visibility import blocked_by_faces
 from visibility_residual import select_pixels
+from filter_visibility import policy_blocked
 
 
 class SourceCorrespondenceTests(unittest.TestCase):
+    def test_radial_footprint_positive_coefficients_and_guard(self):
+        camera = {'T_camera_from_vehicle': np.eye(4).tolist(), 'resolution': {'width': 8, 'height': 8},
+                  'projection': {'k': [0,0,0,0], 'alpha': 0, 'fx': 1, 'fy': 1, 'cx': 0, 'cy': 0}}
+        box = dict(min_m=[1.5,-.1,1], max_m=[1.8,.1,1.2], tolerance_m=.02)
+        point = [[0,0,2]]
+        self.assertFalse(policy_blocked(camera, point, [[.1,0]], box)[0])
+        box['mode'] = 'bilinear_radial_v1'
+        self.assertTrue(policy_blocked(camera, point, [[.1,0]], box)[0])
+        self.assertFalse(policy_blocked(camera, point, [[0,0]], box)[0])
+        box['guard_texels'] = 1
+        self.assertTrue(policy_blocked(camera, point, [[0,0]], box)[0])
+        camera['projection']['k'][0] = .01
+        with self.assertRaisesRegex(ValueError, 'zero-distortion'):
+            policy_blocked(camera, point, [[0,0]], box)
+
     def test_visibility_residual_selection_includes_all_visible_controls(self):
         rgb = np.array([[[255, 0, 255], [255, 0, 255], [0, 0, 0]],
                         [[0, 0, 0], [255, 0, 255], [0, 0, 0]]], np.uint8)
