@@ -3138,3 +3138,84 @@ Native revision `4aa653e402e2e2df3228e6d3fb1e55dd41a5acbd`, executable/config/in
 Full build, Mesa CTest7/7, carrier GTest10/10 на Mesa/NVIDIA и independent controls18/18 прошли. Native test сравнивает shader с face oracle, проверяет endpoint preservation на front-facing top plane, rejected hybrid validity, сохранение uploads и exact restoration. Core/IPC покрывают schema/bounds/tolerance, catalog, revision/counters, invalid apply и возврат исходного frame/config. Python выполняет независимую проверку и рисунки, продуктовая логика остаётся в сервере.
 
 Вне expected target остаётся198/56 proxy pixels. Central-ray control не описывает bilinear/cubemap/Eevee footprint; точная причина каждого остатка пока не установлена. Следующий bounded diagnostic — per-pixel attribution остатков, разделение filter support, carrier approximation и неподдержанных target regions; затем обоснованный filter-aware control с preservation tests. Нужны tolerance/geometry uncertainty sensitivity и реалистичный источник depth/geometry, неизвестные natural objects, новые сцены/mounts/poses, overhead и physical/Aurora испытания. Получена проверенная partial mitigation на supplied geometry; универсальность решения и восстановление всего virtual view не доказаны.
+
+## 4.74. Происхождение остаточных цветовых следов после проверки видимости
+
+### 4.74.1. Вопрос и независимая постановка
+
+После §4.73 крупные смещённые копии уменьшились, но для local carrier остались198/56 outside proxy pixels. До дальнейшего ужесточения visibility нужно выяснить, появляются ли они из-за неверного центрального луча, соседних texels или приблизительной геометрии. Выполнен read-only diagnostic на **прежних** native outputs; сервер, RGB, калибровка и параметры не менялись. Подробный evidence и воспроизведение: [[validation/VISIBILITY_RESIDUAL]].
+
+До Blender ray capture сохранён frozen plan с94 file hashes. Selection включает все residual chroma pixels вне independent target для plane/local и frames0/1, плюс все independent source-visible target pixels как controls. Всего497 residual и290 control memberships,787 output coordinates. Controls повторяются для двух носителей; это не новые сцены или независимые наблюдения.
+
+В Blender5.2.2LTS восстановлена прежняя сцена по проверенным generator hashes, target pose и rig matrices. Для каждого selected pixel получены nearest virtual object, source-center hit и четыре source texel-center identities. RGB не перерендеривались. Исходная открытая сцена пользователя восстановлена после операции.
+
+### 4.74.2. Центральный луч и четыре texels отвечают на разные вопросы
+
+Для source coordinate $(u,v)$ с $i=\lfloor u\rfloor,j=\lfloor v\rfloor$ и $f_x=u-i,f_y=v-j$ bilinear coefficients:
+
+$$
+\beta_{00}=(1-f_x)(1-f_y),\quad\beta_{10}=f_x(1-f_y),\quad
+\beta_{01}=(1-f_x)f_y,\quad\beta_{11}=f_xf_y.
+$$
+
+Texture color равен сумме frozen RGB texels с этими коэффициентами. При положительном camera weight цвет соседнего texel может попасть в output, хотя центральный луч $(u,v)$ видит дорогу. Более того, сам source RGB texel уже отфильтрован при предыдущем cubemap/Blender rendering; его geometric center ID не описывает весь footprint цвета.
+
+```plantuml
+@startuml
+rectangle "Native output pixel\ncarrier XYZ + source UV/status" as O
+rectangle "Центральный source ray\nnearest opaque object" as C
+rectangle "Четыре texel-center rays\nnearest opaque objects" as T
+rectangle "Frozen source RGB texels\nbilinear coefficients" as R
+rectangle "Независимое linear-RGB fusion\nсравнение с ordinary output" as F
+O --> C : проверка point identity
+O --> T : floor(UV) + neighbours
+T --> R : geometry labels отдельно от цвета
+R --> F : положительные texture/camera weights
+note bottom of R
+Цвет texel может смешивать поверхности,
+даже если его центральный ray не видит target.
+end note
+@enduml
+```
+
+Рисунок4.123 — Разделение central-ray identity, texel-center support и фактического source RGB. Смешивать эти уровни в одну semantic mask нельзя.
+
+### 4.74.3. Полная атрибуция выбранных residual pixels
+
+| Frame / carrier | Residual | Target source center | Neighbor target texel only | Colored texel без target-center texel | Visible controls |
+|---|---:|---:|---:|---:|---:|
+| 0 / plane | 192 | 0 | 164 | 28 | 76 |
+| 0 / local | 198 | 2 | 167 | 29 | 76 |
+| 1 / plane | 51 | 0 | 49 | 2 | 69 |
+| 1 / local | 56 | 0 | 50 | 6 | 69 |
+| Всего | 497 | 2 | 430 | 65 | 290 |
+
+Таблица4.75 — Раздельные классы source support. Учитываются положительные bilinear coefficients и camera edge weights; virtual target ROI независим от carrier.
+
+Все497 virtual rays попадают в road,0 — в target. У всех есть положительно взвешенный chroma source texel; unsupported residual0. Из432 pixels с target-texel center support два имеют также center-target hit, остальные430 объясняются наличием соседнего target texel. У65 pixels нет target-center texel, но source RGB содержит цветовой marker. Это предсуществующий цвет в source footprint; точные cubemap/Eevee filter weights для этих новых samples не восстановлены. Нельзя автоматически переносить causal attribution прежнего §4.69 на другие rays.
+
+![Классы остаточных пикселей](figures/experiments/visibility_residual_support.png)
+
+Рисунок4.124 — Все497 residual pixels четырёх условий. Central-ray visibility оставляет разные виды footprint support, поэтому уменьшение только endpoint tolerance не решает весь остаток.
+
+Independent output reconstruction из source RGB, bilinear texture coefficients, edge weights, linear fusion и sRGB encode даёт maximum error0.580158/0.580158/0.646510/0.773483LSB для четырёх cases. Все меньше1LSB при заранее заданном пределе2LSB. Это подтверждает численное происхождение native colors из samples; полная causal reconstruction предшествующего RGB renderer не заявляется.
+
+Контрольный subset независимо распознан как target для всех76/69 pixels каждого носителя. На local все имеют center-target и target-texel support; на plane —0. Weighted source присутствует во всех controls, но plane выбирает другую поверхность. Следовательно, наличие источника и корректность наблюдаемой поверхности нужно проверять раздельно.
+
+### 4.74.4. Допуск и редкие геометрические отклонения
+
+После primary frozen audit выполнен явно обозначенный **post-hoc** geometry drill-down. Два center-target pixels frame0/local — output(y,x)(207,309) и(208,309), camera3. Разность camera-to-carrier и camera-to-source-hit ranges составляет0.001996m и0.019753m. Independent six-face predicate исключает оба при tolerance0 и сохраняет при настроенном0.02m. Это проверка predicate на зафиксированных positions, не новый native rendering с изменённым tolerance.
+
+Близость hit к carrier показывает роль endpoint bias. Однако простой переход к нулю не обоснован: допуск защищал видимые грани от self-occlusion/raster rounding. Нужны paired preservation tests на controls, а также uncertainty sensitivity.
+
+У plane source-road hits совпадают с carrier с max19.182/16.499µm. У local имеются4/5 residual output pixels с хотя бы одной source-road distance>2cm; maximum9.243/3.394m при median порядка2–3µm. Поднятый ramp point и дальний road hit могут лежать на одном source ray. Это отдельный overlapping diagnostic приблизительной height-field geometry: counts4/5 не складываются с категориями таблицы. Порог2cm применён post-hoc для описания, а не для поиска оптимума.
+
+![Расположение residual и center-target pixels](figures/experiments/visibility_residual_pixels.png)
+
+Рисунок4.125 — Actual frozen native RGB, yellow residual, cyan independent target, red два center-target cases на local boundary. Данные не заменены сегментированным или синтетически исправленным изображением.
+
+### 4.74.5. Проверки и обоснованный следующий шаг
+
+Independent controls19/19, включая полную selection/empty selection, и CTest source_correspondence прошли. Frozen products/scene arrays и повторный audit сверены SHA; detailed report побитно воспроизводится. Product code не менялся. Начальный import collision одноимённых research/Blender modules устранён явным preload research module в capture-команде, до successful capture; план и helper после capture не изменялись.
+
+Следующая разработка — server-side filter-aware visibility policy с сохранением полезного source-visible subset, paired tolerance/geometry uncertainty sensitivity и контролем border erosion/unsupported pixels/road error. Опыт пока не показывает, какой новый policy лучше: он установил, какие разные источники остатка этот policy должен учитывать. Реалистичная оценка depth, natural-object holdout, overhead и physical/Aurora проверка остаются открытыми. Привязка к ранее исследованной сцене не позволяет объявить полный исследовательский вывод о general mitigation.

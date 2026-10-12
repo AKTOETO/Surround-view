@@ -79,3 +79,5 @@ Configs — прежние local-support frameN-plane/local_100 плюс box д�
 ## Ограничения и следующий этап
 
 Остаются198/56 outside proxy pixels, полный target частично unsupported. Проверка central ray не учитывает bilinear/cubemap/Eevee footprint; **причина каждого нового остатка этим опытом не установлена**. Следующий bounded diagnostic: per-pixel correspondence/footprint остатка, отдельно источник, mesh approximation и unsupported target; затем при необходимости filter-aware policy с preservation controls. Нужны допуск/geometry uncertainty sensitivity, новые сцены/натуральные объекты/poses, реалистичная оценка depth из доступных sensors/RGB и политика unsupported surfaces. No equal-budget timing/overhead, no physical/Aurora verification. Один known AABB — полезный механизм исследовательского сервера, не универсальное решение всех occlusions.
+
+Bounded attribution остатка выполнен в [[validation/VISIBILITY_RESIDUAL]] (§4.74): все497 residual virtual-road pixels трассированы до source centers/four texels. Следующая разработка — filter-aware server policy с preservation/uncertainty controls; остаток пока не исправлен новым native алгоритмом.
