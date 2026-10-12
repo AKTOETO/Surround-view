@@ -3391,3 +3391,111 @@ Guard1 на local уменьшает outside198→1 и56→0, повышает f
 Отказ показывает чувствительность exact supplied-surface recognition к carrier/scene discrepancy. Конкретный вклад mesh/raster/calibration в этот pixel ещё не разделён. Увеличить epsilon по одному наблюдению означало бы смешать numerical convention и geometry uncertainty. Следующий frozen paired опыт должен варьировать допуски и геометрию с контролями road/interior/hidden-face и preservation, а не только устранять один pixel.
 
 Independent oracle даёт0 status mismatches на4319565 camera-point pairs; carrier/retained UV exact, full build/CTest7/7, carrier GTest10/10 Mesa/NVIDIA и independent21/21 успешны, reaudit identical. Shared ordinary/hybrid validity и inspection parity проверяются отдельно. Численное согласие не закрывает strict quality gate. Два correlated frames одного известного box остаются ограничением; independent scene families, natural objects, realistic geometry, overhead и physical/Aurora проверки нужны для полноценного заключения.
+
+
+## 4.77. Парная чувствительность visibility к допускам и погрешности геометрии
+
+### 4.77.1. Постановка и управляемый серверный параметр
+
+В §4.76 один source-visible pixel не проходил численную surface band из-за carrier/scene discrepancy. Проверка одной расширенной полосы могла бы скрыть регрессию, поэтому выполнены две заранее заданные ветви: tolerance grid при nominal geometry и translation grid при неизменном endpoint bias. Цель — проверить preservation одновременно с false acceptance и road quality, не подобрать допуск только для одного pixel.
+
+Сервер принимает optional `source_occlusion_box.support_tolerance_m` только для `bilinear_box_surface_v1`: диапазон[0,0.05]m, default0.00001m. Он меняет полосу принадлежности actual carrier point конечной грани supplied box. Это отдельный параметр от endpoint bias `tolerance_m`; соседний inset10µm не меняется. `center` остаётся default, omission нового поля воспроизводит прежний box-surface output.
+
+$$S_\epsilon(P)=[\min_k\inf_{Q\in F_k}\|P-Q\|_\infty\le\epsilon],\qquad O=O_c(b)\lor(O_r(b)\land\neg S_\epsilon(P)).$$
+
+Support band $\epsilon$ не отменяет central blocking $O_c$ с bias $b$. Увеличение полосы может сохранить неверную поверхность; это явно заданная гипотеза о геометрической погрешности, не её автоматическая оценка. Поле проходит server validation и revision-aware full-surface `Client::configure_surface`; catalog публикует `default_support_tolerance_m` и `support_tolerance_range_m` вместо прежнего fixed-band metadata key. Для other modes поле отвергается как неприменимое. GUI-форма остаётся задачей.
+
+```plantuml
+@startuml
+start
+:Freeze RGB / independent truth / carrier;
+fork
+  :Nominal box;
+  :Bias0/2/20mm × support10µm/1/10mm;
+fork again
+  :Box translations ±5mm X/Y/Z;
+  :Bias20mm × support10µm/1/10mm;
+end fork
+:Matched center controls + off controls;
+:76 native captures;
+:Independent status / geometry / UV audit;
+:Visible hits + unsupported + outside
++ road MAE + reference blocking;
+if (All gates on both frames?) then (да)
+  :Candidate for independent holdout;
+else (нет)
+  :Retain failure and its mechanism;
+endif
+stop
+@enduml
+```
+
+Рисунок4.132 — Frozen sensitivity design. Shifted geometry не пересекается со всеми bias; выводы ограничены выполненными ветвями.
+
+### 4.77.2. Nominal допуски и сохранение объекта
+
+Frozen matrix:76 native conditions на NVIDIA RTX5070Ti, native revision `7043c6157644b807c085371b9b46bc8a034aacf5`, plan commit2375bc9 до capture. План `configs/research/visibility-sensitivity-plan.json`: два прежних correlated frames; nominal bias0/2/20mm × support10µm/1mm/10mm и matched centers; шесть translations±5mm по vehicle X/Y/Z при bias20mm × три bands и matched centers; plane/local off controls. Это **не полный совместный factorial**: shifted geometry не пересекалась с bias0/2mm. RGB, cameras, actual carrier, independent Blender truth и размеры box не менялись. Perturbation относится к предоставленной серверу геометрии, не к новому физическому capture.
+
+Полосы выбраны после прежнего boundary failure: исследование developmental, не independent holdout. Внутри frozen серии параметры не подгонялись. Восемь historical off/center/default-band RGBA hashes совпали. Полный JSON с76 rows, configs, hashes, oracle counts и gates: [[validation/baselines/visibility_sensitivity_v1.json]].
+
+Hits — chroma proxy на independent source-visible target subset76/69; outside — proxy вне полной target mask178/172. Threshold `min(R,B)-G>0.15` применяется к RGB8/255, без component filtering. Road MAE в linear RGB считается на прежнем фиксированном ROI169447/169513, включая fallback. Coverage138052/138058 неизменна. Proxy не является segmentation natural objects.
+
+Пять заранее заданных gates проверяются раздельно: сохранить **все**76/69 hits, не иметь visible target без source, outside ниже nominal center, road MAE не выше nominal center, не увеличить nominal-blocked retained camera-point pairs. Последний diagnostic использует nominal box на actual carrier positions и fixed reference bias2mm независимо от configured box/bias. Это known-box predicate, не полная scene-depth truth. Accepted pairs не равны положительно взвешенным fusion contributions. Отдельно записаны accepted target-camera pairs без independent truth visibility и supported road pairs; они показывают риск неверного surface association, а не доказывают итоговый вклад в RGB.
+
+| Frame | Bias, mm | Center hits / outside | Band10µm hits / outside | Band1mm hits / outside | Band10mm hits / outside |
+|---|---:|---:|---:|---:|---:|
+| 0 | 0 | 49 / 197 | 49 / 0 | 49 / 0 | 49 / 1 |
+| 0 | 2 | 75 / 197 | 75 / 0 | 75 / 0 | 75 / 1 |
+| 0 | 20 | 76 / 198 | 75 / 1 | 76 / 1 | 76 / 2 |
+| 1 | 0 | 33 / 56 | 33 / 0 | 33 / 0 | 33 / 0 |
+| 1 | 2 | 69 / 56 | 69 / 0 | 69 / 0 | 69 / 0 |
+| 1 | 20 | 69 / 56 | 69 / 0 | 69 / 0 | 69 / 0 |
+
+Таблица4.78 — Nominal hits/outside; полные метрики всех76 условий сохранены отдельно. Bias и support band имеют разные геометрические роли и не взаимозаменяемы.
+
+![Native nominal tolerance matrix](figures/experiments/visibility_sensitivity_nominal.png)
+
+Рисунок4.133 — Зависимость source-visible hits и outside proxy от двух допусков. Слишком малый endpoint bias удаляет объект до проверки support membership.
+
+![Native nominal target RGB](figures/experiments/visibility_sensitivity_rgb.png)
+
+Рисунок4.134 — Actual native крупный план target при nominal geometry/bias20mm. Full target contour показан cyan; восстановлена видимая часть, скрытые грани не синтезированы.
+
+### 4.77.3. Geometry uncertainty и пределы найденного профиля
+
+| Frame | Shift | Center hits / outside | Band10µm hits / outside | Band1mm hits / outside | Band10mm hits / outside | Nominal-blocked retained, band10mm |
+|---|---|---:|---:|---:|---:|---:|
+| 0 | nom | 76 / 198 | 75 / 1 | 76 / 1 | 76 / 2 | 3 |
+| 0 | xp | 76 / 214 | 75 / 1 | 76 / 1 | 76 / 2 | 3 |
+| 0 | xm | 76 / 190 | 73 / 1 | 76 / 1 | 76 / 1 | 3 |
+| 0 | yp | 76 / 255 | 74 / 1 | 75 / 1 | 76 / 2 | 3 |
+| 0 | ym | 76 / 166 | 75 / 1 | 75 / 1 | 76 / 1 | 1 |
+| 0 | zp | 5 / 477 | 2 / 2 | 2 / 2 | 5 / 3 | 2 |
+| 0 | zm | 76 / 34 | 2 / 1 | 2 / 1 | 76 / 2 | 7 |
+| 1 | nom | 69 / 56 | 69 / 0 | 69 / 0 | 69 / 0 | 0 |
+| 1 | xp | 69 / 83 | 69 / 0 | 69 / 0 | 69 / 0 | 0 |
+| 1 | xm | 69 / 61 | 68 / 0 | 68 / 0 | 69 / 0 | 0 |
+| 1 | yp | 69 / 92 | 69 / 0 | 69 / 0 | 69 / 0 | 0 |
+| 1 | ym | 69 / 53 | 68 / 0 | 69 / 0 | 69 / 0 | 0 |
+| 1 | zp | 4 / 104 | 2 / 0 | 2 / 0 | 4 / 0 | 0 |
+| 1 | zm | 69 / 44 | 3 / 0 | 3 / 0 | 69 / 0 | 1 |
+
+Таблица4.79 — Box-only translation controls при bias20mm. Все pixels/hits являются outputs native server path, не Python renderer.
+
+![Native supplied geometry shifts](figures/experiments/visibility_sensitivity_geometry.png)
+
+Рисунок4.135 — Native sensitivity к смещению supplied box при фиксированных RGB/cameras/carrier/truth. Падение при Z+ и false acceptance при Z− требуют раздельного рассмотрения.
+
+При nominal box, bias20mm и support1mm восстановлены76/76 и69/69 visible hits, outside1/0, full IoU0.424581/0.401163. Прежний boundary pixel возвращается; road MAE0.020771376/0.020801917 против center0.020982273/0.020858322. Но unsupported полный target89/103 остаётся: сохранение видимой части не означает восстановления невидимых граней.
+
+Support10mm не улучшает visible hits относительно1mm, а в frame0 увеличивает outside1→2 и reference-blocked retained pairs2→3; supported road pairs0→4 (frame1 0→1). Меньшая road MAE при этом не отменяет лишнего marker. При bias0 visible hits даже center падают до49/76 и33/69; при bias2mm —75/76 и69/69. Повышение support band не может восстановить sample, уже отклонённый central predicate. Independent oracle согласован с этим поведением; float/shader bug из данного результата не следует.
+
+Geometry shift Z+5mm снижает center hits до5/76 и4/69; box-surface support10mm сохраняет те же5/76 и4/69. Увеличение support band не исправляет ошибочный central blocking. Z−5mm с support10mm возвращает76/76 и69/69, но reference-blocked retained pairs7/1 превышают nominal center3/0; одновременно accepted target-camera pairs без independent visibility17/1 против13/0 у nominal1mm. Такой вариант не проходит gates. Для некоторых горизонтальных смещений широкая полоса помогает, но это не общая устойчивость.
+
+Все пять gates проходят23/54 surface outputs; одновременно для обоих кадров —7/27 пар условий. Ни одна проверенная полоса не проходит оба направления Z uncertainty. Default не меняется. Это проверенный nominal candidate profile, **не подтверждённая robust/general mitigation**.
+
+### 4.77.4. Достоверность и дальнейший этап
+
+Восемь historical RGBA hashes совпали; geometry/retained UV unchanged. Independent finite-face/segment oracle имеет0 mismatches на15985665 camera-point pairs, включая zero-bias stress. Full build/CTest7/7, carrier GTest10/10 Mesa/NVIDIA и independent22/22 прошли; повторный JSON совпал побитно. Это подтверждение реализации объявленных predicates, не универсального качества и не15.99млн независимых сцен.
+
+Геометрические shifts — deliberate misconfiguration известного box при прежних RGB, не measurement distribution реального стенда. Параметры выбраны после прежнего boundary finding, поэтому series developmental; независимой validation holdout нет. Следующий шаг — явное разделение неверного occluder, неточного support и ненаблюдаемого target, uncertainty/unsupported policy и separate oracle upper bound. Затем нужны новые scene/geometry seeds, rotations/scales/height-field uncertainty, natural-object correspondence, равные бюджеты/overhead и physical/Aurora проверка. Nominal preservation gate закрыт для проверенного профиля1mm/20mm/guard1 на двух прежних кадрах; robustness и общий вывод исследования остаются открытыми.
