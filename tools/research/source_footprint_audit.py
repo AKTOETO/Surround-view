@@ -1,7 +1,6 @@
 """Independent four-texel audit of frozen point-ray/RGB mismatches; no product renderer."""
 import json
 import numpy as np
-from source_correspondence import sha, verified, load_product, describe
 
 
 def footprint(pixels, width, height):
@@ -24,6 +23,7 @@ def selected_pixels(kinds,status,control_count):
 
 
 def collect(root,plan_path):
+    from source_correspondence import sha, verified, load_product, describe
     from PIL import Image
     from displaced_correspondence import bilinear_rgb, chroma_mask
     plan=json.loads(plan_path.read_text())
