@@ -3499,3 +3499,88 @@ Geometry shift Z+5mm снижает center hits до5/76 и4/69; box-surface sup
 Восемь historical RGBA hashes совпали; geometry/retained UV unchanged. Independent finite-face/segment oracle имеет0 mismatches на15985665 camera-point pairs, включая zero-bias stress. Full build/CTest7/7, carrier GTest10/10 Mesa/NVIDIA и independent22/22 прошли; повторный JSON совпал побитно. Это подтверждение реализации объявленных predicates, не универсального качества и не15.99млн независимых сцен.
 
 Геометрические shifts — deliberate misconfiguration известного box при прежних RGB, не measurement distribution реального стенда. Параметры выбраны после прежнего boundary finding, поэтому series developmental; независимой validation holdout нет. Следующий шаг — явное разделение неверного occluder, неточного support и ненаблюдаемого target, uncertainty/unsupported policy и separate oracle upper bound. Затем нужны новые scene/geometry seeds, rotations/scales/height-field uncertainty, natural-object correspondence, равные бюджеты/overhead и physical/Aurora проверка. Nominal preservation gate закрыт для проверенного профиля1mm/20mm/guard1 на двух прежних кадрах; robustness и общий вывод исследования остаются открытыми.
+
+
+## 4.78. Раздельная атрибуция потерь и ограничение наблюдаемости target
+
+### 4.78.1. Exploratory audit всех условий
+
+После sensitivity screen выполнен read-only post-hoc audit всех74 local outputs:54 surface variants,18 center controls,2 off controls. Новых native renders и алгоритмов нет. План47dff5a зафиксирован до расчёта категорий, но aggregate results уже были известны; это exploratory explanation, не independent confirmation. Products/primary/source hashes проверены.
+
+Для каждого independent source-visible target pixel без chroma proxy классификатор проверяет native source statuses относительно local-off geometry eligibility и independent central segment predicate. Четыре непересекающихся класса: (1) baseline samples недоступны; (2) все baseline-eligible sources отклонены central blocking; (3) после central test источники ещё допустимы, но после footprint filtering не остаётся samples; (4) хотя бы один native sample допустим, но output proxy отсутствует. В третьем классе возможна смесь central/footprint rejection между камерами: он не означает, что central blocking отсутствует совсем.
+
+Source eligibility здесь не равна положительному blending weight или соответствию той же scene surface. Классификация локализует stage-level отказ по всем eligible cameras, а не восстанавливает все физические причины. Geometry/retained UV parity и0 oracle mismatches проверены в primary [[validation/VISIBILITY_SENSITIVITY]]. Все74 local outputs относятся к edge_feather (default при omission fusion); выводы о стадиях не переносить автоматически на signed nonlocal multiband/graph-cut paths. Новых native captures и изменений алгоритмов нет.
+
+```plantuml
+@startuml
+start
+:Independent visible target pixel
+without native chroma proxy;
+if (Any off-baseline eligible camera?) then (нет)
+  :Baseline unavailable;
+else (да)
+  if (Any native retained source?) then (да)
+    :Source present / proxy missing;
+  else (нет)
+    if (Any baseline source survives central test?) then (да)
+      :Remaining sources footprint-rejected;
+    else (нет)
+      :All central-blocked;
+    endif
+  endif
+endif
+:Keep coordinate/category and primary identity;
+stop
+@enduml
+```
+
+Рисунок4.136 — Exhaustive/disjoint stage-level partition. Camera eligibility не является доказательством scene correspondence.
+
+### 4.78.2. Причины потерь и скрытая часть объекта
+
+В54 surface outputs обнаружено903 visible-loss memberships:600 all-central и303 remaining-footprint; baseline-unavailable0 и source-present/proxy-missing0. Они относятся к145 unique(frame,y,x) coordinates на двух correlated frames, не к903 независимым pixels. В18 center controls —200 central losses,0 footprint, как требует контракт. Два off controls потерь не имеют. Полный74-row отчёт хранит coordinates/category каждого visible loss, а не только выбранные примеры.
+
+Для Z+5mm/support10mm остаются71/65 central losses; расширение support band не может их снять. При nominal bias0 все27/36 потерь также central. Следовательно, одинаковое исчезновение marker требует разных исправлений: membership/filter guard не исправляет central occluder misplacement. Причины geometry discrepancy внутри central stage (mesh, pose, bounds, projection/raster) этим audit не разделены.
+
+Independent full target178/172 разделён на visible76/69 и hidden102/103. Off output окрашивает все102/103 hidden pixels; center frame0 —5; nominal1mm profile —0/0. Это color proxy без наблюдения соответствующей target surface; uniform marker color не позволяет по одному RGB совпадению доказать point/surface correspondence. В nominal1mm profile13/0 hidden pixels имеют хоть какой-то geometrically eligible sample,89/103 не имеют ни одного. Наличие sample для hidden target не делает его наблюдаемым: он может проецироваться на другую поверхность.
+
+| Frame | Вариант | Visible hits | Central loss | Footprint loss | Hidden pixels | Hidden proxy hits | Hidden source absent |
+|---|---|---:|---:|---:|---:|---:|---:|
+| 0 | `local_100` | 76/76 | 0 | 0 | 102 | 102 | 0 |
+| 0 | `c_nom_b020` | 76/76 | 0 | 0 | 102 | 5 | 78 |
+| 0 | `s_nom_b020_e1mm` | 76/76 | 0 | 0 | 102 | 0 | 89 |
+| 0 | `s_nom_b000_e1mm` | 49/76 | 27 | 0 | 102 | 0 | 89 |
+| 0 | `s_zp_b020_e10mm` | 5/76 | 71 | 0 | 102 | 0 | 89 |
+| 0 | `s_zm_b020_e10mm` | 76/76 | 0 | 0 | 102 | 2 | 87 |
+| 1 | `local_100` | 69/69 | 0 | 0 | 103 | 103 | 0 |
+| 1 | `c_nom_b020` | 69/69 | 0 | 0 | 103 | 0 | 103 |
+| 1 | `s_nom_b020_e1mm` | 69/69 | 0 | 0 | 103 | 0 | 103 |
+| 1 | `s_nom_b000_e1mm` | 33/69 | 36 | 0 | 103 | 0 | 103 |
+| 1 | `s_zp_b020_e10mm` | 4/69 | 65 | 0 | 103 | 0 | 103 |
+| 1 | `s_zm_b020_e10mm` | 69/69 | 0 | 0 | 103 | 1 | 102 |
+
+Таблица4.80 — Representative controls; полный74-row JSON включает все visible-loss coordinates. Central и footprint counts не складываются с hidden counts: это разные subsets.
+
+![Visibility loss causes](figures/experiments/visibility_failure_causes.png)
+
+Рисунок4.137 — Central и remaining-footprint losses при support1mm. Z+ и bias0 требуют исправления central geometry policy, а не только расширения membership band.
+
+![Visibility-limited target](figures/experiments/visibility_failure_observability.png)
+
+Рисунок4.138 — Visible/hidden target и marker proxy. Off profile окрашивает hidden pixels, но не подтверждает наблюдение их поверхности.
+
+### 4.78.3. Условный ceiling и смысл метрик
+
+При **явно ограниченной модели** $\widehat T\subseteq T\cap V$ (предсказывать marker только на independent source-visible target), отсутствие outside даёт условный proxy ceiling:
+
+$$IoU_{visible\ only}\le\frac{|T\cap V|}{|T|}=\frac{76}{178}=0.426966\quad\text{или}\quad\frac{69}{172}=0.401163.$$
+
+Если все visible pixels сохранены и outside $g$, фактический score равен $|T\cap V|/(|T|+g)$. Nominal1mm/bias20mm даёт76/179=0.424581 и69/172=0.401163. Это **не универсальная upper bound** для reconstruction, priors, temporal models или повторения одинакового цвета на скрытой грани. Она условна относительно запрета hidden predictions и известной truth visibility. Малая full IoU не всегда является потерей видимой части, а высокая hidden recall не доказывает физически правильной реконструкции. Natural appearance и correspondence должны проверяться отдельно.
+
+Совпадение coded marker с expected target не доказывает point identity даже на visible subset: однотонная окраска маскирует ошибку выборки другого места того же объекта. Следующая независимая проверка должна включать natural/nonuniform appearance и source-surface correspondence, а не заменять их увеличением числа synthetic cases.
+
+### 4.78.4. Политика unsupported данных и следующий native этап
+
+Текущий fallback opaque и предназначен для отображения, не является восстановленной scene surface. Coverage диагностирует sample eligibility; независимая observability mask является исследовательским эталоном. Проект [[architecture/UNSUPPORTED_SURFACES]] разделяет camera eligibility, positive-weight support и physical correspondence. Предлагаются отдельные typed support diagnostics через сервер/library, с общей frame/config/input identity и явной unsupported semantics; это ещё не реализованный API.
+
+Independent23/23 и CTest1/1 прошли; disjoint/exhaustive categories сверены с каждой primary строкой, center имеет0 footprint losses; second JSON identical. Tracked report [[validation/baselines/visibility_failure_v1.json]], воспроизведение [[validation/VISIBILITY_FAILURE]]. Два correlated frames/один known target не дают general reconstruction conclusion. Дальше native support export/unsupported policy и решение geometry uncertainty, затем независимые appearance/scene/pose trials, overhead и physical/Aurora acceptance.
