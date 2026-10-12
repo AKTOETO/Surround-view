@@ -496,6 +496,9 @@ Image Renderer::render(const FrameSet &set, const View &view, RenderInspection *
             available[k] = 1;
         }
         std::string n = std::to_string(k);
+        const auto origin = transform(inverse_rigid(cam.T), {0, 0, 0});
+        glUniform3f(glGetUniformLocation(i.prog, ("camera_origin[" + n + "]").c_str()), origin.x,
+                    origin.y, origin.z);
         matrix(i.prog, ("pose[" + n + "]").c_str(), cam.T);
         glUniform4f(glGetUniformLocation(i.prog, ("intrinsics[" + n + "]").c_str()), cam.fx, cam.fy,
                     cam.cx, cam.cy);
@@ -507,6 +510,13 @@ Image Renderer::render(const FrameSet &set, const View &view, RenderInspection *
                     cam.z_epsilon);
         glUniform1i(glGetUniformLocation(i.prog, ("input" + n).c_str()), k);
     }
+    const auto &box = c.surface.source_occlusion;
+    glUniform1i(glGetUniformLocation(i.prog, "source_occlusion_enabled"), box.enabled);
+    glUniform3f(glGetUniformLocation(i.prog, "source_box_min"), box.minimum.x, box.minimum.y,
+                box.minimum.z);
+    glUniform3f(glGetUniformLocation(i.prog, "source_box_max"), box.maximum.x, box.maximum.y,
+                box.maximum.z);
+    glUniform1f(glGetUniformLocation(i.prog, "source_occlusion_tolerance"), box.tolerance);
     glUniform4iv(glGetUniformLocation(i.prog, "available"), 1, available);
     glUniform1i(glGetUniformLocation(i.prog, "fusion_mode"), c.fusion.mode == "hard_best_angle" ? 1
                                                              : c.fusion.mode == "angular_feather"

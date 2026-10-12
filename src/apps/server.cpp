@@ -924,6 +924,14 @@ int main(int argc, char **argv)
                                  {"minimum_extent_and_transition_m", .01},
                                  {"height_range_m", boost::json::array{0., 5.}},
                                  {"bounds", "plateau and transition must fit inside carrier"}}},
+                            {"rectangular_source_occlusion",
+                             boost::json::object{
+                                 {"field", "source_occlusion_box"},
+                                 {"fields", boost::json::array{"min_m", "max_m", "tolerance_m"}},
+                                 {"frame", "vehicle"},
+                                 {"meaning", "one supplied opaque AABB; omit to disable"},
+                                 {"coordinate_range_m", boost::json::array{-100., 100.}},
+                                 {"tolerance_range_m", boost::json::array{0., .1}}}},
                             {"apply", "prepare buffers then publish between render calls"}};
                     }
                     else if (type == "configure_surface")

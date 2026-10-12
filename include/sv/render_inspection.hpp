@@ -23,13 +23,14 @@ enum class SourceProjectionStatus : unsigned char
     behind_camera = 3,
     outside_angle = 4,
     outside_image = 5,
-    vehicle_footprint = 6
+    vehicle_footprint = 6,
+    supplied_occluder = 7
 };
 
 struct SourceProjectionInspection
 {
     cv::Mat pixels; // CV_32FC2, source pixel centres; NaN unless valid.
-    cv::Mat status; // CV_8UC1, SourceProjectionStatus; no scene-occlusion test.
+    cv::Mat status; // CV_8UC1, SourceProjectionStatus; optional supplied-box occlusion.
 };
 
 struct RenderInspectionRequest

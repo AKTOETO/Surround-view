@@ -52,6 +52,14 @@ struct LocalSupportPatch
     double offset(double x, double y) const;
 };
 
+// One explicitly supplied opaque vehicle-frame AABB; research visibility control.
+struct SourceOcclusionBox
+{
+    bool enabled = false;
+    Vec3 minimum, maximum;
+    double tolerance = .02;
+};
+
 struct Surface
 {
     std::string type = "rectangular_bowl_v1";
@@ -59,6 +67,7 @@ struct Surface
     // Assumed support height for rectangular carriers; not an estimated scene depth.
     double reference_height = 0;
     LocalSupportPatch local_support;
+    SourceOcclusionBox source_occlusion;
     double enclosure_radius = 12, enclosure_height = 12;
     int nx = 32, ny = 32;
     int dome_latitude_cells = 64, dome_longitude_cells = 128, floor_radial_cells = 32;

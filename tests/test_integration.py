@@ -221,11 +221,14 @@ class IntegrationTests(unittest.TestCase):
                 patch = dict(center_x_m=2.4, center_y_m=2.3, half_length_m=.2,
                              half_width_m=.2, height_m=.8, transition_m=.2)
                 surfaces.append(dict(flat, local_support_patch=patch))
+                occluder = dict(min_m=[2.2, 2.1, .6], max_m=[2.6, 2.5, 1.], tolerance_m=.02)
+                surfaces.append(dict(flat, source_occlusion_box=occluder))
                 catalog = client.command('surface_catalog')
                 self.assertTrue(catalog['accepted'])
                 self.assertEqual(catalog['surface_catalog']['rectangular_reference_height']['field'],
                                  'reference_height_m')
                 self.assertEqual(catalog['surface_catalog']['rectangular_local_support']['frame'], 'vehicle')
+                self.assertEqual(catalog['surface_catalog']['rectangular_source_occlusion']['frame'], 'vehicle')
                 builds = int(header['mesh_build_count'])
                 for surface in surfaces:
                     ack = client.command('configure_surface', base_config_revision=revision,
@@ -243,6 +246,8 @@ class IntegrationTests(unittest.TestCase):
                 for rev, surface in [('0', original_surface), (revision, {'type': 'missing'}),
                                      (revision, dict(flat, local_support_patch=dict(patch, transition_m=0))),
                                      (revision, dict(flat, local_support_patch=dict(patch, center_x_m=100))),
+                                     (revision, dict(flat, source_occlusion_box=dict(occluder, tolerance_m=-1))),
+                                     (revision, dict(flat, source_occlusion_box=dict(occluder, max_m=[0, 0, 0]))),
                                      (revision, dict(flat, reference_height_m=-1)),
                                      (revision, dict(flat, reference_height_m=5.1)),
                                      (revision, dict(surfaces[2], dome_radius_m=3))]:

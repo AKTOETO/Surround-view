@@ -486,7 +486,7 @@ Config parse_config(const boost::json::value &value)
         keys(s,
              {"type", "flat_half_length_m", "flat_half_width_m", "outer_half_length_m",
               "outer_half_width_m", "corner_height_m", "uniform_cells"},
-             "surface", {"reference_height_m", "local_support_patch"});
+             "surface", {"reference_height_m", "local_support_patch", "source_occlusion_box"});
         c.surface.a = num(s.at("flat_half_length_m"));
         c.surface.b = num(s.at("flat_half_width_m"));
         c.surface.A = num(s.at("outer_half_length_m"));
@@ -522,6 +522,27 @@ Config parse_config(const boost::json::value &value)
                         std::abs(p.center_x) + p.half_length + p.transition <= c.surface.A &&
                         std::abs(p.center_y) + p.half_width + p.transition <= c.surface.B,
                     "surface.local_support_patch: invalid dimensions/height or outside carrier");
+        }
+        if (const auto *value = s.if_contains("source_occlusion_box"))
+        {
+            const auto &box = value->as_object();
+            keys(box, {"min_m", "max_m", "tolerance_m"}, "surface.source_occlusion_box");
+            const auto &lo = box.at("min_m").as_array();
+            const auto &hi = box.at("max_m").as_array();
+            require(lo.size() == 3 && hi.size() == 3, "source_occlusion_box: expected XYZ bounds");
+            auto &b = c.surface.source_occlusion;
+            b.enabled = true;
+            b.minimum = {num(lo[0]), num(lo[1]), num(lo[2])};
+            b.maximum = {num(hi[0]), num(hi[1]), num(hi[2])};
+            b.tolerance = num(box.at("tolerance_m"));
+            for (int axis = 0; axis < 3; ++axis)
+            {
+                require(num(hi[axis]) > num(lo[axis]) && std::abs(num(lo[axis])) <= 100 &&
+                            std::abs(num(hi[axis])) <= 100,
+                        "source_occlusion_box: ordered bounds in [-100,100] metres required");
+            }
+            require(b.tolerance >= 0 && b.tolerance <= .1,
+                    "source_occlusion_box.tolerance_m: expected [0,0.1] metres");
         }
         const auto &cells = s.at("uniform_cells").as_array();
         require(cells.size() == 2, "surface.uniform_cells");

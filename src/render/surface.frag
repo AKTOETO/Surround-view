@@ -17,6 +17,38 @@ uniform int inspection_regions;
 uniform float reference_height;
 uniform int inspection_camera;
 uniform float edge_width_px, angle_power;
+uniform int source_occlusion_enabled;
+uniform vec3 source_box_min, source_box_max, camera_origin[4];
+uniform float source_occlusion_tolerance;
+
+// Finite segment / opaque AABB. Parameter t is a fraction of camera-to-carrier distance.
+bool source_occluded(int camera)
+{
+    if (source_occlusion_enabled == 0) { return false; }
+    vec3 origin = camera_origin[camera];
+    vec3 direction = world - origin;
+    float distance_m = length(direction);
+    if (distance_m <= source_occlusion_tolerance) { return false; }
+    float entry = 0.0, exit = 1.0;
+    for (int axis = 0; axis < 3; ++axis)
+    {
+        if (abs(direction[axis]) < 1e-8)
+        {
+            if (origin[axis] < source_box_min[axis] || origin[axis] > source_box_max[axis])
+            {
+                return false;
+            }
+        }
+        else
+        {
+            float a = (source_box_min[axis] - origin[axis]) / direction[axis];
+            float b = (source_box_max[axis] - origin[axis]) / direction[axis];
+            entry = max(entry, min(a, b));
+            exit = min(exit, max(a, b));
+        }
+    }
+    return entry <= exit && entry < 1.0 - source_occlusion_tolerance / distance_m;
+}
 
 vec3 camera_color(int i)
 {
@@ -72,7 +104,7 @@ int source_projection(int i, out vec2 px, out float theta)
     {
         return 5;
     }
-    return 1;
+    return source_occluded(i) ? 7 : 1;
 }
 
 vec4 pack_float(float value)

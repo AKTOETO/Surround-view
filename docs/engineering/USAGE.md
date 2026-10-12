@@ -1062,3 +1062,15 @@ Read-only новых hybrid domains: `MPLCONFIGDIR=/tmp/sv-matplotlib python3 do
 Координаты относятся к автомобилю: при движении rig неподвижный мировой объект требует пересчёта центра. Поля и ограничения доступны в `surface_catalog.rectangular_local_support`. Это временная настройка геометрии с заранее известным положением/высотой; библиотека не оценивает их по камерам. Удалить участок — отправить полную surface без этого объекта. Геометрия дороги вне участка сохраняется, но результат RGB и видимость нужно оценивать отдельно. Формула и ограничения mesh: [[engineering/RENDERING]].
 
 Парный local-height опыт, native команды, сохранённые результаты и ограничения: [[validation/LOCAL_SUPPORT#Проверки и воспроизведение]]. Рисунки: `MPLCONFIGDIR=/tmp/sv-matplotlib python3 docs/diploma/plot_local_support.py --output-report artifacts/local-support-v1/reaudit.json`. Требуются frozen raw artifacts; Python здесь выполняет только independent audit/plot.
+
+Для supplied source-visibility control добавить в полную rectangular surface:
+
+```json
+"source_occlusion_box": {
+  "min_m": [2.2, 2.1, 0.6],
+  "max_m": [2.6, 2.5, 1.0],
+  "tolerance_m": 0.02
+}
+```
+
+Применить через `Client::configure_surface` с актуальной revision; допустимые поля доступны в `surface_catalog.rectangular_source_occlusion`. Границы — vehicle-frame XYZ, поэтому при движении автомобиля их нужно пересчитать. Настройка исключает перекрытые источники перед слиянием; сам объём не рисуется, RGB depth estimation не выполняется. Удалить control — отправить полную surface без `source_occlusion_box`. Не подменять этим заранее известным объёмом решение задачи оценки глубины реальной сцены.

@@ -125,6 +125,23 @@ int main(int argc, char **argv)
         }
         local.local_support.height = 5;
         check(!sv::safe_view(local, low_view), "view below local support rejected");
+        auto occlusion_config = config.effective;
+        boost::json::object occluder{{"min_m", boost::json::array{2.2, 2.1, .6}},
+                                     {"max_m", boost::json::array{2.6, 2.5, 1.}},
+                                     {"tolerance_m", .02}};
+        occlusion_config.as_object()["surface"].as_object()["source_occlusion_box"] = occluder;
+        check(sv::parse_config(occlusion_config).surface.source_occlusion.enabled,
+              "source occlusion schema");
+        for (const auto &invalid : {boost::json::object{{"min_m", boost::json::array{2.2, 2.1}},
+                                                        {"max_m", boost::json::array{2.6, 2.5, 1.}},
+                                                        {"tolerance_m", .02}},
+                                    boost::json::object{{"min_m", boost::json::array{2.2, 2.1, .6}},
+                                                        {"max_m", boost::json::array{2.2, 2.5, 1.}},
+                                                        {"tolerance_m", .02}}})
+        {
+            occlusion_config.as_object()["surface"].as_object()["source_occlusion_box"] = invalid;
+            rejects([&] { sv::parse_config(occlusion_config); }, "invalid source occlusion bounds");
+        }
         const auto floor = sv::make_floor_mesh(12, 8, 24);
         check(floor.indices.size() == (24 * 3 + 7 * 24 * 6), "disk floor triangulation");
         for (size_t i = 0; i < floor.indices.size(); i += 3)
