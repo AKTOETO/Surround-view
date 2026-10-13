@@ -125,7 +125,8 @@ void RuntimeSettings::apply(const QString &json, const QString &baseRevision, bo
                 if (field.key() != "mode" && field.key() != "diagnostic" &&
                     field.key() != "edge_width_px" && field.key() != "angle_power" &&
                     field.key() != "smoothness_weight" && field.key() != "pyramid_levels" &&
-                    field.key() != "pyramid_boundary" && field.key() != "seam_solver")
+                    field.key() != "pyramid_boundary" && field.key() != "seam_solver" &&
+                    field.key() != "fallback_display")
                 {
                     throw std::runtime_error("unknown_fusion_field");
                 }
@@ -153,6 +154,15 @@ void RuntimeSettings::apply(const QString &json, const QString &baseRevision, bo
             {
                 settings.seam_solver = std::string(value->as_string());
             }
+            if (auto value = object.if_contains("fallback_display"))
+            {
+                const auto &display = value->as_object();
+                if (display.size() != 1 || !display.contains("mode"))
+                {
+                    throw std::runtime_error("invalid_fallback_display_fields");
+                }
+                settings.fallback_display.mode = std::string(display.at("mode").as_string());
+            }
             pending_id_ = client->configure_fusion(revision, settings);
         }
         else
@@ -166,4 +176,35 @@ void RuntimeSettings::apply(const QString &json, const QString &baseRevision, bo
         status_ = QString::fromUtf8(error.what());
     }
     emit changed();
+}
+
+bool RuntimeSettings::fallbackAvailable() const
+{
+    const auto *catalog = catalogs_.if_contains("fusion_catalog");
+    return catalog && catalog->as_object().contains("fallback_display");
+}
+
+QString RuntimeSettings::fallbackMode() const
+{
+    if (fusion_.isEmpty())
+    {
+        return "legacy";
+    }
+    const auto fusion = boost::json::parse(fusion_.toStdString()).as_object();
+    const auto *display = fusion.if_contains("fallback_display");
+    return display ? QString::fromStdString(std::string(display->at("mode").as_string()))
+                   : "legacy";
+}
+
+void RuntimeSettings::setFallbackDisplay(const QString &mode)
+{
+    if (!fallbackAvailable())
+    {
+        status_ = "Сервер не объявил настройку fallback display";
+        emit changed();
+        return;
+    }
+    auto fusion = boost::json::parse(fusion_.isEmpty() ? "{}" : fusion_.toStdString()).as_object();
+    fusion["fallback_display"] = boost::json::object{{"mode", mode.toStdString()}};
+    applyFusion(pretty(fusion), revision_);
 }

@@ -200,7 +200,7 @@ Config parse_config(const boost::json::value &value)
         const auto &fusion = value->as_object();
         keys(fusion, {"mode"}, "fusion",
              {"diagnostic", "edge_width_px", "angle_power", "smoothness_weight", "pyramid_levels",
-              "pyramid_boundary", "seam_solver"});
+              "pyramid_boundary", "seam_solver", "fallback_display"});
         c.fusion.mode = str(fusion.at("mode"));
         require(c.fusion.mode == "edge_feather" || c.fusion.mode == "hard_best_angle" ||
                     c.fusion.mode == "angular_feather" ||
@@ -240,6 +240,15 @@ Config parse_config(const boost::json::value &value)
         {
             c.fusion.seam_solver = str(*v);
         }
+        if (const auto *v = fusion.if_contains("fallback_display"))
+        {
+            const auto &display = v->as_object();
+            keys(display, {"mode"}, "fusion.fallback_display");
+            c.fusion.fallback_display.mode = str(display.at("mode"));
+        }
+        require(c.fusion.fallback_display.mode == "legacy" ||
+                    c.fusion.fallback_display.mode == "hatch",
+                "fusion.fallback_display.mode: expected legacy or hatch");
         require(c.fusion.seam_solver == "binary_pairs" || c.fusion.seam_solver == "alpha_expansion",
                 "fusion.seam_solver: expected binary_pairs or alpha_expansion");
         require(c.fusion.smoothness_weight >= 0 && c.fusion.smoothness_weight <= 100,

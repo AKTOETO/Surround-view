@@ -19,6 +19,21 @@ Column {
         Text { anchors.centerIn: parent; text: "Обновить состояние и catalog"; color: "white" }
         MouseArea { anchors.fill: parent; onClicked: runtimeSettings.refresh() }
     }
+    Text {
+        width: parent.width
+        text: "Fallback — участок, где pipeline не выполнил сшивку. Штриховка не обнаруживает выборку неверной поверхности. Режим: " + runtimeSettings.fallbackMode
+        color: "#cbd5e0"; wrapMode: Text.Wrap; font.pixelSize: 11
+    }
+    Rectangle {
+        width: parent.width; height: 34; color: "#653663"; radius: 4
+        opacity: runtimeSettings.ready && runtimeSettings.fallbackAvailable && !runtimeSettings.pending ? 1 : 0.4
+        Text { anchors.centerIn: parent; text: runtimeSettings.fallbackMode === "hatch" ? "Вернуть обычный fallback" : "Показать fallback штриховкой"; color: "white" }
+        MouseArea {
+            anchors.fill: parent
+            enabled: runtimeSettings.ready && runtimeSettings.fallbackAvailable && !runtimeSettings.pending
+            onClicked: runtimeSettings.setFallbackDisplay(runtimeSettings.fallbackMode === "hatch" ? "legacy" : "hatch")
+        }
+    }
     Repeater {
         model: ["fusion", "surface"]
         Column {

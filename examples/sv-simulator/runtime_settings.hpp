@@ -16,6 +16,8 @@ class RuntimeSettings : public QObject
     Q_PROPERTY(QString status READ status NOTIFY changed)
     Q_PROPERTY(bool ready READ ready NOTIFY changed)
     Q_PROPERTY(bool pending READ pending NOTIFY changed)
+    Q_PROPERTY(QString fallbackMode READ fallbackMode NOTIFY changed)
+    Q_PROPERTY(bool fallbackAvailable READ fallbackAvailable NOTIFY changed)
 
   public:
 
@@ -59,6 +61,9 @@ class RuntimeSettings : public QObject
     void attach(const std::shared_ptr<sv::client::Client> &client);
     void consume(const boost::json::object &header);
     void commandFailed(const boost::json::object &header, const std::string &reason);
+    QString fallbackMode() const;
+    bool fallbackAvailable() const;
+    Q_INVOKABLE void setFallbackDisplay(const QString &mode);
     Q_INVOKABLE void refresh();
     Q_INVOKABLE void applyFusion(const QString &json, const QString &baseRevision);
     Q_INVOKABLE void applySurface(const QString &json, const QString &baseRevision);

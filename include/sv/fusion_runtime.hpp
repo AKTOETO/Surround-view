@@ -22,30 +22,39 @@ inline boost::json::object fusion_settings(const Fusion &fusion)
     {
         result["seam_solver"] = fusion.seam_solver;
     }
+    if (fusion.fallback_display.mode != "legacy")
+    {
+        result["fallback_display"] = boost::json::object{{"mode", fusion.fallback_display.mode}};
+    }
     return result;
 }
 
 inline boost::json::object fusion_catalog()
 {
-    return {{"version", 4},
-            {"modes", boost::json::array{"edge_feather", "hard_best_angle", "angular_feather",
-                                         "seam_distance_feather", "graph_cut_seam", "multi_band",
-                                         "graph_cut_multi_band"}},
-            {"diagnostics", boost::json::array{"color", "coverage", "weights"}},
-            {"edge_width_px", boost::json::object{{"exclusive_min", 0}, {"max", 4096}}},
-            {"angle_power", boost::json::object{{"exclusive_min", 0}, {"max", 32}}},
-            {"smoothness_weight", boost::json::object{{"min", 0}, {"max", 100}}},
-            {"pyramid_levels", boost::json::object{{"min", 1}, {"max", 8}}},
-            {"pyramid_boundary", boost::json::array{"zero", "normalized"}},
-            {"normalized_pyramid_implementation", "normalized_support_v1"},
-            {"research_backend", "gles_projection_cpu_fusion_v1"},
-            {"research_fusion_implementation", "validity_zero_extension_v2"},
-            {"research_pixel_limit", 262144},
-            {"seam_solver", boost::json::array{"binary_pairs", "alpha_expansion"}},
-            {"graph_cut_scope", "binary_pairs_default_or_global_weighted_potts_expansion"},
-            {"alpha_expansion_implementation", "integer_potts_v1"},
-            {"alpha_expansion_max_sweeps", 8},
-            {"apply", "between_render_calls"},
-            {"persistence", "temporary"}};
+    return {
+        {"version", 5},
+        {"modes", boost::json::array{"edge_feather", "hard_best_angle", "angular_feather",
+                                     "seam_distance_feather", "graph_cut_seam", "multi_band",
+                                     "graph_cut_multi_band"}},
+        {"fallback_display", boost::json::object{{"modes", boost::json::array{"legacy", "hatch"}},
+                                                 {"scope", "existing_fallback_branch_color_only"},
+                                                 {"implementation", "screen_tiles_8px_v1"},
+                                                 {"scene_correspondence", false}}},
+        {"diagnostics", boost::json::array{"color", "coverage", "weights"}},
+        {"edge_width_px", boost::json::object{{"exclusive_min", 0}, {"max", 4096}}},
+        {"angle_power", boost::json::object{{"exclusive_min", 0}, {"max", 32}}},
+        {"smoothness_weight", boost::json::object{{"min", 0}, {"max", 100}}},
+        {"pyramid_levels", boost::json::object{{"min", 1}, {"max", 8}}},
+        {"pyramid_boundary", boost::json::array{"zero", "normalized"}},
+        {"normalized_pyramid_implementation", "normalized_support_v1"},
+        {"research_backend", "gles_projection_cpu_fusion_v1"},
+        {"research_fusion_implementation", "validity_zero_extension_v2"},
+        {"research_pixel_limit", 262144},
+        {"seam_solver", boost::json::array{"binary_pairs", "alpha_expansion"}},
+        {"graph_cut_scope", "binary_pairs_default_or_global_weighted_potts_expansion"},
+        {"alpha_expansion_implementation", "integer_potts_v1"},
+        {"alpha_expansion_max_sweeps", 8},
+        {"apply", "between_render_calls"},
+        {"persistence", "temporary"}};
 }
 } // namespace sv

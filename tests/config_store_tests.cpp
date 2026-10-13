@@ -130,3 +130,23 @@ TEST(ConfigStorePersistence, FailedRuntimePreparationDoesNotPublishRevisionOrSna
     EXPECT_EQ(store.revision(), 0U);
     EXPECT_EQ(store.active()->effective, initial.effective);
 }
+
+TEST(ConfigValidation, FallbackDisplayDefaultsAndStrictFields)
+{
+    const auto initial = sv::load_config(SV_TEST_CONFIG_PATH);
+    auto effective = initial.effective;
+    effective.as_object()["fusion"] = boost::json::object{{"mode", "edge_feather"}};
+    EXPECT_EQ(sv::parse_config(effective).fusion.fallback_display.mode, "legacy");
+    for (const auto *display : {R"({"mode":"legacy"})", R"({"mode":"hatch"})"})
+    {
+        effective.at("fusion").as_object()["fallback_display"] = boost::json::parse(display);
+        EXPECT_NO_THROW(sv::parse_config(effective));
+    }
+    for (const auto *display :
+         {R"({})", R"({"mode":"transparent"})", R"({"mode":"hatch","scene_confidence":true})",
+          R"("hatch")", R"({"mode":1})"})
+    {
+        effective.at("fusion").as_object()["fallback_display"] = boost::json::parse(display);
+        EXPECT_ANY_THROW(sv::parse_config(effective));
+    }
+}

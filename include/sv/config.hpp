@@ -1,4 +1,5 @@
 #pragma once
+#include "sv/fallback_display.hpp"
 #include "sv/math.hpp"
 #include <boost/json.hpp>
 #include <filesystem>
@@ -12,6 +13,7 @@ struct Fusion
     unsigned pyramid_levels = 4;
     std::string pyramid_boundary = "zero";
     std::string seam_solver = "binary_pairs";
+    FallbackDisplay fallback_display;
 };
 
 struct Connections

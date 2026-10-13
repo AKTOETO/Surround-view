@@ -60,6 +60,20 @@ TEST(SimulatorRuntime, AppliesRejectsAndRestoresThroughClientLibrary)
     settings.attach(client);
     ASSERT_TRUE(wait_until(
         [&] { return settings.ready() && settings.catalogJson().contains("surface_catalog"); }));
+    ASSERT_TRUE(settings.fallbackAvailable());
+    const auto before_display = settings.fusionJson();
+    settings.setFallbackDisplay("hatch");
+    ASSERT_TRUE(wait_until([&] { return !settings.pending(); }));
+    EXPECT_EQ(settings.fallbackMode(), "hatch");
+    const auto marked_revision = settings.revision();
+    settings.setFallbackDisplay("unknown");
+    ASSERT_TRUE(wait_until([&] { return !settings.pending(); }));
+    EXPECT_EQ(settings.revision(), marked_revision);
+    EXPECT_EQ(settings.fallbackMode(), "hatch");
+    settings.setFallbackDisplay("legacy");
+    ASSERT_TRUE(wait_until([&] { return !settings.pending(); }));
+    EXPECT_EQ(settings.fallbackMode(), "legacy");
+    EXPECT_EQ(settings.fusionJson(), before_display);
     const auto original = settings.fusionJson();
     const auto surface = settings.surfaceJson();
     const auto initial_revision = settings.revision();

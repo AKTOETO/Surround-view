@@ -83,7 +83,8 @@ Scenario parse_scenario(const boost::json::value &value)
     {
         const auto &fields = variant.as_object();
         keys(fields, {"mode", "diagnostic", "edge_width_px", "angle_power", "pyramid_levels",
-                      "smoothness_weight", "pyramid_boundary", "seam_solver", "surface"});
+                      "smoothness_weight", "pyramid_boundary", "seam_solver", "fallback_display",
+                      "surface"});
         client::FusionSettings fusion;
         fusion.mode = std::string(fields.at("mode").as_string());
         if (fusion.mode != "edge_feather" && fusion.mode != "hard_best_angle" &&
@@ -138,6 +139,16 @@ Scenario parse_scenario(const boost::json::value &value)
         if (fusion.pyramid_boundary != "zero" && fusion.pyramid_boundary != "normalized")
         {
             throw std::invalid_argument("unsupported pyramid boundary");
+        }
+        if (auto v = fields.if_contains("fallback_display"))
+        {
+            const auto &display = v->as_object();
+            keys(display, {"mode"});
+            fusion.fallback_display.mode = std::string(display.at("mode").as_string());
+            if (fusion.fallback_display.mode != "legacy" && fusion.fallback_display.mode != "hatch")
+            {
+                throw std::invalid_argument("unsupported fallback display");
+            }
         }
         Variant parsed_variant{std::move(fusion), std::nullopt};
         if (auto v = fields.if_contains("surface"))

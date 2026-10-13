@@ -247,6 +247,62 @@ class OutputProducts(unittest.TestCase):
         self.assertEqual(original, restored)
         self.assertNotIn('source_visibility_schema', header)
 
+    def test_fallback_display_live_switch_masks_rejection_and_reset(self):
+        for camera in self.cfg['cameras']:
+            camera['projection']['theta_max_rad'] = .05
+        self.config.write_text(json.dumps(self.cfg))
+        original_file = self.config.read_bytes()
+        self.start()
+        self.client = Client(self.ipc)
+        self.client.frame()
+        self.frame_after(self.client.command('pause'))
+        catalog = self.client.command('fusion_catalog')['fusion_catalog']
+        self.assertEqual(catalog['version'], 5)
+        self.assertFalse(catalog['fallback_display']['scene_correspondence'])
+        for mode in catalog['modes']:
+            with self.subTest(mode=mode):
+                active = self.client.command('state')
+                fusion = dict(mode=mode)
+                header, original = self.frame_after(self.client.command('configure_fusion',
+                    base_config_revision=active['config_revision'], fusion=fusion))
+                self.assertNotIn('fallback_display', header['fusion'])
+                _, support = self.frame_after(self.client.command('configure_output', product='render_support_v1'))
+                _, visibility = self.frame_after(self.client.command('configure_output', product='source_visibility_v1'))
+                self.frame_after(self.client.command('configure_output', product='final_frame'))
+                active = self.client.command('state')
+                fusion['fallback_display'] = dict(mode='hatch')
+                ack = self.client.command('configure_fusion', base_config_revision=active['config_revision'], fusion=fusion)
+                header, marked = self.frame_after(ack)
+                self.assertEqual(header['fusion']['fallback_display'], dict(mode='hatch'))
+                original_pixels = np.frombuffer(original, np.uint8).reshape(64, 96, 4)
+                marked_pixels = np.frombuffer(marked, np.uint8).reshape(64, 96, 4)
+                paths = np.frombuffer(support, np.uint8).reshape(64, 96, 4)[..., 2]
+                fallback = np.isin(paths, [3, 5])
+                self.assertGreater(fallback.sum(), 0)
+                np.testing.assert_array_equal(marked_pixels[~fallback], original_pixels[~fallback])
+                y, x = np.mgrid[:64, :96]
+                dark = ((x // 8 + (63-y) // 8) % 2) != 0
+                expected = np.where(dark[..., None], [38, 13, 38, 255], [255, 0, 255, 255])
+                self.assertLessEqual(np.abs(marked_pixels.astype(int)[fallback]-expected[fallback]).max(), 1)
+                _, actual = self.frame_after(self.client.command('configure_output', product='render_support_v1'))
+                self.assertEqual(actual, support)
+                _, actual = self.frame_after(self.client.command('configure_output', product='source_visibility_v1'))
+                self.assertEqual(actual, visibility)
+                for display in [dict(mode='wrong'), {}, dict(mode='hatch', extra=True), 'hatch']:
+                    state = self.client.command('state')
+                    rejected = self.client.command('configure_fusion', base_config_revision=state['config_revision'],
+                        fusion=dict(mode=mode, fallback_display=display))
+                    self.assertFalse(rejected['accepted'])
+                    self.assertEqual(rejected['config_revision'], state['config_revision'])
+                    self.assertEqual(rejected['state_revision'], state['state_revision'])
+                    self.assertEqual(rejected['fusion'], state['fusion'])
+                self.frame_after(self.client.command('configure_output', product='final_frame'))
+                active = self.client.command('state')
+                _, restored = self.frame_after(self.client.command('configure_fusion',
+                    base_config_revision=active['config_revision'], fusion=dict(mode=mode)))
+                self.assertEqual(restored, original)
+        self.assertEqual(self.config.read_bytes(), original_file)
+
     def test_reconnect_during_pending_support_does_not_leak_product(self):
         self.start()
         for attempt in range(10):

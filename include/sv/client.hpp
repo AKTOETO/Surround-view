@@ -1,5 +1,6 @@
 #pragma once
 #include "sv/client_output.hpp"
+#include "sv/fallback_display.hpp"
 #include "sv/protocol.hpp"
 #include <functional>
 #include <memory>
@@ -33,6 +34,7 @@ struct FusionSettings
     unsigned pyramid_levels = 4;
     std::string pyramid_boundary = "zero";
     std::string seam_solver = "binary_pairs";
+    FallbackDisplay fallback_display;
 };
 
 struct Event
@@ -137,6 +139,11 @@ class Client
         if (fusion.seam_solver != "binary_pairs")
         {
             fields["seam_solver"] = fusion.seam_solver;
+        }
+        if (fusion.fallback_display.mode != "legacy")
+        {
+            fields["fallback_display"] =
+                boost::json::object{{"mode", fusion.fallback_display.mode}};
         }
         return command("configure_fusion",
                        {{"base_config_revision", std::to_string(base_config_revision)},

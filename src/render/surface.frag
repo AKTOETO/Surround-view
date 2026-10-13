@@ -11,7 +11,7 @@ uniform ivec4 available;
 uniform vec2 vehicle;
 uniform int surface_mode;
 uniform float dome_radius;
-uniform int fusion_mode, diagnostic_mode;
+uniform int fusion_mode, diagnostic_mode, fallback_hatch;
 uniform int sample_camera;
 uniform int inspection_regions;
 uniform float reference_height;
@@ -366,6 +366,12 @@ void main()
     if (total > 1e-6)
     {
         color = vec4(encode(sum / total), 1);
+    }
+    else if (fallback_hatch != 0)
+    {
+        // Explicit display of this branch only; not a scene observability test.
+        float tile = mod(floor(gl_FragCoord.x / 8.0) + floor(gl_FragCoord.y / 8.0), 2.0);
+        color = vec4(mix(vec3(1, 0, 1), vec3(.15, .05, .15), tile), 1);
     }
     else if (surface_mode == 1)
     {

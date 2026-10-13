@@ -542,6 +542,8 @@ Image Renderer::render(const FrameSet &set, const View &view, RenderInspection *
                 c.fusion.diagnostic == "coverage"  ? 1
                 : c.fusion.diagnostic == "weights" ? 2
                                                    : 0);
+    glUniform1i(glGetUniformLocation(i.prog, "fallback_hatch"),
+                c.fusion.fallback_display.mode == "hatch");
     glUniform1f(glGetUniformLocation(i.prog, "edge_width_px"), c.fusion.edge_width_px);
     glUniform1f(glGetUniformLocation(i.prog, "angle_power"), c.fusion.angle_power);
     if (i.draw_query)

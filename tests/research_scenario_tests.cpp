@@ -164,3 +164,20 @@ TEST(ResearchScenarioIntegration, CancellationAndCallbackFailureRestoreBaseline)
     EXPECT_EQ(failed_capture.at("error"), "capture failure");
     std::this_thread::sleep_for(std::chrono::milliseconds(80));
 }
+
+TEST(ResearchScenario, FallbackDisplayIsExplicitAndStrict)
+{
+    const auto scenario = sv::research::parse_scenario(boost::json::parse(
+        R"({"schema_version":1,"variants":[{"mode":"multi_band","fallback_display":{"mode":"hatch"}},{"mode":"edge_feather"}]})"));
+    EXPECT_EQ(scenario.variants[0].fusion.fallback_display.mode, "hatch");
+    EXPECT_EQ(scenario.variants[1].fusion.fallback_display.mode, "legacy");
+    for (const auto *display :
+         {R"({"mode":"bad"})", R"({})", R"({"mode":"hatch","confidence":true})", R"("hatch")"})
+    {
+        auto input =
+            boost::json::parse(R"({"schema_version":1,"variants":[{"mode":"multi_band"}]})");
+        input.at("variants").as_array()[0].as_object()["fallback_display"] =
+            boost::json::parse(display);
+        EXPECT_ANY_THROW(sv::research::parse_scenario(input));
+    }
+}

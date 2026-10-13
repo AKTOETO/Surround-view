@@ -40,6 +40,10 @@ boost::json::object settings(const client::FusionSettings &fusion)
     {
         result["seam_solver"] = fusion.seam_solver;
     }
+    if (fusion.fallback_display.mode != "legacy")
+    {
+        result["fallback_display"] = boost::json::object{{"mode", fusion.fallback_display.mode}};
+    }
     return result;
 }
 

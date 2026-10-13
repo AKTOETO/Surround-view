@@ -242,3 +242,73 @@ TEST(RenderSupportContract, FusionReturnsActualPostSmoothingBaseWeightsWithoutFu
     EXPECT_EQ(cv::norm(plain.color, captured.color, cv::NORM_INF), 0);
     EXPECT_GT(cv::norm(plain.blend_weights, plain.weights, cv::NORM_INF), .01);
 }
+
+TEST_P(RenderSupport, FallbackHatchMarksOnlyActualFallbackAndRestoresLegacy)
+{
+    for (const bool dome : {false, true})
+    {
+        SCOPED_TRACE(dome);
+        auto config = support_config();
+        config.fusion.mode = GetParam();
+        if (dome)
+        {
+            config.surface.type = "dome_floor_v1";
+        }
+        sv::Renderer renderer(config);
+        for (const bool missing : {true, false})
+        {
+            SCOPED_TRACE(missing);
+            const auto frames = missing ? sv::FrameSet{} : black_frames(config);
+            const auto original = renderer.render(frames, config.view);
+            config.fusion.fallback_display.mode = "hatch";
+            renderer.set_fusion(config.fusion);
+            sv::RenderInspection inspection;
+            const auto marked = renderer.render(frames, config.view, &inspection,
+                                                {false, false, false, true, true});
+            EXPECT_EQ(marked.pixels, renderer.render(frames, config.view).pixels);
+            int fallbacks = 0, fused = 0;
+            for (int y = 0; y < config.height; ++y)
+            {
+                for (int x = 0; x < config.width; ++x)
+                {
+                    const auto path = static_cast<sv::RenderSupportPath>(
+                        inspection.support.at<cv::Vec4b>(y, x)[2]);
+                    const auto offset = (size_t(y) * config.width + x) * 4;
+                    if (path == sv::RenderSupportPath::gpu_fallback ||
+                        path == sv::RenderSupportPath::hybrid_fallback)
+                    {
+                        const bool dark = ((x / 8) + ((config.height - 1 - y) / 8)) % 2;
+                        const std::array<int, 4> expected =
+                            dark ? std::array<int, 4>{38, 13, 38, 255}
+                                 : std::array<int, 4>{255, 0, 255, 255};
+                        for (int ch = 0; ch < 4; ++ch)
+                        {
+                            EXPECT_NEAR(marked.pixels[offset + ch], expected[ch], 1);
+                        }
+                        ++fallbacks;
+                    }
+                    else
+                    {
+                        EXPECT_TRUE(std::equal(marked.pixels.begin() + offset,
+                                               marked.pixels.begin() + offset + 4,
+                                               original.pixels.begin() + offset));
+                        fused += path == sv::RenderSupportPath::gpu_fusion ||
+                                 path == sv::RenderSupportPath::hybrid_fusion;
+                    }
+                }
+            }
+            if (missing)
+            {
+                EXPECT_GT(fallbacks, 0);
+                EXPECT_EQ(fused, 0);
+            }
+            else
+            {
+                EXPECT_GT(fused, 0); // Real black samples must not be marked as missing.
+            }
+            config.fusion.fallback_display.mode = "legacy";
+            renderer.set_fusion(config.fusion);
+            EXPECT_EQ(renderer.render(frames, config.view).pixels, original.pixels);
+        }
+    }
+}
