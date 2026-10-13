@@ -1,0 +1,226 @@
+{
+  "schema_version": 1,
+  "scope": "posthoc_two_failed_pairings_source_status_and_archived_current_mesa_controls",
+  "primary_report_sha256": "769d3ec59bf342ef1ba0fa5e435fa9074f2646442ebb7e3946d6215337983db4",
+  "binary_sha256": "f22453d4eac328ad5cab364c9a694742532dbfb40b707409a3321470bb9fe932",
+  "rows": [
+    {
+      "frame": 1,
+      "variant": "s_nom_b020_e10mm-accept-facing",
+      "y": 207,
+      "x": 324,
+      "historical_eligible": [],
+      "current_statuses": [
+        3,
+        3,
+        3,
+        10
+      ],
+      "current_eligible": [
+        3
+      ],
+      "current_count": 1,
+      "count_agrees": true,
+      "metadata": {
+        "device": "llvmpipe (LLVM 22.1.8, 256 bits)",
+        "output_product": "source_visibility_v1",
+        "frame_index": 1,
+        "inputs": [
+          {
+            "camera_id": 0,
+            "path": "/home/bogdan/prog/MAI/surround-view/artifacts/parallax-sensor-inputs-v1/rig101-near-z080/seed101-inputs/camera0_0001.png",
+            "sha256": "b3e3260e22eb594db3883fd147e26e71542285c4d7edb44a9f3a0bd4be4d2d87"
+          },
+          {
+            "camera_id": 1,
+            "path": "/home/bogdan/prog/MAI/surround-view/artifacts/parallax-sensor-inputs-v1/rig101-near-z080/seed101-inputs/camera1_0001.png",
+            "sha256": "478c4701d651a8be72ba172ed4561ca6abeb7e03e17e8e12f146efc554afe51c"
+          },
+          {
+            "camera_id": 2,
+            "path": "/home/bogdan/prog/MAI/surround-view/artifacts/parallax-sensor-inputs-v1/rig101-near-z080/seed101-inputs/camera2_0001.png",
+            "sha256": "eb03272bb2587981efdf13aa26a306fc2dbda1fe9113da5cccefe34ecb9a036f"
+          },
+          {
+            "camera_id": 3,
+            "path": "/home/bogdan/prog/MAI/surround-view/artifacts/parallax-sensor-inputs-v1/rig101-near-z080/seed101-inputs/camera3_0001.png",
+            "sha256": "d6976fb34b7a5646d5a46330bd6cde1c39f03f44f57b92bc9c1b0e193ee2499f"
+          }
+        ],
+        "width": 640,
+        "height": 360,
+        "config_sha256": "62f64872a7e49039d899741a85b243edf2f4a32662a4afce917069f67720d077",
+        "manifest_sha256": "298e789999336b13a91dcc5aa573c785aa43afcf9d553156f53519533cefd7ec",
+        "payload_sha256": "6a4d4f1c91f9a65c6f33785f4c6c811824e3c32ee94b94e92bc80de403362d65",
+        "source_fingerprint": "00046f907fb051260cca8ab011c850f8ff8b888eff9457bff2dbb0c1bc09e79a"
+      },
+      "file": "artifacts/source-disagreement-pairing-attribution-v1/frame1-s_nom_b020_e10mm-accept-facing.rgba",
+      "sha256": "6a4d4f1c91f9a65c6f33785f4c6c811824e3c32ee94b94e92bc80de403362d65",
+      "matched_mesa_controls": [
+        {
+          "label": "archived_binary_mesa",
+          "binary_sha256": "69c8552f0882cf24e918192db82549050c08f5e5b80a2737e7fc07e8539142ee",
+          "report": "artifacts/source-disagreement-pairing-attribution-v1/archived_binary_mesa-s_nom_b020_e10mm-accept-facing/report.json",
+          "report_sha256": "9d32b092d9c8fdd6cbeaaebade5595580a0716d378b74168fb5630ae9eaec3f8",
+          "device": "llvmpipe (LLVM 22.1.8, 256 bits)",
+          "source_fingerprint": "2fc9b585cf72496ab120ef8649c2e73f787f5e0d7fd861715bba88c0cda21692",
+          "legacy_camera3_status": 1
+        },
+        {
+          "label": "current_binary_mesa",
+          "binary_sha256": "2aede07323699463741f7160a7b21ec9ae4e68d315a2a9759f6bfb738c120e3f",
+          "report": "artifacts/source-disagreement-pairing-attribution-v1/current_binary_mesa-s_nom_b020_e10mm-accept-facing/report.json",
+          "report_sha256": "349578ebf0b6bb50cad491f486ae24e4060147747ae9e2d2a7372ca949a67a25",
+          "device": "llvmpipe (LLVM 22.1.8, 256 bits)",
+          "source_fingerprint": "00046f907fb051260cca8ab011c850f8ff8b888eff9457bff2dbb0c1bc09e79a",
+          "legacy_camera3_status": 1
+        }
+      ],
+      "all_mesa_payloads_equal": true,
+      "mesa_payloads_checked": [
+        "camera0-pixels.f32",
+        "camera0-status.u8",
+        "camera1-pixels.f32",
+        "camera1-status.u8",
+        "camera2-pixels.f32",
+        "camera2-status.u8",
+        "camera3-pixels.f32",
+        "camera3-status.u8",
+        "carrier-positions.f32",
+        "carrier-regions.u8",
+        "output.rgba"
+      ],
+      "mesa_payload_sha256": {
+        "carrier-positions.f32": "b9b2e93caaa70abfa93cdf4ad0f721bb6e5ebfcec79b02dca8cd49d05cfc5060",
+        "carrier-regions.u8": "008a493d6096b7c001a1e733ee7a919cdf5106d25af7f861e244fb769ff087a0",
+        "output.rgba": "2d00277fcb385cc734d332ed7e40b61b389a11a6bc2f622267fa0ac4c323eea7",
+        "camera0-pixels.f32": "a349af756c5b24e424a5d06dd89589072da6678455f7d6461665e048269577b3",
+        "camera0-status.u8": "e51566ae11a2810fa7e0a81671a896ba54f90aeb74a2c8991e8bf39efee96db3",
+        "camera1-pixels.f32": "3b57d2f85796df594d678f5cbd5ff5a23ce35f7b7fa159ace4be19adf68fd4ae",
+        "camera1-status.u8": "c7c459bc28a559f902726c47d3544ab991804a497e6192dbbfb11763c726a334",
+        "camera2-pixels.f32": "b5ce943f6768e30a04d31a8dcde8f197b9b40f2f26b445e9c4f1c2b352279322",
+        "camera2-status.u8": "723bed6190c0530d0cbafaa024afc681d95fdd16423d74be9ada309d875b8260",
+        "camera3-pixels.f32": "46e95bcc030efbf16927e9b302a3e5da3d5b090d91e440d7f484202c85e2c59c",
+        "camera3-status.u8": "934681e8428d695f2b09dfaf12a9c7f52e69ae337fc5f37c2f97c730ffa13e57"
+      },
+      "historical_legacy_statuses": [
+        3,
+        3,
+        3,
+        7
+      ]
+    },
+    {
+      "frame": 1,
+      "variant": "s_zm_b020_e10mm-nominal-facing",
+      "y": 207,
+      "x": 324,
+      "historical_eligible": [],
+      "current_statuses": [
+        3,
+        3,
+        3,
+        1
+      ],
+      "current_eligible": [
+        3
+      ],
+      "current_count": 1,
+      "count_agrees": true,
+      "metadata": {
+        "device": "llvmpipe (LLVM 22.1.8, 256 bits)",
+        "output_product": "source_visibility_v1",
+        "frame_index": 1,
+        "inputs": [
+          {
+            "camera_id": 0,
+            "path": "/home/bogdan/prog/MAI/surround-view/artifacts/parallax-sensor-inputs-v1/rig101-near-z080/seed101-inputs/camera0_0001.png",
+            "sha256": "b3e3260e22eb594db3883fd147e26e71542285c4d7edb44a9f3a0bd4be4d2d87"
+          },
+          {
+            "camera_id": 1,
+            "path": "/home/bogdan/prog/MAI/surround-view/artifacts/parallax-sensor-inputs-v1/rig101-near-z080/seed101-inputs/camera1_0001.png",
+            "sha256": "478c4701d651a8be72ba172ed4561ca6abeb7e03e17e8e12f146efc554afe51c"
+          },
+          {
+            "camera_id": 2,
+            "path": "/home/bogdan/prog/MAI/surround-view/artifacts/parallax-sensor-inputs-v1/rig101-near-z080/seed101-inputs/camera2_0001.png",
+            "sha256": "eb03272bb2587981efdf13aa26a306fc2dbda1fe9113da5cccefe34ecb9a036f"
+          },
+          {
+            "camera_id": 3,
+            "path": "/home/bogdan/prog/MAI/surround-view/artifacts/parallax-sensor-inputs-v1/rig101-near-z080/seed101-inputs/camera3_0001.png",
+            "sha256": "d6976fb34b7a5646d5a46330bd6cde1c39f03f44f57b92bc9c1b0e193ee2499f"
+          }
+        ],
+        "width": 640,
+        "height": 360,
+        "config_sha256": "1286f73c5d581be1d8caa25fed7c4b49a37d6fc624613635214b46c659d5dd67",
+        "manifest_sha256": "298e789999336b13a91dcc5aa573c785aa43afcf9d553156f53519533cefd7ec",
+        "payload_sha256": "c0a324697dbef11eb8a1221f9aadde8e53e96ef007bb3f29cb3efb85dd7520c6",
+        "source_fingerprint": "00046f907fb051260cca8ab011c850f8ff8b888eff9457bff2dbb0c1bc09e79a"
+      },
+      "file": "artifacts/source-disagreement-pairing-attribution-v1/frame1-s_zm_b020_e10mm-nominal-facing.rgba",
+      "sha256": "c0a324697dbef11eb8a1221f9aadde8e53e96ef007bb3f29cb3efb85dd7520c6",
+      "matched_mesa_controls": [
+        {
+          "label": "archived_binary_mesa",
+          "binary_sha256": "69c8552f0882cf24e918192db82549050c08f5e5b80a2737e7fc07e8539142ee",
+          "report": "artifacts/source-disagreement-pairing-attribution-v1/archived_binary_mesa-s_zm_b020_e10mm-nominal-facing/report.json",
+          "report_sha256": "9e3283cea135dd72976f042d94c6c507f979b42ab687adff745b1ec39b4475db",
+          "device": "llvmpipe (LLVM 22.1.8, 256 bits)",
+          "source_fingerprint": "2fc9b585cf72496ab120ef8649c2e73f787f5e0d7fd861715bba88c0cda21692",
+          "legacy_camera3_status": 1
+        },
+        {
+          "label": "current_binary_mesa",
+          "binary_sha256": "2aede07323699463741f7160a7b21ec9ae4e68d315a2a9759f6bfb738c120e3f",
+          "report": "artifacts/source-disagreement-pairing-attribution-v1/current_binary_mesa-s_zm_b020_e10mm-nominal-facing/report.json",
+          "report_sha256": "1dcf2eccdb19b9bac2847dbce0bc5171c16a2ca228d57d913bc84e43bf202828",
+          "device": "llvmpipe (LLVM 22.1.8, 256 bits)",
+          "source_fingerprint": "00046f907fb051260cca8ab011c850f8ff8b888eff9457bff2dbb0c1bc09e79a",
+          "legacy_camera3_status": 1
+        }
+      ],
+      "all_mesa_payloads_equal": true,
+      "mesa_payloads_checked": [
+        "camera0-pixels.f32",
+        "camera0-status.u8",
+        "camera1-pixels.f32",
+        "camera1-status.u8",
+        "camera2-pixels.f32",
+        "camera2-status.u8",
+        "camera3-pixels.f32",
+        "camera3-status.u8",
+        "carrier-positions.f32",
+        "carrier-regions.u8",
+        "output.rgba"
+      ],
+      "mesa_payload_sha256": {
+        "carrier-positions.f32": "b9b2e93caaa70abfa93cdf4ad0f721bb6e5ebfcec79b02dca8cd49d05cfc5060",
+        "carrier-regions.u8": "008a493d6096b7c001a1e733ee7a919cdf5106d25af7f861e244fb769ff087a0",
+        "output.rgba": "4cf82fc933635577c682ef61042d568e6fa8853e3fcba879b9d56ca4b7784ce6",
+        "camera0-pixels.f32": "a349af756c5b24e424a5d06dd89589072da6678455f7d6461665e048269577b3",
+        "camera0-status.u8": "e51566ae11a2810fa7e0a81671a896ba54f90aeb74a2c8991e8bf39efee96db3",
+        "camera1-pixels.f32": "3b57d2f85796df594d678f5cbd5ff5a23ce35f7b7fa159ace4be19adf68fd4ae",
+        "camera1-status.u8": "c7c459bc28a559f902726c47d3544ab991804a497e6192dbbfb11763c726a334",
+        "camera2-pixels.f32": "b5ce943f6768e30a04d31a8dcde8f197b9b40f2f26b445e9c4f1c2b352279322",
+        "camera2-status.u8": "723bed6190c0530d0cbafaa024afc681d95fdd16423d74be9ada309d875b8260",
+        "camera3-pixels.f32": "2a0af05e8f70c1e24953bf3f392b40e8583b0ebe406112d4d0c72e3536721eab",
+        "camera3-status.u8": "ebcdc100e8e658a65510de8b289d8d6c19b75b6802cd10664db20f35dc4375ac"
+      },
+      "historical_legacy_statuses": [
+        3,
+        3,
+        3,
+        7
+      ]
+    }
+  ],
+  "limitations": [
+    "Primary two historical pairings remain failures; controls do not replace the frozen primary result",
+    "All11 archived/current Mesa payloads agree for these two conditions; archived NVIDIA differs at the selected central-occlusion statuses",
+    "Backend/runtime sensitivity exists already with archived binary; exact numerical cause and current NVIDIA behavior not established",
+    "Same static inputs but separate diagnostic renders; no full-matrix cross-backend stability or quality ranking"
+  ]
+}
