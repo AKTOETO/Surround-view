@@ -230,6 +230,9 @@ class IntegrationTests(unittest.TestCase):
                 for policy in ['accept', 'reject']:
                     surfaces.append(dict(flat, source_occlusion_box=dict(occluder,
                         uncertainty=dict(radius_m=.005, ambiguous_policy=policy))))
+                surfaces.append(dict(flat, source_occlusion_box=dict(occluder,
+                    mode='bilinear_box_surface_v1', support_tolerance_m=.01,
+                    require_facing_surface=True)))
                 catalog = client.command('surface_catalog')
                 self.assertTrue(catalog['accepted'])
                 self.assertEqual(catalog['surface_catalog']['rectangular_reference_height']['field'],
@@ -240,6 +243,8 @@ class IntegrationTests(unittest.TestCase):
                     catalog['surface_catalog']['rectangular_source_occlusion']['modes'])
                 self.assertEqual(catalog['surface_catalog']['rectangular_source_occlusion']
                     ['uncertainty']['policies'], ['accept', 'reject'])
+                self.assertFalse(catalog['surface_catalog']['rectangular_source_occlusion']
+                    ['default_require_facing_surface'])
                 builds = int(header['mesh_build_count'])
                 for surface in surfaces:
                     ack = client.command('configure_surface', base_config_revision=revision,
@@ -260,6 +265,9 @@ class IntegrationTests(unittest.TestCase):
                                      (revision, dict(flat, source_occlusion_box=dict(occluder, mode='unknown'))),
                                      (revision, dict(flat, source_occlusion_box=dict(occluder, guard_texels=1))),
                                      (revision, dict(flat, source_occlusion_box=dict(occluder, tolerance_m=-1))),
+                                     (revision, dict(flat, source_occlusion_box=dict(occluder, require_facing_surface=True))),
+                                     (revision, dict(flat, source_occlusion_box=dict(occluder,
+                                         mode='bilinear_box_surface_v1', require_facing_surface=1))),
                                      (revision, dict(flat, source_occlusion_box=dict(occluder,
                                          uncertainty=dict(radius_m=.051, ambiguous_policy='accept')))),
                                      (revision, dict(flat, source_occlusion_box=dict(occluder,

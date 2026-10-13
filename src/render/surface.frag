@@ -22,6 +22,7 @@ uniform vec3 source_box_min, source_box_max, camera_origin[4];
 uniform float source_occlusion_tolerance, source_support_tolerance;
 uniform float source_uncertainty_radius;
 uniform int source_ambiguity_policy;
+uniform int source_require_facing;
 
 // Finite segment / opaque AABB. Parameter t is a fraction of camera-to-carrier distance.
 bool box_segment_occluded(vec3 origin, vec3 endpoint, float inset_m, bool closed_degenerate)
@@ -68,6 +69,19 @@ bool on_source_box_surface(vec3 point)
     return min(face_distance.x, min(face_distance.y, face_distance.z)) <= epsilon_m;
 }
 
+bool source_face_faces_camera(vec3 origin, vec3 point)
+{
+    // Caller has checked finite face-band membership. Retain ALL near faces at corners.
+    for (int axis = 0; axis < 3; ++axis)
+    {
+        if (abs(point[axis] - source_box_min[axis]) <= source_support_tolerance &&
+            origin[axis] < source_box_min[axis]) { return true; }
+        if (abs(point[axis] - source_box_max[axis]) <= source_support_tolerance &&
+            origin[axis] > source_box_max[axis]) { return true; }
+    }
+    return false;
+}
+
 // Neighbouring rays terminate at the central carrier radial range.
 // Policy2 preserves a visible carrier endpoint on the supplied box itself.
 // Parser restricts this inverse to zero-distortion equidistant optics.
@@ -88,7 +102,11 @@ int source_rejection(int camera, vec2 px)
     }
     if (source_occlusion_policy == 0) { return 0; }
     // Membership only bypasses the footprint stage, after the selected central policy.
-    if (source_occlusion_policy == 2 && on_source_box_surface(world)) { return 0; }
+    if (source_occlusion_policy == 2 && on_source_box_surface(world))
+    {
+        if (source_require_facing != 0 && !source_face_faces_camera(origin, world)) { return 9; }
+        return 0;
+    }
     vec2 base = floor(px), fraction = px - base;
     float distance_m = length(world - origin);
     for (int y = -1; y <= 2; ++y)

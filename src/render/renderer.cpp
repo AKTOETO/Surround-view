@@ -526,6 +526,7 @@ Image Renderer::render(const FrameSet &set, const View &view, RenderInspection *
                 box.maximum.z);
     glUniform1f(glGetUniformLocation(i.prog, "source_occlusion_tolerance"), box.tolerance);
     glUniform1f(glGetUniformLocation(i.prog, "source_support_tolerance"), box.support_tolerance);
+    glUniform1i(glGetUniformLocation(i.prog, "source_require_facing"), box.require_facing_surface);
     glUniform1f(glGetUniformLocation(i.prog, "source_uncertainty_radius"), box.uncertainty.radius);
     glUniform1i(glGetUniformLocation(i.prog, "source_ambiguity_policy"),
                 box.uncertainty.ambiguous_policy == "accept"   ? 1

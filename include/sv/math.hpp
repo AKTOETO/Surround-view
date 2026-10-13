@@ -68,6 +68,7 @@ struct SourceOcclusionBox
     int guard_texels = 0;
     double support_tolerance = 1e-5;
     OcclusionUncertainty uncertainty{};
+    bool require_facing_surface = false;
 };
 
 struct Surface

@@ -527,7 +527,8 @@ Config parse_config(const boost::json::value &value)
         {
             const auto &box = value->as_object();
             keys(box, {"min_m", "max_m", "tolerance_m"}, "surface.source_occlusion_box",
-                 {"mode", "guard_texels", "support_tolerance_m", "uncertainty"});
+                 {"mode", "guard_texels", "support_tolerance_m", "uncertainty",
+                  "require_facing_surface"});
             const auto &lo = box.at("min_m").as_array();
             const auto &hi = box.at("max_m").as_array();
             require(lo.size() == 3 && hi.size() == 3, "source_occlusion_box: expected XYZ bounds");
@@ -561,6 +562,12 @@ Config parse_config(const boost::json::value &value)
             require(b.mode == "center" || b.mode == "bilinear_radial_v1" ||
                         b.mode == "bilinear_box_surface_v1",
                     "source_occlusion_box.mode: unknown policy");
+            if (const auto *facing = box.if_contains("require_facing_surface"))
+            {
+                require(b.mode == "bilinear_box_surface_v1",
+                        "source_occlusion_box.require_facing_surface requires box-surface policy");
+                b.require_facing_surface = facing->as_bool();
+            }
             if (const auto *support = box.if_contains("support_tolerance_m"))
             {
                 require(b.mode == "bilinear_box_surface_v1",

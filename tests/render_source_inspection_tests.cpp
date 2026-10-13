@@ -559,6 +559,61 @@ TEST_P(OcclusionUncertaintyTest, MatchesFaceCertificatesAndRestoresNominalOutput
     EXPECT_GT(blocked_count, 0);
     EXPECT_GT(ambiguous_count, 0);
     EXPECT_GT(clear_count, 0);
+    surface.source_occlusion = {true, {2, 1.5, 0}, {4, 3.5, .01}, .1};
+    surface.source_occlusion.mode = "bilinear_box_surface_v1";
+    renderer.set_surface(surface);
+    sv::RenderInspection no_facing;
+    const auto no_facing_output = renderer.render(frames, config.view, &no_facing, {true, true});
+    surface.source_occlusion.require_facing_surface = true;
+    renderer.set_surface(surface);
+    sv::RenderInspection facing;
+    const auto facing_output = renderer.render(frames, config.view, &facing, {true, true});
+    EXPECT_EQ(facing_output.pixels, renderer.render(frames, config.view).pixels);
+    int orientation_rejected = 0;
+    for (int camera = 0; camera < 4; ++camera)
+    {
+        const auto origin = sv::transform(sv::inverse_rigid(config.cameras[camera].T), {0, 0, 0});
+        const std::array<double, 3> o{origin.x, origin.y, origin.z};
+        const std::array<double, 3> lo{2, 1.5, 0}, hi{4, 3.5, .01};
+        for (int y = 0; y < config.height; ++y)
+        {
+            for (int x = 0; x < config.width; ++x)
+            {
+                const int old = no_facing.source_projections[camera].status.at<uchar>(y, x);
+                int expected = old;
+                if (old == 1)
+                {
+                    const auto p = no_facing.carrier_positions.at<cv::Vec3f>(y, x);
+                    bool finite = true, near = false, outward = false;
+                    const double band = surface.source_occlusion.support_tolerance;
+                    for (int axis = 0; axis < 3; ++axis)
+                    {
+                        finite &= p[axis] >= lo[axis] - band && p[axis] <= hi[axis] + band;
+                        const bool lower = std::abs(p[axis] - lo[axis]) <= band;
+                        const bool upper = std::abs(p[axis] - hi[axis]) <= band;
+                        near |= lower || upper;
+                        outward |= (lower && o[axis] < lo[axis]) || (upper && o[axis] > hi[axis]);
+                    }
+                    if (finite && near && !outward)
+                    {
+                        expected = 9;
+                        ++orientation_rejected;
+                    }
+                }
+                EXPECT_EQ(facing.source_projections[camera].status.at<uchar>(y, x), expected);
+                if (expected == 9)
+                {
+                    const auto uv = facing.source_projections[camera].pixels.at<cv::Vec2f>(y, x);
+                    EXPECT_TRUE(std::isnan(uv[0]) && std::isnan(uv[1]));
+                }
+            }
+        }
+    }
+    EXPECT_GT(orientation_rejected, 0);
+    EXPECT_EQ(renderer.uploads(), uploads);
+    surface.source_occlusion.require_facing_surface = false;
+    renderer.set_surface(surface);
+    EXPECT_EQ(renderer.render(frames, config.view).pixels, no_facing_output.pixels);
     renderer.set_surface(config.surface);
     EXPECT_EQ(renderer.render(frames, config.view).pixels, plain.pixels);
 }

@@ -183,6 +183,14 @@ int main(int argc, char **argv)
         occlusion_config.as_object()["surface"].as_object()["source_occlusion_box"] = occluder;
         check(sv::parse_config(occlusion_config).surface.source_occlusion.support_tolerance == .001,
               "support tolerance is independent from endpoint bias");
+        occluder["require_facing_surface"] = true;
+        occlusion_config.as_object()["surface"].as_object()["source_occlusion_box"] = occluder;
+        check(sv::parse_config(occlusion_config).surface.source_occlusion.require_facing_surface,
+              "explicit finite-face facing schema");
+        occluder["require_facing_surface"] = 1;
+        occlusion_config.as_object()["surface"].as_object()["source_occlusion_box"] = occluder;
+        rejects([&] { sv::parse_config(occlusion_config); }, "facing option requires boolean");
+        occluder.erase("require_facing_surface");
         for (double bad : {-.001, .051})
         {
             occluder["support_tolerance_m"] = bad;
@@ -191,6 +199,13 @@ int main(int argc, char **argv)
         }
         occluder["support_tolerance_m"] = .001;
         occluder["mode"] = "bilinear_radial_v1";
+        auto irrelevant_facing = occluder;
+        irrelevant_facing.erase("support_tolerance_m");
+        irrelevant_facing["require_facing_surface"] = false;
+        occlusion_config.as_object()["surface"].as_object()["source_occlusion_box"] =
+            irrelevant_facing;
+        rejects([&] { sv::parse_config(occlusion_config); },
+                "facing option rejected for other modes");
         occlusion_config.as_object()["surface"].as_object()["source_occlusion_box"] = occluder;
         rejects([&] { sv::parse_config(occlusion_config); },
                 "irrelevant support tolerance rejected");
