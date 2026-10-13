@@ -1,0 +1,77 @@
+{
+  "schema_version": 1,
+  "scope": "illustrative_native_source_visibility_not_quality_trial",
+  "frame": 0,
+  "width": 640,
+  "height": 360,
+  "requested_egl_vendor": "10_nvidia.json",
+  "backend_device_not_recorded_by_fixture": true,
+  "sha256": {
+    "artifacts/source-visibility-frame0.rgba": "3606dcc29822e08eea324040c739244c9a1e0dfb122cc0be8e7ecb6aa480baaa",
+    "artifacts/native-facing-configs-v1/frame0-s_zp_b020_e10mm-accept-facing.json": "5073e2088f3dd3ad4b75d25f8917b243760bbef16ee3ec98df81a13d78e946c9",
+    "artifacts/parallax-sensor-inputs-v1/rig101-near-z080/seed101-inputs/manifest.json": "298e789999336b13a91dcc5aa573c785aa43afcf9d553156f53519533cefd7ec",
+    "docs/diploma/plot_source_visibility_product.py": "298e5de7f1e5c81c2d42e25fc4e7072fddd3974241af13f8cd4fd1846f6af49c"
+  },
+  "camera_histograms": [
+    {
+      "No carrier/ego": 92038,
+      "Eligible unclassified": 0,
+      "Unavailable": 0,
+      "Behind camera": 60132,
+      "Outside angle": 4449,
+      "Outside image": 0,
+      "Vehicle footprint": 485,
+      "Central blocked": 276,
+      "Ambiguous rejected": 0,
+      "Backfacing support": 2,
+      "Ambiguous accepted": 0,
+      "Clear accepted": 72309,
+      "Footprint blocked": 709
+    },
+    {
+      "No carrier/ego": 92038,
+      "Eligible unclassified": 0,
+      "Unavailable": 0,
+      "Behind camera": 100618,
+      "Outside angle": 4202,
+      "Outside image": 0,
+      "Vehicle footprint": 485,
+      "Central blocked": 0,
+      "Ambiguous rejected": 0,
+      "Backfacing support": 0,
+      "Ambiguous accepted": 0,
+      "Clear accepted": 33057,
+      "Footprint blocked": 0
+    },
+    {
+      "No carrier/ego": 92038,
+      "Eligible unclassified": 0,
+      "Unavailable": 0,
+      "Behind camera": 109173,
+      "Outside angle": 3288,
+      "Outside image": 0,
+      "Vehicle footprint": 485,
+      "Central blocked": 0,
+      "Ambiguous rejected": 0,
+      "Backfacing support": 0,
+      "Ambiguous accepted": 0,
+      "Clear accepted": 25416,
+      "Footprint blocked": 0
+    },
+    {
+      "No carrier/ego": 92038,
+      "Eligible unclassified": 0,
+      "Unavailable": 0,
+      "Behind camera": 48558,
+      "Outside angle": 5008,
+      "Outside image": 0,
+      "Vehicle footprint": 485,
+      "Central blocked": 3975,
+      "Ambiguous rejected": 0,
+      "Backfacing support": 0,
+      "Ambiguous accepted": 74,
+      "Clear accepted": 79690,
+      "Footprint blocked": 572
+    }
+  ]
+}
