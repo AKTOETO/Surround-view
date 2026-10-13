@@ -4222,3 +4222,88 @@ A_j(\varepsilon)=\{i:E_{ij}=1\land M_i(\varepsilon)=1\}.
 Новый фиксированный фильтр в сервер не переносится. Следующий этап должен определить реально доступные признаки для joint selection и явную политику unsupported output, затем проверить preservation и reference/scene correspondence вместе. После developmental опыта необходим frozen nonuniform/natural-object holdout с независимыми geometry/mount seeds; uniform marker и два correlated frames не завершают ranking. Overhead, physical cameras и Aurora проверяются отдельно.
 
 Воспроизводимые commands, hashes, ограничения и отчёт: [[validation/RESIDUAL_SURFACE]], [[validation/baselines/residual_surface_v1.json]]. Шесть новых known-answer tests проверяют triangle intersection и equidistant inverse; selected CTest4/4,0.63s. Prepared input и report при повторении побайтно идентичны. Native renderer/server/library не изменялись; новый полный regression suite в этом этапе не заявляется.
+
+## 4.87. Доступные runtime evidence и явное отображение fallback
+
+### 4.87.1. Переход от независимой истины к реализуемому поведению
+
+§4.86 установил, что для7/9 выбранных coordinates нет matching source alternative при20mm даже до eligibility. Сервер не получает экспортированную scene geometry и не может использовать independent Blender hit как готовый признак качества. Следовательно, перенос oracle rejection в product нарушил бы разделение validation truth и runtime inputs. Требуется определить, что действительно измеряет текущий pipeline, и сначала обеспечить корректную интерпретацию этих измерений.
+
+Таблица4.89 — Runtime evidence и допустимые выводы.
+
+|Данные|Доступность в сервере|Подтверждаемое свойство|Не подтверждается|
+|---|---|---|---|
+|Source projection/status|Есть, source_visibility_v1|Прохождение текущих input/projection/supplied-box predicates|Истинная наблюдаемость нужной scene point|
+|Accepted ambiguous/clear|Есть при explicit positive-radius uncertainty|Bounded certificate для supplied AABB и stated bias/poses|Точная геометрия сцены и отсутствие parallax|
+|Local camera counts/base weights/path|Есть, render_support_v1|Eligibility, локальные веса и выбранная ветка output|Effective support nonlocal fusion и scene confidence|
+|Source-depth и true hit|Нет общего runtime input|Доступны независимому Blender oracle для проверки|Автоматически доступная product mitigation|
+|Camera RGB disagreement|Кадры доступны; отдельный estimator не реализован|Потенциальный consistency signal будущего метода|Надёжное point correspondence: uniform marker скрывает ошибку|
+
+В данном этапе реализована узкая presentation policy для достоверно известного события: перехода в уже существующую ветку fallback. Её назначение — отличать нейтральный фон заполнения от наблюдаемого изображения камер. Она не объявляется general unsupported-surface detector и не улучшает quality metrics §4.86.
+
+### 4.87.2. Контракт и реализации GPU/hybrid
+
+Настройка `fusion.fallback_display={"mode":"legacy"|"hatch"}` включена в общую C++ config validation. Блок optional; отсутствие возвращает legacy. Nested object принимает единственный строковый mode, неизвестные поля и значения отклоняются до mutation. Shared `FallbackDisplay` выделен в отдельный небольшой header и используется Config/FusionSettings без дополнительных Qt/OpenCV зависимостей клиентской библиотеки.
+
+`fusion_catalog` version5 объявляет режимы, `existing_fallback_branch_color_only`, `screen_tiles_8px_v1` и `scene_correspondence=false`. Применение идёт через существующий `configure_fusion`, между render calls, с проверкой config revision и прежним lease contract. Runtime настройка временная; серверный файл не перезаписывается. Full replacement без поля сбрасывает legacy. Default не сериализуется в normalized snapshot и typed command, сохраняя историческую форму данных; перед hatch клиент проверяет capability.
+
+Пусть `B(x,y)` — фактически выбранная ветка output, а `F` — множество существующих fallback branches. Для color output
+
+\[
+I'(x,y)=
+\begin{cases}
+H(x,y), & B(x,y)\in F\ \land\ \text{mode=hatch},\\
+I(x,y), & \text{иначе}.
+\end{cases}
+\]
+
+`H` — opaque экранная сетка8px из magenta `(1,0,1)` и dark `(0.15,0.05,0.15)`. Grid вычисляется в framebuffer coordinates; при top-left readback фаза Y соответствует `height-1-y`. Альфа не используется для кодирования validity.
+
+В GPU hard_best_angle fallback означает отсутствие winner; у feather — `total<=1e-6`. В hybrid отсутствие local eligible samples сохраняет shader fallback, наличие samples заменяет его CPU fusion result. Поэтому hybrid с eligible samples и нулевыми local base weights не обязан переходить в fallback: текущая fusion имеет собственную ветку обработки такого случая. Базовые weights не переименовываются в confidence. Диагностическая маска сохраняет прежние path codes3/5 для fallback и4/6 для fusion.
+
+Coverage/weights views проходят до presentation branch. Ego model, masked footprint и background не маркируются. Чёрные source images являются допустимыми наблюдениями; проверка яркости для признания пропуска не вводилась. Отбор камер, carrier geometry, shader projection, hybrid pyramid и diagnostic products остаются прежними.
+
+### 4.87.3. Процесс управления и интерфейс
+
+```plantuml
+@startuml
+actor "Исследователь" as U
+participant "sv-simulator\nRuntimeSettings" as G
+participant "sv-client-lib" as L
+participant "sv-server" as S
+participant "Renderer" as R
+U -> G : Обновить состояние/catalog
+G -> L : state(), fusion_catalog()
+L -> S : existing SV01 commands
+S --> G : snapshot/revision + fallback capability
+U -> G : Показать fallback / вернуть legacy
+G -> G : Copy current fusion snapshot; replace display mode
+G -> L : configure_fusion(base revision, settings)
+L -> S : full fusion replacement
+S -> S : Validate fields/revision/lease; temporary apply
+alt accepted
+  S -> R : set_fusion between render calls
+  R -> R : Unchanged pipeline; mark actual fallback branch
+  S --> G : ACK + applied snapshot
+  S --> L : final frame + revision/fusion metadata
+else rejected or stale
+  S --> G : Rejection + actual snapshot; no mutation
+end
+@enduml
+```
+
+Рисунок4.159 — Управление отображением через прежний протокол. Настройку выполняет сервер; GUI не редактирует его файл и не реализует fusion.
+
+В simulator добавлена кнопка, показывающая текущий mode и переключающая legacy/hatch без JSON editing. Она использует последний snapshot/revision, сохраняет другие fusion parameters и недоступна без capability, при disconnect/pending. Typed library API и C++ scenario runner принимают тот же nested field; сценарный отчёт сохраняет явный hatch, lease восстанавливает исходный snapshot. Это один удобный control; замена остальных JSON editors полноценными вкладками и виджетами остаётся отдельной работой.
+
+![Native fallback presentation](figures/experiments/fallback_display_example.png)
+
+Рисунок4.160 — Реальный output скомпилированного renderer для bowl и dome: обычное заполнение и контрастная сетка. Синтетический ground fixture с FoV0.9rad,320×180, seam_distance_feather; это illustration, не новый quality trial или photorealistic world. `plot_fallback_display.py` вызывает существующий native probe и визуализирует сохранённые RGBA. Backend device зафиксирован как llvmpipe (LLVM22.1.8,256bits); provenance/hashes — [[validation/baselines/fallback_display_example_v1.json]].
+
+### 4.87.4. Проверки и границы результата
+
+Сборка Linux renderer/server/library/clients завершена. GTest для всех семи fusion modes проверяет плоский rectangular carrier (bowl с H=0) и dome, отсутствие frames и реальные чёрные samples, screen pattern по actual RenderSupportPath, сохранность остальных pixels, inspection parity и legacy restore. Config/scenario tests проверяют default, неверные types/values и лишние nested fields. Live tests по семи modes проверяют wire marked frame, unchanged support/source-visibility masks, rejection без изменения state/config revisions, omission reset и unchanged config file. Simulator adapter проверяет hatch/invalid/legacy через typed API на Unix/TCP; installed CMake consumer проверяет новый public header и отсутствие Qt/OpenCV/GLES dependencies.
+
+После исправления install list **полный Mesa CTest59/59 за107.13s**, включая native carrier inspection32 tests и client transports. Ранние прогоны выявили sandbox socket denial, GL1285 автоматически выбранного драйвера и missing installed header; окончательный прогон выполнен после устранения header defect, с explicit Mesa и разрешёнными local sockets. Этот результат не доказывает работоспособность текущего NVIDIA backend или Aurora и не является overhead benchmark.
+
+Закрыта только optional presentation policy существующего fallback. General scene correspondence, joint selection без truth leakage, effective multiband support, temporal/prior fill и independent nonuniform holdout остаются открытыми. Следующий алгоритмический опыт должен явно задать доступные дополнительные признаки и совместно проверить полезную поддержку, wrong-point sampling и отказ от недостоверного результата. Качество не следует оценивать по тому, что пустота стала заметнее.

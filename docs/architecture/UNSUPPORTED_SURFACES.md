@@ -1,6 +1,6 @@
 # Политика unsupported surfaces
 
-Статус: native local-support mask реализована ([[validation/RENDER_SUPPORT]]), доставка одного выбранного продукта через wire/typed client API реализована ([[validation/OUTPUT_PRODUCTS]]). Новая политика заполнения и parallel subscriptions пока являются проектом. Обычный RGBA и существующий wire contract сохранены.
+Статус: native local-support mask реализована ([[validation/RENDER_SUPPORT]]), доставка одного выбранного продукта через wire/typed client API реализована ([[validation/OUTPUT_PRODUCTS]]). Optional presentation policy существующего fallback реализована: legacy/hatch через configure_fusion и кнопку simulator ([[validation/FALLBACK_DISPLAY]]). General reconstruction/fill и parallel subscriptions пока являются проектом. Обычный RGBA и существующий wire contract сохранены.
 
 ## Что существует
 
@@ -62,3 +62,5 @@ Remaining entry-gap audit показывает, почему нельзя сме
 Native и wire source_visibility_v1/SourceVisibilityView реализованы: причины central/ambiguity/facing/footprint, accepted10/11, explicit scope и owning typed delivery. RenderSupportView сохраняет прежние counts/path, отдельный продукт добавляет source classifications; parallel subscriptions не добавлены. General reconstruction/unsupported policy, GUI и scene correspondence остаются открытыми: [[validation/SOURCE_VISIBILITY_PRODUCT]].
 
 Независимый residual audit (§4.86, [[validation/RESIDUAL_SURFACE]]) установил: у7/9 выбранных coordinates нет matching projection-valid alternative даже до eligibility при20mm; при2mm — у8/9. Same-object footprint не исключает wrong-point sampling. Это ограниченный post-hoc результат одного coded world, не runtime evidence: scene oracle нельзя использовать в продукте как доступный confidence input. Следующий контракт должен явно определить доступные признаки joint selection и unsupported policy; general reconstruction и holdout остаются открытыми.
+
+§4.87 фиксирует доступные runtime evidence и реализует явную сетку только для существующих fallback branches. Source correspondence не выводится из branch/path, ambiguous/clear или RGB яркости. Реальные чёрные samples не отмечаются как missing; effective nonlocal support и joint selection требуют отдельного метода/проверок. [[validation/FALLBACK_DISPLAY]].

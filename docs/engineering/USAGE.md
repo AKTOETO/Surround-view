@@ -1199,3 +1199,9 @@ if (sv::client::validate_output_product(*event.message) == sv::OutputProduct::So
 ```
 
 Для прежнего цвета вызовите configure_output(sv::OutputProduct::FinalFrame). In-flight old product тоже release-ить, затем ожидать нужный product/revision; reconnect сбрасывает selector, библиотека автоматически его не повторяет. A byte — camera3 status, не opacity; используйте отдельную palette. Status10 accepted ambiguous и11 accepted clear доступны только для explicit positive-radius uncertainty;1 без такого certificate. Принятие не гарантирует положительный вклад fusion или правильную поверхность сцены. Полный status table, сценарий, tests и ограничения: [[validation/SOURCE_VISIBILITY_PRODUCT]]. GUI palette/camera selector пока не реализованы; API доступен любому C++ client через installed headers.
+
+## Показать участки fallback
+
+В sv-simulator откройте панель «Алгоритмы и геометрия сервера», нажмите «Обновить состояние и catalog», затем **«Показать fallback штриховкой»**. Повторное нажатие возвращает обычное заполнение. Кнопка сохраняет остальные fusion settings и работает с локальным/удалённым сервером через прежнее подключение. Требуется объявленная capability fallback_display (catalog v5). Настройка временная, без записи файла; shader выполняется на сервере.
+
+Для C++ клиента задать `settings.fallback_display.mode="hatch"` перед `configure_fusion(revision, settings)`. Scenario variant принимает `"fallback_display":{"mode":"hatch"}`. Configure полностью заменяет fusion: укажите остальные нужные параметры, omission возвращает defaults. Сетка отмечает только фактический pipeline fallback; она не обнаруживает все неверные источники или поверхности. [[validation/FALLBACK_DISPLAY]].

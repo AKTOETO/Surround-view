@@ -339,3 +339,7 @@ end note
 После ACK приложение может увидеть старый in-flight продукт: release обязателен, затем ожидать output_product=render_support_v1 и state_revision>=R. При восстановлении final_frame повторить configure_output; конфиг на диске не меняется. Не путать sample eligibility или local base weights с scene visibility и полным multiband contribution. Tests: [[validation/OUTPUT_PRODUCTS]].
 
 Сценарий С12 также применяется к source_visibility_v1: каталог/schema → configure_output → ACK state_revision → type11 statuses → release. Проверять product и revision каждого пакета; older in-flight пакет освободить и пропустить. При reconnect повторно выбрать продукт. Color/lease rejection, native parity семи modes и typed Unix/TCP consumption проверены: [[validation/SOURCE_VISIBILITY_PRODUCT]].
+
+### Сценарий отображения fallback через configure_fusion
+
+Клиент читает state и fusion_catalog, проверяет fallback_display capability, копирует fusion snapshot и устанавливает nested mode=hatch. Сервер проверяет base_config_revision/lease и всю конфигурацию, применяет её между render calls и возвращает временный snapshot. Клиент ждёт frame с применённой revision; после ACK возможен прежний in-flight frame. Stale/invalid request не меняет state/config revisions. Legacy возвращается full replacement с mode=legacy либо omission. Настройка не пишет config file; внутри experiment сохраняется прежний lease restore contract. Последовательность и ограничения: [[diploma/04_EXPERIMENTAL_STUDY#4.87.3. Процесс управления и интерфейс]], [[validation/FALLBACK_DISPLAY]].

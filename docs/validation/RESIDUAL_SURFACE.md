@@ -82,3 +82,5 @@ ctest --test-dir build -R '^(source_correspondence|uncertainty_facing|facing_ent
 ## Решение и открытые задачи
 
 Не вводить новый fixed rejection или выбирать камеры по недоступной в реальности scene truth. На выбранных координатах простая смена камеры часто не имеет соответствующего источника. Следующий шаг — определить доступную дополнительную информацию и явную unsupported policy, проверить joint selection с сохранением полезных наблюдений. Затем frozen nonuniform/natural-object holdout с независимыми geometry/mount seeds и отдельный overhead. Общие triangle/raster identity/coverage controls, physical cameras и Aurora остаются открытыми. Диагностический supplied-box clear в `source_visibility_v1` не гарантирует scene point correspondence.
+
+Следующим этапом доступные runtime evidence зафиксированы и добавлено optional отображение существующего fallback: [[validation/FALLBACK_DISPLAY]], §4.87. Это не joint correspondence mitigation; дополнительные признаки и независимый holdout остаются открытыми.

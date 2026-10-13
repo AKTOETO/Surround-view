@@ -283,3 +283,7 @@ Catalog adds `require_facing_surface` to optional fields, `default_require_facin
 ## Native per-camera visibility product
 
 Opt-in RenderInspectionRequest::source_visibility добавляет CV_8UC4 матрицу с SourceVisibilityStatus для камер0..3; один дополнительный pass/readback после common region pass. Общие source_projection/source_central_rejection сохраняют legacy UV/status semantics, разделяя причины7/12 только в новом продукте. Accepted ambiguity10 и clear certificate11 классифицируются после всех отказов при explicit positive-radius uncertainty; иначе eligible1. Vehicle depth model/background0, vehicle footprint6, unavailable2. Матрица очищается при повторном использовании inspection без запроса. Color-only, обычный RGBA не меняется; extra overhead включён в inspection_cpu_ms. Wire/typed delivery реализована: [[validation/SOURCE_VISIBILITY_PRODUCT]]. Это не effective fusion support, не arbitrary scene depth и не mitigation само по себе.
+
+## Явное отображение fallback
+
+Optional `fusion.fallback_display={"mode":"legacy"|"hatch"}` управляет только color presentation существующего fallback branch. Omission→legacy, strict nested object; catalog v5 объявляет scope и `scene_correspondence=false`. Hatch — opaque8px magenta/dark screen grid. GPU использует actual winner/total threshold; hybrid сохраняет fallback только при отсутствии eligible samples. Ego/background, fused pixels и coverage/weights не меняются. Чёрный image не считается missing; grid не устанавливает scene validity. Полный контракт, проверки и пример: [[validation/FALLBACK_DISPLAY]].

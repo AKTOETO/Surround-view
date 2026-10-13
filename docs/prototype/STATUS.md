@@ -1,5 +1,7 @@
 # Состояние прототипа и границы подтверждения
 
+14.10.2026: native fallback_display legacy/hatch реализован через configure_fusion/catalog v5/typed library и кнопку simulator; seven-mode masks/RGBA restore и полный Mesa CTest59/59 проверены. Это только отображение фактической fallback branch, не scene confidence/general mitigation. Доступные runtime evidence отделены от Blender truth ([[validation/FALLBACK_DISPLAY]], §4.87).
+
 Дополнение 13.10.2026: Ограниченный residual source-surface audit выполнен: 69/69 Blender/independent triangle rays согласованы (max5.05µm); из9 исходных pairs при20mm две matching, шесть same-object/wrong-point и одна wrong-object, при2mm matching0/9. У7/9 выбранных coordinates нет matching alternative при20mm даже до eligibility. Это post-hoc scene-specific truth, не holdout/general mitigation; далее доступные runtime evidence и explicit unsupported policy, nonuniform holdout и overhead ([[validation/RESIDUAL_SURFACE]], §4.86). Selected CTest4/4; product code unchanged.
 
 Дополнение 13.10.2026: source_visibility_v1 реализован в native renderer/server/sv-client-lib: четыре camera statuses, accepted ambiguity10/clear11, отдельные central7/footprint12, typed owning view, Unix/TCP и native parity семи fusion modes. Полная Mesa регрессия58/58,81.69s; NVIDIA inspection25/25. GUI/parallel products/overhead и general mitigation остаются открытыми: [[validation/SOURCE_VISIBILITY_PRODUCT]], §4.85.

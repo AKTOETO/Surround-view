@@ -1,5 +1,7 @@
 # Оставшиеся работы
 
+14.10.2026: native fallback_display legacy/hatch реализован через configure_fusion/catalog v5/typed library и кнопку simulator; seven-mode masks/RGBA restore и полный Mesa CTest59/59 проверены. Это только отображение фактической fallback branch, не scene confidence/general mitigation. Доступные runtime evidence отделены от Blender truth ([[validation/FALLBACK_DISPLAY]], §4.87).
+
 Сверено с кодом и проверочными отчётами 13.10.2026. Выполненные пункты удалены из этого списка; их реализация и результаты описаны в документах по ссылкам. Состояние Linux-прототипа и ограничения: [[prototype/STATUS]]. Подробная последовательность этапов: [[planning/ROADMAP]].
 
 ## Приоритет 1 — доказать качество решения для диплома
