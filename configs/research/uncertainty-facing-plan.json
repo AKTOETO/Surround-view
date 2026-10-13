@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "scope": "exhaustive_reference_blocking_and_finite_face_facing_control",
+  "phase": "post_hoc_readonly_exploratory",
+  "primary_report": "docs/validation/baselines/native_uncertainty_v1.json",
+  "native_plan": "configs/research/native-uncertainty-nvidia-plan.json",
+  "selection": "ALL36 non-nominal native uncertainty outputs; ALL retained nominal-reference-blocked pairs and ALL independent visible target pixels, no coordinate cap. Prior aggregate gates known; no new native render.",
+  "facing_rule": "At least one finite supplied-box face within existing support_tolerance_m (default10um), with camera origin strictly outside that face plane; all near faces participate, no nearest-face tie choice. Reject only near-face samples without any outward-facing eligible face. Face extensions use finite-band bounds. Outside band unchanged.",
+  "measurements": [
+    "Exhaustive accepted reference-blocked pair coordinates, native positive edge weights, added/removed vs matched nominal output and virtual target/road/other class",
+    "Visible target camera support before/after hypothetical finite-face-facing removal",
+    "Counterfactual independent edge-feather RGB from same retained source texels, after facing filter; primary RGBA reconstruction <=2LSB before any interpretation",
+    "Whole-frame proxy/road/reference gates on hypothetical recomposition, clearly oracle analysis not server output"
+  ],
+  "frozen_files": {
+    "docs/validation/baselines/native_uncertainty_v1.json": "c1af9bca31704b724e1a71fee02dacae798a5eb76519f894fe59e479f455ad81",
+    "configs/research/native-uncertainty-nvidia-plan.json": "78506c6af2fc69f6491445ad28af9f44a5c7c505c3488e03bb69e96769654b50",
+    "configs/research/visibility-sensitivity-plan.json": "255f6f8f3073f3f017e584f5a28f9bdfc680f1bdd8dcafcdfe228d1e314cb5a1",
+    "tools/research/source_visibility.py": "39c19b8b13a908feff773ebe0803dae1dee49b1d972956a4671a61a480ccd7d9",
+    "tools/research/source_correspondence.py": "723e6899ee98327454c77636663ae61e3533617e0bd9b848543520230b47fbef",
+    "tools/research/source_footprint_audit.py": "bac573f94a90ce9fb09792d387adf8a076b73e30056e03e6baf57779b13295ee"
+  },
+  "limitations": [
+    "Posthoc one explored coded scene/two correlated frames; no holdout",
+    "Reference blocking on actual carrier at nominal supplied box and2mm bias is not independent scene false acceptance",
+    "Face-facing rule assumes supplied box surface normals, not true arbitrary scene surface",
+    "Hypothetical Python recomposition is diagnostic only; production candidates require native implementation and matched capture",
+    "No modification to server defaults or primary captures; no sensor geometry, Aurora or overhead conclusions"
+  ]
+}
