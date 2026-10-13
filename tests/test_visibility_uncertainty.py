@@ -7,6 +7,8 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools/research'))
 from visibility_uncertainty import certificates, pixel_certificates
 from source_visibility import blocked_by_faces
+from native_uncertainty import expected_status, footprint_blocked
+from visibility_sensitivity import policy_blocked
 
 
 class UncertaintyTests(unittest.TestCase):
@@ -68,6 +70,35 @@ class UncertaintyTests(unittest.TestCase):
         with self.assertRaises(ValueError): certificates([0, 0, 0], [[3, 0, 0]], [2, -1, -1], [1, 1, 1], 0, 0)
         b, c = certificates([0, 0, 0], np.empty((0, 3)), [1, -1, -1], [2, 1, 1], 0, 0)
         self.assertEqual(len(b), 0); self.assertEqual(len(c), 0)
+
+    def test_nominal_oracle_matches_prior_policy_for_all_footprints(self):
+        camera = dict(T_camera_from_vehicle=np.eye(4).tolist(),
+                      projection=dict(fx=10, fy=10, cx=16, cy=16, k=[0]*4),
+                      resolution=dict(width=32, height=32))
+        points = np.array([[x, y, z] for x in [-.5, 0, .5] for y in [-.5, 0, .5] for z in [1, 2]], float)
+        pixels = np.column_stack([16 + np.arctan2(points[:, 0], points[:, 2]) * 10,
+                                  16 + np.arctan2(points[:, 1], points[:, 2]) * 10])
+        for mode in ['center', 'bilinear_radial_v1', 'bilinear_box_surface_v1']:
+            box = dict(min_m=[-.2, -.2, .5], max_m=[.2, .2, 1], tolerance_m=.02,
+                       mode=mode, guard_texels=1, support_tolerance_m=.001)
+            status, ambiguous = expected_status(camera, points, pixels, box)
+            np.testing.assert_array_equal(status, np.where(policy_blocked(camera, points, pixels, box), 7, 1))
+            self.assertFalse(ambiguous.any())
+
+    def test_accepting_ambiguity_does_not_bypass_footprint(self):
+        camera = dict(T_camera_from_vehicle=np.eye(4).tolist(),
+                      projection=dict(fx=10, fy=10, cx=16, cy=16, k=[0]*4),
+                      resolution=dict(width=32, height=32))
+        points = np.array([[0, 0, 2]], float); pixels = np.array([[16, 16]], float)
+        box = dict(min_m=[-.04, -.04, .5], max_m=[.04, .04, 1], tolerance_m=.02,
+                   uncertainty=dict(radius_m=.05, ambiguous_policy='accept'), mode='center')
+        status, ambiguous = expected_status(camera, points, pixels, box)
+        self.assertEqual(status[0], 1); self.assertTrue(ambiguous[0])
+        box.update(mode='bilinear_radial_v1', guard_texels=0)
+        self.assertTrue(footprint_blocked(camera, points, pixels, box)[0])
+        self.assertEqual(expected_status(camera, points, pixels, box)[0][0], 7)
+        box['uncertainty']['ambiguous_policy'] = 'reject'
+        self.assertEqual(expected_status(camera, points, pixels, box)[0][0], 8)
 
 
 if __name__ == '__main__':
