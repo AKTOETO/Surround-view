@@ -102,3 +102,5 @@ Test fixture берёт manifest frame0 и только сохраняет nativ
 Рисунок — Native source_visibility_v1 в прежней сцене. Palette создаётся только для оформления; продукт остаётся integer matrix.
 
 Закрыта native и typed wire наблюдаемость принятых ambiguous rays и причин отказа. Далее остаются GUI palette/camera selector, matched occlusion studies с этим продуктом, per-stage masks для всех rejected predicates при необходимости, overhead, actual source-surface/triangle truth и independent holdout. Эта реализация не устраняет выявленные parallax/unsupported failures.
+
+Следующий bounded geometry audit выполнен отдельно: [[validation/RESIDUAL_SURFACE]], §4.86. Historical native eligibility сопоставлена с independent source hits; новый diagnostic product в этих captures не переснимался. Supplied-box clear не означает scene point correspondence.

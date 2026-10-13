@@ -202,3 +202,5 @@ Native radial footprint visibility (bilinear_radial_v1, guard0/1) реализо
 §4.84: remaining entry-gap audit36 outputs/30 memberships; quantified grazing amplification и negative fixed central2/0mm filters, без новой product реализации/captures. Таблица4.86, рисунки4.150–4.152. [[validation/FACING_ENTRY_GAP]].
 
 §4.85: native source_visibility_v1 и typed SV01 delivery; accepted uncertainty и причины отказа без изменения legacy UV/status. CTest58/58, NVIDIA25/25. Таблица4.87, рисунки4.153–4.154. [[validation/SOURCE_VISIBILITY_PRODUCT]].
+
+§4.86: all9 residual coordinates/all4 cameras, independent scene hits и triangle oracle69/69; same-object/wrong-point и отсутствие matching alternatives. Таблица4.88, рисунки4.155–4.158. [[validation/RESIDUAL_SURFACE]].

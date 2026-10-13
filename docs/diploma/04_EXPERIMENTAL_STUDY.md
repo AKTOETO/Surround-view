@@ -4109,3 +4109,116 @@ Client unit tests покрывают owning lifetime/bounds, eligibility helper,
 ### 4.85.4. Итог этапа и ограничения
 
 Закрыта native и typed-wire диагностика accepted ambiguity и приоритетной причины отказа. Теперь следующий joint-selection опыт может получать решения работающего сервера с config/input provenance. Сам продукт не исправляет parallax, не заполняет hidden/unsupported target и не доказывает scene correspondence. Остаются GUI palette/camera selector, использование диагностики в matched occlusion matrix, overhead, per-stage predicates при необходимости, source-surface/triangle truth и independent nonuniform/natural-object holdout. General robust mitigation и испытания на физических камерах/Aurora остаются открытыми.
+
+## 4.86. Независимая проверка поверхности на остаточных source rays
+
+### 4.86.1. Вопрос исследования и фиксация опыта
+
+В §4.84 найдены девять уникальных residual `(frame,y,x,camera)` pairs из 30 reference memberships. Отказ от fixed central2/0mm фильтра обусловлен потерей полезных наблюдений. Однако сам reference violation описывает пересечение supplied box, а не истинную ошибку изображения. Чтобы выбрать дальнейшую mitigation, требуется установить, видит ли источник нужный объект, ту же точку его поверхности и существует ли подходящая альтернативная камера. Диагностика §4.85 объясняет решение pipeline, но не заменяет такую проверку.
+
+Опыт ограничен всеми девятью остаточными координатами и всеми четырьмя камерами. План `configs/research/residual-surface-plan.json`, prepared inputs и helpers зафиксированы commit702bd3d до нового geometry capture. Допуски point correspondence2/20mm, ray-oracle200µm и projection0.002px заданы заранее. Выбор координат post-hoc по прежним отказам: это developmental audit одного coded world, не независимый holdout или оценка распространённости дефекта.
+
+В отдельном background Blender5.2.2 LTS восстановлены два прежних положения rig, flat road и target. Пользовательская открытая сцена не изменялась. Полная virtual-target mask640×360 совпала с архивом побитно:178/172 target pixels; на них совпали и camera visibility bits. Это проверка target domain, а не утверждение о visibility вне него. RGB не переснимался.
+
+```plantuml
+@startuml
+start
+:Frozen plan + historical native products;
+:All 9 residual coordinates, all 4 cameras;
+fork
+  :Isolated Blender reconstruction;
+  :Verify full target masks and target visibility;
+  :Trace virtual, source-centre and 4 texel rays;
+fork again
+  :Retained native UV union;
+  :Independent projection for never-retained alternatives;
+end fork
+:Export evaluated world triangles;
+:Independent two-sided nearest-ray intersection;
+if (Kinds and points agree?) then (yes)
+  :Compare source hit with virtual hit at 2/20mm;
+  :Join with historical eligibility per condition;
+  :Separate wrong object, wrong point and no hit;
+else (no)
+  :Stop interpretation; investigate reconstruction;
+  stop
+endif
+:Report and figures; runtime policy unchanged;
+stop
+@enduml
+```
+
+Рисунок4.155 — Проверка цепочки от native source UV до истинной точки поверхности. Scene geometry используется только независимым исследовательским oracle.
+
+### 4.86.2. Определение соответствия и проверка oracle
+
+Пусть `q` — фактическая точка носителя, `u_i=π_i(q)` — source UV камеры `i`, `p_v` — ближайший hit виртуального луча в истинной сцене, `p_i` — ближайший hit source ray через `u_i`. Тогда
+
+\[
+e_i=\|p_i-p_v\|_2,\qquad
+M_i(\varepsilon)=\mathbf{1}\{p_i,p_v\text{ существуют}\}\,
+\mathbf{1}\{k_i=k_v\ne0\}\,
+\mathbf{1}\{e_i\le\varepsilon\}.
+\]
+
+Здесь `k` — semantic kind, а не только наличие hit. Сопоставление с eligibility условия `j` задаётся
+
+\[
+A_j(\varepsilon)=\{i:E_{ij}=1\land M_i(\varepsilon)=1\}.
+\]
+
+В этом опыте `E` берётся из прежних native accepted statuses1, а не из новой матрицы §4.85. Непустое `A` означает существование eligible matching centre, но не гарантирует положительный или effective contribution после weighting/nonlocal fusion. Point tolerance2/20mm — sensitivity controls, не обоснованные эксплуатационные требования.
+
+Из36 pixel-camera alternatives12 имеют valid projection. Для11 существуют retained native UV, одинаковые между условиями; для одной, никогда не удержанной renderer, используется явно помеченная independent projection. Разница retained UV с независимой проекцией не превышает0.0000491px при допуске0.002px. Источники с недопустимой проекцией не получают искусственного hit.
+
+Для12 source centres и48 bilinear texel centres, а также9 virtual rays получены69 nearest-hit записей. Экспортировано2310 evaluated world triangles на каждый frame. Независимое NumPy two-sided ray/triangle intersection согласуется с Blender по semantic kind и point для69/69 rays; максимальная ошибка5.05µm меньше допуска200µm. Это подтверждает выбранные nearest hits, но не уникальность polygon identity на общих рёбрах и не полную raster coverage всех pixels.
+
+### 4.86.3. Остаточные пары и альтернативные источники
+
+Таблица4.88 — Все девять исходных residual pairs; координаты `(y,x)`, расстояние между source и virtual hits в мм.
+
+|Frame / pixel|Camera|Virtual / source|Ошибка, мм|Matched≤20mm|
+|---|---|---|---:|---|
+|F0 (206,311)|0|target / target|17.775|да|
+|F0 (208,309)|3|road / target|1370.631|нет|
+|F0 (209,321)|3|target / target|66.267|нет|
+|F0 (210,313)|3|target / target|108.605|нет|
+|F0 (211,318)|3|target / target|16.661|да|
+|F1 (203,318)|3|target / target|26.856|нет|
+|F1 (205,327)|3|target / target|145.542|нет|
+|F1 (206,322)|3|target / target|163.894|нет|
+|F1 (207,324)|3|target / target|109.539|нет|
+
+При20mm две пары соответствуют поверхности, шесть видят нужный объект в другой точке, одна видит target вместо road. При2mm не проходит ни одна исходная пара. Таким образом, прежний reference counter нельзя целиком интерпретировать как количество wrong-surface sources. Порог влияет на классификацию и должен сохраняться рядом с выводом.
+
+Дополнительный C3 для F0(206,311) имеет ошибку0.048599mm и проходит оба допуска. C0 для F0(208,309) не имеет scene hit; отсутствие расстояния не означает нулевую ошибку. Independently projected C0 для F0(210,313) попадает в target с ошибкой228.147mm и не является сохранённым native sample.
+
+![Residual source hit distances](figures/experiments/residual_surface_errors.png)
+
+Рисунок4.156 — Все12 valid alternatives на логарифмической шкале: совпадение при2/20mm, same-object/wrong-point, wrong-object и отдельный no-hit. `[projected]` обозначает единственную альтернативу без retained native UV.
+
+В совокупности12 alternatives дают при20mm три matching sources, семь same-object/wrong-point, один wrong-object и один no-hit. У7/9 выбранных coordinates нет соответствующей альтернативы даже до pipeline eligibility; при2mm — у8/9. Следовательно, на этих координатах простая смена камеры не решает задачу correspondence. Это не доказательство невозможности иной carrier geometry, depth reconstruction или дополнительного наблюдения.
+
+По18 историческим условиям каждого frame получены162 зависимые pixel-condition cells. При20mm112 не имеют eligible source,30 имеют eligible sources без matching centre,20 имеют хотя бы один matched eligible. При2mm counts составляют112/42/8. Это анализ выбранных failure coordinates, не full-frame quality percentages и не независимые статистические испытания.
+
+![Historical eligibility and matching](figures/experiments/residual_surface_support.png)
+
+Рисунок4.157 — Наличие matched eligible source при20mm по supplied-box shifts nominal/Z±5mm, bands1/10mm и policies nominal/accept/reject. Истинная геометрия сцены одинакова между этими условиями.
+
+### 4.86.4. Почему object-ID footprint недостаточно
+
+Для F1(205,327), F1(206,322), F1(207,324) все четыре bilinear texel rays видят target, их target coefficient sum равна1. Тем не менее центральная точка отличается от virtual hit на109.539–163.894mm. Проверка только semantic ID даже на всём texel footprint пропускает wrong-point sampling. Однородная окраска diagnostic target делает этот дефект слабо различимым по RGB.
+
+Сумма bilinear coefficients здесь обозначает долю четырёх ray-classified texels с target kind. Она не является измерением Eevee filtered RGB weights и не устанавливает correspondence каждой точки footprint. Геометрический central hit, четыре texel hits и RGB граница должны сохраняться как разные наблюдения.
+
+![Archived independent RGB with residual coordinates](figures/experiments/residual_surface_pixels.png)
+
+Рисунок4.158 — Все девять coordinates на архивном независимом RGB Blender. У F0(208,309) central virtual hit относится к дороге, несмотря на окраску filtered pixel у границы marker. Это прежний RGB, а не новый photorealistic capture.
+
+### 4.86.5. Вывод и следующий этап
+
+Ограниченная неопределённость supplied box и scene point correspondence описывают разные свойства. Новый diagnostic clear11 (§4.85) подтверждает только stated supplied-box certificate; он не обеспечивает совпадение истинной точки поверхности. На семи выбранных coordinates ни одна projection-valid камера не даёт centre correspondence при20mm, поэтому нельзя обосновать general mitigation одним отбором камер или object-ID фильтром.
+
+Новый фиксированный фильтр в сервер не переносится. Следующий этап должен определить реально доступные признаки для joint selection и явную политику unsupported output, затем проверить preservation и reference/scene correspondence вместе. После developmental опыта необходим frozen nonuniform/natural-object holdout с независимыми geometry/mount seeds; uniform marker и два correlated frames не завершают ranking. Overhead, physical cameras и Aurora проверяются отдельно.
+
+Воспроизводимые commands, hashes, ограничения и отчёт: [[validation/RESIDUAL_SURFACE]], [[validation/baselines/residual_surface_v1.json]]. Шесть новых known-answer tests проверяют triangle intersection и equidistant inverse; selected CTest4/4,0.63s. Prepared input и report при повторении побайтно идентичны. Native renderer/server/library не изменялись; новый полный regression suite в этом этапе не заявляется.
