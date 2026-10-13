@@ -196,3 +196,5 @@ Native radial footprint visibility (bilinear_radial_v1, guard0/1) реализо
 §4.81: bounded central uncertainty audit на18 прежних center controls/шести радиусах,108 rows; достаточные guaranteed/optimistic eligibility bounds и reference-risk. При5mm все200 loss memberships потенциально снимаются, но1125/1305 visible memberships ambiguous; не новый RGB render или готовая mitigation. Таблица4.83, рисунки4.141–4.143. [[validation/VISIBILITY_UNCERTAINTY]].
 
 §4.82: native accept/reject uncertainty policies,54 matched NVIDIA RGBA captures,18 historical controls exact; restoration/reference-blocking/footprint tradeoff, robust joint gates не пройдены. Таблица4.84, рисунки4.144–4.146. [[validation/NATIVE_UNCERTAINTY]].
+
+§4.83: joint uncertainty/finite-face-facing native кандидат;36 enabled и4 disabled NVIDIA captures,oracle0/8407961, CTest57/57. Z+5mm accept/surface10mm проходит пять gates, но nominal/Z−5mm оставляют reference failures; robust fixed профиль не найден. Таблица4.85, рисунки4.147–4.149. [[validation/NATIVE_FACING]].

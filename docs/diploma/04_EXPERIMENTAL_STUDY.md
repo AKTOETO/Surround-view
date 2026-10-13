@@ -3884,3 +3884,82 @@ Reject+surface10mm при Z−5mm сохраняет76/69 hits, outside1/0, refe
 Закрыт перенос двух uncertainty policies в server renderer и первый matched RGB контроль. Robust mitigation остаётся открытой: central acceptance восстанавливает видимую часть в одном режиме, но ослабляет reference blocking; central rejection защищает от ambiguity ценой потерь полезных источников. Далее требуется совместный central/footprint/surface-correspondence критерий с explicit unsupported policy и independent nonuniform/natural-object holdout. Дополнительная диагностика и оценка радиуса должны опираться на доступную геометрию, а не знание истинного experimental shift. Defaults сохранены; физические камеры/Aurora и overhead требуют отдельных проверок.
 
 После primary capture commit50fad11 отделил closed degenerate erosion uncertainty от legacy empty-interior footprint convention; добавлен collapsed-erosion radius10mm test. Отдельный заранее зафиксированный compatibility plan1f914be повторил все54 условия:594 product payloads, включая54 RGBA, побайтно идентичны primary. Это сохранность результатов после boundary fix, не новая независимая quality sample. Frozen primary source проверяется по Git revision006b74a; final regression относится к50fad11. Подробности: [[validation/NATIVE_UNCERTAINTY#Граничное исправление после primary capture]], [[validation/baselines/native_uncertainty_degenerate_parity_v1.json]].
+
+## 4.83. Совместный критерий uncertainty и ориентации конечных граней
+
+### 4.83.1. Причина остаточного нарушения и исследовательский вопрос
+
+На предыдущем этапе accept+surface10mm при Z+5mm сохранял76/69 видимых попаданий, но число nominal-reference-blocked retained pairs frame0 составляло4 при baseline3. Проверим, объясняется ли нарушение источниками с нулевыми весами и помогает ли ориентация конечных граней supplied box. Геометрия остаётся дополнительной известной информацией; оценка препятствия из RGB здесь не выполняется.
+
+Read-only post-hoc план8675805 включил все36 прежних accept/reject outputs и все1845 reference-blocked пары. Все1845 имеют положительный edge weight. Независимое воспроизведение bilinear sampling и linear-RGB fusion отличается от native output максимум на0.773484LSB при зафиксированном пределе2LSB. Следовательно, остаточный gate failure нельзя списать на zero-weight eligibility. Для каждого луча сохранены ROI, visibility bits, normalized weight, near/facing face masks и hypothetical leave-one-out RGB delta: [[validation/baselines/uncertainty_facing_v1.json]].
+
+В проблемном frame0 четыре пары(y,x,camera): (206,311,0), (208,309,3), (208,310,0), (211,318,3). Две относятся к independent-visible target, одна к hidden target, одна к road. Первая и третья имеют near faces без facing faces; кандидат удаляет их. Вторая и четвёртая сохраняются благодаря хотя бы одной обращённой к камере грани. Важно, что reference gate проверяет луч к carrier endpoint относительно nominal supplied box; это не прямое доказательство ошибочного scene observation. Удаляемая первая пара была source-visible, но альтернативный источник сохраняет output target coverage. Ориентация здесь является проверяемым эвристическим ограничением, не ground-truth classifier.
+
+### 4.83.2. Серверная реализация и воспроизводимый план
+
+В shader добавлен optional bool `require_facing_surface`, только для `bilinear_box_surface_v1`, defaultfalse. После central policy и finite-band membership для каждой близкой конечной грани f проверяется:
+
+\[
+F_f(o,q)=N_f(q)\land[n_f\cdot(o-p_f)>0],\qquad
+\operatorname{retain}(o,q)=\bigvee_f F_f(o,q).
+\]
+
+Здесь N означает попадание carrier endpoint q в расширенные на support band конечные bounds и расстояние до плоскости грани не больше band; n — outward normal, p — точка грани, o — origin камеры из inverse extrinsics. На рёбрах проверяются все близкие грани; nearest-face tie-break отсутствует. Камера в плоскости грани не проходит strict half-space. Если near face есть, но facing face нет, native status9 и UV=NaN. За пределами band остаётся radial footprint; central rejection7/8 имеет приоритет. Значения uncertainty/band/bias и геометрия не меняются. Defaults и disabled path сохраняют прежние результаты.
+
+```plantuml
+@startuml
+participant "Client через sv-client-lib" as C
+participant "sv-server config/revision" as S
+participant "Native renderer" as R
+participant "Native inspection / research audit" as A
+C -> S : configure_surface(revision, whole surface, lease?)
+S -> S : validate mode + bool; atomic apply
+S --> C : accepted + new revision / rejection
+S -> R : selected central + footprint + facing policies
+R -> R : central rejection7/8?
+R -> R : finite near faces; any outward-facing face?
+R -> R : retain or status9/NaN; normal fusion
+R --> S : RGBA and requested products
+S --> C : selected output with config revision
+R --> A : XYZ / source UV / status / actual RGBA
+A -> A : independent predicate + hashes + truth metrics
+@enduml
+```
+
+Рисунок4.147 — Применение политики через существующий протокол и проверка native pipeline. Inspection status9 не является новым wire product; сервер по-прежнему владеет конфигурацией.
+
+Native implementationb1a820c; план78b4b5a зафиксирован до40 captures:36 enabled=2frames×3shifts×2bands×3central policies и4 historical disabled controls. Bands1/10mm, bias20mm, radius5mm, edge_feather; только facing flag отличается от соответствующего прошлого output. Backend NVIDIA RTX5070Ti закреплён vendor/device проверкой. Предыдущая post-hoc диагностика уже была известна при фиксации native плана: это developmental paired confirmation реализации, не независимый holdout и не новый unbiased ranking алгоритмов.
+
+### 4.83.3. Actual RGBA и совместные критерии
+
+Таблица4.85 — Native surface10mm с включённой ориентацией; значения F0/F1. Пять gates прежние: все visible hits, отсутствие visible pixels без источника, outside ниже nominal-center, road MAE не хуже baseline и отсутствие роста reference-blocked pairs выше3/0.
+
+|Policy / shift|Visible hits|Outside proxy|Reference-blocked|Все gates на обоих frames|
+|---|---:|---:|---:|---|
+|nominal /nom|76/69|2/0|2/0|да|
+|nominal /Z+5mm|4/4|3/0|1/0|нет|
+|nominal /Z−5mm|76/69|2/0|4/1|нет|
+|accept /nom|76/69|2/0|4/1|нет|
+|accept /Z+5mm|76/69|3/0|2/0|да|
+|accept /Z−5mm|76/69|2/0|4/4|нет|
+|reject /nom|3/3|1/0|0/0|нет|
+|reject /Z+5mm|3/3|2/0|0/0|нет|
+|reject /Z−5mm|76/69|1/0|1/0|да|
+
+При Z+5mm/accept число reference-blocked frame0 снижается4→2, independent-visible hits76/69 и outside3/0 сохраняются. Road linear-RGB MAE0.020786668/0.020800755 ниже baseline0.020982273/0.020858322. Кандидат исправляет конкретный совместный gate failure, сохраняя наблюдаемую часть объекта.
+
+![Метрики native ориентации граней](figures/experiments/native_facing_metrics.png)
+
+Рисунок4.148 — Accept/surface10mm при трёх supplied-box shifts: выключенная/включённая ориентация. RGB метрики рассчитаны по actual native outputs; reference остаётся conservative geometry proxy.
+
+Однако при nominal accept сохраняются reference4/1, при Z−5mm —4/4. Из36 enabled outputs все gates проходят10, из18 paired enabled cells —5; вместе с disabled controls12/40 outputs. Ни один фиксированный band×policy профиль не проходит одновременно nominal и оба Z shifts на обоих frames. Подбор policy по истинному shift был бы использованием недоступной oracle информации.
+
+![Independent Blender и actual native RGBA](figures/experiments/native_facing_rgb.png)
+
+Рисунок4.149 — Z+5mm, реальный RGBA серверного shader. Cyan outline описывает full target, включая hidden часть; accept сохраняет видимую верхнюю поверхность, nominal оставляет лишь несколько попаданий. Однородный цвет не подтверждает попадание в правильную точку реальной поверхности, а hidden часть остаётся неподдержанной.
+
+### 4.83.4. Проверяемость, ограничения и следующий шаг
+
+Независимый finite-face/strict-halfspace oracle дал0 mismatches на8407961 prior-valid camera-point pairs. Carrier XYZ/regions и retained UV неизменны; status9 UV=NaN. Четыре disabled RGBA побайтно равны истории. Full-frame supported reconstruction≤0.773484LSB на всех40 outputs; actual качество взято из native RGBA. Повторные диагностический36-row и native40-row audits побайтно идентичны. Полный Mesa CTest57/57 за94.65s; четыре parameterized NVIDIA GTest cases4/4 проверяют facing для edge_feather/multi_band и accept/reject, restore parity и неизменные uploads. Это regression times, не measurement render overhead. Quality matrix включает только edge_feather.
+
+Код графиков находится рядом с главой: `plot_native_facing.py`; frozen планы, raw provenance, отчёты, runtime API и воспроизведение: [[validation/NATIVE_FACING]]. Закрыт bounded native facing кандидат и его matched контроль. General correspondence/unsupported mitigation остаётся открытой: нужны дополнительные геометрические свидетельства без знания истинного shift, independent nonuniform/natural-object holdouts, triangle-hit truth и оценка overhead. Accepted-ambiguity diagnostics и GUI controls также ещё не завершены. Нет оснований объявлять метод универсально устойчивым или переносить эти выводы на физические камеры/Aurora без испытаний.

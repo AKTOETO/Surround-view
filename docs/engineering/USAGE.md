@@ -1094,7 +1094,7 @@ Read-only residual audit прежних source-visibility outputs: `MPLCONFIGDIR
 
 ## Supplied box surface preservation (experimental)
 
-`surface.source_occlusion_box.mode="bilinear_box_surface_v1"` adds a bounded alternative to `bilinear_radial_v1`. When uncertainty is omitted, after the unchanged central occlusion test, a carrier endpoint within the configured support band (default10µm, L∞ distance) of any finite supplied-box face retains the central sample. Hidden faces are still rejected. Points outside that surface band use the prior radial footprint test with `guard_texels=0/1`; zero-distortion equidistant optics are required. Interior points and face extensions farther than the numerical band receive no exemption. This recognizes one known box, not arbitrary scene surfaces or RGB depth. Default remains `center`.
+`surface.source_occlusion_box.mode="bilinear_box_surface_v1"` adds a bounded alternative to `bilinear_radial_v1`. When uncertainty is omitted, after the unchanged central occlusion test, a carrier endpoint within the configured support band (default10µm, L∞ distance) of any finite supplied-box face retains the central sample. Central occlusion rejection remains in force; optional facing filtering below further restricts the surface exemption. Points outside that surface band use the prior radial footprint test with `guard_texels=0/1`; zero-distortion equidistant optics are required. Interior points and face extensions farther than the numerical band receive no exemption. This recognizes one known box, not arbitrary scene surfaces or RGB depth. Default remains `center`.
 
 The mode is selected through existing `Client::configure_surface` with the whole surface and current `base_config_revision`; the server validates and publishes it between renders. `surface_catalog.rectangular_source_occlusion.modes` lists it, and `default_support_tolerance_m=0.00001` and `support_tolerance_range_m=[0,0.05]` describe the optional configurable `support_tolerance_m`. It is separate from configurable `tolerance_m` (central endpoint bias); clients must not submit the catalog metadata as config fields. No new message/transport is introduced. A GUI control for this mode is still pending.
 
@@ -1159,3 +1159,19 @@ const auto command_id = client.configure_surface(revision, std::move(surface));
 ```
 
 Этот пример предполагает уже заданный box и отсутствие чужого experiment lease. При owned lease передайте его ID третьим аргументом. Для `reject` измените policy; для возврата nominal удалите `uncertainty` из полного surface и примените с новой revision. Дождитесь accepted ACK и нужной revision кадра; stale/rejected command не применять локально. Настройка temporary, после restart требуется повторное применение. Native capture/reaudit команды — [[validation/NATIVE_UNCERTAINTY#Проверки и воспроизведение]].
+
+## Ориентация конечных граней
+
+При существующем supplied box можно включить дополнительный experimental filter. В обработчике state ACK используйте полный текущий surface и актуальную revision:
+
+```cpp
+auto surface = state_ack.at("surface").as_object();
+auto &box = surface.at("source_occlusion_box").as_object();
+box["mode"] = "bilinear_box_surface_v1";
+box["require_facing_surface"] = true;
+const auto revision = sv::parse_decimal_u64(
+    std::string(state_ack.at("config_revision").as_string()));
+const auto command_id = client.configure_surface(revision, std::move(surface));
+```
+
+Сохраните прежний full surface для restore; не подставляйте experimental bounds/radius из исследования в произвольную сцену. Пример предполагает valid существующий box, zero-distortion equidistant cameras и отсутствие чужого lease; при собственном lease передайте ID третьим аргументом. Дождитесь accepted ACK и новой config revision кадра. `false`/omission возвращает прежнюю facing-disabled обработку; поле недопустимо в других modes. Server catalog сообщает default и scope. Изменение временное, без сохранения на диск. Central policies остаются независимыми: их acceptance не обходит facing check. GUI form и отдельная доставка native status9 пока отсутствуют. Условия, результаты и отрицательные robustness cases: [[validation/NATIVE_FACING]].
