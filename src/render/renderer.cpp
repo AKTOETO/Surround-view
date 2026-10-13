@@ -526,6 +526,11 @@ Image Renderer::render(const FrameSet &set, const View &view, RenderInspection *
                 box.maximum.z);
     glUniform1f(glGetUniformLocation(i.prog, "source_occlusion_tolerance"), box.tolerance);
     glUniform1f(glGetUniformLocation(i.prog, "source_support_tolerance"), box.support_tolerance);
+    glUniform1f(glGetUniformLocation(i.prog, "source_uncertainty_radius"), box.uncertainty.radius);
+    glUniform1i(glGetUniformLocation(i.prog, "source_ambiguity_policy"),
+                box.uncertainty.ambiguous_policy == "accept"   ? 1
+                : box.uncertainty.ambiguous_policy == "reject" ? 2
+                                                               : 0);
     glUniform4iv(glGetUniformLocation(i.prog, "available"), 1, available);
     glUniform1i(glGetUniformLocation(i.prog, "fusion_mode"), c.fusion.mode == "hard_best_angle" ? 1
                                                              : c.fusion.mode == "angular_feather"

@@ -227,6 +227,9 @@ class IntegrationTests(unittest.TestCase):
                     mode='bilinear_radial_v1', guard_texels=1)))
                 surfaces.append(dict(flat, source_occlusion_box=dict(occluder,
                     mode='bilinear_box_surface_v1', guard_texels=1, support_tolerance_m=.001)))
+                for policy in ['accept', 'reject']:
+                    surfaces.append(dict(flat, source_occlusion_box=dict(occluder,
+                        uncertainty=dict(radius_m=.005, ambiguous_policy=policy))))
                 catalog = client.command('surface_catalog')
                 self.assertTrue(catalog['accepted'])
                 self.assertEqual(catalog['surface_catalog']['rectangular_reference_height']['field'],
@@ -235,6 +238,8 @@ class IntegrationTests(unittest.TestCase):
                 self.assertEqual(catalog['surface_catalog']['rectangular_source_occlusion']['frame'], 'vehicle')
                 self.assertIn('bilinear_box_surface_v1',
                     catalog['surface_catalog']['rectangular_source_occlusion']['modes'])
+                self.assertEqual(catalog['surface_catalog']['rectangular_source_occlusion']
+                    ['uncertainty']['policies'], ['accept', 'reject'])
                 builds = int(header['mesh_build_count'])
                 for surface in surfaces:
                     ack = client.command('configure_surface', base_config_revision=revision,
@@ -255,6 +260,10 @@ class IntegrationTests(unittest.TestCase):
                                      (revision, dict(flat, source_occlusion_box=dict(occluder, mode='unknown'))),
                                      (revision, dict(flat, source_occlusion_box=dict(occluder, guard_texels=1))),
                                      (revision, dict(flat, source_occlusion_box=dict(occluder, tolerance_m=-1))),
+                                     (revision, dict(flat, source_occlusion_box=dict(occluder,
+                                         uncertainty=dict(radius_m=.051, ambiguous_policy='accept')))),
+                                     (revision, dict(flat, source_occlusion_box=dict(occluder,
+                                         uncertainty=dict(radius_m=.005, ambiguous_policy='unknown')))),
                                      (revision, dict(flat, source_occlusion_box=dict(occluder, max_m=[0, 0, 0]))),
                                      (revision, dict(flat, reference_height_m=-1)),
                                      (revision, dict(flat, reference_height_m=5.1)),

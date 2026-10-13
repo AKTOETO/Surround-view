@@ -20,6 +20,8 @@ uniform float edge_width_px, angle_power;
 uniform int source_occlusion_enabled, source_occlusion_policy, source_guard_texels;
 uniform vec3 source_box_min, source_box_max, camera_origin[4];
 uniform float source_occlusion_tolerance, source_support_tolerance;
+uniform float source_uncertainty_radius;
+uniform int source_ambiguity_policy;
 
 // Finite segment / opaque AABB. Parameter t is a fraction of camera-to-carrier distance.
 bool segment_occluded(vec3 origin, vec3 endpoint, float inset_m)
@@ -28,7 +30,7 @@ bool segment_occluded(vec3 origin, vec3 endpoint, float inset_m)
     float distance_m = length(direction);
     if (distance_m <= source_occlusion_tolerance) { return false; }
     vec3 lo = source_box_min + vec3(inset_m), hi = source_box_max - vec3(inset_m);
-    if (any(greaterThanEqual(lo, hi))) { return false; }
+    if (any(greaterThan(lo, hi))) { return false; }
     float entry = 0.0, exit = 1.0;
     for (int axis = 0; axis < 3; ++axis)
     {
@@ -63,14 +65,24 @@ bool on_source_box_surface(vec3 point)
 // Neighbouring rays terminate at the central carrier radial range.
 // Policy2 preserves a visible carrier endpoint on the supplied box itself.
 // Parser restricts this inverse to zero-distortion equidistant optics.
-bool source_occluded(int camera, vec2 px)
+int source_rejection(int camera, vec2 px)
 {
-    if (source_occlusion_enabled == 0) { return false; }
+    if (source_occlusion_enabled == 0) { return 0; }
     vec3 origin = camera_origin[camera];
-    if (segment_occluded(origin, world, 0.0)) { return true; }
-    if (source_occlusion_policy == 0) { return false; }
-    // Never bypass central-ray occlusion: hidden faces remain rejected.
-    if (source_occlusion_policy == 2 && on_source_box_surface(world)) { return false; }
+    if (source_ambiguity_policy == 0 || source_uncertainty_radius == 0.0)
+    {
+        if (segment_occluded(origin, world, 0.0)) { return 7; }
+    }
+    else
+    {
+        // Sufficient certificates for supplied face-coordinate error. Fixed carrier and poses.
+        if (segment_occluded(origin, world, source_uncertainty_radius)) { return 7; }
+        bool ambiguous = segment_occluded(origin, world, -source_uncertainty_radius);
+        if (ambiguous && source_ambiguity_policy == 2) { return 8; }
+    }
+    if (source_occlusion_policy == 0) { return 0; }
+    // Membership only bypasses the footprint stage, after the selected central policy.
+    if (source_occlusion_policy == 2 && on_source_box_surface(world)) { return 0; }
     vec2 base = floor(px), fraction = px - base;
     float distance_m = length(world - origin);
     for (int y = -1; y <= 2; ++y)
@@ -90,10 +102,10 @@ bool source_occluded(int camera, vec2 px)
             float theta = length(ab);
             float scale = theta > 1e-12 ? sin(theta) / theta : 1.0;
             vec3 ray = transpose(mat3(pose[camera])) * vec3(ab * scale, cos(theta));
-            if (segment_occluded(origin, origin + ray * distance_m, 1e-5)) { return true; }
+            if (segment_occluded(origin, origin + ray * distance_m, 1e-5)) { return 7; }
         }
     }
-    return false;
+    return 0;
 }
 
 vec3 camera_color(int i)
@@ -150,7 +162,8 @@ int source_projection(int i, out vec2 px, out float theta)
     {
         return 5;
     }
-    return source_occluded(i, px) ? 7 : 1;
+    int rejection = source_rejection(i, px);
+    return rejection == 0 ? 1 : rejection;
 }
 
 vec4 pack_float(float value)

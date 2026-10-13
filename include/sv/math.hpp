@@ -52,6 +52,12 @@ struct LocalSupportPatch
     double offset(double x, double y) const;
 };
 
+struct OcclusionUncertainty
+{
+    double radius = 0;
+    std::string ambiguous_policy = "nominal"; // Internal default; explicit config: accept/reject.
+};
+
 // One explicitly supplied opaque vehicle-frame AABB; research visibility control.
 struct SourceOcclusionBox
 {
@@ -61,6 +67,7 @@ struct SourceOcclusionBox
     std::string mode = "center";
     int guard_texels = 0;
     double support_tolerance = 1e-5;
+    OcclusionUncertainty uncertainty{};
 };
 
 struct Surface

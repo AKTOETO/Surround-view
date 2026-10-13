@@ -132,6 +132,31 @@ int main(int argc, char **argv)
         occlusion_config.as_object()["surface"].as_object()["source_occlusion_box"] = occluder;
         check(sv::parse_config(occlusion_config).surface.source_occlusion.enabled,
               "source occlusion schema");
+        for (const auto &policy : {"accept", "reject"})
+        {
+            auto candidate = occluder;
+            candidate["uncertainty"] =
+                boost::json::object{{"radius_m", .005}, {"ambiguous_policy", policy}};
+            occlusion_config.as_object()["surface"].as_object()["source_occlusion_box"] = candidate;
+            const auto parsed = sv::parse_config(occlusion_config).surface.source_occlusion;
+            check(parsed.uncertainty.radius == .005 &&
+                      parsed.uncertainty.ambiguous_policy == policy,
+                  "explicit central uncertainty schema");
+        }
+        for (const auto &invalid :
+             {boost::json::object{{"radius_m", -.001}, {"ambiguous_policy", "accept"}},
+              boost::json::object{{"radius_m", .051}, {"ambiguous_policy", "reject"}},
+              boost::json::object{{"radius_m", .005}, {"ambiguous_policy", "nominal"}},
+              boost::json::object{{"radius_m", .005}},
+              boost::json::object{{"ambiguous_policy", "accept"}},
+              boost::json::object{
+                  {"radius_m", .005}, {"ambiguous_policy", "accept"}, {"extra", 1}}})
+        {
+            auto candidate = occluder;
+            candidate["uncertainty"] = invalid;
+            occlusion_config.as_object()["surface"].as_object()["source_occlusion_box"] = candidate;
+            rejects([&] { sv::parse_config(occlusion_config); }, "invalid central uncertainty");
+        }
         for (const auto &invalid : {boost::json::object{{"min_m", boost::json::array{2.2, 2.1}},
                                                         {"max_m", boost::json::array{2.6, 2.5, 1.}},
                                                         {"tolerance_m", .02}},

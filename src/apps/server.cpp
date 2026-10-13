@@ -968,14 +968,23 @@ int main(int argc, char **argv)
                                  {"meaning", "one supplied opaque AABB; omit to disable"},
                                  {"coordinate_range_m", boost::json::array{-100., 100.}},
                                  {"tolerance_range_m", boost::json::array{0., .1}},
-                                 {"optional_fields", boost::json::array{"mode", "guard_texels",
-                                                                        "support_tolerance_m"}},
+                                 {"optional_fields",
+                                  boost::json::array{"mode", "guard_texels", "support_tolerance_m",
+                                                     "uncertainty"}},
                                  {"modes", boost::json::array{"center", "bilinear_radial_v1",
                                                               "bilinear_box_surface_v1"}},
                                  {"guard_texels_range", boost::json::array{0, 1}},
                                  {"default_mode", "center"},
                                  {"default_support_tolerance_m", 1e-5},
                                  {"support_tolerance_range_m", boost::json::array{0., .05}},
+                                 {"uncertainty",
+                                  boost::json::object{
+                                      {"required_fields",
+                                       boost::json::array{"radius_m", "ambiguous_policy"}},
+                                      {"radius_range_m", boost::json::array{0., .05}},
+                                      {"policies", boost::json::array{"accept", "reject"}},
+                                      {"scope", "central rays only; footprint unchanged; omit for "
+                                                "nominal"}}},
                                  {"footprint_optics", "zero-distortion equidistant only"}}},
                             {"apply", "prepare buffers then publish between render calls"}};
                     }

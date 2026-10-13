@@ -527,7 +527,7 @@ Config parse_config(const boost::json::value &value)
         {
             const auto &box = value->as_object();
             keys(box, {"min_m", "max_m", "tolerance_m"}, "surface.source_occlusion_box",
-                 {"mode", "guard_texels", "support_tolerance_m"});
+                 {"mode", "guard_texels", "support_tolerance_m", "uncertainty"});
             const auto &lo = box.at("min_m").as_array();
             const auto &hi = box.at("max_m").as_array();
             require(lo.size() == 3 && hi.size() == 3, "source_occlusion_box: expected XYZ bounds");
@@ -536,6 +536,20 @@ Config parse_config(const boost::json::value &value)
             b.minimum = {num(lo[0]), num(lo[1]), num(lo[2])};
             b.maximum = {num(hi[0]), num(hi[1]), num(hi[2])};
             b.tolerance = num(box.at("tolerance_m"));
+            if (const auto *value = box.if_contains("uncertainty"))
+            {
+                const auto &uncertainty = value->as_object();
+                keys(uncertainty, {"radius_m", "ambiguous_policy"},
+                     "source_occlusion_box.uncertainty");
+                b.uncertainty.radius = num(uncertainty.at("radius_m"));
+                b.uncertainty.ambiguous_policy = str(uncertainty.at("ambiguous_policy"));
+                require(b.uncertainty.radius >= 0 && b.uncertainty.radius <= .05,
+                        "source_occlusion_box.uncertainty.radius_m: expected [0,0.05] metres");
+                require(
+                    b.uncertainty.ambiguous_policy == "accept" ||
+                        b.uncertainty.ambiguous_policy == "reject",
+                    "source_occlusion_box.uncertainty.ambiguous_policy: expected accept/reject");
+            }
             if (const auto *mode = box.if_contains("mode"))
             {
                 b.mode = str(*mode);

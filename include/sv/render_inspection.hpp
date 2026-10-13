@@ -25,7 +25,8 @@ enum class SourceProjectionStatus : unsigned char
     outside_angle = 4,
     outside_image = 5,
     vehicle_footprint = 6,
-    supplied_occluder = 7
+    supplied_occluder = 7,
+    uncertain_occluder = 8 // Ambiguous central ray rejected by explicit uncertainty policy.
 };
 
 struct SourceProjectionInspection

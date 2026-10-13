@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cmath>
 #include <gtest/gtest.h>
+#include <tuple>
 
 TEST(SourceInspection, ShaderCoordinatesAndRejectionsMatchIndependentProjection)
 {
@@ -453,3 +454,115 @@ TEST(SourceInspection, SuppliedBoxRejectsOnlyBlockedSourceSegmentsAndRestoresOut
     renderer.set_surface(config.surface);
     EXPECT_EQ(plain.pixels, renderer.render(frames, config.view).pixels);
 }
+
+class OcclusionUncertaintyTest
+    : public ::testing::TestWithParam<std::tuple<std::string, std::string>>
+{
+};
+
+TEST_P(OcclusionUncertaintyTest, MatchesFaceCertificatesAndRestoresNominalOutput)
+{
+    auto config = sv::load_config(SV_TEST_CONFIG);
+    config.width = 160;
+    config.height = 100;
+    config.surface.H = 0;
+    config.fusion.mode = std::get<0>(GetParam());
+    config.fusion.diagnostic = "color";
+    sv::FrameSet frames;
+    for (int index = 0; index < 4; ++index)
+    {
+        auto &camera = config.cameras[index];
+        camera.T = sv::identity();
+        camera.T[5] = camera.T[10] = -1;
+        camera.T[3] = index - 2.;
+        camera.T[7] = 1. - index;
+        camera.T[11] = 5;
+        camera.theta_max = 1.5;
+        camera.fx = camera.fy = 30;
+        camera.cx = camera.width / 2.;
+        camera.cy = camera.height / 2.;
+        auto image = std::make_shared<sv::Image>();
+        image->width = camera.width;
+        image->height = camera.height;
+        image->channels = 3;
+        image->pixels.resize(camera.width * camera.height * 3, 50 + index * 60);
+        frames.frames[index] = sv::Frame{index, 0, 0, 0, image};
+    }
+    sv::Renderer renderer(config);
+    sv::RenderInspection before;
+    const auto plain = renderer.render(frames, config.view, &before, {true, true});
+    const auto uploads = renderer.uploads();
+    auto surface = config.surface;
+    surface.source_occlusion = {true, {2, 1.5, -.01}, {4, 3.5, .01}, 0};
+    renderer.set_surface(surface);
+    const auto nominal = renderer.render(frames, config.view);
+    int blocked_count = 0, ambiguous_count = 0, clear_count = 0;
+    for (double radius : {0., .005, .05})
+    {
+        surface.source_occlusion.uncertainty = {radius, std::get<1>(GetParam())};
+        renderer.set_surface(surface);
+        sv::RenderInspection current;
+        const auto output = renderer.render(frames, config.view, &current, {true, true});
+        EXPECT_EQ(output.pixels, renderer.render(frames, config.view).pixels);
+        EXPECT_EQ(renderer.uploads(), uploads);
+        if (radius == 0)
+        {
+            EXPECT_EQ(output.pixels, nominal.pixels);
+        }
+        for (int camera = 0; camera < 4; ++camera)
+        {
+            const auto origin =
+                sv::transform(sv::inverse_rigid(config.cameras[camera].T), {0, 0, 0});
+            for (int y = 0; y < config.height; ++y)
+            {
+                for (int x = 0; x < config.width; ++x)
+                {
+                    const int old = before.source_projections[camera].status.at<uchar>(y, x);
+                    const int actual = current.source_projections[camera].status.at<uchar>(y, x);
+                    if (old != 1)
+                    {
+                        EXPECT_EQ(actual, old);
+                        continue;
+                    }
+                    const auto p = before.carrier_positions.at<cv::Vec3f>(y, x);
+                    auto inner = surface.source_occlusion, outer = inner;
+                    inner.minimum = inner.minimum + sv::Vec3{radius, radius, radius};
+                    inner.maximum = inner.maximum - sv::Vec3{radius, radius, radius};
+                    outer.minimum = outer.minimum - sv::Vec3{radius, radius, radius};
+                    outer.maximum = outer.maximum + sv::Vec3{radius, radius, radius};
+                    const bool nonempty = inner.minimum.x <= inner.maximum.x &&
+                                          inner.minimum.y <= inner.maximum.y &&
+                                          inner.minimum.z <= inner.maximum.z;
+                    const bool blocked =
+                        nonempty && face_occlusion(origin, {p[0], p[1], p[2]}, inner);
+                    const bool ambiguous =
+                        !blocked && face_occlusion(origin, {p[0], p[1], p[2]}, outer);
+                    const int expected =
+                        blocked ? 7 : (ambiguous && std::get<1>(GetParam()) == "reject" ? 8 : 1);
+                    EXPECT_EQ(actual, expected);
+                    blocked_count += blocked;
+                    ambiguous_count += ambiguous;
+                    clear_count += !blocked && !ambiguous;
+                    const auto uv = current.source_projections[camera].pixels.at<cv::Vec2f>(y, x);
+                    if (expected == 1)
+                    {
+                        EXPECT_EQ(uv, before.source_projections[camera].pixels.at<cv::Vec2f>(y, x));
+                    }
+                    else
+                    {
+                        EXPECT_TRUE(std::isnan(uv[0]) && std::isnan(uv[1]));
+                    }
+                }
+            }
+        }
+    }
+    EXPECT_GT(blocked_count, 0);
+    EXPECT_GT(ambiguous_count, 0);
+    EXPECT_GT(clear_count, 0);
+    renderer.set_surface(config.surface);
+    EXPECT_EQ(renderer.render(frames, config.view).pixels, plain.pixels);
+}
+
+INSTANTIATE_TEST_SUITE_P(CentralPolicies, OcclusionUncertaintyTest,
+                         ::testing::Combine(::testing::Values("edge_feather", "multi_band"),
+                                            ::testing::Values("accept", "reject")));
