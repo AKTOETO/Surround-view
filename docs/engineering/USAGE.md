@@ -1094,7 +1094,7 @@ Read-only residual audit прежних source-visibility outputs: `MPLCONFIGDIR
 
 ## Supplied box surface preservation (experimental)
 
-`surface.source_occlusion_box.mode="bilinear_box_surface_v1"` adds a bounded alternative to `bilinear_radial_v1`. After the unchanged central occlusion test, a carrier endpoint within the configured support band (default10µm, L∞ distance) of any finite supplied-box face retains the central sample. Hidden faces are still rejected. Points outside that surface band use the prior radial footprint test with `guard_texels=0/1`; zero-distortion equidistant optics are required. Interior points and face extensions farther than the numerical band receive no exemption. This recognizes one known box, not arbitrary scene surfaces or RGB depth. Default remains `center`.
+`surface.source_occlusion_box.mode="bilinear_box_surface_v1"` adds a bounded alternative to `bilinear_radial_v1`. When uncertainty is omitted, after the unchanged central occlusion test, a carrier endpoint within the configured support band (default10µm, L∞ distance) of any finite supplied-box face retains the central sample. Hidden faces are still rejected. Points outside that surface band use the prior radial footprint test with `guard_texels=0/1`; zero-distortion equidistant optics are required. Interior points and face extensions farther than the numerical band receive no exemption. This recognizes one known box, not arbitrary scene surfaces or RGB depth. Default remains `center`.
 
 The mode is selected through existing `Client::configure_surface` with the whole surface and current `base_config_revision`; the server validates and publishes it between renders. `surface_catalog.rectangular_source_occlusion.modes` lists it, and `default_support_tolerance_m=0.00001` and `support_tolerance_range_m=[0,0.05]` describe the optional configurable `support_tolerance_m`. It is separate from configurable `tolerance_m` (central endpoint bias); clients must not submit the catalog metadata as config fields. No new message/transport is introduced. A GUI control for this mode is still pending.
 
@@ -1133,3 +1133,29 @@ client.configure_output(sv::client::OutputProduct::FinalFrame);
 ```
 
 Integer RGBA channels нельзя напрямую показывать как фотографию. Использовать палитру по path/counts, отдельно выделять ego/background. Маска не является confidence, scene visibility или полным multiband contribution. Формат, ограничения и handling ошибок: [[engineering/PROTOCOL_IMPLEMENTED#Выбор data product: output_selection_v1 / render_support_v1]], проверки: [[validation/OUTPUT_PRODUCTS]].
+
+## Bounded central uncertainty (experimental)
+
+`surface.source_occlusion_box.uncertainty` is optional. If present, both `radius_m` (finite[0,0.05]m) and `ambiguous_policy` (`accept` or `reject`) are required; extra keys are rejected. Omit the object for nominal behavior; radius0 retains historical classification. For fixed carrier/poses/endpoint bias, the eroded supplied box certifies blocking and the dilated box certifies clearance. Accept admits ambiguous central rays to the existing nominal footprint stage; reject returns native `SourceProjectionStatus::uncertain_occluder=8`. Status1 remains policy eligibility, including accepted ambiguity, not definitely-clear confidence. Status7 can represent definite central blocking or nominal footprint rejection; rejected UV stays NaN. Support membership and neighbor rays remain nominal and independent of central uncertainty.
+
+The existing full-surface `Client::configure_surface` call applies/restores these fields with current revision/lease; the server advertises required fields/range/policies under `surface_catalog.rectangular_source_occlusion.uncertainty`. No new wire command, persistence, parallel subscription or accepted-ambiguity product is implied. Native inspection status8 is not currently a separate remotely selectable product. GUI forms remain pending. Defaults are unchanged. Implementation,54 native RGBA controls, backend provenance and negative robustness results: [[validation/NATIVE_UNCERTAINTY]].
+
+Добавьте к существующему `source_occlusion_box` в полной surface:
+
+```json
+"uncertainty": {"radius_m": 0.005, "ambiguous_policy": "accept"}
+```
+
+Сначала запросите `state` и `surface_catalog`; используйте актуальную `config_revision`. В callback получения state ACK пример изменения через библиотеку выглядит так (обработчик ACK/rejection остаётся у приложения):
+
+```cpp
+auto surface = state_ack.at("surface").as_object();
+auto &box = surface.at("source_occlusion_box").as_object();
+box["uncertainty"] = boost::json::object{{"radius_m", 0.005},
+                                         {"ambiguous_policy", "accept"}};
+const auto revision = sv::parse_decimal_u64(
+    std::string(state_ack.at("config_revision").as_string()));
+const auto command_id = client.configure_surface(revision, std::move(surface));
+```
+
+Этот пример предполагает уже заданный box и отсутствие чужого experiment lease. При owned lease передайте его ID третьим аргументом. Для `reject` измените policy; для возврата nominal удалите `uncertainty` из полного surface и примените с новой revision. Дождитесь accepted ACK и нужной revision кадра; stale/rejected command не применять локально. Настройка temporary, после restart требуется повторное применение. Native capture/reaudit команды — [[validation/NATIVE_UNCERTAINTY#Проверки и воспроизведение]].

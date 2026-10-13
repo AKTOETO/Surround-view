@@ -1,5 +1,7 @@
 # Состояние прототипа и границы подтверждения
 
+Дополнение 13.10.2026: native central uncertainty accept/reject через configure_surface/catalog реализованы;54 matched NVIDIA RGBA controls,18 archived hashes exact,oracle0/11665215, CTest56/56 и inspection25/25 NVIDIA. Accept+surface10mm восстанавливает Z+5mm visible76/69, но reference gate frame0 провален; robust профиль не получен, default nominal сохранён. Silent Mesa fallback первой серии обнаружен pairing audit и устранён explicit backend plan: [[validation/NATIVE_UNCERTAINTY]], §4.82.
+
 Дополнение 13.10.2026: bounded supplied-AABB uncertainty audit108 rows/18 прежних center controls выполнен. При5mm все200 central loss memberships потенциально снимаются, но1125/1305 visible memberships ambiguous и93 новых pairs blocked nominal reference. Это read-only eligibility bounds, не новая mitigation/RGB capture; CTest2/2, повторный JSON identical: [[validation/VISIBILITY_UNCERTAINTY]], §4.81.
 
 Дополнение 13.10.2026: native local-support mask доставляется через SV01 output_selection_v1/render_support_v1 и typed RenderSupportView. Unix/TCP, parity семи алгоритмов, отказ несовместимых настроек и reconnect проверены; полная Mesa-регрессия55/55, NVIDIA wire tests3/3. GUI palette и parallel products пока отсутствуют: [[validation/OUTPUT_PRODUCTS]], §4.80.

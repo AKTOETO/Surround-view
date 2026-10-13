@@ -3798,3 +3798,89 @@ stop
 Collector проверяет pinned primary/sensitivity/truth hashes и consumed products, matched camera/carrier geometry, native center status vs independent face oracle и прежние loss counts. Семь unit tests включают27 translated и100 face-perturbed boxes на200 rays при трёх biases, known-answer endpoint/origin controls, degenerate erosion, monotonicity, категории pixels и invalid inputs. Дополнительно23 прежних correspondence tests прошли; CTest2/2. Повторный108-row JSON побайтно идентичен. Скрипт [[diploma/plot_visibility_uncertainty.py]] расположен рядом с главой; команды и требования к ignored raw captures — [[validation/VISIBILITY_UNCERTAINTY]].
 
 Закрыт bounded uncertainty audit, но robust mitigation не получена. Простое принятие всех ambiguous rays имеет потенциал восстановления eligibility и одновременно ослабляет rejection посторонних поверхностей. Следующий этап — native uncertainty-aware кандидат с явной ambiguous/unsupported policy и matched RGBA captures, общими gates visible preservation/outside/road/reference blocking и отдельной проверкой footprint stage. После этого требуется independent nonuniform/natural-object holdout. Радиус должен быть обоснован доступной геометрией или оценён по sensors; его подбор на прежнем marker не подтверждает generalization. Серверные defaults сохранены; физические камеры, target Aurora и overhead этим анализом не проверены.
+
+## 4.82. Серверная реализация политик неопределённой окклюзии и paired RGBA проверка
+
+### 4.82.1. Перенос достаточных границ в production renderer
+
+Границы §4.81 реализованы в сервере как опциональный объект `source_occlusion_box.uncertainty={radius_m,ambiguous_policy}`. Оба поля обязательны, finite radius находится в[0,0.05]m, policy — accept/reject. Отсутствие объекта и radius0 сохраняют nominal central predicate. Радиус относится к ошибке координат граней supplied AABB, при фиксированных camera origins, actual carrier и endpoint bias; оценки uncertainty по sensors сервер не выполняет.
+
+Обозначим $I^-_u$ и $I^+_u$ blocking обрезанного central segment eroded/dilated box. Политика accept отклоняет луч при $I^-_u$, reject — при $I^+_u$. После принятия central ray выполняется прежний nominal footprint test $F(p,i)$, включая finite-face exemption, заданную отдельным `support_tolerance_m`:
+
+$$R_{accept}=I^-_u\lor F,\qquad R_{reject}=I^+_u\lor F.$$
+
+Здесь $F=0$ для mode=center. При footprint modes это radial-range приближение, а не full scene visibility. Включение central uncertainty не изменяет nominal box, относительно которого выполняется footprint stage: это намеренно изолирует две причины отказа. Accept допускает ambiguity, но не доказывает правильность выбранной поверхности.
+
+```plantuml
+@startuml
+actor "sv-client / svctl" as Client
+participant "sv-client-lib" as Lib
+participant "sv-server control" as Control
+participant "Config store / render loop" as Render
+participant "GPU projection / hybrid samples" as GPU
+Client -> Lib: configure_surface(revision, whole surface)
+Lib -> Control: SV01 configure_surface + optional uncertainty
+Control -> Control: validate schema, bounds, revision, lease
+alt invalid or stale
+  Control --> Lib: rejected ACK; state unchanged
+else valid
+  Control -> Render: prepare and publish between renders
+  Render -> GPU: radius, policy; existing nominal footprint settings
+  GPU -> GPU: inner blocked -> status7
+  GPU -> GPU: ambiguous + reject -> status8
+  GPU -> GPU: accepted central -> nominal footprint -> eligibility
+  Control --> Lib: accepted ACK + applied revision
+  Render --> Client: ordinary output with applied identity
+end
+@enduml
+```
+
+Рисунок4.144 — Применение uncertainty через существующий клиентский API и серверный pipeline. Ответ с final output проходит прежний data channel; схема не добавляет multi-session или parallel diagnostic subscriptions.
+
+Rejected ambiguity получила native `SourceProjectionStatus::uncertain_occluder=8`; координаты UV для неё NaN. Status7 означает definite central blocking либо nominal footprint rejection, status1 — eligibility по выбранной политике, включая accepted ambiguity. Поэтому status1 нельзя считать definitely-clear certificate. Отдельный native/wire channel accepted ambiguity пока отсутствует; в исследовании её считает independent oracle. Параметры доступны через `surface_catalog`, full-surface apply/restore выполняются через существующий `Client::configure_surface` с revision/lease semantics. Persisted config и defaults не изменены.
+
+### 4.82.2. Frozen постановка и контроль аппаратного backend
+
+Implementation commit `006b74a`, fingerprint `24848fb721badb4bce8ae96b912641d93f8eb8a8bc5bb24a1e2db70dff1f9044`. До captures зафиксирован54-case plan `11ccee5`: два прежних frames × nominal/Z±5mm × center/surface1mm/surface10mm × nominal/accept/reject. Bias20mm и uncertainty5mm заданы до новых metric results;5mm выбраны по прежнему exploratory audit, не независимой выборке. RGB800×800, output640×360, carrier/cameras/truth сохраняются; quality captures относятся к edge_feather.
+
+Первый запуск в sandbox автоматически выбрал llvmpipe и не прошёл archived carrier/RGBA parity относительно NVIDIA. Raw captures и исходный план сохранены, metrics не использованы для подбора кандидата. После explicit NVIDIA nominal control с exact archived RGBA зафиксирован новый backend-pinned plan `55a20b5`, затем выполнена полная54-case серия на RTX5070Ti. Collector теперь требует заданный device и EGL vendor; повторная серия не является независимым holdout. Это отдельный выявленный дефект экспериментальной процедуры: успешный EGL context ещё не гарантирует нужный backend.
+
+### 4.82.3. Actual RGBA: восстановление видимых pixels и ограничения
+
+Таблица4.84 — Native результаты, пары frame0/frame1. Reference counts относятся ко всем retained camera-point pairs, blocked nominal box при fixed2mm bias; это не independent scene false acceptance.
+
+| Shift / policy / footprint | Visible hits | Outside proxy | Reference-blocked pairs |
+|---|---:|---:|---:|
+| nominal /nominal /surface1mm |76/69|1/0|2/0|
+| nominal /accept /surface1mm |76/69|1/0|5/1|
+| Z+5mm /nominal /surface10mm |5/4|3/0|2/0|
+| Z+5mm /accept /surface1mm |3/2|2/0|2/0|
+| Z+5mm /accept /surface10mm |76/69|3/0|4/0|
+| Z+5mm /reject /surface10mm |3/3|2/0|0/0|
+| Z+5mm /accept /center |76/69|852/277|664/221|
+| Z−5mm /nominal /surface10mm |76/69|2/0|7/1|
+| Z−5mm /reject /surface10mm |76/69|1/0|1/0|
+
+Accept+surface10mm при Z+5mm восстанавливает все71/65 central losses и observed76/69 hits; outside3/0 остаётся низкой. Однако frame0 reference-blocked4 превышает nominal-center baseline3, поэтому совместный gate не выполнен. Accept+surface1mm даёт только3/2 hits: central и footprint stages нельзя исправлять независимо без проверки полного RGB результата. Accept+center увеличивает outside до852/277 и road MAE до0.021903361/0.021165150 против nominal-center0.020982273/0.020858322.
+
+![Joint tradeoff native политик](figures/experiments/native_uncertainty_metrics.png)
+
+Рисунок4.145 — Native visible/outside/reference counts при surface10mm. Политики переключаются в серверном shader, Python используется для независимого анализа и оформления графика.
+
+Reject+surface10mm при Z−5mm сохраняет76/69 hits, outside1/0, reference1/0 и проходит пять gates на обоих frames. Но nominal/Z+5mm для той же политики сохраняют только3/3 hits. Выбор policy с использованием известного experimental shift был бы oracle tuning, а не одним robust режимом.
+
+![Фрагменты actual RGBA и independent truth](figures/experiments/native_uncertainty_rgb.png)
+
+Рисунок4.146 — Z+5mm: independent Blender и actual native outputs. Cyan outline описывает full target; accept+surface10mm возвращает наблюдаемую верхнюю часть, reject оставляет почти пустую поверхность, accept+center создаёт посторонние копии. Hidden часть не восстановлена по соответствующим source observations.
+
+Из54 outputs joint gates проходят9, включая5 из36 candidate outputs; из27 paired cells проходят4, включая2 из18 candidate cells. Ни один из шести candidate profiles footprint-kind×policy не проходит одновременно nominal и оба Z shifts на обоих frames. Восстановление source-visible marker не равно восстановлению всего target178/172; full scene correspondence не доказана.
+
+### 4.82.4. Проверяемость и вывод этапа
+
+Все18 nominal RGBA побайтно совпадают с архивом, actual carrier/regions и retained source UV неизменны. Independent six-face/nominal-neighbor oracle:0 mismatches на11665215 prior-valid camera-point pairs. Повторный54-row audit побайтно идентичен. Матрица, hashes, frozen native binary, invocations, ограничения и команды: [[validation/NATIVE_UNCERTAINTY]], [[validation/baselines/native_uncertainty_v1.json]].
+
+Четыре parameterized C++ GTest cases проверяют accept/reject на edge_feather и multi_band, radii0/5/10/50mm, empty erosion, invalid UV, unchanged uploads, nominal0 parity и restore. Native inspection suite25/25 на NVIDIA; Mesa full CTest56/56 за80.21s включает schema и live runtime catalog/apply/reject/restore checks. Python9/9 проверяет oracle decomposition и независимость footprint refusal. Эти тайминги описывают тестовую suite, не render overhead benchmark.
+
+Закрыт перенос двух uncertainty policies в server renderer и первый matched RGB контроль. Robust mitigation остаётся открытой: central acceptance восстанавливает видимую часть в одном режиме, но ослабляет reference blocking; central rejection защищает от ambiguity ценой потерь полезных источников. Далее требуется совместный central/footprint/surface-correspondence критерий с explicit unsupported policy и independent nonuniform/natural-object holdout. Дополнительная диагностика и оценка радиуса должны опираться на доступную геометрию, а не знание истинного experimental shift. Defaults сохранены; физические камеры/Aurora и overhead требуют отдельных проверок.
+
+После primary capture commit50fad11 отделил closed degenerate erosion uncertainty от legacy empty-interior footprint convention; добавлен collapsed-erosion radius10mm test. Отдельный заранее зафиксированный compatibility plan1f914be повторил все54 условия:594 product payloads, включая54 RGBA, побайтно идентичны primary. Это сохранность результатов после boundary fix, не новая независимая quality sample. Frozen primary source проверяется по Git revision006b74a; final regression относится к50fad11. Подробности: [[validation/NATIVE_UNCERTAINTY#Граничное исправление после primary capture]], [[validation/baselines/native_uncertainty_degenerate_parity_v1.json]].

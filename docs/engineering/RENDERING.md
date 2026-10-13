@@ -180,7 +180,8 @@ Inspection сохраняет прежнюю geometry policy с ego model так
 | 4 `outside_angle` | theta > theta_max |
 | 5 `outside_image` | Центр выборки вне [0,width−1] × [0,height−1] |
 | 6 `vehicle_footprint` | Участок пола, исключённый под кузовом |
-| 7 `supplied_occluder` | Луч перекрыт явно заданным source_occlusion_box |
+| 7 `supplied_occluder` | Central blocking по выбранной политике или nominal footprint rejection |
+| 8 `uncertain_occluder` | Ambiguous central ray отклонён explicit uncertainty policy=reject |
 
 Приоритет: background/ego depth, footprint, отсутствие кадра, Z, угол, границы, optional supplied occluder. Проекция использует общую с основным shader функцию, а не повторный CPU расчёт. Значения получаются 12 дополнительными RGBA8 passes/readbacks (U, V, status для каждой камеры); сохраняемый payload — 36 bytes/output pixel, без transient readback/region buffers. Carrier XYZ запрашивается независимо. Внутренняя geometry policy всегда включает ego, даже если final weights/coverage view его не рисует. Поэтому допустимость hybrid sample сравнивается только вне background/ego.
 
@@ -224,7 +225,7 @@ Neighbour-ray tests use an interior inset of10µm on the supplied AABB to exclud
 
 ## Supplied box surface preservation (experimental)
 
-`surface.source_occlusion_box.mode="bilinear_box_surface_v1"` adds a bounded alternative to `bilinear_radial_v1`. After the unchanged central occlusion test, a carrier endpoint within the configured support band (default10µm, L∞ distance) of any finite supplied-box face retains the central sample. Hidden faces are still rejected. Points outside that surface band use the prior radial footprint test with `guard_texels=0/1`; zero-distortion equidistant optics are required. Interior points and face extensions farther than the numerical band receive no exemption. This recognizes one known box, not arbitrary scene surfaces or RGB depth. Default remains `center`.
+`surface.source_occlusion_box.mode="bilinear_box_surface_v1"` adds a bounded alternative to `bilinear_radial_v1`. When uncertainty is omitted, after the unchanged central occlusion test, a carrier endpoint within the configured support band (default10µm, L∞ distance) of any finite supplied-box face retains the central sample. Hidden faces are still rejected. Points outside that surface band use the prior radial footprint test with `guard_texels=0/1`; zero-distortion equidistant optics are required. Interior points and face extensions farther than the numerical band receive no exemption. This recognizes one known box, not arbitrary scene surfaces or RGB depth. Default remains `center`.
 
 The mode is selected through existing `Client::configure_surface` with the whole surface and current `base_config_revision`; the server validates and publishes it between renders. `surface_catalog.rectangular_source_occlusion.modes` lists it, and `default_support_tolerance_m=0.00001` and `support_tolerance_range_m=[0,0.05]` describe the optional configurable `support_tolerance_m`. It is separate from configurable `tolerance_m` (central endpoint bias); clients must not submit the catalog metadata as config fields. No new message/transport is introduced. A GUI control for this mode is still pending.
 
@@ -265,3 +266,9 @@ GLES проход использует тот же `source_projection` и фор
 При support-only capture текущий hybrid RenderInspection также удерживает samples/ego и копию fallback_rgba; приведённые 4 bytes/pixel относятся к самой маске, а не ко всему inspection или пиковому RSS. Эти затраты следует включить в overhead benchmark.
 
 Ни R, ни G не являются scene observability/correspondence. Для multiband локальные base weights не описывают spatial/signed contribution конечного пикселя. Формат не меняет fallback policy и не объявляет reconstruction наблюдением. Known-answer проверки и команды: [[validation/RENDER_SUPPORT]].
+
+## Bounded central uncertainty (experimental)
+
+`surface.source_occlusion_box.uncertainty` is optional. If present, both `radius_m` (finite[0,0.05]m) and `ambiguous_policy` (`accept` or `reject`) are required; extra keys are rejected. Omit the object for nominal behavior; radius0 retains historical classification. For fixed carrier/poses/endpoint bias, the eroded supplied box certifies blocking and the dilated box certifies clearance. Accept admits ambiguous central rays to the existing nominal footprint stage; reject returns native `SourceProjectionStatus::uncertain_occluder=8`. Status1 remains policy eligibility, including accepted ambiguity, not definitely-clear confidence. Status7 can represent definite central blocking or nominal footprint rejection; rejected UV stays NaN. Support membership and neighbor rays remain nominal and independent of central uncertainty.
+
+The existing full-surface `Client::configure_surface` call applies/restores these fields with current revision/lease; the server advertises required fields/range/policies under `surface_catalog.rectangular_source_occlusion.uncertainty`. No new wire command, persistence, parallel subscription or accepted-ambiguity product is implied. Native inspection status8 is not currently a separate remotely selectable product. GUI forms remain pending. Defaults are unchanged. Implementation,54 native RGBA controls, backend provenance and negative robustness results: [[validation/NATIVE_UNCERTAINTY]].
