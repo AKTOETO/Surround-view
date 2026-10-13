@@ -1,0 +1,144 @@
+{
+  "schema_version": 1,
+  "scope": "illustrative_native_fallback_display_not_quality_trial",
+  "script_sha256": "2ef871fe4ab29a6dc4573307841f8cf1608d924cb335f120ac39d6e4cd713ced",
+  "figure_sha256": "8e22645f21b04d3d32e804f97562a7ae753d0d2851de94e6e15f0ed6cc5dc9f9",
+  "records": [
+    {
+      "carrier": "bowl",
+      "mode": "legacy",
+      "device": "llvmpipe (LLVM 22.1.8, 256 bits)",
+      "source_fingerprint": "7cc5a58689d4d635f5d9c662ef61f2aba42de78f4b2cfd05b937c62c76c91a25",
+      "sha256": {
+        "artifacts/fallback-display-example-v1/bowl-legacy.json": "333af908ecfa8879f3b05a5601591ce6f359579bdccb4483c688b6d5730190c2",
+        "artifacts/fallback-display-example-v1/bowl-legacy/index.json": "fc916383dfe1d11cb8460ea68fd326173c1ac8aaeb6f7bdfc74e1722623c3f6a",
+        "artifacts/fallback-display-example-v1/bowl-legacy/seam_distance_feather-color/actual.rgba": "7c6e266a368a0d0621a586b68d78d6bb61360f7fd34740a2140847f0a8d22cc5"
+      },
+      "manifest_sha256": "e808db349e196d63a75a524acf105c2b551d9b61b15878292fd347c830316fb0",
+      "inputs": [
+        {
+          "camera_id": 0,
+          "path": "/home/bogdan/prog/MAI/surround-view/artifacts/fallback-display-example-v1/inputs/camera0_0000.ppm",
+          "sha256": "67564c2d8f02f4465919663d603ec9a8dee9bfe62ab50458409a7b82d880cb45"
+        },
+        {
+          "camera_id": 1,
+          "path": "/home/bogdan/prog/MAI/surround-view/artifacts/fallback-display-example-v1/inputs/camera1_0000.ppm",
+          "sha256": "163dd39adb7745059659354ee7c15c7e1c85763f0a6d47bcad64dd31bacebdab"
+        },
+        {
+          "camera_id": 2,
+          "path": "/home/bogdan/prog/MAI/surround-view/artifacts/fallback-display-example-v1/inputs/camera2_0000.ppm",
+          "sha256": "061eeb1613893dca9544452e03ca48890fc99da551f35beb8ff2d74331290508"
+        },
+        {
+          "camera_id": 3,
+          "path": "/home/bogdan/prog/MAI/surround-view/artifacts/fallback-display-example-v1/inputs/camera3_0000.ppm",
+          "sha256": "6dc9132211d9702d097423590e071e3c92b09ba9b2be72782ae4690811e66943"
+        }
+      ]
+    },
+    {
+      "carrier": "bowl",
+      "mode": "hatch",
+      "device": "llvmpipe (LLVM 22.1.8, 256 bits)",
+      "source_fingerprint": "7cc5a58689d4d635f5d9c662ef61f2aba42de78f4b2cfd05b937c62c76c91a25",
+      "sha256": {
+        "artifacts/fallback-display-example-v1/bowl-hatch.json": "25e0d623701827e96ae2a2df79af0dd4edc420c15ef7d493279cea02e7ebd370",
+        "artifacts/fallback-display-example-v1/bowl-hatch/index.json": "7487518d8724246d9c1b635867455add9de99bde761d81f2df3c8bcd219b5a9f",
+        "artifacts/fallback-display-example-v1/bowl-hatch/seam_distance_feather-color/actual.rgba": "594aa59739857814a3c1bcd7ea9ca7ca52c28574a88840fd1da7caa93f4138cc"
+      },
+      "manifest_sha256": "e808db349e196d63a75a524acf105c2b551d9b61b15878292fd347c830316fb0",
+      "inputs": [
+        {
+          "camera_id": 0,
+          "path": "/home/bogdan/prog/MAI/surround-view/artifacts/fallback-display-example-v1/inputs/camera0_0000.ppm",
+          "sha256": "67564c2d8f02f4465919663d603ec9a8dee9bfe62ab50458409a7b82d880cb45"
+        },
+        {
+          "camera_id": 1,
+          "path": "/home/bogdan/prog/MAI/surround-view/artifacts/fallback-display-example-v1/inputs/camera1_0000.ppm",
+          "sha256": "163dd39adb7745059659354ee7c15c7e1c85763f0a6d47bcad64dd31bacebdab"
+        },
+        {
+          "camera_id": 2,
+          "path": "/home/bogdan/prog/MAI/surround-view/artifacts/fallback-display-example-v1/inputs/camera2_0000.ppm",
+          "sha256": "061eeb1613893dca9544452e03ca48890fc99da551f35beb8ff2d74331290508"
+        },
+        {
+          "camera_id": 3,
+          "path": "/home/bogdan/prog/MAI/surround-view/artifacts/fallback-display-example-v1/inputs/camera3_0000.ppm",
+          "sha256": "6dc9132211d9702d097423590e071e3c92b09ba9b2be72782ae4690811e66943"
+        }
+      ]
+    },
+    {
+      "carrier": "dome",
+      "mode": "legacy",
+      "device": "llvmpipe (LLVM 22.1.8, 256 bits)",
+      "source_fingerprint": "7cc5a58689d4d635f5d9c662ef61f2aba42de78f4b2cfd05b937c62c76c91a25",
+      "sha256": {
+        "artifacts/fallback-display-example-v1/dome-legacy.json": "7a1c7723dbba6749635c3fcd16fea1c16d4f5599371feebad1d025815186d3c3",
+        "artifacts/fallback-display-example-v1/dome-legacy/index.json": "42a978defe8902c6faf65414a3f6206eebfc5ff4d27d2bc44fcaeb8f7b169b94",
+        "artifacts/fallback-display-example-v1/dome-legacy/seam_distance_feather-color/actual.rgba": "417f23b8ac2deecf8e55166d2554ffaf3e601dfc2e1bb54fdd5f358c0525b0ba"
+      },
+      "manifest_sha256": "e808db349e196d63a75a524acf105c2b551d9b61b15878292fd347c830316fb0",
+      "inputs": [
+        {
+          "camera_id": 0,
+          "path": "/home/bogdan/prog/MAI/surround-view/artifacts/fallback-display-example-v1/inputs/camera0_0000.ppm",
+          "sha256": "67564c2d8f02f4465919663d603ec9a8dee9bfe62ab50458409a7b82d880cb45"
+        },
+        {
+          "camera_id": 1,
+          "path": "/home/bogdan/prog/MAI/surround-view/artifacts/fallback-display-example-v1/inputs/camera1_0000.ppm",
+          "sha256": "163dd39adb7745059659354ee7c15c7e1c85763f0a6d47bcad64dd31bacebdab"
+        },
+        {
+          "camera_id": 2,
+          "path": "/home/bogdan/prog/MAI/surround-view/artifacts/fallback-display-example-v1/inputs/camera2_0000.ppm",
+          "sha256": "061eeb1613893dca9544452e03ca48890fc99da551f35beb8ff2d74331290508"
+        },
+        {
+          "camera_id": 3,
+          "path": "/home/bogdan/prog/MAI/surround-view/artifacts/fallback-display-example-v1/inputs/camera3_0000.ppm",
+          "sha256": "6dc9132211d9702d097423590e071e3c92b09ba9b2be72782ae4690811e66943"
+        }
+      ]
+    },
+    {
+      "carrier": "dome",
+      "mode": "hatch",
+      "device": "llvmpipe (LLVM 22.1.8, 256 bits)",
+      "source_fingerprint": "7cc5a58689d4d635f5d9c662ef61f2aba42de78f4b2cfd05b937c62c76c91a25",
+      "sha256": {
+        "artifacts/fallback-display-example-v1/dome-hatch.json": "1cd1be7af68e82e3d4821dc98378d2f5b8bc2b67b5677251a21d9e6c9a56fcb1",
+        "artifacts/fallback-display-example-v1/dome-hatch/index.json": "20e9c73d525a4203012bd9999c18904788133b40fb6440ecbd3e1f826b9d7916",
+        "artifacts/fallback-display-example-v1/dome-hatch/seam_distance_feather-color/actual.rgba": "b442b7817815dcc4ecb702e1a31452ccbbbbaff63086543af6aacf4389506df4"
+      },
+      "manifest_sha256": "e808db349e196d63a75a524acf105c2b551d9b61b15878292fd347c830316fb0",
+      "inputs": [
+        {
+          "camera_id": 0,
+          "path": "/home/bogdan/prog/MAI/surround-view/artifacts/fallback-display-example-v1/inputs/camera0_0000.ppm",
+          "sha256": "67564c2d8f02f4465919663d603ec9a8dee9bfe62ab50458409a7b82d880cb45"
+        },
+        {
+          "camera_id": 1,
+          "path": "/home/bogdan/prog/MAI/surround-view/artifacts/fallback-display-example-v1/inputs/camera1_0000.ppm",
+          "sha256": "163dd39adb7745059659354ee7c15c7e1c85763f0a6d47bcad64dd31bacebdab"
+        },
+        {
+          "camera_id": 2,
+          "path": "/home/bogdan/prog/MAI/surround-view/artifacts/fallback-display-example-v1/inputs/camera2_0000.ppm",
+          "sha256": "061eeb1613893dca9544452e03ca48890fc99da551f35beb8ff2d74331290508"
+        },
+        {
+          "camera_id": 3,
+          "path": "/home/bogdan/prog/MAI/surround-view/artifacts/fallback-display-example-v1/inputs/camera3_0000.ppm",
+          "sha256": "6dc9132211d9702d097423590e071e3c92b09ba9b2be72782ae4690811e66943"
+        }
+      ]
+    }
+  ]
+}
