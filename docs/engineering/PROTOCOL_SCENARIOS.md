@@ -343,3 +343,7 @@ end note
 ### Сценарий отображения fallback через configure_fusion
 
 Клиент читает state и fusion_catalog, проверяет fallback_display capability, копирует fusion snapshot и устанавливает nested mode=hatch. Сервер проверяет base_config_revision/lease и всю конфигурацию, применяет её между render calls и возвращает временный snapshot. Клиент ждёт frame с применённой revision; после ACK возможен прежний in-flight frame. Stale/invalid request не меняет state/config revisions. Legacy возвращается full replacement с mode=legacy либо omission. Настройка не пишет config file; внутри experiment сохраняется прежний lease restore contract. Последовательность и ограничения: [[diploma/04_EXPERIMENTAL_STUDY#4.87.3. Процесс управления и интерфейс]], [[validation/FALLBACK_DISPLAY]].
+
+### Расширение С12: encoded RGB disagreement
+
+Вместо render_support_v1 выбрать source_disagreement_v1, проверив catalog/schema. Сервер вычисляет обычный кадр и отдельный native eligible RGB pass, передаёт выбранную integer matrix с теми же frame/config/input identities. Client validator проверяет exact schema/shape/domain/counts, SourceDisagreementView различает undefined и defined-zero; release/old in-flight filtering прежние. Смена non-color/active lease отвергается без mutation. Диагностика не включает rejection threshold, не меняет cameras/fusion и не доказывает scene correspondence. Sequence: [[diploma/04_EXPERIMENTAL_STUDY#4.88.2. Реализация server/library и формат]].

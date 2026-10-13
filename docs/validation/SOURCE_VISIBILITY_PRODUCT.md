@@ -104,3 +104,5 @@ Test fixture берёт manifest frame0 и только сохраняет nativ
 Закрыта native и typed wire наблюдаемость принятых ambiguous rays и причин отказа. Далее остаются GUI palette/camera selector, matched occlusion studies с этим продуктом, per-stage masks для всех rejected predicates при необходимости, overhead, actual source-surface/triangle truth и independent holdout. Эта реализация не устраняет выявленные parallax/unsupported failures.
 
 Следующий bounded geometry audit выполнен отдельно: [[validation/RESIDUAL_SURFACE]], §4.86. Historical native eligibility сопоставлена с independent source hits; новый diagnostic product в этих captures не переснимался. Supplied-box clear не означает scene point correspondence.
+
+source_disagreement_v1 добавлен отдельным продуктом; source_visibility использован для post-hoc attribution двух historical pairing failures. У old/current Mesa source decisions одинаковы в двух controls, historical NVIDIA отличается; общее cross-backend подтверждение открыто: [[validation/SOURCE_DISAGREEMENT]], §4.88.

@@ -287,3 +287,7 @@ Opt-in RenderInspectionRequest::source_visibility добавляет CV_8UC4 м�
 ## Явное отображение fallback
 
 Optional `fusion.fallback_display={"mode":"legacy"|"hatch"}` управляет только color presentation существующего fallback branch. Omission→legacy, strict nested object; catalog v5 объявляет scope и `scene_correspondence=false`. Hatch — opaque8px magenta/dark screen grid. GPU использует actual winner/total threshold; hybrid сохраняет fallback только при отсутствии eligible samples. Ego/background, fused pixels и coverage/weights не меняются. Чёрный image не считается missing; grid не устанавливает scene validity. Полный контракт, проверки и пример: [[validation/FALLBACK_DISPLAY]].
+
+## Native source RGB disagreement
+
+`RenderInspectionRequest::source_disagreement` (sixth optional bool) returns top-left CV_8UC4: R=UNORM maximum encoded-RGB channel range over eligible bilinear samples, G=count0..4, B=255 iff count≥2, A=carrier domain255. Ego/background/masked footprint all0. Undefined R0/B0 differs from defined agreement R0/B255. One additional pass/readback follows common region pass, color only; ordinary RGBA/eligibility/weights unchanged. Hybrid reports local eligible RGB, not nonlocal effective support. Repeated inspection without request clears the data. Native/server delivery and bounded audit with two historical pairing failures: [[validation/SOURCE_DISAGREEMENT]].

@@ -206,3 +206,5 @@ Native radial footprint visibility (bilinear_radial_v1, guard0/1) реализо
 §4.86: all9 residual coordinates/all4 cameras, independent scene hits и triangle oracle69/69; same-object/wrong-point и отсутствие matching alternatives. Таблица4.88, рисунки4.155–4.158. [[validation/RESIDUAL_SURFACE]].
 
 §4.87: runtime evidence contract и optional native fallback display, catalog v5, typed API и GUI button, полный Mesa CTest59/59. Таблица4.89, рисунки4.159–4.160. [[validation/FALLBACK_DISPLAY]].
+
+§4.88: native encoded RGB disagreement и typed wire API; frozen photometric evidence screen с2 failed historical pairings и old/current Mesa controls. Таблица4.90, рисунки4.161–4.163. Полный CTest59/59 не подменяет scientific pairing gate. [[validation/SOURCE_DISAGREEMENT]].

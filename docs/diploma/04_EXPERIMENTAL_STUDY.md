@@ -4307,3 +4307,93 @@ end
 После исправления install list **полный Mesa CTest59/59 за107.13s**, включая native carrier inspection32 tests и client transports. Ранние прогоны выявили sandbox socket denial, GL1285 автоматически выбранного драйвера и missing installed header; окончательный прогон выполнен после устранения header defect, с explicit Mesa и разрешёнными local sockets. Этот результат не доказывает работоспособность текущего NVIDIA backend или Aurora и не является overhead benchmark.
 
 Закрыта только optional presentation policy существующего fallback. General scene correspondence, joint selection без truth leakage, effective multiband support, temporal/prior fill и independent nonuniform holdout остаются открытыми. Следующий алгоритмический опыт должен явно задать доступные дополнительные признаки и совместно проверить полезную поддержку, wrong-point sampling и отказ от недостоверного результата. Качество не следует оценивать по тому, что пустота стала заметнее.
+
+## 4.88. Native photometric evidence и границы его применимости
+
+### 4.88.1. Исследовательский вопрос и определение
+
+После §4.86–4.87 сервер располагает eligibility и local output path, но не независимой scene depth. Следующий проверяемый признак — согласие изображений нескольких допущенных камер на фактическом carrier. Он доступен без передачи Blender truth в продукт, однако uniform texture и exposure способны сделать его неоднозначным. Поэтому сначала реализуется измерение, затем проверяется его информативность; автоматический rejection threshold заранее не предполагается полезным.
+
+Для eligible set `E(q)` и bilinear encoded RGB samples `c_i(q)` определим
+
+\[
+n(q)=|E(q)|,\qquad
+D(q)=\max_{a\in\{R,G,B\}}\left(\max_{i\in E(q)}c_{ia}-\min_{i\in E(q)}c_{ia}\right),\quad n(q)\ge2.
+\]
+
+Это максимум попарного L∞ расхождения. При `n<2` значение **не определено**, а не равно нулю. Два одинаковых чёрных samples дают определённый ноль; единственный источник не даёт сравнения независимо от яркости. Scene point correspondence из RGB agreement не следует: две камеры могут видеть одинаково окрашенные разные точки.
+
+### 4.88.2. Реализация server/library и формат
+
+Добавлен `source_disagreement_v1` в native renderer, sv-server и sv-client-lib. Отдельный RGBA8 pass использует ту же source_projection, что обычный render, включая supplied-box/uncertainty/facing/footprint. Metric вычисляется до weights/linearization/color compensation. Hybrid также сообщает local eligible encoded samples, не effective nonlocal support. Ordinary RGBA и выбор источников не меняются.
+
+Таблица4.90 — Контракт integer transport payload.
+
+|Канал|Содержание|Особенности|
+|---|---|---|
+|R|UNORM D×255|0..255, принудительно0 при undefined|
+|G|eligible count|integer0..4, не нормированная fraction|
+|B|comparison defined|255 iff G≥2|
+|A|carrier domain|255 на carrier вне footprint/ego;0 вне domain|
+
+Все bytes вне domain равны0. Поэтому `R0,B0,G1` и `R0,B255,G2` различаются по смыслу. Alpha — domain, не вероятность правильности. Footprint/ego исключаются depth-tested passes; background не становится измерением. Один дополнительный diagnostic pass/readback следует после common region pass. Request — шестой optional bool в RenderInspectionRequest, прежние aggregate initializers сохраняют порядок. Данные очищаются при следующем render без запроса, non-color view запрещён.
+
+Новый продукт объявляется HELLO/output_catalog с exact schema. Используются прежние configure_output/type11/release и config/input/frame identities. One product per generation, reconnect→final_frame, временный selector без записи на диск и запрет configure_output при active lease сохраняются. `SourceDisagreementView` владеет immutable Message без payload copy и Qt/OpenCV зависимости; at(x,y) возвращает range/count/defined/carrier. Validator проверяет schema, shapes, provenance, cross-product fields, count≤used inputs и domain/defined invariants.
+
+```plantuml
+@startuml
+participant "Research client" as C
+participant "sv-client-lib" as L
+participant "sv-server" as S
+participant "Native renderer" as R
+C -> L : output_catalog + configure_output(SourceDisagreement)
+L -> S : existing SV01 commands
+S -> S : validate color/data/idle lease; bind generation
+S --> C : ACK + state_revision + exact schema
+S -> R : ordinary render + opt-in disagreement
+R -> R : shared source projection/predicates
+R -> R : encoded RGB min/max; count; defined iff count>=2
+R --> S : unchanged final RGBA + integer metric
+S --> L : selected type11 + inputs/revisions/token
+L -> L : validate and retain owning Message
+L --> C : SourceDisagreementView
+C -> L : release(header)
+L -> S : type22 buffer token
+note over C,R
+No source rejection or scene-confidence claim.
+Single-source comparison remains undefined.
+end note
+@enduml
+```
+
+Рисунок4.161 — Доставка native photometric evidence через существующий протокол. GUI palette и parallel products остаются открытыми.
+
+### 4.88.3. Frozen audit и проверка historic pairing
+
+Plan `configs/research/source-disagreement-plan.json` зафиксирован commit0583fad до нового capture; native реализация —14a7684. Выбраны все36 прежних facing-enabled configurations и девять residual coordinates,162 dependent pixel-condition cells. Из исторических statuses заранее известно распределение112 empty/44 singleton/6 paired. Native binary, inputs, configs, helper/code hashes, actual llvmpipe backend, independent bilinear oracle по retained UV и допуск1 byte зафиксированы. Thresholds8/16/32/64/128 byte с правилом strict `D>threshold` заданы заранее и не оптимизируются.
+
+Результат **не прошёл полный historical pairing gate**:160/162 cells согласованы, две отличаются по eligibility. Текущий count distribution110 empty/46 singleton/6 paired. Обе отличающиеся cells — F1(207,324), nominal/surface10mm/accept и Z−5mm/surface10mm/nominal. Исторический source3 status7, текущий source_visibility10 и1 соответственно; текущий count1 подтверждён повторной native source-visibility capture. Эти две cells нельзя объявлять корректно сопоставленными с прежними truth labels.
+
+Post-hoc attribution повторила обе конфигурации на Mesa архивным неизменным correspondence binary (SHA69c8552f… из прежнего плана) и текущим бинарником. Legacy camera3 status1 в обоих случаях; все11 payloads — output RGBA, carrier coordinates/regions, четыре UV/status pairs — совпали побайтно между old/current Mesa для каждой конфигурации. Следовательно, расхождение с прежним NVIDIA воспроизводится уже старым бинарником на текущем Mesa, а новая метрика не является причиной regression в данных двух контролях. Это локализация backend/runtime sensitivity; точная численная причина и current NVIDIA behavior ещё не установлены. Primary failure не переименован в pass и не исправлен заменой historical report.
+
+![Native selected comparison cells](figures/experiments/source_disagreement_cells.png)
+
+Рисунок4.162 — Counts и encoded range по всем162 cells. Red X — failed historical pairings, исключённые из truth inference. Gray — undefined comparison; этот цвет не означает правильный source.
+
+### 4.88.4. Что удалось измерить и чего недостаточно для threshold
+
+В шести согласованных paired cells F0(208,309) native encoded range равен116/255; independent bilinear range116.636 byte, округлённое значение117, ошибка1 byte в frozen tolerance. Thresholds8/16/32/64 отмечают6/6,128 —0/6. Однако все шесть cells относятся к одной road coordinate и не имеют matching eligible source при2/20mm. В выборке нет correct paired controls, поэтому specificity, false-positive rate, ranking и рабочий threshold не определены.
+
+44 согласованные singleton cells не получают pair comparison, включая известные wrong-point samples из §4.86. Ещё112 historical empty cells включают два failed pairings; для160 согласованных cells это110 empty,44 singleton,6 paired. Такая раздельная запись не скрывает изменение eligibility между backend/runtime. Нельзя считать отсутствие пары успешным photometric acceptance или объединять коррелированные условия в независимую статистику.
+
+![Native source disagreement maps](figures/experiments/source_disagreement_native.png)
+
+Рисунок4.163 — Native count и range для Z+5mm/accept/surface10mm на прежних frames. Полный raster показан как диагностическое измерение; scene truth классифицирована только на выбранных coordinates. Низкий range на плоскости не является доказательством наблюдаемости всех scene points. В заголовке сохранён primary pairing failure.
+
+Collector при повторении дал побайтно идентичный JSON. Plot по умолчанию отказывается изображать failed report как успешный; явный `--allow-pairing-failures` разрешает визуализацию с пометками. Reports/hashes и команды: [[validation/SOURCE_DISAGREEMENT]], [[validation/baselines/source_disagreement_v1.json]], [[validation/baselines/source_disagreement_pairing_v1.json]].
+
+### 4.88.5. Проверки продукта и следующий этап
+
+Полная Mesa регрессия59/59 за106.94s. Новые8 GTest cases проверяют семь modes, known encoded ranges, counts4/2/1/0, одинаковые чёрные samples, domain/ego, zero-weight eligibility, обычный RGBA и reset. Два typed tests проверяют lifetime/bounds, schemas/pixels, missing inputs и truncated payload. Live tests проверяют native/wire byte parity семи modes, color rejection без mutation, final restore, typed Unix/TCP consumer и reconnect трёх diagnostic products. Независимый audit sampler дополнительно имеет3 known-answer tests. Ранний selected test выявил ошибку расположения assertion в расширенном consumer test; исправлено до full run. Product regression pass и scientific pairing failure — разные результаты.
+
+Завершена native/server/library измерительная функция, но не general correspondence mitigation. Сначала требуется атрибутировать endpoint/tolerance precision и backend/runtime различия central predicate, получить matched source truth текущего backend. Затем нужны correct/incorrect paired controls на nonuniform surfaces с independent depth/pose, exposure/filter controls и честная abstention для singleton/ambiguous texture. Только после них можно выбирать joint selection rule и переходить к frozen independent holdout. Overhead, physical cameras и Aurora проверяются отдельно.

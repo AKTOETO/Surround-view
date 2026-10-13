@@ -1205,3 +1205,9 @@ if (sv::client::validate_output_product(*event.message) == sv::OutputProduct::So
 В sv-simulator откройте панель «Алгоритмы и геометрия сервера», нажмите «Обновить состояние и catalog», затем **«Показать fallback штриховкой»**. Повторное нажатие возвращает обычное заполнение. Кнопка сохраняет остальные fusion settings и работает с локальным/удалённым сервером через прежнее подключение. Требуется объявленная capability fallback_display (catalog v5). Настройка временная, без записи файла; shader выполняется на сервере.
 
 Для C++ клиента задать `settings.fallback_display.mode="hatch"` перед `configure_fusion(revision, settings)`. Scenario variant принимает `"fallback_display":{"mode":"hatch"}`. Configure полностью заменяет fusion: укажите остальные нужные параметры, omission возвращает defaults. Сетка отмечает только фактический pipeline fallback; она не обнаруживает все неверные источники или поверхности. [[validation/FALLBACK_DISPLAY]].
+
+## Измерить RGB-разногласие камер
+
+Через `sv-client-lib` проверьте output_catalog и выберите `OutputProduct::SourceDisagreement` методом configure_output. Сервер отправит source_disagreement_v1 вместо final_frame; следующий выбор FinalFrame или reconnect вернёт обычный кадр. Нужны color view и idle experiment lease. В owning SourceDisagreementView используйте defined перед интерпретацией encoded_rgb_range: одна камера не даёт pair comparison. Число eligible sources включает нулевые fusion weights. Диагностика доступна по прежним Unix/TCP connections; отдельная GUI palette/selector пока не добавлена.
+
+Проверка серверной доставки: `ctest --test-dir build -R output_products --output-on-failure` с рабочим EGL backend. Frozen study/plots и обнаруженный drift двух исторических pairings описаны в [[validation/SOURCE_DISAGREEMENT]]; исследовательский threshold не выбран и автоматически sources не отбрасываются.

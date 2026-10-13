@@ -144,3 +144,7 @@ Client::output_catalog() и configure_output(OutputProduct::FinalFrame/RenderSup
 ## Управление отображением fallback
 
 `FusionSettings::fallback_display.mode` (`sv::FallbackDisplay`, отдельный installed header) принимает legacy/hatch. После проверки `fusion_catalog.fallback_display` вызвать прежний configure_fusion с текущей revision и полным набором желаемых settings; default legacy опускается для совместимости со старыми серверами. Full apply с omission возвращает legacy, snapshot при legacy может не содержать поле. Mode не изменяет typed diagnostic products и не означает confidence. Simulator имеет кнопку без JSON editing; C++ scenario variants сохраняют nested field. [[validation/FALLBACK_DISPLAY]].
+
+## SourceDisagreementView
+
+Check output_catalog for `source_disagreement_v1`, then `configure_output(OutputProduct::SourceDisagreement)`. Filter type11 by product/revision and release previous in-flight packets. `SourceDisagreementView(message)` owns immutable Message without payload copy/Qt/OpenCV; at(x,y) returns encoded_rgb_range, eligible_cameras, defined, carrier. Undefined means fewer than two eligible sources; it is not zero error or acceptance. Exact schema, shape/provenance, count≤used inputs and domain/defined invariants are validated. release(header) preserves owning view lifetime; bounded server slot still must be released promptly. Selector is temporary, one product per generation, default on reconnect final_frame; active lease forbids switching. [[validation/SOURCE_DISAGREEMENT]].

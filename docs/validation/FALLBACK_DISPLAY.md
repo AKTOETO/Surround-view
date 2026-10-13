@@ -60,3 +60,5 @@ MPLCONFIGDIR=/tmp/sv-matplotlib python3 docs/diploma/plot_fallback_display.py
 ## Осталось
 
 General scene correspondence, joint selection без truth leakage и независимый nonuniform holdout остаются открытыми. Нужны GUI palettes/camera selectors diagnostic products, matched captures и overhead. Эта реализация закрывает только optional визуальное различение существующего fallback; temporal/prior fill, confidence calibration, параллельные продукты и multiple client sessions не добавлены.
+
+Следующий этап добавил native RGB disagreement measurement и проверил границы evidence, сохранив2 historical pairing failures: [[validation/SOURCE_DISAGREEMENT]], §4.88. Сетка fallback и RGB disagreement не заменяют scene point correspondence.

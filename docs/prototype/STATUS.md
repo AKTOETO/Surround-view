@@ -1,5 +1,7 @@
 # Состояние прототипа и границы подтверждения
 
+14.10.2026: source_disagreement_v1 реализован в renderer/server/typed client API; undefined при менее2 eligible cameras, один opt-in pass, Unix/TCP parity и полный Mesa CTest59/59. Frozen audit36 configs/162 cells:160 pairing pass,2 historical eligibility failures; current counts110/46/6. Old/current Mesa11 payloads побайтно совпали в двух attribution controls: backend/runtime sensitivity существует уже у архивного бинарника. Threshold не выбран; correct paired controls отсутствуют ([[validation/SOURCE_DISAGREEMENT]], §4.88).
+
 14.10.2026: native fallback_display legacy/hatch реализован через configure_fusion/catalog v5/typed library и кнопку simulator; seven-mode masks/RGBA restore и полный Mesa CTest59/59 проверены. Это только отображение фактической fallback branch, не scene confidence/general mitigation. Доступные runtime evidence отделены от Blender truth ([[validation/FALLBACK_DISPLAY]], §4.87).
 
 Дополнение 13.10.2026: Ограниченный residual source-surface audit выполнен: 69/69 Blender/independent triangle rays согласованы (max5.05µm); из9 исходных pairs при20mm две matching, шесть same-object/wrong-point и одна wrong-object, при2mm matching0/9. У7/9 выбранных coordinates нет matching alternative при20mm даже до eligibility. Это post-hoc scene-specific truth, не holdout/general mitigation; далее доступные runtime evidence и explicit unsupported policy, nonuniform holdout и overhead ([[validation/RESIDUAL_SURFACE]], §4.86). Selected CTest4/4; product code unchanged.

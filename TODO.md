@@ -1,10 +1,14 @@
 # Оставшиеся работы
 
+14.10.2026: source_disagreement_v1 реализован в renderer/server/typed client API; undefined при менее2 eligible cameras, один opt-in pass, Unix/TCP parity и полный Mesa CTest59/59. Frozen audit36 configs/162 cells:160 pairing pass,2 historical eligibility failures; current counts110/46/6. Old/current Mesa11 payloads побайтно совпали в двух attribution controls: backend/runtime sensitivity существует уже у архивного бинарника. Threshold не выбран; correct paired controls отсутствуют ([[validation/SOURCE_DISAGREEMENT]], §4.88).
+
 14.10.2026: native fallback_display legacy/hatch реализован через configure_fusion/catalog v5/typed library и кнопку simulator; seven-mode masks/RGBA restore и полный Mesa CTest59/59 проверены. Это только отображение фактической fallback branch, не scene confidence/general mitigation. Доступные runtime evidence отделены от Blender truth ([[validation/FALLBACK_DISPLAY]], §4.87).
 
 Сверено с кодом и проверочными отчётами 13.10.2026. Выполненные пункты удалены из этого списка; их реализация и результаты описаны в документах по ссылкам. Состояние Linux-прототипа и ограничения: [[prototype/STATUS]]. Подробная последовательность этапов: [[planning/ROADMAP]].
 
 ## Приоритет 1 — доказать качество решения для диплома
+
+Ближайший блокирующий исследовательский шаг: атрибутировать различия central predicate у F1(207,324) между историческим NVIDIA и текущим Mesa (endpoint/tolerance precision), получить matched source truth текущего backend. Две failed cells из photometric screen не считать pass. Затем correct/incorrect paired nonuniform controls, exposure/filter sensitivity и abstention для singleton; до них не выбирать rejection threshold. [[validation/SOURCE_DISAGREEMENT]].
 
 Исследовательские инструменты и первые синтетические прогоны добавлены, но аудит коммитов `ee1bcc5e..HEAD` выявил, что часть опубликованных метрик не подтверждает заявленные выводы. Приоритет 1 **не закрыт**. Exit criteria для полноценного заключения: [[planning/ROADMAP#Критерии готовности исследовательского заключения]]. Проверенные ограничения и расхождения: [[planning/AUDIT]].
 
