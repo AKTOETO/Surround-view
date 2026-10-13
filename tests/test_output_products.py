@@ -212,6 +212,28 @@ class OutputProducts(unittest.TestCase):
                 str(self.manifest), str(native_mask), 'source_visibility_v1'], capture_output=True, timeout=10)
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertEqual(mask, native_mask.read_bytes())
+        for policy, expected_status in [('accept', 10), ('reject', 8)]:
+            active = self.client.command('state')
+            surface = copy.deepcopy(active['surface'])
+            surface['source_occlusion_box'] = {
+                'min_m': [-10, -10, -.005], 'max_m': [10, 10, .005], 'tolerance_m': 0,
+                'uncertainty': {'radius_m': .01, 'ambiguous_policy': policy}}
+            ack = self.client.command('configure_surface', base_config_revision=active['config_revision'], surface=surface)
+            header, mask = self.frame_after(ack)
+            pixels = np.frombuffer(mask, np.uint8).reshape(64, 96, 4)
+            self.assertGreater(np.count_nonzero(pixels == expected_status), 0)
+            cfg = copy.deepcopy(self.cfg)
+            cfg['fusion'] = ack['fusion']
+            cfg['surface'] = ack['surface']
+            native_config.write_text(json.dumps(cfg))
+            result = subprocess.run([str(BUILD / 'sv-support-wire-probe'), str(native_config),
+                str(self.manifest), str(native_mask), 'source_visibility_v1'], capture_output=True, timeout=10)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(mask, native_mask.read_bytes())
+            self.assertEqual(header['config_revision'], ack['config_revision'])
+        active = self.client.command('state')
+        ack = self.client.command('configure_surface', base_config_revision=active['config_revision'], surface=state['surface'])
+        self.frame_after(ack)
         fusion = copy.deepcopy(ack['fusion'])
         fusion['diagnostic'] = 'coverage'
         rejected = self.client.command('configure_fusion', base_config_revision=ack['config_revision'], fusion=fusion)
