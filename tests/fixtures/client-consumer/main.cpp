@@ -12,7 +12,7 @@ int main(int argc, char **argv)
     {
         sv::client::Options options;
         unsigned frames = 3;
-        bool exercise = false, allow_reconnect = false, support = false;
+        bool exercise = false, allow_reconnect = false, support = false, visibility = false;
         for (int i = 1; i < argc; ++i)
         {
             const std::string arg = argv[i];
@@ -61,6 +61,10 @@ int main(int argc, char **argv)
             {
                 exercise = true;
             }
+            else if (arg == "--visibility")
+            {
+                visibility = true;
+            }
             else if (arg == "--support")
             {
                 support = true;
@@ -72,7 +76,7 @@ int main(int argc, char **argv)
                     "CONTROL_PORT DATA_PORT [--frames N --exercise|--support]");
             }
         }
-        if (support && exercise)
+        if ((support && exercise) || (visibility && (support || exercise)))
         {
             throw std::runtime_error("--support and --exercise are separate probe modes");
         }
@@ -139,10 +143,12 @@ int main(int argc, char **argv)
                 if (event.detail == "ready")
                 {
                     client.state();
-                    if (support)
+                    if (support || visibility)
                     {
                         client.output_catalog();
-                        client.configure_output(sv::client::OutputProduct::RenderSupport);
+                        client.configure_output(visibility
+                                                    ? sv::client::OutputProduct::SourceVisibility
+                                                    : sv::client::OutputProduct::RenderSupport);
                     }
                     if (exercise)
                     {
@@ -163,7 +169,8 @@ int main(int argc, char **argv)
             if (event.message->type == 11)
             {
                 const auto product = sv::client::validate_output_product(*event.message);
-                if (support && product != sv::client::OutputProduct::RenderSupport)
+                if ((support && product != sv::client::OutputProduct::RenderSupport) ||
+                    (visibility && product != sv::client::OutputProduct::SourceVisibility))
                 {
                     client.release(event.message->header);
                     continue; // An old product may already be in flight when the command applies.
@@ -184,6 +191,22 @@ int main(int argc, char **argv)
                     header["eligible_pixels"] = eligible;
                     header["positive_local_weight_pixels"] = positive;
                 }
+                if (visibility)
+                {
+                    const sv::client::SourceVisibilityView view(event.message);
+                    unsigned eligible = 0;
+                    for (int y = 0; y < view.height(); ++y)
+                    {
+                        for (int x = 0; x < view.width(); ++x)
+                        {
+                            for (int camera = 0; camera < 4; ++camera)
+                            {
+                                eligible += sv::source_visibility_eligible(view.at(x, y, camera));
+                            }
+                        }
+                    }
+                    header["eligible_camera_pairs"] = eligible;
+                }
                 // Consumer retains an owning immutable Message; release does not invalidate it.
                 uint64_t hash = 14695981039346656037ULL;
                 for (auto byte : event.message->payload)
@@ -201,7 +224,7 @@ int main(int argc, char **argv)
             }
             else if (event.message->type == 21)
             {
-                if (support && !header.at("accepted").as_bool())
+                if ((support || visibility) && !header.at("accepted").as_bool())
                 {
                     throw std::runtime_error("support probe command rejected: " +
                                              std::string(header.at("reason").as_string()));

@@ -376,6 +376,7 @@ ServerIO::ServerIO(const sv::Connections &n, const std::string &source_type,
                     "copied_rgba",
                     "output_selection_v1",
                     "render_support_v1",
+                    "source_visibility_v1",
                     "calibrate",
                     "calibration_provenance_v1",
                     "calibration_status",
@@ -548,8 +549,8 @@ bool ServerIO::publish(sv::Message message, uint64_t expected_generation)
     asio::post(io,
                [this, expected_generation, message = std::move(message)]() mutable
                {
-                   if (generation == expected_generation && active_video &&
-                       !active_video->closed && active_video->hello)
+                   if (generation == expected_generation && active_video && !active_video->closed &&
+                       active_video->hello)
                    {
                        active_video->publish(std::move(message));
                    }
@@ -927,10 +928,12 @@ int main(int argc, char **argv)
                         {
                             throw std::runtime_error("output_requires_data_channel");
                         }
-                        if (product == sv::OutputProduct::RenderSupport &&
+                        if (product != sv::OutputProduct::FinalFrame &&
                             config_store.active()->fusion.diagnostic != "color")
                         {
-                            throw std::runtime_error("render_support_requires_color");
+                            throw std::runtime_error(product == sv::OutputProduct::SourceVisibility
+                                                         ? "source_visibility_requires_color"
+                                                         : "render_support_requires_color");
                         }
                         output_product = product;
                         output_generation = network.generation.load();
@@ -978,7 +981,8 @@ int main(int argc, char **argv)
                                  {"default_support_tolerance_m", 1e-5},
                                  {"support_tolerance_range_m", boost::json::array{0., .05}},
                                  {"default_require_facing_surface", false},
-                                 {"facing_scope", "box-surface only; any near finite face with camera strictly outside its plane"},
+                                 {"facing_scope", "box-surface only; any near finite face with "
+                                                  "camera strictly outside its plane"},
                                  {"uncertainty",
                                   boost::json::object{
                                       {"required_fields",
@@ -1017,10 +1021,13 @@ int main(int argc, char **argv)
                         // Full replacement avoids retaining parameters from a previous trial.
                         effective.as_object()["fusion"] = m.header.at("fusion").as_object();
                         auto prepared = sv::parse_config(effective).fusion;
-                        if (output_product == sv::OutputProduct::RenderSupport &&
+                        if (output_product != sv::OutputProduct::FinalFrame &&
                             prepared.diagnostic != "color")
                         {
-                            throw std::runtime_error("render_support_requires_color");
+                            throw std::runtime_error(output_product ==
+                                                             sv::OutputProduct::SourceVisibility
+                                                         ? "source_visibility_requires_color"
+                                                         : "render_support_requires_color");
                         }
                         if (!config_store.update_runtime_if_revision(effective, revision, reason))
                         {
@@ -1317,9 +1324,12 @@ int main(int argc, char **argv)
                 sv::RenderInspection inspection;
                 sv::RenderInspectionRequest inspection_request;
                 inspection_request.support = output_product == sv::OutputProduct::RenderSupport;
-                auto image = renderer->render(last_set, view,
-                                              inspection_request.support ? &inspection : nullptr,
-                                              inspection_request);
+                inspection_request.source_visibility =
+                    output_product == sv::OutputProduct::SourceVisibility;
+                auto image = renderer->render(
+                    last_set, view,
+                    output_product != sv::OutputProduct::FinalFrame ? &inspection : nullptr,
+                    inspection_request);
                 auto done = sv::now_ns();
                 frame_id++;
                 boost::json::array inputs;
@@ -1406,16 +1416,24 @@ int main(int argc, char **argv)
                     std::move(image.pixels)};
 
                 output.header["output_product"] = sv::output_product_name(output_product);
-                if (inspection_request.support)
+                if (inspection_request.support || inspection_request.source_visibility)
                 {
-                    const auto &mask = inspection.support;
+                    const auto &mask = inspection_request.support ? inspection.support
+                                                                  : inspection.source_visibility;
                     if (mask.type() != CV_8UC4 || mask.rows != image.height ||
                         mask.cols != image.width || !mask.isContinuous())
                     {
                         throw std::runtime_error("invalid native render support mask");
                     }
                     output.payload.assign(mask.data, mask.data + mask.total() * mask.elemSize());
-                    output.header["support_schema"] = sv::render_support_schema();
+                    if (inspection_request.support)
+                    {
+                        output.header["support_schema"] = sv::render_support_schema();
+                    }
+                    else
+                    {
+                        output.header["source_visibility_schema"] = sv::source_visibility_schema();
+                    }
                     output.header["inspection_cpu_ms"] = timing.inspection_cpu_ms;
                 }
 

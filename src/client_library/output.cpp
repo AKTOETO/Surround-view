@@ -10,19 +10,23 @@ OutputProduct validate_output_product(const Message &message)
         value ? parse_output_product(std::string(value->as_string())) : OutputProduct::FinalFrame;
     if (product == OutputProduct::FinalFrame)
     {
-        if (message.header.contains("support_schema"))
+        if (message.header.contains("support_schema") ||
+            message.header.contains("source_visibility_schema"))
         {
             throw std::invalid_argument("support schema on final frame");
         }
         return product;
     }
+    const bool visibility = product == OutputProduct::SourceVisibility;
     const auto &h = message.header;
     const auto width = h.at("width").as_int64(), height = h.at("height").as_int64();
     if (message.type != 11 || h.at("pixel_format").as_string() != "RGBA8" ||
         h.at("row_origin").as_string() != "top_left" || width < 2 || width > 4096 || height < 2 ||
         height > 2160 || h.at("stride_bytes").as_int64() != width * 4 ||
         message.payload.size() != size_t(width * height * 4) ||
-        h.at("support_schema") != render_support_schema() ||
+        (visibility ? h.at("source_visibility_schema") != source_visibility_schema()
+                    : h.at("support_schema") != render_support_schema()) ||
+        h.contains(visibility ? "support_schema" : "source_visibility_schema") ||
         h.at("session_id").as_string().empty() || h.at("buffer_token").as_string().empty() ||
         h.at("diagnostic_view").as_string() != "color")
     {
@@ -34,7 +38,7 @@ OutputProduct validate_output_product(const Message &message)
         parse_decimal_u64(std::string(h.at(key).as_string()));
     }
     const auto &inputs = h.at("inputs").as_array();
-    unsigned cameras = 0;
+    unsigned cameras = 0, used_cameras = 0;
     if (inputs.size() != 4)
     {
         throw std::invalid_argument("invalid render support inputs");
@@ -51,6 +55,7 @@ OutputProduct validate_output_product(const Message &message)
         cameras |= 1u << camera;
         if (fields.at("used").as_bool())
         {
+            used_cameras |= 1u << camera;
             for (const auto *key : {"sequence_id", "release_timestamp_ns"})
             {
                 parse_decimal_u64(std::string(fields.at(key).as_string()));
@@ -60,6 +65,22 @@ OutputProduct validate_output_product(const Message &message)
     for (size_t offset = 0; offset < message.payload.size(); offset += 4)
     {
         const auto *p = message.payload.data() + offset;
+        if (visibility)
+        {
+            for (int camera = 0; camera < 4; ++camera)
+            {
+                if (p[camera] > 12 ||
+                    ((p[camera] == 0 || p[camera] == 6) &&
+                     (p[0] != p[camera] || p[1] != p[camera] || p[2] != p[camera] ||
+                      p[3] != p[camera])) ||
+                    (!(used_cameras & (1u << camera)) && p[camera] != 0 && p[camera] != 6 &&
+                     p[camera] != 2))
+                {
+                    throw std::invalid_argument("invalid source visibility pixel");
+                }
+            }
+            continue;
+        }
         const auto path = static_cast<RenderSupportPath>(p[2]);
         if (p[0] > 4 || p[1] > p[0] || p[2] > 6 ||
             p[3] != (path == RenderSupportPath::background ? 0 : 255) ||
@@ -106,6 +127,42 @@ SupportPixel RenderSupportView::at(int x, int y) const
 }
 
 const Message &RenderSupportView::message() const noexcept
+{
+    return *message_;
+}
+
+SourceVisibilityView::SourceVisibilityView(std::shared_ptr<const Message> message)
+    : message_(std::move(message))
+{
+    if (!message_ || validate_output_product(*message_) != OutputProduct::SourceVisibility)
+    {
+        throw std::invalid_argument("source visibility message required");
+    }
+    width_ = static_cast<int>(message_->header.at("width").as_int64());
+    height_ = static_cast<int>(message_->header.at("height").as_int64());
+}
+
+int SourceVisibilityView::width() const noexcept
+{
+    return width_;
+}
+
+int SourceVisibilityView::height() const noexcept
+{
+    return height_;
+}
+
+SourceVisibilityStatus SourceVisibilityView::at(int x, int y, int camera) const
+{
+    if (x < 0 || y < 0 || x >= width_ || y >= height_ || camera < 0 || camera > 3)
+    {
+        throw std::out_of_range("source visibility coordinate/camera");
+    }
+    return static_cast<SourceVisibilityStatus>(
+        message_->payload[(size_t(y) * width_ + x) * 4 + camera]);
+}
+
+const Message &SourceVisibilityView::message() const noexcept
 {
     return *message_;
 }

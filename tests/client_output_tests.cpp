@@ -140,3 +140,65 @@ TEST(ClientOutput, RejectsInvalidCountsPathsAndDomains)
     EXPECT_THROW(sv::output_product_name(static_cast<sv::OutputProduct>(99)),
                  std::invalid_argument);
 }
+
+namespace
+{
+sv::Message visibility_message()
+{
+    auto message = support_message();
+    message.header["output_product"] = "source_visibility_v1";
+    message.header.erase("support_schema");
+    message.header["source_visibility_schema"] = sv::source_visibility_schema();
+    message.payload = {0, 0, 0, 0, 1, 10, 11, 12, 7, 8, 9, 2, 6, 6, 6, 6};
+    return message;
+}
+} // namespace
+
+TEST(ClientOutput, VisibilityViewOwnsFourCameraStatusesAndChecksBounds)
+{
+    auto message = std::make_shared<sv::Message>(visibility_message());
+    const auto *bytes = message->payload.data();
+    sv::client::SourceVisibilityView view(message);
+    message.reset();
+    EXPECT_EQ(view.width(), 2);
+    EXPECT_EQ(view.height(), 2);
+    EXPECT_EQ(view.message().payload.data(), bytes);
+    EXPECT_EQ(view.at(1, 0, 1), sv::SourceVisibilityStatus::accepted_ambiguous);
+    EXPECT_EQ(view.at(1, 0, 2), sv::SourceVisibilityStatus::accepted_clear);
+    EXPECT_EQ(view.at(1, 0, 3), sv::SourceVisibilityStatus::footprint_occluder);
+    EXPECT_TRUE(sv::source_visibility_eligible(view.at(1, 0, 1)));
+    EXPECT_FALSE(sv::source_visibility_eligible(view.at(1, 0, 3)));
+    EXPECT_THROW(view.at(0, 0, 4), std::out_of_range);
+    EXPECT_THROW(view.at(-1, 0, 0), std::out_of_range);
+    EXPECT_THROW(view.at(0, 2, 0), std::out_of_range);
+    EXPECT_THROW(sv::client::SourceVisibilityView(nullptr), std::invalid_argument);
+    EXPECT_THROW(sv::client::RenderSupportView(std::make_shared<sv::Message>(view.message())),
+                 std::invalid_argument);
+}
+
+TEST(ClientOutput, VisibilityRejectsSchemaUnknownStatusesAndMissingCameraClaims)
+{
+    for (int byte : {13, 255, 0, 6})
+    {
+        auto message = visibility_message();
+        message.payload[4] = byte;
+        EXPECT_THROW(sv::client::validate_output_product(message), std::invalid_argument);
+    }
+    auto message = visibility_message();
+    message.header["source_visibility_schema"] = boost::json::object{};
+    EXPECT_THROW(sv::client::validate_output_product(message), std::exception);
+    message = visibility_message();
+    message.header["support_schema"] = sv::render_support_schema();
+    EXPECT_THROW(sv::client::validate_output_product(message), std::exception);
+    message = visibility_message();
+    message.payload.pop_back();
+    EXPECT_THROW(sv::client::validate_output_product(message), std::exception);
+    message = visibility_message();
+    message.header.at("inputs").as_array()[1].as_object()["used"] = false;
+    EXPECT_THROW(sv::client::validate_output_product(message), std::exception);
+    message.payload[5] = message.payload[9] = 2;
+    EXPECT_NO_THROW(sv::client::validate_output_product(message));
+    message = visibility_message();
+    message.header["output_product"] = "final_frame";
+    EXPECT_THROW(sv::client::validate_output_product(message), std::exception);
+}

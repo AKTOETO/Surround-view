@@ -1,6 +1,7 @@
 #pragma once
 #include "sv/output_product.hpp"
 #include "sv/render_support.hpp"
+#include "sv/source_visibility.hpp"
 #include <memory>
 
 namespace sv::client
@@ -29,6 +30,21 @@ class RenderSupportView
     int width() const noexcept;
     int height() const noexcept;
     SupportPixel at(int x, int y) const;
+    const Message &message() const noexcept;
+};
+
+// Four status bytes per pixel; channel3 is camera3, not opacity.
+class SourceVisibilityView
+{
+    std::shared_ptr<const Message> message_;
+    int width_ = 0, height_ = 0;
+
+  public:
+
+    explicit SourceVisibilityView(std::shared_ptr<const Message>);
+    int width() const noexcept;
+    int height() const noexcept;
+    SourceVisibilityStatus at(int x, int y, int camera) const;
     const Message &message() const noexcept;
 };
 } // namespace sv::client
