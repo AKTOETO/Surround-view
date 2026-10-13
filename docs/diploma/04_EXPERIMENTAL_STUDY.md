@@ -3963,3 +3963,77 @@ Native implementationb1a820c; план78b4b5a зафиксирован до40 ca
 Независимый finite-face/strict-halfspace oracle дал0 mismatches на8407961 prior-valid camera-point pairs. Carrier XYZ/regions и retained UV неизменны; status9 UV=NaN. Четыре disabled RGBA побайтно равны истории. Full-frame supported reconstruction≤0.773484LSB на всех40 outputs; actual качество взято из native RGBA. Повторные диагностический36-row и native40-row audits побайтно идентичны. Полный Mesa CTest57/57 за94.65s; четыре parameterized NVIDIA GTest cases4/4 проверяют facing для edge_feather/multi_band и accept/reject, restore parity и неизменные uploads. Это regression times, не measurement render overhead. Quality matrix включает только edge_feather.
 
 Код графиков находится рядом с главой: `plot_native_facing.py`; frozen планы, raw provenance, отчёты, runtime API и воспроизведение: [[validation/NATIVE_FACING]]. Закрыт bounded native facing кандидат и его matched контроль. General correspondence/unsupported mitigation остаётся открытой: нужны дополнительные геометрические свидетельства без знания истинного shift, independent nonuniform/natural-object holdouts, triangle-hit truth и оценка overhead. Accepted-ambiguity diagnostics и GUI controls также ещё не завершены. Нет оснований объявлять метод универсально устойчивым или переносить эти выводы на физические камеры/Aurora без испытаний.
+
+## 4.84. Остаточные нарушения: grazing rays и различие геометрической ошибки и endpoint bias
+
+### 4.84.1. Постановка и метод
+
+После §4.83 остаются reference failures при nominal/Z−5mm. Проверим, достаточно ли ужесточить отступ перед концом центрального луча. План3fcb504 зафиксирован до новых результатов, но после известных агрегатов предыдущего опыта: это post-hoc read-only diagnostic, не независимый holdout. Включены все36 facing-enabled outputs, все30 remaining reference memberships и все independent-visible pixels. Memberships соответствуют9 уникальным(frame,y,x,camera) парам; все30 имеют положительный вес.
+
+Кандидаты дополнительно отбрасывают уже native-eligible source, blocked **текущим supplied box** при bias2mm или0mm. Nominal true box применяется только для оценки. Геометрия, band, radius, camera input и carrier сохранены. Это не изменение server `tolerance_m`: оно повлияло бы также на соседние footprint rays, тогда как здесь проверяется только дополнительный central filter. Новая product реализация и renders не выполнялись.
+
+```plantuml
+@startuml
+start
+:Verify frozen native parent audit and raw hashes;
+:All36 enabled outputs / all remaining reference pairs;
+:Independent six finite-face intersections;
+:Record nominal and supplied entry-to-endpoint gaps;
+:Fixed supplied central filters2mm and0mm;
+:Recompose only changed pixels from original sources;
+:Check visible preservation AND road/outside/reference gates;
+if (One fixed profile passes all shifts?) then (yes)
+ :Candidate for new native matched trial;
+else (no)
+ :Record negative result; retain defaults;
+endif
+stop
+@enduml
+```
+
+Рисунок4.150 — Read-only проверка следующего кандидата. Истинное experimental смещение не используется при выборе camera sample.
+
+### 4.84.2. Геометрическая причина чувствительности
+
+Для отрезка p(t)=o+t(q−o) независимо вычислено первое пересечение шести конечных граней. Gap g=(1−t_entry)‖q−o‖ означает расстояние вдоль луча от entry до endpoint. Отсутствие segment hit хранится какnull, не как0. Closed-box origin внутри/на границе использует entry0, согласованно с reference predicate.
+
+Reference gaps всех30 memberships лежат в16.804–166.417mm, выше evaluation bias2mm. Семь уже blocked текущим supplied box при20mm, но допущены uncertainty acceptance; у девяти вообще нет пересечения со смещённым supplied box. Последние нельзя убрать уменьшением любого nonnegative endpoint bias при том же central predicate.17 memberships ambiguous,13 clear при радиусе конкретного captured условия; nominal rows имеютradius0. Эти классы относятся к supplied geometry, а не к independent scene surface truth.
+
+Для frame0/pixel(y211,x318)/camera3 вертикальный direction cosine d_z≈−0.047495. Top-face shift+5mm увеличивает entry-to-endpoint gap16.804→122.078mm. Для фиксированной first-hit плоскости:
+
+\[
+|\Delta\ell|=\frac{|\Delta z|}{|d_z|}
+\approx\frac{5\text{ mm}}{0.04749495}=105.274\text{ mm}.
+\]
+
+Это grazing geometry: небольшая нормальная ошибка грани создаёт значительно больший сдвиг пересечения вдоль луча. Формула действует пока пересечение остаётся на той же конечной грани; при Z−5mm supplied hit этого луча исчезает. Поэтому ошибка положения грани и endpoint bias одинаковой численной величины не эквивалентны. Geometry uncertainty нельзя исправить только одним более строгим tolerance без проверки useful-source preservation.
+
+![Reference и supplied entry gaps](figures/experiments/facing_entry_gap_geometry.png)
+
+Рисунок4.151 — Remaining accept/surface10mm memberships: при одинаковых carrier rays меняется supplied-box intersection. No hit означает отсутствие пересечения, не отрицательную длину. Повторные пары не являются дополнительными независимыми observations.
+
+### 4.84.3. Counterfactual RGB и отрицательный результат
+
+Исходный supported RGB воспроизведён максимум с0.773484LSB ошибки при пределе2LSB. Для фильтров выполнена независимая linear-RGB recomposition из тех же исходных texels/weights; unchanged pixels сохраняют native RGB. При отсутствии положительных weights используется прежний rectangular fallback. Следующая таблица содержит **hypothetical** outputs; это не новая native capture серия.
+
+Таблица4.86 — Accept/surface10mm: fixed supplied central2mm filter, F0/F1.
+
+|Shift|Visible actual→hypothetical|Visible без источника после|Reference actual→hypothetical|Joint gates после|
+|---|---:|---:|---:|---|
+|nom|76/69→75/69|1/0|4/1→0/0|нет|
+|Z+5mm|76/69→1/0|75/69|2/0→0/0|нет|
+|Z−5mm|76/69→76/69|0/0|4/4→2/1|нет|
+
+Оба fixed фильтра удаляют21/30 remaining reference memberships, но2mm почти полностью теряет visible target при Z+5mm.0mm ещё сильнее: nominal49/33 hits, Z+5mm0/0. При Z−5mm оба сохраняют76/69 hits, но reference2/1 не проходит frame1 baseline0. Снижение одного reference counter не компенсирует preservation failure.
+
+![Visible preservation и reference tradeoff](figures/experiments/facing_entry_gap_metrics.png)
+
+Рисунок4.152 — Actual native facing output и два hypothetical central-only filters; при Z+5mm строгая проверка удаляет полезные sources, которые uncertainty acceptance ранее сохраняла.
+
+По всем36 outputs2mm проходит8 отдельных conditions,0mm —4. Ни один fixed band×central-policy профиль не проходит все три shifts на обоих frames. Следовательно, в этой постановке оснований переносить fixed extra2/0mm rejection в сервер как mitigation нет. Это отрицательный результат конкретных кандидатов, не доказательство невозможности joint geometric/RGB решения вообще.
+
+### 4.84.4. Проверяемость и решение
+
+Шесть независимых known-answer tests проверяют entry distances, axial/oblique/miss, closed boundary convention, exact binary strict threshold, translation/axis permutation/scale и invalid/empty cases. Selected CTest4/4 за1.21s; parent40-case native audit повторно проверен, новый36-row отчёт при повторении побайтно идентичен. Renderer/library/protocol в этапе не менялись; прежний полный57-test regression не выдаётся за новый запуск. Метаданные, limitations и команды: [[validation/FACING_ENTRY_GAP]], [[validation/baselines/facing_entry_gap_v1.json]]. Графики воспроизводит соседний `plot_facing_entry_gap.py`.
+
+Далее необходимы native accepted-ambiguity/rejection diagnostics, проверка independent source-surface/triangle correspondence для residual rays и альтернативных источников, explicit unsupported policy и holdout с nonuniform/natural targets. Runtime selection должен опираться на реально доступную информацию; supplied known geometry, evaluation truth и oracle upper bound следует сохранять раздельно. Defaults не изменены, overhead и перенос на Aurora не оценивались.

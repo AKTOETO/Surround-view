@@ -1,5 +1,7 @@
 # Состояние прототипа и границы подтверждения
 
+Дополнение 13.10.2026: read-only remaining entry-gap audit36 native outputs/30 memberships выполнен. Fixed supplied central2/0mm filters теряют visible target при Z+5mm,9 reference memberships не имеют supplied segment hit. Grazing ray amplifies5mm face shift to105.274mm entry shift. Defaults/product не менялись; selected CTest4/4: [[validation/FACING_ENTRY_GAP]], §4.84.
+
 Дополнение 13.10.2026: native optional require_facing_surface через configure_surface/catalog;40 NVIDIA captures,4 historical controls exact,oracle0/8407961, Mesa CTest57/57. Z+5mm accept/surface10mm сохраняет76/69 hits и снижает reference4→2, но общего fixed robust профиля нет. Read-only pair attribution и actual RGBA подтверждение разделены: [[validation/NATIVE_FACING]], §4.83.
 
 Дополнение 13.10.2026: native central uncertainty accept/reject через configure_surface/catalog реализованы;54 matched NVIDIA RGBA controls,18 archived hashes exact,oracle0/11665215, CTest56/56 и inspection25/25 NVIDIA. Accept+surface10mm восстанавливает Z+5mm visible76/69, но reference gate frame0 провален; robust профиль не получен, default nominal сохранён. Silent Mesa fallback первой серии обнаружен pairing audit и устранён explicit backend plan: [[validation/NATIVE_UNCERTAINTY]], §4.82.

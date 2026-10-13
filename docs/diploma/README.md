@@ -198,3 +198,5 @@ Native radial footprint visibility (bilinear_radial_v1, guard0/1) реализо
 §4.82: native accept/reject uncertainty policies,54 matched NVIDIA RGBA captures,18 historical controls exact; restoration/reference-blocking/footprint tradeoff, robust joint gates не пройдены. Таблица4.84, рисунки4.144–4.146. [[validation/NATIVE_UNCERTAINTY]].
 
 §4.83: joint uncertainty/finite-face-facing native кандидат;36 enabled и4 disabled NVIDIA captures,oracle0/8407961, CTest57/57. Z+5mm accept/surface10mm проходит пять gates, но nominal/Z−5mm оставляют reference failures; robust fixed профиль не найден. Таблица4.85, рисунки4.147–4.149. [[validation/NATIVE_FACING]].
+
+§4.84: remaining entry-gap audit36 outputs/30 memberships; quantified grazing amplification и negative fixed central2/0mm filters, без новой product реализации/captures. Таблица4.86, рисунки4.150–4.152. [[validation/FACING_ENTRY_GAP]].
