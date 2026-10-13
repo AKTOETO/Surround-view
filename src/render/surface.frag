@@ -85,7 +85,7 @@ bool source_face_faces_camera(vec3 origin, vec3 point)
 // Neighbouring rays terminate at the central carrier radial range.
 // Policy2 preserves a visible carrier endpoint on the supplied box itself.
 // Parser restricts this inverse to zero-distortion equidistant optics.
-int source_rejection(int camera, vec2 px)
+int source_central_rejection(int camera)
 {
     if (source_occlusion_enabled == 0) { return 0; }
     vec3 origin = camera_origin[camera];
@@ -100,6 +100,15 @@ int source_rejection(int camera, vec2 px)
         bool ambiguous = box_segment_occluded(origin, world, -source_uncertainty_radius, true);
         if (ambiguous && source_ambiguity_policy == 2) { return 8; }
     }
+    return 0;
+}
+
+int source_rejection(int camera, vec2 px)
+{
+    if (source_occlusion_enabled == 0) { return 0; }
+    int central = source_central_rejection(camera);
+    if (central != 0) { return central; }
+    vec3 origin = camera_origin[camera];
     if (source_occlusion_policy == 0) { return 0; }
     // Membership only bypasses the footprint stage, after the selected central policy.
     if (source_occlusion_policy == 2 && on_source_box_surface(world))
@@ -198,6 +207,32 @@ vec4 pack_float(float value)
 
 void main()
 {
+    if (inspection_regions == 9)
+    {
+        if (surface_mode == 0 && abs(world.x) <= vehicle.x && abs(world.y) <= vehicle.y)
+        {
+            color = vec4(6.0 / 255.0);
+            return;
+        }
+        vec4 statuses = vec4(0);
+        for (int camera = 0; camera < 4; ++camera)
+        {
+            vec2 px;
+            float theta;
+            int status = source_projection(camera, px, theta);
+            if (status == 7 && source_central_rejection(camera) == 0) { status = 12; }
+            if (status == 1 && source_occlusion_enabled != 0 &&
+                source_ambiguity_policy != 0 && source_uncertainty_radius > 0.0)
+            {
+                bool ambiguous = box_segment_occluded(camera_origin[camera], world,
+                                                      -source_uncertainty_radius, true);
+                status = ambiguous ? 10 : 11;
+            }
+            statuses[camera] = float(status) / 255.0;
+        }
+        color = statuses;
+        return;
+    }
     if (inspection_regions >= 5 && inspection_regions != 8)
     {
         vec2 px;

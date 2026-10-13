@@ -2,6 +2,7 @@
 #include "sv/frame.hpp"
 #include "sv/fusion.hpp"
 #include "sv/render_support.hpp"
+#include "sv/source_visibility.hpp"
 
 namespace sv
 {
@@ -42,6 +43,7 @@ struct RenderInspectionRequest
     bool source_projections = false;   // Opt-in: twelve extra passes/readbacks.
     bool fusion_contributions = false; // Hybrid research modes only; no extra GLES passes.
     bool support = false;              // Color view only; one extra RGBA8 pass/readback.
+    bool source_visibility = false;    // One RGBA8 pass/readback, four camera statuses.
 };
 
 // Explicit, render-thread-only capture for numerical inspection. Not a wire subscription.
@@ -62,5 +64,7 @@ struct RenderInspection
     // Hybrid weights are the actual base weights AFTER optional seam smoothing.
     // Counts are zero on ego/background. Not effective multiband support or scene truth.
     cv::Mat support;
+    // CV_8UC4, top-left: SourceVisibilityStatus for cameras0..3; no alpha channel.
+    cv::Mat source_visibility;
 };
 } // namespace sv

@@ -64,7 +64,7 @@ TEST_P(RenderSupport, CountsMatchSourceValidityAndActualWeightsWithoutChangingOu
     const auto plain = renderer.render(frames, config.view);
     sv::RenderInspection inspection;
     const auto captured =
-        renderer.render(frames, config.view, &inspection, {false, true, hybrid, true});
+        renderer.render(frames, config.view, &inspection, {false, true, hybrid, true, true});
     EXPECT_EQ(captured.pixels, plain.pixels);
     EXPECT_EQ(renderer.uploads(), 3);
     EXPECT_GT(renderer.last_timing().inspection_cpu_ms, 0);
@@ -77,6 +77,11 @@ TEST_P(RenderSupport, CountsMatchSourceValidityAndActualWeightsWithoutChangingOu
         {
             const auto region = inspection.carrier_regions.at<uchar>(y, x);
             const auto pixel = inspection.support.at<cv::Vec4b>(y, x);
+            for (int camera = 0; camera < 4; ++camera)
+            {
+                EXPECT_EQ(inspection.source_visibility.at<cv::Vec4b>(y, x)[camera],
+                          inspection.source_projections[camera].status.at<uchar>(y, x));
+            }
             if (region == 0 || region == 3 || region == 5)
             {
                 EXPECT_EQ(pixel[0], 0);
@@ -122,6 +127,7 @@ TEST_P(RenderSupport, CountsMatchSourceValidityAndActualWeightsWithoutChangingOu
     EXPECT_EQ(renderer.render(frames, config.view).pixels, plain.pixels);
     EXPECT_EQ(renderer.last_timing().inspection_cpu_ms, 0);
     renderer.render({}, config.view, &inspection, {false, false, false, true});
+    EXPECT_TRUE(inspection.source_visibility.empty());
     for (int y = 0; y < config.height; ++y)
     {
         for (int x = 0; x < config.width; ++x)

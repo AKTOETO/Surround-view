@@ -443,7 +443,7 @@ Image Renderer::render(const FrameSet &set, const View &view, RenderInspection *
                        RenderInspectionRequest request)
 {
     if ((request.carrier_positions || request.source_projections || request.fusion_contributions ||
-         request.support) &&
+         request.support || request.source_visibility) &&
         !inspection)
     {
         throw std::invalid_argument("render inspection requires an inspection destination");
@@ -456,7 +456,8 @@ Image Renderer::render(const FrameSet &set, const View &view, RenderInspection *
     {
         throw std::invalid_argument("fusion contributions require a hybrid research mode");
     }
-    if (request.support && impl_->config.fusion.diagnostic != "color")
+    if ((request.support || request.source_visibility) &&
+        impl_->config.fusion.diagnostic != "color")
     {
         throw std::invalid_argument("render support requires the color view");
     }
@@ -782,7 +783,8 @@ Image Renderer::render(const FrameSet &set, const View &view, RenderInspection *
                     for (int x = 0; x < c.width; ++x)
                     {
                         auto &pixel = inspection->support.at<cv::Vec4b>(y, x);
-                        if (pixel[2] == static_cast<unsigned char>(RenderSupportPath::gpu_fallback) ||
+                        if (pixel[2] ==
+                                static_cast<unsigned char>(RenderSupportPath::gpu_fallback) ||
                             pixel[2] == static_cast<unsigned char>(RenderSupportPath::gpu_fusion))
                         {
                             pixel = hybrid_support.at<cv::Vec4b>(y, x);
@@ -801,6 +803,10 @@ Image Renderer::render(const FrameSet &set, const View &view, RenderInspection *
                 unpack_coordinate(geometry_pass(axis + 2), inspection->carrier_regions,
                                   inspection->carrier_positions, axis);
             }
+        }
+        if (request.source_visibility)
+        {
+            inspection->source_visibility = geometry_pass(9);
         }
         if (request.source_projections)
         {

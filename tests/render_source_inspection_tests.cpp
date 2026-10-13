@@ -257,8 +257,8 @@ TEST(SourceInspection, SuppliedBoxRejectsOnlyBlockedSourceSegmentsAndRestoresOut
         surface.source_occlusion.mode = "bilinear_radial_v1";
         surface.source_occlusion.guard_texels = guard;
         renderer.set_surface(surface);
-        renderer.render(frames, config.view, &after, {true, true});
-        int current_rejections = 0;
+        renderer.render(frames, config.view, &after, {true, true, false, false, true});
+        int current_rejections = 0, neighbor_only = 0;
         for (int camera = 0; camera < 4; ++camera)
         {
             const auto inverse = sv::inverse_rigid(config.cameras[camera].T);
@@ -281,7 +281,8 @@ TEST(SourceInspection, SuppliedBoxRejectsOnlyBlockedSourceSegmentsAndRestoresOut
                     const auto uv = before.source_projections[camera].pixels.at<cv::Vec2f>(y, x);
                     const double bx = std::floor(uv[0]), by = std::floor(uv[1]);
                     const double fx = uv[0] - bx, fy = uv[1] - by;
-                    bool blocked = face_occlusion(origin, point, surface.source_occlusion);
+                    const bool central = face_occlusion(origin, point, surface.source_occlusion);
+                    bool blocked = central;
                     for (int dy = -guard; dy <= 1 + guard; ++dy)
                     {
                         for (int dx = -guard; dx <= 1 + guard; ++dx)
@@ -308,10 +309,14 @@ TEST(SourceInspection, SuppliedBoxRejectsOnlyBlockedSourceSegmentsAndRestoresOut
                     EXPECT_EQ(status, blocked ? 7 : 1)
                         << "guard=" << guard << " camera=" << camera << " pixel=" << x << "," << y
                         << " uv=" << uv << " point=" << p;
+                    EXPECT_EQ(after.source_visibility.at<cv::Vec4b>(y, x)[camera],
+                              blocked ? (central ? 7 : 12) : 1);
+                    neighbor_only += blocked && !central;
                     current_rejections += status == 7;
                 }
             }
         }
+        EXPECT_GT(neighbor_only, 0);
         EXPECT_GE(current_rejections, footprint_rejections);
         footprint_rejections = current_rejections;
     }
@@ -502,7 +507,8 @@ TEST_P(OcclusionUncertaintyTest, MatchesFaceCertificatesAndRestoresNominalOutput
         surface.source_occlusion.uncertainty = {radius, std::get<1>(GetParam())};
         renderer.set_surface(surface);
         sv::RenderInspection current;
-        const auto output = renderer.render(frames, config.view, &current, {true, true});
+        const auto output =
+            renderer.render(frames, config.view, &current, {true, true, false, false, true});
         EXPECT_EQ(output.pixels, renderer.render(frames, config.view).pixels);
         EXPECT_EQ(renderer.uploads(), uploads);
         if (radius == 0)
@@ -519,9 +525,11 @@ TEST_P(OcclusionUncertaintyTest, MatchesFaceCertificatesAndRestoresNominalOutput
                 {
                     const int old = before.source_projections[camera].status.at<uchar>(y, x);
                     const int actual = current.source_projections[camera].status.at<uchar>(y, x);
+                    const int visibility = current.source_visibility.at<cv::Vec4b>(y, x)[camera];
                     if (old != 1)
                     {
                         EXPECT_EQ(actual, old);
+                        EXPECT_EQ(visibility, old);
                         continue;
                     }
                     const auto p = before.carrier_positions.at<cv::Vec3f>(y, x);
@@ -540,6 +548,8 @@ TEST_P(OcclusionUncertaintyTest, MatchesFaceCertificatesAndRestoresNominalOutput
                     const int expected =
                         blocked ? 7 : (ambiguous && std::get<1>(GetParam()) == "reject" ? 8 : 1);
                     EXPECT_EQ(actual, expected);
+                    EXPECT_EQ(visibility,
+                              expected == 1 && radius > 0 ? (ambiguous ? 10 : 11) : expected);
                     blocked_count += blocked;
                     ambiguous_count += ambiguous;
                     clear_count += !blocked && !ambiguous;
@@ -563,11 +573,13 @@ TEST_P(OcclusionUncertaintyTest, MatchesFaceCertificatesAndRestoresNominalOutput
     surface.source_occlusion.mode = "bilinear_box_surface_v1";
     renderer.set_surface(surface);
     sv::RenderInspection no_facing;
-    const auto no_facing_output = renderer.render(frames, config.view, &no_facing, {true, true});
+    const auto no_facing_output =
+        renderer.render(frames, config.view, &no_facing, {true, true, false, false, true});
     surface.source_occlusion.require_facing_surface = true;
     renderer.set_surface(surface);
     sv::RenderInspection facing;
-    const auto facing_output = renderer.render(frames, config.view, &facing, {true, true});
+    const auto facing_output =
+        renderer.render(frames, config.view, &facing, {true, true, false, false, true});
     EXPECT_EQ(facing_output.pixels, renderer.render(frames, config.view).pixels);
     int orientation_rejected = 0;
     for (int camera = 0; camera < 4; ++camera)
@@ -603,6 +615,7 @@ TEST_P(OcclusionUncertaintyTest, MatchesFaceCertificatesAndRestoresNominalOutput
                 EXPECT_EQ(facing.source_projections[camera].status.at<uchar>(y, x), expected);
                 if (expected == 9)
                 {
+                    EXPECT_EQ(facing.source_visibility.at<cv::Vec4b>(y, x)[camera], 9);
                     const auto uv = facing.source_projections[camera].pixels.at<cv::Vec2f>(y, x);
                     EXPECT_TRUE(std::isnan(uv[0]) && std::isnan(uv[1]));
                 }
