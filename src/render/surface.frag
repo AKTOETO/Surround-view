@@ -24,13 +24,13 @@ uniform float source_uncertainty_radius;
 uniform int source_ambiguity_policy;
 
 // Finite segment / opaque AABB. Parameter t is a fraction of camera-to-carrier distance.
-bool segment_occluded(vec3 origin, vec3 endpoint, float inset_m)
+bool box_segment_occluded(vec3 origin, vec3 endpoint, float inset_m, bool closed_degenerate)
 {
     vec3 direction = endpoint - origin;
     float distance_m = length(direction);
     if (distance_m <= source_occlusion_tolerance) { return false; }
     vec3 lo = source_box_min + vec3(inset_m), hi = source_box_max - vec3(inset_m);
-    if (any(greaterThan(lo, hi))) { return false; }
+    if (any(greaterThan(lo, hi)) || (!closed_degenerate && any(equal(lo, hi)))) { return false; }
     float entry = 0.0, exit = 1.0;
     for (int axis = 0; axis < 3; ++axis)
     {
@@ -50,6 +50,12 @@ bool segment_occluded(vec3 origin, vec3 endpoint, float inset_m)
         }
     }
     return entry <= exit && entry < 1.0 - source_occlusion_tolerance / distance_m;
+}
+
+bool segment_occluded(vec3 origin, vec3 endpoint, float inset_m)
+{
+    // Preserve the historical nominal/footprint empty-interior convention.
+    return box_segment_occluded(origin, endpoint, inset_m, false);
 }
 
 // Known supplied box surface with an explicit, independently configured support band.
@@ -76,8 +82,8 @@ int source_rejection(int camera, vec2 px)
     else
     {
         // Sufficient certificates for supplied face-coordinate error. Fixed carrier and poses.
-        if (segment_occluded(origin, world, source_uncertainty_radius)) { return 7; }
-        bool ambiguous = segment_occluded(origin, world, -source_uncertainty_radius);
+        if (box_segment_occluded(origin, world, source_uncertainty_radius, true)) { return 7; }
+        bool ambiguous = box_segment_occluded(origin, world, -source_uncertainty_radius, true);
         if (ambiguous && source_ambiguity_policy == 2) { return 8; }
     }
     if (source_occlusion_policy == 0) { return 0; }

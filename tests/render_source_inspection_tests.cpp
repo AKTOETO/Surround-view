@@ -497,7 +497,7 @@ TEST_P(OcclusionUncertaintyTest, MatchesFaceCertificatesAndRestoresNominalOutput
     renderer.set_surface(surface);
     const auto nominal = renderer.render(frames, config.view);
     int blocked_count = 0, ambiguous_count = 0, clear_count = 0;
-    for (double radius : {0., .005, .05})
+    for (double radius : {0., .005, .01, .05})
     {
         surface.source_occlusion.uncertainty = {radius, std::get<1>(GetParam())};
         renderer.set_surface(surface);
