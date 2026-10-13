@@ -1,0 +1,341 @@
+{
+  "schema_version": 1,
+  "scope": "developmental_residual_photometric_evidence_not_quality_ranking",
+  "truth_report": "docs/validation/baselines/residual_surface_v1.json",
+  "prepared_input": "artifacts/residual-surface-input-v1.json",
+  "manifest": "artifacts/parallax-sensor-inputs-v1/rig101-near-z080/seed101-inputs/manifest.json",
+  "binary": "build/sv-support-wire-probe",
+  "output_root": "artifacts/source-disagreement-v1",
+  "backend_environment": {
+    "__EGL_VENDOR_LIBRARY_FILENAMES": "/usr/share/glvnd/egl_vendor.d/50_mesa.json",
+    "LIBGL_ALWAYS_SOFTWARE": "1",
+    "EGL_PLATFORM": "surfaceless"
+  },
+  "required_device_substring": "llvmpipe",
+  "thresholds_byte": [
+    8,
+    16,
+    32,
+    64,
+    128
+  ],
+  "rgb_byte_tolerance": 1,
+  "prior_known_selection": "All9 previously selected residual coordinates across all36 historical facing-enabled conditions. Historical eligible counts known before metric capture:112 empty,44 singleton,6 paired cells.",
+  "frozen_files": {
+    "docs/validation/baselines/native_facing_v1.json": "23f593848a537eb8f8ebe5fb71c99b2d5efb852ca2546ebd54ac78c51af4f465",
+    "docs/validation/baselines/residual_surface_v1.json": "42e39bcd27ef605eb32f4c0af1b88c7dcf2deb298e39fef1dc35409fc1654659",
+    "artifacts/residual-surface-input-v1.json": "31b9bdc7c0c26ba989dd37094b93d1035bd2a41ea6599d09dbe5ab96130354d6",
+    "tools/research/source_disagreement.py": "0e32517ac660a4ba695d30d6484c3f9bd50c6618922c0c7ed2ef0767cb32f66b",
+    "build/sv-support-wire-probe": "f22453d4eac328ad5cab364c9a694742532dbfb40b707409a3321470bb9fe932",
+    "src/render/surface.frag": "908f791847a699e28ff48c56b7c9ec3b3e79536fb5965bc2eec3ea91978b2e18",
+    "src/render/renderer.cpp": "df71aafe067e88800624e0c8580b70f899c5a7b6b549fc387704b6c615d3c1bb",
+    "tests/support_wire_probe.cpp": "23c0ae7a2cf66b3db488fdcca1c4894074cd992a6ee8153048a83ac86c6b7109",
+    "artifacts/parallax-sensor-inputs-v1/rig101-near-z080/seed101-inputs/manifest.json": "298e789999336b13a91dcc5aa573c785aa43afcf9d553156f53519533cefd7ec",
+    "artifacts/native-facing-configs-v1/frame0-s_nom_b020_e1mm-nominal-facing.json": "ff905320ddd5fdb5ac39a8f3c56669c7a374ae8dc9b1e85d56026b8d53201b3e",
+    "artifacts/native-facing-v1/frame0-s_nom_b020_e1mm-nominal-facing/report.json": "e6ebe78e65324364beadc02cfdb4d2cb2387b1b522db331bd277309e25b1c163",
+    "artifacts/parallax-sensor-inputs-v1/rig101-near-z080/seed101-inputs/camera0_0000.png": "157d65d1a3a8d1037227e8aeec25523de73d833aff03413e8a385a4585a25dbe",
+    "artifacts/parallax-sensor-inputs-v1/rig101-near-z080/seed101-inputs/camera1_0000.png": "cb4f94db861c8dab5355b361e2bb856cccfb22572ea914653cdbfc066eb24f1c",
+    "artifacts/parallax-sensor-inputs-v1/rig101-near-z080/seed101-inputs/camera2_0000.png": "a4dfe42d14fcf4ff032d87deccaa172df4faf38cf07ca11f4ea5c9d1077d2344",
+    "artifacts/parallax-sensor-inputs-v1/rig101-near-z080/seed101-inputs/camera3_0000.png": "5505be88a8d8d03e1c5ce2eb39de32b0a42c2641888609896604fe7ab29e82e5",
+    "artifacts/native-facing-configs-v1/frame0-s_nom_b020_e1mm-accept-facing.json": "4918c1b73c64c7d886d42c8f80c335c00b240fd613c8cdc586ef2545721e6e35",
+    "artifacts/native-facing-v1/frame0-s_nom_b020_e1mm-accept-facing/report.json": "1e8b53d2c2717a5cb29e689aacdccf1c847b4237d02cc1c8f08894c99d648859",
+    "artifacts/native-facing-configs-v1/frame0-s_nom_b020_e1mm-reject-facing.json": "79c2711abc3fe74a68bf166fcd835cbac2b3b4ad008b549feb2f41ca9b90487d",
+    "artifacts/native-facing-v1/frame0-s_nom_b020_e1mm-reject-facing/report.json": "3ce568890def1b34a8341fdbebf55cc4665ba5799df67a6a912d32086c34e1ad",
+    "artifacts/native-facing-configs-v1/frame0-s_nom_b020_e10mm-nominal-facing.json": "1b9a099a884e2b7d336616c16e571d16e0bd9a21014c62cf747c8bd536e046af",
+    "artifacts/native-facing-v1/frame0-s_nom_b020_e10mm-nominal-facing/report.json": "57c5ef20e1e9c64eb2c5251c3a992f99d8aaae25bf47b9681901d9ee42e866d3",
+    "artifacts/native-facing-configs-v1/frame0-s_nom_b020_e10mm-accept-facing.json": "9e7bb53c4f5973a85b2bc0f63b66880db858762c7ce03a8e478b76fb90c9c1dd",
+    "artifacts/native-facing-v1/frame0-s_nom_b020_e10mm-accept-facing/report.json": "a426dd369fa7f72bbfd480243a276ea45256232a708156126a7d83c6fca8520a",
+    "artifacts/native-facing-configs-v1/frame0-s_nom_b020_e10mm-reject-facing.json": "26e99fa9ac15b14c5dcfc203f8f82fc9c92ebfb6a14ae3a9ba202e6140b86c4f",
+    "artifacts/native-facing-v1/frame0-s_nom_b020_e10mm-reject-facing/report.json": "a59c0c12898b04482924ce48074a9f84c4c65a6c0824c6db30c66853822471d1",
+    "artifacts/native-facing-configs-v1/frame0-s_zp_b020_e1mm-nominal-facing.json": "6bd153e92dce70bbeed25d4b776346ca7d697c4d83cb1edaa6362bf8c0615ab3",
+    "artifacts/native-facing-v1/frame0-s_zp_b020_e1mm-nominal-facing/report.json": "ef4a58827a366257136ee9adb7257522ee365c7824bd0a4445b8c42c2359fa05",
+    "artifacts/native-facing-configs-v1/frame0-s_zp_b020_e1mm-accept-facing.json": "a0b497c7b694e03aea64b785fac3a66e790ec1e605e15e430d307ca678892022",
+    "artifacts/native-facing-v1/frame0-s_zp_b020_e1mm-accept-facing/report.json": "480a3081539ee46bed8c7565bf289a89bdaf1df5921e70b09137abf89763c68f",
+    "artifacts/native-facing-configs-v1/frame0-s_zp_b020_e1mm-reject-facing.json": "7496d7aaf639b3360196a9c123eca5deb23505cd7190bf9c7fc9cd163e797518",
+    "artifacts/native-facing-v1/frame0-s_zp_b020_e1mm-reject-facing/report.json": "ee3dad87e96b37d7fa8a093c4d8c0a32c717db4e76f95e791bf24b738a9a59e8",
+    "artifacts/native-facing-configs-v1/frame0-s_zp_b020_e10mm-nominal-facing.json": "ecc248e4b9df8223a2a9f36f634b24426cbb6fa8a2c9d637e2f22bb09af5f6eb",
+    "artifacts/native-facing-v1/frame0-s_zp_b020_e10mm-nominal-facing/report.json": "4eb8b165787c0b206b38068ee80978ce40b11533a077aa392d2bc5dbe6a9dfd3",
+    "artifacts/native-facing-configs-v1/frame0-s_zp_b020_e10mm-accept-facing.json": "5073e2088f3dd3ad4b75d25f8917b243760bbef16ee3ec98df81a13d78e946c9",
+    "artifacts/native-facing-v1/frame0-s_zp_b020_e10mm-accept-facing/report.json": "b467c371dc392dc879034cb3d67db9e0bdcb0e4e9a2ed5783ec754a355547dc6",
+    "artifacts/native-facing-configs-v1/frame0-s_zp_b020_e10mm-reject-facing.json": "e7aab98cebc9aeed655d50a38a0fb16bd76ab2b84372b06a7aedc735f62b7199",
+    "artifacts/native-facing-v1/frame0-s_zp_b020_e10mm-reject-facing/report.json": "b9f1a80c0119168a5e06e059898e960655d88bebf88a4bd863c4a8a62c748e36",
+    "artifacts/native-facing-configs-v1/frame0-s_zm_b020_e1mm-nominal-facing.json": "ee1c6486e40790917ce0c4b994f959c306718fa928eda5d74cdb029136615419",
+    "artifacts/native-facing-v1/frame0-s_zm_b020_e1mm-nominal-facing/report.json": "c828a3b811463ab9008f4e6582e84c919ec08298e54323b1549dc0ecb4856d5e",
+    "artifacts/native-facing-configs-v1/frame0-s_zm_b020_e1mm-accept-facing.json": "1d6f3ad33ac2d51ec0606279004f841712c09374d00e8acffce3a0e6686e4bcf",
+    "artifacts/native-facing-v1/frame0-s_zm_b020_e1mm-accept-facing/report.json": "ed3d5eff84a67b6e78b9cbbb0db4fe5ffa1485bf76afa997328e176ae7a7cd1a",
+    "artifacts/native-facing-configs-v1/frame0-s_zm_b020_e1mm-reject-facing.json": "4ab3d3a28cac4f891836ced4ad3a8980d8192141c7545ac3bad48ad8cefcabb2",
+    "artifacts/native-facing-v1/frame0-s_zm_b020_e1mm-reject-facing/report.json": "fb6dd72ea817bfa10a64c30f136f6b478049816ece62e839fd1e5d7b8cde9a5a",
+    "artifacts/native-facing-configs-v1/frame0-s_zm_b020_e10mm-nominal-facing.json": "251d42d8c833fb625cd671933b9126bd95553c8109097e683dd2eb8777284e56",
+    "artifacts/native-facing-v1/frame0-s_zm_b020_e10mm-nominal-facing/report.json": "05d0e3499bb796fd78df071eddb36efdaef32a7d4c2aef1898b707ebf7c333a3",
+    "artifacts/native-facing-configs-v1/frame0-s_zm_b020_e10mm-accept-facing.json": "66bc811414afae12239c037bdf1d347a57375a965fdfbf5b7193c6a0987749c0",
+    "artifacts/native-facing-v1/frame0-s_zm_b020_e10mm-accept-facing/report.json": "0bedb08e37517dcbe3218c24d1463e65abe10ca3d4d1439499150876cac4ba4c",
+    "artifacts/native-facing-configs-v1/frame0-s_zm_b020_e10mm-reject-facing.json": "0ea8b80c69b582311f3eb1b53c386c74a063c559ffad88096dce1f6c2c90fb8b",
+    "artifacts/native-facing-v1/frame0-s_zm_b020_e10mm-reject-facing/report.json": "c1b8e8d1c7f6a5d8211483fffd36f4d7e337113357e95c04fe7e6880fcab7876",
+    "artifacts/native-facing-configs-v1/frame1-s_nom_b020_e1mm-nominal-facing.json": "9c69398d21f065a763f3cfad8082f7d0da0efe2a49354be0a46ef991f16b0e12",
+    "artifacts/native-facing-v1/frame1-s_nom_b020_e1mm-nominal-facing/report.json": "758a22689e2125bfbb3e80d20f0039b939a44e606af6a2b44e83e93702199031",
+    "artifacts/parallax-sensor-inputs-v1/rig101-near-z080/seed101-inputs/camera0_0001.png": "b3e3260e22eb594db3883fd147e26e71542285c4d7edb44a9f3a0bd4be4d2d87",
+    "artifacts/parallax-sensor-inputs-v1/rig101-near-z080/seed101-inputs/camera1_0001.png": "478c4701d651a8be72ba172ed4561ca6abeb7e03e17e8e12f146efc554afe51c",
+    "artifacts/parallax-sensor-inputs-v1/rig101-near-z080/seed101-inputs/camera2_0001.png": "eb03272bb2587981efdf13aa26a306fc2dbda1fe9113da5cccefe34ecb9a036f",
+    "artifacts/parallax-sensor-inputs-v1/rig101-near-z080/seed101-inputs/camera3_0001.png": "d6976fb34b7a5646d5a46330bd6cde1c39f03f44f57b92bc9c1b0e193ee2499f",
+    "artifacts/native-facing-configs-v1/frame1-s_nom_b020_e1mm-accept-facing.json": "14bcbc97abdf48c856c67702b030fbb89b07a632a62e6b5869c13278c58b9d38",
+    "artifacts/native-facing-v1/frame1-s_nom_b020_e1mm-accept-facing/report.json": "0e4c1e4c4f1a450d24a0f2ed0d7cf216fbf79cf1b667a86430a68b64715028f2",
+    "artifacts/native-facing-configs-v1/frame1-s_nom_b020_e1mm-reject-facing.json": "f081bfd04a7befec88d3a0f870df3d0234e02dbfd9be93b717ef14f96888fe1e",
+    "artifacts/native-facing-v1/frame1-s_nom_b020_e1mm-reject-facing/report.json": "084f2f1a1c1065258318887b66a4da33b538ba5800cbc7345d30404e8ac188df",
+    "artifacts/native-facing-configs-v1/frame1-s_nom_b020_e10mm-nominal-facing.json": "1d4c9488e78cc206cf911bf69f88593cc7ad13258705282383e28ab5000bcdf9",
+    "artifacts/native-facing-v1/frame1-s_nom_b020_e10mm-nominal-facing/report.json": "3d22017fe0a71a3dcb0ff09419d8f1bfa6ba1f725c0d7bbf3ba31a747f3baf56",
+    "artifacts/native-facing-configs-v1/frame1-s_nom_b020_e10mm-accept-facing.json": "62f64872a7e49039d899741a85b243edf2f4a32662a4afce917069f67720d077",
+    "artifacts/native-facing-v1/frame1-s_nom_b020_e10mm-accept-facing/report.json": "3812a2c44b5e9f3f3f05fb4fa054f33481e6d9c4f160be9f1f045f6679c07072",
+    "artifacts/native-facing-configs-v1/frame1-s_nom_b020_e10mm-reject-facing.json": "292277c56291259ce0ed50ba8417b5529ff8cdc76807832545d2fb45840700c2",
+    "artifacts/native-facing-v1/frame1-s_nom_b020_e10mm-reject-facing/report.json": "b5826f72c3786100c8ba53fd36473cb67dfdd456e530aaa43cd0f3364b520bd2",
+    "artifacts/native-facing-configs-v1/frame1-s_zp_b020_e1mm-nominal-facing.json": "759bf8b71bfa0e31f3e3b5a3df0c62ef476a269492cdbb76800ede7ac8923496",
+    "artifacts/native-facing-v1/frame1-s_zp_b020_e1mm-nominal-facing/report.json": "bc804538c62fe2262de084edbbaccf51f01dbbc4ec74da1c2d2fa98d78ca1dcb",
+    "artifacts/native-facing-configs-v1/frame1-s_zp_b020_e1mm-accept-facing.json": "985128e05bb656b2990391143f7df30bdc263d8c1358b5828fe4a0281552b396",
+    "artifacts/native-facing-v1/frame1-s_zp_b020_e1mm-accept-facing/report.json": "c36631dedb86481206c8606d8300c47893b7a32b4eeb425aec0542524233da50",
+    "artifacts/native-facing-configs-v1/frame1-s_zp_b020_e1mm-reject-facing.json": "26b380a1498283644cf4a7a87bbd889e91be19458b1cb37286e2d240447cf09a",
+    "artifacts/native-facing-v1/frame1-s_zp_b020_e1mm-reject-facing/report.json": "dbf7831a30a39744930f411289cfdaa68d29272d2c689917a601aec6ca8cb58c",
+    "artifacts/native-facing-configs-v1/frame1-s_zp_b020_e10mm-nominal-facing.json": "117889edc1a212d48bfcb7678650ae23f55e9f52be85675d9bc15eb3f7afac6b",
+    "artifacts/native-facing-v1/frame1-s_zp_b020_e10mm-nominal-facing/report.json": "fbd0537ef1506e0c8aef6c027c39befed191e9e25daad58b956ec049256f0091",
+    "artifacts/native-facing-configs-v1/frame1-s_zp_b020_e10mm-accept-facing.json": "ad20c785ae95c1cced7982060d8f331b9a15037ca7eccecfc8904ca80ddd8efa",
+    "artifacts/native-facing-v1/frame1-s_zp_b020_e10mm-accept-facing/report.json": "6989075369dae12984b1e80297744944555df1744eb864b3d3289d1ac37ba5f5",
+    "artifacts/native-facing-configs-v1/frame1-s_zp_b020_e10mm-reject-facing.json": "305662e9a1121c78e54a95c7de721c0e51160b5db181b199492a3a75cd8232d5",
+    "artifacts/native-facing-v1/frame1-s_zp_b020_e10mm-reject-facing/report.json": "243abad16e38acb384a06a9b53521760c54ba63a138cc75142615657534e7f0e",
+    "artifacts/native-facing-configs-v1/frame1-s_zm_b020_e1mm-nominal-facing.json": "bfbe618dbb27240153db863c6af71f63833d027bc66fd6d61a574cccd60bda9f",
+    "artifacts/native-facing-v1/frame1-s_zm_b020_e1mm-nominal-facing/report.json": "3c482a366524d143e1614ace8b151316c500cd85f9b5f0af4f73bcad6bcebbc6",
+    "artifacts/native-facing-configs-v1/frame1-s_zm_b020_e1mm-accept-facing.json": "fb523efbb48f3982c06a1f9e5202a4faec8dde2f46ccbccf113dffa7e6169cb3",
+    "artifacts/native-facing-v1/frame1-s_zm_b020_e1mm-accept-facing/report.json": "b7e1e45874e2080a67289f877be9960311384b2e51135b13b685cad0aa29a5bf",
+    "artifacts/native-facing-configs-v1/frame1-s_zm_b020_e1mm-reject-facing.json": "f031788cef0319ac11ebf30b41fd44686ee9f0d8a5a25d9ebfc009c3d6d3c118",
+    "artifacts/native-facing-v1/frame1-s_zm_b020_e1mm-reject-facing/report.json": "df96bef39197687d3d43af6395892aec37ba89b69f36335175f636cc7db9cece",
+    "artifacts/native-facing-configs-v1/frame1-s_zm_b020_e10mm-nominal-facing.json": "1286f73c5d581be1d8caa25fed7c4b49a37d6fc624613635214b46c659d5dd67",
+    "artifacts/native-facing-v1/frame1-s_zm_b020_e10mm-nominal-facing/report.json": "02fe35b583252bcd42ea71456af90e9342cf7df42120effd15596404dc8b90f3",
+    "artifacts/native-facing-configs-v1/frame1-s_zm_b020_e10mm-accept-facing.json": "d6c1258341f68bb559169ba1c2b51924afd33564d7db9449c2a5f9ce9d28599b",
+    "artifacts/native-facing-v1/frame1-s_zm_b020_e10mm-accept-facing/report.json": "6288c67b6be6c044f92f5d705a6119f002626b864681b87d79bf533c104eb309",
+    "artifacts/native-facing-configs-v1/frame1-s_zm_b020_e10mm-reject-facing.json": "755fe78dd9108b50bcfa12c45d99b1ca5ea327bf9367fead8a68a6258829f2ea",
+    "artifacts/native-facing-v1/frame1-s_zm_b020_e10mm-reject-facing/report.json": "7097acfe73797f09da56d875cffe4f3d6af58cae0f62d7a4d5e4d0494be70745"
+  },
+  "cases": [
+    {
+      "frame": 0,
+      "variant": "s_nom_b020_e1mm-nominal-facing",
+      "config": "artifacts/native-facing-configs-v1/frame0-s_nom_b020_e1mm-nominal-facing.json",
+      "historical_report": "artifacts/native-facing-v1/frame0-s_nom_b020_e1mm-nominal-facing/report.json"
+    },
+    {
+      "frame": 0,
+      "variant": "s_nom_b020_e1mm-accept-facing",
+      "config": "artifacts/native-facing-configs-v1/frame0-s_nom_b020_e1mm-accept-facing.json",
+      "historical_report": "artifacts/native-facing-v1/frame0-s_nom_b020_e1mm-accept-facing/report.json"
+    },
+    {
+      "frame": 0,
+      "variant": "s_nom_b020_e1mm-reject-facing",
+      "config": "artifacts/native-facing-configs-v1/frame0-s_nom_b020_e1mm-reject-facing.json",
+      "historical_report": "artifacts/native-facing-v1/frame0-s_nom_b020_e1mm-reject-facing/report.json"
+    },
+    {
+      "frame": 0,
+      "variant": "s_nom_b020_e10mm-nominal-facing",
+      "config": "artifacts/native-facing-configs-v1/frame0-s_nom_b020_e10mm-nominal-facing.json",
+      "historical_report": "artifacts/native-facing-v1/frame0-s_nom_b020_e10mm-nominal-facing/report.json"
+    },
+    {
+      "frame": 0,
+      "variant": "s_nom_b020_e10mm-accept-facing",
+      "config": "artifacts/native-facing-configs-v1/frame0-s_nom_b020_e10mm-accept-facing.json",
+      "historical_report": "artifacts/native-facing-v1/frame0-s_nom_b020_e10mm-accept-facing/report.json"
+    },
+    {
+      "frame": 0,
+      "variant": "s_nom_b020_e10mm-reject-facing",
+      "config": "artifacts/native-facing-configs-v1/frame0-s_nom_b020_e10mm-reject-facing.json",
+      "historical_report": "artifacts/native-facing-v1/frame0-s_nom_b020_e10mm-reject-facing/report.json"
+    },
+    {
+      "frame": 0,
+      "variant": "s_zp_b020_e1mm-nominal-facing",
+      "config": "artifacts/native-facing-configs-v1/frame0-s_zp_b020_e1mm-nominal-facing.json",
+      "historical_report": "artifacts/native-facing-v1/frame0-s_zp_b020_e1mm-nominal-facing/report.json"
+    },
+    {
+      "frame": 0,
+      "variant": "s_zp_b020_e1mm-accept-facing",
+      "config": "artifacts/native-facing-configs-v1/frame0-s_zp_b020_e1mm-accept-facing.json",
+      "historical_report": "artifacts/native-facing-v1/frame0-s_zp_b020_e1mm-accept-facing/report.json"
+    },
+    {
+      "frame": 0,
+      "variant": "s_zp_b020_e1mm-reject-facing",
+      "config": "artifacts/native-facing-configs-v1/frame0-s_zp_b020_e1mm-reject-facing.json",
+      "historical_report": "artifacts/native-facing-v1/frame0-s_zp_b020_e1mm-reject-facing/report.json"
+    },
+    {
+      "frame": 0,
+      "variant": "s_zp_b020_e10mm-nominal-facing",
+      "config": "artifacts/native-facing-configs-v1/frame0-s_zp_b020_e10mm-nominal-facing.json",
+      "historical_report": "artifacts/native-facing-v1/frame0-s_zp_b020_e10mm-nominal-facing/report.json"
+    },
+    {
+      "frame": 0,
+      "variant": "s_zp_b020_e10mm-accept-facing",
+      "config": "artifacts/native-facing-configs-v1/frame0-s_zp_b020_e10mm-accept-facing.json",
+      "historical_report": "artifacts/native-facing-v1/frame0-s_zp_b020_e10mm-accept-facing/report.json"
+    },
+    {
+      "frame": 0,
+      "variant": "s_zp_b020_e10mm-reject-facing",
+      "config": "artifacts/native-facing-configs-v1/frame0-s_zp_b020_e10mm-reject-facing.json",
+      "historical_report": "artifacts/native-facing-v1/frame0-s_zp_b020_e10mm-reject-facing/report.json"
+    },
+    {
+      "frame": 0,
+      "variant": "s_zm_b020_e1mm-nominal-facing",
+      "config": "artifacts/native-facing-configs-v1/frame0-s_zm_b020_e1mm-nominal-facing.json",
+      "historical_report": "artifacts/native-facing-v1/frame0-s_zm_b020_e1mm-nominal-facing/report.json"
+    },
+    {
+      "frame": 0,
+      "variant": "s_zm_b020_e1mm-accept-facing",
+      "config": "artifacts/native-facing-configs-v1/frame0-s_zm_b020_e1mm-accept-facing.json",
+      "historical_report": "artifacts/native-facing-v1/frame0-s_zm_b020_e1mm-accept-facing/report.json"
+    },
+    {
+      "frame": 0,
+      "variant": "s_zm_b020_e1mm-reject-facing",
+      "config": "artifacts/native-facing-configs-v1/frame0-s_zm_b020_e1mm-reject-facing.json",
+      "historical_report": "artifacts/native-facing-v1/frame0-s_zm_b020_e1mm-reject-facing/report.json"
+    },
+    {
+      "frame": 0,
+      "variant": "s_zm_b020_e10mm-nominal-facing",
+      "config": "artifacts/native-facing-configs-v1/frame0-s_zm_b020_e10mm-nominal-facing.json",
+      "historical_report": "artifacts/native-facing-v1/frame0-s_zm_b020_e10mm-nominal-facing/report.json"
+    },
+    {
+      "frame": 0,
+      "variant": "s_zm_b020_e10mm-accept-facing",
+      "config": "artifacts/native-facing-configs-v1/frame0-s_zm_b020_e10mm-accept-facing.json",
+      "historical_report": "artifacts/native-facing-v1/frame0-s_zm_b020_e10mm-accept-facing/report.json"
+    },
+    {
+      "frame": 0,
+      "variant": "s_zm_b020_e10mm-reject-facing",
+      "config": "artifacts/native-facing-configs-v1/frame0-s_zm_b020_e10mm-reject-facing.json",
+      "historical_report": "artifacts/native-facing-v1/frame0-s_zm_b020_e10mm-reject-facing/report.json"
+    },
+    {
+      "frame": 1,
+      "variant": "s_nom_b020_e1mm-nominal-facing",
+      "config": "artifacts/native-facing-configs-v1/frame1-s_nom_b020_e1mm-nominal-facing.json",
+      "historical_report": "artifacts/native-facing-v1/frame1-s_nom_b020_e1mm-nominal-facing/report.json"
+    },
+    {
+      "frame": 1,
+      "variant": "s_nom_b020_e1mm-accept-facing",
+      "config": "artifacts/native-facing-configs-v1/frame1-s_nom_b020_e1mm-accept-facing.json",
+      "historical_report": "artifacts/native-facing-v1/frame1-s_nom_b020_e1mm-accept-facing/report.json"
+    },
+    {
+      "frame": 1,
+      "variant": "s_nom_b020_e1mm-reject-facing",
+      "config": "artifacts/native-facing-configs-v1/frame1-s_nom_b020_e1mm-reject-facing.json",
+      "historical_report": "artifacts/native-facing-v1/frame1-s_nom_b020_e1mm-reject-facing/report.json"
+    },
+    {
+      "frame": 1,
+      "variant": "s_nom_b020_e10mm-nominal-facing",
+      "config": "artifacts/native-facing-configs-v1/frame1-s_nom_b020_e10mm-nominal-facing.json",
+      "historical_report": "artifacts/native-facing-v1/frame1-s_nom_b020_e10mm-nominal-facing/report.json"
+    },
+    {
+      "frame": 1,
+      "variant": "s_nom_b020_e10mm-accept-facing",
+      "config": "artifacts/native-facing-configs-v1/frame1-s_nom_b020_e10mm-accept-facing.json",
+      "historical_report": "artifacts/native-facing-v1/frame1-s_nom_b020_e10mm-accept-facing/report.json"
+    },
+    {
+      "frame": 1,
+      "variant": "s_nom_b020_e10mm-reject-facing",
+      "config": "artifacts/native-facing-configs-v1/frame1-s_nom_b020_e10mm-reject-facing.json",
+      "historical_report": "artifacts/native-facing-v1/frame1-s_nom_b020_e10mm-reject-facing/report.json"
+    },
+    {
+      "frame": 1,
+      "variant": "s_zp_b020_e1mm-nominal-facing",
+      "config": "artifacts/native-facing-configs-v1/frame1-s_zp_b020_e1mm-nominal-facing.json",
+      "historical_report": "artifacts/native-facing-v1/frame1-s_zp_b020_e1mm-nominal-facing/report.json"
+    },
+    {
+      "frame": 1,
+      "variant": "s_zp_b020_e1mm-accept-facing",
+      "config": "artifacts/native-facing-configs-v1/frame1-s_zp_b020_e1mm-accept-facing.json",
+      "historical_report": "artifacts/native-facing-v1/frame1-s_zp_b020_e1mm-accept-facing/report.json"
+    },
+    {
+      "frame": 1,
+      "variant": "s_zp_b020_e1mm-reject-facing",
+      "config": "artifacts/native-facing-configs-v1/frame1-s_zp_b020_e1mm-reject-facing.json",
+      "historical_report": "artifacts/native-facing-v1/frame1-s_zp_b020_e1mm-reject-facing/report.json"
+    },
+    {
+      "frame": 1,
+      "variant": "s_zp_b020_e10mm-nominal-facing",
+      "config": "artifacts/native-facing-configs-v1/frame1-s_zp_b020_e10mm-nominal-facing.json",
+      "historical_report": "artifacts/native-facing-v1/frame1-s_zp_b020_e10mm-nominal-facing/report.json"
+    },
+    {
+      "frame": 1,
+      "variant": "s_zp_b020_e10mm-accept-facing",
+      "config": "artifacts/native-facing-configs-v1/frame1-s_zp_b020_e10mm-accept-facing.json",
+      "historical_report": "artifacts/native-facing-v1/frame1-s_zp_b020_e10mm-accept-facing/report.json"
+    },
+    {
+      "frame": 1,
+      "variant": "s_zp_b020_e10mm-reject-facing",
+      "config": "artifacts/native-facing-configs-v1/frame1-s_zp_b020_e10mm-reject-facing.json",
+      "historical_report": "artifacts/native-facing-v1/frame1-s_zp_b020_e10mm-reject-facing/report.json"
+    },
+    {
+      "frame": 1,
+      "variant": "s_zm_b020_e1mm-nominal-facing",
+      "config": "artifacts/native-facing-configs-v1/frame1-s_zm_b020_e1mm-nominal-facing.json",
+      "historical_report": "artifacts/native-facing-v1/frame1-s_zm_b020_e1mm-nominal-facing/report.json"
+    },
+    {
+      "frame": 1,
+      "variant": "s_zm_b020_e1mm-accept-facing",
+      "config": "artifacts/native-facing-configs-v1/frame1-s_zm_b020_e1mm-accept-facing.json",
+      "historical_report": "artifacts/native-facing-v1/frame1-s_zm_b020_e1mm-accept-facing/report.json"
+    },
+    {
+      "frame": 1,
+      "variant": "s_zm_b020_e1mm-reject-facing",
+      "config": "artifacts/native-facing-configs-v1/frame1-s_zm_b020_e1mm-reject-facing.json",
+      "historical_report": "artifacts/native-facing-v1/frame1-s_zm_b020_e1mm-reject-facing/report.json"
+    },
+    {
+      "frame": 1,
+      "variant": "s_zm_b020_e10mm-nominal-facing",
+      "config": "artifacts/native-facing-configs-v1/frame1-s_zm_b020_e10mm-nominal-facing.json",
+      "historical_report": "artifacts/native-facing-v1/frame1-s_zm_b020_e10mm-nominal-facing/report.json"
+    },
+    {
+      "frame": 1,
+      "variant": "s_zm_b020_e10mm-accept-facing",
+      "config": "artifacts/native-facing-configs-v1/frame1-s_zm_b020_e10mm-accept-facing.json",
+      "historical_report": "artifacts/native-facing-v1/frame1-s_zm_b020_e10mm-accept-facing/report.json"
+    },
+    {
+      "frame": 1,
+      "variant": "s_zm_b020_e10mm-reject-facing",
+      "config": "artifacts/native-facing-configs-v1/frame1-s_zm_b020_e10mm-reject-facing.json",
+      "historical_report": "artifacts/native-facing-v1/frame1-s_zm_b020_e10mm-reject-facing/report.json"
+    }
+  ],
+  "limitations": [
+    "Posthoc nine failure coordinates in one uniform coded world, two correlated frames; not holdout or full-frame frequency estimate",
+    "Six historically paired cells are all at one road coordinate, with no matching eligible source at2/20mm: no correct paired controls for specificity/ranking",
+    "Single-source comparison undefined, not zero disagreement or implicit acceptance",
+    "Encoded RGB consistency cannot certify point correspondence; lighting/filter/exposure and texture ambiguity remain confounders",
+    "Different backend from archived NVIDIA; selected eligibility and input hashes must agree before interpreting metric",
+    "No rejection threshold selected or deployed; no mitigation, overhead or Aurora conclusion"
+  ]
+}
