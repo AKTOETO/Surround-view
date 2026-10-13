@@ -4397,3 +4397,97 @@ Collector при повторении дал побайтно идентичны
 Полная Mesa регрессия59/59 за106.94s. Новые8 GTest cases проверяют семь modes, known encoded ranges, counts4/2/1/0, одинаковые чёрные samples, domain/ego, zero-weight eligibility, обычный RGBA и reset. Два typed tests проверяют lifetime/bounds, schemas/pixels, missing inputs и truncated payload. Live tests проверяют native/wire byte parity семи modes, color rejection без mutation, final restore, typed Unix/TCP consumer и reconnect трёх diagnostic products. Независимый audit sampler дополнительно имеет3 known-answer tests. Ранний selected test выявил ошибку расположения assertion в расширенном consumer test; исправлено до full run. Product regression pass и scientific pairing failure — разные результаты.
 
 Завершена native/server/library измерительная функция, но не general correspondence mitigation. Сначала требуется атрибутировать endpoint/tolerance precision и backend/runtime различия central predicate, получить matched source truth текущего backend. Затем нужны correct/incorrect paired controls на nonuniform surfaces с independent depth/pose, exposure/filter controls и честная abstention для singleton/ambiguous texture. Только после них можно выбирать joint selection rule и переходить к frozen independent holdout. Overhead, physical cameras и Aurora проверяются отдельно.
+
+## 4.89. Численная атрибуция backend различий central predicate
+
+### 4.89.1. Проверяемое противоречие
+
+§4.88 сохранил две failed historical pairings у F1(207,324): nominal/accept/surface10mm и Z−5mm/nominal/surface10mm. Архивный и текущий binaries на Mesa имеют одинаковые11 payloads в этих двух configurations, но исторический NVIDIA сообщает central rejection7, Mesa — accepted1 (source_visibility10/1). Следующий шаг должен проверить фактические аргументы и margin предиката, прежде чем изменять серверную логику.
+
+Read-only attribution закреплена plan `configs/research/endpoint-precision-plan.json`, commit0d552f7. Exploratory replay до фиксации уже обнаружил gap на разных сторонах20mm; это явно post-hoc developmental investigation, не blind hypothesis test. Новые RGB/camera captures не создаются. Plan pinning охватывает native configs, все consumed payloads, helpers и source predicate/math files.
+
+### 4.89.2. Независимый oracle и controlled replays
+
+Первый метод — независимое пересечение конечного segment со всеми шестью finite faces. Decimal arithmetic80 digits получает точные значения binary floats записанных данных. Это повышает точность вычисления над представленными значениями, но не точность физической калибровки. Выбирается первый finite hit; origin inside задаёт entry0, no-hit остаётся отдельным результатом. Closed bounds и strict endpoint bias соответствуют контракту central predicate.
+
+Второй метод — host slab replay с варьированием precision origin, parameters и arithmetic. На каждый endpoint проверяются8 combinations, по двум endpoints/двум configurations всего32 replays. Float32 model намеренно округляет отдельные операции без FMA; он не выдаётся за tracing shader instructions. Replays могут совпадать между собой после приведения inputs к float32; их количество не является числом независимых испытаний.
+
+```plantuml
+@startuml
+start
+:Two frozen historical pairing failures;
+:Verify configs/input identity and raw payload hashes;
+:Read NVIDIA and Mesa carrier endpoints;
+fork
+  :Independent 80-digit finite-face intersection;
+  :Entry face, gap and strict bias margin;
+fork again
+  :2 origin precisions x 2 parameter precisions x 2 arithmetic precisions;
+  :Host slab replay for each endpoint;
+end fork
+:Compare results with corresponding native decisions;
+:All 8 coordinate-axis substitutions;
+:Rounded-MVP reprojection diagnostic;
+:Separate endpoint drift from predicate arithmetic;
+:Preserve primary failure and unchanged runtime defaults;
+stop
+@enduml
+```
+
+Рисунок4.164 — Численная проверка двух backend failures. Она атрибутирует решение на записанных varyings, но не эмулирует внутреннюю rasterization драйвера.
+
+### 4.89.3. Как endpoint drift пересекает threshold
+
+Измеренные carrier points NVIDIA и Mesa отличаются на
+
+\[
+\Delta q=(41.484833,-14.781952,73.015690)\ \text{мкм},\qquad
+\|\Delta q\|=85.268918\ \text{мкм}.
+\]
+
+Camera origin остаётся общим по config, приблизительно `(0.38617925,1.1,1.12)` м. В первом случае central stage использует eroded nominal box с radius5mm; во втором — nominal box, уже смещённый вниз5mm. В обоих случаях first hit лежит на верхнем Z-face0.995m. Две configurations используют один pixel и общую активную грань; их нельзя интерпретировать как независимые scene trials.
+
+Для camera origin `o`, endpoint `q` и active upper plane `h`:
+
+\[
+t=\frac{h-o_z}{q_z-o_z},\qquad
+ g(q)=(1-t)\|q-o\|,\qquad
+ \text{central blocked}\iff\text{finite hit}\land g(q)>b.
+\]
+
+Здесь `b=0.020m` — configured endpoint bias. Чувствительность содержит зависимость от `(q_z-o_z)^{-1}`: при косом пересечении небольшая ошибка endpoint изменяет расстояние вдоль луча заметнее, чем сам endpoint.
+
+Таблица4.91 — High-precision replay по записанным carrier points; результаты одинаковы для обеих configurations.
+
+|Endpoint backend|Z endpoint, м|Entry-to-endpoint gap, мм|Margin к20mm, мм|Central result|
+|---|---:|---:|---:|---|
+|Historical NVIDIA|0.993868887424469|20.505998665|+0.505998665|blocked|
+|Archived/current Mesa|0.993941903114319|19.193568922|−0.806431078|not blocked|
+
+Gap отличается на1.312429743mm при norm endpoint delta0.085268918mm: amplification15.391655. Threshold действительно лежит между двумя результатами; это не спор о strict/non-strict comparison при exact equality.
+
+Все32 host replays и четыре high-precision cases согласованы с соответствующими native central decisions. Максимальное изменение gap относительно Decimal oracle в precision-factor matrix —0.148631µm для NVIDIA point и0.091546µm для Mesa point. Это значительно меньше margins505.999/806.431µm. **Для данных controlled inputs** origin/parameter/arithmetic rounding не меняют classification. Эти replay maxima не задают универсальной погрешности GPU или bound для новых сцен.
+
+![Endpoint gaps and arithmetic precision](figures/experiments/endpoint_precision_gaps.png)
+
+Рисунок4.165 — Gap и maximum deviation восьми host replays. Два backend endpoints лежат по разные стороны20mm; arithmetic ranges существенно меньше их decision margins и не являются confidence intervals.
+
+### 4.89.4. Counterfactual axis attribution и предел объяснения
+
+Полный перебор8 coordinate substitutions проверяет, какая часть observed endpoint difference достаточна для flip. При Mesa Z все четыре combinations дают not-blocked, при NVIDIA Z — blocked. Замена только Z даёт gap19.193370449mm вместо20.505998665mm, а замена X/Y при старом Z —20.506210711mm без flip. Значит, в данной finite matrix Z drift достаточен, XY drift недостаточен; это не статистическая корреляция между trials.
+
+Rounded-MVP reprojection norm выбранного native point составляет0.001479666px для NVIDIA и0.000009123px для Mesa. Это диагностирует различие recorded carrier varyings относительно общего pixel centre. Оно согласуется с endpoint-construction/raster-interpolation источником чувствительности, но не изолирует vertex snapping, triangle coverage, varying interpolation либо конкретные GPU instructions. Более низкий reprojection error сам по себе не доказывает scene correctness во всём raster.
+
+![Coordinate substitutions and projection](figures/experiments/endpoint_precision_axes.png)
+
+Рисунок4.166 — Axis substitutions, XYZ drift и rounded-MVP reprojection. Вторая configuration имеет те же результаты, потому что активная верхняя грань совпадает. Counterfactual points используются только в математическом replay, не подаются в production pipeline.
+
+### 4.89.5. Решение и дальнейшая проверка
+
+Смена central decision на **записанных аргументах** объяснена endpoint drift и его геометрическим усилением. Оснований заменять `<`/`<=` или подбирать новый bias по двум выбранным pixels нет. Native defaults/selection/RGBA сохранены; primary photometric gate остаётся failed2/162. Объяснение failure не превращает его в успешное historical pairing.
+
+Existing bounded uncertainty относится к координатам supplied box при fixed endpoint и camera pose. Ошибка carrier endpoint является другой неопределённостью. Для общей numerical ambiguity policy нужны её отдельный контракт и обоснованные bounds, negative controls, preservation и false-admission tests; две observed differences таких bounds не задают.
+
+Следующий практический этап — matched source truth текущего backend и correct/incorrect paired nonuniform controls. Дополнительная driver/raster attribution остаётся отдельной работой и не обязана блокировать fixed-backend experiments с измеренными inputs. Затем проверяются photometric confounders/exposure, singleton abstention и независимый holdout; физические камеры, overhead и Aurora остаются открытыми.
+
+Пять independent known-answer tests проверяют strict bias, axial/miss/parallel/inside, translation/permutation, host float replays и invalid geometry. Selected CTest4/4 за1.20s; native C++/GLSL/server/library не менялись, предыдущий full59/59 не объявляется новым прогоном. Report при повторении побайтно идентичен. Команды, hashes и ограничения: [[validation/ENDPOINT_PRECISION]], [[validation/baselines/endpoint_precision_v1.json]].

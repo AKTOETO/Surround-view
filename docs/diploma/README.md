@@ -208,3 +208,5 @@ Native radial footprint visibility (bilinear_radial_v1, guard0/1) реализо
 §4.87: runtime evidence contract и optional native fallback display, catalog v5, typed API и GUI button, полный Mesa CTest59/59. Таблица4.89, рисунки4.159–4.160. [[validation/FALLBACK_DISPLAY]].
 
 §4.88: native encoded RGB disagreement и typed wire API; frozen photometric evidence screen с2 failed historical pairings и old/current Mesa controls. Таблица4.90, рисунки4.161–4.163. Полный CTest59/59 не подменяет scientific pairing gate. [[validation/SOURCE_DISAGREEMENT]].
+
+§4.89: Decimal80 finite-face oracle,32 precision replays и axis substitutions объясняют central decision flip от endpoint drift; strict predicate/defaults сохранены. Таблица4.91, рисунки4.164–4.166. [[validation/ENDPOINT_PRECISION]].

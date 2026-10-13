@@ -88,7 +88,7 @@ MPLCONFIGDIR=/tmp/sv-matplotlib python3 docs/diploma/plot_source_disagreement.py
 
 ## Следующая задача
 
-Сначала атрибутировать backend/runtime различия central predicate (endpoint/tolerance precision) и получить matched independent source truth для текущего backend. Затем получить correct и incorrect **paired** controls на nonuniform surface с independently known depth/poses; отдельно vary exposure/filtering и carrier errors. Проверить, добавляет ли photometric evidence информацию к geometry/eligibility, и обосновать abstention для singleton/ambiguous texture. Только после этого обсуждать joint selection thresholds и holdout. Общая mitigation и законченное исследовательское заключение остаются открытыми.
+Атрибуция на записанных endpoints завершена: [[validation/ENDPOINT_PRECISION]], §4.89; малый Z drift пересекает20mm bias, все32 host replays согласованы. Primary pairing failure сохранён, точный driver/raster механизм не установлен. Теперь получить matched independent source truth для текущего backend, затем correct и incorrect **paired** controls на nonuniform surface с independently known depth/poses; отдельно vary exposure/filtering и carrier errors. Проверить, добавляет ли photometric evidence информацию к geometry/eligibility, и обосновать abstention для singleton/ambiguous texture. Только после этого обсуждать joint selection thresholds и holdout. Общая mitigation и законченное исследовательское заключение остаются открытыми.
 
 Post-hoc controls воспроизводятся существующими compiled probes; output directories уже сохранённого опыта не перезаписывать:
 

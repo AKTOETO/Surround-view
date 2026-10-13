@@ -1,5 +1,7 @@
 # Состояние прототипа и границы подтверждения
 
+14.10.2026: численная атрибуция двух historical pairing failures выполнена:85.268918µm endpoint drift (Z73.015690µm) меняет central gap20.505999→19.193569mm при bias20mm. Decimal80/32 host precision replays и axis substitutions объясняют flip на записанных q; native predicate/defaults не менялись. Primary2 failures сохранены. Далее matched source truth текущего backend и balanced nonuniform paired controls; точный driver/raster механизм не изолирован ([[validation/ENDPOINT_PRECISION]], §4.89).
+
 14.10.2026: source_disagreement_v1 реализован в renderer/server/typed client API; undefined при менее2 eligible cameras, один opt-in pass, Unix/TCP parity и полный Mesa CTest59/59. Frozen audit36 configs/162 cells:160 pairing pass,2 historical eligibility failures; current counts110/46/6. Old/current Mesa11 payloads побайтно совпали в двух attribution controls: backend/runtime sensitivity существует уже у архивного бинарника. Threshold не выбран; correct paired controls отсутствуют ([[validation/SOURCE_DISAGREEMENT]], §4.88).
 
 14.10.2026: native fallback_display legacy/hatch реализован через configure_fusion/catalog v5/typed library и кнопку simulator; seven-mode masks/RGBA restore и полный Mesa CTest59/59 проверены. Это только отображение фактической fallback branch, не scene confidence/general mitigation. Доступные runtime evidence отделены от Blender truth ([[validation/FALLBACK_DISPLAY]], §4.87).
