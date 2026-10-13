@@ -1,0 +1,3264 @@
+{
+  "schema_version": 1,
+  "scope": "native_facing_remaining_reference_entry_gap_audit",
+  "phase": "posthoc_readonly_developmental",
+  "plan_sha256": "95b040bd9802c828547883140a8ec7867830a1f5b6fc124e9c67c5636ef2cfc4",
+  "collector_sha256": "37c299b4075264c8ddcfb29dcf933e98e83fdd1367b6b69360f7565765d89518",
+  "dependency_sha256": {
+    "source_correspondence.py": "723e6899ee98327454c77636663ae61e3533617e0bd9b848543520230b47fbef",
+    "source_visibility.py": "39c19b8b13a908feff773ebe0803dae1dee49b1d972956a4671a61a480ccd7d9",
+    "source_footprint_audit.py": "bac573f94a90ce9fb09792d387adf8a076b73e30056e03e6baf57779b13295ee",
+    "uncertainty_facing.py": "22e779ef65481842002b040906553bc485834dca5efb709e935e1b35420a2108",
+    "visibility_uncertainty.py": "f75f8d17d65c79c4db5d5eb397a7b81def1065c348ed528398ac1f8bbfa5e6e0",
+    "displaced_correspondence.py": "ac55ca8cdace67684549b7132fbf6c60a6a33babe069e703e5021df6685bf65f",
+    "native_facing.py": "33fd798b548b624e7d6b20f2a8091aca7857c0d3a69768064fad042ae8784690",
+    "native_uncertainty.py": "b754ffbaead1501b82336a49325c4a8b4c6c0f21bf48ce129d7b3717f72e2a83"
+  },
+  "rows": [
+    {
+      "frame": 0,
+      "variant": "s_nom_b020_e1mm-nominal-facing",
+      "shift": "nom",
+      "kind": "surface1mm",
+      "policy": "nominal",
+      "report_sha256": "e6ebe78e65324364beadc02cfdb4d2cb2387b1b522db331bd277309e25b1c163",
+      "output_sha256": "f5ece821f071b560a1ba319ceeca21388f1d5d77b21c9683cffdeca1398c8e28",
+      "uncertainty_radius_m": 0,
+      "reference_pairs": [
+        {
+          "y": 211,
+          "x": 318,
+          "camera": 3,
+          "virtual_roi": "target",
+          "target_visible_to_camera": true,
+          "carrier_xyz_m": [
+            2.5060343742370605,
+            2.500159502029419,
+            0.9992018938064575
+          ],
+          "camera_origin_m": [
+            0.38617924625616884,
+            1.1000000000000005,
+            1.12
+          ],
+          "direction_cosines": [
+            0.8334767603940231,
+            0.5505095090615585,
+            -0.047494950425138
+          ],
+          "reference_gap_m": 0.016804022035994407,
+          "supplied_gap_m": 0.016804022035994407,
+          "supplied_central_blocked": false,
+          "uncertainty_class": "clear",
+          "near_face_bits": 40,
+          "facing_face_bits": 32,
+          "base_weight": 1.0,
+          "rejected_by": {
+            "supplied_center_2mm": true,
+            "supplied_center_0mm": true
+          }
+        }
+      ],
+      "reconstruction_error_lsb": {
+        "min": 0.0,
+        "p50": 0.17392608271340748,
+        "max": 0.6198584884018601
+      },
+      "candidates": [
+        {
+          "name": "supplied_center_2mm",
+          "tolerance_m": 0.002,
+          "hypothetical_metrics": {
+            "visible_proxy_hits": 75,
+            "visible_without_source": 1,
+            "visible_losing_all_positive_weights": 1,
+            "removed_pairs": 1,
+            "removed_reference_pairs": 1,
+            "outside_proxy": 1,
+            "reference_blocked_pairs": 0,
+            "road_linear_rgb_mae": 0.020771375636310305
+          },
+          "hypothetical_gates": {
+            "all_visible_hits": false,
+            "no_visible_without_source": false,
+            "outside_below_nominal_center": true,
+            "road_not_worse_than_nominal_center": true,
+            "no_reference_blocking_increase": true
+          },
+          "hypothetical_all_gates": false
+        },
+        {
+          "name": "supplied_center_0mm",
+          "tolerance_m": 0,
+          "hypothetical_metrics": {
+            "visible_proxy_hits": 49,
+            "visible_without_source": 27,
+            "visible_losing_all_positive_weights": 27,
+            "removed_pairs": 27,
+            "removed_reference_pairs": 1,
+            "outside_proxy": 1,
+            "reference_blocked_pairs": 0,
+            "road_linear_rgb_mae": 0.020771375636310305
+          },
+          "hypothetical_gates": {
+            "all_visible_hits": false,
+            "no_visible_without_source": false,
+            "outside_below_nominal_center": true,
+            "road_not_worse_than_nominal_center": true,
+            "no_reference_blocking_increase": true
+          },
+          "hypothetical_all_gates": false
+        }
+      ]
+    },
+    {
+      "frame": 0,
+      "variant": "s_nom_b020_e1mm-accept-facing",
+      "shift": "nom",
+      "kind": "surface1mm",
+      "policy": "accept",
+      "report_sha256": "1e8b53d2c2717a5cb29e689aacdccf1c847b4237d02cc1c8f08894c99d648859",
+      "output_sha256": "f5ece821f071b560a1ba319ceeca21388f1d5d77b21c9683cffdeca1398c8e28",
+      "uncertainty_radius_m": 0.005,
+      "reference_pairs": [
+        {
+          "y": 211,
+          "x": 318,
+          "camera": 3,
+          "virtual_roi": "target",
+          "target_visible_to_camera": true,
+          "carrier_xyz_m": [
+            2.5060343742370605,
+            2.500159502029419,
+            0.9992018938064575
+          ],
+          "camera_origin_m": [
+            0.38617924625616884,
+            1.1000000000000005,
+            1.12
+          ],
+          "direction_cosines": [
+            0.8334767603940231,
+            0.5505095090615585,
+            -0.047494950425138
+          ],
+          "reference_gap_m": 0.016804022035994407,
+          "supplied_gap_m": 0.016804022035994407,
+          "supplied_central_blocked": false,
+          "uncertainty_class": "ambiguous",
+          "near_face_bits": 40,
+          "facing_face_bits": 32,
+          "base_weight": 1.0,
+          "rejected_by": {
+            "supplied_center_2mm": true,
+            "supplied_center_0mm": true
+          }
+        }
+      ],
+      "reconstruction_error_lsb": {
+        "min": 0.0,
+        "p50": 0.17392608271340748,
+        "max": 0.6198584884018601
+      },
+      "candidates": [
+        {
+          "name": "supplied_center_2mm",
+          "tolerance_m": 0.002,
+          "hypothetical_metrics": {
+            "visible_proxy_hits": 75,
+            "visible_without_source": 1,
+            "visible_losing_all_positive_weights": 1,
+            "removed_pairs": 1,
+            "removed_reference_pairs": 1,
+            "outside_proxy": 1,
+            "reference_blocked_pairs": 0,
+            "road_linear_rgb_mae": 0.020771375636310305
+          },
+          "hypothetical_gates": {
+            "all_visible_hits": false,
+            "no_visible_without_source": false,
+            "outside_below_nominal_center": true,
+            "road_not_worse_than_nominal_center": true,
+            "no_reference_blocking_increase": true
+          },
+          "hypothetical_all_gates": false
+        },
+        {
+          "name": "supplied_center_0mm",
+          "tolerance_m": 0,
+          "hypothetical_metrics": {
+            "visible_proxy_hits": 49,
+            "visible_without_source": 27,
+            "visible_losing_all_positive_weights": 27,
+            "removed_pairs": 27,
+            "removed_reference_pairs": 1,
+            "outside_proxy": 1,
+            "reference_blocked_pairs": 0,
+            "road_linear_rgb_mae": 0.020771375636310305
+          },
+          "hypothetical_gates": {
+            "all_visible_hits": false,
+            "no_visible_without_source": false,
+            "outside_below_nominal_center": true,
+            "road_not_worse_than_nominal_center": true,
+            "no_reference_blocking_increase": true
+          },
+          "hypothetical_all_gates": false
+        }
+      ]
+    },
+    {
+      "frame": 0,
+      "variant": "s_nom_b020_e1mm-reject-facing",
+      "shift": "nom",
+      "kind": "surface1mm",
+      "policy": "reject",
+      "report_sha256": "3ce568890def1b34a8341fdbebf55cc4665ba5799df67a6a912d32086c34e1ad",
+      "output_sha256": "1736c78763e9f299d82799b40e57ea4b1b1f25e6db483f548783865fa2d32684",
+      "uncertainty_radius_m": 0.005,
+      "reference_pairs": [],
+      "reconstruction_error_lsb": {
+        "min": 0.0,
+        "p50": 0.17390501461614605,
+        "max": 0.6198584884018601
+      },
+      "candidates": [
+        {
+          "name": "supplied_center_2mm",
+          "tolerance_m": 0.002,
+          "hypothetical_metrics": {
+            "visible_proxy_hits": 3,
+            "visible_without_source": 73,
+            "visible_losing_all_positive_weights": 0,
+            "removed_pairs": 0,
+            "removed_reference_pairs": 0,
+            "outside_proxy": 1,
+            "reference_blocked_pairs": 0,
+            "road_linear_rgb_mae": 0.020771375636310305
+          },
+          "hypothetical_gates": {
+            "all_visible_hits": false,
+            "no_visible_without_source": false,
+            "outside_below_nominal_center": true,
+            "road_not_worse_than_nominal_center": true,
+            "no_reference_blocking_increase": true
+          },
+          "hypothetical_all_gates": false
+        },
+        {
+          "name": "supplied_center_0mm",
+          "tolerance_m": 0,
+          "hypothetical_metrics": {
+            "visible_proxy_hits": 1,
+            "visible_without_source": 75,
+            "visible_losing_all_positive_weights": 2,
+            "removed_pairs": 2,
+            "removed_reference_pairs": 0,
+            "outside_proxy": 1,
+            "reference_blocked_pairs": 0,
+            "road_linear_rgb_mae": 0.020771375636310305
+          },
+          "hypothetical_gates": {
+            "all_visible_hits": false,
+            "no_visible_without_source": false,
+            "outside_below_nominal_center": true,
+            "road_not_worse_than_nominal_center": true,
+            "no_reference_blocking_increase": true
+          },
+          "hypothetical_all_gates": false
+        }
+      ]
+    },
+    {
+      "frame": 0,
+      "variant": "s_nom_b020_e10mm-nominal-facing",
+      "shift": "nom",
+      "kind": "surface10mm",
+      "policy": "nominal",
+      "report_sha256": "57c5ef20e1e9c64eb2c5251c3a992f99d8aaae25bf47b9681901d9ee42e866d3",
+      "output_sha256": "6e0a6a4c100c45445f395df9b34774abebb2fc696ffd60f5d53f3669770c5e4e",
+      "uncertainty_radius_m": 0,
+      "reference_pairs": [
+        {
+          "y": 208,
+          "x": 309,
+          "camera": 3,
+          "virtual_roi": "road",
+          "target_visible_to_camera": false,
+          "carrier_xyz_m": [
+            2.6095316410064697,
+            2.108137607574463,
+            0.9523423910140991
+          ],
+          "camera_origin_m": [
+            0.38617924625616884,
+            1.1000000000000005,
+            1.12
+          ],
+          "direction_cosines": [
+            0.9086080999142884,
+            0.4119913686346795,
+            -0.068515932020736
+          ],
+          "reference_gap_m": 0.019751888495699452,
+          "supplied_gap_m": 0.019751888495699452,
+          "supplied_central_blocked": false,
+          "uncertainty_class": "clear",
+          "near_face_bits": 6,
+          "facing_face_bits": 4,
+          "base_weight": 1.0,
+          "rejected_by": {
+            "supplied_center_2mm": true,
+            "supplied_center_0mm": true
+          }
+        },
+        {
+          "y": 211,
+          "x": 318,
+          "camera": 3,
+          "virtual_roi": "target",
+          "target_visible_to_camera": true,
+          "carrier_xyz_m": [
+            2.5060343742370605,
+            2.500159502029419,
+            0.9992018938064575
+          ],
+          "camera_origin_m": [
+            0.38617924625616884,
+            1.1000000000000005,
+            1.12
+          ],
+          "direction_cosines": [
+            0.8334767603940231,
+            0.5505095090615585,
+            -0.047494950425138
+          ],
+          "reference_gap_m": 0.016804022035994407,
+          "supplied_gap_m": 0.016804022035994407,
+          "supplied_central_blocked": false,
+          "uncertainty_class": "clear",
+          "near_face_bits": 40,
+          "facing_face_bits": 32,
+          "base_weight": 1.0,
+          "rejected_by": {
+            "supplied_center_2mm": true,
+            "supplied_center_0mm": true
+          }
+        }
+      ],
+      "reconstruction_error_lsb": {
+        "min": 0.0,
+        "p50": 0.17392147626631527,
+        "max": 0.6198584884018601
+      },
+      "candidates": [
+        {
+          "name": "supplied_center_2mm",
+          "tolerance_m": 0.002,
+          "hypothetical_metrics": {
+            "visible_proxy_hits": 75,
+            "visible_without_source": 1,
+            "visible_losing_all_positive_weights": 1,
+            "removed_pairs": 2,
+            "removed_reference_pairs": 2,
+            "outside_proxy": 1,
+            "reference_blocked_pairs": 0,
+            "road_linear_rgb_mae": 0.020771087365889722
+          },
+          "hypothetical_gates": {
+            "all_visible_hits": false,
+            "no_visible_without_source": false,
+            "outside_below_nominal_center": true,
+            "road_not_worse_than_nominal_center": true,
+            "no_reference_blocking_increase": true
+          },
+          "hypothetical_all_gates": false
+        },
+        {
+          "name": "supplied_center_0mm",
+          "tolerance_m": 0,
+          "hypothetical_metrics": {
+            "visible_proxy_hits": 49,
+            "visible_without_source": 27,
+            "visible_losing_all_positive_weights": 27,
+            "removed_pairs": 29,
+            "removed_reference_pairs": 2,
+            "outside_proxy": 1,
+            "reference_blocked_pairs": 0,
+            "road_linear_rgb_mae": 0.020771375636310305
+          },
+          "hypothetical_gates": {
+            "all_visible_hits": false,
+            "no_visible_without_source": false,
+            "outside_below_nominal_center": true,
+            "road_not_worse_than_nominal_center": true,
+            "no_reference_blocking_increase": true
+          },
+          "hypothetical_all_gates": false
+        }
+      ]
+    },
+    {
+      "frame": 0,
+      "variant": "s_nom_b020_e10mm-accept-facing",
+      "shift": "nom",
+      "kind": "surface10mm",
+      "policy": "accept",
+      "report_sha256": "a426dd369fa7f72bbfd480243a276ea45256232a708156126a7d83c6fca8520a",
+      "output_sha256": "5033630b0897199e0bb80a70bc8afc15fbe6996bcab139f2009f657087d99495",
+      "uncertainty_radius_m": 0.005,
+      "reference_pairs": [
+        {
+          "y": 208,
+          "x": 309,
+          "camera": 3,
+          "virtual_roi": "road",
+          "target_visible_to_camera": false,
+          "carrier_xyz_m": [
+            2.6095316410064697,
+            2.108137607574463,
+            0.9523423910140991
+          ],
+          "camera_origin_m": [
+            0.38617924625616884,
+            1.1000000000000005,
+            1.12
+          ],
+          "direction_cosines": [
+            0.9086080999142884,
+            0.4119913686346795,
+            -0.068515932020736
+          ],
+          "reference_gap_m": 0.019751888495699452,
+          "supplied_gap_m": 0.019751888495699452,
+          "supplied_central_blocked": false,
+          "uncertainty_class": "ambiguous",
+          "near_face_bits": 6,
+          "facing_face_bits": 4,
+          "base_weight": 1.0,
+          "rejected_by": {
+            "supplied_center_2mm": true,
+            "supplied_center_0mm": true
+          }
+        },
+        {
+          "y": 209,
+          "x": 321,
+          "camera": 3,
+          "virtual_roi": "target",
+          "target_visible_to_camera": false,
+          "carrier_xyz_m": [
+            2.3496241569519043,
+            2.500685930252075,
+            0.9965697526931763
+          ],
+          "camera_origin_m": [
+            0.38617924625616884,
+            1.1000000000000005,
+            1.12
+          ],
+          "direction_cosines": [
+            0.8130173897513153,
+            0.5799918361200233,
+            -0.05110962723481478
+          ],
+          "reference_gap_m": 0.06711548278495598,
+          "supplied_gap_m": 0.06711548278495598,
+          "supplied_central_blocked": true,
+          "uncertainty_class": "ambiguous",
+          "near_face_bits": 40,
+          "facing_face_bits": 32,
+          "base_weight": 1.0,
+          "rejected_by": {
+            "supplied_center_2mm": true,
+            "supplied_center_0mm": true
+          }
+        },
+        {
+          "y": 210,
+          "x": 313,
+          "camera": 3,
+          "virtual_roi": "target",
+          "target_visible_to_camera": false,
+          "carrier_xyz_m": [
+            2.6010894775390625,
+            2.3279223442077637,
+            0.9945528507232666
+          ],
+          "camera_origin_m": [
+            0.38617924625616884,
+            1.1000000000000005,
+            1.12
+          ],
+          "direction_cosines": [
+            0.8735189646800956,
+            0.48426949303433164,
+            -0.04947399782193961
+          ],
+          "reference_gap_m": 0.11010125553908288,
+          "supplied_gap_m": 0.11010125553908288,
+          "supplied_central_blocked": true,
+          "uncertainty_class": "ambiguous",
+          "near_face_bits": 34,
+          "facing_face_bits": 32,
+          "base_weight": 1.0,
+          "rejected_by": {
+            "supplied_center_2mm": true,
+            "supplied_center_0mm": true
+          }
+        },
+        {
+          "y": 211,
+          "x": 318,
+          "camera": 3,
+          "virtual_roi": "target",
+          "target_visible_to_camera": true,
+          "carrier_xyz_m": [
+            2.5060343742370605,
+            2.500159502029419,
+            0.9992018938064575
+          ],
+          "camera_origin_m": [
+            0.38617924625616884,
+            1.1000000000000005,
+            1.12
+          ],
+          "direction_cosines": [
+            0.8334767603940231,
+            0.5505095090615585,
+            -0.047494950425138
+          ],
+          "reference_gap_m": 0.016804022035994407,
+          "supplied_gap_m": 0.016804022035994407,
+          "supplied_central_blocked": false,
+          "uncertainty_class": "ambiguous",
+          "near_face_bits": 40,
+          "facing_face_bits": 32,
+          "base_weight": 1.0,
+          "rejected_by": {
+            "supplied_center_2mm": true,
+            "supplied_center_0mm": true
+          }
+        }
+      ],
+      "reconstruction_error_lsb": {
+        "min": 0.0,
+        "p50": 0.17392147626631527,
+        "max": 0.6198584884018601
+      },
+      "candidates": [
+        {
+          "name": "supplied_center_2mm",
+          "tolerance_m": 0.002,
+          "hypothetical_metrics": {
+            "visible_proxy_hits": 75,
+            "visible_without_source": 1,
+            "visible_losing_all_positive_weights": 1,
+            "removed_pairs": 4,
+            "removed_reference_pairs": 4,
+            "outside_proxy": 1,
+            "reference_blocked_pairs": 0,
+            "road_linear_rgb_mae": 0.020771087365889722
+          },
+          "hypothetical_gates": {
+            "all_visible_hits": false,
+            "no_visible_without_source": false,
+            "outside_below_nominal_center": true,
+            "road_not_worse_than_nominal_center": true,
+            "no_reference_blocking_increase": true
+          },
+          "hypothetical_all_gates": false
+        },
+        {
+          "name": "supplied_center_0mm",
+          "tolerance_m": 0,
+          "hypothetical_metrics": {
+            "visible_proxy_hits": 49,
+            "visible_without_source": 27,
+            "visible_losing_all_positive_weights": 27,
+            "removed_pairs": 31,
+            "removed_reference_pairs": 4,
+            "outside_proxy": 1,
+            "reference_blocked_pairs": 0,
+            "road_linear_rgb_mae": 0.020771375636310305
+          },
+          "hypothetical_gates": {
+            "all_visible_hits": false,
+            "no_visible_without_source": false,
+            "outside_below_nominal_center": true,
+            "road_not_worse_than_nominal_center": true,
+            "no_reference_blocking_increase": true
+          },
+          "hypothetical_all_gates": false
+        }
+      ]
+    },
+    {
+      "frame": 0,
+      "variant": "s_nom_b020_e10mm-reject-facing",
+      "shift": "nom",
+      "kind": "surface10mm",
+      "policy": "reject",
+      "report_sha256": "a59c0c12898b04482924ce48074a9f84c4c65a6c0824c6db30c66853822471d1",
+      "output_sha256": "66cd661dfda4bdc66de597d4fa07308522be023e47cf55328cd8e62be3115366",
+      "uncertainty_radius_m": 0.005,
+      "reference_pairs": [],
+      "reconstruction_error_lsb": {
+        "min": 0.0,
+        "p50": 0.17390060759772297,
+        "max": 0.6198584884018601
+      },
+      "candidates": [
+        {
+          "name": "supplied_center_2mm",
+          "tolerance_m": 0.002,
+          "hypothetical_metrics": {
+            "visible_proxy_hits": 3,
+            "visible_without_source": 73,
+            "visible_losing_all_positive_weights": 0,
+            "removed_pairs": 0,
+            "removed_reference_pairs": 0,
+            "outside_proxy": 1,
+            "reference_blocked_pairs": 0,
+            "road_linear_rgb_mae": 0.020771087365889722
+          },
+          "hypothetical_gates": {
+            "all_visible_hits": false,
+            "no_visible_without_source": false,
+            "outside_below_nominal_center": true,
+            "road_not_worse_than_nominal_center": true,
+            "no_reference_blocking_increase": true
+          },
+          "hypothetical_all_gates": false
+        },
+        {
+          "name": "supplied_center_0mm",
+          "tolerance_m": 0,
+          "hypothetical_metrics": {
+            "visible_proxy_hits": 1,
+            "visible_without_source": 75,
+            "visible_losing_all_positive_weights": 2,
+            "removed_pairs": 3,
+            "removed_reference_pairs": 0,
+            "outside_proxy": 1,
+            "reference_blocked_pairs": 0,
+            "road_linear_rgb_mae": 0.020771375636310305
+          },
+          "hypothetical_gates": {
+            "all_visible_hits": false,
+            "no_visible_without_source": false,
+            "outside_below_nominal_center": true,
+            "road_not_worse_than_nominal_center": true,
+            "no_reference_blocking_increase": true
+          },
+          "hypothetical_all_gates": false
+        }
+      ]
+    },
+    {
+      "frame": 0,
+      "variant": "s_zp_b020_e1mm-nominal-facing",
+      "shift": "zp",
+      "kind": "surface1mm",
+      "policy": "nominal",
+      "report_sha256": "ef4a58827a366257136ee9adb7257522ee365c7824bd0a4445b8c42c2359fa05",
+      "output_sha256": "698148f846a97d1e841f7c0127f56fe7f07dc9e80a0bc0efc35c8751bf98613e",
+      "uncertainty_radius_m": 0,
+      "reference_pairs": [
+        {
+          "y": 206,
+          "x": 311,
+          "camera": 0,
+          "virtual_roi": "target",
+          "target_visible_to_camera": true,
+          "carrier_xyz_m": [
+            2.513273239135742,
+            2.1177141666412354,
+            0.9999999403953552
+          ],
+          "camera_origin_m": [
+            2.36,
+            0.05696108239399542,
+            0.85
+          ],
+          "direction_cosines": [
+            0.07397777610233211,
+            0.9946284891494952,
+            0.07239790891417969
+          ],
+          "reference_gap_m": 0.0178098323489432,
+          "supplied_gap_m": 0.0178098323489432,
+          "supplied_central_blocked": false,
+          "uncertainty_class": "clear",
+          "near_face_bits": 0,
+          "facing_face_bits": 0,
+          "base_weight": 1.0,
+          "rejected_by": {
+            "supplied_center_2mm": true,
+            "supplied_center_0mm": true
+          }
+        }
+      ],
+      "reconstruction_error_lsb": {
+        "min": 0.0,
+        "p50": 0.17431838942341926,
+        "max": 0.6198584884018601
+      },
+      "candidates": [
+        {
+          "name": "supplied_center_2mm",
+          "tolerance_m": 0.002,
+          "hypothetical_metrics": {
+            "visible_proxy_hits": 1,
+            "visible_without_source": 75,
+            "visible_losing_all_positive_weights": 1,
+            "removed_pairs": 1,
+            "removed_reference_pairs": 1,
+            "outside_proxy": 2,
+            "reference_blocked_pairs": 0,
+            "road_linear_rgb_mae": 0.020787294365156524
+          },
+          "hypothetical_gates": {
+            "all_visible_hits": false,
+            "no_visible_without_source": false,
+            "outside_below_nominal_center": true,
+            "road_not_worse_than_nominal_center": true,
+            "no_reference_blocking_increase": true
+          },
+          "hypothetical_all_gates": false
+        },
+        {
+          "name": "supplied_center_0mm",
+          "tolerance_m": 0,
+          "hypothetical_metrics": {
+            "visible_proxy_hits": 0,
+            "visible_without_source": 76,
+            "visible_losing_all_positive_weights": 2,
+            "removed_pairs": 2,
+            "removed_reference_pairs": 1,
+            "outside_proxy": 2,
+            "reference_blocked_pairs": 0,
+            "road_linear_rgb_mae": 0.020787294365156524
+          },
+          "hypothetical_gates": {
+            "all_visible_hits": false,
+            "no_visible_without_source": false,
+            "outside_below_nominal_center": true,
+            "road_not_worse_than_nominal_center": true,
+            "no_reference_blocking_increase": true
+          },
+          "hypothetical_all_gates": false
+        }
+      ]
+    },
+    {
+      "frame": 0,
+      "variant": "s_zp_b020_e1mm-accept-facing",
+      "shift": "zp",
+      "kind": "surface1mm",
+      "policy": "accept",
+      "report_sha256": "480a3081539ee46bed8c7565bf289a89bdaf1df5921e70b09137abf89763c68f",
+      "output_sha256": "698148f846a97d1e841f7c0127f56fe7f07dc9e80a0bc0efc35c8751bf98613e",
+      "uncertainty_radius_m": 0.005,
+      "reference_pairs": [
+        {
+          "y": 206,
+          "x": 311,
+          "camera": 0,
+          "virtual_roi": "target",
+          "target_visible_to_camera": true,
+          "carrier_xyz_m": [
+            2.513273239135742,
+            2.1177141666412354,
+            0.9999999403953552
+          ],
+          "camera_origin_m": [
+            2.36,
+            0.05696108239399542,
+            0.85
+          ],
+          "direction_cosines": [
+            0.07397777610233211,
+            0.9946284891494952,
+            0.07239790891417969
+          ],
+          "reference_gap_m": 0.0178098323489432,
+          "supplied_gap_m": 0.0178098323489432,
+          "supplied_central_blocked": false,
+          "uncertainty_class": "ambiguous",
+          "near_face_bits": 0,
+          "facing_face_bits": 0,
+          "base_weight": 1.0,
+          "rejected_by": {
+            "supplied_center_2mm": true,
+            "supplied_center_0mm": true
+          }
+        }
+      ],
+      "reconstruction_error_lsb": {
+        "min": 0.0,
+        "p50": 0.17431838942341926,
+        "max": 0.6198584884018601
+      },
+      "candidates": [
+        {
+          "name": "supplied_center_2mm",
+          "tolerance_m": 0.002,
+          "hypothetical_metrics": {
+            "visible_proxy_hits": 1,
+            "visible_without_source": 75,
+            "visible_losing_all_positive_weights": 1,
+            "removed_pairs": 1,
+            "removed_reference_pairs": 1,
+            "outside_proxy": 2,
+            "reference_blocked_pairs": 0,
+            "road_linear_rgb_mae": 0.020787294365156524
+          },
+          "hypothetical_gates": {
+            "all_visible_hits": false,
+            "no_visible_without_source": false,
+            "outside_below_nominal_center": true,
+            "road_not_worse_than_nominal_center": true,
+            "no_reference_blocking_increase": true
+          },
+          "hypothetical_all_gates": false
+        },
+        {
+          "name": "supplied_center_0mm",
+          "tolerance_m": 0,
+          "hypothetical_metrics": {
+            "visible_proxy_hits": 0,
+            "visible_without_source": 76,
+            "visible_losing_all_positive_weights": 2,
+            "removed_pairs": 2,
+            "removed_reference_pairs": 1,
+            "outside_proxy": 2,
+            "reference_blocked_pairs": 0,
+            "road_linear_rgb_mae": 0.020787294365156524
+          },
+          "hypothetical_gates": {
+            "all_visible_hits": false,
+            "no_visible_without_source": false,
+            "outside_below_nominal_center": true,
+            "road_not_worse_than_nominal_center": true,
+            "no_reference_blocking_increase": true
+          },
+          "hypothetical_all_gates": false
+        }
+      ]
+    },
+    {
+      "frame": 0,
+      "variant": "s_zp_b020_e1mm-reject-facing",
+      "shift": "zp",
+      "kind": "surface1mm",
+      "policy": "reject",
+      "report_sha256": "ee3dad87e96b37d7fa8a093c4d8c0a32c717db4e76f95e791bf24b738a9a59e8",
+      "output_sha256": "0a55c956f46888805b4ebb49d1d0ab1e01a6b0dc9ac0da62f912464716fb4751",
+      "uncertainty_radius_m": 0.005,
+      "reference_pairs": [],
+      "reconstruction_error_lsb": {
+        "min": 0.0,
+        "p50": 0.1743141292743644,
+        "max": 0.6198584884018601
+      },
+      "candidates": [
+        {
+          "name": "supplied_center_2mm",
+          "tolerance_m": 0.002,
+          "hypothetical_metrics": {
+            "visible_proxy_hits": 1,
+            "visible_without_source": 75,
+            "visible_losing_all_positive_weights": 0,
+            "removed_pairs": 0,
+            "removed_reference_pairs": 0,
+            "outside_proxy": 2,
+            "reference_blocked_pairs": 0,
+            "road_linear_rgb_mae": 0.020787294365156524
+          },
+          "hypothetical_gates": {
+            "all_visible_hits": false,
+            "no_visible_without_source": false,
+            "outside_below_nominal_center": true,
+            "road_not_worse_than_nominal_center": true,
+            "no_reference_blocking_increase": true
+          },
+          "hypothetical_all_gates": false
+        },
+        {
+          "name": "supplied_center_0mm",
+          "tolerance_m": 0,
+          "hypothetical_metrics": {
+            "visible_proxy_hits": 0,
+            "visible_without_source": 76,
+            "visible_losing_all_positive_weights": 1,
+            "removed_pairs": 1,
+            "removed_reference_pairs": 0,
+            "outside_proxy": 2,
+            "reference_blocked_pairs": 0,
+            "road_linear_rgb_mae": 0.020787294365156524
+          },
+          "hypothetical_gates": {
+            "all_visible_hits": false,
+            "no_visible_without_source": false,
+            "outside_below_nominal_center": true,
+            "road_not_worse_than_nominal_center": true,
+            "no_reference_blocking_increase": true
+          },
+          "hypothetical_all_gates": false
+        }
+      ]
+    },
+    {
+      "frame": 0,
+      "variant": "s_zp_b020_e10mm-nominal-facing",
+      "shift": "zp",
+      "kind": "surface10mm",
+      "policy": "nominal",
+      "report_sha256": "4eb8b165787c0b206b38068ee80978ce40b11533a077aa392d2bc5dbe6a9dfd3",
+      "output_sha256": "3fd12be1bcb1ecbf1d9f97c14c21df4dfa15eb58c7736bf9242b1d01ea190c36",
+      "uncertainty_radius_m": 0,
+      "reference_pairs": [
+        {
+          "y": 208,
+          "x": 309,
+          "camera": 3,
+          "virtual_roi": "road",
+          "target_visible_to_camera": false,
+          "carrier_xyz_m": [
+            2.6095316410064697,
+            2.108137607574463,
+            0.9523423910140991
+          ],
+          "camera_origin_m": [
+            0.38617924625616884,
+            1.1000000000000005,
+            1.12
+          ],
+          "direction_cosines": [
+            0.9086080999142884,
+            0.4119913686346795,
+            -0.068515932020736
+          ],
+          "reference_gap_m": 0.019751888495699452,
+          "supplied_gap_m": 0.019751888495699452,
+          "supplied_central_blocked": false,
+          "uncertainty_class": "clear",
+          "near_face_bits": 6,
+          "facing_face_bits": 4,
+          "base_weight": 1.0,
+          "rejected_by": {
+            "supplied_center_2mm": true,
+            "supplied_center_0mm": true
+          }
+        }
+      ],
+      "reconstruction_error_lsb": {
+        "min": 0.0,
+        "p50": 0.1743155624717332,
+        "max": 0.6198584884018601
+      },
+      "candidates": [
+        {
+          "name": "supplied_center_2mm",
+          "tolerance_m": 0.002,
+          "hypothetical_metrics": {
+            "visible_proxy_hits": 1,
+            "visible_without_source": 75,
+            "visible_losing_all_positive_weights": 3,
+            "removed_pairs": 4,
+            "removed_reference_pairs": 1,
+            "outside_proxy": 2,
+            "reference_blocked_pairs": 0,
+            "road_linear_rgb_mae": 0.02078700609473594
+          },
+          "hypothetical_gates": {
+            "all_visible_hits": false,
+            "no_visible_without_source": false,
+            "outside_below_nominal_center": true,
+            "road_not_worse_than_nominal_center": true,
+            "no_reference_blocking_increase": true
+          },
+          "hypothetical_all_gates": false
+        },
+        {
+          "name": "supplied_center_0mm",
+          "tolerance_m": 0,
+          "hypothetical_metrics": {
+            "visible_proxy_hits": 0,
+            "visible_without_source": 76,
+            "visible_losing_all_positive_weights": 4,
+            "removed_pairs": 6,
+            "removed_reference_pairs": 1,
+            "outside_proxy": 2,
+            "reference_blocked_pairs": 0,
+            "road_linear_rgb_mae": 0.020787294365156524
+          },
+          "hypothetical_gates": {
+            "all_visible_hits": false,
+            "no_visible_without_source": false,
+            "outside_below_nominal_center": true,
+            "road_not_worse_than_nominal_center": true,
+            "no_reference_blocking_increase": true
+          },
+          "hypothetical_all_gates": false
+        }
+      ]
+    },
+    {
+      "frame": 0,
+      "variant": "s_zp_b020_e10mm-accept-facing",
+      "shift": "zp",
+      "kind": "surface10mm",
+      "policy": "accept",
+      "report_sha256": "b467c371dc392dc879034cb3d67db9e0bdcb0e4e9a2ed5783ec754a355547dc6",
+      "output_sha256": "ecae1400a7593a3e7d2691845dd6e6fae99403d14c9433944cc076f913de0b61",
+      "uncertainty_radius_m": 0.005,
+      "reference_pairs": [
+        {
+          "y": 208,
+          "x": 309,
+          "camera": 3,
+          "virtual_roi": "road",
+          "target_visible_to_camera": false,
+          "carrier_xyz_m": [
+            2.6095316410064697,
+            2.108137607574463,
+            0.9523423910140991
+          ],
+          "camera_origin_m": [
+            0.38617924625616884,
+            1.1000000000000005,
+            1.12
+          ],
+          "direction_cosines": [
+            0.9086080999142884,
+            0.4119913686346795,
+            -0.068515932020736
+          ],
+          "reference_gap_m": 0.019751888495699452,
+          "supplied_gap_m": 0.019751888495699452,
+          "supplied_central_blocked": false,
+          "uncertainty_class": "ambiguous",
+          "near_face_bits": 6,
+          "facing_face_bits": 4,
+          "base_weight": 1.0,
+          "rejected_by": {
+            "supplied_center_2mm": true,
+            "supplied_center_0mm": true
+          }
+        },
+        {
+          "y": 211,
+          "x": 318,
+          "camera": 3,
+          "virtual_roi": "target",
+          "target_visible_to_camera": true,
+          "carrier_xyz_m": [
+            2.5060343742370605,
+            2.500159502029419,
+            0.9992018938064575
+          ],
+          "camera_origin_m": [
+            0.38617924625616884,
+            1.1000000000000005,
+            1.12
+          ],
+          "direction_cosines": [
+            0.8334767603940231,
+            0.5505095090615585,
+            -0.047494950425138
+          ],
+          "reference_gap_m": 0.016804022035994407,
+          "supplied_gap_m": 0.12207837131404964,
+          "supplied_central_blocked": true,
+          "uncertainty_class": "ambiguous",
+          "near_face_bits": 40,
+          "facing_face_bits": 32,
+          "base_weight": 1.0,
+          "rejected_by": {
+            "supplied_center_2mm": true,
+            "supplied_center_0mm": true
+          }
+        }
+      ],
+      "reconstruction_error_lsb": {
+        "min": 0.0,
+        "p50": 0.17435523088791172,
+        "max": 0.6198584884018601
+      },
+      "candidates": [
+        {
+          "name": "supplied_center_2mm",
+          "tolerance_m": 0.002,
+          "hypothetical_metrics": {
+            "visible_proxy_hits": 1,
+            "visible_without_source": 75,
+            "visible_losing_all_positive_weights": 75,
+            "removed_pairs": 76,
+            "removed_reference_pairs": 2,
+            "outside_proxy": 2,
+            "reference_blocked_pairs": 0,
+            "road_linear_rgb_mae": 0.02078700609473594
+          },
+          "hypothetical_gates": {
+            "all_visible_hits": false,
+            "no_visible_without_source": false,
+            "outside_below_nominal_center": true,
+            "road_not_worse_than_nominal_center": true,
+            "no_reference_blocking_increase": true
+          },
+          "hypothetical_all_gates": false
+        },
+        {
+          "name": "supplied_center_0mm",
+          "tolerance_m": 0,
+          "hypothetical_metrics": {
+            "visible_proxy_hits": 0,
+            "visible_without_source": 76,
+            "visible_losing_all_positive_weights": 76,
+            "removed_pairs": 78,
+            "removed_reference_pairs": 2,
+            "outside_proxy": 2,
+            "reference_blocked_pairs": 0,
+            "road_linear_rgb_mae": 0.020787294365156524
+          },
+          "hypothetical_gates": {
+            "all_visible_hits": false,
+            "no_visible_without_source": false,
+            "outside_below_nominal_center": true,
+            "road_not_worse_than_nominal_center": true,
+            "no_reference_blocking_increase": true
+          },
+          "hypothetical_all_gates": false
+        }
+      ]
+    },
+    {
+      "frame": 0,
+      "variant": "s_zp_b020_e10mm-reject-facing",
+      "shift": "zp",
+      "kind": "surface10mm",
+      "policy": "reject",
+      "report_sha256": "b9f1a80c0119168a5e06e059898e960655d88bebf88a4bd863c4a8a62c748e36",
+      "output_sha256": "0da1d2b1dec6d1bee975d48b5e37900e2f0d182bd35314aa5a73f553c515feb0",
+      "uncertainty_radius_m": 0.005,
+      "reference_pairs": [],
+      "reconstruction_error_lsb": {
+        "min": 0.0,
+        "p50": 0.17431843778455658,
+        "max": 0.6198584884018601
+      },
+      "candidates": [
+        {
+          "name": "supplied_center_2mm",
+          "tolerance_m": 0.002,
+          "hypothetical_metrics": {
+            "visible_proxy_hits": 1,
+            "visible_without_source": 75,
+            "visible_losing_all_positive_weights": 2,
+            "removed_pairs": 2,
+            "removed_reference_pairs": 0,
+            "outside_proxy": 2,
+            "reference_blocked_pairs": 0,
+            "road_linear_rgb_mae": 0.02078700609473594
+          },
+          "hypothetical_gates": {
+            "all_visible_hits": false,
+            "no_visible_without_source": false,
+            "outside_below_nominal_center": true,
+            "road_not_worse_than_nominal_center": true,
+            "no_reference_blocking_increase": true
+          },
+          "hypothetical_all_gates": false
+        },
+        {
+          "name": "supplied_center_0mm",
+          "tolerance_m": 0,
+          "hypothetical_metrics": {
+            "visible_proxy_hits": 0,
+            "visible_without_source": 76,
+            "visible_losing_all_positive_weights": 3,
+            "removed_pairs": 4,
+            "removed_reference_pairs": 0,
+            "outside_proxy": 2,
+            "reference_blocked_pairs": 0,
+            "road_linear_rgb_mae": 0.020787294365156524
+          },
+          "hypothetical_gates": {
+            "all_visible_hits": false,
+            "no_visible_without_source": false,
+            "outside_below_nominal_center": true,
+            "road_not_worse_than_nominal_center": true,
+            "no_reference_blocking_increase": true
+          },
+          "hypothetical_all_gates": false
+        }
+      ]
+    },
+    {
+      "frame": 0,
+      "variant": "s_zm_b020_e1mm-nominal-facing",
+      "shift": "zm",
+      "kind": "surface1mm",
+      "policy": "nominal",
+      "report_sha256": "c828a3b811463ab9008f4e6582e84c919ec08298e54323b1549dc0ecb4856d5e",
+      "output_sha256": "86e68827ac56fa886a28e72a766eadb84771ef17d1f9eff132935c9ae3d29f02",
+      "uncertainty_radius_m": 0,
+      "reference_pairs": [
+        {
+          "y": 206,
+          "x": 311,
+          "camera": 0,
+          "virtual_roi": "target",
+          "target_visible_to_camera": true,
+          "carrier_xyz_m": [
+            2.513273239135742,
+            2.1177141666412354,
+            0.9999999403953552
+          ],
+          "camera_origin_m": [
+            2.36,
+            0.05696108239399542,
+            0.85
+          ],
+          "direction_cosines": [
+            0.07397777610233211,
+            0.9946284891494952,
+            0.07239790891417969
+          ],
+          "reference_gap_m": 0.0178098323489432,
+          "supplied_gap_m": null,
+          "supplied_central_blocked": false,
+          "uncertainty_class": "clear",
+          "near_face_bits": 0,
+          "facing_face_bits": 0,
+          "base_weight": 1.0,
+          "rejected_by": {
+            "supplied_center_2mm": false,
+            "supplied_center_0mm": false
+          }
+        }
+      ],
+      "reconstruction_error_lsb": {
+        "min": 0.0,
+        "p50": 0.17364308539394102,
+        "max": 0.6198584884018601
+      },
+      "candidates": [
+        {
+          "name": "supplied_center_2mm",
+          "tolerance_m": 0.002,
+          "hypothetical_metrics": {
+            "visible_proxy_hits": 2,
+            "visible_without_source": 74,
+            "visible_losing_all_positive_weights": 0,
+            "removed_pairs": 0,
+            "removed_reference_pairs": 0,
+            "outside_proxy": 1,
+            "reference_blocked_pairs": 1,
+            "road_linear_rgb_mae": 0.020770626242368986
+          },
+          "hypothetical_gates": {
+            "all_visible_hits": false,
+            "no_visible_without_source": false,
+            "outside_below_nominal_center": true,
+            "road_not_worse_than_nominal_center": true,
+            "no_reference_blocking_increase": true
+          },
+          "hypothetical_all_gates": false
+        },
+        {
+          "name": "supplied_center_0mm",
+          "tolerance_m": 0,
+          "hypothetical_metrics": {
+            "visible_proxy_hits": 2,
+            "visible_without_source": 74,
+            "visible_losing_all_positive_weights": 0,
+            "removed_pairs": 0,
+            "removed_reference_pairs": 0,
+            "outside_proxy": 1,
+            "reference_blocked_pairs": 1,
+            "road_linear_rgb_mae": 0.020770626242368986
+          },
+          "hypothetical_gates": {
+            "all_visible_hits": false,
+            "no_visible_without_source": false,
+            "outside_below_nominal_center": true,
+            "road_not_worse_than_nominal_center": true,
+            "no_reference_blocking_increase": true
+          },
+          "hypothetical_all_gates": false
+        }
+      ]
+    },
+    {
+      "frame": 0,
+      "variant": "s_zm_b020_e1mm-accept-facing",
+      "shift": "zm",
+      "kind": "surface1mm",
+      "policy": "accept",
+      "report_sha256": "ed3d5eff84a67b6e78b9cbbb0db4fe5ffa1485bf76afa997328e176ae7a7cd1a",
+      "output_sha256": "86e68827ac56fa886a28e72a766eadb84771ef17d1f9eff132935c9ae3d29f02",
+      "uncertainty_radius_m": 0.005,
+      "reference_pairs": [
+        {
+          "y": 206,
+          "x": 311,
+          "camera": 0,
+          "virtual_roi": "target",
+          "target_visible_to_camera": true,
+          "carrier_xyz_m": [
+            2.513273239135742,
+            2.1177141666412354,
+            0.9999999403953552
+          ],
+          "camera_origin_m": [
+            2.36,
+            0.05696108239399542,
+            0.85
+          ],
+          "direction_cosines": [
+            0.07397777610233211,
+            0.9946284891494952,
+            0.07239790891417969
+          ],
+          "reference_gap_m": 0.0178098323489432,
+          "supplied_gap_m": null,
+          "supplied_central_blocked": false,
+          "uncertainty_class": "ambiguous",
+          "near_face_bits": 0,
+          "facing_face_bits": 0,
+          "base_weight": 1.0,
+          "rejected_by": {
+            "supplied_center_2mm": false,
+            "supplied_center_0mm": false
+          }
+        }
+      ],
+      "reconstruction_error_lsb": {
+        "min": 0.0,
+        "p50": 0.17364308539394102,
+        "max": 0.6198584884018601
+      },
+      "candidates": [
+        {
+          "name": "supplied_center_2mm",
+          "tolerance_m": 0.002,
+          "hypothetical_metrics": {
+            "visible_proxy_hits": 2,
+            "visible_without_source": 74,
+            "visible_losing_all_positive_weights": 0,
+            "removed_pairs": 0,
+            "removed_reference_pairs": 0,
+            "outside_proxy": 1,
+            "reference_blocked_pairs": 1,
+            "road_linear_rgb_mae": 0.020770626242368986
+          },
+          "hypothetical_gates": {
+            "all_visible_hits": false,
+            "no_visible_without_source": false,
+            "outside_below_nominal_center": true,
+            "road_not_worse_than_nominal_center": true,
+            "no_reference_blocking_increase": true
+          },
+          "hypothetical_all_gates": false
+        },
+        {
+          "name": "supplied_center_0mm",
+          "tolerance_m": 0,
+          "hypothetical_metrics": {
+            "visible_proxy_hits": 2,
+            "visible_without_source": 74,
+            "visible_losing_all_positive_weights": 0,
+            "removed_pairs": 0,
+            "removed_reference_pairs": 0,
+            "outside_proxy": 1,
+            "reference_blocked_pairs": 1,
+            "road_linear_rgb_mae": 0.020770626242368986
+          },
+          "hypothetical_gates": {
+            "all_visible_hits": false,
+            "no_visible_without_source": false,
+            "outside_below_nominal_center": true,
+            "road_not_worse_than_nominal_center": true,
+            "no_reference_blocking_increase": true
+          },
+          "hypothetical_all_gates": false
+        }
+      ]
+    },
+    {
+      "frame": 0,
+      "variant": "s_zm_b020_e1mm-reject-facing",
+      "shift": "zm",
+      "kind": "surface1mm",
+      "policy": "reject",
+      "report_sha256": "fb6dd72ea817bfa10a64c30f136f6b478049816ece62e839fd1e5d7b8cde9a5a",
+      "output_sha256": "b0c087c845e03c6a8a00b6775fd6db301440b00e1d8f5644284be704ec673ef8",
+      "uncertainty_radius_m": 0.005,
+      "reference_pairs": [],
+      "reconstruction_error_lsb": {
+        "min": 0.0,
+        "p50": 0.17364078864659405,
+        "max": 0.6198584884018601
+      },
+      "candidates": [
+        {
+          "name": "supplied_center_2mm",
+          "tolerance_m": 0.002,
+          "hypothetical_metrics": {
+            "visible_proxy_hits": 1,
+            "visible_without_source": 75,
+            "visible_losing_all_positive_weights": 0,
+            "removed_pairs": 0,
+            "removed_reference_pairs": 0,
+            "outside_proxy": 1,
+            "reference_blocked_pairs": 0,
+            "road_linear_rgb_mae": 0.020770626242368986
+          },
+          "hypothetical_gates": {
+            "all_visible_hits": false,
+            "no_visible_without_source": false,
+            "outside_below_nominal_center": true,
+            "road_not_worse_than_nominal_center": true,
+            "no_reference_blocking_increase": true
+          },
+          "hypothetical_all_gates": false
+        },
+        {
+          "name": "supplied_center_0mm",
+          "tolerance_m": 0,
+          "hypothetical_metrics": {
+            "visible_proxy_hits": 1,
+            "visible_without_source": 75,
+            "visible_losing_all_positive_weights": 0,
+            "removed_pairs": 0,
+            "removed_reference_pairs": 0,
+            "outside_proxy": 1,
+            "reference_blocked_pairs": 0,
+            "road_linear_rgb_mae": 0.020770626242368986
+          },
+          "hypothetical_gates": {
+            "all_visible_hits": false,
+            "no_visible_without_source": false,
+            "outside_below_nominal_center": true,
+            "road_not_worse_than_nominal_center": true,
+            "no_reference_blocking_increase": true
+          },
+          "hypothetical_all_gates": false
+        }
+      ]
+    },
+    {
+      "frame": 0,
+      "variant": "s_zm_b020_e10mm-nominal-facing",
+      "shift": "zm",
+      "kind": "surface10mm",
+      "policy": "nominal",
+      "report_sha256": "05d0e3499bb796fd78df071eddb36efdaef32a7d4c2aef1898b707ebf7c333a3",
+      "output_sha256": "a45ce19136478fa0f2e15c48d13d248177147b803192d8b2dc2288ae819858a9",
+      "uncertainty_radius_m": 0,
+      "reference_pairs": [
+        {
+          "y": 208,
+          "x": 309,
+          "camera": 3,
+          "virtual_roi": "road",
+          "target_visible_to_camera": false,
+          "carrier_xyz_m": [
+            2.6095316410064697,
+            2.108137607574463,
+            0.9523423910140991
+          ],
+          "camera_origin_m": [
+            0.38617924625616884,
+            1.1000000000000005,
+            1.12
+          ],
+          "direction_cosines": [
+            0.9086080999142884,
+            0.4119913686346795,
+            -0.068515932020736
+          ],
+          "reference_gap_m": 0.019751888495699452,
+          "supplied_gap_m": 0.019751888495699452,
+          "supplied_central_blocked": false,
+          "uncertainty_class": "clear",
+          "near_face_bits": 6,
+          "facing_face_bits": 4,
+          "base_weight": 1.0,
+          "rejected_by": {
+            "supplied_center_2mm": true,
+            "supplied_center_0mm": true
+          }
+        },
+        {
+          "y": 209,
+          "x": 321,
+          "camera": 3,
+          "virtual_roi": "target",
+          "target_visible_to_camera": false,
+          "carrier_xyz_m": [
+            2.3496241569519043,
+            2.500685930252075,
+            0.9965697526931763
+          ],
+          "camera_origin_m": [
+            0.38617924625616884,
+            1.1000000000000005,
+            1.12
+          ],
+          "direction_cosines": [
+            0.8130173897513153,
+            0.5799918361200233,
+            -0.05110962723481478
+          ],
+          "reference_gap_m": 0.06711548278495598,
+          "supplied_gap_m": null,
+          "supplied_central_blocked": false,
+          "uncertainty_class": "clear",
+          "near_face_bits": 40,
+          "facing_face_bits": 32,
+          "base_weight": 1.0,
+          "rejected_by": {
+            "supplied_center_2mm": false,
+            "supplied_center_0mm": false
+          }
+        },
+        {
+          "y": 210,
+          "x": 313,
+          "camera": 3,
+          "virtual_roi": "target",
+          "target_visible_to_camera": false,
+          "carrier_xyz_m": [
+            2.6010894775390625,
+            2.3279223442077637,
+            0.9945528507232666
+          ],
+          "camera_origin_m": [
+            0.38617924625616884,
+            1.1000000000000005,
+            1.12
+          ],
+          "direction_cosines": [
+            0.8735189646800956,
+            0.48426949303433164,
+            -0.04947399782193961
+          ],
+          "reference_gap_m": 0.11010125553908288,
+          "supplied_gap_m": 0.009038066386765856,
+          "supplied_central_blocked": false,
+          "uncertainty_class": "clear",
+          "near_face_bits": 34,
+          "facing_face_bits": 32,
+          "base_weight": 1.0,
+          "rejected_by": {
+            "supplied_center_2mm": true,
+            "supplied_center_0mm": true
+          }
+        },
+        {
+          "y": 211,
+          "x": 318,
+          "camera": 3,
+          "virtual_roi": "target",
+          "target_visible_to_camera": true,
+          "carrier_xyz_m": [
+            2.5060343742370605,
+            2.500159502029419,
+            0.9992018938064575
+          ],
+          "camera_origin_m": [
+            0.38617924625616884,
+            1.1000000000000005,
+            1.12
+          ],
+          "direction_cosines": [
+            0.8334767603940231,
+            0.5505095090615585,
+            -0.047494950425138
+          ],
+          "reference_gap_m": 0.016804022035994407,
+          "supplied_gap_m": null,
+          "supplied_central_blocked": false,
+          "uncertainty_class": "clear",
+          "near_face_bits": 40,
+          "facing_face_bits": 32,
+          "base_weight": 1.0,
+          "rejected_by": {
+            "supplied_center_2mm": false,
+            "supplied_center_0mm": false
+          }
+        }
+      ],
+      "reconstruction_error_lsb": {
+        "min": 0.0,
+        "p50": 0.17366899745150732,
+        "max": 0.6198584884018601
+      },
+      "candidates": [
+        {
+          "name": "supplied_center_2mm",
+          "tolerance_m": 0.002,
+          "hypothetical_metrics": {
+            "visible_proxy_hits": 76,
+            "visible_without_source": 0,
+            "visible_losing_all_positive_weights": 0,
+            "removed_pairs": 2,
+            "removed_reference_pairs": 2,
+            "outside_proxy": 1,
+            "reference_blocked_pairs": 2,
+            "road_linear_rgb_mae": 0.0207703379719484
+          },
+          "hypothetical_gates": {
+            "all_visible_hits": true,
+            "no_visible_without_source": true,
+            "outside_below_nominal_center": true,
+            "road_not_worse_than_nominal_center": true,
+            "no_reference_blocking_increase": true
+          },
+          "hypothetical_all_gates": true
+        },
+        {
+          "name": "supplied_center_0mm",
+          "tolerance_m": 0,
+          "hypothetical_metrics": {
+            "visible_proxy_hits": 76,
+            "visible_without_source": 0,
+            "visible_losing_all_positive_weights": 0,
+            "removed_pairs": 3,
+            "removed_reference_pairs": 2,
+            "outside_proxy": 1,
+            "reference_blocked_pairs": 2,
+            "road_linear_rgb_mae": 0.020770626242368986
+          },
+          "hypothetical_gates": {
+            "all_visible_hits": true,
+            "no_visible_without_source": true,
+            "outside_below_nominal_center": true,
+            "road_not_worse_than_nominal_center": true,
+            "no_reference_blocking_increase": true
+          },
+          "hypothetical_all_gates": true
+        }
+      ]
+    },
+    {
+      "frame": 0,
+      "variant": "s_zm_b020_e10mm-accept-facing",
+      "shift": "zm",
+      "kind": "surface10mm",
+      "policy": "accept",
+      "report_sha256": "0bedb08e37517dcbe3218c24d1463e65abe10ca3d4d1439499150876cac4ba4c",
+      "output_sha256": "a45ce19136478fa0f2e15c48d13d248177147b803192d8b2dc2288ae819858a9",
+      "uncertainty_radius_m": 0.005,
+      "reference_pairs": [
+        {
+          "y": 208,
+          "x": 309,
+          "camera": 3,
+          "virtual_roi": "road",
+          "target_visible_to_camera": false,
+          "carrier_xyz_m": [
+            2.6095316410064697,
+            2.108137607574463,
+            0.9523423910140991
+          ],
+          "camera_origin_m": [
+            0.38617924625616884,
+            1.1000000000000005,
+            1.12
+          ],
+          "direction_cosines": [
+            0.9086080999142884,
+            0.4119913686346795,
+            -0.068515932020736
+          ],
+          "reference_gap_m": 0.019751888495699452,
+          "supplied_gap_m": 0.019751888495699452,
+          "supplied_central_blocked": false,
+          "uncertainty_class": "ambiguous",
+          "near_face_bits": 6,
+          "facing_face_bits": 4,
+          "base_weight": 1.0,
+          "rejected_by": {
+            "supplied_center_2mm": true,
+            "supplied_center_0mm": true
+          }
+        },
+        {
+          "y": 209,
+          "x": 321,
+          "camera": 3,
+          "virtual_roi": "target",
+          "target_visible_to_camera": false,
+          "carrier_xyz_m": [
+            2.3496241569519043,
+            2.500685930252075,
+            0.9965697526931763
+          ],
+          "camera_origin_m": [
+            0.38617924625616884,
+            1.1000000000000005,
+            1.12
+          ],
+          "direction_cosines": [
+            0.8130173897513153,
+            0.5799918361200233,
+            -0.05110962723481478
+          ],
+          "reference_gap_m": 0.06711548278495598,
+          "supplied_gap_m": null,
+          "supplied_central_blocked": false,
+          "uncertainty_class": "ambiguous",
+          "near_face_bits": 40,
+          "facing_face_bits": 32,
+          "base_weight": 1.0,
+          "rejected_by": {
+            "supplied_center_2mm": false,
+            "supplied_center_0mm": false
+          }
+        },
+        {
+          "y": 210,
+          "x": 313,
+          "camera": 3,
+          "virtual_roi": "target",
+          "target_visible_to_camera": false,
+          "carrier_xyz_m": [
+            2.6010894775390625,
+            2.3279223442077637,
+            0.9945528507232666
+          ],
+          "camera_origin_m": [
+            0.38617924625616884,
+            1.1000000000000005,
+            1.12
+          ],
+          "direction_cosines": [
+            0.8735189646800956,
+            0.48426949303433164,
+            -0.04947399782193961
+          ],
+          "reference_gap_m": 0.11010125553908288,
+          "supplied_gap_m": 0.009038066386765856,
+          "supplied_central_blocked": false,
+          "uncertainty_class": "ambiguous",
+          "near_face_bits": 34,
+          "facing_face_bits": 32,
+          "base_weight": 1.0,
+          "rejected_by": {
+            "supplied_center_2mm": true,
+            "supplied_center_0mm": true
+          }
+        },
+        {
+          "y": 211,
+          "x": 318,
+          "camera": 3,
+          "virtual_roi": "target",
+          "target_visible_to_camera": true,
+          "carrier_xyz_m": [
+            2.5060343742370605,
+            2.500159502029419,
+            0.9992018938064575
+          ],
+          "camera_origin_m": [
+            0.38617924625616884,
+            1.1000000000000005,
+            1.12
+          ],
+          "direction_cosines": [
+            0.8334767603940231,
+            0.5505095090615585,
+            -0.047494950425138
+          ],
+          "reference_gap_m": 0.016804022035994407,
+          "supplied_gap_m": null,
+          "supplied_central_blocked": false,
+          "uncertainty_class": "clear",
+          "near_face_bits": 40,
+          "facing_face_bits": 32,
+          "base_weight": 1.0,
+          "rejected_by": {
+            "supplied_center_2mm": false,
+            "supplied_center_0mm": false
+          }
+        }
+      ],
+      "reconstruction_error_lsb": {
+        "min": 0.0,
+        "p50": 0.17366899745150732,
+        "max": 0.6198584884018601
+      },
+      "candidates": [
+        {
+          "name": "supplied_center_2mm",
+          "tolerance_m": 0.002,
+          "hypothetical_metrics": {
+            "visible_proxy_hits": 76,
+            "visible_without_source": 0,
+            "visible_losing_all_positive_weights": 0,
+            "removed_pairs": 2,
+            "removed_reference_pairs": 2,
+            "outside_proxy": 1,
+            "reference_blocked_pairs": 2,
+            "road_linear_rgb_mae": 0.0207703379719484
+          },
+          "hypothetical_gates": {
+            "all_visible_hits": true,
+            "no_visible_without_source": true,
+            "outside_below_nominal_center": true,
+            "road_not_worse_than_nominal_center": true,
+            "no_reference_blocking_increase": true
+          },
+          "hypothetical_all_gates": true
+        },
+        {
+          "name": "supplied_center_0mm",
+          "tolerance_m": 0,
+          "hypothetical_metrics": {
+            "visible_proxy_hits": 76,
+            "visible_without_source": 0,
+            "visible_losing_all_positive_weights": 0,
+            "removed_pairs": 3,
+            "removed_reference_pairs": 2,
+            "outside_proxy": 1,
+            "reference_blocked_pairs": 2,
+            "road_linear_rgb_mae": 0.020770626242368986
+          },
+          "hypothetical_gates": {
+            "all_visible_hits": true,
+            "no_visible_without_source": true,
+            "outside_below_nominal_center": true,
+            "road_not_worse_than_nominal_center": true,
+            "no_reference_blocking_increase": true
+          },
+          "hypothetical_all_gates": true
+        }
+      ]
+    },
+    {
+      "frame": 0,
+      "variant": "s_zm_b020_e10mm-reject-facing",
+      "shift": "zm",
+      "kind": "surface10mm",
+      "policy": "reject",
+      "report_sha256": "c1b8e8d1c7f6a5d8211483fffd36f4d7e337113357e95c04fe7e6880fcab7876",
+      "output_sha256": "644ec3df9d0cd25821838e14100aff849208146e7a89800a0d25199d2ca168e0",
+      "uncertainty_radius_m": 0.005,
+      "reference_pairs": [
+        {
+          "y": 211,
+          "x": 318,
+          "camera": 3,
+          "virtual_roi": "target",
+          "target_visible_to_camera": true,
+          "carrier_xyz_m": [
+            2.5060343742370605,
+            2.500159502029419,
+            0.9992018938064575
+          ],
+          "camera_origin_m": [
+            0.38617924625616884,
+            1.1000000000000005,
+            1.12
+          ],
+          "direction_cosines": [
+            0.8334767603940231,
+            0.5505095090615585,
+            -0.047494950425138
+          ],
+          "reference_gap_m": 0.016804022035994407,
+          "supplied_gap_m": null,
+          "supplied_central_blocked": false,
+          "uncertainty_class": "clear",
+          "near_face_bits": 40,
+          "facing_face_bits": 32,
+          "base_weight": 1.0,
+          "rejected_by": {
+            "supplied_center_2mm": false,
+            "supplied_center_0mm": false
+          }
+        }
+      ],
+      "reconstruction_error_lsb": {
+        "min": 0.0,
+        "p50": 0.17366899745150732,
+        "max": 0.6198584884018601
+      },
+      "candidates": [
+        {
+          "name": "supplied_center_2mm",
+          "tolerance_m": 0.002,
+          "hypothetical_metrics": {
+            "visible_proxy_hits": 76,
+            "visible_without_source": 0,
+            "visible_losing_all_positive_weights": 0,
+            "removed_pairs": 0,
+            "removed_reference_pairs": 0,
+            "outside_proxy": 1,
+            "reference_blocked_pairs": 1,
+            "road_linear_rgb_mae": 0.0207703379719484
+          },
+          "hypothetical_gates": {
+            "all_visible_hits": true,
+            "no_visible_without_source": true,
+            "outside_below_nominal_center": true,
+            "road_not_worse_than_nominal_center": true,
+            "no_reference_blocking_increase": true
+          },
+          "hypothetical_all_gates": true
+        },
+        {
+          "name": "supplied_center_0mm",
+          "tolerance_m": 0,
+          "hypothetical_metrics": {
+            "visible_proxy_hits": 76,
+            "visible_without_source": 0,
+            "visible_losing_all_positive_weights": 0,
+            "removed_pairs": 1,
+            "removed_reference_pairs": 0,
+            "outside_proxy": 1,
+            "reference_blocked_pairs": 1,
+            "road_linear_rgb_mae": 0.020770626242368986
+          },
+          "hypothetical_gates": {
+            "all_visible_hits": true,
+            "no_visible_without_source": true,
+            "outside_below_nominal_center": true,
+            "road_not_worse_than_nominal_center": true,
+            "no_reference_blocking_increase": true
+          },
+          "hypothetical_all_gates": true
+        }
+      ]
+    },
+    {
+      "frame": 1,
+      "variant": "s_nom_b020_e1mm-nominal-facing",
+      "shift": "nom",
+      "kind": "surface1mm",
+      "policy": "nominal",
+      "report_sha256": "758a22689e2125bfbb3e80d20f0039b939a44e606af6a2b44e83e93702199031",
+      "output_sha256": "b946ce4cad376cdf8dbc4b5cd9a4280ac26bc872445c8783184c5ed541cee765",
+      "uncertainty_radius_m": 0,
+      "reference_pairs": [],
+      "reconstruction_error_lsb": {
+        "min": 0.0,
+        "p50": 0.17282948596403003,
+        "max": 0.7734834402799606
+      },
+      "candidates": [
+        {
+          "name": "supplied_center_2mm",
+          "tolerance_m": 0.002,
+          "hypothetical_metrics": {
+            "visible_proxy_hits": 69,
+            "visible_without_source": 0,
+            "visible_losing_all_positive_weights": 0,
+            "removed_pairs": 0,
+            "removed_reference_pairs": 0,
+            "outside_proxy": 0,
+            "reference_blocked_pairs": 0,
+            "road_linear_rgb_mae": 0.020801917257358832
+          },
+          "hypothetical_gates": {
+            "all_visible_hits": true,
+            "no_visible_without_source": true,
+            "outside_below_nominal_center": true,
+            "road_not_worse_than_nominal_center": true,
+            "no_reference_blocking_increase": true
+          },
+          "hypothetical_all_gates": true
+        },
+        {
+          "name": "supplied_center_0mm",
+          "tolerance_m": 0,
+          "hypothetical_metrics": {
+            "visible_proxy_hits": 33,
+            "visible_without_source": 36,
+            "visible_losing_all_positive_weights": 36,
+            "removed_pairs": 36,
+            "removed_reference_pairs": 0,
+            "outside_proxy": 0,
+            "reference_blocked_pairs": 0,
+            "road_linear_rgb_mae": 0.020801917257358832
+          },
+          "hypothetical_gates": {
+            "all_visible_hits": false,
+            "no_visible_without_source": false,
+            "outside_below_nominal_center": true,
+            "road_not_worse_than_nominal_center": true,
+            "no_reference_blocking_increase": true
+          },
+          "hypothetical_all_gates": false
+        }
+      ]
+    },
+    {
+      "frame": 1,
+      "variant": "s_nom_b020_e1mm-accept-facing",
+      "shift": "nom",
+      "kind": "surface1mm",
+      "policy": "accept",
+      "report_sha256": "0e4c1e4c4f1a450d24a0f2ed0d7cf216fbf79cf1b667a86430a68b64715028f2",
+      "output_sha256": "b946ce4cad376cdf8dbc4b5cd9a4280ac26bc872445c8783184c5ed541cee765",
+      "uncertainty_radius_m": 0.005,
+      "reference_pairs": [],
+      "reconstruction_error_lsb": {
+        "min": 0.0,
+        "p50": 0.17282948596403003,
+        "max": 0.7734834402799606
+      },
+      "candidates": [
+        {
+          "name": "supplied_center_2mm",
+          "tolerance_m": 0.002,
+          "hypothetical_metrics": {
+            "visible_proxy_hits": 69,
+            "visible_without_source": 0,
+            "visible_losing_all_positive_weights": 0,
+            "removed_pairs": 0,
+            "removed_reference_pairs": 0,
+            "outside_proxy": 0,
+            "reference_blocked_pairs": 0,
+            "road_linear_rgb_mae": 0.020801917257358832
+          },
+          "hypothetical_gates": {
+            "all_visible_hits": true,
+            "no_visible_without_source": true,
+            "outside_below_nominal_center": true,
+            "road_not_worse_than_nominal_center": true,
+            "no_reference_blocking_increase": true
+          },
+          "hypothetical_all_gates": true
+        },
+        {
+          "name": "supplied_center_0mm",
+          "tolerance_m": 0,
+          "hypothetical_metrics": {
+            "visible_proxy_hits": 33,
+            "visible_without_source": 36,
+            "visible_losing_all_positive_weights": 36,
+            "removed_pairs": 36,
+            "removed_reference_pairs": 0,
+            "outside_proxy": 0,
+            "reference_blocked_pairs": 0,
+            "road_linear_rgb_mae": 0.020801917257358832
+          },
+          "hypothetical_gates": {
+            "all_visible_hits": false,
+            "no_visible_without_source": false,
+            "outside_below_nominal_center": true,
+            "road_not_worse_than_nominal_center": true,
+            "no_reference_blocking_increase": true
+          },
+          "hypothetical_all_gates": false
+        }
+      ]
+    },
+    {
+      "frame": 1,
+      "variant": "s_nom_b020_e1mm-reject-facing",
+      "shift": "nom",
+      "kind": "surface1mm",
+      "policy": "reject",
+      "report_sha256": "084f2f1a1c1065258318887b66a4da33b538ba5800cbc7345d30404e8ac188df",
+      "output_sha256": "76b95b796ae6372494d504a1bb8613a3c34c81d10b802bf31cfc4e3af2070571",
+      "uncertainty_radius_m": 0.005,
+      "reference_pairs": [],
+      "reconstruction_error_lsb": {
+        "min": 0.0,
+        "p50": 0.17281355522572994,
+        "max": 0.6270412355661357
+      },
+      "candidates": [
+        {
+          "name": "supplied_center_2mm",
+          "tolerance_m": 0.002,
+          "hypothetical_metrics": {
+            "visible_proxy_hits": 3,
+            "visible_without_source": 66,
+            "visible_losing_all_positive_weights": 0,
+            "removed_pairs": 0,
+            "removed_reference_pairs": 0,
+            "outside_proxy": 0,
+            "reference_blocked_pairs": 0,
+            "road_linear_rgb_mae": 0.020801917257358832
+          },
+          "hypothetical_gates": {
+            "all_visible_hits": false,
+            "no_visible_without_source": false,
+            "outside_below_nominal_center": true,
+            "road_not_worse_than_nominal_center": true,
+            "no_reference_blocking_increase": true
+          },
+          "hypothetical_all_gates": false
+        },
+        {
+          "name": "supplied_center_0mm",
+          "tolerance_m": 0,
+          "hypothetical_metrics": {
+            "visible_proxy_hits": 0,
+            "visible_without_source": 69,
+            "visible_losing_all_positive_weights": 3,
+            "removed_pairs": 3,
+            "removed_reference_pairs": 0,
+            "outside_proxy": 0,
+            "reference_blocked_pairs": 0,
+            "road_linear_rgb_mae": 0.020801917257358832
+          },
+          "hypothetical_gates": {
+            "all_visible_hits": false,
+            "no_visible_without_source": false,
+            "outside_below_nominal_center": true,
+            "road_not_worse_than_nominal_center": true,
+            "no_reference_blocking_increase": true
+          },
+          "hypothetical_all_gates": false
+        }
+      ]
+    },
+    {
+      "frame": 1,
+      "variant": "s_nom_b020_e10mm-nominal-facing",
+      "shift": "nom",
+      "kind": "surface10mm",
+      "policy": "nominal",
+      "report_sha256": "3d22017fe0a71a3dcb0ff09419d8f1bfa6ba1f725c0d7bbf3ba31a747f3baf56",
+      "output_sha256": "b946ce4cad376cdf8dbc4b5cd9a4280ac26bc872445c8783184c5ed541cee765",
+      "uncertainty_radius_m": 0,
+      "reference_pairs": [],
+      "reconstruction_error_lsb": {
+        "min": 0.0,
+        "p50": 0.17282948596403003,
+        "max": 0.7734834402799606
+      },
+      "candidates": [
+        {
+          "name": "supplied_center_2mm",
+          "tolerance_m": 0.002,
+          "hypothetical_metrics": {
+            "visible_proxy_hits": 69,
+            "visible_without_source": 0,
+            "visible_losing_all_positive_weights": 0,
+            "removed_pairs": 0,
+            "removed_reference_pairs": 0,
+            "outside_proxy": 0,
+            "reference_blocked_pairs": 0,
+            "road_linear_rgb_mae": 0.020801917257358832
+          },
+          "hypothetical_gates": {
+            "all_visible_hits": true,
+            "no_visible_without_source": true,
+            "outside_below_nominal_center": true,
+            "road_not_worse_than_nominal_center": true,
+            "no_reference_blocking_increase": true
+          },
+          "hypothetical_all_gates": true
+        },
+        {
+          "name": "supplied_center_0mm",
+          "tolerance_m": 0,
+          "hypothetical_metrics": {
+            "visible_proxy_hits": 33,
+            "visible_without_source": 36,
+            "visible_losing_all_positive_weights": 36,
+            "removed_pairs": 36,
+            "removed_reference_pairs": 0,
+            "outside_proxy": 0,
+            "reference_blocked_pairs": 0,
+            "road_linear_rgb_mae": 0.020801917257358832
+          },
+          "hypothetical_gates": {
+            "all_visible_hits": false,
+            "no_visible_without_source": false,
+            "outside_below_nominal_center": true,
+            "road_not_worse_than_nominal_center": true,
+            "no_reference_blocking_increase": true
+          },
+          "hypothetical_all_gates": false
+        }
+      ]
+    },
+    {
+      "frame": 1,
+      "variant": "s_nom_b020_e10mm-accept-facing",
+      "shift": "nom",
+      "kind": "surface10mm",
+      "policy": "accept",
+      "report_sha256": "3812a2c44b5e9f3f3f05fb4fa054f33481e6d9c4f160be9f1f045f6679c07072",
+      "output_sha256": "f09cccb0a4aa204040a97a33bc7d9c835cc5db977c905b94962905993e711aa8",
+      "uncertainty_radius_m": 0.005,
+      "reference_pairs": [
+        {
+          "y": 203,
+          "x": 318,
+          "camera": 3,
+          "virtual_roi": "target",
+          "target_visible_to_camera": false,
+          "carrier_xyz_m": [
+            2.200313091278076,
+            2.18076229095459,
+            0.9984337687492371
+          ],
+          "camera_origin_m": [
+            0.38617924625616884,
+            1.1000000000000005,
+            1.12
+          ],
+          "direction_cosines": [
+            0.857681110904218,
+            0.510959764558125,
+            -0.05747374183757341
+          ],
+          "reference_gap_m": 0.02725124901714702,
+          "supplied_gap_m": 0.02725124901714702,
+          "supplied_central_blocked": true,
+          "uncertainty_class": "ambiguous",
+          "near_face_bits": 34,
+          "facing_face_bits": 32,
+          "base_weight": 1.0,
+          "rejected_by": {
+            "supplied_center_2mm": true,
+            "supplied_center_0mm": true
+          }
+        }
+      ],
+      "reconstruction_error_lsb": {
+        "min": 0.0,
+        "p50": 0.17282969318330288,
+        "max": 0.7734834402799606
+      },
+      "candidates": [
+        {
+          "name": "supplied_center_2mm",
+          "tolerance_m": 0.002,
+          "hypothetical_metrics": {
+            "visible_proxy_hits": 69,
+            "visible_without_source": 0,
+            "visible_losing_all_positive_weights": 0,
+            "removed_pairs": 1,
+            "removed_reference_pairs": 1,
+            "outside_proxy": 0,
+            "reference_blocked_pairs": 0,
+            "road_linear_rgb_mae": 0.020801917257358832
+          },
+          "hypothetical_gates": {
+            "all_visible_hits": true,
+            "no_visible_without_source": true,
+            "outside_below_nominal_center": true,
+            "road_not_worse_than_nominal_center": true,
+            "no_reference_blocking_increase": true
+          },
+          "hypothetical_all_gates": true
+        },
+        {
+          "name": "supplied_center_0mm",
+          "tolerance_m": 0,
+          "hypothetical_metrics": {
+            "visible_proxy_hits": 33,
+            "visible_without_source": 36,
+            "visible_losing_all_positive_weights": 36,
+            "removed_pairs": 37,
+            "removed_reference_pairs": 1,
+            "outside_proxy": 0,
+            "reference_blocked_pairs": 0,
+            "road_linear_rgb_mae": 0.020801917257358832
+          },
+          "hypothetical_gates": {
+            "all_visible_hits": false,
+            "no_visible_without_source": false,
+            "outside_below_nominal_center": true,
+            "road_not_worse_than_nominal_center": true,
+            "no_reference_blocking_increase": true
+          },
+          "hypothetical_all_gates": false
+        }
+      ]
+    },
+    {
+      "frame": 1,
+      "variant": "s_nom_b020_e10mm-reject-facing",
+      "shift": "nom",
+      "kind": "surface10mm",
+      "policy": "reject",
+      "report_sha256": "b5826f72c3786100c8ba53fd36473cb67dfdd456e530aaa43cd0f3364b520bd2",
+      "output_sha256": "76b95b796ae6372494d504a1bb8613a3c34c81d10b802bf31cfc4e3af2070571",
+      "uncertainty_radius_m": 0.005,
+      "reference_pairs": [],
+      "reconstruction_error_lsb": {
+        "min": 0.0,
+        "p50": 0.17281355522572994,
+        "max": 0.6270412355661357
+      },
+      "candidates": [
+        {
+          "name": "supplied_center_2mm",
+          "tolerance_m": 0.002,
+          "hypothetical_metrics": {
+            "visible_proxy_hits": 3,
+            "visible_without_source": 66,
+            "visible_losing_all_positive_weights": 0,
+            "removed_pairs": 0,
+            "removed_reference_pairs": 0,
+            "outside_proxy": 0,
+            "reference_blocked_pairs": 0,
+            "road_linear_rgb_mae": 0.020801917257358832
+          },
+          "hypothetical_gates": {
+            "all_visible_hits": false,
+            "no_visible_without_source": false,
+            "outside_below_nominal_center": true,
+            "road_not_worse_than_nominal_center": true,
+            "no_reference_blocking_increase": true
+          },
+          "hypothetical_all_gates": false
+        },
+        {
+          "name": "supplied_center_0mm",
+          "tolerance_m": 0,
+          "hypothetical_metrics": {
+            "visible_proxy_hits": 0,
+            "visible_without_source": 69,
+            "visible_losing_all_positive_weights": 3,
+            "removed_pairs": 3,
+            "removed_reference_pairs": 0,
+            "outside_proxy": 0,
+            "reference_blocked_pairs": 0,
+            "road_linear_rgb_mae": 0.020801917257358832
+          },
+          "hypothetical_gates": {
+            "all_visible_hits": false,
+            "no_visible_without_source": false,
+            "outside_below_nominal_center": true,
+            "road_not_worse_than_nominal_center": true,
+            "no_reference_blocking_increase": true
+          },
+          "hypothetical_all_gates": false
+        }
+      ]
+    },
+    {
+      "frame": 1,
+      "variant": "s_zp_b020_e1mm-nominal-facing",
+      "shift": "zp",
+      "kind": "surface1mm",
+      "policy": "nominal",
+      "report_sha256": "bc804538c62fe2262de084edbbaccf51f01dbbc4ec74da1c2d2fa98d78ca1dcb",
+      "output_sha256": "949f3c8a62a744b21b6af34f8bc50c650470904dc7344cd990ef898e408471db",
+      "uncertainty_radius_m": 0,
+      "reference_pairs": [],
+      "reconstruction_error_lsb": {
+        "min": 0.0,
+        "p50": 0.1729037187391853,
+        "max": 0.6270412355661357
+      },
+      "candidates": [
+        {
+          "name": "supplied_center_2mm",
+          "tolerance_m": 0.002,
+          "hypothetical_metrics": {
+            "visible_proxy_hits": 0,
+            "visible_without_source": 69,
+            "visible_losing_all_positive_weights": 2,
+            "removed_pairs": 2,
+            "removed_reference_pairs": 0,
+            "outside_proxy": 0,
+            "reference_blocked_pairs": 0,
+            "road_linear_rgb_mae": 0.02080075508026763
+          },
+          "hypothetical_gates": {
+            "all_visible_hits": false,
+            "no_visible_without_source": false,
+            "outside_below_nominal_center": true,
+            "road_not_worse_than_nominal_center": true,
+            "no_reference_blocking_increase": true
+          },
+          "hypothetical_all_gates": false
+        },
+        {
+          "name": "supplied_center_0mm",
+          "tolerance_m": 0,
+          "hypothetical_metrics": {
+            "visible_proxy_hits": 0,
+            "visible_without_source": 69,
+            "visible_losing_all_positive_weights": 2,
+            "removed_pairs": 2,
+            "removed_reference_pairs": 0,
+            "outside_proxy": 0,
+            "reference_blocked_pairs": 0,
+            "road_linear_rgb_mae": 0.02080075508026763
+          },
+          "hypothetical_gates": {
+            "all_visible_hits": false,
+            "no_visible_without_source": false,
+            "outside_below_nominal_center": true,
+            "road_not_worse_than_nominal_center": true,
+            "no_reference_blocking_increase": true
+          },
+          "hypothetical_all_gates": false
+        }
+      ]
+    },
+    {
+      "frame": 1,
+      "variant": "s_zp_b020_e1mm-accept-facing",
+      "shift": "zp",
+      "kind": "surface1mm",
+      "policy": "accept",
+      "report_sha256": "c36631dedb86481206c8606d8300c47893b7a32b4eeb425aec0542524233da50",
+      "output_sha256": "949f3c8a62a744b21b6af34f8bc50c650470904dc7344cd990ef898e408471db",
+      "uncertainty_radius_m": 0.005,
+      "reference_pairs": [],
+      "reconstruction_error_lsb": {
+        "min": 0.0,
+        "p50": 0.1729037187391853,
+        "max": 0.6270412355661357
+      },
+      "candidates": [
+        {
+          "name": "supplied_center_2mm",
+          "tolerance_m": 0.002,
+          "hypothetical_metrics": {
+            "visible_proxy_hits": 0,
+            "visible_without_source": 69,
+            "visible_losing_all_positive_weights": 2,
+            "removed_pairs": 2,
+            "removed_reference_pairs": 0,
+            "outside_proxy": 0,
+            "reference_blocked_pairs": 0,
+            "road_linear_rgb_mae": 0.02080075508026763
+          },
+          "hypothetical_gates": {
+            "all_visible_hits": false,
+            "no_visible_without_source": false,
+            "outside_below_nominal_center": true,
+            "road_not_worse_than_nominal_center": true,
+            "no_reference_blocking_increase": true
+          },
+          "hypothetical_all_gates": false
+        },
+        {
+          "name": "supplied_center_0mm",
+          "tolerance_m": 0,
+          "hypothetical_metrics": {
+            "visible_proxy_hits": 0,
+            "visible_without_source": 69,
+            "visible_losing_all_positive_weights": 2,
+            "removed_pairs": 2,
+            "removed_reference_pairs": 0,
+            "outside_proxy": 0,
+            "reference_blocked_pairs": 0,
+            "road_linear_rgb_mae": 0.02080075508026763
+          },
+          "hypothetical_gates": {
+            "all_visible_hits": false,
+            "no_visible_without_source": false,
+            "outside_below_nominal_center": true,
+            "road_not_worse_than_nominal_center": true,
+            "no_reference_blocking_increase": true
+          },
+          "hypothetical_all_gates": false
+        }
+      ]
+    },
+    {
+      "frame": 1,
+      "variant": "s_zp_b020_e1mm-reject-facing",
+      "shift": "zp",
+      "kind": "surface1mm",
+      "policy": "reject",
+      "report_sha256": "dbf7831a30a39744930f411289cfdaa68d29272d2c689917a601aec6ca8cb58c",
+      "output_sha256": "949f3c8a62a744b21b6af34f8bc50c650470904dc7344cd990ef898e408471db",
+      "uncertainty_radius_m": 0.005,
+      "reference_pairs": [],
+      "reconstruction_error_lsb": {
+        "min": 0.0,
+        "p50": 0.1729037187391853,
+        "max": 0.6270412355661357
+      },
+      "candidates": [
+        {
+          "name": "supplied_center_2mm",
+          "tolerance_m": 0.002,
+          "hypothetical_metrics": {
+            "visible_proxy_hits": 0,
+            "visible_without_source": 69,
+            "visible_losing_all_positive_weights": 2,
+            "removed_pairs": 2,
+            "removed_reference_pairs": 0,
+            "outside_proxy": 0,
+            "reference_blocked_pairs": 0,
+            "road_linear_rgb_mae": 0.02080075508026763
+          },
+          "hypothetical_gates": {
+            "all_visible_hits": false,
+            "no_visible_without_source": false,
+            "outside_below_nominal_center": true,
+            "road_not_worse_than_nominal_center": true,
+            "no_reference_blocking_increase": true
+          },
+          "hypothetical_all_gates": false
+        },
+        {
+          "name": "supplied_center_0mm",
+          "tolerance_m": 0,
+          "hypothetical_metrics": {
+            "visible_proxy_hits": 0,
+            "visible_without_source": 69,
+            "visible_losing_all_positive_weights": 2,
+            "removed_pairs": 2,
+            "removed_reference_pairs": 0,
+            "outside_proxy": 0,
+            "reference_blocked_pairs": 0,
+            "road_linear_rgb_mae": 0.02080075508026763
+          },
+          "hypothetical_gates": {
+            "all_visible_hits": false,
+            "no_visible_without_source": false,
+            "outside_below_nominal_center": true,
+            "road_not_worse_than_nominal_center": true,
+            "no_reference_blocking_increase": true
+          },
+          "hypothetical_all_gates": false
+        }
+      ]
+    },
+    {
+      "frame": 1,
+      "variant": "s_zp_b020_e10mm-nominal-facing",
+      "shift": "zp",
+      "kind": "surface10mm",
+      "policy": "nominal",
+      "report_sha256": "fbd0537ef1506e0c8aef6c027c39befed191e9e25daad58b956ec049256f0091",
+      "output_sha256": "5d0eba686e44cfa160080abcf5ae18afb7469e205bbc85694f4e1c695d1642fe",
+      "uncertainty_radius_m": 0,
+      "reference_pairs": [],
+      "reconstruction_error_lsb": {
+        "min": 0.0,
+        "p50": 0.17289778723076665,
+        "max": 0.6270412355661357
+      },
+      "candidates": [
+        {
+          "name": "supplied_center_2mm",
+          "tolerance_m": 0.002,
+          "hypothetical_metrics": {
+            "visible_proxy_hits": 0,
+            "visible_without_source": 69,
+            "visible_losing_all_positive_weights": 4,
+            "removed_pairs": 4,
+            "removed_reference_pairs": 0,
+            "outside_proxy": 0,
+            "reference_blocked_pairs": 0,
+            "road_linear_rgb_mae": 0.02080075508026763
+          },
+          "hypothetical_gates": {
+            "all_visible_hits": false,
+            "no_visible_without_source": false,
+            "outside_below_nominal_center": true,
+            "road_not_worse_than_nominal_center": true,
+            "no_reference_blocking_increase": true
+          },
+          "hypothetical_all_gates": false
+        },
+        {
+          "name": "supplied_center_0mm",
+          "tolerance_m": 0,
+          "hypothetical_metrics": {
+            "visible_proxy_hits": 0,
+            "visible_without_source": 69,
+            "visible_losing_all_positive_weights": 4,
+            "removed_pairs": 4,
+            "removed_reference_pairs": 0,
+            "outside_proxy": 0,
+            "reference_blocked_pairs": 0,
+            "road_linear_rgb_mae": 0.02080075508026763
+          },
+          "hypothetical_gates": {
+            "all_visible_hits": false,
+            "no_visible_without_source": false,
+            "outside_below_nominal_center": true,
+            "road_not_worse_than_nominal_center": true,
+            "no_reference_blocking_increase": true
+          },
+          "hypothetical_all_gates": false
+        }
+      ]
+    },
+    {
+      "frame": 1,
+      "variant": "s_zp_b020_e10mm-accept-facing",
+      "shift": "zp",
+      "kind": "surface10mm",
+      "policy": "accept",
+      "report_sha256": "6989075369dae12984b1e80297744944555df1744eb864b3d3289d1ac37ba5f5",
+      "output_sha256": "12413e88c06787b0dfef859513299a23940a50f9bb58117e1b58d25e9ee0d1ba",
+      "uncertainty_radius_m": 0.005,
+      "reference_pairs": [],
+      "reconstruction_error_lsb": {
+        "min": 0.0,
+        "p50": 0.1729108670731705,
+        "max": 0.7734834402799606
+      },
+      "candidates": [
+        {
+          "name": "supplied_center_2mm",
+          "tolerance_m": 0.002,
+          "hypothetical_metrics": {
+            "visible_proxy_hits": 0,
+            "visible_without_source": 69,
+            "visible_losing_all_positive_weights": 69,
+            "removed_pairs": 69,
+            "removed_reference_pairs": 0,
+            "outside_proxy": 0,
+            "reference_blocked_pairs": 0,
+            "road_linear_rgb_mae": 0.02080075508026763
+          },
+          "hypothetical_gates": {
+            "all_visible_hits": false,
+            "no_visible_without_source": false,
+            "outside_below_nominal_center": true,
+            "road_not_worse_than_nominal_center": true,
+            "no_reference_blocking_increase": true
+          },
+          "hypothetical_all_gates": false
+        },
+        {
+          "name": "supplied_center_0mm",
+          "tolerance_m": 0,
+          "hypothetical_metrics": {
+            "visible_proxy_hits": 0,
+            "visible_without_source": 69,
+            "visible_losing_all_positive_weights": 69,
+            "removed_pairs": 69,
+            "removed_reference_pairs": 0,
+            "outside_proxy": 0,
+            "reference_blocked_pairs": 0,
+            "road_linear_rgb_mae": 0.02080075508026763
+          },
+          "hypothetical_gates": {
+            "all_visible_hits": false,
+            "no_visible_without_source": false,
+            "outside_below_nominal_center": true,
+            "road_not_worse_than_nominal_center": true,
+            "no_reference_blocking_increase": true
+          },
+          "hypothetical_all_gates": false
+        }
+      ]
+    },
+    {
+      "frame": 1,
+      "variant": "s_zp_b020_e10mm-reject-facing",
+      "shift": "zp",
+      "kind": "surface10mm",
+      "policy": "reject",
+      "report_sha256": "243abad16e38acb384a06a9b53521760c54ba63a138cc75142615657534e7f0e",
+      "output_sha256": "ee941ee060a5649cf234073ce55502e94c961ccf0e3a915667d5560d83cf6450",
+      "uncertainty_radius_m": 0.005,
+      "reference_pairs": [],
+      "reconstruction_error_lsb": {
+        "min": 0.0,
+        "p50": 0.1728986540639852,
+        "max": 0.6270412355661357
+      },
+      "candidates": [
+        {
+          "name": "supplied_center_2mm",
+          "tolerance_m": 0.002,
+          "hypothetical_metrics": {
+            "visible_proxy_hits": 0,
+            "visible_without_source": 69,
+            "visible_losing_all_positive_weights": 3,
+            "removed_pairs": 3,
+            "removed_reference_pairs": 0,
+            "outside_proxy": 0,
+            "reference_blocked_pairs": 0,
+            "road_linear_rgb_mae": 0.02080075508026763
+          },
+          "hypothetical_gates": {
+            "all_visible_hits": false,
+            "no_visible_without_source": false,
+            "outside_below_nominal_center": true,
+            "road_not_worse_than_nominal_center": true,
+            "no_reference_blocking_increase": true
+          },
+          "hypothetical_all_gates": false
+        },
+        {
+          "name": "supplied_center_0mm",
+          "tolerance_m": 0,
+          "hypothetical_metrics": {
+            "visible_proxy_hits": 0,
+            "visible_without_source": 69,
+            "visible_losing_all_positive_weights": 3,
+            "removed_pairs": 3,
+            "removed_reference_pairs": 0,
+            "outside_proxy": 0,
+            "reference_blocked_pairs": 0,
+            "road_linear_rgb_mae": 0.02080075508026763
+          },
+          "hypothetical_gates": {
+            "all_visible_hits": false,
+            "no_visible_without_source": false,
+            "outside_below_nominal_center": true,
+            "road_not_worse_than_nominal_center": true,
+            "no_reference_blocking_increase": true
+          },
+          "hypothetical_all_gates": false
+        }
+      ]
+    },
+    {
+      "frame": 1,
+      "variant": "s_zm_b020_e1mm-nominal-facing",
+      "shift": "zm",
+      "kind": "surface1mm",
+      "policy": "nominal",
+      "report_sha256": "3c482a366524d143e1614ace8b151316c500cd85f9b5f0af4f73bcad6bcebbc6",
+      "output_sha256": "58d68459bdd72302945a6f8d111c659f3782ef64169407042a74b64f4aceea5a",
+      "uncertainty_radius_m": 0,
+      "reference_pairs": [],
+      "reconstruction_error_lsb": {
+        "min": 0.0,
+        "p50": 0.1727827526628971,
+        "max": 0.6270412355661357
+      },
+      "candidates": [
+        {
+          "name": "supplied_center_2mm",
+          "tolerance_m": 0.002,
+          "hypothetical_metrics": {
+            "visible_proxy_hits": 3,
+            "visible_without_source": 66,
+            "visible_losing_all_positive_weights": 0,
+            "removed_pairs": 0,
+            "removed_reference_pairs": 0,
+            "outside_proxy": 0,
+            "reference_blocked_pairs": 0,
+            "road_linear_rgb_mae": 0.02080264363531874
+          },
+          "hypothetical_gates": {
+            "all_visible_hits": false,
+            "no_visible_without_source": false,
+            "outside_below_nominal_center": true,
+            "road_not_worse_than_nominal_center": true,
+            "no_reference_blocking_increase": true
+          },
+          "hypothetical_all_gates": false
+        },
+        {
+          "name": "supplied_center_0mm",
+          "tolerance_m": 0,
+          "hypothetical_metrics": {
+            "visible_proxy_hits": 3,
+            "visible_without_source": 66,
+            "visible_losing_all_positive_weights": 0,
+            "removed_pairs": 0,
+            "removed_reference_pairs": 0,
+            "outside_proxy": 0,
+            "reference_blocked_pairs": 0,
+            "road_linear_rgb_mae": 0.02080264363531874
+          },
+          "hypothetical_gates": {
+            "all_visible_hits": false,
+            "no_visible_without_source": false,
+            "outside_below_nominal_center": true,
+            "road_not_worse_than_nominal_center": true,
+            "no_reference_blocking_increase": true
+          },
+          "hypothetical_all_gates": false
+        }
+      ]
+    },
+    {
+      "frame": 1,
+      "variant": "s_zm_b020_e1mm-accept-facing",
+      "shift": "zm",
+      "kind": "surface1mm",
+      "policy": "accept",
+      "report_sha256": "b7e1e45874e2080a67289f877be9960311384b2e51135b13b685cad0aa29a5bf",
+      "output_sha256": "58d68459bdd72302945a6f8d111c659f3782ef64169407042a74b64f4aceea5a",
+      "uncertainty_radius_m": 0.005,
+      "reference_pairs": [],
+      "reconstruction_error_lsb": {
+        "min": 0.0,
+        "p50": 0.1727827526628971,
+        "max": 0.6270412355661357
+      },
+      "candidates": [
+        {
+          "name": "supplied_center_2mm",
+          "tolerance_m": 0.002,
+          "hypothetical_metrics": {
+            "visible_proxy_hits": 3,
+            "visible_without_source": 66,
+            "visible_losing_all_positive_weights": 0,
+            "removed_pairs": 0,
+            "removed_reference_pairs": 0,
+            "outside_proxy": 0,
+            "reference_blocked_pairs": 0,
+            "road_linear_rgb_mae": 0.02080264363531874
+          },
+          "hypothetical_gates": {
+            "all_visible_hits": false,
+            "no_visible_without_source": false,
+            "outside_below_nominal_center": true,
+            "road_not_worse_than_nominal_center": true,
+            "no_reference_blocking_increase": true
+          },
+          "hypothetical_all_gates": false
+        },
+        {
+          "name": "supplied_center_0mm",
+          "tolerance_m": 0,
+          "hypothetical_metrics": {
+            "visible_proxy_hits": 3,
+            "visible_without_source": 66,
+            "visible_losing_all_positive_weights": 0,
+            "removed_pairs": 0,
+            "removed_reference_pairs": 0,
+            "outside_proxy": 0,
+            "reference_blocked_pairs": 0,
+            "road_linear_rgb_mae": 0.02080264363531874
+          },
+          "hypothetical_gates": {
+            "all_visible_hits": false,
+            "no_visible_without_source": false,
+            "outside_below_nominal_center": true,
+            "road_not_worse_than_nominal_center": true,
+            "no_reference_blocking_increase": true
+          },
+          "hypothetical_all_gates": false
+        }
+      ]
+    },
+    {
+      "frame": 1,
+      "variant": "s_zm_b020_e1mm-reject-facing",
+      "shift": "zm",
+      "kind": "surface1mm",
+      "policy": "reject",
+      "report_sha256": "df96bef39197687d3d43af6395892aec37ba89b69f36335175f636cc7db9cece",
+      "output_sha256": "58d68459bdd72302945a6f8d111c659f3782ef64169407042a74b64f4aceea5a",
+      "uncertainty_radius_m": 0.005,
+      "reference_pairs": [],
+      "reconstruction_error_lsb": {
+        "min": 0.0,
+        "p50": 0.1727827526628971,
+        "max": 0.6270412355661357
+      },
+      "candidates": [
+        {
+          "name": "supplied_center_2mm",
+          "tolerance_m": 0.002,
+          "hypothetical_metrics": {
+            "visible_proxy_hits": 3,
+            "visible_without_source": 66,
+            "visible_losing_all_positive_weights": 0,
+            "removed_pairs": 0,
+            "removed_reference_pairs": 0,
+            "outside_proxy": 0,
+            "reference_blocked_pairs": 0,
+            "road_linear_rgb_mae": 0.02080264363531874
+          },
+          "hypothetical_gates": {
+            "all_visible_hits": false,
+            "no_visible_without_source": false,
+            "outside_below_nominal_center": true,
+            "road_not_worse_than_nominal_center": true,
+            "no_reference_blocking_increase": true
+          },
+          "hypothetical_all_gates": false
+        },
+        {
+          "name": "supplied_center_0mm",
+          "tolerance_m": 0,
+          "hypothetical_metrics": {
+            "visible_proxy_hits": 3,
+            "visible_without_source": 66,
+            "visible_losing_all_positive_weights": 0,
+            "removed_pairs": 0,
+            "removed_reference_pairs": 0,
+            "outside_proxy": 0,
+            "reference_blocked_pairs": 0,
+            "road_linear_rgb_mae": 0.02080264363531874
+          },
+          "hypothetical_gates": {
+            "all_visible_hits": false,
+            "no_visible_without_source": false,
+            "outside_below_nominal_center": true,
+            "road_not_worse_than_nominal_center": true,
+            "no_reference_blocking_increase": true
+          },
+          "hypothetical_all_gates": false
+        }
+      ]
+    },
+    {
+      "frame": 1,
+      "variant": "s_zm_b020_e10mm-nominal-facing",
+      "shift": "zm",
+      "kind": "surface10mm",
+      "policy": "nominal",
+      "report_sha256": "02fe35b583252bcd42ea71456af90e9342cf7df42120effd15596404dc8b90f3",
+      "output_sha256": "c3e3be0386ccfe5e127a61c66f8c9c4f0df947162290d388fb4a31a1e89286b5",
+      "uncertainty_radius_m": 0,
+      "reference_pairs": [
+        {
+          "y": 203,
+          "x": 318,
+          "camera": 3,
+          "virtual_roi": "target",
+          "target_visible_to_camera": false,
+          "carrier_xyz_m": [
+            2.200313091278076,
+            2.18076229095459,
+            0.9984337687492371
+          ],
+          "camera_origin_m": [
+            0.38617924625616884,
+            1.1000000000000005,
+            1.12
+          ],
+          "direction_cosines": [
+            0.857681110904218,
+            0.510959764558125,
+            -0.05747374183757341
+          ],
+          "reference_gap_m": 0.02725124901714702,
+          "supplied_gap_m": null,
+          "supplied_central_blocked": false,
+          "uncertainty_class": "clear",
+          "near_face_bits": 34,
+          "facing_face_bits": 32,
+          "base_weight": 1.0,
+          "rejected_by": {
+            "supplied_center_2mm": false,
+            "supplied_center_0mm": false
+          }
+        }
+      ],
+      "reconstruction_error_lsb": {
+        "min": 0.0,
+        "p50": 0.17279201944627687,
+        "max": 0.7734834402799606
+      },
+      "candidates": [
+        {
+          "name": "supplied_center_2mm",
+          "tolerance_m": 0.002,
+          "hypothetical_metrics": {
+            "visible_proxy_hits": 69,
+            "visible_without_source": 0,
+            "visible_losing_all_positive_weights": 0,
+            "removed_pairs": 0,
+            "removed_reference_pairs": 0,
+            "outside_proxy": 0,
+            "reference_blocked_pairs": 1,
+            "road_linear_rgb_mae": 0.02080264363531874
+          },
+          "hypothetical_gates": {
+            "all_visible_hits": true,
+            "no_visible_without_source": true,
+            "outside_below_nominal_center": true,
+            "road_not_worse_than_nominal_center": true,
+            "no_reference_blocking_increase": false
+          },
+          "hypothetical_all_gates": false
+        },
+        {
+          "name": "supplied_center_0mm",
+          "tolerance_m": 0,
+          "hypothetical_metrics": {
+            "visible_proxy_hits": 69,
+            "visible_without_source": 0,
+            "visible_losing_all_positive_weights": 0,
+            "removed_pairs": 0,
+            "removed_reference_pairs": 0,
+            "outside_proxy": 0,
+            "reference_blocked_pairs": 1,
+            "road_linear_rgb_mae": 0.02080264363531874
+          },
+          "hypothetical_gates": {
+            "all_visible_hits": true,
+            "no_visible_without_source": true,
+            "outside_below_nominal_center": true,
+            "road_not_worse_than_nominal_center": true,
+            "no_reference_blocking_increase": false
+          },
+          "hypothetical_all_gates": false
+        }
+      ]
+    },
+    {
+      "frame": 1,
+      "variant": "s_zm_b020_e10mm-accept-facing",
+      "shift": "zm",
+      "kind": "surface10mm",
+      "policy": "accept",
+      "report_sha256": "6288c67b6be6c044f92f5d705a6119f002626b864681b87d79bf533c104eb309",
+      "output_sha256": "be4e3bff4853a77f56b36a6a3c554c7f80c45aad81882934ac3734f73781fa58",
+      "uncertainty_radius_m": 0.005,
+      "reference_pairs": [
+        {
+          "y": 203,
+          "x": 318,
+          "camera": 3,
+          "virtual_roi": "target",
+          "target_visible_to_camera": false,
+          "carrier_xyz_m": [
+            2.200313091278076,
+            2.18076229095459,
+            0.9984337687492371
+          ],
+          "camera_origin_m": [
+            0.38617924625616884,
+            1.1000000000000005,
+            1.12
+          ],
+          "direction_cosines": [
+            0.857681110904218,
+            0.510959764558125,
+            -0.05747374183757341
+          ],
+          "reference_gap_m": 0.02725124901714702,
+          "supplied_gap_m": null,
+          "supplied_central_blocked": false,
+          "uncertainty_class": "ambiguous",
+          "near_face_bits": 34,
+          "facing_face_bits": 32,
+          "base_weight": 1.0,
+          "rejected_by": {
+            "supplied_center_2mm": false,
+            "supplied_center_0mm": false
+          }
+        },
+        {
+          "y": 205,
+          "x": 327,
+          "camera": 3,
+          "virtual_roi": "target",
+          "target_visible_to_camera": false,
+          "carrier_xyz_m": [
+            2.0233399868011475,
+            2.501765727996826,
+            0.9911701679229736
+          ],
+          "camera_origin_m": [
+            0.38617924625616884,
+            1.1000000000000005,
+            1.12
+          ],
+          "direction_cosines": [
+            0.7582504200835124,
+            0.6492273029699263,
+            -0.05966749132963949
+          ],
+          "reference_gap_m": 0.1479839671529846,
+          "supplied_gap_m": 0.06418624265377672,
+          "supplied_central_blocked": true,
+          "uncertainty_class": "ambiguous",
+          "near_face_bits": 40,
+          "facing_face_bits": 32,
+          "base_weight": 1.0,
+          "rejected_by": {
+            "supplied_center_2mm": true,
+            "supplied_center_0mm": true
+          }
+        },
+        {
+          "y": 206,
+          "x": 322,
+          "camera": 3,
+          "virtual_roi": "target",
+          "target_visible_to_camera": false,
+          "carrier_xyz_m": [
+            2.20192551612854,
+            2.405775308609009,
+            0.990370512008667
+          ],
+          "camera_origin_m": [
+            0.38617924625616884,
+            1.1000000000000005,
+            1.12
+          ],
+          "direction_cosines": [
+            0.8105051109650956,
+            0.5828664384225979,
+            -0.05786346049117811
+          ],
+          "reference_gap_m": 0.16641742318196004,
+          "supplied_gap_m": 0.0800071055556523,
+          "supplied_central_blocked": true,
+          "uncertainty_class": "ambiguous",
+          "near_face_bits": 34,
+          "facing_face_bits": 32,
+          "base_weight": 1.0,
+          "rejected_by": {
+            "supplied_center_2mm": true,
+            "supplied_center_0mm": true
+          }
+        },
+        {
+          "y": 207,
+          "x": 324,
+          "camera": 3,
+          "virtual_roi": "target",
+          "target_visible_to_camera": false,
+          "carrier_xyz_m": [
+            2.188779354095459,
+            2.5012261867523193,
+            0.993868887424469
+          ],
+          "camera_origin_m": [
+            0.38617924625616884,
+            1.1000000000000005,
+            1.12
+          ],
+          "direction_cosines": [
+            0.7883191419328552,
+            0.6127889488026792,
+            -0.05516008237443411
+          ],
+          "reference_gap_m": 0.11115125851176552,
+          "supplied_gap_m": 0.020505998664992135,
+          "supplied_central_blocked": true,
+          "uncertainty_class": "ambiguous",
+          "near_face_bits": 40,
+          "facing_face_bits": 32,
+          "base_weight": 1.0,
+          "rejected_by": {
+            "supplied_center_2mm": true,
+            "supplied_center_0mm": true
+          }
+        }
+      ],
+      "reconstruction_error_lsb": {
+        "min": 0.0,
+        "p50": 0.17279113084077835,
+        "max": 0.7734834402799606
+      },
+      "candidates": [
+        {
+          "name": "supplied_center_2mm",
+          "tolerance_m": 0.002,
+          "hypothetical_metrics": {
+            "visible_proxy_hits": 69,
+            "visible_without_source": 0,
+            "visible_losing_all_positive_weights": 0,
+            "removed_pairs": 3,
+            "removed_reference_pairs": 3,
+            "outside_proxy": 0,
+            "reference_blocked_pairs": 1,
+            "road_linear_rgb_mae": 0.02080264363531874
+          },
+          "hypothetical_gates": {
+            "all_visible_hits": true,
+            "no_visible_without_source": true,
+            "outside_below_nominal_center": true,
+            "road_not_worse_than_nominal_center": true,
+            "no_reference_blocking_increase": false
+          },
+          "hypothetical_all_gates": false
+        },
+        {
+          "name": "supplied_center_0mm",
+          "tolerance_m": 0,
+          "hypothetical_metrics": {
+            "visible_proxy_hits": 69,
+            "visible_without_source": 0,
+            "visible_losing_all_positive_weights": 0,
+            "removed_pairs": 3,
+            "removed_reference_pairs": 3,
+            "outside_proxy": 0,
+            "reference_blocked_pairs": 1,
+            "road_linear_rgb_mae": 0.02080264363531874
+          },
+          "hypothetical_gates": {
+            "all_visible_hits": true,
+            "no_visible_without_source": true,
+            "outside_below_nominal_center": true,
+            "road_not_worse_than_nominal_center": true,
+            "no_reference_blocking_increase": false
+          },
+          "hypothetical_all_gates": false
+        }
+      ]
+    },
+    {
+      "frame": 1,
+      "variant": "s_zm_b020_e10mm-reject-facing",
+      "shift": "zm",
+      "kind": "surface10mm",
+      "policy": "reject",
+      "report_sha256": "7097acfe73797f09da56d875cffe4f3d6af58cae0f62d7a4d5e4d0494be70745",
+      "output_sha256": "a9c76798a003a853e47bcad306000c688545901b38ab44f2a160e9d4ca7787b5",
+      "uncertainty_radius_m": 0.005,
+      "reference_pairs": [],
+      "reconstruction_error_lsb": {
+        "min": 0.0,
+        "p50": 0.172791270786675,
+        "max": 0.7734834402799606
+      },
+      "candidates": [
+        {
+          "name": "supplied_center_2mm",
+          "tolerance_m": 0.002,
+          "hypothetical_metrics": {
+            "visible_proxy_hits": 69,
+            "visible_without_source": 0,
+            "visible_losing_all_positive_weights": 0,
+            "removed_pairs": 0,
+            "removed_reference_pairs": 0,
+            "outside_proxy": 0,
+            "reference_blocked_pairs": 0,
+            "road_linear_rgb_mae": 0.02080264363531874
+          },
+          "hypothetical_gates": {
+            "all_visible_hits": true,
+            "no_visible_without_source": true,
+            "outside_below_nominal_center": true,
+            "road_not_worse_than_nominal_center": true,
+            "no_reference_blocking_increase": true
+          },
+          "hypothetical_all_gates": true
+        },
+        {
+          "name": "supplied_center_0mm",
+          "tolerance_m": 0,
+          "hypothetical_metrics": {
+            "visible_proxy_hits": 69,
+            "visible_without_source": 0,
+            "visible_losing_all_positive_weights": 0,
+            "removed_pairs": 0,
+            "removed_reference_pairs": 0,
+            "outside_proxy": 0,
+            "reference_blocked_pairs": 0,
+            "road_linear_rgb_mae": 0.02080264363531874
+          },
+          "hypothetical_gates": {
+            "all_visible_hits": true,
+            "no_visible_without_source": true,
+            "outside_below_nominal_center": true,
+            "road_not_worse_than_nominal_center": true,
+            "no_reference_blocking_increase": true
+          },
+          "hypothetical_all_gates": true
+        }
+      ]
+    }
+  ],
+  "limitations": [
+    "Posthoc same coded scene/two correlated frames, no holdout",
+    "Reference blocked is conservative carrier/AABB proxy, not independent scene false acceptance",
+    "Nominal box used only for evaluation, never candidate selection",
+    "Central-only counterfactual not equivalent to changing tolerance_m in server which also affects neighboring rays",
+    "Native implementation and matched captures required before production claims"
+  ]
+}
