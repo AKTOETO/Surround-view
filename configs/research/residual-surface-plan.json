@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "scope": "posthoc_exhaustive_residual_native_source_surface_correspondence",
+  "phase": "developmental_independent_geometry_truth_no_new_RGB",
+  "prepared_input": "artifacts/residual-surface-input-v1.json",
+  "truth_path": "artifacts/parallax-sensor-inputs-v1/rig101-near-z080/seed101-capture/paired_truth.json",
+  "case_plan": "artifacts/parallax-sensor-inputs-v1/rig101-near-z080/plan.json",
+  "generator_provenance": "artifacts/parallax-sensor-inputs-v1/provenance.json",
+  "output_root": "artifacts/residual-surface-truth-v1",
+  "selection": "ALL9 unique residual frame/y/x coordinates from all30 memberships in facing_entry_gap_v1, ALL4 cameras, ALL36 facing-enabled native condition memberships. Native retained UV when available; independently projected UV for never-retained alternatives explicitly labeled.",
+  "surface_match_tolerances_m": [
+    0.002,
+    0.02
+  ],
+  "ray_oracle_tolerance_m": 0.0002,
+  "native_projection_tolerance_px": 0.002,
+  "measurements": [
+    "Full Blender virtual-target mask and target visibility equality against frozen archived truth before interpreting rays",
+    "Nearest scene hits at actual retained UV and four positive-coefficient bilinear texel-centre rays; object and point differences separately",
+    "Exported evaluated world triangles, independent two-sided NumPy intersection versus Blender scene.ray_cast",
+    "Alternative source matching per historical eligibility, not merely camera visibility bits"
+  ],
+  "frozen_files": {
+    "artifacts/residual-surface-input-v1.json": "31b9bdc7c0c26ba989dd37094b93d1035bd2a41ea6599d09dbe5ab96130354d6",
+    "docs/validation/baselines/facing_entry_gap_v1.json": "eed58b943368add6b57e0aeafc27687db4eaf23a65db316112d35bfebf9c2514",
+    "docs/validation/baselines/native_facing_v1.json": "23f593848a537eb8f8ebe5fb71c99b2d5efb852ca2546ebd54ac78c51af4f465",
+    "artifacts/parallax-sensor-inputs-v1/rig101-near-z080/plan.json": "db270390c30bad4759f3f6fc0c9a00d7ecce6f1eed4a0808790aa5e0ffa3f398",
+    "artifacts/parallax-sensor-inputs-v1/rig101-near-z080/seed101-capture/paired_truth.json": "cc9c5f54261a19501514e40d9800cfadee1f37993881e4afc90605bd737b18ab",
+    "artifacts/parallax-sensor-inputs-v1/provenance.json": "9be8f358ef4ab96b131d21c8f3b2de6efeeac14e322770f7e99eb43f594df5db",
+    "assets/scenarios/parallax-sensor-v1.json": "cf679acfae308d1815f2e4ae9bcb91f90bf0eaa39f6ca5532e576b173e65952a",
+    "tools/research/residual_surface.py": "38b18adb402cdc7b848986b9c762b4c465fe8234d84ede901668eab4e2dcf2d5",
+    "tools/blender/residual_surface_truth.py": "b5f8d6931f625cc1771aa7159af6b806a6b5eba9da6ea071e04cd94ad4b2b107",
+    "tools/blender/geometry_truth.py": "ba16fd8a2be0be2d42978d15db4cbfe14de406845be439452d5e9dd96cf6a659",
+    "tools/blender/source_surface_truth.py": "8d3060c79795a980018d33fbfff952db1860b30a122399b886b4ef9bb8f84a5f",
+    "tools/blender/paired_truth.py": "8a6139ca15abb51ba237e5f8647982a7e31ab95daae9e6d25dbe792bd6fb69ba",
+    "tools/blender/visibility.py": "466a5cada22d26bfc249125d189018afafdb349a6dd99a71b448995011350fa6"
+  },
+  "limitations": [
+    "Posthoc selected failure coordinates in one explored coded scene, not unbiased full-frame quality ranking or holdout",
+    "Point and four-texel geometry do not reconstruct antialiased Eevee RGB/filter kernel",
+    "Supplied AABB reference blocking is not independent scene error; scene truth is evaluation-only runtime-unavailable input",
+    "Independent projections for rejected alternatives are not native source samples",
+    "No new mitigation, real sensor geometry, overhead or Aurora conclusions"
+  ]
+}
