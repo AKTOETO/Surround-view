@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "scope": "native_facing_remaining_reference_entry_gap_audit",
+  "phase": "posthoc_readonly_developmental",
+  "primary_report": "docs/validation/baselines/native_facing_v1.json",
+  "native_plan": "configs/research/native-facing-plan.json",
+  "selection": "ALL36 facing-enabled outputs; ALL retained nominal-reference-blocked camera pairs, no coordinate cap; all independent-visible target pixels for preservation. Prior aggregate results known.",
+  "candidates": [
+    {
+      "name": "supplied_center_2mm",
+      "tolerance_m": 0.002
+    },
+    {
+      "name": "supplied_center_0mm",
+      "tolerance_m": 0
+    }
+  ],
+  "candidate_scope": "Additional central-only rejection of already native-eligible sources against the CURRENT supplied box. No use of nominal true shift for selection; no re-run of footprint, no creation of samples. Hypothetical edge_feather recomposition, not a production tolerance change.",
+  "measurements": [
+    "First finite-face intersection to endpoint distance for remaining reference pairs; supplied versus nominal geometry",
+    "Current supplied central blocking at configured20mm versus diagnostic2/0mm; eroded/dilated classification",
+    "Hypothetical actual-input RGB, visible support loss, road/outside/reference gates for fixed candidates on all shifts"
+  ],
+  "reconstruction_error_limit_lsb": 2,
+  "frozen_files": {
+    "docs/validation/baselines/native_facing_v1.json": "23f593848a537eb8f8ebe5fb71c99b2d5efb852ca2546ebd54ac78c51af4f465",
+    "configs/research/native-facing-plan.json": "0ea22f2a7a0b5e290243e25c7e08693ea42e8f61b99f743a2b4494ac779dfe58",
+    "tools/research/source_visibility.py": "39c19b8b13a908feff773ebe0803dae1dee49b1d972956a4671a61a480ccd7d9",
+    "tools/research/uncertainty_facing.py": "22e779ef65481842002b040906553bc485834dca5efb709e935e1b35420a2108",
+    "tools/research/native_facing.py": "33fd798b548b624e7d6b20f2a8091aca7857c0d3a69768064fad042ae8784690"
+  },
+  "limitations": [
+    "Posthoc same coded scene/two correlated frames, no holdout",
+    "Reference blocked is conservative carrier/AABB proxy, not independent scene false acceptance",
+    "Nominal box used only for evaluation, never candidate selection",
+    "Central-only counterfactual not equivalent to changing tolerance_m in server which also affects neighboring rays",
+    "Native implementation and matched captures required before production claims"
+  ]
+}
