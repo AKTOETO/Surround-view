@@ -1,5 +1,7 @@
 # Состояние прототипа и границы подтверждения
 
+Дополнение 13.10.2026: source_visibility_v1 реализован в native renderer/server/sv-client-lib: четыре camera statuses, accepted ambiguity10/clear11, отдельные central7/footprint12, typed owning view, Unix/TCP и native parity семи fusion modes. Полная Mesa регрессия58/58,81.69s; NVIDIA inspection25/25. GUI/parallel products/overhead и general mitigation остаются открытыми: [[validation/SOURCE_VISIBILITY_PRODUCT]], §4.85.
+
 Дополнение 13.10.2026: read-only remaining entry-gap audit36 native outputs/30 memberships выполнен. Fixed supplied central2/0mm filters теряют visible target при Z+5mm,9 reference memberships не имеют supplied segment hit. Grazing ray amplifies5mm face shift to105.274mm entry shift. Defaults/product не менялись; selected CTest4/4: [[validation/FACING_ENTRY_GAP]], §4.84.
 
 Дополнение 13.10.2026: native optional require_facing_surface через configure_surface/catalog;40 NVIDIA captures,4 historical controls exact,oracle0/8407961, Mesa CTest57/57. Z+5mm accept/surface10mm сохраняет76/69 hits и снижает reference4→2, но общего fixed robust профиля нет. Read-only pair attribution и actual RGBA подтверждение разделены: [[validation/NATIVE_FACING]], §4.83.

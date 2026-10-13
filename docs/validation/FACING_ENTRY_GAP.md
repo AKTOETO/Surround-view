@@ -80,7 +80,7 @@ python3 docs/diploma/plot_facing_entry_gap.py
 
 Не переносить fixed central2/0mm rejection в сервер как mitigation: исследование выявило regression preservation. Defaults остаются прежними. Следующие ограниченные задачи:
 
-1. Добавить native accepted-ambiguity/rejection-reason диагностику с точным контрактом, отдельно от eligibility/positive-weight/path маски. Нельзя трактовать status1 как definitely-clear.
+1. Native accepted-ambiguity/rejection-reason диагностика и typed wire delivery выполнены следующим этапом: [[validation/SOURCE_VISIBILITY_PRODUCT]]. Далее подключить GUI и использовать продукт в matched исследованиях; status1 не трактовать как definitely-clear.
 2. Проверить source-surface/triangle correspondence для всех9 уникальных residual pairs и альтернативных камер, включая finite filter footprint; visibility bit не задаёт точку поверхности.
 3. Обосновать доступную дополнительную информацию для joint selection/unsupported policy без истинного shift. Явно различать independent validation truth и runtime input.
 4. Затем frozen nonuniform/natural-object holdout с собственными geometry/mount seeds и overhead. По однородному marker и двум correlated frames ranking не завершать.

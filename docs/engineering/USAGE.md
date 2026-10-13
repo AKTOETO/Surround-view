@@ -1138,7 +1138,7 @@ Integer RGBA channels нельзя напрямую показывать как 
 
 `surface.source_occlusion_box.uncertainty` is optional. If present, both `radius_m` (finite[0,0.05]m) and `ambiguous_policy` (`accept` or `reject`) are required; extra keys are rejected. Omit the object for nominal behavior; radius0 retains historical classification. For fixed carrier/poses/endpoint bias, the eroded supplied box certifies blocking and the dilated box certifies clearance. Accept admits ambiguous central rays to the existing nominal footprint stage; reject returns native `SourceProjectionStatus::uncertain_occluder=8`. Status1 remains policy eligibility, including accepted ambiguity, not definitely-clear confidence. Status7 can represent definite central blocking or nominal footprint rejection; rejected UV stays NaN. Support membership and neighbor rays remain nominal and independent of central uncertainty.
 
-The existing full-surface `Client::configure_surface` call applies/restores these fields with current revision/lease; the server advertises required fields/range/policies under `surface_catalog.rectangular_source_occlusion.uncertainty`. No new wire command, persistence, parallel subscription or accepted-ambiguity product is implied. Native inspection status8 is not currently a separate remotely selectable product. GUI forms remain pending. Defaults are unchanged. Implementation,54 native RGBA controls, backend provenance and negative robustness results: [[validation/NATIVE_UNCERTAINTY]].
+The existing full-surface `Client::configure_surface` call applies/restores these fields with current revision/lease; the server advertises required fields/range/policies under `surface_catalog.rectangular_source_occlusion.uncertainty`. No new wire command, persistence or parallel subscription is implied. Accepted ambiguity and rejection reasons are now remotely selectable through source_visibility_v1; the legacy UV/status inspection remains unchanged: [[validation/SOURCE_VISIBILITY_PRODUCT]]. GUI forms remain pending. Defaults are unchanged. Implementation,54 native RGBA controls, backend provenance and negative robustness results: [[validation/NATIVE_UNCERTAINTY]].
 
 Добавьте к существующему `source_occlusion_box` в полной surface:
 
@@ -1174,4 +1174,28 @@ const auto revision = sv::parse_decimal_u64(
 const auto command_id = client.configure_surface(revision, std::move(surface));
 ```
 
-Сохраните прежний full surface для restore; не подставляйте experimental bounds/radius из исследования в произвольную сцену. Пример предполагает valid существующий box, zero-distortion equidistant cameras и отсутствие чужого lease; при собственном lease передайте ID третьим аргументом. Дождитесь accepted ACK и новой config revision кадра. `false`/omission возвращает прежнюю facing-disabled обработку; поле недопустимо в других modes. Server catalog сообщает default и scope. Изменение временное, без сохранения на диск. Central policies остаются независимыми: их acceptance не обходит facing check. GUI form и отдельная доставка native status9 пока отсутствуют. Условия, результаты и отрицательные robustness cases: [[validation/NATIVE_FACING]].
+Сохраните прежний full surface для restore; не подставляйте experimental bounds/radius из исследования в произвольную сцену. Пример предполагает valid существующий box, zero-distortion equidistant cameras и отсутствие чужого lease; при собственном lease передайте ID третьим аргументом. Дождитесь accepted ACK и новой config revision кадра. `false`/omission возвращает прежнюю facing-disabled обработку; поле недопустимо в других modes. Server catalog сообщает default и scope. Изменение временное, без сохранения на диск. Central policies остаются независимыми: их acceptance не обходит facing check. GUI form пока отсутствует; причина9 доставляется через source_visibility_v1. Условия, результаты и отрицательные robustness cases: [[validation/NATIVE_FACING]].
+
+## Причины отказа и принятая неоднозначность
+
+Проверьте capability source_visibility_v1 и output_catalog. При attached data, color view и idle lease:
+
+```cpp
+client.output_catalog();
+const auto command_id = client.configure_output(sv::OutputProduct::SourceVisibility);
+```
+
+В обработчике Frame event с owning event.message, после accepted ACK и проверки state_revision/product:
+
+```cpp
+if (sv::client::validate_output_product(*event.message) == sv::OutputProduct::SourceVisibility)
+{
+    const sv::client::SourceVisibilityView view(event.message);
+    const auto status = view.at(100, 50, 3); // x,y,camera; предварительно проверить размеры
+    const bool eligible = sv::source_visibility_eligible(status);
+    // Сохранить owning view при необходимости; payload не является display RGBA.
+    client.release(view.message().header);
+}
+```
+
+Для прежнего цвета вызовите configure_output(sv::OutputProduct::FinalFrame). In-flight old product тоже release-ить, затем ожидать нужный product/revision; reconnect сбрасывает selector, библиотека автоматически его не повторяет. A byte — camera3 status, не opacity; используйте отдельную palette. Status10 accepted ambiguous и11 accepted clear доступны только для explicit positive-radius uncertainty;1 без такого certificate. Принятие не гарантирует положительный вклад fusion или правильную поверхность сцены. Полный status table, сценарий, tests и ограничения: [[validation/SOURCE_VISIBILITY_PRODUCT]]. GUI palette/camera selector пока не реализованы; API доступен любому C++ client через installed headers.

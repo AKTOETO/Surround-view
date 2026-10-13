@@ -15,7 +15,7 @@
 | 1 | Клиент → сервер: hello; на control `{role:"control"}`, на data `{role:"data", session_id, data_token}` |
 | 2 | Сервер → клиент: hello_ack с `session_id`, `data_token`, `profile`, `capabilities` |
 | 3 | Библиотека → callback: локальное событие потери ожидающей команды (`session_lost`); отдельный wire error пока не реализован |
-| 11 | Сервер → клиент по data: выбранный RGBA8 продукт (final_frame или integer render_support_v1) и provenance/timing metadata |
+| 11 | Сервер → клиент по data: выбранный RGBA8 продукт (final_frame, integer render_support_v1 или source_visibility_v1) и provenance/timing metadata |
 | 20 | Клиент → сервер по control: команда с монотонным в рамках сессии `command_id`, `type` и параметрами |
 | 21 | Сервер → клиент по control: ACK/reject с `accepted`, `reason`, `state_revision` и результатом операции |
 | 22 | Клиент → сервер по data: release с `session_id`, `frame_id`, `buffer_token`; binary payload обязан быть пустым |
@@ -252,14 +252,14 @@ The mode is selected through existing `Client::configure_surface` with the whole
 
 ## Выбор data product: output_selection_v1 / render_support_v1
 
-Handshake объявляет обе capabilities. Существующий type11/22 framing не меняется: data channel передаёт **один выбранный продукт**, с теми же правилами bounded slot/release timeout250ms. Default — final_frame; отсутствие output_product у старого сервера также означает final_frame. Unknown product в новом клиенте вызывает protocol error до пользовательского callback.
+Handshake объявляет output_selection_v1, render_support_v1 и source_visibility_v1. Существующий type11/22 framing не меняется: data channel передаёт **один выбранный продукт**, с теми же правилами bounded slot/release timeout250ms. Default — final_frame; отсутствие output_product у старого сервера также означает final_frame. Unknown product в новом клиенте вызывает protocol error до пользовательского callback.
 
 | Команда / поле | Контракт |
 |---|---|
-| output_catalog | Read-only ACK с version1, products=[final_frame,render_support_v1], default, selection, persistence, requirements и render_support_schema |
+| output_catalog | Read-only ACK с version1, products=[final_frame,render_support_v1,source_visibility_v1], default, selection, persistence, requirements и render_support_schema |
 | configure_output | Обязательный product string из каталога; применяется между render calls, требует attached data channel |
 | ACK/state.output_product | Текущий выбранный продукт; accepted configure_output увеличивает state_revision и applied_command_id, config_revision не меняется |
-| type11.output_product | final_frame либо render_support_v1; RGBA8, top_left, stride=width*4 |
+| type11.output_product | final_frame, render_support_v1 либо source_visibility_v1; RGBA8, top_left, stride=width*4 |
 | type11.support_schema | Только у render_support_v1: version1, channels=[eligible_camera_count,positive_local_weight_count,render_support_path,raster_geometry], scope=local_base_weights_not_scene_visibility |
 | type11.inspection_cpu_ms | Только у маски: CPU wall time geometry inspection/readbacks/merge, не GPU elapsed; hybrid count construction входит в fusion_cpu_ms |
 
@@ -277,8 +277,14 @@ Typed API: Client::output_catalog(), Client::configure_output(OutputProduct), Re
 
 `surface.source_occlusion_box.uncertainty` is optional. If present, both `radius_m` (finite[0,0.05]m) and `ambiguous_policy` (`accept` or `reject`) are required; extra keys are rejected. Omit the object for nominal behavior; radius0 retains historical classification. For fixed carrier/poses/endpoint bias, the eroded supplied box certifies blocking and the dilated box certifies clearance. Accept admits ambiguous central rays to the existing nominal footprint stage; reject returns native `SourceProjectionStatus::uncertain_occluder=8`. Status1 remains policy eligibility, including accepted ambiguity, not definitely-clear confidence. Status7 can represent definite central blocking or nominal footprint rejection; rejected UV stays NaN. Support membership and neighbor rays remain nominal and independent of central uncertainty.
 
-The existing full-surface `Client::configure_surface` call applies/restores these fields with current revision/lease; the server advertises required fields/range/policies under `surface_catalog.rectangular_source_occlusion.uncertainty`. No new wire command, persistence, parallel subscription or accepted-ambiguity product is implied. Native inspection status8 is not currently a separate remotely selectable product. GUI forms remain pending. Defaults are unchanged. Implementation,54 native RGBA controls, backend provenance and negative robustness results: [[validation/NATIVE_UNCERTAINTY]].
+The existing full-surface `Client::configure_surface` call applies/restores these fields with current revision/lease; the server advertises required fields/range/policies under `surface_catalog.rectangular_source_occlusion.uncertainty`. No new wire command, persistence or parallel subscription is implied. Accepted ambiguity and rejection reasons are now remotely selectable through source_visibility_v1; the legacy UV/status inspection remains unchanged: [[validation/SOURCE_VISIBILITY_PRODUCT]]. GUI forms remain pending. Defaults are unchanged. Implementation,54 native RGBA controls, backend provenance and negative robustness results: [[validation/NATIVE_UNCERTAINTY]].
 
 ## Finite-face orientation runtime field
 
-`configure_surface` whole surface now accepts `source_occlusion_box.require_facing_surface` (bool, defaultfalse, only `mode=bilinear_box_surface_v1`; evenfalse in another mode is rejected). Catalog exposes optional field, `default_require_facing_surface=false` and `facing_scope`. Server validates/applies under the same revision and optional owner lease. Within finite-face support band, after central acceptance, at least one near face must strictly face the camera; otherwise native inspection status9/UV NaN. No new command/product, persistence or multiple sessions is introduced. Existing output delivery uses the accepted config revision; restore false/omit through another full-surface update. Detailed order and experiment: [[engineering/RENDERING#Finite-face orientation (experimental)]], [[validation/NATIVE_FACING]].
+`configure_surface` whole surface now accepts `source_occlusion_box.require_facing_surface` (bool, defaultfalse, only `mode=bilinear_box_surface_v1`; evenfalse in another mode is rejected). Catalog exposes optional field, `default_require_facing_surface=false` and `facing_scope`. Server validates/applies under the same revision and optional owner lease. Within finite-face support band, after central acceptance, at least one near face must strictly face the camera; otherwise native inspection status9/UV NaN. The surface field adds no command, persistence or multiple sessions; status9 can now be read through source_visibility_v1. Existing output delivery uses the accepted config revision; restore false/omit through another full-surface update. Detailed order and experiment: [[engineering/RENDERING#Finite-face orientation (experimental)]], [[validation/NATIVE_FACING]].
+
+## Source visibility product
+
+`source_visibility_v1` выбирается существующим configure_output; enum `OutputProduct::SourceVisibility`. Requirements и lifecycle совпадают с локальной support mask: attached data, color view, idle lease, ephemeral data-generation selection, reset final on reconnect. При color conflict reason=`source_visibility_requires_color`; no mutation. Type11.source_visibility_schema строго равна source_visibility_schema() version1, channels=[camera0,camera1,camera2,camera3], statuses0..12 и scope=supplied_geometry_policy_not_scene_visibility. support_schema в таком пакете отсутствует. Все provenance/revision/token/release правила выше применяются и к этому продукту; параллельный final не передаётся.
+
+Четыре bytes каждого pixel — camera statuses, **A не opacity**.0=no_carrier/ego,1=eligible_unclassified,2=unavailable,3=behind,4=angle,5=image,6=vehicle_footprint,7=central blocked,8=ambiguous rejected,9=backfacing,10=ambiguous accepted,11=clear accepted,12=footprint blocked.0/6 одинаковы во всех каналах.1/10/11 eligible до fusion, без утверждения positive/effective weight или истинной поверхности.10/11 используются только при enabled box + explicit positive-radius uncertainty; radius0/omission accepted→1. Clear11 относится только к dilated supplied-box certificate с fixed carrier/poses. Полный порядок, тесты и ограничения: [[validation/SOURCE_VISIBILITY_PRODUCT]]. Typed owning SourceVisibilityView.at(x,y,camera) доступен через sv-client-lib без OpenCV/Qt.

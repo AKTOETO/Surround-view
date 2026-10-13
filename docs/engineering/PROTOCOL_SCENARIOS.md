@@ -17,7 +17,7 @@
 | `state` | Нет | Snapshot, revisions, lease; С02 |
 | `fusion_catalog` | Нет | Каталог fusion версии 4, capabilities параметров; С02 |
 | `output_catalog` | Нет | Каталог продуктов/формат маски; С12 |
-| `configure_output` | `product=final_frame/render_support_v1` | Выбор одного data product до следующего render; С12 |
+| `configure_output` | `product=final_frame/render_support_v1/source_visibility_v1` | Выбор одного data product до следующего render; С12 |
 | `surface_catalog` | Нет | Типы носителей и описание plane; С02 |
 | `orbit` | `azimuth_delta_rad`, `elevation_delta_rad` | Допустимый view; С03 |
 | `zoom` | `distance_delta_m` | Допустимая дистанция; С03 |
@@ -337,3 +337,5 @@ end note
 Рисунок — Реализованный сценарий выбора support product с сохранением bounded release semantics.
 
 После ACK приложение может увидеть старый in-flight продукт: release обязателен, затем ожидать output_product=render_support_v1 и state_revision>=R. При восстановлении final_frame повторить configure_output; конфиг на диске не меняется. Не путать sample eligibility или local base weights с scene visibility и полным multiband contribution. Tests: [[validation/OUTPUT_PRODUCTS]].
+
+Сценарий С12 также применяется к source_visibility_v1: каталог/schema → configure_output → ACK state_revision → type11 statuses → release. Проверять product и revision каждого пакета; older in-flight пакет освободить и пропустить. При reconnect повторно выбрать продукт. Color/lease rejection, native parity семи modes и typed Unix/TCP consumption проверены: [[validation/SOURCE_VISIBILITY_PRODUCT]].

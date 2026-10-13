@@ -4037,3 +4037,75 @@ Reference gaps всех30 memberships лежат в16.804–166.417mm, выше 
 Шесть независимых known-answer tests проверяют entry distances, axial/oblique/miss, closed boundary convention, exact binary strict threshold, translation/axis permutation/scale и invalid/empty cases. Selected CTest4/4 за1.21s; parent40-case native audit повторно проверен, новый36-row отчёт при повторении побайтно идентичен. Renderer/library/protocol в этапе не менялись; прежний полный57-test regression не выдаётся за новый запуск. Метаданные, limitations и команды: [[validation/FACING_ENTRY_GAP]], [[validation/baselines/facing_entry_gap_v1.json]]. Графики воспроизводит соседний `plot_facing_entry_gap.py`.
 
 Далее необходимы native accepted-ambiguity/rejection diagnostics, проверка independent source-surface/triangle correspondence для residual rays и альтернативных источников, explicit unsupported policy и holdout с nonuniform/natural targets. Runtime selection должен опираться на реально доступную информацию; supplied known geometry, evaluation truth и oracle upper bound следует сохранять раздельно. Defaults не изменены, overhead и перенос на Aurora не оценивались.
+
+## 4.85. Наблюдаемость принятых ambiguous rays и причин отказа в работающем сервере
+
+### 4.85.1. Проблема и контракт
+
+§4.84 показал, что уменьшение central endpoint bias удаляет полезные источники и не решает general correspondence. Для следующих опытов нужно получать фактические решения pipeline во время работы сервера. Старый source status1 объединяет accepted clear и accepted ambiguous, а status7 — central и footprint rejection. Local render_support описывает camera counts/base weights/path, но не эти причины. Поэтому добавлен отдельный `source_visibility_v1`, реализованный в C++/GLSL и доставляемый через `sv-client-lib`, без переноса продуктовой логики в Python.
+
+Продукт содержит четыре integer bytes на pixel для камер0..3, top-left, CV_8UC4 внутри renderer и RGBA8 transport container в SV01. Канал A является статусом камеры3, не opacity. Legacy source UV/status сохраняются: accepted=1, rejection7 остаётся прежним агрегированным кодом. Новая матрица имеет собственный enum/schema и не используется как texture/color input для fusion.
+
+Таблица4.87 — SourceVisibilityStatus и его отличие от source eligibility/scene correspondence.
+
+|Коды|Значение|Граница интерпретации|
+|---|---|---|
+|0,6|No carrier/ego; masked vehicle footprint|Не источник для reconstruction; одинаковый код во всех каналах|
+|2–5|Нет кадра; behind camera; angle; image bounds|Projection/input refusal перед геометрической проверкой|
+|7|Central occlusion|Nominal blockage или eroded sufficient certificate согласно конфигурации|
+|8|Rejected ambiguous central ray|Explicit uncertainty policy=reject|
+|9|Backfacing finite support|Opt-in facing filter, не actual scene normal|
+|12|Footprint refusal при central acceptance|Разделяет прежний aggregate7|
+|1|Eligible unclassified|Нет активного bounded-uncertainty certificate|
+|10|Accepted ambiguous|Все filters пройдены, central ray ambiguous, policy=accept|
+|11|Accepted clear|Все filters пройдены, clear по dilated supplied-box certificate|
+
+Eligibility true только для1/10/11; оно не гарантирует положительный fusion weight или соответствие истинной поверхности. Clear11 действует при fixed carrier/poses, заданном endpoint bias и face-coordinate radius для одного supplied AABB. Omission/radius0 возвращают accepted1, а не искусственный clear certificate. Для rejected sample сообщается причина согласно pipeline priority, не все потенциальные причины одновременно.
+
+### 4.85.2. Реализация и взаимодействие
+
+Shader diagnostic pass использует ту же `source_projection` и общую `source_central_rejection`, что основной renderer. После accepted sample активная positive-radius uncertainty классифицирует его по outer-box certificate. Если прежний refusal7 имеет accepted central stage, новый продукт кодирует12. Central7/8, facing9 и footprint12 сохраняют прежний порядок. Vehicle depth model/background обнуляют все каналы. Один дополнительный RGBA8 pass/readback следует за common region pass; данные очищаются при повторном inspection без запроса.
+
+Native commitd8db0c4 и wire/library commit5e24373. Существующие output_catalog/configure_output дополнены продуктом, requirement color и exact source_visibility_schema; новых команд нет. Сервер выбирает один продукт на текущий data generation, default/reconnect→final_frame. State revision/applied command отражают selection, config_revision при выборе не меняется. Selector не сохраняется на диск и не входит в lease snapshot: выбирать его следует до acquire. Несовместимые color/lease updates отклоняются до mutation.
+
+```plantuml
+@startuml
+participant "Client example" as C
+participant "sv-client-lib" as L
+participant "sv-server" as S
+participant "Renderer / shared source predicate" as R
+C -> L : output_catalog / configure_output(SourceVisibility)
+L -> S : existing control commands
+S -> S : validate attached data / color / idle lease
+S --> L : ACK + state_revision
+S -> R : render + opt-in source_visibility
+R -> R : projection -> central -> facing/footprint
+R -> R : accepted1 / ambiguous10 / clear11
+R --> S : ordinary RGBA + camera statuses
+S --> L : type11 selected integer product + revisions/inputs/token
+L -> L : schema / shape / provenance / status validation
+L --> C : owning SourceVisibilityView.at(x,y,camera)
+C -> L : release(header)
+L -> S : existing type22 token
+@enduml
+```
+
+Рисунок4.153 — Доставка same-render диагностики через прежний протокол. Старый in-flight продукт освобождается и фильтруется по product/state_revision; parallel final-frame subscription не добавлен.
+
+Typed SourceVisibilityView сохраняет owning immutable Message без копирования payload и OpenCV/GUI зависимости. Validator отклоняет unknown statuses, неверные schemas/shapes/provenance, cross-product schema, несогласованные background/footprint domains и claims недоступных камер. Release не инвалидирует owning view, но серверный bounded buffer следует освобождать своевременно. Примеры API и полная семантика: [[engineering/USAGE#Причины отказа и принятая неоднозначность]], [[validation/SOURCE_VISIBILITY_PRODUCT]].
+
+### 4.85.3. Проверки и иллюстрация
+
+После завершения сборки полный Mesa CTest58/58 за81.69s, полный NVIDIA inspection25/25 за1.071s. Четыре parameterized GTest cases для accept/reject и edge_feather/multi_band проверяют10/11 по независимому six-face oracle при radii0/5/10/50mm, сохранность legacy UV/status, RGBA parity, facing9 и restore. Independent neighboring-ray fixture разделяет central7/footprint12 для guard0/1 с ненулевым числом neighbor-only отказов. На семи fusion modes без active uncertainty новая маска совпадает с прежним status; missing frame, projection invalid, ego/background и reset проверены.
+
+Client unit tests покрывают owning lifetime/bounds, eligibility helper, unknown codes, truncated payload, schemas и missing-input claims. Integration tests сравнивают весь wire payload с native probe побайтно для семи modes, проверяют no-mutation color rejection, final RGBA restore, typed consumer через Unix/TCP loopback и10 reconnect cycles с чередованием двух diagnostic products. Дополнительная live fixture переключает через configure_surface accept/reject и требует ненулевое число статусов10/8 с полной native/wire parity; после её расширения output_products повторно прошёл1/1 за3.02s. Ранний тестовый запуск при relink и ошибка loop-index в тесте были устранены; полный suite выполнен после завершения сборки. Эти времена не являются benchmark overhead или проверкой two-host/Aurora.
+
+![Native per-camera policy statuses](figures/experiments/source_visibility_example.png)
+
+Рисунок4.154 — Иллюстративная native матрица прежнего frame0/Z+5mm/accept/surface10mm. Camera3 содержит74 accepted-ambiguous memberships; camera0 имеет2 backfacing refusals. Это counts по всему carrier, не target hits или новая quality matrix. Palette создаётся соседним `plot_source_visibility_product.py`; продукт остаётся integer status matrix.
+
+Иллюстрация привязана hashes config/manifest/raw/plot в [[validation/baselines/source_visibility_example_v1.json]]. Fixture сохраняет requested NVIDIA vendor, но не фактическую device string; её нельзя выдавать за новый backend-verified научный capture. Первичные quality результаты §4.83–4.84 не пересчитывались и не изменялись.
+
+### 4.85.4. Итог этапа и ограничения
+
+Закрыта native и typed-wire диагностика accepted ambiguity и приоритетной причины отказа. Теперь следующий joint-selection опыт может получать решения работающего сервера с config/input provenance. Сам продукт не исправляет parallax, не заполняет hidden/unsupported target и не доказывает scene correspondence. Остаются GUI palette/camera selector, использование диагностики в matched occlusion matrix, overhead, per-stage predicates при необходимости, source-surface/triangle truth и independent nonuniform/natural-object holdout. General robust mitigation и испытания на физических камерах/Aurora остаются открытыми.
