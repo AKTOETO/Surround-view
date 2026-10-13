@@ -78,7 +78,7 @@ class OutputProducts(unittest.TestCase):
         catalog = self.client.command('output_catalog')
         self.assertTrue(catalog['accepted'])
         self.assertEqual(catalog['state_revision'], state['state_revision'])
-        self.assertEqual(catalog['output_catalog']['products'], ['final_frame', 'render_support_v1', 'source_visibility_v1'])
+        self.assertEqual(catalog['output_catalog']['products'], ['final_frame', 'render_support_v1', 'source_visibility_v1', 'source_disagreement_v1'])
         ack = self.client.command('configure_output', product='render_support_v1')
         self.assertEqual(ack['config_revision'], state['config_revision'])
         header, mask = self.frame_after(ack)
@@ -247,6 +247,51 @@ class OutputProducts(unittest.TestCase):
         self.assertEqual(original, restored)
         self.assertNotIn('source_visibility_schema', header)
 
+    def test_disagreement_native_wire_parity_all_modes_and_color_rejection(self):
+        self.start()
+        self.client = Client(self.ipc)
+        self.client.frame()
+        _, original = self.frame_after(self.client.command('pause'))
+        initial = self.client.command('state')
+        for mode in ('edge_feather', 'angular_feather', 'hard_best_angle',
+                     'seam_distance_feather', 'graph_cut_seam', 'multi_band', 'graph_cut_multi_band'):
+            state = self.client.command('state')
+            ack = self.client.command('configure_fusion', base_config_revision=state['config_revision'], fusion=dict(mode=mode))
+            self.frame_after(ack)
+            header, data = self.frame_after(self.client.command('configure_output', product='source_disagreement_v1'))
+            self.assertNotIn('support_schema', header)
+            self.assertNotIn('source_visibility_schema', header)
+            cfg = copy.deepcopy(self.cfg)
+            cfg['fusion'] = ack['fusion']
+            native_config = self.directory/'disagreement.json'
+            native_config.write_text(json.dumps(cfg))
+            path = self.directory/'disagreement.rgba'
+            result = subprocess.run([str(BUILD/'sv-support-wire-probe'), str(native_config), str(self.manifest),
+                str(path), 'source_disagreement_v1'], capture_output=True, timeout=10)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.assertEqual(data, path.read_bytes())
+            p = np.frombuffer(data, np.uint8).reshape(64, 96, 4)
+            self.assertTrue(np.all(p[..., 1] <= 4))
+            np.testing.assert_array_equal(p[..., 2] == 255, p[..., 1] >= 2)
+            self.assertGreater(np.count_nonzero(p[..., 2]), 0)
+            self.assertTrue(np.all(p[..., 0][p[..., 1] < 2] == 0))
+            rejected = self.client.command('configure_fusion', base_config_revision=header['config_revision'],
+                fusion=dict(mode=mode, diagnostic='weights'))
+            self.assertFalse(rejected['accepted'])
+            self.assertEqual(rejected['reason'], 'source_disagreement_requires_color')
+            self.assertEqual(rejected['config_revision'], header['config_revision'])
+            self.frame_after(self.client.command('configure_output', product='final_frame'))
+        state = self.client.command('state')
+        _, restored = self.frame_after(self.client.command('configure_fusion',
+            base_config_revision=state['config_revision'], fusion=initial['fusion']))
+        self.assertEqual(restored, original)
+        state = self.client.command('state')
+        self.frame_after(self.client.command('configure_fusion', base_config_revision=state['config_revision'],
+            fusion=dict(mode='edge_feather', diagnostic='weights')))
+        rejected = self.client.command('configure_output', product='source_disagreement_v1')
+        self.assertFalse(rejected['accepted'])
+        self.assertEqual(rejected['reason'], 'source_disagreement_requires_color')
+
     def test_fallback_display_live_switch_masks_rejection_and_reset(self):
         for camera in self.cfg['cameras']:
             camera['projection']['theta_max_rad'] = .05
@@ -309,7 +354,7 @@ class OutputProducts(unittest.TestCase):
             self.client = Client(self.ipc)
             header, _ = self.client.frame()
             self.assertEqual(header['output_product'], 'final_frame')
-            ack = self.client.command('configure_output', product=('render_support_v1' if attempt % 2 else 'source_visibility_v1'))
+            ack = self.client.command('configure_output', product=['render_support_v1', 'source_visibility_v1', 'source_disagreement_v1'][attempt % 3])
             self.assertTrue(ack['accepted'])
             # Close immediately after ACK, without waiting for or releasing the mask.
             # An old render/queued publication must never enter the next data generation.
@@ -351,6 +396,14 @@ class OutputProducts(unittest.TestCase):
             for frame in visibility_frames:
                 self.assertEqual(frame['output_product'], 'source_visibility_v1')
                 self.assertGreater(frame['eligible_camera_pairs'], 0)
+            result = subprocess.run([str(BUILD / 'sv-client-probe'), *endpoint,
+                '--frames', '1', '--disagreement'], text=True, capture_output=True, timeout=20)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            frames = [json.loads(line) for line in result.stdout.splitlines() if json.loads(line).get('message_type') == 11]
+            self.assertGreaterEqual(len(frames), 1)
+            for frame in frames:
+                self.assertEqual(frame['output_product'], 'source_disagreement_v1')
+                self.assertGreater(frame['defined_comparison_pixels'], 0)
             hello = next(m for m in messages if m.get('message_type') == 2)
             self.assertIn('output_selection_v1', hello['capabilities'])
             self.assertIn('render_support_v1', hello['capabilities'])

@@ -44,6 +44,7 @@ struct RenderInspectionRequest
     bool fusion_contributions = false; // Hybrid research modes only; no extra GLES passes.
     bool support = false;              // Color view only; one extra RGBA8 pass/readback.
     bool source_visibility = false;    // One RGBA8 pass/readback, four camera statuses.
+    bool source_disagreement = false;  // One pass; eligible encoded-RGB range, not confidence.
 };
 
 // Explicit, render-thread-only capture for numerical inspection. Not a wire subscription.
@@ -66,5 +67,8 @@ struct RenderInspection
     cv::Mat support;
     // CV_8UC4, top-left: SourceVisibilityStatus for cameras0..3; no alpha channel.
     cv::Mat source_visibility;
+    // RGBA8: max-channel eligible encoded-RGB range, eligible count0..4,
+    // defined255 iff count>=2, carrier domain255 (ego/background/footprint zero).
+    cv::Mat source_disagreement;
 };
 } // namespace sv

@@ -11,22 +11,35 @@ OutputProduct validate_output_product(const Message &message)
     if (product == OutputProduct::FinalFrame)
     {
         if (message.header.contains("support_schema") ||
-            message.header.contains("source_visibility_schema"))
+            message.header.contains("source_visibility_schema") ||
+            message.header.contains("source_disagreement_schema"))
         {
             throw std::invalid_argument("support schema on final frame");
         }
         return product;
     }
     const bool visibility = product == OutputProduct::SourceVisibility;
+    const bool disagreement = product == OutputProduct::SourceDisagreement;
+    const char *schema_key = disagreement ? "source_disagreement_schema"
+                             : visibility ? "source_visibility_schema"
+                                          : "support_schema";
+    const auto schema = disagreement ? source_disagreement_schema()
+                        : visibility ? source_visibility_schema()
+                                     : render_support_schema();
+    for (const auto *key :
+         {"support_schema", "source_visibility_schema", "source_disagreement_schema"})
+    {
+        if (message.header.contains(key) && std::string_view(key) != schema_key)
+        {
+            throw std::invalid_argument("cross-product schema");
+        }
+    }
     const auto &h = message.header;
     const auto width = h.at("width").as_int64(), height = h.at("height").as_int64();
     if (message.type != 11 || h.at("pixel_format").as_string() != "RGBA8" ||
         h.at("row_origin").as_string() != "top_left" || width < 2 || width > 4096 || height < 2 ||
         height > 2160 || h.at("stride_bytes").as_int64() != width * 4 ||
-        message.payload.size() != size_t(width * height * 4) ||
-        (visibility ? h.at("source_visibility_schema") != source_visibility_schema()
-                    : h.at("support_schema") != render_support_schema()) ||
-        h.contains(visibility ? "support_schema" : "source_visibility_schema") ||
+        message.payload.size() != size_t(width * height * 4) || h.at(schema_key) != schema ||
         h.at("session_id").as_string().empty() || h.at("buffer_token").as_string().empty() ||
         h.at("diagnostic_view").as_string() != "color")
     {
@@ -38,7 +51,7 @@ OutputProduct validate_output_product(const Message &message)
         parse_decimal_u64(std::string(h.at(key).as_string()));
     }
     const auto &inputs = h.at("inputs").as_array();
-    unsigned cameras = 0, used_cameras = 0;
+    unsigned cameras = 0, used_cameras = 0, used_count = 0;
     if (inputs.size() != 4)
     {
         throw std::invalid_argument("invalid render support inputs");
@@ -56,6 +69,7 @@ OutputProduct validate_output_product(const Message &message)
         if (fields.at("used").as_bool())
         {
             used_cameras |= 1u << camera;
+            ++used_count;
             for (const auto *key : {"sequence_id", "release_timestamp_ns"})
             {
                 parse_decimal_u64(std::string(fields.at(key).as_string()));
@@ -65,6 +79,16 @@ OutputProduct validate_output_product(const Message &message)
     for (size_t offset = 0; offset < message.payload.size(); offset += 4)
     {
         const auto *p = message.payload.data() + offset;
+        if (disagreement)
+        {
+            if (p[1] > used_count || p[1] > 4 || p[2] != (p[1] >= 2 ? 255 : 0) ||
+                (p[3] != 0 && p[3] != 255) || (!p[3] && (p[0] || p[1] || p[2])) ||
+                (p[1] < 2 && p[0]))
+            {
+                throw std::invalid_argument("invalid source disagreement pixel");
+            }
+            continue;
+        }
         if (visibility)
         {
             for (int camera = 0; camera < 4; ++camera)

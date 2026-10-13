@@ -47,4 +47,25 @@ class SourceVisibilityView
     SourceVisibilityStatus at(int x, int y, int camera) const;
     const Message &message() const noexcept;
 };
+
+struct SourceDisagreementPixel
+{
+    unsigned char encoded_rgb_range = 0, eligible_cameras = 0;
+    bool defined = false, carrier = false;
+};
+
+// Undefined with fewer than two eligible cameras; zero is not a confidence certificate.
+class SourceDisagreementView
+{
+    std::shared_ptr<const Message> message_;
+    int width_ = 0, height_ = 0;
+
+  public:
+
+    explicit SourceDisagreementView(std::shared_ptr<const Message>);
+    int width() const noexcept;
+    int height() const noexcept;
+    SourceDisagreementPixel at(int x, int y) const;
+    const Message &message() const noexcept;
+};
 } // namespace sv::client

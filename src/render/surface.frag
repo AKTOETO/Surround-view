@@ -233,7 +233,7 @@ void main()
         color = statuses;
         return;
     }
-    if (inspection_regions >= 5 && inspection_regions != 8)
+    if (inspection_regions >= 5 && inspection_regions != 8 && inspection_regions != 10)
     {
         vec2 px;
         float theta;
@@ -246,7 +246,7 @@ void main()
             : pack_float(status == 1 ? px[inspection_regions - 5] : uintBitsToFloat(0x7fc00000u));
         return;
     }
-    if (inspection_regions >= 2 && inspection_regions != 8)
+    if (inspection_regions >= 2 && inspection_regions != 8 && inspection_regions != 10)
     {
         // Pack one perspective-interpolated float into RGBA8. No float FBO extension.
         uint bits = floatBitsToUint(world[inspection_regions - 2]);
@@ -267,10 +267,12 @@ void main()
     if (surface_mode == 0 && abs(world.x) <= vehicle.x && abs(world.y) <= vehicle.y)
     {
         if (inspection_regions == 8) { color = vec4(0, 0, 1.0 / 255.0, 1); return; }
+        if (inspection_regions == 10) { color = vec4(0); return; }
         if (sample_camera >= 0) { color = vec4(0); return; }
         color = diagnostic_mode == 0 ? vec4(.2, .22, .24, 1) : vec4(1, 0, 1, 1);
         return;
     }
+    vec3 source_min = vec3(1), source_max = vec3(0);
     vec3 sum = vec3(0);
     float total = 0.0;
     float best = -1.0;
@@ -308,6 +310,8 @@ void main()
         {
             x = texture(input3, uv).rgb;
         }
+        source_min = min(source_min, x);
+        source_max = max(source_max, x);
         float edge = min(min(px.x, px.y), min(sizes[i].x - 1.0 - px.x, sizes[i].y - 1.0 - px.y));
         if (sample_camera >= 0)
         {
@@ -338,6 +342,13 @@ void main()
         total += w;
     }
     if (sample_camera >= 0) { color = vec4(0); return; }
+    if (inspection_regions == 10)
+    {
+        vec3 spread = source_max - source_min;
+        color = vec4(observed >= 2 ? max(spread.r, max(spread.g, spread.b)) : 0.0,
+                     float(observed) / 255.0, observed >= 2 ? 1.0 : 0.0, 1.0);
+        return;
+    }
     if (inspection_regions == 8)
     {
         bool hard_selected = fusion_mode == 1 && winner >= 0;

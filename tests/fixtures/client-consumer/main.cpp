@@ -12,7 +12,8 @@ int main(int argc, char **argv)
     {
         sv::client::Options options;
         unsigned frames = 3;
-        bool exercise = false, allow_reconnect = false, support = false, visibility = false;
+        bool exercise = false, allow_reconnect = false, support = false, visibility = false,
+             disagreement = false;
         for (int i = 1; i < argc; ++i)
         {
             const std::string arg = argv[i];
@@ -60,6 +61,10 @@ int main(int argc, char **argv)
             else if (arg == "--exercise")
             {
                 exercise = true;
+            }
+            else if (arg == "--disagreement")
+            {
+                disagreement = true;
             }
             else if (arg == "--visibility")
             {
@@ -143,12 +148,13 @@ int main(int argc, char **argv)
                 if (event.detail == "ready")
                 {
                     client.state();
-                    if (support || visibility)
+                    if (support || visibility || disagreement)
                     {
                         client.output_catalog();
-                        client.configure_output(visibility
-                                                    ? sv::client::OutputProduct::SourceVisibility
-                                                    : sv::client::OutputProduct::RenderSupport);
+                        client.configure_output(
+                            disagreement ? sv::client::OutputProduct::SourceDisagreement
+                            : visibility ? sv::client::OutputProduct::SourceVisibility
+                                         : sv::client::OutputProduct::RenderSupport);
                     }
                     if (exercise)
                     {
@@ -170,7 +176,8 @@ int main(int argc, char **argv)
             {
                 const auto product = sv::client::validate_output_product(*event.message);
                 if ((support && product != sv::client::OutputProduct::RenderSupport) ||
-                    (visibility && product != sv::client::OutputProduct::SourceVisibility))
+                    (visibility && product != sv::client::OutputProduct::SourceVisibility) ||
+                    (disagreement && product != sv::client::OutputProduct::SourceDisagreement))
                 {
                     client.release(event.message->header);
                     continue; // An old product may already be in flight when the command applies.
@@ -190,6 +197,19 @@ int main(int argc, char **argv)
                     }
                     header["eligible_pixels"] = eligible;
                     header["positive_local_weight_pixels"] = positive;
+                }
+                if (disagreement)
+                {
+                    const sv::client::SourceDisagreementView view(event.message);
+                    unsigned defined = 0;
+                    for (int y = 0; y < view.height(); ++y)
+                    {
+                        for (int x = 0; x < view.width(); ++x)
+                        {
+                            defined += view.at(x, y).defined;
+                        }
+                    }
+                    header["defined_comparison_pixels"] = defined;
                 }
                 if (visibility)
                 {

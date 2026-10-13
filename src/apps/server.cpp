@@ -377,6 +377,7 @@ ServerIO::ServerIO(const sv::Connections &n, const std::string &source_type,
                     "output_selection_v1",
                     "render_support_v1",
                     "source_visibility_v1",
+                    "source_disagreement_v1",
                     "calibrate",
                     "calibration_provenance_v1",
                     "calibration_status",
@@ -933,6 +934,9 @@ int main(int argc, char **argv)
                         {
                             throw std::runtime_error(product == sv::OutputProduct::SourceVisibility
                                                          ? "source_visibility_requires_color"
+                                                     : product ==
+                                                             sv::OutputProduct::SourceDisagreement
+                                                         ? "source_disagreement_requires_color"
                                                          : "render_support_requires_color");
                         }
                         output_product = product;
@@ -1024,10 +1028,12 @@ int main(int argc, char **argv)
                         if (output_product != sv::OutputProduct::FinalFrame &&
                             prepared.diagnostic != "color")
                         {
-                            throw std::runtime_error(output_product ==
-                                                             sv::OutputProduct::SourceVisibility
-                                                         ? "source_visibility_requires_color"
-                                                         : "render_support_requires_color");
+                            throw std::runtime_error(
+                                output_product == sv::OutputProduct::SourceVisibility
+                                    ? "source_visibility_requires_color"
+                                : output_product == sv::OutputProduct::SourceDisagreement
+                                    ? "source_disagreement_requires_color"
+                                    : "render_support_requires_color");
                         }
                         if (!config_store.update_runtime_if_revision(effective, revision, reason))
                         {
@@ -1324,6 +1330,8 @@ int main(int argc, char **argv)
                 sv::RenderInspection inspection;
                 sv::RenderInspectionRequest inspection_request;
                 inspection_request.support = output_product == sv::OutputProduct::RenderSupport;
+                inspection_request.source_disagreement =
+                    output_product == sv::OutputProduct::SourceDisagreement;
                 inspection_request.source_visibility =
                     output_product == sv::OutputProduct::SourceVisibility;
                 auto image = renderer->render(
@@ -1416,10 +1424,12 @@ int main(int argc, char **argv)
                     std::move(image.pixels)};
 
                 output.header["output_product"] = sv::output_product_name(output_product);
-                if (inspection_request.support || inspection_request.source_visibility)
+                if (output_product != sv::OutputProduct::FinalFrame)
                 {
                     const auto &mask = inspection_request.support ? inspection.support
-                                                                  : inspection.source_visibility;
+                                       : inspection_request.source_visibility
+                                           ? inspection.source_visibility
+                                           : inspection.source_disagreement;
                     if (mask.type() != CV_8UC4 || mask.rows != image.height ||
                         mask.cols != image.width || !mask.isContinuous())
                     {
@@ -1430,9 +1440,14 @@ int main(int argc, char **argv)
                     {
                         output.header["support_schema"] = sv::render_support_schema();
                     }
-                    else
+                    else if (inspection_request.source_visibility)
                     {
                         output.header["source_visibility_schema"] = sv::source_visibility_schema();
+                    }
+                    else
+                    {
+                        output.header["source_disagreement_schema"] =
+                            sv::source_disagreement_schema();
                     }
                     output.header["inspection_cpu_ms"] = timing.inspection_cpu_ms;
                 }

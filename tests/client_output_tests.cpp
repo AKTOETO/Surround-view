@@ -202,3 +202,66 @@ TEST(ClientOutput, VisibilityRejectsSchemaUnknownStatusesAndMissingCameraClaims)
     message.header["output_product"] = "final_frame";
     EXPECT_THROW(sv::client::validate_output_product(message), std::exception);
 }
+
+namespace
+{
+sv::Message disagreement_message()
+{
+    auto m = support_message();
+    m.header["output_product"] = "source_disagreement_v1";
+    m.header.erase("support_schema");
+    m.header["source_disagreement_schema"] = sv::source_disagreement_schema();
+    m.payload = {0, 0, 0, 0, 0, 1, 0, 255, 0, 2, 255, 255, 192, 4, 255, 255};
+    return m;
+}
+} // namespace
+
+TEST(ClientOutput, DisagreementOwnsUndefinedAndDefinedZeroWithBounds)
+{
+    auto message = std::make_shared<sv::Message>(disagreement_message());
+    const auto *payload = message->payload.data();
+    sv::client::SourceDisagreementView view(message);
+    message.reset();
+    EXPECT_EQ(view.message().payload.data(), payload);
+    EXPECT_EQ(view.width(), 2);
+    EXPECT_EQ(view.height(), 2);
+    EXPECT_FALSE(view.at(0, 0).carrier);
+    EXPECT_FALSE(view.at(1, 0).defined);
+    EXPECT_EQ(view.at(1, 0).eligible_cameras, 1);
+    EXPECT_TRUE(view.at(0, 1).defined);
+    EXPECT_EQ(view.at(0, 1).encoded_rgb_range, 0);
+    EXPECT_EQ(view.at(1, 1).encoded_rgb_range, 192);
+    EXPECT_THROW(view.at(2, 0), std::out_of_range);
+    EXPECT_THROW(view.at(-1, 0), std::out_of_range);
+    EXPECT_THROW(sv::client::SourceDisagreementView(nullptr), std::invalid_argument);
+}
+
+TEST(ClientOutput, DisagreementRejectsMalformedPixelsSchemasAndMissingInputs)
+{
+    for (const auto &pixel : {std::vector<unsigned char>{1, 1, 0, 255},
+                              {0, 5, 255, 255},
+                              {0, 2, 0, 255},
+                              {0, 1, 255, 255},
+                              {0, 2, 255, 0},
+                              {0, 0, 0, 1}})
+    {
+        auto m = disagreement_message();
+        std::copy(pixel.begin(), pixel.end(), m.payload.begin());
+        EXPECT_THROW(sv::client::validate_output_product(m), std::invalid_argument);
+    }
+    auto m = disagreement_message();
+    m.header["source_visibility_schema"] = sv::source_visibility_schema();
+    EXPECT_THROW(sv::client::validate_output_product(m), std::invalid_argument);
+    m = disagreement_message();
+    m.header["source_disagreement_schema"] = boost::json::object{};
+    EXPECT_THROW(sv::client::validate_output_product(m), std::invalid_argument);
+    m = disagreement_message();
+    m.header["inputs"].as_array()[0].as_object()["used"] = false;
+    EXPECT_THROW(sv::client::validate_output_product(m), std::invalid_argument);
+    m = disagreement_message();
+    m.payload.pop_back();
+    EXPECT_THROW(sv::client::validate_output_product(m), std::invalid_argument);
+    m = disagreement_message();
+    m.header["output_product"] = "final_frame";
+    EXPECT_THROW(sv::client::validate_output_product(m), std::invalid_argument);
+}

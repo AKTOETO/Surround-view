@@ -443,7 +443,7 @@ Image Renderer::render(const FrameSet &set, const View &view, RenderInspection *
                        RenderInspectionRequest request)
 {
     if ((request.carrier_positions || request.source_projections || request.fusion_contributions ||
-         request.support || request.source_visibility) &&
+         request.support || request.source_visibility || request.source_disagreement) &&
         !inspection)
     {
         throw std::invalid_argument("render inspection requires an inspection destination");
@@ -456,7 +456,7 @@ Image Renderer::render(const FrameSet &set, const View &view, RenderInspection *
     {
         throw std::invalid_argument("fusion contributions require a hybrid research mode");
     }
-    if ((request.support || request.source_visibility) &&
+    if ((request.support || request.source_visibility || request.source_disagreement) &&
         impl_->config.fusion.diagnostic != "color")
     {
         throw std::invalid_argument("render support requires the color view");
@@ -805,6 +805,10 @@ Image Renderer::render(const FrameSet &set, const View &view, RenderInspection *
                 unpack_coordinate(geometry_pass(axis + 2), inspection->carrier_regions,
                                   inspection->carrier_positions, axis);
             }
+        }
+        if (request.source_disagreement)
+        {
+            inspection->source_disagreement = geometry_pass(10);
         }
         if (request.source_visibility)
         {
