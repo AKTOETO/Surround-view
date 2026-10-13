@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "scope": "posthoc_degenerate_inset_fix_byte_parity_all54_native_conditions",
+  "parent_plan": "configs/research/native-uncertainty-nvidia-plan.json",
+  "parent_plan_sha256": "78506c6af2fc69f6491445ad28af9f44a5c7c505c3488e03bb69e96769654b50",
+  "primary_report": "docs/validation/baselines/native_uncertainty_v1.json",
+  "primary_report_sha256": "c1af9bca31704b724e1a71fee02dacae798a5eb76519f894fe59e479f455ad81",
+  "source_revision": "50fad11b1cda36f217fe73a98cf4f9ebf4b5aab0",
+  "source_fingerprint": "bf66020bf536513afbd1ac2edf743e0dfb7d7556f62df47e4a79ab98bab6408c",
+  "binary_sha256": "792a429ef30836e39b007041e554d7a529c6d71bf63ff76464c33fafea237e03",
+  "shader_sha256": "aed897a863a7d69c933933612f0493d2368107452e0240f44b017c23a3f979a0",
+  "output_root": "artifacts/native-uncertainty-degenerate-parity-v1",
+  "selection": "ALL54 prior conditions, no parameter/ROI changes. Expected exact SHA256 of every diagnostic product and ordinary RGBA; no new quality claim. Preserve old frozen primary captures. New temporary non-RGBA payload discarded after byte parity check; new RGBA retained.",
+  "limitations": [
+    "Same previously explored conditions; compatibility regression only, no new independent scientific sample"
+  ]
+}
