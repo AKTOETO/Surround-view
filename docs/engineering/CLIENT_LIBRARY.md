@@ -155,3 +155,13 @@ Check output_catalog for `source_disagreement_v1`, then `configure_output(Output
 parse_configuration_snapshot(). Owning ConfigurationSnapshot содержит active/persisted objects,
 uint64 revision и flags. Полная серверная validation не дублируется в библиотеке. Scope, limits,
 порядок взаимодействия и оставшиеся операции: [[engineering/CONFIG_SERVICE]].
+
+## Каталог и предварительная проверка изменений
+
+При capabilities config_catalog_v1/config_validate_v1 доступны configuration_catalog() и
+validate_configuration(base_revision, changes). Owning ConfigurationCatalog содержит operations,
+replaceable_groups и fusion/surface parameter catalogs; ConfigurationValidation — base_revision
+и проверенные complete replacement groups. Разбирать только accepted ACK методами
+parse_configuration_catalog()/parse_configuration_validation(). Для rejected ACK читать reason.
+Сервер остаётся authoritative semantic validator; успешная проверка не является apply token.
+Пока поддержаны только fusion/surface, без general update/persistence. [[engineering/CONFIG_SERVICE]].

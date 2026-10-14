@@ -1,5 +1,7 @@
 # Подробный план реализации
 
+14.10.2026: ConfigService discovery/side-effect-free validation fusion/surface реализованы: shared parameter catalogs с geometry bounds, complete group replacement, stale revision/current view/output/budget checks, typed C++ API и Unix/TCP consumer workflow. 10/10 GTest, selected CTest5/5; update/save/operation IDs остаются следующей работой. [[engineering/CONFIG_SERVICE]].
+
 14.10.2026: первый продуктовый ConfigService read реализован: config_read_v1, coherent active/persisted/revision snapshot, typed C++ parser и read_configuration(), Unix/TCP consumer parity, read during lease, bounded oversize rejection без disconnect. Selected CTest5/5; general schema/validate/update/apply ещё не реализованы. [[engineering/CONFIG_SERVICE]].
 
 14.10.2026: последний bounded target-overlap control завершён: independent preflight/capture726/730 target pixels,3520/3520 metric и240/240 anchor checks;26 same-coordinate plane-none→patch-all geometry contrasts. Target RGB MAE33.65→23.85 /33.83→24.08. Следующая работа — ConfigService/library/GUI, оставшиеся исследования отложены до общего ExperimentRunner. [[validation/TARGET_OVERLAP]], §4.92.

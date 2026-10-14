@@ -10,12 +10,14 @@
 
 ## Полный каталог текущих операций
 
-Каталог содержит21 серверную команду; запросы передаются как type20, результат — type21. Typed API перечислен там, где он есть; остальные доступны через `command(type, parameters)`. Наличие generic API не означает поддержку неизвестной команды сервером.
+Каталог содержит 23 серверные команды; запросы передаются как type20, результат — type21. Typed API перечислен там, где он есть; остальные доступны через `command(type, parameters)`. Наличие generic API не означает поддержку неизвестной команды сервером.
 
 | Команда | Запрос помимо command_id/type | Успешный результат / сценарий |
 |---|---|---|
 | `state` | Нет | Snapshot, revisions, lease; С02 |
 | `config_read` | Нет; capability config_read_v1 | Coherent ConfigStore active/persisted/revision, read-only; С13 |
+| `config_catalog` | Нет; capability config_catalog_v1 | Fusion/surface bounds и replacement/validation policy; С14 |
+| `config_validate` | base_config_revision, changes object; capability config_validate_v1 | Read-only candidate check, без renderer preparation/persistence; С14 |
 | `fusion_catalog` | Нет | Каталог fusion версии 5, capabilities параметров; С02 |
 | `output_catalog` | Нет | Каталог продуктов/формат маски; С12 |
 | `configure_output` | `product=final_frame/render_support_v1/source_visibility_v1/source_disagreement_v1` | Выбор одного data product до следующего render; С12 |
@@ -351,4 +353,8 @@ end note
 
 ## С13. Согласованное чтение ConfigStore
 
-Реализованы read_configuration() и owning parse_configuration_snapshot(); snapshot доступен без lease token и не меняет revisions/рендер/файл. Scope исключает session view и launch-only CLI overrides. Диаграмма request/ACK, oversize rejection и поля: [[engineering/CONFIG_SERVICE]]. General validate/update/apply остаются будущими сценариями.
+Реализованы read_configuration() и owning parse_configuration_snapshot(); snapshot доступен без lease token и не меняет revisions/рендер/файл. Scope исключает session view и launch-only CLI overrides. Диаграмма request/ACK, oversize rejection и поля: [[engineering/CONFIG_SERVICE]]. Discovery/validation описаны в С14; general update/apply остаются будущими сценариями.
+
+## С14. Discovery и проверка без применения
+
+Приложение читает catalog и snapshot, формирует полные replacement groups fusion/surface и вызывает validate_configuration(base_revision, changes). Валидный запрос возвращает configuration_validation, invalid/stale — rejected ACK с reason. Даже успешный результат не резервирует revision, не подготавливает GPU и не применяет настройки. Операции разрешены при lease и не вызывают новый paused render. Диаграмма последовательности, поля/границы и проверки: [[engineering/CONFIG_SERVICE]].

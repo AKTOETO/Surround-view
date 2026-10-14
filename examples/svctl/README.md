@@ -1,12 +1,13 @@
 # svctl: настройка и управление без Qt
 
-CLI использует только публичную `sv-client-lib`, Boost и STL. Поддерживаются существующие `state`, `pause`, `resume`, `step`, `preset`, `orbit`, `zoom`; неизвестное расширение передаётся через `command TYPE --params JSON_OBJECT`, а сервер решает, поддерживает ли его. ConfigService read доступен через `command config_read`; general config mutations и subscriptions пока отсутствуют на сервере; CLI не имитирует их редактированием файла.
+CLI использует только публичную `sv-client-lib`, Boost и STL. Поддерживаются существующие `state`, `pause`, `resume`, `step`, `preset`, `orbit`, `zoom`; неизвестное расширение передаётся через `command TYPE --params JSON_OBJECT`, а сервер решает, поддерживает ли его. ConfigService read/discovery/validation доступны через `command config_read`, `command config_catalog`, `command config_validate --params ...`; general config mutations и subscriptions пока отсутствуют на сервере; CLI не имитирует их редактированием файла.
 
 ```sh
 cmake -S . -B build -DSV_CLIENT=OFF
 cmake --build build --target svctl
 build/svctl --unix /tmp/sv-prototype state
 build/svctl --unix /tmp/sv-prototype command config_read
+build/svctl --unix /tmp/sv-prototype command config_catalog
 build/svctl --tcp 127.0.0.1 53101 53102 preset top
 build/svctl --unix /tmp/sv-prototype orbit 0.1 -0.05
 build/svctl --unix /tmp/sv-prototype zoom -0.5

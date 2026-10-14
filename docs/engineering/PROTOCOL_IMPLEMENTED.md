@@ -1,10 +1,10 @@
 # Реализованный протокол SV01
 
-Срез реализации Linux 0.6.x. Это описание текущего wire-контракта, сверенное с `include/sv/protocol.hpp`, `src/core/protocol.cpp`, `src/apps/server.cpp` и `src/client_library/client.cpp`. Runtime fusion API `fusion_runtime_v1` описан ниже; первый ConfigService read config_read_v1 реализован ([[engineering/CONFIG_SERVICE]]), general validate/update/apply ещё отсутствуют. Целевая расширенная архитектура и подписки описаны отдельно в [[architecture/CLIENT_SERVER_MODEL]] и пока не являются возможностями сервера.
+Срез реализации Linux 0.6.x. Это описание текущего wire-контракта, сверенное с `include/sv/protocol.hpp`, `src/core/protocol.cpp`, `src/apps/server.cpp` и `src/client_library/client.cpp`. Runtime fusion API `fusion_runtime_v1` описан ниже; ConfigService read/catalog/validate для fusion/surface реализован ([[engineering/CONFIG_SERVICE]]), general update/apply/save ещё отсутствуют. Целевая расширенная архитектура и подписки описаны отдельно в [[architecture/CLIENT_SERVER_MODEL]] и пока не являются возможностями сервера.
 
 ## Транспорт и кадрирование
 
-Полный каталог 21 команды и 13 сценариев подключения, применения, обработки кадров и отказов с PlantUML: [[engineering/PROTOCOL_SCENARIOS]]. Сценарии описывают текущий код; проектируемые API остаются отдельно.
+Полный каталог 23 команд и 14 сценариев подключения, применения, обработки кадров и отказов с PlantUML: [[engineering/PROTOCOL_SCENARIOS]]. Сценарии описывают текущий код; проектируемые API остаются отдельно.
 
 Один логический клиент использует две независимые stream-связи: control и data. Поддерживаются Unix domain sockets либо TCP; транспорт выбирается только конфигурацией endpoint/listeners. Клиентская библиотека сама не переключается на другой транспорт. UDP, TLS, несколько одновременных клиентов и control-only пока отсутствуют. Серверная сторона ограничена одной сессией: второй клиент не образует независимое пространство состояния.
 
@@ -300,3 +300,7 @@ Additive HELLO/output_catalog product `source_disagreement_v1` with exact source
 ## ConfigService read config_read_v1
 
 `config_read` возвращает coherent active/persisted/revision snapshot в ACK configuration; доступен при lease, не меняет revisions/файл/render dirty. Typed API: read_configuration()/parse_configuration_snapshot(). Лимит snapshot32KiB, oversize отклоняется без disconnect. Scope config_store исключает launch-only overrides и session state. Поля, диаграмма, проверки и оставшиеся операции: [[engineering/CONFIG_SERVICE]].
+
+## ConfigService discovery/validation v1
+
+Capabilities config_catalog_v1/config_validate_v1, команды config_catalog/config_validate. Каталог задаёт replacement policy для fusion/surface и общие parameter bounds. Validation проверяет base_config_revision, complete replacement groups, общий parser, текущий view и output guard; successful ACK содержит configuration_validation с applied=false/renderer_prepared=false. Read-only при lease, без изменения revisions/файла/render dirty. Это не apply token и не гарантия GPU preparation. Typed API, negative cases и диаграмма: [[engineering/CONFIG_SERVICE]].

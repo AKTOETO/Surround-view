@@ -1234,3 +1234,16 @@ build/svctl --tcp 127.0.0.1 53101 53102 command config_read
 Запрос не требует JSON-ввода и не изменяет конфиг. ACK configuration содержит coherent
 active/persisted/revision snapshot ConfigStore, без session view и launch-only overrides.
 Нужен сервер с capability config_read_v1. Подробный C++ API и ограничения: [[engineering/CONFIG_SERVICE]].
+
+## Получить допустимые параметры и проверить изменения
+
+```sh
+build/svctl --unix /tmp/sv-prototype command config_catalog
+# Revision брать из config_read; 0 здесь только пример:
+build/svctl --unix /tmp/sv-prototype command config_validate --params '{"base_config_revision":"0","changes":{"fusion":{"mode":"multi_band","pyramid_boundary":"normalized"}}}'
+```
+
+Validation ничего не применяет и не сохраняет. Полная замена fusion требует mode; omitted
+fusion fields получают defaults. Surface требует все geometry fields. Остальные root groups
+пока не поддержаны. Для программного клиента используйте typed API, для GUI формы будут
+добавлены следующим шагом. Контракт и ограничения: [[engineering/CONFIG_SERVICE]].

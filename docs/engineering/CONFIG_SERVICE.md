@@ -1,8 +1,8 @@
-# ConfigService: реализованное чтение конфигурации
+# ConfigService: чтение, каталог и проверка конфигурации
 
-14.10.2026. Первый продуктовый шаг после bounded research [[validation/TARGET_OVERLAP]].
-Серверный `ConfigService` предоставляет **только read**; general validate/update/apply/save,
-operation IDs и restart orchestration ещё не реализованы. Временные configure_fusion/surface
+14.10.2026. Продуктовые шаги после bounded research [[validation/TARGET_OVERLAP]].
+Серверный `ConfigService` предоставляет read, discovery и проверку групп fusion/surface;
+general update/apply/save, operation IDs и restart orchestration ещё не реализованы. Временные configure_fusion/surface
 и persistent calibration apply сохраняют прежние контракты.
 
 ## Wire-контракт config_read_v1
@@ -36,7 +36,7 @@ Persistence configured указывает наличие серверного pe
 Scope `config_store` намеренно исключает текущий session view, pause/output selection,
 фактическое состояние listeners и launch-only CLI overrides `--ipc-dir`/`--manifest`/`--loop`.
 Для текущего view/lease/runtime state использовать `state`; не считать snapshot полным паспортом
-запущенного процесса. Это чтение, не schema discovery всех поддерживаемых изменений.
+запущенного процесса. Для discovery fusion/surface использовать отдельный config_catalog ниже.
 
 Read доступен и при удерживаемом/recovering experiment lease без lease token. Не меняет
 config_revision/state_revision/applied_command, не помечает render dirty и не сохраняет файл.
@@ -96,7 +96,7 @@ build/svctl --tcp 127.0.0.1 53101 53102 command config_read
 
 JSON-ввод для этого запроса не нужен. GUI binding/read forms — следующий этап, не свойство текущего UI.
 
-## Проверки и следующие шаги
+## Проверки первого read-среза и следующие шаги
 
 5 новых GTest проверяют active/persisted, отсутствие read-side revision changes, coherent
 concurrent publication, oversize rejection, owning typed result/uint64 max и malformed responses.
@@ -108,8 +108,132 @@ configuration_snapshot/config_store_persistence/client_output/experiment_lease/o
 5/5 за5.92s (output_products содержит8 Python integration cases). Первый sandbox run не мог bind
 сокеты; проверка повторена вне sandbox. Full suite и Aurora в этом шаге не проверялись.
 
-Далее: ConfigService schema/capability discovery с apply policy, side-effect-free validate,
-revision-aware update, operation IDs/status, atomic persistence и frame-boundary apply; затем
+Далее: revision-aware update, operation IDs/status, atomic persistence и frame-boundary apply; затем
 подключить формы GUI и сценарный runner. API должен различать временные settings, persisted
 settings, session state и restart-required settings. Исторические configure_* не превращать
 в автоматически сохраняемые операции без явного контракта.
+
+## Discovery config_catalog_v1
+
+Capability `config_catalog_v1`, команда `config_catalog`, ACK field `configuration_catalog`:
+
+|Поле|Контракт v1|
+|---|---|
+|schema_version / scope|1 / config_store_groups|
+|operations|config_read, config_catalog, config_validate|
+|replaceable_groups|fusion, surface|
+|changes_semantics|replace_each_supplied_group|
+|omitted_groups|keep_active|
+|base_config_revision_required|true|
+|validation_scope|parse_config_and_current_session|
+|prepares_renderer / reserves_revision / generic_apply_supported|false / false / false|
+|persistence|none|
+|fusion / surface|Общие каталоги runtime параметров, без дублирования bounds в сервисе|
+
+Это каталог параметров/политик, **не полный JSON Schema всех root groups**. Другие группы
+(cameras/source/connections/output/runtime/vehicle/view) через config_validate пока не изменяются.
+Surface.geometry_fields описывает четыре geometry types: required geometry fields, units,
+числовые integer-cell bounds и текстовые cross-field constraints. Optional reference height,
+local support и source occlusion описаны прежними разделами surface catalog. Поле type задаёт
+discriminator и обязательно в replacement. Plane — rectangular_bowl_v1 с corner_height_m0.
+Общий parse_config остаётся authoritative validator для связей параметров, optics и budgets;
+GUI не должен считать static field hints достаточным доказательством допустимости.
+
+`surface_catalog` использует тот же helper и получает additive geometry_fields. Fusion catalog v5
+сохраняет прежний контракт. Новые standalone commands не требуют lease token и не меняют состояние.
+
+## Проверка config_validate_v1
+
+Capability `config_validate_v1`. Запрос type20:
+
+```json
+{
+  "command_id":"43",
+  "type":"config_validate",
+  "base_config_revision":"7",
+  "changes":{"fusion":{"mode":"multi_band","pyramid_boundary":"normalized"}}
+}
+```
+
+Каждый supplied group полностью заменяет соответствующий active JSON block; omitted groups
+сохраняются. Поэтому mode обязателен в fusion, а остальные omitted fusion parameters получают
+defaults общего parser. Surface должен содержать type и все required fields своего geometry type.
+Пустой changes, неизвестные groups и неверные типы/поля отклоняются. Это не JSON merge patch.
+
+После декодирования changes object сервис получает coherent active/revision snapshot. При stale
+base revision проверка сразу отклоняется; затем candidate копируется и проходит parse_config,
+safe_view для **текущего session view**, color requirement выбранного intermediate output.
+Проверяются в том числе CPU research pixel budget и прежние constraints virtual_camera из Config.
+Renderer allocation/mesh preparation/driver checks не выполняются: valid не гарантирует успешную
+будущую GPU preparation или запись на диск. Validation не резервирует revision и не выдаёт apply token.
+
+Успешный ACK accepted=true содержит configuration_validation:
+
+```json
+{
+  "schema_version":1,
+  "scope":"config_store_groups",
+  "base_config_revision":"7",
+  "valid":true,
+  "changes":{"fusion":{"mode":"multi_band","diagnostic":"color","edge_width_px":24,"angle_power":2,"smoothness_weight":0.1,"pyramid_levels":4,"pyramid_boundary":"normalized"}},
+  "applied":false,
+  "renderer_prepared":false
+}
+```
+
+Fusion возвращается с defaults через общий fusion_settings; surface — проверенный complete input
+block, без materialization всех optional defaults. При отказе accepted=false, reason и обычные
+state fields; configuration_validation отсутствует. Стабильные reasons этого шага:
+stale_config_revision, configuration_changes_empty, configuration_group_unsupported, view_clearance
+и прежние *_requires_color. Ошибки parse_config возвращают прежний текст parser; structured
+field-level errors/локализация ещё не добавлены.
+
+Во время lease validation разрешён без token: active/persisted/revision/file и paused-render dirty
+не меняются. При будущем apply обязательны повторная проверка revision, session constraints,
+preparation и явная persistence policy. validate→apply не является сейчас серверной транзакцией.
+
+```plantuml
+@startuml
+actor Application as A
+participant "sv-client-lib" as L
+participant "sv-server / ConfigService" as S
+participant ConfigStore as C
+A -> L : configuration_catalog()
+L -> S : config_catalog
+S --> L : shared fusion/surface bounds + validation policy
+L --> A : owning ConfigurationCatalog
+A -> L : validate_configuration(base_revision, changes)
+L -> S : config_validate
+S -> C : coherent active + revision snapshot
+C --> S : immutable candidate base
+alt stale revision or unsupported/invalid changes
+  S --> L : rejected ACK + reason
+else parser and current-session constraints pass
+  S -> S : copy / replace groups / parse_config / safe_view / output guard
+  S --> L : accepted ACK + valid changes / applied=false
+end
+L --> A : Event::Message; parse only accepted results
+note over S,C : No renderer preparation, persistence or revision reservation
+@enduml
+```
+
+Рисунок — Реализованный discovery/validation workflow. Приложение выбирает допустимые параметры
+из catalog; отрицательный результат отображает по ACK reason, не вызывает success parser.
+
+Typed API: Client::configuration_catalog(), Client::validate_configuration(base_revision, changes),
+parse_configuration_catalog(), parse_configuration_validation(). Owning results не зависят от Qt,
+OpenCV или core Config; parsers проверяют schema/policy/revision и не подменяют semantic validation.
+Строгий parser не позволяет принять applied=true/renderer_prepared=true как validation-only result.
+
+```sh
+build/svctl --unix /tmp/sv-prototype command config_catalog
+# base_config_revision взять из config_read, не считать постоянным нулём:
+build/svctl --unix /tmp/sv-prototype command config_validate --params '{"base_config_revision":"0","changes":{"fusion":{"mode":"multi_band"}}}'
+```
+
+Новые5 GTest (всего10 configuration tests) проверяют replacement/defaults, отсутствие изменений,
+stale/empty/unsupported/typed bounds, current view/output guards, research budget, shared catalog
+и malformed typed responses. Live tests проверяют все7 fusion modes и invalid matrix при lease,
+неизменные file/revisions/output и отсутствие нового paused frame. Реальный C++ consumer выполняет
+read→catalog→validate по Unix и TCP. Selected CTest5/5 за6.30s; output_products содержит9 integration
+cases. Full regression и Aurora в этом шаге не запускались.
