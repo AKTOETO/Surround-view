@@ -122,7 +122,7 @@ class ExperimentLease
     bool allows(const std::string &operation, const std::string &owner, const std::string &id,
                 uint64_t now) const
     {
-        if (operation == "state" || operation == "fusion_catalog" ||
+        if (operation == "state" || operation == "config_read" || operation == "fusion_catalog" ||
             operation == "surface_catalog" || operation == "output_catalog" ||
             operation == "calibration_status")
         {

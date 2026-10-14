@@ -13,7 +13,7 @@ int main(int argc, char **argv)
         sv::client::Options options;
         unsigned frames = 3;
         bool exercise = false, allow_reconnect = false, support = false, visibility = false,
-             disagreement = false;
+             disagreement = false, configuration = false;
         for (int i = 1; i < argc; ++i)
         {
             const std::string arg = argv[i];
@@ -66,6 +66,10 @@ int main(int argc, char **argv)
             {
                 disagreement = true;
             }
+            else if (arg == "--configuration")
+            {
+                configuration = true;
+            }
             else if (arg == "--visibility")
             {
                 visibility = true;
@@ -84,6 +88,10 @@ int main(int argc, char **argv)
         if ((support && exercise) || (visibility && (support || exercise)))
         {
             throw std::runtime_error("--support and --exercise are separate probe modes");
+        }
+        if (configuration && (support || visibility || disagreement || exercise))
+        {
+            throw std::runtime_error("--configuration is a separate probe mode");
         }
         std::mutex mutex;
         std::condition_variable cv;
@@ -147,7 +155,14 @@ int main(int argc, char **argv)
                 }
                 if (event.detail == "ready")
                 {
-                    client.state();
+                    if (configuration)
+                    {
+                        client.read_configuration();
+                    }
+                    else
+                    {
+                        client.state();
+                    }
                     if (support || visibility || disagreement)
                     {
                         client.output_catalog();
@@ -172,6 +187,11 @@ int main(int argc, char **argv)
             }
             auto header = event.message->header;
             header["message_type"] = event.message->type;
+            if (configuration && event.message->type == 21)
+            {
+                const auto snapshot = sv::client::parse_configuration_snapshot(*event.message);
+                header["validated_configuration_revision"] = std::to_string(snapshot.revision);
+            }
             if (event.message->type == 11)
             {
                 const auto product = sv::client::validate_output_product(*event.message);

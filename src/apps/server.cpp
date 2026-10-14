@@ -3,6 +3,7 @@
 #include "output_selection.hpp"
 #include "sv/build_info.hpp"
 #include "sv/calibration_job.hpp"
+#include "sv/config_service.hpp"
 #include "sv/config_store.hpp"
 #include "sv/experiment_lease.hpp"
 #include "sv/fusion_runtime.hpp"
@@ -369,6 +370,7 @@ ServerIO::ServerIO(const sv::Connections &n, const std::string &source_type,
                     "pause",
                     "resume",
                     "state",
+                    "config_read_v1",
                     "fusion_runtime_v1",
                     "research_fusion_v1",
                     "runtime_surface_v1",
@@ -652,6 +654,7 @@ int main(int argc, char **argv)
         }
 
         sv::ConfigStore config_store(initial_cfg, std::filesystem::absolute(cfg_path));
+        sv::ConfigService config_service(config_store);
         sv::CalibrationJobManager calib_jobs;
 
         std::unique_ptr<sv::FrameSource> source;
@@ -906,6 +909,10 @@ int main(int argc, char **argv)
                     }
                     else if (type == "state")
                     {
+                    }
+                    else if (type == "config_read")
+                    {
+                        extra_res["configuration"] = config_service.read();
                     }
                     else if (type == "fusion_catalog")
                     {
@@ -1295,7 +1302,7 @@ int main(int argc, char **argv)
                         reason = "source_control_queue_full";
                     }
                 }
-                if (accepted && type != "state" && type != "fusion_catalog" &&
+                if (accepted && type != "state" && type != "config_read" && type != "fusion_catalog" &&
                     type != "output_catalog" && type != "surface_catalog" &&
                     type != "experiment_acquire" && type != "experiment_renew" &&
                     type != "experiment_release" && type != "calibrate" &&

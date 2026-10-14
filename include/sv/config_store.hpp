@@ -14,6 +14,13 @@
 namespace sv
 {
 
+struct ConfigurationState
+{
+    std::shared_ptr<const Config> active, persisted;
+    uint64_t revision = 0;
+    bool persistence_configured = false;
+};
+
 class ConfigStore : public IConfigStore
 {
   public:
@@ -40,6 +47,12 @@ class ConfigStore : public IConfigStore
     {
         std::lock_guard<std::mutex> lock(mutex_);
         return {active_, revision_.load()};
+    }
+
+    ConfigurationState configuration_state() const
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        return {active_, persisted_, revision_.load(), !persistence_path_.empty()};
     }
 
     bool update(const Config &new_config, std::string &error_reason) override

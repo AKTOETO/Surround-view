@@ -1,4 +1,5 @@
 #pragma once
+#include "sv/client_configuration.hpp"
 #include "sv/client_output.hpp"
 #include "sv/fallback_display.hpp"
 #include "sv/protocol.hpp"
@@ -103,6 +104,12 @@ class Client
     uint64_t state()
     {
         return command("state");
+    }
+
+    // Available when HELLO advertises config_read_v1. Does not persist or mutate state.
+    uint64_t read_configuration()
+    {
+        return command("config_read");
     }
 
     uint64_t fusion_catalog()

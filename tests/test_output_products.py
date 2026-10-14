@@ -68,6 +68,58 @@ class OutputProducts(unittest.TestCase):
                 return header, pixels
         self.fail('frame revision did not advance')
 
+    def test_oversized_configuration_read_rejects_without_disconnect_or_mutation(self):
+        self.cfg['profile_id'] = 'x' * 20000
+        self.config.write_text(json.dumps(self.cfg))
+        self.start()
+        self.client = Client(self.ipc)
+        paused = self.client.command('pause')
+        original = self.config.read_bytes()
+        rejected = self.client.command('config_read')
+        self.assertFalse(rejected['accepted'], rejected)
+        self.assertEqual(rejected['reason'], 'configuration_snapshot_too_large')
+        self.assertNotIn('configuration', rejected)
+        state = self.client.command('state')
+        self.assertTrue(state['accepted'])
+        self.assertEqual(state['state_revision'], paused['state_revision'])
+        self.assertEqual(state['config_revision'], paused['config_revision'])
+        self.assertEqual(self.config.read_bytes(), original)
+
+    def test_configuration_read_is_coherent_readonly_and_allowed_during_lease(self):
+        self.start()
+        self.client = Client(self.ipc)
+        self.client.frame()
+        paused = self.client.command('pause')
+        original = self.config.read_bytes()
+        first = self.client.command('config_read')
+        self.assertTrue(first['accepted'], first)
+        snapshot = first['configuration']
+        self.assertEqual(snapshot['schema_version'], 1)
+        self.assertEqual(snapshot['scope'], 'config_store')
+        self.assertEqual(snapshot['revision'], first['config_revision'])
+        self.assertEqual(first['state_revision'], paused['state_revision'])
+        self.assertEqual(snapshot['active'], snapshot['persisted'])
+        self.assertFalse(snapshot['has_runtime_changes'])
+        self.assertTrue(snapshot['persistence_configured'])
+        fusion = copy.deepcopy(first['fusion'])
+        fusion['mode'] = 'angular_feather'
+        changed = self.client.command('configure_fusion',
+            base_config_revision=first['config_revision'], fusion=fusion)
+        self.assertTrue(changed['accepted'], changed)
+        lease = self.client.command('experiment_acquire', ttl_ms=5000)
+        self.assertTrue(lease['accepted'], lease)
+        active = self.client.command('config_read')  # No lease token for a read.
+        self.assertTrue(active['accepted'], active)
+        self.assertEqual(active['config_revision'], changed['config_revision'])
+        self.assertEqual(active['state_revision'], changed['state_revision'])
+        snapshot = active['configuration']
+        self.assertEqual(snapshot['revision'], active['config_revision'])
+        self.assertTrue(snapshot['has_runtime_changes'])
+        self.assertEqual(snapshot['active']['fusion']['mode'], 'angular_feather')
+        self.assertEqual(snapshot['persisted'], first['configuration']['persisted'])
+        self.assertEqual(self.config.read_bytes(), original)
+        self.client.command('experiment_release', lease_id=lease['experiment_lease']['lease_id'])
+
     def test_live_selection_native_parity_rejections_and_reconnect(self):
         self.start()
         self.client = Client(self.ipc)
@@ -379,6 +431,16 @@ class OutputProducts(unittest.TestCase):
         self.config.write_text(json.dumps(self.cfg))
         self.start()
         for endpoint in (['--unix', str(self.ipc)], ['--tcp', '127.0.0.1', str(ctl), str(data)]):
+            result = subprocess.run([str(BUILD / 'sv-client-probe'), *endpoint,
+                '--frames', '1', '--configuration'], text=True, capture_output=True, timeout=20)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            messages = [json.loads(line) for line in result.stdout.splitlines()]
+            snapshots = [m for m in messages if 'validated_configuration_revision' in m]
+            self.assertEqual(len(snapshots), 1)
+            self.assertEqual(snapshots[0]['validated_configuration_revision'], snapshots[0]['config_revision'])
+            self.assertEqual(snapshots[0]['configuration']['active'], snapshots[0]['configuration']['persisted'])
+            hellos = [m for m in messages if m.get('message_type') == 2]
+            self.assertTrue(any('config_read_v1' in m.get('capabilities', []) for m in hellos))
             result = subprocess.run([str(BUILD / 'sv-client-probe'), *endpoint,
                 '--frames', '1', '--support'], text=True, capture_output=True, timeout=20)
             self.assertEqual(result.returncode, 0, result.stderr)
