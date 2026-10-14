@@ -26,6 +26,20 @@ class Renderer
 
   public:
 
+    class SurfaceUpdate
+    {
+        struct Impl;
+        std::unique_ptr<Impl> impl_;
+        explicit SurfaceUpdate(std::unique_ptr<Impl>);
+        friend class Renderer;
+
+      public:
+
+        ~SurfaceUpdate();
+        // Render-thread only. The update must not outlive its renderer.
+        void commit() noexcept;
+    };
+
     explicit Renderer(const Config &);
     ~Renderer();
     Renderer(const Renderer &) = delete;
@@ -33,6 +47,7 @@ class Renderer
     // Render-thread only; caller must validate and prepare settings before publishing.
     void set_fusion(Fusion) noexcept;
     void set_surface(Surface); // Prepare mesh buffers before committing; render-thread only.
+    std::unique_ptr<SurfaceUpdate> prepare_surface(Surface);
     Image render(const FrameSet &, const View &, RenderInspection *inspection = nullptr,
                  RenderInspectionRequest request = {});
     std::vector<Pixel> project_points(const Camera &, const std::vector<Vec3> &);

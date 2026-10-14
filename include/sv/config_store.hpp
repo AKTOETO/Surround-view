@@ -5,10 +5,12 @@
 #include <filesystem>
 #include <fstream>
 #include <functional>
+#include <limits>
 #include <memory>
 #include <mutex>
 #include <stdexcept>
 #include <string>
+#include <type_traits>
 #include <utility>
 
 namespace sv
@@ -113,6 +115,50 @@ class ConfigStore : public IConfigStore
         persisted_ = active_;
     }
 
+    template <class Publish>
+    bool commit_prepared_if_revision(const Config &candidate, uint64_t expected_revision,
+                                     bool persist_snapshot, std::string &error, Publish publish)
+    {
+        static_assert(std::is_nothrow_invocable_v<Publish &>, "publication must be noexcept");
+        std::lock_guard<std::mutex> lock(mutex_);
+        if (revision_.load() != expected_revision)
+        {
+            error = "stale_config_revision";
+            return false;
+        }
+        try
+        {
+            if (revision_.load() == std::numeric_limits<uint64_t>::max())
+            {
+                throw std::overflow_error("config_revision_exhausted");
+            }
+            if (persist_snapshot && persistence_path_.empty())
+            {
+                throw std::runtime_error("configuration_persistence_unavailable");
+            }
+            auto updated = std::make_shared<Config>(parse_config(candidate.effective));
+            if (persist_snapshot)
+            {
+                write_atomic(updated->effective);
+            }
+            // Everything below is nonthrowing; renderer and store publish under one lock.
+            publish();
+            active_ = std::move(updated);
+            if (persist_snapshot)
+            {
+                persisted_ = active_;
+            }
+            ++revision_;
+            error.clear();
+            return true;
+        }
+        catch (const std::exception &failure)
+        {
+            error = failure.what();
+            return false;
+        }
+    }
+
     std::shared_ptr<const Config> persisted() const
     {
         std::lock_guard<std::mutex> lock(mutex_);
@@ -175,6 +221,11 @@ class ConfigStore : public IConfigStore
                                          temporary.string());
             }
             stream.close();
+            if (!stream)
+            {
+                throw std::runtime_error("cannot close temporary config file " +
+                                         temporary.string());
+            }
             std::filesystem::rename(temporary, persistence_path_);
         }
         catch (...)

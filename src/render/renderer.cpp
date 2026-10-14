@@ -947,26 +947,70 @@ boost::json::object Renderer::mesh_resources() const
             {"resident", measure({&i.mesh, &i.floor_mesh, &i.dome_mesh})}};
 }
 
-void Renderer::set_surface(Surface surface)
+struct Renderer::SurfaceUpdate::Impl
 {
-    auto &i = *impl_;
+    Renderer::Impl *owner = nullptr;
+    Surface surface;
+    Mesh floor, shell;
+    GLuint fv = 0, fb = 0, fe = 0, sv = 0, sb = 0, se = 0;
+    bool committed = false;
 
-    struct Buffers
+    ~Impl()
     {
-        Mesh floor, shell;
-        GLuint fv = 0, fb = 0, fe = 0, sv = 0, sb = 0, se = 0;
+        glDeleteBuffers(1, &fb);
+        glDeleteBuffers(1, &fe);
+        glDeleteVertexArrays(1, &fv);
+        glDeleteBuffers(1, &sb);
+        glDeleteBuffers(1, &se);
+        glDeleteVertexArrays(1, &sv);
+    }
+};
 
-        ~Buffers()
-        {
-            glDeleteBuffers(1, &fb);
-            glDeleteBuffers(1, &fe);
-            glDeleteVertexArrays(1, &fv);
-            glDeleteBuffers(1, &sb);
-            glDeleteBuffers(1, &se);
-            glDeleteVertexArrays(1, &sv);
-        }
-    } prepared;
+Renderer::SurfaceUpdate::SurfaceUpdate(std::unique_ptr<Impl> impl) : impl_(std::move(impl))
+{
+}
 
+Renderer::SurfaceUpdate::~SurfaceUpdate() = default;
+
+void Renderer::SurfaceUpdate::commit() noexcept
+{
+    auto &prepared = *impl_;
+    if (prepared.committed)
+    {
+        return;
+    }
+    auto &i = *prepared.owner;
+    auto &surface = prepared.surface;
+    // No fallible work after publication starts; destructor releases the old buffers.
+    if (surface.type == "rectangular_bowl_v1")
+    {
+        std::swap(i.mesh, prepared.floor);
+        std::swap(i.vao, prepared.fv);
+        std::swap(i.vbo, prepared.fb);
+        std::swap(i.ebo, prepared.fe);
+    }
+    else
+    {
+        std::swap(i.floor_mesh, prepared.floor);
+        std::swap(i.dome_mesh, prepared.shell);
+        std::swap(i.floor_vao, prepared.fv);
+        std::swap(i.floor_vbo, prepared.fb);
+        std::swap(i.floor_ebo, prepared.fe);
+        std::swap(i.dome_vao, prepared.sv);
+        std::swap(i.dome_vbo, prepared.sb);
+        std::swap(i.dome_ebo, prepared.se);
+    }
+    i.config.surface = std::move(surface);
+    ++i.mesh_build_count;
+    prepared.committed = true;
+}
+
+std::unique_ptr<Renderer::SurfaceUpdate> Renderer::prepare_surface(Surface surface)
+{
+    auto state = std::make_unique<SurfaceUpdate::Impl>();
+    state->owner = impl_.get();
+    state->surface = surface;
+    auto &prepared = *state;
     if (surface.type == "rectangular_bowl_v1")
     {
         prepared.floor = make_mesh(surface);
@@ -997,27 +1041,13 @@ void Renderer::set_surface(Surface surface)
         upload_mesh(prepared.shell, prepared.sv, prepared.sb, prepared.se);
     }
     check("prepare surface buffers");
-    // No fallible work after publication starts; destructor releases the old buffers.
-    if (surface.type == "rectangular_bowl_v1")
-    {
-        std::swap(i.mesh, prepared.floor);
-        std::swap(i.vao, prepared.fv);
-        std::swap(i.vbo, prepared.fb);
-        std::swap(i.ebo, prepared.fe);
-    }
-    else
-    {
-        std::swap(i.floor_mesh, prepared.floor);
-        std::swap(i.dome_mesh, prepared.shell);
-        std::swap(i.floor_vao, prepared.fv);
-        std::swap(i.floor_vbo, prepared.fb);
-        std::swap(i.floor_ebo, prepared.fe);
-        std::swap(i.dome_vao, prepared.sv);
-        std::swap(i.dome_vbo, prepared.sb);
-        std::swap(i.dome_ebo, prepared.se);
-    }
-    i.config.surface = std::move(surface);
-    ++i.mesh_build_count;
+
+    return std::unique_ptr<SurfaceUpdate>(new SurfaceUpdate(std::move(state)));
+}
+
+void Renderer::set_surface(Surface surface)
+{
+    prepare_surface(std::move(surface))->commit();
 }
 
 void Renderer::set_fusion(Fusion fusion) noexcept

@@ -13,7 +13,7 @@ int main(int argc, char **argv)
         sv::client::Options options;
         unsigned frames = 3;
         bool exercise = false, allow_reconnect = false, support = false, visibility = false,
-             disagreement = false, configuration = false;
+             disagreement = false, configuration = false, configuration_apply = false;
         for (int i = 1; i < argc; ++i)
         {
             const std::string arg = argv[i];
@@ -70,6 +70,10 @@ int main(int argc, char **argv)
             {
                 configuration = true;
             }
+            else if (arg == "--configuration-apply")
+            {
+                configuration = configuration_apply = true;
+            }
             else if (arg == "--visibility")
             {
                 visibility = true;
@@ -112,7 +116,11 @@ int main(int argc, char **argv)
                                       cv.notify_one();
                                   });
         unsigned received = 0, acknowledgements = 0;
-        const unsigned expected_acks = configuration ? 3 : exercise ? 5 : support ? 3 : 1;
+        const unsigned expected_acks = configuration_apply ? 4
+                                       : configuration     ? 3
+                                       : exercise          ? 5
+                                       : support           ? 3
+                                                           : 1;
         uint64_t configuration_revision = 0;
         const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(15);
         while (received < frames || acknowledgements < expected_acks)
@@ -200,16 +208,30 @@ int main(int argc, char **argv)
                 else if (header.contains("configuration_catalog"))
                 {
                     const auto catalog = sv::client::parse_configuration_catalog(*event.message);
+                    if (configuration_apply && !catalog.apply_supported)
+                    {
+                        throw std::runtime_error("configuration apply unsupported");
+                    }
                     header["validated_configuration_catalog"] = !catalog.replaceable_groups.empty();
                     client.validate_configuration(
                         configuration_revision,
                         {{"fusion", boost::json::object{{"mode", "angular_feather"}}}});
                 }
-                else
+                else if (header.contains("configuration_validation"))
                 {
                     const auto result = sv::client::parse_configuration_validation(*event.message);
                     header["validated_configuration_base_revision"] =
                         std::to_string(result.base_revision);
+                    if (configuration_apply)
+                    {
+                        client.apply_configuration(result.base_revision, result.changes, false);
+                    }
+                }
+                else
+                {
+                    const auto result = sv::client::parse_configuration_application(*event.message);
+                    header["validated_configuration_application_revision"] =
+                        std::to_string(result.revision);
                 }
             }
             if (event.message->type == 11)

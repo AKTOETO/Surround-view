@@ -85,6 +85,116 @@ class OutputProducts(unittest.TestCase):
         self.assertEqual(state['config_revision'], paused['config_revision'])
         self.assertEqual(self.config.read_bytes(), original)
 
+    def test_typed_configuration_apply_unix_and_tcp(self):
+        reservations = [socket.socket(), socket.socket()]
+        try:
+            for item in reservations:
+                item.bind(('127.0.0.1', 0))
+            ctl, data = [item.getsockname()[1] for item in reservations]
+        finally:
+            for item in reservations:
+                item.close()
+        self.cfg['connections'] = {
+            'unix': {'enabled': True, 'directory': str(self.ipc)},
+            'tcp': {'enabled': True, 'address': '127.0.0.1', 'control_port': ctl, 'data_port': data}}
+        self.config.write_text(json.dumps(self.cfg))
+        original = self.config.read_bytes()
+        self.start()
+        for endpoint in (['--unix', str(self.ipc)], ['--tcp', '127.0.0.1', str(ctl), str(data)]):
+            result = subprocess.run([str(BUILD / 'sv-client-probe'), *endpoint,
+                '--frames', '1', '--configuration-apply'], text=True, capture_output=True, timeout=20)
+            self.assertEqual(result.returncode, 0, result.stderr)
+            messages = [json.loads(line) for line in result.stdout.splitlines()]
+            receipts = [m for m in messages if 'validated_configuration_application_revision' in m]
+            self.assertEqual(len(receipts), 1)
+            receipt = receipts[0]['configuration_application']
+            self.assertEqual(int(receipt['revision']), int(receipt['base_config_revision']) + 1)
+            self.assertFalse(receipt['persisted'])
+            self.assertEqual(receipts[0]['config_revision'], receipt['revision'])
+        self.assertEqual(self.config.read_bytes(), original)
+
+    def test_configuration_apply_runtime_persistence_stale_and_restart(self):
+        self.start()
+        self.client = Client(self.ipc)
+        before_frame, _ = self.frame_after(self.client.command('pause'))
+        before = self.client.command('config_read')
+        original = self.config.read_bytes()
+        surface = copy.deepcopy(self.cfg['surface'])
+        surface['corner_height_m'] = 0
+        surface['uniform_cells'] = [16, 12]
+        applied = self.client.command('config_apply', base_config_revision=before['config_revision'],
+            persist=False, changes={'fusion': {'mode': 'multi_band', 'pyramid_boundary': 'normalized'}, 'surface': surface})
+        self.assertTrue(applied['accepted'], applied)
+        receipt = applied['configuration_application']
+        self.assertFalse(receipt['persisted'])
+        self.assertEqual(int(receipt['revision']), int(receipt['base_config_revision']) + 1)
+        frame, _ = self.frame_after(applied)
+        self.assertEqual(frame['config_revision'], receipt['revision'])
+        self.assertEqual(frame['frame_set_id'], before_frame['frame_set_id'])
+        self.assertEqual(frame['upload_count'], before_frame['upload_count'])
+        self.assertEqual(self.config.read_bytes(), original)
+        stale = self.client.command('config_apply', base_config_revision=before['config_revision'],
+            persist=True, changes={'fusion': {'mode': 'edge_feather'}})
+        self.assertFalse(stale['accepted'])
+        self.assertEqual(stale['reason'], 'stale_config_revision')
+        lease = self.client.command('experiment_acquire', ttl_ms=5000)
+        for persist in (False, True):
+            rejected = self.client.command('config_apply', base_config_revision=receipt['revision'],
+                persist=persist, changes={'fusion': {'mode': 'edge_feather'}},
+                lease_id=lease['experiment_lease']['lease_id'])
+            self.assertFalse(rejected['accepted'])
+            self.assertEqual(rejected['reason'], 'experiment_lease_conflict')
+        self.client.command('experiment_release', lease_id=lease['experiment_lease']['lease_id'])
+        deadline = time.monotonic() + 3
+        while True:
+            state = self.client.command('state')
+            if state['experiment_lease']['state'] == 'idle':
+                break
+            self.assertLess(time.monotonic(), deadline)
+        saved = self.client.command('config_apply', base_config_revision=state['config_revision'],
+            persist=True, changes={'fusion': {'mode': 'angular_feather'}})
+        self.assertTrue(saved['accepted'], saved)
+        self.assertTrue(saved['configuration_application']['persisted'])
+        self.frame_after(saved)
+        snapshot = self.client.command('config_read')['configuration']
+        self.assertEqual(snapshot['active'], snapshot['persisted'])
+        self.assertEqual(json.loads(self.config.read_text()), snapshot['active'])
+        self.assertEqual(snapshot['active']['surface'], surface)  # Saves the full active snapshot.
+        self.shutdown()
+        self.start()
+        self.client = Client(self.ipc)
+        frame, _ = self.client.frame()
+        restored = self.client.command('config_read')['configuration']
+        self.assertEqual(restored['revision'], '0')  # Revisions are process-local.
+        self.assertEqual(restored['active'], snapshot['active'])
+        self.assertEqual(frame['fusion_mode'], 'angular_feather')
+
+    def test_configuration_apply_disk_failure_preserves_renderer_and_store(self):
+        self.start()
+        self.client = Client(self.ipc)
+        before_frame, before_pixels = self.frame_after(self.client.command('pause'))
+        before = self.client.command('config_read')
+        original = self.config.read_bytes()
+        surface = copy.deepcopy(self.cfg['surface'])
+        surface['corner_height_m'] = 0
+        self.config.unlink()
+        self.config.mkdir()  # Rename of the prepared file must fail.
+        failed = self.client.command('config_apply', base_config_revision=before['config_revision'],
+            persist=True, changes={'surface': surface, 'fusion': {'mode': 'angular_feather'}})
+        self.assertFalse(failed['accepted'], failed)
+        self.assertNotIn('configuration_application', failed)
+        self.assertEqual(failed['config_revision'], before['config_revision'])
+        self.assertEqual(failed['state_revision'], before['state_revision'])
+        after = self.client.command('config_read')
+        self.assertEqual(after['configuration'], before['configuration'])
+        self.assertFalse(Path(str(self.config) + '.tmp').exists())
+        self.config.rmdir()
+        self.config.write_bytes(original)
+        ack = self.client.command('orbit', azimuth_delta_rad=0, elevation_delta_rad=0)
+        frame, pixels = self.frame_after(ack)
+        self.assertEqual(pixels, before_pixels)
+        self.assertEqual(frame['upload_count'], before_frame['upload_count'])
+
     def test_configuration_discovery_validation_is_readonly_revision_checked_and_session_aware(self):
         self.start()
         self.client = Client(self.ipc)
@@ -96,7 +206,7 @@ class OutputProducts(unittest.TestCase):
         self.assertTrue(catalog['accepted'], catalog)
         fields = catalog['configuration_catalog']
         self.assertEqual(fields['replaceable_groups'], ['fusion', 'surface'])
-        self.assertFalse(fields['generic_apply_supported'])
+        self.assertTrue(fields['generic_apply_supported'])
         self.assertFalse(fields['prepares_renderer'])
         surface = self.client.command('surface_catalog')['surface_catalog']
         self.assertEqual(fields['surface'], surface)

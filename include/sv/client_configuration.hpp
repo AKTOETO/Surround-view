@@ -18,6 +18,7 @@ struct ConfigurationCatalog
 {
     std::vector<std::string> operations, replaceable_groups;
     boost::json::object fusion, surface;
+    bool apply_supported = false;
 };
 
 struct ConfigurationValidation
@@ -28,4 +29,12 @@ struct ConfigurationValidation
 
 ConfigurationCatalog parse_configuration_catalog(const Message &);
 ConfigurationValidation parse_configuration_validation(const Message &);
+
+struct ConfigurationApplication
+{
+    uint64_t base_revision = 0, revision = 0;
+    bool persisted = false;
+};
+
+ConfigurationApplication parse_configuration_application(const Message &);
 } // namespace sv::client

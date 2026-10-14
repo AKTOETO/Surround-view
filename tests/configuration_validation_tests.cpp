@@ -91,7 +91,8 @@ TEST(ConfigurationDiscovery, CatalogSharesFusionSurfaceBoundsAndExplicitPolicies
     const auto fields = sv::ConfigService(store).catalog();
     const auto result =
         sv::client::parse_configuration_catalog(validation_reply(fields, "configuration_catalog"));
-    EXPECT_EQ(result.operations.size(), 3U);
+    EXPECT_EQ(result.operations.size(), 4U);
+    EXPECT_TRUE(result.apply_supported);
     EXPECT_EQ(result.replaceable_groups, (std::vector<std::string>{"fusion", "surface"}));
     EXPECT_EQ(result.fusion, sv::fusion_catalog());
     EXPECT_EQ(result.surface, sv::surface_catalog());
@@ -105,7 +106,7 @@ TEST(ConfigurationDiscovery, CatalogSharesFusionSurfaceBoundsAndExplicitPolicies
                   .at("maximum"),
               128);
     for (const auto &[key, value] : std::vector<std::pair<std::string, boost::json::value>>{
-             {"generic_apply_supported", true},
+             {"generic_apply_supported", false},
              {"prepares_renderer", true},
              {"reserves_revision", true},
              {"persistence", "automatic"},

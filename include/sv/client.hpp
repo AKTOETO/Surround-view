@@ -124,6 +124,14 @@ class Client
                                            {"changes", std::move(changes)}});
     }
 
+    // Explicit persistence policy. Not replayed after a lost ACK/reconnect.
+    uint64_t apply_configuration(uint64_t base_revision, boost::json::object changes, bool persist)
+    {
+        return command("config_apply", {{"base_config_revision", std::to_string(base_revision)},
+                                        {"changes", std::move(changes)},
+                                        {"persist", persist}});
+    }
+
     uint64_t fusion_catalog()
     {
         return command("fusion_catalog");

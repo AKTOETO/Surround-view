@@ -1,6 +1,7 @@
 #include "command_parameters.hpp"
 #include "experiment_recovery.hpp"
 #include "output_selection.hpp"
+#include "renderer_configuration.hpp"
 #include "sv/build_info.hpp"
 #include "sv/calibration_job.hpp"
 #include "sv/config_service.hpp"
@@ -373,6 +374,7 @@ ServerIO::ServerIO(const sv::Connections &n, const std::string &source_type,
                     "config_read_v1",
                     "config_catalog_v1",
                     "config_validate_v1",
+                    "config_apply_v1",
                     "fusion_runtime_v1",
                     "research_fusion_v1",
                     "runtime_surface_v1",
@@ -926,6 +928,19 @@ int main(int argc, char **argv)
                             std::string(m.header.at("base_config_revision").as_string()));
                         extra_res["configuration_validation"] = config_service.validate(
                             revision, m.header.at("changes").as_object(), view, output_product);
+                    }
+                    else if (type == "config_apply")
+                    {
+                        const auto revision = sv::parse_decimal_u64(
+                            std::string(m.header.at("base_config_revision").as_string()));
+                        const auto &changes = m.header.at("changes").as_object();
+                        extra_res["configuration_application"] = config_service.apply(
+                            revision, changes, m.header.at("persist").as_bool(), view, output_product,
+                            [&](const sv::Config &prepared)
+                            {
+                                return std::make_unique<sv::RendererConfigurationUpdate>(
+                                    *renderer, prepared, changes.contains("surface"));
+                            });
                     }
                     else if (type == "fusion_catalog")
                     {
