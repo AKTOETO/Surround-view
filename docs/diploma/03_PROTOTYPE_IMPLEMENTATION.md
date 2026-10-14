@@ -898,7 +898,7 @@ Server prepare→revision recheck→optional atomic rename→noexcept publicatio
 validation/runtime/save actions и вкладкой результата операции. Редактор не открывает config file;
 все запросы проходят через sv-client-lib. Видимые поля разделены по группам, обычная работа не
 требует ручного JSON. При смене типа геометрии создаётся новый draft; optional support/occlusion
-поля сохраняются только при правках текущего типа, их отдельные формы остаются задачей.
+поля сохраняются только при правках текущего типа, их отдельные формы теперь доступны во вложенных вкладках «Опора» и «Видимость» (§3.27).
 
 ![Формы сшивки и выбор сохранения](../engineering/figures/configuration-editor.png)
 
@@ -943,3 +943,34 @@ Server ConfigService/wire контракты и ограничения: [[engine
 [[engineering/CONFIG_OPERATIONS]]. Следующий диагностический этап — отключаемая devel telemetry
 через библиотеку с bounded samples, графиками подсистем и отдельным измерением overhead; он пока
 остаётся планом, а текущие frame timings не равны такому полному profiler.
+
+
+## 3.27 Формы управляемых предположений об опоре и видимости
+
+В ноутбучный клиент добавлены формы reference height, локального support patch и заданного opaque
+AABB. Его mode, guard texels, support tolerance/facing и central-ray uncertainty доступны через
+catalog-driven controls. Изменения идут через прежние validate/apply-once серверного ConfigService;
+геометрическая проверка, принятие параметров и рендеринг остаются в sv-server.
+
+![Форма visibility assumptions](../engineering/figures/occlusion-editor.png)
+
+Рисунок 3.35 — Ввод AABB/box-surface/uncertainty через формы. Native QML fixture показывает интерфейс,
+а не эмпирически найденную оптимальную настройку или результат на Авроре.
+
+Выключение optional объекта означает omission в полном surface replacement; остальные группы
+не меняются. Box-surface→radial/center удаляет запрещённые support/facing поля, center также убирает
+guard. Заданные bounds/tolerances не считаются измеренной scene geometry, reference height не
+оценивает глубину, accept/reject uncertainty не доказывает правильность correspondence. Эти границы
+сохраняют корректное различие между управлением экспериментом и выводами самого исследования.
+
+Проверены4 новых native model cases, real Unix/TCP enable→validate→apply→disable/restore всех3
+visibility modes и отрицательный ordered-AABB case без изменения active revision. QML tests
+вызывают реальные сигналы форм, сохраняют micro-scale values и проверяют framework warnings.
+Selected CTest5/5 за29.86s; полный61-test прогон в этом шаге не повторялся.
+
+Отдельно исправлена загрузка DriveWorld (FINAL left/right), scale builtin primitives, согласование
+radian heading/degrees Euler, focus reset и Esc. Driving smoke теперь проверяет lazy Loader; host
+OpenGL/Mesa проверка завершилась без сообщений. Preview остаётся визуальным инструментом с
+placeholder автомобилем; физическая модель, синхронный camera producer и target performance
+этим исправлением не подтверждены. Контракты/команды и первичная Qt ссылка:
+[[engineering/CONFIG_SERVICE#Исправления QML и driving preview]].

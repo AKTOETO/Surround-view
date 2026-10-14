@@ -367,7 +367,7 @@ surface и не вызывает лишнюю mesh preparation. No-edit save о�
 проверяет instance, а не перепривязывает её к другому серверу.
 
 Optional reference_height/local_support/source_occlusion поля сохраняются при правках текущего
-носителя; отдельных форм для них пока нет. Выбор другого типа носителя создаёт начальный draft
+носителя; отдельные формы реализованы ниже. Выбор другого типа носителя создаёт начальный draft
 и явно сбрасывает optional поля. Другие root groups, lease-aware disabling всех кнопок, единый
 ExperimentRunner UI и telemetry charts остаются задачами. Старый RuntimeSettings adapter/API
 сохранён для compatibility/tests, но видимая панель больше не требует JSON ввода.
@@ -387,3 +387,100 @@ Selected CTest client_transports/output_products/simulator_runtime_errors/simula
 В persistence regression baseline — **config_read.active**, уже разобранный сервером. Host Boost.JSON
 reader в default number mode может округлять последние разряды исходных double; побайтовое
 сохранение исходного JSON и численная round-trip policy этим UI-срезом не реализованы.
+
+## Расширения геометрии: Опора и Видимость
+
+14.10.2026. В «Носитель» добавлены вложенные вкладки «Геометрия», «Опора» и «Видимость».
+Дополнительные поля поддерживаются только rectangular_bowl_v1; toggle доступен при наличии
+соответствующего server catalog descriptor. Для dome/cylinder/cube расширения выключены.
+
+| Форма | Передаваемые поля | Выключение |
+|---|---|---|
+| Высота опоры | reference_height_m,0..5m | Удаление поля, server default0 |
+| Локальный участок | local_support_patch: center XY, half extents, additive height, transition | Удаление объекта |
+| Непрозрачный AABB | source_occlusion_box: min/max XYZ, tolerance | Удаление объекта вместе с uncertainty |
+| Visibility policy | center / bilinear_radial_v1 / bilinear_box_surface_v1 | Выбор center — nominal central-ray policy |
+| Footprint guard | guard_texels,0/1 | Center удаляет guard field |
+| Принадлежность грани | support_tolerance_m, require_facing_surface | Оба поля удаляются вне box-surface |
+| Неопределённость | uncertainty.radius_m, ambiguous_policy=accept/reject | Удаление только uncertainty |
+
+Числовые пределы берутся из catalog. Для локального участка UI пределы XY/extents привязаны к
+размеру текущего носителя; вместимость всего плато+transition проверяет сервер. min<max по каждой
+оси AABB, view clearance и zero-distortion optics для footprint проверяются при validate/apply.
+Defaults создают **черновик**, а не подтверждённую геометрию реальной сцены: новый AABB3..4m поX
+и±0.5m поY нужно изменить под конкретную постановку. Reference/local height не измеряют глубину;
+uncertainty не расширяет footprint и не является автоматически оценённой confidence.
+
+![Форма геометрической видимости](figures/occlusion-editor.png)
+
+Рисунок — Вкладка «Видимость»: bounds AABB, box-surface, micro-scale support tolerance и uncertainty.
+Снимок native QML fixture; он иллюстрирует интерфейс и не подтверждает качество выбранной политики.
+
+Tolerance/radius поля показывают6 знаков после запятой;0.000012m не округляется UI до0.000m.
+При смене box-surface→radial удаляются support_tolerance_m/require_facing_surface, guard и uncertainty
+сохраняются. При смене на center удаляется также guard. Это явная подготовка совместимого draft;
+parser сервера остаётся authoritative validator. Включение существующего optional объекта не
+сбрасывает значения, отключение удаляет только выбранный объект. Nested map/list updates сохраняют
+остальные поля и не создают literal dotted JSON keys. Неверный list index/отсутствующий parent не
+меняет draft. Во время pending/unresolved операции все изменения по-прежнему блокируются.
+
+```plantuml
+@startuml
+[*] --> Disabled
+Disabled --> Center : enable AABB draft
+Center --> BoxSurface : select box-surface
+BoxSurface --> Radial : remove support tolerance + facing
+Radial --> Center : remove guard
+BoxSurface --> Center : remove support tolerance + facing + guard
+Center --> Disabled : omit AABB
+Radial --> Disabled : omit AABB
+BoxSurface --> Disabled : omit AABB
+note right of BoxSurface
+Bounds/tolerance/uncertainty survive mode changes.
+Server validates optics, ordered bounds and view.
+end note
+@enduml
+```
+
+Рисунок — Переходы visibility draft; выключение AABB и nominal center имеют разные смыслы.
+
+Проверки:4 новых native model tests, всего10 в simulator_runtime_errors; Unix/TCP native adapter
+выполняет enable→validate→apply всех3 modes→invalid ordered-bound validation→disable→restore.
+Temporary workflows оставляют config file неизменным. QML regression вызывает signals переключателей,
+mode choice и micro-scale numeric fields, проверяет nested results/cleanup и включает всю текущую
+server surface schema. Captured Qt warning/critical messages проверяются отдельно от engine.warnings.
+Selected CTest client_transports/output_products/simulator_runtime_errors/simulator_session_state/
+simulator_configuration_qml: **5/5 за29.86s**. Последний содержит2 native cases: формы и DriveWorld.
+Полная suite61 целиком повторно не запускалась; Aurora runtime этим host прогоном не подтверждён.
+
+## Исправления QML и driving preview
+
+Обработчики picked/edited, mouse/wheel и Keys используют formal parameters в function handlers;
+нет deprecated injected value/mouse/event. Аналогичные pointer handlers исправлены в touch example.
+DriveWorld boolean left/right переименованы steerLeft/steerRight: прежние имена конфликтовали с
+inherited FINAL Item properties и прерывали загрузку компонента. Отдельный regression загружает
+его и проверяет движение/поворот, размеры, сброс input при скрытии; Qt logs входят в assertion.
+
+Builtin Model primitives имеют размеры порядка100 units: meter-scale geometry использует scale/100
+([Qt Model documentation](https://doc.qt.io/qt-6.8/qml-qtquick3d-model.html)). Heading хранится в radians
+для sin/cos, eulerRotation получает degrees с согласованным знаком; chase camera следует heading.
+Esc сигнализирует main Loader и возвращает frame view; потеря focus/скрытие очищает кнопки движения,
+click в 3D области возвращает focus. Это визуальная модель с placeholder автомобилем и простым
+управлением, без collision/physics qualification и без передачи camera frames серверу.
+
+--world-smoke теперь проверяет Loader.Ready и возвращает ненулевой код при ошибке компонента;
+раньше успешный main event loop мог скрыть ошибку lazy Loader. Qt Quick3D требуется≥6.3 согласно
+QML import. Отдельный host offscreen OpenGL/Mesa world-smoke завершился exit0 без сообщений:
+
+```sh
+__EGL_VENDOR_LIBRARY_FILENAMES=/usr/share/glvnd/egl_vendor.d/50_mesa.json LIBGL_ALWAYS_SOFTWARE=1 QT_QPA_PLATFORM=offscreen QSG_RHI_BACKEND=opengl build/examples/sv-simulator/sv-simulator --unix /tmp/sv-world-smoke-no-server --world-smoke
+```
+
+Для восстановления рисунка с fixture:
+
+```sh
+QT_QPA_PLATFORM=offscreen QT_QUICK_BACKEND=software SV_QML_SURFACE_SCREENSHOT=/tmp/sv-occlusion-editor.png build/sv-simulator-configuration-qml-tests
+```
+
+Component/unit test не измеряет интерактивный FPS, camera production, аппаратную пригодность или
+физическую точность модели. Эти этапы остаются отдельными задачами.

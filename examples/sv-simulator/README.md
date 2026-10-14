@@ -60,7 +60,7 @@ Frame image URLs include both session ID and frame ID, preventing cache/load ide
 
 Catalog v4 additionally advertises optional `seam_solver=binary_pairs|alpha_expansion` for both graph-cut modes. The adapter accepts this field alongside pyramid_boundary and passes it through typed sv-client-lib. Loading an alpha snapshot preserves the field; omitting it on full apply resets the default binary_pairs. Unknown fields are rejected, and solver validation remains server-owned. The current form provides a solver selector; validation remains server-owned. Actual frame metadata includes energy/convergence diagnostics, with no local solver execution.
 
-Catalog v5 adds optional `fusion.fallback_display={"mode":"legacy"|"hatch"}`. The configuration form has a fallback hatch checkbox; apply it through the normal validate/apply workflow. Existing server revision/rejection handling applies; legacy is omitted from normalized snapshots. Scenario variants also preserve the nested field. This marks the existing fallback branch only, not wrong-point sampling or scene confidence: [[validation/FALLBACK_DISPLAY]]. Fusion and required geometry settings now use tabbed controls. Optional support/occlusion forms and other root groups remain planned.
+Catalog v5 adds optional `fusion.fallback_display={"mode":"legacy"|"hatch"}`. The configuration form has a fallback hatch checkbox; apply it through the normal validate/apply workflow. Existing server revision/rejection handling applies; legacy is omitted from normalized snapshots. Scenario variants also preserve the nested field. This marks the existing fallback branch only, not wrong-point sampling or scene confidence: [[validation/FALLBACK_DISPLAY]]. Fusion and required geometry settings now use tabbed controls. Optional support/occlusion forms are available under Carrier → Support/Visibility; other root groups remain planned.
 
 
 ## Configuration forms and build dependencies
@@ -82,3 +82,23 @@ The QML test uses offscreen software rendering. Optional screenshot:
 ```sh
 QT_QPA_PLATFORM=offscreen QT_QUICK_BACKEND=software SV_QML_SCREENSHOT=/tmp/sv-config-editor.png build/sv-simulator-configuration-qml-tests
 ```
+
+
+## Optional surfaces and QML fixes (14.10.2026)
+
+Carrier now has Geometry / Support / Visibility tabs. Toggle reference_height_m, local_support_patch,
+source_occlusion_box or its uncertainty; disabling omits the field. AABB bounds, tolerance, three
+visibility modes, guard texels, box-surface support tolerance/facing, uncertainty radius and ambiguous
+policy use forms and server catalog. Mode changes remove incompatible fields; all semantic and
+optics validation stays in sv-server. Tolerances display6 decimal places. These are supplied geometric
+assumptions, not estimated scene depth/confidence. See `docs/engineering/CONFIG_SERVICE.md`.
+
+Signal handlers now declare value/mouse/event explicitly. DriveWorld no longer overrides FINAL
+left/right properties. Preview uses meter-sized builtins and radians internally, degrees for Euler;
+Esc returns to frame view and focus loss clears movement keys. Click the 3D area to resume keyboard
+control after using the sidebar. This remains a visual placeholder, not an image producer.
+
+Qt Quick3D≥6.3 is required for preview. --world-smoke now fails if the lazy Loader fails, rather than
+accepting only a successful main-window load. Native QML regression captures framework warnings,
+loads DriveWorld and checks input/motion/units; a host Mesa OpenGL smoke also passed. Existing GUI
+processes must be restarted to load rebuilt resources.

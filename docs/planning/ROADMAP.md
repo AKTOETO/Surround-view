@@ -1,5 +1,7 @@
 # Подробный план реализации
 
+14.10.2026: формы reference height/local support/source occlusion/uncertainty реализованы в sv-simulator с server catalog, omission при выключении и cleanup зависимых полей при смене visibility mode. Исправлены QML signal parameters и DriveWorld FINAL left/right, масштаб/углы/Esc. Полная сборка; selected CTest5/5 за29.86s, world-smoke exit0 без сообщений. [[engineering/CONFIG_SERVICE]].
+
 14.10.2026: sv-simulator получил формы ConfigService (fusion/required geometry), validate, explicit runtime/save и process-scoped operation reconciliation. Без ввода JSON; changed groups, immutable retry intent, restart guard и requested/active/persisted comparison. Полная сборка; selected CTest5/5 за29.91s,15 live output cases, native Unix/TCP adapter и offscreen QML checks. SV_SIMULATOR отделён от touchscreen/Aurora. [[engineering/CONFIG_SERVICE]].
 
 14.10.2026: config_operations_v1 реализован: explicit apply-once/status через sv-client-lib, process-instance guard, bounded128-entry journal без eviction, retained commit/rejection и reconnect recovery без повторной mutation. Process-scoped GUI reconciliation реализован; durable journal и управляемая retention ещё не реализованы. [[engineering/CONFIG_OPERATIONS]].

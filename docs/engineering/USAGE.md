@@ -647,7 +647,7 @@ build/examples/sv-simulator/sv-simulator --unix /tmp/sv-prototype
 
 Нажмите «Проверить черновик», затем «Применить временно» либо подтвердите сохранение всего active snapshot и нажмите «Применить и сохранить на сервере». Применение выполняется через sv-client-lib; server config file меняет только сервер. После успешной операции GUI перечитывает актуальный snapshot. При stale revision обновите/загрузите active и перенесите правку вручную. Lost ACK блокирует новые изменения до operation status; same-ID retry явно использует исходный intent, новый instance требует ручной сверки. Подробности: [[engineering/CONFIG_SERVICE]].
 
-Optional support/occlusion сохраняются для текущего типа носителя; при выборе другого типа сбрасываются с предупреждением. Формы для optional fields, остальных root groups и сценариев ещё предстоят. Editor не захватывает experiment lease; новый apply при lease будет отклонён. Перед запуском svctl отключите GUI: сервер пока односессионный.
+Optional support/occlusion сохраняются для текущего типа носителя; при выборе другого типа сбрасываются с предупреждением. Optional reference/local support/AABB/uncertainty доступны во вложенных вкладках «Опора» и «Видимость». Формы остальных root groups и сценариев ещё предстоят. Editor не захватывает experiment lease; новый apply при lease будет отклонён. Перед запуском svctl отключите GUI: сервер пока односессионный.
 
 
 ### Исследование границ multiband
@@ -1259,3 +1259,5 @@ fusion fields получают defaults. Surface требует все geometry 
 ## ConfigService в ноутбучном GUI
 
 В sv-simulator нажмите «Конфигурация» в верхней панели. Вкладки «Сшивка», «Носитель», «Операция» используют кнопки, selectors и числовые поля. Проверка и explicit runtime/persistent apply выполняются сервером через библиотеку; для save требуется checkbox полного active snapshot. После потери ACK сначала status/reconciliation, без автоматического replay. Подробные шаги, рисунок, optional-field ограничения и проверки: [[engineering/CONFIG_SERVICE#GUI sv-simulator: формы и восстановление результата]]. Сборка laptop GUI: SV_CLIENT=ON/SV_SIMULATOR=ON; touch-only: SV_SIMULATOR=OFF.
+
+В «Носитель → Опора/Видимость» можно включить и отключить reference height, local support patch, AABB и uncertainty без JSON. Выключение удаляет optional поле; смена visibility mode очищает несовместимые guard/facing/support параметры. Bounds/units читаются из catalog, сервер проверяет cross-field constraints и optics. Пошаговый контракт, рисунок и проверки: [[engineering/CONFIG_SERVICE#Расширения геометрии: Опора и Видимость]]. После обновления бинарника перезапустите GUI; старый процесс продолжает использовать прежние QML ресурсы.
