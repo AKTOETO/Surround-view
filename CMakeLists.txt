@@ -353,7 +353,7 @@ if(BUILD_TESTING AND SV_GTEST_TESTS)
     add_executable(sv-simulator-runtime-tests tests/simulator_runtime_tests.cpp
       examples/sv-simulator/runtime_settings.cpp examples/sv-simulator/runtime_settings.hpp
       examples/sv-simulator/configuration_editor.hpp examples/sv-simulator/configuration_editor.cpp
-      examples/sv-simulator/configuration_draft.cpp examples/sv-simulator/configuration_operation.cpp
+      examples/sv-simulator/configuration_draft.cpp examples/sv-simulator/configuration_surface.cpp examples/sv-simulator/configuration_operation.cpp
       tests/simulator_configuration_tests.cpp)
     set_target_properties(sv-simulator-runtime-tests PROPERTIES AUTOMOC ON)
     target_include_directories(sv-simulator-runtime-tests PRIVATE examples/sv-simulator)
@@ -366,7 +366,7 @@ if(BUILD_TESTING AND SV_GTEST_TESTS)
       examples/sv-simulator/runtime_settings.cpp examples/sv-simulator/runtime_settings.hpp
       examples/sv-simulator/ipc_discovery.cpp
       examples/sv-simulator/configuration_editor.hpp examples/sv-simulator/configuration_editor.cpp
-      examples/sv-simulator/configuration_draft.cpp examples/sv-simulator/configuration_operation.cpp)
+      examples/sv-simulator/configuration_draft.cpp examples/sv-simulator/configuration_surface.cpp examples/sv-simulator/configuration_operation.cpp)
     set_target_properties(sv-simulator-session-tests PROPERTIES AUTOMOC ON)
     target_include_directories(sv-simulator-session-tests PRIVATE examples/sv-simulator examples/sv-client)
     target_link_libraries(sv-simulator-session-tests PRIVATE sv-client-lib
@@ -374,13 +374,23 @@ if(BUILD_TESTING AND SV_GTEST_TESTS)
     add_test(NAME simulator_session_state COMMAND sv-simulator-session-tests)
     if(SV_SIMULATOR)
       add_executable(sv-simulator-configuration-qml-tests tests/simulator_configuration_qml_tests.cpp
+        tests/simulator_drive_world_qml_tests.cpp
         examples/sv-simulator/configuration_editor.hpp examples/sv-simulator/configuration_editor.cpp
-        examples/sv-simulator/configuration_draft.cpp examples/sv-simulator/configuration_operation.cpp
+        examples/sv-simulator/configuration_draft.cpp examples/sv-simulator/configuration_surface.cpp examples/sv-simulator/configuration_operation.cpp
         examples/sv-simulator/simulator.qrc)
       set_target_properties(sv-simulator-configuration-qml-tests PROPERTIES AUTOMOC ON AUTORCC ON)
       target_include_directories(sv-simulator-configuration-qml-tests PRIVATE examples/sv-simulator)
       target_link_libraries(sv-simulator-configuration-qml-tests PRIVATE sv-client-lib
         Qt${QT_VERSION_MAJOR}::Core Qt${QT_VERSION_MAJOR}::Gui Qt${QT_VERSION_MAJOR}::Quick GTest::gtest)
+      if(QT_VERSION_MAJOR EQUAL 6)
+        find_package(Qt6 6.3 QUIET COMPONENTS Quick3D)
+      endif()
+      if(TARGET Qt6::Quick3D)
+        target_compile_definitions(sv-simulator-configuration-qml-tests PRIVATE SV_TEST_QUICK3D=1)
+        target_link_libraries(sv-simulator-configuration-qml-tests PRIVATE Qt6::Quick3D)
+      else()
+        target_compile_definitions(sv-simulator-configuration-qml-tests PRIVATE SV_TEST_QUICK3D=0)
+      endif()
       add_test(NAME simulator_configuration_qml COMMAND sv-simulator-configuration-qml-tests)
       set_tests_properties(simulator_configuration_qml PROPERTIES
         ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software")

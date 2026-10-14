@@ -1,6 +1,9 @@
 #include "configuration_editor.hpp"
+#include "sv/surface_runtime.hpp"
 #include <QCoreApplication>
 #include <QElapsedTimer>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QTemporaryDir>
 #include <QThread>
 #include <gtest/gtest.h>
@@ -16,6 +19,16 @@ struct ConfigurationEditorTestAccess
         editor.connected_ = editor.operations_supported_ = editor.apply_supported_ = true;
         editor.read_id_ = 100;
         editor.catalog_loaded_ = true;
+        editor.catalog_["surface"] =
+            QJsonDocument::fromJson(
+                QByteArray::fromStdString(boost::json::serialize(sv::surface_catalog())))
+                .object()
+                .toVariantMap();
+    }
+
+    static void removeSurfaceCatalog(ConfigurationEditor &editor)
+    {
+        editor.catalog_.remove("surface");
     }
 
     static uint64_t applyId(const ConfigurationEditor &editor)
@@ -67,6 +80,11 @@ sv::Message snapshot(uint64_t id, const std::string &server_instance = instance,
         {"surface",
          boost::json::object{{"type", "rectangular_bowl_v1"},
                              {"uniform_cells", boost::json::array{32, 32}},
+                             {"flat_half_length_m", 2.6},
+                             {"flat_half_width_m", 1.2},
+                             {"outer_half_length_m", 6.0},
+                             {"outer_half_width_m", 4.5},
+                             {"corner_height_m", 1.5},
                              {"local_support_patch", boost::json::object{{"height_m", .1}}}}}};
     return {21,
             {{"command_id", std::to_string(id)},
@@ -195,6 +213,99 @@ TEST_F(EditorUnit, UnrelatedAcknowledgementCannotOverwriteDraftOrFinishPendingOp
     EXPECT_EQ(editor.fusion().value("mode").toString(), "angular_feather");
 }
 
+TEST_F(EditorUnit, OptionalTogglesRemoveOnlySelectedFieldsAndPreserveOtherGroups)
+{
+    const auto original_fusion = editor.fusion();
+    const auto cells = editor.surface().value("uniform_cells");
+    editor.setOptionalEnabled("reference_height_m", true);
+    EXPECT_TRUE(editor.surface().contains("reference_height_m"));
+    editor.setField("surface", "reference_height_m", .25);
+    editor.setOptionalEnabled("local_support_patch", false);
+    editor.setOptionalEnabled("local_support_patch", true);
+    editor.setField("surface", "local_support_patch.center_x_m", -1.0);
+    editor.setField("surface", "local_support_patch.height_m", .5);
+    editor.setOptionalEnabled("source_occlusion_box", true);
+    editor.setOptionalEnabled("uncertainty", true);
+    editor.setField("surface", "source_occlusion_box.min_m.1", -.75);
+    editor.setField("surface", "source_occlusion_box.uncertainty.radius_m", .012345);
+    editor.setField("surface", "source_occlusion_box.uncertainty.ambiguous_policy", "reject");
+    const auto box = editor.surface().value("source_occlusion_box").toMap();
+    EXPECT_DOUBLE_EQ(box.value("min_m").toList().at(1).toDouble(), -.75);
+    EXPECT_DOUBLE_EQ(box.value("uncertainty").toMap().value("radius_m").toDouble(), .012345);
+    editor.setOptionalEnabled("reference_height_m", false);
+    EXPECT_FALSE(editor.surface().contains("reference_height_m"));
+    EXPECT_EQ(editor.surface().value("source_occlusion_box").toMap(), box);
+    editor.setOptionalEnabled("uncertainty", false);
+    EXPECT_FALSE(editor.surface().value("source_occlusion_box").toMap().contains("uncertainty"));
+    EXPECT_TRUE(editor.surface().contains("local_support_patch"));
+    editor.setOptionalEnabled("source_occlusion_box", false);
+    EXPECT_FALSE(editor.surface().contains("source_occlusion_box"));
+    EXPECT_EQ(editor.surface().value("uniform_cells"), cells);
+    EXPECT_EQ(editor.fusion(), original_fusion);
+    editor.apply(false);
+    const auto intent = ConfigurationEditorTestAccess::intent(editor);
+    EXPECT_EQ(intent.size(), 1U);
+    EXPECT_TRUE(intent.contains("surface"));
+    EXPECT_FALSE(intent.at("surface").as_object().contains("source_occlusion_box"));
+}
+
+TEST_F(EditorUnit, ModeTransitionRemovesIllegalFieldsButRetainsUncertaintyAndBounds)
+{
+    editor.setOptionalEnabled("source_occlusion_box", true);
+    editor.setOptionalEnabled("uncertainty", true);
+    editor.setField("surface", "source_occlusion_box.mode", "bilinear_box_surface_v1");
+    editor.setField("surface", "source_occlusion_box.guard_texels", 1);
+    editor.setField("surface", "source_occlusion_box.require_facing_surface", true);
+    editor.setField("surface", "source_occlusion_box.support_tolerance_m", .000012);
+    const auto initial = editor.surface().value("source_occlusion_box").toMap();
+    editor.setField("surface", "source_occlusion_box.mode", "bilinear_radial_v1");
+    auto box = editor.surface().value("source_occlusion_box").toMap();
+    EXPECT_FALSE(box.contains("support_tolerance_m"));
+    EXPECT_FALSE(box.contains("require_facing_surface"));
+    EXPECT_EQ(box.value("guard_texels").toInt(), 1);
+    EXPECT_EQ(box.value("uncertainty"), initial.value("uncertainty"));
+    editor.setField("surface", "source_occlusion_box.mode", "center");
+    box = editor.surface().value("source_occlusion_box").toMap();
+    EXPECT_FALSE(box.contains("guard_texels"));
+    EXPECT_EQ(box.value("min_m"), initial.value("min_m"));
+    EXPECT_EQ(box.value("max_m"), initial.value("max_m"));
+}
+
+TEST_F(EditorUnit, InvalidNestedPathsAndUncertainOperationNeverModifyDraft)
+{
+    editor.setOptionalEnabled("source_occlusion_box", true);
+    const auto before = editor.surface();
+    editor.setField("surface", "source_occlusion_box.min_m.3", 4);
+    editor.setField("surface", "source_occlusion_box.min_m.-1", 4);
+    editor.setField("surface", "source_occlusion_box.min_m.invalid", 4);
+    editor.setField("surface", "source_occlusion_box..tolerance_m", .1);
+    editor.setField("surface", "source_occlusion_box.uncertainty.radius_m", .01);
+    EXPECT_EQ(editor.surface(), before);
+    editor.apply(false);
+    editor.commandFailed(
+        {{"command_id", std::to_string(ConfigurationEditorTestAccess::applyId(editor))}},
+        "lost_ack");
+    editor.setOptionalEnabled("source_occlusion_box", false);
+    editor.setField("surface", "source_occlusion_box.min_m.0", -9);
+    EXPECT_EQ(editor.surface(), before);
+}
+
+TEST_F(EditorUnit, OptionalControlsRequireRectangularCarrierAndAdvertisedCatalog)
+{
+    editor.setSurfaceType("dome_floor_v1");
+    const auto dome = editor.surface();
+    editor.setOptionalEnabled("reference_height_m", true);
+    editor.setOptionalEnabled("source_occlusion_box", true);
+    EXPECT_EQ(editor.surface(), dome);
+    editor.setSurfaceType("rectangular_bowl_v1");
+    const auto rectangular = editor.surface();
+    ConfigurationEditorTestAccess::removeSurfaceCatalog(editor);
+    editor.setOptionalEnabled("reference_height_m", true);
+    editor.setOptionalEnabled("source_occlusion_box", true);
+    EXPECT_EQ(editor.surface(), rectangular);
+    EXPECT_TRUE(editor.status().contains("не объявил"));
+}
+
 TEST(SimulatorRuntime, ConfigServiceFormsValidateApplyAndRestore)
 {
     ConfigurationEditor editor;
@@ -273,6 +384,45 @@ TEST(SimulatorRuntime, ConfigServiceFormsValidateApplyAndRestore)
     EXPECT_EQ(editor.serverRevision(), valid_revision);
     EXPECT_TRUE(editor.status().contains("Отклонено сервером"));
     editor.loadActive();
+    editor.setOptionalEnabled("reference_height_m", true);
+    editor.setField("surface", "reference_height_m", .1);
+    editor.setOptionalEnabled("local_support_patch", true);
+    editor.setField("surface", "local_support_patch.height_m", .2);
+    editor.setOptionalEnabled("source_occlusion_box", true);
+    editor.setOptionalEnabled("uncertainty", true);
+    editor.setField("surface", "source_occlusion_box.uncertainty.radius_m", .005);
+    editor.setField("surface", "source_occlusion_box.uncertainty.ambiguous_policy", "reject");
+    for (const auto &mode : {"bilinear_box_surface_v1", "bilinear_radial_v1", "center"})
+    {
+        editor.setField("surface", "source_occlusion_box.mode", mode);
+        if (std::string(mode) == "bilinear_box_surface_v1")
+        {
+            editor.setField("surface", "source_occlusion_box.guard_texels", 1);
+            editor.setField("surface", "source_occlusion_box.require_facing_surface", true);
+            editor.setField("surface", "source_occlusion_box.support_tolerance_m", .000012);
+        }
+        editor.validate();
+        ASSERT_TRUE(waitFor([&] { return !editor.busy(); }));
+        ASSERT_TRUE(editor.validated()) << editor.status().toStdString();
+        editor.apply(false);
+        ASSERT_TRUE(waitFor([&] { return !editor.busy() || !failure.isEmpty(); }));
+        ASSERT_TRUE(failure.isEmpty()) << failure.toStdString();
+        ASSERT_FALSE(editor.unresolved());
+        EXPECT_EQ(editor.surface().value("source_occlusion_box").toMap().value("mode").toString(),
+                  mode);
+    }
+    // Cross-field failure must preserve the active revision and the editable rejected draft.
+    const auto before_invalid = editor.serverRevision();
+    editor.setField("surface", "source_occlusion_box.min_m.0", 10.0);
+    editor.validate();
+    ASSERT_TRUE(waitFor([&] { return !editor.busy(); }));
+    EXPECT_FALSE(editor.validated());
+    EXPECT_EQ(editor.serverRevision(), before_invalid);
+    EXPECT_TRUE(editor.status().contains("ordered bounds")) << editor.status().toStdString();
+    editor.loadActive();
+    editor.setOptionalEnabled("reference_height_m", false);
+    editor.setOptionalEnabled("local_support_patch", false);
+    editor.setOptionalEnabled("source_occlusion_box", false);
     for (auto it = original_fusion.begin(); it != original_fusion.end(); ++it)
     {
         editor.setField("fusion", it.key(), it.value());

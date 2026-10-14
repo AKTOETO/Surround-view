@@ -45,26 +45,19 @@ void ConfigurationEditor::setField(const QString &group, const QString &field,
     {
         return;
     }
-    // Only field names from the forms are supplied here; final validation is server-side.
-    if (field == "fallback_display.mode")
+    if (group == "fusion" && field == "fallback_display.mode" &&
+        !draft->contains("fallback_display"))
     {
-        (*draft)["fallback_display"] = QVariantMap{{"mode", value}};
+        (*draft)["fallback_display"] = QVariantMap{};
     }
-    else if (field.startsWith("uniform_cells."))
+    if (!replaceDraftPath(*draft, field, value))
     {
-        auto cells = draft->value("uniform_cells").toList();
-        bool ok = false;
-        const int index = field.mid(14).toInt(&ok);
-        if (!ok || index < 0 || index >= cells.size())
-        {
-            return;
-        }
-        cells[index] = value;
-        (*draft)["uniform_cells"] = cells;
+        return;
     }
-    else
+    if (group == "surface" && field == "source_occlusion_box.mode")
     {
-        (*draft)[field] = value;
+        normalizeOcclusionMode();
+        status_ = "Политика видимости изменена; несовместимые guard/facing/support поля удалены";
     }
     validated_ = false;
     emit draftChanged();

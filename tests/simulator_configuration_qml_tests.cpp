@@ -1,6 +1,10 @@
 #include "configuration_editor.hpp"
+#include "qml_warning_capture.hpp"
+#include "sv/surface_runtime.hpp"
 #include <QGuiApplication>
 #include <QImage>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QQuickItem>
@@ -28,22 +32,17 @@ struct ConfigurationEditorTestAccess
                          {"diagnostics", QStringList{"color", "coverage", "weights"}},
                          {"pyramid_boundary", QStringList{"zero", "normalized"}},
                          {"seam_solver", QStringList{"binary_pairs", "alpha_expansion"}}}},
-            {"surface",
-             QVariantMap{
-                 {"types", QStringList{"rectangular_bowl_v1", "dome_floor_v1", "cylinder_floor_v1",
-                                       "cube_floor_v1"}},
-                 {"geometry_fields",
-                  QVariantMap{
-                      {"dome_floor_v1",
-                       QVariantMap{{"required", QStringList{"dome_radius_m", "dome_latitude_cells",
-                                                            "dome_longitude_cells",
-                                                            "floor_radial_cells"}}}}}}}}};
+            {"surface", QJsonDocument::fromJson(QByteArray::fromStdString(
+                                                    boost::json::serialize(sv::surface_catalog())))
+                            .object()
+                            .toVariantMap()}};
         editor.setSurfaceType("dome_floor_v1");
     }
 };
 
 TEST(SimulatorConfigurationQml, LoadsFormsChangesTabsAndRendersWithoutBindingErrors)
 {
+    QmlWarningCapture log_warnings;
     ConfigurationEditor editor;
     ConfigurationEditorTestAccess::seed(editor);
     QQmlApplicationEngine engine;
@@ -83,6 +82,70 @@ TEST(SimulatorConfigurationQml, LoadsFormsChangesTabsAndRendersWithoutBindingErr
         editor.setSurfaceType(type);
         QCoreApplication::processEvents();
     }
+    object->findChild<QObject *>("configurationTabs")->setProperty("currentIndex", 1);
+    editor.setSurfaceType("rectangular_bowl_v1");
+    auto *surface_tabs = object->findChild<QObject *>("surfaceTabs");
+    ASSERT_TRUE(surface_tabs);
+    auto toggle = [&](const char *name, bool checked)
+    {
+        auto *control = object->findChild<QObject *>(name);
+        return control && control->setProperty("checked", checked) &&
+               QMetaObject::invokeMethod(control, "clicked");
+    };
+    surface_tabs->setProperty("currentIndex", 1);
+    QCoreApplication::processEvents();
+    ASSERT_TRUE(toggle("referenceHeightToggle", true));
+    ASSERT_TRUE(toggle("localSupportToggle", true));
+    EXPECT_TRUE(editor.surface().contains("reference_height_m"));
+    EXPECT_TRUE(editor.surface().contains("local_support_patch"));
+    surface_tabs->setProperty("currentIndex", 2);
+    QCoreApplication::processEvents();
+    ASSERT_TRUE(toggle("sourceOcclusionToggle", true));
+    ASSERT_TRUE(toggle("sourceUncertaintyToggle", true));
+    EXPECT_TRUE(editor.surface().value("source_occlusion_box").toMap().contains("uncertainty"));
+    auto *mode_choice = object->findChild<QObject *>("occlusionModeChoice");
+    ASSERT_TRUE(mode_choice);
+    ASSERT_TRUE(QMetaObject::invokeMethod(mode_choice, "picked",
+                                          Q_ARG(QString, "bilinear_box_surface_v1")));
+    QCoreApplication::processEvents();
+    auto *support = object->findChild<QObject *>("supportToleranceField");
+    ASSERT_TRUE(support);
+    ASSERT_TRUE(QMetaObject::invokeMethod(support, "edited", Q_ARG(double, .000012)));
+    EXPECT_DOUBLE_EQ(editor.surface()
+                         .value("source_occlusion_box")
+                         .toMap()
+                         .value("support_tolerance_m")
+                         .toDouble(),
+                     .000012);
+    auto *guard = object->findChild<QObject *>("guardTexelsField");
+    ASSERT_TRUE(guard);
+    ASSERT_TRUE(QMetaObject::invokeMethod(guard, "edited", Q_ARG(double, 1)));
+    ASSERT_TRUE(QMetaObject::invokeMethod(mode_choice, "picked", Q_ARG(QString, "center")));
+    EXPECT_FALSE(editor.surface().value("source_occlusion_box").toMap().contains("guard_texels"));
+    EXPECT_FALSE(
+        editor.surface().value("source_occlusion_box").toMap().contains("support_tolerance_m"));
+    ASSERT_TRUE(QMetaObject::invokeMethod(mode_choice, "picked",
+                                          Q_ARG(QString, "bilinear_box_surface_v1")));
+    editor.setField("surface", "source_occlusion_box.support_tolerance_m", .000012);
+    editor.setField("surface", "source_occlusion_box.uncertainty.radius_m", .005);
+    editor.setField("surface", "source_occlusion_box.uncertainty.ambiguous_policy", "reject");
+    const auto surface_screenshot = qEnvironmentVariable("SV_QML_SURFACE_SCREENSHOT");
+    if (!surface_screenshot.isEmpty())
+    {
+        window.resize(380, 2200);
+        QEventLoop capture_loop;
+        QTimer::singleShot(120, &capture_loop, &QEventLoop::quit);
+        capture_loop.exec();
+        ASSERT_TRUE(window.grabWindow().save(surface_screenshot));
+        window.resize(380, 1050);
+    }
+    ASSERT_TRUE(toggle("sourceUncertaintyToggle", false));
+    ASSERT_TRUE(toggle("sourceOcclusionToggle", false));
+    ASSERT_TRUE(toggle("referenceHeightToggle", false));
+    ASSERT_TRUE(toggle("localSupportToggle", false));
+    EXPECT_FALSE(editor.surface().contains("source_occlusion_box"));
+    EXPECT_FALSE(editor.surface().contains("reference_height_m"));
+    EXPECT_FALSE(editor.surface().contains("local_support_patch"));
     object->findChild<QObject *>("configurationTabs")->setProperty("currentIndex", 0);
     QEventLoop loop;
     QTimer::singleShot(120, &loop, &QEventLoop::quit);
@@ -94,6 +157,8 @@ TEST(SimulatorConfigurationQml, LoadsFormsChangesTabsAndRendersWithoutBindingErr
     {
         ASSERT_TRUE(image.save(screenshot));
     }
+    EXPECT_TRUE(log_warnings.messages().isEmpty())
+        << log_warnings.messages().join('\n').toStdString();
     EXPECT_TRUE(warnings.isEmpty()) << warnings.join('\n').toStdString();
     item->setParentItem(nullptr);
 }

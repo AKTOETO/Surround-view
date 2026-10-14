@@ -6,7 +6,7 @@ set(CMAKE_AUTORCC ON)
 
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Gui Qml Quick Network QuickControls2)
 if(QT_VERSION_MAJOR EQUAL 6)
-    find_package(Qt6 QUIET COMPONENTS Quick3D)
+    find_package(Qt6 6.3 QUIET COMPONENTS Quick3D)
     if(TARGET Qt6::Quick3D)
         set(SV_SIMULATOR_QUICK3D_AVAILABLE 1)
     else()
@@ -28,6 +28,7 @@ add_executable(sv-simulator
     configuration_editor.hpp
     configuration_editor.cpp
     configuration_draft.cpp
+    configuration_surface.cpp
     configuration_operation.cpp
     simulator.qrc
 )

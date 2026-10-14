@@ -104,6 +104,7 @@ class ConfigurationEditor : public QObject
     Q_INVOKABLE void refresh();
     Q_INVOKABLE void loadActive();
     Q_INVOKABLE void setField(const QString &group, const QString &field, const QVariant &value);
+    Q_INVOKABLE void setOptionalEnabled(const QString &field, bool enabled);
     Q_INVOKABLE void setSurfaceType(const QString &type);
     Q_INVOKABLE void validate();
     Q_INVOKABLE void apply(bool persist);
@@ -137,6 +138,8 @@ class ConfigurationEditor : public QObject
         State state = State::Awaiting;
     };
 
+    static bool replaceDraftPath(QVariantMap &draft, const QString &field, const QVariant &value);
+    void normalizeOcclusionMode();
     boost::json::object changes() const;
     std::shared_ptr<sv::client::Client> client() const;
     void receiveOperation(const sv::Message &message);

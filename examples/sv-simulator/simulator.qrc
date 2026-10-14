@@ -3,6 +3,9 @@
         <file>main.qml</file>
         <file>DriveWorld.qml</file>
         <file>RuntimePanel.qml</file>
+        <file>SurfacePanel.qml</file>
+        <file>SupportPanel.qml</file>
+        <file>OcclusionPanel.qml</file>
         <file>ConfigChoice.qml</file>
         <file>ConfigCheck.qml</file>
         <file>ConfigNumber.qml</file>
