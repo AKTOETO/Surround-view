@@ -1247,3 +1247,7 @@ Validation ничего не применяет и не сохраняет. По
 fusion fields получают defaults. Surface требует все geometry fields. Остальные root groups
 пока не поддержаны. Для программного клиента используйте typed API, для GUI формы будут
 добавлены следующим шагом. Контракт и ограничения: [[engineering/CONFIG_SERVICE]].
+
+## Применение конфигурации сервером
+
+После read_configuration()/configuration_catalog() доступны validate_configuration(base, changes) и apply_configuration(base, changes, persist). Fusion/surface передаются полными replacement groups. persist=false оставляет файл неизменным; persist=true сохраняет весь active snapshot. Ответ разбирается parse_configuration_application(); не повторять mutation после потери ACK автоматически. GUI binding общего сервиса ещё предстоит; команды CLI, диаграмма, ограничения lease и проверки: [[engineering/CONFIG_SERVICE]].

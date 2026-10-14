@@ -1,8 +1,8 @@
 # Подробный план реализации
 
-14.10.2026: ConfigService discovery/side-effect-free validation fusion/surface реализованы: shared parameter catalogs с geometry bounds, complete group replacement, stale revision/current view/output/budget checks, typed C++ API и Unix/TCP consumer workflow. 10/10 GTest, selected CTest5/5; update/save/operation IDs остаются следующей работой. [[engineering/CONFIG_SERVICE]].
+14.10.2026: атомарный config_apply_v1 для fusion/surface реализован: explicit persist, GPU prepare→revision recheck→optional atomic rename→noexcept publication; runtime/persist/restart и rollback при disk/prepare/stale errors проверены. Catalog schema2, typed Unix/TCP API. Полная сборка и Mesa CTest60/60, configuration GTest15/15. Остались operation IDs/status, GUI binding, другие группы и restart orchestration. [[engineering/CONFIG_SERVICE]].
 
-14.10.2026: первый продуктовый ConfigService read реализован: config_read_v1, coherent active/persisted/revision snapshot, typed C++ parser и read_configuration(), Unix/TCP consumer parity, read during lease, bounded oversize rejection без disconnect. Selected CTest5/5; general schema/validate/update/apply ещё не реализованы. [[engineering/CONFIG_SERVICE]].
+14.10.2026: первый продуктовый ConfigService read реализован: config_read_v1, coherent active/persisted/revision snapshot, typed C++ parser и read_configuration(), Unix/TCP consumer parity, read during lease, bounded oversize rejection без disconnect. Selected CTest5/5; На первом read-срезе schema/validate/update/apply отсутствовали; текущий apply описан выше. [[engineering/CONFIG_SERVICE]].
 
 14.10.2026: последний bounded target-overlap control завершён: independent preflight/capture726/730 target pixels,3520/3520 metric и240/240 anchor checks;26 same-coordinate plane-none→patch-all geometry contrasts. Target RGB MAE33.65→23.85 /33.83→24.08. Следующая работа — ConfigService/library/GUI, оставшиеся исследования отложены до общего ExperimentRunner. [[validation/TARGET_OVERLAP]], §4.92.
 
@@ -224,3 +224,7 @@ fake-adapter integration, затем реальные камеры/драйве�
 ## Финальная оптимизация и рекомендации РБПО
 
 Перед финальной приёмкой выполнить code-aligned hardening audit по [[planning/HARDENING]]: перенести применимые меры из RBPO, проверить resource/latency budgets, negative/fuzz cases и target permissions/signatures. R/T IDs учебной модели не означают доказанную уязвимость текущего кода. TMR/DTLS/VLAN/WORM и иные расширения требуют отдельного решения о deployment scope.
+
+## Versioned protobuf codec
+
+Инженерная оценка и C++ metadata microbenchmark выполнены: [[engineering/PROTOBUF]]. Следующая задача: typed schema и compatibility/limits tests, затем versioned codec migration с отдельным binary image payload и offline Aurora dependencies. Измерить системный CPU/RSS/end-to-end; текущие metadata результаты не доказывают ускорения pipeline. SV01 пока не изменён; работа не блокирует ConfigService operation IDs/status.

@@ -165,3 +165,7 @@ replaceable_groups и fusion/surface parameter catalogs; ConfigurationValidation
 parse_configuration_catalog()/parse_configuration_validation(). Для rejected ACK читать reason.
 Сервер остаётся authoritative semantic validator; успешная проверка не является apply token.
 Пока поддержаны только fusion/surface, без general update/persistence. [[engineering/CONFIG_SERVICE]].
+
+## Применение конфигурации сервером
+
+После read_configuration()/configuration_catalog() доступны validate_configuration(base, changes) и apply_configuration(base, changes, persist). Fusion/surface передаются полными replacement groups. persist=false оставляет файл неизменным; persist=true сохраняет весь active snapshot. Ответ разбирается parse_configuration_application(); не повторять mutation после потери ACK автоматически. GUI binding общего сервиса ещё предстоит; команды CLI, диаграмма, ограничения lease и проверки: [[engineering/CONFIG_SERVICE]].

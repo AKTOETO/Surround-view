@@ -1,8 +1,7 @@
-# ConfigService: чтение, каталог и проверка конфигурации
+# ConfigService: чтение, проверка и атомарное применение
 
 14.10.2026. Продуктовые шаги после bounded research [[validation/TARGET_OVERLAP]].
-Серверный `ConfigService` предоставляет read, discovery и проверку групп fusion/surface;
-general update/apply/save, operation IDs и restart orchestration ещё не реализованы. Временные configure_fusion/surface
+Серверный `ConfigService` предоставляет read, discovery, проверку и атомарное применение групп fusion/surface с явным выбором сохранения. Operation IDs/status, другие root groups и restart orchestration ещё не реализованы. Временные configure_fusion/surface
 и persistent calibration apply сохраняют прежние контракты.
 
 ## Wire-контракт config_read_v1
@@ -108,12 +107,12 @@ configuration_snapshot/config_store_persistence/client_output/experiment_lease/o
 5/5 за5.92s (output_products содержит8 Python integration cases). Первый sandbox run не мог bind
 сокеты; проверка повторена вне sandbox. Full suite и Aurora в этом шаге не проверялись.
 
-Далее: revision-aware update, operation IDs/status, atomic persistence и frame-boundary apply; затем
+Следующий этап после реализованного ниже config_apply: operation IDs/status; затем
 подключить формы GUI и сценарный runner. API должен различать временные settings, persisted
 settings, session state и restart-required settings. Исторические configure_* не превращать
 в автоматически сохраняемые операции без явного контракта.
 
-## Discovery config_catalog_v1
+## Discovery config_catalog_v1: исходная схема 1
 
 Capability `config_catalog_v1`, команда `config_catalog`, ACK field `configuration_catalog`:
 
@@ -140,7 +139,7 @@ discriminator и обязательно в replacement. Plane — rectangular_bo
 GUI не должен считать static field hints достаточным доказательством допустимости.
 
 `surface_catalog` использует тот же helper и получает additive geometry_fields. Fusion catalog v5
-сохраняет прежний контракт. Новые standalone commands не требуют lease token и не меняют состояние.
+сохраняет прежний контракт. Команды чтения/каталога/validation не требуют lease token и не меняют состояние.
 
 ## Проверка config_validate_v1
 
@@ -189,8 +188,7 @@ stale_config_revision, configuration_changes_empty, configuration_group_unsuppor
 field-level errors/локализация ещё не добавлены.
 
 Во время lease validation разрешён без token: active/persisted/revision/file и paused-render dirty
-не меняются. При будущем apply обязательны повторная проверка revision, session constraints,
-preparation и явная persistence policy. validate→apply не является сейчас серверной транзакцией.
+не меняются. При config_apply выполняются повторная проверка revision, session constraints, preparation и явная persistence policy. Отдельная validation не резервирует revision для будущего apply.
 
 ```plantuml
 @startuml
@@ -237,3 +235,86 @@ stale/empty/unsupported/typed bounds, current view/output guards, research budge
 неизменные file/revisions/output и отсутствие нового paused frame. Реальный C++ consumer выполняет
 read→catalog→validate по Unix и TCP. Selected CTest5/5 за6.30s; output_products содержит9 integration
 cases. Full regression и Aurora в этом шаге не запускались.
+
+## Атомарное применение config_apply_v1
+
+Capability `config_apply_v1`; команда type20, required `persist` **boolean**:
+
+```json
+{"command_id":"44","type":"config_apply","base_config_revision":"7","changes":{"fusion":{"mode":"multi_band"}},"persist":false}
+```
+
+Replacement semantics совпадают с validate. `persist=false` изменяет только active; `persist=true`
+сохраняет **весь результирующий active snapshot**, включая предыдущие временные изменения других
+групп. Это не выборочное сохранение supplied groups. Применение запрещено во время любого active,
+restoring или failed experiment lease, в том числе его владельцу. Read/catalog/validate остаются доступны.
+
+Accepted type21 содержит обычные state fields и:
+
+```json
+{"configuration_application":{"schema_version":1,"scope":"config_store_groups","base_config_revision":"7","revision":"8","applied":true,"persisted":false}}
+```
+
+API: `Client::apply_configuration(base_revision, changes, persist)`;
+`parse_configuration_application(message)` возвращает owning typed receipt. Новая config_revision
+и state_revision увеличиваются по одному разу, render помечается dirty. Config revision начинается
+с нуля при новом запуске процесса; нельзя использовать cached revision после reconnect без чтения.
+
+Текущий config_catalog имеет **schema_version=2**, прежнюю capability `config_catalog_v1`, четыре
+operations, generic_apply_supported=true, persistence=explicit_runtime_or_snapshot и apply_policy
+(between_render_calls/prepares_before_persistence=true; allowed_during_experiment/
+operation_ids_supported/automatic_retry=false). Root prepares_renderer/reserves_revision=false
+описывают validation, а не apply. Клиентский parser понимает схемы 1 и 2; apply_supported=false
+для прежней схемы 1. Catalog не является полным JSON Schema всех root groups.
+
+```plantuml
+@startuml
+actor Client
+participant ConfigService as S
+participant Renderer as R
+participant ConfigStore as C
+database "Server config file" as F
+Client -> S : config_apply(base, changes, persist)
+S -> S : validate revision / groups / view / output
+S -> R : prepare candidate surface (no publication)
+R --> S : staged update
+S -> C : commit_prepared_if_revision
+C -> C : lock; recheck revision; parse candidate
+opt persist=true
+  C -> F : write temporary file; close; atomic rename
+end
+alt preparation / revision / persistence failed
+  S -> R : discard staged update
+  S --> Client : rejected ACK; active state unchanged
+else all fallible steps succeeded
+  C -> R : publish() noexcept between render calls
+  C -> C : publish active / persisted / revision
+  S --> Client : accepted ACK + application receipt
+end
+@enduml
+```
+
+Рисунок — Подготовка, сохранение и публикация конфигурации; при отказе стадия публикации не выполняется.
+
+Mesh preparation не меняет активные meshes и не загружает заново cached camera frames. Fusion-only
+apply не перестраивает mesh. `Renderer::SurfaceUpdate` живёт только в render thread и не должен
+пережить Renderer. После успешной подготовки повторный revision check защищает от stale candidate.
+Success receipt выделяется до commit; публикация не выполняет fallible allocation или GL preparation.
+Ошибки подготовки/rename/stale revision оставляют прежние config, renderer и persisted snapshot.
+Atomic rename обеспечивает атомарную замену файла при работающем процессе; **fsync и гарантия
+сохранности после сбоя питания не реализованы**.
+
+При потере ACK клиент не повторяет запрос автоматически: operation IDs/status ещё отсутствуют.
+Нужно перечитать config/state и согласовать следующий запрос. Таймаут не доказывает отсутствие commit.
+
+```sh
+build/svctl --unix /tmp/sv-prototype command config_read
+# Подставить актуальную revision; persist=true сохраняет полный active snapshot:
+build/svctl --unix /tmp/sv-prototype command config_apply --params '{"base_config_revision":"0","changes":{"fusion":{"mode":"multi_band"}},"persist":false}'
+```
+
+Проверено 14.10.2026: полная сборка, включая Qt-клиенты; Mesa CTest **60/60 за78.10s**.
+Configuration GTest **15/15**, отдельный native renderer test проверяет prepare/discard/commit и
+cached uploads. Output-products integration содержит12 cases: runtime/persist/restart, disk rename
+failure с неизменным RGBA, lease rejection, stale revision и typed Unix/TCP read→validate→apply.
+Target Aurora и crash durability этим Linux-прогоном не подтверждаются.

@@ -1,6 +1,6 @@
 # Реализованный протокол SV01
 
-Срез реализации Linux 0.6.x. Это описание текущего wire-контракта, сверенное с `include/sv/protocol.hpp`, `src/core/protocol.cpp`, `src/apps/server.cpp` и `src/client_library/client.cpp`. Runtime fusion API `fusion_runtime_v1` описан ниже; ConfigService read/catalog/validate для fusion/surface реализован ([[engineering/CONFIG_SERVICE]]), general update/apply/save ещё отсутствуют. Целевая расширенная архитектура и подписки описаны отдельно в [[architecture/CLIENT_SERVER_MODEL]] и пока не являются возможностями сервера.
+Срез реализации Linux 0.6.x. Это описание текущего wire-контракта, сверенное с `include/sv/protocol.hpp`, `src/core/protocol.cpp`, `src/apps/server.cpp` и `src/client_library/client.cpp`. Runtime fusion API `fusion_runtime_v1` описан ниже; ConfigService read/catalog/validate и atomic apply с explicit persistence для fusion/surface реализованы ([[engineering/CONFIG_SERVICE]]); operation IDs/status и другие группы отсутствуют. Целевая расширенная архитектура и подписки описаны отдельно в [[architecture/CLIENT_SERVER_MODEL]] и пока не являются возможностями сервера.
 
 ## Транспорт и кадрирование
 
@@ -304,3 +304,7 @@ Additive HELLO/output_catalog product `source_disagreement_v1` with exact source
 ## ConfigService discovery/validation v1
 
 Capabilities config_catalog_v1/config_validate_v1, команды config_catalog/config_validate. Каталог задаёт replacement policy для fusion/surface и общие parameter bounds. Validation проверяет base_config_revision, complete replacement groups, общий parser, текущий view и output guard; successful ACK содержит configuration_validation с applied=false/renderer_prepared=false. Read-only при lease, без изменения revisions/файла/render dirty. Это не apply token и не гарантия GPU preparation. Typed API, negative cases и диаграмма: [[engineering/CONFIG_SERVICE]].
+
+## ConfigService atomic apply
+
+`config_apply_v1`: type20 config_apply с base_config_revision, changes и required persist boolean; type21 configuration_application. Catalog schema2, runtime/persist policy, lease rejection и rollback: [[engineering/CONFIG_SERVICE]]. Protobuf рассматривается отдельно: [[engineering/PROTOBUF]]; текущий SV01 остаётся JSON metadata + binary payload.
