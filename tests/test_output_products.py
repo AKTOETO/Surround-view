@@ -85,6 +85,28 @@ class OutputProducts(unittest.TestCase):
         self.assertEqual(state['config_revision'], paused['config_revision'])
         self.assertEqual(self.config.read_bytes(), original)
 
+    def test_simulator_config_editor_persists_via_client_library(self):
+        probe = BUILD / 'sv-simulator-runtime-tests'
+        if not probe.exists():
+            self.skipTest('Qt simulator model not built')
+        self.start()
+        # Compare with authoritative values already loaded by the C++ server. Parsing the raw
+        # source file in Python uses different rounding from Boost.JSON's default number mode.
+        observer = Client(self.ipc)
+        try:
+            before = observer.command('config_read')['configuration']['active']
+        finally:
+            observer.close()
+        result = subprocess.run([str(probe), '--unix', str(self.ipc), '--persistent'],
+            text=True, capture_output=True, timeout=15)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        saved = json.loads(self.config.read_text())
+        self.assertEqual(saved['fusion']['mode'], 'angular_feather')
+        self.assertEqual(saved['fusion']['angle_power'], 3)
+        for group, value in before.items():
+            if group != 'fusion':
+                self.assertEqual(saved[group], value)
+
     def test_typed_configuration_apply_unix_and_tcp(self):
         reservations = [socket.socket(), socket.socket()]
         try:

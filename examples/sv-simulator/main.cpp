@@ -108,6 +108,8 @@ int main(int argc, char **argv)
     engine.rootContext()->setContextProperty(QStringLiteral("bridge"), &bridge);
     engine.rootContext()->setContextProperty(QStringLiteral("runtimeSettings"),
                                              bridge.runtimeSettings());
+    engine.rootContext()->setContextProperty(QStringLiteral("configurationEditor"),
+                                             bridge.configurationEditor());
     engine.rootContext()->setContextProperty(QStringLiteral("driveWorldAvailable"),
                                              SV_SIMULATOR_QUICK3D_AVAILABLE != 0);
     engine.rootContext()->setContextProperty(QStringLiteral("startDrivingWorld"), world_smoke);

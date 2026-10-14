@@ -3,5 +3,8 @@
         <file>main.qml</file>
         <file>DriveWorld.qml</file>
         <file>RuntimePanel.qml</file>
+        <file>ConfigChoice.qml</file>
+        <file>ConfigCheck.qml</file>
+        <file>ConfigNumber.qml</file>
     </qresource>
 </RCC>

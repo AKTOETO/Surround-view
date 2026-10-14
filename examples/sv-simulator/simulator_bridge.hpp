@@ -1,5 +1,6 @@
 #pragma once
 
+#include "configuration_editor.hpp"
 #include "runtime_settings.hpp"
 #include "sv/client.hpp"
 #include <QElapsedTimer>
@@ -122,6 +123,11 @@ class SimulatorBridge : public QObject
         return &runtime_settings_;
     }
 
+    ConfigurationEditor *configurationEditor()
+    {
+        return &configuration_editor_;
+    }
+
     Q_INVOKABLE void preset(const QString &name);
     Q_INVOKABLE void orbit(double az, double elevation);
     Q_INVOKABLE void zoom(double distance);
@@ -153,6 +159,7 @@ class SimulatorBridge : public QObject
 
     std::shared_ptr<sv::client::Client> client_;
     RuntimeSettings runtime_settings_;
+    ConfigurationEditor configuration_editor_;
     QString url_;
     QString status_ = "Соединение с сервером…";
     QString serverInfo_ = "Ожидание ответа сервера";

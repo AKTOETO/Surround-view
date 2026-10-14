@@ -37,6 +37,13 @@ Window {
             font.pixelSize: 13
         }
 
+        Rectangle {
+            x: 440; anchors.verticalCenter: parent.verticalCenter
+            width: 135; height: 32; radius: 5; color: "#155451"
+            Text { anchors.centerIn: parent; text: "Конфигурация"; color: "white" }
+            MouseArea { anchors.fill: parent; onClicked: controlsScroll.contentY = configurationPanel.y + 16 }
+        }
+
         Text {
             anchors.right: parent.right
             anchors.rightMargin: 20
@@ -130,6 +137,7 @@ Window {
         color: "#1a1f2c"
 
         Flickable {
+            id: controlsScroll
             anchors.fill: parent
             contentWidth: width
             contentHeight: controlsColumn.height + 32
@@ -383,7 +391,7 @@ Window {
 
             Rectangle { width: parent.width; height: 1; color: "#2d3748" }
 
-            RuntimePanel { width: parent.width }
+            RuntimePanel { id: configurationPanel; width: parent.width }
 
             Text {
                 text: "СЕРВЕРНАЯ КАЛИБРОВКА"

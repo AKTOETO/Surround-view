@@ -43,6 +43,7 @@ cmake -S . -B build -G Ninja \
     -DSV_GPU=ON \
     -DSV_CLIENT=%{sv_with_client} \
     -DSV_QT_MAJOR=5 \
+    -DSV_SIMULATOR=OFF \
     -DSV_PLATFORM_TEST=ON \
     -DSV_FETCH_MISSING_DEPS=OFF \
     -DSV_PYTHON_TESTS=OFF \

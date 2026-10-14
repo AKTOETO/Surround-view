@@ -5,9 +5,11 @@
 #include <QThread>
 #include <gtest/gtest.h>
 
+sv::client::Endpoint simulator_runtime_endpoint;
+
 namespace
 {
-sv::client::Endpoint endpoint;
+auto &endpoint = simulator_runtime_endpoint;
 
 bool wait_until(const std::function<bool()> &done)
 {
@@ -196,6 +198,11 @@ TEST(SimulatorRuntimeUnit, LocalCommandFailureEndsPendingAndDoesNotClaimServerRe
 int main(int argc, char **argv)
 {
     QCoreApplication app(argc, argv);
+    const bool persistent = argc > 1 && std::string(argv[argc - 1]) == "--persistent";
+    if (persistent)
+    {
+        --argc;
+    }
     const bool unit = argc == 2 && std::string(argv[1]) == "--unit";
     if (!unit && argc == 3 && std::string(argv[1]) == "--unix")
     {
@@ -214,6 +221,8 @@ int main(int argc, char **argv)
     }
     argc = 1;
     ::testing::InitGoogleTest(&argc, argv);
-    ::testing::GTEST_FLAG(filter) = unit ? "SimulatorRuntimeUnit.*" : "SimulatorRuntime.*";
+    ::testing::GTEST_FLAG(filter) = unit         ? "SimulatorRuntimeUnit.*:EditorUnit.*"
+                                    : persistent ? "SimulatorConfigurationPersistent.*"
+                                                 : "SimulatorRuntime.*";
     return RUN_ALL_TESTS();
 }

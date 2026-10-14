@@ -9,6 +9,12 @@ option(SV_CLIENT "Build the Qt Quick touchscreen client example" ON)
 option(SV_GTEST_TESTS "Build additional C++ unit tests using system GTest" OFF)
 option(SV_SANITIZERS "Enable address and undefined behavior sanitizers" OFF)
 option(SV_AURORA "Configure the offline Aurora SDK profile" OFF)
+if(SV_CLIENT AND NOT SV_AURORA)
+  set(SV_SIMULATOR_DEFAULT ON)
+else()
+  set(SV_SIMULATOR_DEFAULT OFF)
+endif()
+option(SV_SIMULATOR "Build the laptop simulator example (requires SV_CLIENT)" ${SV_SIMULATOR_DEFAULT})
 if(SV_AURORA)
   set(SV_FETCH_MISSING_DEPS_DEFAULT OFF)
 else()
@@ -177,7 +183,9 @@ if(SV_CLIENT)
       install(FILES packaging/aurora/icons/surround-view.png
         DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/128x128/apps)
     endif()
-    add_subdirectory(examples/sv-simulator)
+    if(SV_SIMULATOR)
+      add_subdirectory(examples/sv-simulator)
+    endif()
   endif()
 endif()
 include(CTest)
@@ -343,7 +351,10 @@ if(BUILD_TESTING AND SV_GTEST_TESTS)
       Qt${QT_VERSION_MAJOR}::Core GTest::gtest_main)
     add_test(NAME simulator_ipc_discovery COMMAND sv-simulator-discovery-tests)
     add_executable(sv-simulator-runtime-tests tests/simulator_runtime_tests.cpp
-      examples/sv-simulator/runtime_settings.cpp examples/sv-simulator/runtime_settings.hpp)
+      examples/sv-simulator/runtime_settings.cpp examples/sv-simulator/runtime_settings.hpp
+      examples/sv-simulator/configuration_editor.hpp examples/sv-simulator/configuration_editor.cpp
+      examples/sv-simulator/configuration_draft.cpp examples/sv-simulator/configuration_operation.cpp
+      tests/simulator_configuration_tests.cpp)
     set_target_properties(sv-simulator-runtime-tests PROPERTIES AUTOMOC ON)
     target_include_directories(sv-simulator-runtime-tests PRIVATE examples/sv-simulator)
     target_link_libraries(sv-simulator-runtime-tests PRIVATE
@@ -353,12 +364,27 @@ if(BUILD_TESTING AND SV_GTEST_TESTS)
       examples/sv-client/bridge.cpp examples/sv-client/bridge.hpp
       examples/sv-simulator/simulator_bridge.cpp examples/sv-simulator/simulator_bridge.hpp
       examples/sv-simulator/runtime_settings.cpp examples/sv-simulator/runtime_settings.hpp
-      examples/sv-simulator/ipc_discovery.cpp)
+      examples/sv-simulator/ipc_discovery.cpp
+      examples/sv-simulator/configuration_editor.hpp examples/sv-simulator/configuration_editor.cpp
+      examples/sv-simulator/configuration_draft.cpp examples/sv-simulator/configuration_operation.cpp)
     set_target_properties(sv-simulator-session-tests PROPERTIES AUTOMOC ON)
     target_include_directories(sv-simulator-session-tests PRIVATE examples/sv-simulator examples/sv-client)
     target_link_libraries(sv-simulator-session-tests PRIVATE sv-client-lib
       Qt${QT_VERSION_MAJOR}::Core Qt${QT_VERSION_MAJOR}::Gui Qt${QT_VERSION_MAJOR}::Quick GTest::gtest)
     add_test(NAME simulator_session_state COMMAND sv-simulator-session-tests)
+    if(SV_SIMULATOR)
+      add_executable(sv-simulator-configuration-qml-tests tests/simulator_configuration_qml_tests.cpp
+        examples/sv-simulator/configuration_editor.hpp examples/sv-simulator/configuration_editor.cpp
+        examples/sv-simulator/configuration_draft.cpp examples/sv-simulator/configuration_operation.cpp
+        examples/sv-simulator/simulator.qrc)
+      set_target_properties(sv-simulator-configuration-qml-tests PROPERTIES AUTOMOC ON AUTORCC ON)
+      target_include_directories(sv-simulator-configuration-qml-tests PRIVATE examples/sv-simulator)
+      target_link_libraries(sv-simulator-configuration-qml-tests PRIVATE sv-client-lib
+        Qt${QT_VERSION_MAJOR}::Core Qt${QT_VERSION_MAJOR}::Gui Qt${QT_VERSION_MAJOR}::Quick GTest::gtest)
+      add_test(NAME simulator_configuration_qml COMMAND sv-simulator-configuration-qml-tests)
+      set_tests_properties(simulator_configuration_qml PROPERTIES
+        ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_QUICK_BACKEND=software")
+    endif()
   endif()
   add_executable(sv-experiment-lease-tests tests/experiment_lease_tests.cpp)
   target_link_libraries(sv-experiment-lease-tests PRIVATE sv-core GTest::gtest_main)

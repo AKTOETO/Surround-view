@@ -4,7 +4,7 @@ project(sv-simulator LANGUAGES CXX)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Gui Qml Quick Network)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Gui Qml Quick Network QuickControls2)
 if(QT_VERSION_MAJOR EQUAL 6)
     find_package(Qt6 QUIET COMPONENTS Quick3D)
     if(TARGET Qt6::Quick3D)
@@ -25,6 +25,10 @@ add_executable(sv-simulator
     simulator_bridge.hpp
     runtime_settings.cpp
     runtime_settings.hpp
+    configuration_editor.hpp
+    configuration_editor.cpp
+    configuration_draft.cpp
+    configuration_operation.cpp
     simulator.qrc
 )
 
@@ -36,6 +40,7 @@ target_link_libraries(sv-simulator PRIVATE
     Qt${QT_VERSION_MAJOR}::Gui
     Qt${QT_VERSION_MAJOR}::Qml
     Qt${QT_VERSION_MAJOR}::Quick
+    Qt${QT_VERSION_MAJOR}::QuickControls2
     Qt${QT_VERSION_MAJOR}::Network
 )
 if(SV_SIMULATOR_QUICK3D_AVAILABLE)
