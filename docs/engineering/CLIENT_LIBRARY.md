@@ -169,3 +169,7 @@ parse_configuration_catalog()/parse_configuration_validation(). Для rejected 
 ## Применение конфигурации сервером
 
 После read_configuration()/configuration_catalog() доступны validate_configuration(base, changes) и apply_configuration(base, changes, persist). Fusion/surface передаются полными replacement groups. persist=false оставляет файл неизменным; persist=true сохраняет весь active snapshot. Ответ разбирается parse_configuration_application(); не повторять mutation после потери ACK автоматически. GUI binding общего сервиса ещё предстоит; команды CLI, диаграмма, ограничения lease и проверки: [[engineering/CONFIG_SERVICE]].
+
+## Результат операции после потери ACK
+
+Для новых apply использовать explicit apply_configuration_once(instance, operation_id, base, changes, persist) и configuration_operation_status(instance, operation_id), затем parse_configuration_operation(). ID/intent хранит приложение; библиотека не повторяет mutation автоматически. Журнал сохраняется при reconnect, ограничен128 операциями и теряется при restart; старый instance нельзя автоматически заменять новым. Команды CLI, sequence diagram и ограничения: [[engineering/CONFIG_OPERATIONS]].

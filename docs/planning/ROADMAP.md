@@ -1,6 +1,8 @@
 # Подробный план реализации
 
-14.10.2026: атомарный config_apply_v1 для fusion/surface реализован: explicit persist, GPU prepare→revision recheck→optional atomic rename→noexcept publication; runtime/persist/restart и rollback при disk/prepare/stale errors проверены. Catalog schema2, typed Unix/TCP API. Полная сборка и Mesa CTest60/60, configuration GTest15/15. Остались operation IDs/status, GUI binding, другие группы и restart orchestration. [[engineering/CONFIG_SERVICE]].
+14.10.2026: config_operations_v1 реализован: explicit apply-once/status через sv-client-lib, process-instance guard, bounded128-entry journal без eviction, retained commit/rejection и reconnect recovery без повторной mutation. Durable journal, управляемая retention и GUI reconciliation ещё не реализованы. [[engineering/CONFIG_OPERATIONS]].
+
+14.10.2026: атомарный config_apply_v1 для fusion/surface реализован: explicit persist, GPU prepare→revision recheck→optional atomic rename→noexcept publication; runtime/persist/restart и rollback при disk/prepare/stale errors проверены. Catalog schema2, typed Unix/TCP API. Полная сборка и Mesa CTest60/60, configuration GTest15/15. Operation IDs/status для отдельного process-scoped apply-once уже добавлены; остаются durable recovery/retention, GUI binding, другие группы и restart orchestration. [[engineering/CONFIG_SERVICE]].
 
 14.10.2026: первый продуктовый ConfigService read реализован: config_read_v1, coherent active/persisted/revision snapshot, typed C++ parser и read_configuration(), Unix/TCP consumer parity, read during lease, bounded oversize rejection без disconnect. Selected CTest5/5; На первом read-срезе schema/validate/update/apply отсутствовали; текущий apply описан выше. [[engineering/CONFIG_SERVICE]].
 
@@ -227,4 +229,8 @@ fake-adapter integration, затем реальные камеры/драйве�
 
 ## Versioned protobuf codec
 
-Инженерная оценка и C++ metadata microbenchmark выполнены: [[engineering/PROTOBUF]]. Следующая задача: typed schema и compatibility/limits tests, затем versioned codec migration с отдельным binary image payload и offline Aurora dependencies. Измерить системный CPU/RSS/end-to-end; текущие metadata результаты не доказывают ускорения pipeline. SV01 пока не изменён; работа не блокирует ConfigService operation IDs/status.
+Инженерная оценка и C++ metadata microbenchmark выполнены: [[engineering/PROTOBUF]]. Следующая задача: typed schema и compatibility/limits tests, затем versioned codec migration с отдельным binary image payload и offline Aurora dependencies. Измерить системный CPU/RSS/end-to-end; текущие metadata результаты не доказывают ускорения pipeline. SV01 пока не изменён; работа не блокирует дальнейшее развитие ConfigService/GUI.
+
+## Devel telemetry через клиентскую библиотеку
+
+Добавить server-owned отключаемый сбор (по умолчанию off), bounded sampling/subscriptions, typed sv-client-lib API и графики subsystem load/queues/latency в sv-simulator. Разделять CPU wall/GPU execution, привязывать samples к instance/config/frame/experiment; сравнить overhead disabled/minimal/detailed на одном replay. Telemetry-only connection не должна требовать final-frame delivery. Подробная приёмка: [[../TODO#Отключаемая серверная телеметрия для devel-тестирования]]. Сам sampler/exporter этого расширения ещё не реализован.

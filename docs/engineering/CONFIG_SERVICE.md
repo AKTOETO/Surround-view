@@ -1,7 +1,7 @@
 # ConfigService: чтение, проверка и атомарное применение
 
 14.10.2026. Продуктовые шаги после bounded research [[validation/TARGET_OVERLAP]].
-Серверный `ConfigService` предоставляет read, discovery, проверку и атомарное применение групп fusion/surface с явным выбором сохранения. Operation IDs/status, другие root groups и restart orchestration ещё не реализованы. Временные configure_fusion/surface
+Серверный `ConfigService` предоставляет read, discovery, проверку и атомарное применение групп fusion/surface с явным выбором сохранения. Process-scoped operation IDs/status добавлены отдельно: [[engineering/CONFIG_OPERATIONS]]. Другие root groups, durable journal/retention и restart orchestration ещё не реализованы. Временные configure_fusion/surface
 и persistent calibration apply сохраняют прежние контракты.
 
 ## Wire-контракт config_read_v1
@@ -107,7 +107,7 @@ configuration_snapshot/config_store_persistence/client_output/experiment_lease/o
 5/5 за5.92s (output_products содержит8 Python integration cases). Первый sandbox run не мог bind
 сокеты; проверка повторена вне sandbox. Full suite и Aurora в этом шаге не проверялись.
 
-Следующий этап после реализованного ниже config_apply: operation IDs/status; затем
+Следующий этап после config_apply и process-scoped apply-once/status: GUI reconciliation; затем
 подключить формы GUI и сценарный runner. API должен различать временные settings, persisted
 settings, session state и restart-required settings. Исторические configure_* не превращать
 в автоматически сохраняемые операции без явного контракта.
@@ -304,8 +304,7 @@ Success receipt выделяется до commit; публикация не вы
 Atomic rename обеспечивает атомарную замену файла при работающем процессе; **fsync и гарантия
 сохранности после сбоя питания не реализованы**.
 
-При потере ACK клиент не повторяет запрос автоматически: operation IDs/status ещё отсутствуют.
-Нужно перечитать config/state и согласовать следующий запрос. Таймаут не доказывает отсутствие commit.
+При потере ACK старого config_apply клиент не повторяет запрос автоматически: эта команда не имеет deduplication. Нужно перечитать config/state и согласовать следующий запрос. Для новых операций есть отдельный process-scoped apply-once/status: [[engineering/CONFIG_OPERATIONS]]. Таймаут не доказывает отсутствие commit.
 
 ```sh
 build/svctl --unix /tmp/sv-prototype command config_read
@@ -318,3 +317,5 @@ Configuration GTest **15/15**, отдельный native renderer test пров�
 cached uploads. Output-products integration содержит12 cases: runtime/persist/restart, disk rename
 failure с неизменным RGBA, lease rejection, stale revision и typed Unix/TCP read→validate→apply.
 Target Aurora и crash durability этим Linux-прогоном не подтверждаются.
+
+Process-scoped журнал операций, новый server_instance_id в snapshot и сценарий восстановления после потерянного ACK описаны в [[engineering/CONFIG_OPERATIONS]]. Общий GUI binding и durable operation recovery остаются планом.

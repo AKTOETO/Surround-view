@@ -101,3 +101,7 @@ Multilabel server candidate/cost/global-gap controls: [[validation/MULTILABEL_SE
 Чувствительность к дискретизации носителя: [[validation/CARRIER_REFINEMENT]], frozen plan [[research/CARRIER_REFINEMENT_PROTOCOL]], диплом§4.49.
 
 Раздельные scene/boundary ROI и ограничения aggregate RGB metric: [[validation/SPATIAL_ROI]], протокол [[research/SPATIAL_ROI_PROTOCOL]], диплом§4.50.
+
+## Удалённая конфигурация и диагностика
+
+[[engineering/CONFIG_SERVICE|Read/catalog/validate и atomic runtime/persistent apply]], [[engineering/CONFIG_OPERATIONS|Process-scoped операции и потеря ACK]], [[engineering/PROTOCOL_SCENARIOS|Сценарии взаимодействия]], [[engineering/PROTOBUF|Оценка protobuf и C++ benchmark]]. Отключаемая subsystem telemetry через библиотеку и графики sv-simulator пока запланированы: [[../TODO#Отключаемая серверная телеметрия для devel-тестирования]].

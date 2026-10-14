@@ -99,4 +99,4 @@ end note
 Рисунок — Предлагаемое размещение protobuf без изменения ответственности сервера и клиентской библиотеки.
 
 Первый этап — contract/schema и compatibility tests, затем codec integration. Полная миграция
-не выполнена и не должна блокировать operation IDs/status и текущие GUI bindings ConfigService.
+не выполнена и не должна блокировать дальнейшие ConfigService/GUI bindings. Process-scoped operation IDs/status уже реализованы отдельно: [[engineering/CONFIG_OPERATIONS]].

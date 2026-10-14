@@ -1,6 +1,6 @@
 # Реализованный протокол SV01
 
-Срез реализации Linux 0.6.x. Это описание текущего wire-контракта, сверенное с `include/sv/protocol.hpp`, `src/core/protocol.cpp`, `src/apps/server.cpp` и `src/client_library/client.cpp`. Runtime fusion API `fusion_runtime_v1` описан ниже; ConfigService read/catalog/validate и atomic apply с explicit persistence для fusion/surface реализованы ([[engineering/CONFIG_SERVICE]]); operation IDs/status и другие группы отсутствуют. Целевая расширенная архитектура и подписки описаны отдельно в [[architecture/CLIENT_SERVER_MODEL]] и пока не являются возможностями сервера.
+Срез реализации Linux 0.6.x. Это описание текущего wire-контракта, сверенное с `include/sv/protocol.hpp`, `src/core/protocol.cpp`, `src/apps/server.cpp` и `src/client_library/client.cpp`. Runtime fusion API `fusion_runtime_v1` описан ниже; ConfigService read/catalog/validate и atomic apply с explicit persistence для fusion/surface реализованы ([[engineering/CONFIG_SERVICE]]); process-scoped apply-once/status реализованы ([[engineering/CONFIG_OPERATIONS]]), durable recovery и другие группы отсутствуют. Целевая расширенная архитектура и подписки описаны отдельно в [[architecture/CLIENT_SERVER_MODEL]] и пока не являются возможностями сервера.
 
 ## Транспорт и кадрирование
 
@@ -308,3 +308,7 @@ Capabilities config_catalog_v1/config_validate_v1, команды config_catalog
 ## ConfigService atomic apply
 
 `config_apply_v1`: type20 config_apply с base_config_revision, changes и required persist boolean; type21 configuration_application. Catalog schema2, runtime/persist policy, lease rejection и rollback: [[engineering/CONFIG_SERVICE]]. Protobuf рассматривается отдельно: [[engineering/PROTOBUF]]; текущий SV01 остаётся JSON metadata + binary payload.
+
+## ConfigService process-scoped operation journal
+
+Capability config_operations_v1 добавляет config_apply_once и config_operation_status, а config_read — server_instance_id. Wire fields, bounded retention, rejected/status ACK semantics и reconnect/restart сценарии: [[engineering/CONFIG_OPERATIONS]]. Прежние config_apply/configure_* не получили автоматическую идемпотентность.

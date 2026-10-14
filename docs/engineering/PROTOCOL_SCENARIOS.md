@@ -10,7 +10,7 @@
 
 ## Полный каталог текущих операций
 
-Каталог содержит 24 серверные команды; запросы передаются как type20, результат — type21. Typed API перечислен там, где он есть; остальные доступны через `command(type, parameters)`. Наличие generic API не означает поддержку неизвестной команды сервером.
+Каталог содержит 26 серверных команд; запросы передаются как type20, результат — type21. Typed API перечислен там, где он есть; остальные доступны через `command(type, parameters)`. Наличие generic API не означает поддержку неизвестной команды сервером.
 
 | Команда | Запрос помимо command_id/type | Успешный результат / сценарий |
 |---|---|---|
@@ -19,6 +19,8 @@
 | `config_catalog` | Нет; capability config_catalog_v1 | Fusion/surface bounds и replacement/validation policy; С14 |
 | `config_validate` | base_config_revision, changes object; capability config_validate_v1 | Read-only candidate check, без renderer preparation/persistence; С14 |
 | `config_apply` | base_config_revision, changes, required persist boolean; capability config_apply_v1 | Atomic runtime/persist apply fusion/surface; С15 |
+| `config_apply_once` | server_instance_id, operation_id, base_config_revision, changes, persist; capability config_operations_v1 | Process-scoped dedup apply; С16 |
+| `config_operation_status` | server_instance_id, operation_id; capability config_operations_v1 | Retained committed/rejected/pending/not_found; С16 |
 | `fusion_catalog` | Нет | Каталог fusion версии 5, capabilities параметров; С02 |
 | `output_catalog` | Нет | Каталог продуктов/формат маски; С12 |
 | `configure_output` | `product=final_frame/render_support_v1/source_visibility_v1/source_disagreement_v1` | Выбор одного data product до следующего render; С12 |
@@ -249,7 +251,7 @@ Stopped --> [*]
 | С08, С10 | `client_release_budget`, `client_command_order` |
 | С11 | `client_lifecycle` и cleanup остальных library suites |
 
-Названия — точки входа проверок, а не утверждение о полном покрытии всех ветвей. Длительный overload, два физических узла, fuzz decoder, cancellation/ACK races и fault injection persistence для config_apply реализован; остальные ветви требуют расширения. Multi-session, control-only, parallel subscriptions/остальные intermediate products (один выбранный support product реализован в С12), operation IDs/status, другие ConfigService groups и UDP находятся в TODO; не добавлять их в список текущих возможностей без реализации и тестов.
+Названия — точки входа проверок, а не утверждение о полном покрытии всех ветвей. Длительный overload, два физических узла, fuzz decoder, cancellation/ACK races и fault injection persistence для config_apply реализован; остальные ветви требуют расширения. Multi-session, control-only, parallel subscriptions/остальные intermediate products (один выбранный support product реализован в С12), durable operation recovery/retention, другие ConfigService groups и UDP находятся в TODO; не добавлять их в список текущих возможностей без реализации и тестов.
 
 ### С06а. Несколько paused frame sets и capture
 
@@ -363,3 +365,7 @@ end note
 ## С15. Revision-aware runtime/persistent apply
 
 Клиент читает snapshot/catalog, редактирует replacement groups и вызывает apply_configuration(base, changes, persist). Сервер проверяет session constraints, готовит renderer, повторно проверяет revision под store lock, при persist=true заменяет файл, затем публикует prepared state между render calls. Ошибка до публикации сохраняет прежний state. Во время experiment lease запрос отвергается. Accepted ACK содержит typed application receipt; старый in-flight frame освободить, ожидать новую revision. Потеря ACK требует reconciliation через config_read, автоматического повтора нет. Диаграмма и проверки: [[engineering/CONFIG_SERVICE]].
+
+## С16. Восстановление результата после потери ACK
+
+Приложение сохраняет server_instance_id, уникальный operation ID и неизменный intent до apply_configuration_once(). При потере ACK переподключается, проверяет instance, получает configuration_operation_status(). Explicit retry того же запроса возвращает retained результат без новых revisions/dirty. Конфликт intent отклоняется; отказ тоже сохраняется. После restart старый instance отклоняется: автоматического replay нет. Bounded journal без eviction, lease semantics, historical revision, API, sequence diagram и проверки: [[engineering/CONFIG_OPERATIONS]].
