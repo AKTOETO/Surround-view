@@ -21,7 +21,7 @@ def textured_material(directory, seed, period):
     pixels = texture(seed)
     image = bpy.data.images.new('SV independent texture', width=128, height=128)
     rgba = np.concatenate([pixels.astype(float)/255, np.ones((128, 128, 1))], axis=-1)
-    image.pixels.foreach_set(rgba.ravel())
+    image.pixels.foreach_set(rgba.astype(np.float32).ravel())
     image.filepath_raw = str(directory/f'texture-{seed}.png')
     image.file_format = 'PNG'
     image.save()
