@@ -371,6 +371,8 @@ ServerIO::ServerIO(const sv::Connections &n, const std::string &source_type,
                     "resume",
                     "state",
                     "config_read_v1",
+                    "config_catalog_v1",
+                    "config_validate_v1",
                     "fusion_runtime_v1",
                     "research_fusion_v1",
                     "runtime_surface_v1",
@@ -914,6 +916,17 @@ int main(int argc, char **argv)
                     {
                         extra_res["configuration"] = config_service.read();
                     }
+                    else if (type == "config_catalog")
+                    {
+                        extra_res["configuration_catalog"] = config_service.catalog();
+                    }
+                    else if (type == "config_validate")
+                    {
+                        const auto revision = sv::parse_decimal_u64(
+                            std::string(m.header.at("base_config_revision").as_string()));
+                        extra_res["configuration_validation"] = config_service.validate(
+                            revision, m.header.at("changes").as_object(), view, output_product);
+                    }
                     else if (type == "fusion_catalog")
                     {
                         auto catalog = sv::fusion_catalog();
@@ -951,59 +964,7 @@ int main(int argc, char **argv)
                     }
                     else if (type == "surface_catalog")
                     {
-                        extra_res["surface_catalog"] = boost::json::object{
-                            {"types", boost::json::array{"rectangular_bowl_v1", "dome_floor_v1",
-                                                         "cylinder_floor_v1", "cube_floor_v1"}},
-                            {"plane", "rectangular_bowl_v1 with corner_height_m=0"},
-                            {"rectangular_reference_height",
-                             boost::json::object{
-                                 {"field", "reference_height_m"},
-                                 {"unit", "m"},
-                                 {"minimum", 0.},
-                                 {"maximum", 5.},
-                                 {"default", 0.},
-                                 {"meaning", "assumed support height; not estimated depth"}}},
-                            {"rectangular_local_support",
-                             boost::json::object{
-                                 {"field", "local_support_patch"},
-                                 {"fields",
-                                  boost::json::array{"center_x_m", "center_y_m", "half_length_m",
-                                                     "half_width_m", "height_m", "transition_m"}},
-                                 {"frame", "vehicle"},
-                                 {"meaning", "supplied local additive height; omit to disable"},
-                                 {"minimum_extent_and_transition_m", .01},
-                                 {"height_range_m", boost::json::array{0., 5.}},
-                                 {"bounds", "plateau and transition must fit inside carrier"}}},
-                            {"rectangular_source_occlusion",
-                             boost::json::object{
-                                 {"field", "source_occlusion_box"},
-                                 {"fields", boost::json::array{"min_m", "max_m", "tolerance_m"}},
-                                 {"frame", "vehicle"},
-                                 {"meaning", "one supplied opaque AABB; omit to disable"},
-                                 {"coordinate_range_m", boost::json::array{-100., 100.}},
-                                 {"tolerance_range_m", boost::json::array{0., .1}},
-                                 {"optional_fields",
-                                  boost::json::array{"mode", "guard_texels", "support_tolerance_m",
-                                                     "uncertainty", "require_facing_surface"}},
-                                 {"modes", boost::json::array{"center", "bilinear_radial_v1",
-                                                              "bilinear_box_surface_v1"}},
-                                 {"guard_texels_range", boost::json::array{0, 1}},
-                                 {"default_mode", "center"},
-                                 {"default_support_tolerance_m", 1e-5},
-                                 {"support_tolerance_range_m", boost::json::array{0., .05}},
-                                 {"default_require_facing_surface", false},
-                                 {"facing_scope", "box-surface only; any near finite face with "
-                                                  "camera strictly outside its plane"},
-                                 {"uncertainty",
-                                  boost::json::object{
-                                      {"required_fields",
-                                       boost::json::array{"radius_m", "ambiguous_policy"}},
-                                      {"radius_range_m", boost::json::array{0., .05}},
-                                      {"policies", boost::json::array{"accept", "reject"}},
-                                      {"scope", "central rays only; footprint unchanged; omit for "
-                                                "nominal"}}},
-                                 {"footprint_optics", "zero-distortion equidistant only"}}},
-                            {"apply", "prepare buffers then publish between render calls"}};
+                        extra_res["surface_catalog"] = sv::surface_catalog();
                     }
                     else if (type == "configure_surface")
                     {
@@ -1302,7 +1263,8 @@ int main(int argc, char **argv)
                         reason = "source_control_queue_full";
                     }
                 }
-                if (accepted && type != "state" && type != "config_read" && type != "fusion_catalog" &&
+                if (accepted && type != "state" && type != "config_read" &&
+                    type != "config_catalog" && type != "config_validate" && type != "fusion_catalog" &&
                     type != "output_catalog" && type != "surface_catalog" &&
                     type != "experiment_acquire" && type != "experiment_renew" &&
                     type != "experiment_release" && type != "calibrate" &&

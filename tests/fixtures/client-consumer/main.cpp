@@ -112,7 +112,8 @@ int main(int argc, char **argv)
                                       cv.notify_one();
                                   });
         unsigned received = 0, acknowledgements = 0;
-        const unsigned expected_acks = exercise ? 5 : support ? 3 : 1;
+        const unsigned expected_acks = configuration ? 3 : exercise ? 5 : support ? 3 : 1;
+        uint64_t configuration_revision = 0;
         const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(15);
         while (received < frames || acknowledgements < expected_acks)
         {
@@ -189,8 +190,27 @@ int main(int argc, char **argv)
             header["message_type"] = event.message->type;
             if (configuration && event.message->type == 21)
             {
-                const auto snapshot = sv::client::parse_configuration_snapshot(*event.message);
-                header["validated_configuration_revision"] = std::to_string(snapshot.revision);
+                if (header.contains("configuration"))
+                {
+                    const auto snapshot = sv::client::parse_configuration_snapshot(*event.message);
+                    configuration_revision = snapshot.revision;
+                    header["validated_configuration_revision"] = std::to_string(snapshot.revision);
+                    client.configuration_catalog();
+                }
+                else if (header.contains("configuration_catalog"))
+                {
+                    const auto catalog = sv::client::parse_configuration_catalog(*event.message);
+                    header["validated_configuration_catalog"] = !catalog.replaceable_groups.empty();
+                    client.validate_configuration(
+                        configuration_revision,
+                        {{"fusion", boost::json::object{{"mode", "angular_feather"}}}});
+                }
+                else
+                {
+                    const auto result = sv::client::parse_configuration_validation(*event.message);
+                    header["validated_configuration_base_revision"] =
+                        std::to_string(result.base_revision);
+                }
             }
             if (event.message->type == 11)
             {

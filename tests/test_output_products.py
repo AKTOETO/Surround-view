@@ -85,6 +85,60 @@ class OutputProducts(unittest.TestCase):
         self.assertEqual(state['config_revision'], paused['config_revision'])
         self.assertEqual(self.config.read_bytes(), original)
 
+    def test_configuration_discovery_validation_is_readonly_revision_checked_and_session_aware(self):
+        self.start()
+        self.client = Client(self.ipc)
+        self.frame_after(self.client.command('pause'))
+        self.frame_after(self.client.command('configure_output', product='source_disagreement_v1'))
+        before = self.client.command('config_read')
+        original = self.config.read_bytes()
+        catalog = self.client.command('config_catalog')
+        self.assertTrue(catalog['accepted'], catalog)
+        fields = catalog['configuration_catalog']
+        self.assertEqual(fields['replaceable_groups'], ['fusion', 'surface'])
+        self.assertFalse(fields['generic_apply_supported'])
+        self.assertFalse(fields['prepares_renderer'])
+        surface = self.client.command('surface_catalog')['surface_catalog']
+        self.assertEqual(fields['surface'], surface)
+        self.assertEqual(surface['geometry_fields']['cube_floor_v1']['face_cells']['maximum'], 128)
+        lease = self.client.command('experiment_acquire', ttl_ms=5000)
+        self.assertTrue(lease['accepted'], lease)
+        for mode in fields['fusion']['modes']:
+            response = self.client.command('config_validate', base_config_revision=before['config_revision'],
+                changes={'fusion': {'mode': mode}, 'surface': self.cfg['surface']})
+            self.assertTrue(response['accepted'], response)
+            result = response['configuration_validation']
+            self.assertEqual(result['base_config_revision'], before['config_revision'])
+            self.assertEqual(result['changes']['fusion']['mode'], mode)
+            self.assertFalse(result['applied'])
+            self.assertFalse(result['renderer_prepared'])
+            self.assertEqual(response['state_revision'], before['state_revision'])
+        invalid = [
+            ('1', {'fusion': {}}, 'stale_config_revision'),
+            (before['config_revision'], {}, 'configuration_changes_empty'),
+            (before['config_revision'], {'connections': {}}, 'configuration_group_unsupported'),
+            (before['config_revision'], {'fusion': {'mode': 'edge_feather', 'diagnostic': 'coverage'}}, 'source_disagreement_requires_color'),
+            (before['config_revision'], {'fusion': {'mode': 'edge_feather', 'angle_power': True}}, None),
+            (before['config_revision'], {'fusion': {'mode': 'edge_feather', 'typo': 1}}, None),
+            (before['config_revision'], {'surface': {'type': 'dome_floor_v1'}}, None)]
+        for revision, changes, reason in invalid:
+            rejected = self.client.command('config_validate', base_config_revision=revision, changes=changes)
+            self.assertFalse(rejected['accepted'], rejected)
+            self.assertNotIn('configuration_validation', rejected)
+            if reason:
+                self.assertEqual(rejected['reason'], reason)
+            self.assertEqual(rejected['state_revision'], before['state_revision'])
+            self.assertEqual(rejected['config_revision'], before['config_revision'])
+        after = self.client.command('config_read')
+        self.assertEqual(after['configuration'], before['configuration'])
+        self.assertEqual(after['output_product'], 'source_disagreement_v1')
+        self.assertEqual(self.config.read_bytes(), original)
+        self.client.data.settimeout(.15)
+        with self.assertRaises(TimeoutError):
+            self.client.frame()  # Validation does not dirty a paused render.
+        self.client.data.settimeout(3)
+        self.client.command('experiment_release', lease_id=lease['experiment_lease']['lease_id'])
+
     def test_configuration_read_is_coherent_readonly_and_allowed_during_lease(self):
         self.start()
         self.client = Client(self.ipc)
@@ -439,8 +493,16 @@ class OutputProducts(unittest.TestCase):
             self.assertEqual(len(snapshots), 1)
             self.assertEqual(snapshots[0]['validated_configuration_revision'], snapshots[0]['config_revision'])
             self.assertEqual(snapshots[0]['configuration']['active'], snapshots[0]['configuration']['persisted'])
+            catalogs = [m for m in messages if m.get('validated_configuration_catalog')]
+            validations = [m for m in messages if 'validated_configuration_base_revision' in m]
+            self.assertEqual(len(catalogs), 1)
+            self.assertEqual(len(validations), 1)
+            self.assertEqual(validations[0]['validated_configuration_base_revision'], snapshots[0]['config_revision'])
+            self.assertFalse(validations[0]['configuration_validation']['applied'])
             hellos = [m for m in messages if m.get('message_type') == 2]
             self.assertTrue(any('config_read_v1' in m.get('capabilities', []) for m in hellos))
+            self.assertTrue(any('config_catalog_v1' in m.get('capabilities', []) for m in hellos))
+            self.assertTrue(any('config_validate_v1' in m.get('capabilities', []) for m in hellos))
             result = subprocess.run([str(BUILD / 'sv-client-probe'), *endpoint,
                 '--frames', '1', '--support'], text=True, capture_output=True, timeout=20)
             self.assertEqual(result.returncode, 0, result.stderr)

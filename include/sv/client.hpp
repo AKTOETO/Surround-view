@@ -112,6 +112,18 @@ class Client
         return command("config_read");
     }
 
+    uint64_t configuration_catalog()
+    {
+        return command("config_catalog");
+    }
+
+    // Complete replacements of supplied fusion/surface groups; validates without applying.
+    uint64_t validate_configuration(uint64_t base_revision, boost::json::object changes)
+    {
+        return command("config_validate", {{"base_config_revision", std::to_string(base_revision)},
+                                           {"changes", std::move(changes)}});
+    }
+
     uint64_t fusion_catalog()
     {
         return command("fusion_catalog");

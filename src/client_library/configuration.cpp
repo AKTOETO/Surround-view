@@ -1,8 +1,47 @@
 #include "sv/client_configuration.hpp"
+#include <algorithm>
 #include <stdexcept>
 
 namespace sv::client
 {
+namespace
+{
+const boost::json::object &reply_fields(const Message &message, const char *key, const char *scope)
+{
+    if (message.type != 21 || !message.payload.empty() || !message.header.at("accepted").as_bool())
+    {
+        throw std::invalid_argument("configuration result requires accepted ACK");
+    }
+    (void)parse_decimal_u64(std::string(message.header.at("command_id").as_string()));
+    const auto &fields = message.header.at(key).as_object();
+    if (!fields.at("schema_version").is_int64() || fields.at("schema_version").as_int64() != 1 ||
+        fields.at("scope").as_string() != scope)
+    {
+        throw std::invalid_argument("unsupported configuration result schema");
+    }
+    return fields;
+}
+
+std::vector<std::string> strings(const boost::json::value &value)
+{
+    std::vector<std::string> result;
+    for (const auto &item : value.as_array())
+    {
+        const std::string text(item.as_string());
+        if (text.empty() || std::find(result.begin(), result.end(), text) != result.end())
+        {
+            throw std::invalid_argument("invalid configuration catalog list");
+        }
+        result.push_back(text);
+    }
+    if (result.empty())
+    {
+        throw std::invalid_argument("empty configuration catalog list");
+    }
+    return result;
+}
+} // namespace
+
 ConfigurationSnapshot parse_configuration_snapshot(const Message &message)
 {
     const auto &header = message.header;
@@ -30,6 +69,51 @@ ConfigurationSnapshot parse_configuration_snapshot(const Message &message)
     if (result.has_runtime_changes != (result.active != result.persisted))
     {
         throw std::invalid_argument("configuration snapshot change flag mismatch");
+    }
+    return result;
+}
+
+ConfigurationCatalog parse_configuration_catalog(const Message &message)
+{
+    const auto &fields = reply_fields(message, "configuration_catalog", "config_store_groups");
+    if (fields.at("changes_semantics").as_string() != "replace_each_supplied_group" ||
+        fields.at("omitted_groups").as_string() != "keep_active" ||
+        !fields.at("base_config_revision_required").as_bool() ||
+        fields.at("validation_scope").as_string() != "parse_config_and_current_session" ||
+        fields.at("prepares_renderer").as_bool() || fields.at("reserves_revision").as_bool() ||
+        fields.at("generic_apply_supported").as_bool() ||
+        fields.at("persistence").as_string() != "none")
+    {
+        throw std::invalid_argument("unsupported configuration catalog policy");
+    }
+    return {strings(fields.at("operations")), strings(fields.at("replaceable_groups")),
+            fields.at("fusion").as_object(), fields.at("surface").as_object()};
+}
+
+ConfigurationValidation parse_configuration_validation(const Message &message)
+{
+    const auto &fields = reply_fields(message, "configuration_validation", "config_store_groups");
+    ConfigurationValidation result;
+    result.base_revision =
+        parse_decimal_u64(std::string(fields.at("base_config_revision").as_string()));
+    if (result.base_revision !=
+            parse_decimal_u64(std::string(message.header.at("config_revision").as_string())) ||
+        !fields.at("valid").as_bool() || fields.at("applied").as_bool() ||
+        fields.at("renderer_prepared").as_bool())
+    {
+        throw std::invalid_argument("inconsistent configuration validation result");
+    }
+    result.changes = fields.at("changes").as_object();
+    if (result.changes.empty())
+    {
+        throw std::invalid_argument("empty validated configuration changes");
+    }
+    for (const auto &field : result.changes)
+    {
+        if ((field.key() != "fusion" && field.key() != "surface") || !field.value().is_object())
+        {
+            throw std::invalid_argument("invalid validated configuration group");
+        }
     }
     return result;
 }
