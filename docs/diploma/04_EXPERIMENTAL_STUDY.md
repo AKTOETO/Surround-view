@@ -4491,3 +4491,99 @@ Existing bounded uncertainty относится к координатам suppli
 Следующий практический этап — matched source truth текущего backend и correct/incorrect paired nonuniform controls. Дополнительная driver/raster attribution остаётся отдельной работой и не обязана блокировать fixed-backend experiments с измеренными inputs. Затем проверяются photometric confounders/exposure, singleton abstention и независимый holdout; физические камеры, overhead и Aurora остаются открытыми.
 
 Пять independent known-answer tests проверяют strict bias, axial/miss/parallel/inside, translation/permutation, host float replays и invalid geometry. Selected CTest4/4 за1.20s; native C++/GLSL/server/library не менялись, предыдущий full59/59 не объявляется новым прогоном. Report при повторении побайтно идентичен. Команды, hashes и ограничения: [[validation/ENDPOINT_PRECISION]], [[validation/baselines/endpoint_precision_v1.json]].
+
+## 4.90. Matched source truth Mesa и парные photometric controls
+
+### 4.90.1. Почему требуется новая связка аргументов и истины
+
+§4.88–4.89 показали, что перенос historical NVIDIA eligibility на текущий Mesa приводит к двум failed cells. Их numerical explanation не делает старые labels подходящими для новых inputs. Поэтому следующий опыт заново получает actual UV/status текущего backend, строит source rays по ним и сравнивает hits с virtual scene point. Из прежней scene truth переиспользуется геометрия, а не вывод о корректности старого camera sample.
+
+Frozen plan `configs/research/mesa-source-truth-plan.json`, commit eaf740e до capture. Current correspondence binary сохранён отдельно в artifacts/research-binaries/source-truth-mesa-v1 с SHA2aede073…; executable/config/source-image/geometry/helper hashes закреплены. Runtime C++/GLSL/server/library в этом шаге не менялись. Созданы36 native captures прежних conditions на llvmpipe (LLVM22.1.8,256bits); каждый probe проверяет ordinary RGBA parity до/во время/после inspection.
+
+### 4.90.2. Независимая геометрия и две выборки
+
+Primary selection включает прежние9 residual coordinates во всех18 conditions соответствующего frame:162 correlated memberships. Secondary inventory задаётся до capture независимо от RGB: pixel centres offset8/step16 на640×360, два profiles (nominal/surface1mm/nominal и Z+5mm/surface10mm/accept), оба frames. Получено880 lattice cells на frame/profile,3520 memberships суммарно. Это расширение покрытия одной уже исследованной сцены, не новый holdout.
+
+Для физических camera rays используются current retained UV, исходные camera calibration/poses и frozen evaluated world triangles Blender. Calibration roundtrip ≤1.11e−16 при declared tolerance1e−12. Повторно проверены69 прежних Blender ray anchors и9 independently reconstructed virtual rays:78/78, max point difference5.05µm. Для новых source UV выполняется независимое NumPy triangle intersection; свежего Blender ray_cast или RGB capture нет. Дополнительная post-collection проверка virtual semantic kinds против полных архивных Blender object-ID arrays прошла1049/1049 уникальных in-domain coordinates; она не заменяет distance validation каждой новой точки.
+
+Scene correspondence требует finite hits одинакового semantic kind и point distance≤2/20mm; это declared sensitivity tolerances, не эксплуатационные автомобильные требования. Singleton может иметь matching centre, но не photometric comparison. Centre-ray labels не реконструируют конечный bilinear/cubemap/Eevee filter footprint. Нативные UV/status и source_disagreement_v1 получены в отдельных repeat renders на одинаковых static inputs и source fingerprint; config/manifest/frame/input identities и фактические device strings проверены. Это не новый joint wire payload.
+
+```plantuml
+@startuml
+start
+:Frozen native binary, unchanged inputs/configs;
+:36 Mesa correspondence captures;
+:Verify ordinary RGBA parity, identities and actual backend;
+fork
+  :Current UV/status + carrier region;
+  :Primary 9 residual coordinates;
+  :Predeclared 16px lattice, two profiles;
+fork again
+  :Previously verified Blender world triangles;
+  :Recheck 69 stored rays + 9 virtual rays;
+end fork
+:Trace source rays through actual current UV;
+:Classify finite centre correspondence at 2/20mm;
+:Join unchanged native RGB metric by frame/config/input;
+:Independent bilinear RGB oracle;
+:Separate outside domain, singleton and paired samples;
+:Keep historical failures; publish new matched report;
+stop
+@enduml
+```
+
+Рисунок4.167 — Получение matched current-backend labels. Геометрия используется только исследовательским oracle; truth не передаётся серверу как доступный runtime input.
+
+### 4.90.3. Primary follow-up
+
+Все162 primary cells прошли count/domain/defined/RGB oracle, max byte error0. Текущее распределение110 empty/46 singleton/6 paired подтверждено заново. Для2 дополнительных eligible cells F1(207,324) source3 видит target в другой точке: error108.253mm. При2/20mm это nonmatching centre; pair comparison остаётся undefined, поскольку камера одна. Таким образом, ранее отсутствовавшая current-backend оценка получена без заимствования historical labels.
+
+При2mm primary counts:110 no eligible,44 eligible without matching,8 with matching. При20mm:110/32/20. Все6 paired cells F0(208,309) не имеют matching source. Native range116 совпадает с округлённым independent current-UV range116.44556; historical UV давали116.63605→117. Даже при соблюдённом старом1-byte tolerance новое связывание sampling arguments важно для честного matched сравнения.
+
+Historical report §4.88 остаётся failed2/162. Новый успешный current-backend report не меняет это состояние и не доказывает full-frame cross-backend equivalence.
+
+### 4.90.4. Inventory парных наблюдений
+
+Таблица4.92 — Все заранее выбранные lattice cells; source-centre correspondence одинаково классифицируется при2/20mm.
+
+|Frame/profile|Cells|Outside domain|Singleton|Paired|Все centres matching≤2mm|
+|---|---:|---:|---:|---:|---:|
+|F0 nominal|880|360|243|277|276|
+|F0 Z+5mm accept|880|360|242|278|277|
+|F1 nominal|880|360|246|274|274|
+|F1 Z+5mm accept|880|360|246|274|274|
+|Всего|3520|1440|977|1103|1101|
+
+Все3520 lattice metric oracles прошли при max byte error1. Внутри carrier domain zero-source cells отсутствуют в данной lattice;1440 count0 относятся к background/ego/footprint domain exclusion. Нельзя считать их потерей прямого наблюдения carrier. Из1103 paired memberships1101 имеют все matching centres, max distance0.115125mm. Две remaining memberships повторяют одну F0 coordinate на двух profiles, а не две независимые сцены. Все paired virtual hits здесь относятся к road.
+
+Для тех же frozen thresholds8/16/32/64/128 byte количество flagged matching-centre inventory cells составляет61/25/4/0/0 из1101. Две nonmatching inventory cells не отмечены ни одним threshold. Primary nonmatching cells отмечены6/6 для8–64 и0/6 для128. Это descriptive counts correlated memberships, не population error rates или новый ranking.
+
+![Matched inventory and thresholds](figures/experiments/mesa_source_truth_inventory.png)
+
+Рисунок4.168 — Domain/support inventory и реакция заранее заданных thresholds. Синий ряд обозначает geometric centre labels; он не означает, что все соответствующие final RGB pixels правильны.
+
+### 4.90.5. Контрпример даже для одной camera pair
+
+У F0(232,312), cameras0+3, оба source hits относятся к road, но находятся от virtual hit на55.279/49.706mm. Native RGB range равен1/255. Carrier endpoint имеет Z15.187mm на заданном transition local_support_patch, тогда как virtual scene point находится на road Z0. Это показывает ограничение данного height-field approximation; новый mesh implementation defect из этого не следует.
+
+В том же frame/profile Z+5mm/accept и той же camera pair0+3, F0(344,424) имеет matching centres с errors0.012620/0.000883mm, однако range20/255. Следовательно, для hypothetical rule
+
+\[
+\operatorname{reject}(D;T)=\mathbf1\{D>T\}
+\]
+
+отклонить первую nonmatching пару требует `T<1`, а сохранить вторую matching пару — `T≥20`. Одновременно выполнить это невозможно. Даже отдельный threshold для данной camera pair не решает эти два centre-classification examples. В другой matching pair0+1 maximum range53/255; inter-camera agreement не является monotonically ordered centre-correctness score.
+
+![Native and independent images at paired examples](figures/experiments/mesa_source_truth_counterexamples.png)
+
+Рисунок4.169 — Post-hoc illustrations одного frame/profile/pair: native final RGBA, archived independent Blender RGB и patches source cameras0/3. Examples для рисунка выбраны после inventory; исходная lattice selection и thresholds не изменены. Cyan marker показывает анализируемый centre. На C0 patch второй пары видна соседняя граница magenta target, но точный вклад antialias/filter kernel не атрибутирован.
+
+Необходимо также различать centre matching и цвет результата. Для первого example native/reference RGB равны `[47,61,77]`/`[61,72,84]`, для второго `[90,90,113]`/`[83,92,103]`. Это иллюстративные bytes без нового quality gate. Matching centres не гарантируют корректность filtered RGB, а низкое source disagreement не гарантирует совпадение с independent RGB. Поэтому найденный counterexample отвергает использование простого RGB-range threshold **как сертификата centre correspondence**, но не доказывает бесполезность метрики для наблюдения seams/ghost contamination. Такие критерии требуют отдельной image-quality оценки.
+
+### 4.90.6. Проверки, provenance и следующий этап
+
+Получен новый successful matched report, не заменяющий historical failed report. Его full raw JSON4.1MB остаётся в artifacts; tracked [[validation/baselines/mesa_source_truth_v1.json]] содержит SHA,36 capture identities,78 anchors, все162 primary и1103 paired inventory cells, group/threshold counts, examples и hashes рисунков. Nonpaired details доступны в полном raw report и воспроизводятся из compiled captures. Открытая сцена Blender в этом шаге не использовалась и не менялась.
+
+Четыре новых known-answer tests проверяют virtual pixel centre/clip segment, world translation, missing/wrong-kind hit и point tolerance. С sampler/residual/endpoint tests18/18 Python controls; selected CTest4/4 за1.30s. Native product code не менялся; предыдущий full59/59 не объявляется новым прогоном. Full raw collector при повторении побайтно идентичен. Команды/ограничения: [[validation/MESA_SOURCE_TRUTH]].
+
+Matched source truth текущего backend и первая paired-control inventory завершены. Теперь следует получить independent texture-rich/nonuniform object scenes с balanced correct/incorrect paired controls, провести exposure/filter/noise ablations и отдельно проверить final RGB/seam/ghost quality. До нового selection/abstention rule нужно определить его target: centre geometry, filter contamination либо perceptual seam; их нельзя объединять одним confidence label. Настоящий natural-object holdout, general reconstruction, physical cameras, overhead и Aurora остаются открытыми.

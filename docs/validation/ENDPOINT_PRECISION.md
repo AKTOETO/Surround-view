@@ -54,7 +54,7 @@ Rounded-MVP reprojection norm: NVIDIA0.001479666px, Mesa0.000009123px. Это п
 
 Причина смены central decision на **записанных** аргументах локализована: малый endpoint drift усиливается скользящим пересечением. Предикат не следует чинить подбором нового bias по двум pixels. Native defaults, source selection и RGBA сохранены. Fixed-carrier supplied-box uncertainty ограничивает faces коробки, а не ошибку самого endpoint; эти два вида неопределённости нельзя смешивать.
 
-Для следующего исследования нужен matched source truth текущего backend и correct/incorrect paired controls на nonuniform scene. Дополнительная driver/raster attribution полезна, но не обязана блокировать fixed-backend эксперименты с явно измеренными аргументами. Для общей numerical ambiguity policy нужны отдельный контракт endpoint uncertainty, обоснованная область/граница ошибок и preservation/false-admission tests; два selected pixels такой границы не задают. Physical sensor/model uncertainty, overhead и Aurora остаются отдельными этапами.
+Следующий matched current-backend source truth и первый paired inventory выполнены: [[validation/MESA_SOURCE_TRUTH]], §4.90. Далее independent nonuniform/texture-rich object scenes и balanced correct/incorrect controls с отдельной image-quality оценкой. Дополнительная driver/raster attribution полезна, но не обязана блокировать fixed-backend эксперименты с явно измеренными аргументами. Для общей numerical ambiguity policy нужны отдельный контракт endpoint uncertainty, обоснованная область/граница ошибок и preservation/false-admission tests; два selected pixels такой границы не задают. Physical sensor/model uncertainty, overhead и Aurora остаются отдельными этапами.
 
 ## Проверки и повторение
 
