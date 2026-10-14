@@ -211,3 +211,12 @@ Tracked трёхкадровый paired temporal опыт повторён по�
 Критерий приёмки: измеренная цепочка «output pixel → actual carrier hit → source sample → independent scene surface» с hashes/config/binaries и отрицательными случаями. Только после этого переходить к расширенному optical-height/baseline/mount sweep и независимым scene families; целевая Аврора остаётся отдельным аппаратным этапом.
 
 Численная атрибуция recorded endpoint/tolerance drift двух F1(207,324) configurations после §4.88 выполнена ([[validation/ENDPOINT_PRECISION]], §4.89). Matched current-backend source truth и первый paired lattice inventory выполнены ([[validation/MESA_SOURCE_TRUTH]], §4.90). Первый baseline двух independent texture/pose instances выполнен ([[validation/TEXTURED_SOURCE]], §4.91), но target two-camera-visible interior n0. Bounded target-overlap control и26 paired geometry contrasts выполнены ([[validation/TARGET_OVERLAP]], §4.92). Далее ConfigService/library/GUI; filter/resolution convergence, exposure/noise и separate final RGB/ghost/seam quality сохраняются для общего ExperimentRunner и не блокируют переход к коду. Six primary paired cells одного road pixel не задают specificity/ranking; дополнительно1103 lattice paired memberships содержат1101 matching-centre и2 повторения одного wrong-point coordinate. Простой RGB-range threshold не сертификат геометрического соответствия; singleton comparisons undefined. General mitigation/independent holdout остаются открытыми. [[validation/SOURCE_DISAGREEMENT]].
+
+## Per-camera hardware/simulator sources
+
+После транзакций ConfigService разработать per-camera source schema и CompositeFrameSource:
+независимый выбор device (/dev/video*), simulator Unix/TCP или replay для каждого camera_id,
+включая all-device и mixed sets. Negotiation, timing/clock domains, calibration identity, bounded
+workers/reconnect и apply/restart policy должны быть доступны из client library/GUI. Сначала
+fake-adapter integration, затем реальные камеры/драйверы и Aurora. Это не реализовано текущим
+общим source.type. Контракт/границы и приёмка: [[engineering/SOURCES]], [[../TODO]].

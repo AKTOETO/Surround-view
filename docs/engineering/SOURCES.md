@@ -145,3 +145,20 @@ Failed --> [*] : report + nonzero exit
 ```
 
 *Рисунок И.2 — Lifecycle одного camera worker. Остальные камеры имеют независимые состояния; проверка lateness выполняется также после handshake.*
+
+## Запланировано: независимый источник каждой камеры
+
+По требованию автора следующий source schema должен позволять для camera_id0…3 независимо
+выбирать device (/dev/video* или стабильный /dev/v4l/by-id/*), simulator socket или replay.
+Четыре настоящие камеры — частный случай; mixed real/virtual camera set тоже обязателен.
+Это будущая возможность: текущий source.type по-прежнему выбирает один общий backend.
+
+Нужны CompositeFrameSource и отдельные capture workers/queues, negotiated format/resolution/FPS,
+реальные sensor timestamps и clock mapping, calibration identity, reconnect/backoff и ограниченное
+завершение зависшего capture. Pause/resume и допустимость Step должны быть определены для mixed
+set, а не унаследованы молча от replay. ConfigService должен сообщать apply/restart policy каждой
+настройки; simulator показывает формы выбора device/path/transport и ошибок negotiation.
+
+Перед аппаратной приёмкой проверить fake V4L2 adapter + socket producer, mixed-source skew,
+потери/переподключение, отсутствие открытия неописанных ports/devices и shutdown bounds.
+Физические /dev/video* и Aurora остаются обязательным отдельным испытанием. [[../TODO]].
