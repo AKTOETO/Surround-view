@@ -1,0 +1,5356 @@
+{
+  "schema_version": 1,
+  "scope": "bounded_target_overlap_control_before_product_development",
+  "plan_sha256": "ab25abe6877f3bd24a8539063f1199eeafc3f5734143e8998bdd43c07936d4c3",
+  "scene_study_sha256": "92892f9af832f9f961b98c58fc06b00655d480a2cb25a392ef3915efbbea7978",
+  "invocation_sha256": "3962c7b7aae09b9a672a37c648bdf041d254a00566e0697c8188e96d71b9d80a",
+  "collector_sha256": "00097b2d47f2e9908308a3c552ababb9ef73e2ce0ec48d26d92dda875711c24c",
+  "anchors": [
+    {
+      "id": "overlap-227",
+      "profile": "plane",
+      "y": 8,
+      "x": 8,
+      "passed": true,
+      "error_m": 1.8978503592155645e-06
+    },
+    {
+      "id": "overlap-227",
+      "profile": "plane",
+      "y": 8,
+      "x": 40,
+      "passed": true,
+      "error_m": 2.3900752589118916e-06
+    },
+    {
+      "id": "overlap-227",
+      "profile": "plane",
+      "y": 8,
+      "x": 72,
+      "passed": true,
+      "error_m": 9.318931533119372e-07
+    },
+    {
+      "id": "overlap-227",
+      "profile": "plane",
+      "y": 8,
+      "x": 104,
+      "passed": true,
+      "error_m": 2.164420216535264e-06
+    },
+    {
+      "id": "overlap-227",
+      "profile": "plane",
+      "y": 8,
+      "x": 136,
+      "passed": true,
+      "error_m": 8.681865411740288e-06
+    },
+    {
+      "id": "overlap-227",
+      "profile": "plane",
+      "y": 8,
+      "x": 168,
+      "passed": true,
+      "error_m": 2.3904253069223597e-06
+    },
+    {
+      "id": "overlap-227",
+      "profile": "plane",
+      "y": 8,
+      "x": 200,
+      "passed": true,
+      "error_m": 3.182534049658523e-06
+    },
+    {
+      "id": "overlap-227",
+      "profile": "plane",
+      "y": 8,
+      "x": 232,
+      "passed": true,
+      "error_m": 2.570922483036186e-06
+    },
+    {
+      "id": "overlap-227",
+      "profile": "plane",
+      "y": 8,
+      "x": 264,
+      "passed": true,
+      "error_m": 1.6989684156932533e-06
+    },
+    {
+      "id": "overlap-227",
+      "profile": "plane",
+      "y": 8,
+      "x": 296,
+      "passed": true,
+      "error_m": 5.628144331090476e-06
+    },
+    {
+      "id": "overlap-227",
+      "profile": "plane",
+      "y": 40,
+      "x": 8,
+      "passed": true,
+      "error_m": 3.95284994801169e-06
+    },
+    {
+      "id": "overlap-227",
+      "profile": "plane",
+      "y": 40,
+      "x": 40,
+      "passed": true,
+      "error_m": 3.5465158993016384e-07
+    },
+    {
+      "id": "overlap-227",
+      "profile": "plane",
+      "y": 40,
+      "x": 72,
+      "passed": true,
+      "error_m": 8.301747479259424e-07
+    },
+    {
+      "id": "overlap-227",
+      "profile": "plane",
+      "y": 40,
+      "x": 104,
+      "passed": true,
+      "error_m": 6.51330232107184e-07
+    },
+    {
+      "id": "overlap-227",
+      "profile": "plane",
+      "y": 40,
+      "x": 136,
+      "passed": true,
+      "error_m": 1.8761660726210233e-06
+    },
+    {
+      "id": "overlap-227",
+      "profile": "plane",
+      "y": 40,
+      "x": 168,
+      "passed": true,
+      "error_m": 6.250445407911734e-06
+    },
+    {
+      "id": "overlap-227",
+      "profile": "plane",
+      "y": 40,
+      "x": 200,
+      "passed": true,
+      "error_m": 6.813737881414324e-07
+    },
+    {
+      "id": "overlap-227",
+      "profile": "plane",
+      "y": 40,
+      "x": 232,
+      "passed": true,
+      "error_m": 2.404770565101918e-06
+    },
+    {
+      "id": "overlap-227",
+      "profile": "plane",
+      "y": 40,
+      "x": 264,
+      "passed": true,
+      "error_m": 1.1654111605696417e-06
+    },
+    {
+      "id": "overlap-227",
+      "profile": "plane",
+      "y": 40,
+      "x": 296,
+      "passed": true,
+      "error_m": 2.65538334301995e-06
+    },
+    {
+      "id": "overlap-227",
+      "profile": "plane",
+      "y": 72,
+      "x": 8,
+      "passed": true,
+      "error_m": 2.258645307081151e-06
+    },
+    {
+      "id": "overlap-227",
+      "profile": "plane",
+      "y": 72,
+      "x": 40,
+      "passed": true,
+      "error_m": 1.4668075497872373e-06
+    },
+    {
+      "id": "overlap-227",
+      "profile": "plane",
+      "y": 72,
+      "x": 72,
+      "passed": true,
+      "error_m": 1.623283836197628e-06
+    },
+    {
+      "id": "overlap-227",
+      "profile": "plane",
+      "y": 72,
+      "x": 104,
+      "passed": true,
+      "error_m": 8.416484584021444e-07
+    },
+    {
+      "id": "overlap-227",
+      "profile": "plane",
+      "y": 72,
+      "x": 136,
+      "passed": true,
+      "error_m": 6.090663911543639e-07
+    },
+    {
+      "id": "overlap-227",
+      "profile": "plane",
+      "y": 72,
+      "x": 168,
+      "passed": true,
+      "error_m": 6.517994291247679e-07
+    },
+    {
+      "id": "overlap-227",
+      "profile": "plane",
+      "y": 72,
+      "x": 200,
+      "passed": true,
+      "error_m": 2.095580186355944e-06
+    },
+    {
+      "id": "overlap-227",
+      "profile": "plane",
+      "y": 72,
+      "x": 232,
+      "passed": true,
+      "error_m": 2.9224989255182895e-06
+    },
+    {
+      "id": "overlap-227",
+      "profile": "plane",
+      "y": 72,
+      "x": 264,
+      "passed": true,
+      "error_m": 2.1931641567625444e-06
+    },
+    {
+      "id": "overlap-227",
+      "profile": "plane",
+      "y": 72,
+      "x": 296,
+      "passed": true,
+      "error_m": 1.4868117099287116e-06
+    },
+    {
+      "id": "overlap-227",
+      "profile": "plane",
+      "y": 104,
+      "x": 8,
+      "passed": true,
+      "error_m": 2.1623943797712937e-06
+    },
+    {
+      "id": "overlap-227",
+      "profile": "plane",
+      "y": 104,
+      "x": 40,
+      "passed": true,
+      "error_m": 1.0143177662184628e-06
+    },
+    {
+      "id": "overlap-227",
+      "profile": "plane",
+      "y": 104,
+      "x": 72,
+      "passed": true,
+      "error_m": 6.050599133414937e-07
+    },
+    {
+      "id": "overlap-227",
+      "profile": "plane",
+      "y": 104,
+      "x": 104,
+      "passed": true,
+      "error_m": 4.933223970446649e-07
+    },
+    {
+      "id": "overlap-227",
+      "profile": "plane",
+      "y": 104,
+      "x": 136,
+      "passed": true,
+      "error_m": 4.7244765438054065e-07
+    },
+    {
+      "id": "overlap-227",
+      "profile": "plane",
+      "y": 104,
+      "x": 168,
+      "passed": true,
+      "error_m": 1.5314923335483273e-07
+    },
+    {
+      "id": "overlap-227",
+      "profile": "plane",
+      "y": 104,
+      "x": 200,
+      "passed": true,
+      "error_m": 1.234965698290131e-07
+    },
+    {
+      "id": "overlap-227",
+      "profile": "plane",
+      "y": 104,
+      "x": 232,
+      "passed": true,
+      "error_m": 2.9089681028059614e-07
+    },
+    {
+      "id": "overlap-227",
+      "profile": "plane",
+      "y": 104,
+      "x": 264,
+      "passed": true,
+      "error_m": 1.2271262180731954e-06
+    },
+    {
+      "id": "overlap-227",
+      "profile": "plane",
+      "y": 104,
+      "x": 296,
+      "passed": true,
+      "error_m": 7.622947924604095e-07
+    },
+    {
+      "id": "overlap-227",
+      "profile": "plane",
+      "y": 136,
+      "x": 8,
+      "passed": true,
+      "error_m": 4.0268280654855407e-07
+    },
+    {
+      "id": "overlap-227",
+      "profile": "plane",
+      "y": 136,
+      "x": 40,
+      "passed": true,
+      "error_m": 5.897740186851513e-07
+    },
+    {
+      "id": "overlap-227",
+      "profile": "plane",
+      "y": 136,
+      "x": 72,
+      "passed": true,
+      "error_m": 9.203074020674033e-07
+    },
+    {
+      "id": "overlap-227",
+      "profile": "plane",
+      "y": 136,
+      "x": 104,
+      "passed": true,
+      "error_m": 2.755682153256975e-07
+    },
+    {
+      "id": "overlap-227",
+      "profile": "plane",
+      "y": 136,
+      "x": 136,
+      "passed": true,
+      "error_m": 1.4708661929837468e-07
+    },
+    {
+      "id": "overlap-227",
+      "profile": "plane",
+      "y": 136,
+      "x": 168,
+      "passed": true,
+      "error_m": 4.1128424642382496e-07
+    },
+    {
+      "id": "overlap-227",
+      "profile": "plane",
+      "y": 136,
+      "x": 200,
+      "passed": true,
+      "error_m": 9.046817484148281e-07
+    },
+    {
+      "id": "overlap-227",
+      "profile": "plane",
+      "y": 136,
+      "x": 232,
+      "passed": true,
+      "error_m": 6.055495520459289e-07
+    },
+    {
+      "id": "overlap-227",
+      "profile": "plane",
+      "y": 136,
+      "x": 264,
+      "passed": true,
+      "error_m": 6.41917234075855e-07
+    },
+    {
+      "id": "overlap-227",
+      "profile": "plane",
+      "y": 136,
+      "x": 296,
+      "passed": true,
+      "error_m": 6.471795789258163e-07
+    },
+    {
+      "id": "overlap-227",
+      "profile": "plane",
+      "y": 168,
+      "x": 8,
+      "passed": true,
+      "error_m": 7.220572890968307e-07
+    },
+    {
+      "id": "overlap-227",
+      "profile": "plane",
+      "y": 168,
+      "x": 40,
+      "passed": true,
+      "error_m": 9.164346263273993e-07
+    },
+    {
+      "id": "overlap-227",
+      "profile": "plane",
+      "y": 168,
+      "x": 72,
+      "passed": true,
+      "error_m": 5.427196944509553e-07
+    },
+    {
+      "id": "overlap-227",
+      "profile": "plane",
+      "y": 168,
+      "x": 104,
+      "passed": true,
+      "error_m": 4.5535101025657985e-07
+    },
+    {
+      "id": "overlap-227",
+      "profile": "plane",
+      "y": 168,
+      "x": 136,
+      "passed": true,
+      "error_m": 6.233470986420551e-07
+    },
+    {
+      "id": "overlap-227",
+      "profile": "plane",
+      "y": 168,
+      "x": 168,
+      "passed": true,
+      "error_m": 5.81833866281037e-07
+    },
+    {
+      "id": "overlap-227",
+      "profile": "plane",
+      "y": 168,
+      "x": 200,
+      "passed": true,
+      "error_m": 6.700259824455094e-07
+    },
+    {
+      "id": "overlap-227",
+      "profile": "plane",
+      "y": 168,
+      "x": 232,
+      "passed": true,
+      "error_m": 4.570462473375157e-07
+    },
+    {
+      "id": "overlap-227",
+      "profile": "plane",
+      "y": 168,
+      "x": 264,
+      "passed": true,
+      "error_m": 6.768828952384432e-07
+    },
+    {
+      "id": "overlap-227",
+      "profile": "plane",
+      "y": 168,
+      "x": 296,
+      "passed": true,
+      "error_m": 3.889780629027091e-07
+    },
+    {
+      "id": "overlap-227",
+      "profile": "supplied_local_patch",
+      "y": 8,
+      "x": 8,
+      "passed": true,
+      "error_m": 1.8978503592155645e-06
+    },
+    {
+      "id": "overlap-227",
+      "profile": "supplied_local_patch",
+      "y": 8,
+      "x": 40,
+      "passed": true,
+      "error_m": 2.3900752589118916e-06
+    },
+    {
+      "id": "overlap-227",
+      "profile": "supplied_local_patch",
+      "y": 8,
+      "x": 72,
+      "passed": true,
+      "error_m": 9.318931533119372e-07
+    },
+    {
+      "id": "overlap-227",
+      "profile": "supplied_local_patch",
+      "y": 8,
+      "x": 104,
+      "passed": true,
+      "error_m": 2.164420216535264e-06
+    },
+    {
+      "id": "overlap-227",
+      "profile": "supplied_local_patch",
+      "y": 8,
+      "x": 136,
+      "passed": true,
+      "error_m": 8.681865411740288e-06
+    },
+    {
+      "id": "overlap-227",
+      "profile": "supplied_local_patch",
+      "y": 8,
+      "x": 168,
+      "passed": true,
+      "error_m": 2.3904253069223597e-06
+    },
+    {
+      "id": "overlap-227",
+      "profile": "supplied_local_patch",
+      "y": 8,
+      "x": 200,
+      "passed": true,
+      "error_m": 3.182534049658523e-06
+    },
+    {
+      "id": "overlap-227",
+      "profile": "supplied_local_patch",
+      "y": 8,
+      "x": 232,
+      "passed": true,
+      "error_m": 2.570922483036186e-06
+    },
+    {
+      "id": "overlap-227",
+      "profile": "supplied_local_patch",
+      "y": 8,
+      "x": 264,
+      "passed": true,
+      "error_m": 1.6989684156932533e-06
+    },
+    {
+      "id": "overlap-227",
+      "profile": "supplied_local_patch",
+      "y": 8,
+      "x": 296,
+      "passed": true,
+      "error_m": 5.628144331090476e-06
+    },
+    {
+      "id": "overlap-227",
+      "profile": "supplied_local_patch",
+      "y": 40,
+      "x": 8,
+      "passed": true,
+      "error_m": 3.95284994801169e-06
+    },
+    {
+      "id": "overlap-227",
+      "profile": "supplied_local_patch",
+      "y": 40,
+      "x": 40,
+      "passed": true,
+      "error_m": 3.5465158993016384e-07
+    },
+    {
+      "id": "overlap-227",
+      "profile": "supplied_local_patch",
+      "y": 40,
+      "x": 72,
+      "passed": true,
+      "error_m": 8.301747479259424e-07
+    },
+    {
+      "id": "overlap-227",
+      "profile": "supplied_local_patch",
+      "y": 40,
+      "x": 104,
+      "passed": true,
+      "error_m": 6.51330232107184e-07
+    },
+    {
+      "id": "overlap-227",
+      "profile": "supplied_local_patch",
+      "y": 40,
+      "x": 136,
+      "passed": true,
+      "error_m": 1.8761660726210233e-06
+    },
+    {
+      "id": "overlap-227",
+      "profile": "supplied_local_patch",
+      "y": 40,
+      "x": 168,
+      "passed": true,
+      "error_m": 6.250445407911734e-06
+    },
+    {
+      "id": "overlap-227",
+      "profile": "supplied_local_patch",
+      "y": 40,
+      "x": 200,
+      "passed": true,
+      "error_m": 6.813737881414324e-07
+    },
+    {
+      "id": "overlap-227",
+      "profile": "supplied_local_patch",
+      "y": 40,
+      "x": 232,
+      "passed": true,
+      "error_m": 2.404770565101918e-06
+    },
+    {
+      "id": "overlap-227",
+      "profile": "supplied_local_patch",
+      "y": 40,
+      "x": 264,
+      "passed": true,
+      "error_m": 1.1654111605696417e-06
+    },
+    {
+      "id": "overlap-227",
+      "profile": "supplied_local_patch",
+      "y": 40,
+      "x": 296,
+      "passed": true,
+      "error_m": 2.65538334301995e-06
+    },
+    {
+      "id": "overlap-227",
+      "profile": "supplied_local_patch",
+      "y": 72,
+      "x": 8,
+      "passed": true,
+      "error_m": 2.258645307081151e-06
+    },
+    {
+      "id": "overlap-227",
+      "profile": "supplied_local_patch",
+      "y": 72,
+      "x": 40,
+      "passed": true,
+      "error_m": 1.4668075497872373e-06
+    },
+    {
+      "id": "overlap-227",
+      "profile": "supplied_local_patch",
+      "y": 72,
+      "x": 72,
+      "passed": true,
+      "error_m": 1.623283836197628e-06
+    },
+    {
+      "id": "overlap-227",
+      "profile": "supplied_local_patch",
+      "y": 72,
+      "x": 104,
+      "passed": true,
+      "error_m": 8.416484584021444e-07
+    },
+    {
+      "id": "overlap-227",
+      "profile": "supplied_local_patch",
+      "y": 72,
+      "x": 136,
+      "passed": true,
+      "error_m": 6.090663911543639e-07
+    },
+    {
+      "id": "overlap-227",
+      "profile": "supplied_local_patch",
+      "y": 72,
+      "x": 168,
+      "passed": true,
+      "error_m": 6.517994291247679e-07
+    },
+    {
+      "id": "overlap-227",
+      "profile": "supplied_local_patch",
+      "y": 72,
+      "x": 200,
+      "passed": true,
+      "error_m": 2.095580186355944e-06
+    },
+    {
+      "id": "overlap-227",
+      "profile": "supplied_local_patch",
+      "y": 72,
+      "x": 232,
+      "passed": true,
+      "error_m": 2.9224989255182895e-06
+    },
+    {
+      "id": "overlap-227",
+      "profile": "supplied_local_patch",
+      "y": 72,
+      "x": 264,
+      "passed": true,
+      "error_m": 2.1931641567625444e-06
+    },
+    {
+      "id": "overlap-227",
+      "profile": "supplied_local_patch",
+      "y": 72,
+      "x": 296,
+      "passed": true,
+      "error_m": 1.4868117099287116e-06
+    },
+    {
+      "id": "overlap-227",
+      "profile": "supplied_local_patch",
+      "y": 104,
+      "x": 8,
+      "passed": true,
+      "error_m": 2.1623943797712937e-06
+    },
+    {
+      "id": "overlap-227",
+      "profile": "supplied_local_patch",
+      "y": 104,
+      "x": 40,
+      "passed": true,
+      "error_m": 1.0143177662184628e-06
+    },
+    {
+      "id": "overlap-227",
+      "profile": "supplied_local_patch",
+      "y": 104,
+      "x": 72,
+      "passed": true,
+      "error_m": 6.050599133414937e-07
+    },
+    {
+      "id": "overlap-227",
+      "profile": "supplied_local_patch",
+      "y": 104,
+      "x": 104,
+      "passed": true,
+      "error_m": 4.933223970446649e-07
+    },
+    {
+      "id": "overlap-227",
+      "profile": "supplied_local_patch",
+      "y": 104,
+      "x": 136,
+      "passed": true,
+      "error_m": 4.7244765438054065e-07
+    },
+    {
+      "id": "overlap-227",
+      "profile": "supplied_local_patch",
+      "y": 104,
+      "x": 168,
+      "passed": true,
+      "error_m": 1.5314923335483273e-07
+    },
+    {
+      "id": "overlap-227",
+      "profile": "supplied_local_patch",
+      "y": 104,
+      "x": 200,
+      "passed": true,
+      "error_m": 1.234965698290131e-07
+    },
+    {
+      "id": "overlap-227",
+      "profile": "supplied_local_patch",
+      "y": 104,
+      "x": 232,
+      "passed": true,
+      "error_m": 2.9089681028059614e-07
+    },
+    {
+      "id": "overlap-227",
+      "profile": "supplied_local_patch",
+      "y": 104,
+      "x": 264,
+      "passed": true,
+      "error_m": 1.2271262180731954e-06
+    },
+    {
+      "id": "overlap-227",
+      "profile": "supplied_local_patch",
+      "y": 104,
+      "x": 296,
+      "passed": true,
+      "error_m": 7.622947924604095e-07
+    },
+    {
+      "id": "overlap-227",
+      "profile": "supplied_local_patch",
+      "y": 136,
+      "x": 8,
+      "passed": true,
+      "error_m": 4.0268280654855407e-07
+    },
+    {
+      "id": "overlap-227",
+      "profile": "supplied_local_patch",
+      "y": 136,
+      "x": 40,
+      "passed": true,
+      "error_m": 5.897740186851513e-07
+    },
+    {
+      "id": "overlap-227",
+      "profile": "supplied_local_patch",
+      "y": 136,
+      "x": 72,
+      "passed": true,
+      "error_m": 9.203074020674033e-07
+    },
+    {
+      "id": "overlap-227",
+      "profile": "supplied_local_patch",
+      "y": 136,
+      "x": 104,
+      "passed": true,
+      "error_m": 2.755682153256975e-07
+    },
+    {
+      "id": "overlap-227",
+      "profile": "supplied_local_patch",
+      "y": 136,
+      "x": 136,
+      "passed": true,
+      "error_m": 1.4708661929837468e-07
+    },
+    {
+      "id": "overlap-227",
+      "profile": "supplied_local_patch",
+      "y": 136,
+      "x": 168,
+      "passed": true,
+      "error_m": 4.1128424642382496e-07
+    },
+    {
+      "id": "overlap-227",
+      "profile": "supplied_local_patch",
+      "y": 136,
+      "x": 200,
+      "passed": true,
+      "error_m": 9.046817484148281e-07
+    },
+    {
+      "id": "overlap-227",
+      "profile": "supplied_local_patch",
+      "y": 136,
+      "x": 232,
+      "passed": true,
+      "error_m": 6.055495520459289e-07
+    },
+    {
+      "id": "overlap-227",
+      "profile": "supplied_local_patch",
+      "y": 136,
+      "x": 264,
+      "passed": true,
+      "error_m": 6.41917234075855e-07
+    },
+    {
+      "id": "overlap-227",
+      "profile": "supplied_local_patch",
+      "y": 136,
+      "x": 296,
+      "passed": true,
+      "error_m": 6.471795789258163e-07
+    },
+    {
+      "id": "overlap-227",
+      "profile": "supplied_local_patch",
+      "y": 168,
+      "x": 8,
+      "passed": true,
+      "error_m": 7.220572890968307e-07
+    },
+    {
+      "id": "overlap-227",
+      "profile": "supplied_local_patch",
+      "y": 168,
+      "x": 40,
+      "passed": true,
+      "error_m": 9.164346263273993e-07
+    },
+    {
+      "id": "overlap-227",
+      "profile": "supplied_local_patch",
+      "y": 168,
+      "x": 72,
+      "passed": true,
+      "error_m": 5.427196944509553e-07
+    },
+    {
+      "id": "overlap-227",
+      "profile": "supplied_local_patch",
+      "y": 168,
+      "x": 104,
+      "passed": true,
+      "error_m": 4.5535101025657985e-07
+    },
+    {
+      "id": "overlap-227",
+      "profile": "supplied_local_patch",
+      "y": 168,
+      "x": 136,
+      "passed": true,
+      "error_m": 6.233470986420551e-07
+    },
+    {
+      "id": "overlap-227",
+      "profile": "supplied_local_patch",
+      "y": 168,
+      "x": 168,
+      "passed": true,
+      "error_m": 5.81833866281037e-07
+    },
+    {
+      "id": "overlap-227",
+      "profile": "supplied_local_patch",
+      "y": 168,
+      "x": 200,
+      "passed": true,
+      "error_m": 6.700259824455094e-07
+    },
+    {
+      "id": "overlap-227",
+      "profile": "supplied_local_patch",
+      "y": 168,
+      "x": 232,
+      "passed": true,
+      "error_m": 4.570462473375157e-07
+    },
+    {
+      "id": "overlap-227",
+      "profile": "supplied_local_patch",
+      "y": 168,
+      "x": 264,
+      "passed": true,
+      "error_m": 6.768828952384432e-07
+    },
+    {
+      "id": "overlap-227",
+      "profile": "supplied_local_patch",
+      "y": 168,
+      "x": 296,
+      "passed": true,
+      "error_m": 3.889780629027091e-07
+    },
+    {
+      "id": "overlap-229",
+      "profile": "plane",
+      "y": 8,
+      "x": 8,
+      "passed": true,
+      "error_m": 5.7364544436846365e-06
+    },
+    {
+      "id": "overlap-229",
+      "profile": "plane",
+      "y": 8,
+      "x": 40,
+      "passed": true,
+      "error_m": 2.6322691084458137e-06
+    },
+    {
+      "id": "overlap-229",
+      "profile": "plane",
+      "y": 8,
+      "x": 72,
+      "passed": true,
+      "error_m": 1.0202399187068652e-06
+    },
+    {
+      "id": "overlap-229",
+      "profile": "plane",
+      "y": 8,
+      "x": 104,
+      "passed": true,
+      "error_m": 3.7604485503392547e-06
+    },
+    {
+      "id": "overlap-229",
+      "profile": "plane",
+      "y": 8,
+      "x": 136,
+      "passed": true,
+      "error_m": 1.1548746463858884e-06
+    },
+    {
+      "id": "overlap-229",
+      "profile": "plane",
+      "y": 8,
+      "x": 168,
+      "passed": true,
+      "error_m": 2.388768139451958e-07
+    },
+    {
+      "id": "overlap-229",
+      "profile": "plane",
+      "y": 8,
+      "x": 200,
+      "passed": true,
+      "error_m": 4.604071009185114e-07
+    },
+    {
+      "id": "overlap-229",
+      "profile": "plane",
+      "y": 8,
+      "x": 232,
+      "passed": true,
+      "error_m": 1.706488421350053e-06
+    },
+    {
+      "id": "overlap-229",
+      "profile": "plane",
+      "y": 8,
+      "x": 264,
+      "passed": true,
+      "error_m": 2.8077263747914307e-06
+    },
+    {
+      "id": "overlap-229",
+      "profile": "plane",
+      "y": 8,
+      "x": 296,
+      "passed": true,
+      "error_m": 5.211933207455653e-06
+    },
+    {
+      "id": "overlap-229",
+      "profile": "plane",
+      "y": 40,
+      "x": 8,
+      "passed": true,
+      "error_m": 4.1624845325366205e-06
+    },
+    {
+      "id": "overlap-229",
+      "profile": "plane",
+      "y": 40,
+      "x": 40,
+      "passed": true,
+      "error_m": 2.7701844294455697e-06
+    },
+    {
+      "id": "overlap-229",
+      "profile": "plane",
+      "y": 40,
+      "x": 72,
+      "passed": true,
+      "error_m": 1.6675059649632888e-06
+    },
+    {
+      "id": "overlap-229",
+      "profile": "plane",
+      "y": 40,
+      "x": 104,
+      "passed": true,
+      "error_m": 7.686027706014305e-07
+    },
+    {
+      "id": "overlap-229",
+      "profile": "plane",
+      "y": 40,
+      "x": 136,
+      "passed": true,
+      "error_m": 2.410949006760036e-06
+    },
+    {
+      "id": "overlap-229",
+      "profile": "plane",
+      "y": 40,
+      "x": 168,
+      "passed": true,
+      "error_m": 3.848289750963943e-06
+    },
+    {
+      "id": "overlap-229",
+      "profile": "plane",
+      "y": 40,
+      "x": 200,
+      "passed": true,
+      "error_m": 1.1621497486759807e-06
+    },
+    {
+      "id": "overlap-229",
+      "profile": "plane",
+      "y": 40,
+      "x": 232,
+      "passed": true,
+      "error_m": 7.696281302219986e-07
+    },
+    {
+      "id": "overlap-229",
+      "profile": "plane",
+      "y": 40,
+      "x": 264,
+      "passed": true,
+      "error_m": 7.281465745401659e-07
+    },
+    {
+      "id": "overlap-229",
+      "profile": "plane",
+      "y": 40,
+      "x": 296,
+      "passed": true,
+      "error_m": 9.060909361243094e-07
+    },
+    {
+      "id": "overlap-229",
+      "profile": "plane",
+      "y": 72,
+      "x": 8,
+      "passed": true,
+      "error_m": 1.7846575646964468e-06
+    },
+    {
+      "id": "overlap-229",
+      "profile": "plane",
+      "y": 72,
+      "x": 40,
+      "passed": true,
+      "error_m": 1.5755259461947853e-06
+    },
+    {
+      "id": "overlap-229",
+      "profile": "plane",
+      "y": 72,
+      "x": 72,
+      "passed": true,
+      "error_m": 4.718384177984091e-06
+    },
+    {
+      "id": "overlap-229",
+      "profile": "plane",
+      "y": 72,
+      "x": 104,
+      "passed": true,
+      "error_m": 1.9533803407804054e-06
+    },
+    {
+      "id": "overlap-229",
+      "profile": "plane",
+      "y": 72,
+      "x": 136,
+      "passed": true,
+      "error_m": 2.0806712746432416e-07
+    },
+    {
+      "id": "overlap-229",
+      "profile": "plane",
+      "y": 72,
+      "x": 168,
+      "passed": true,
+      "error_m": 8.920580160659978e-07
+    },
+    {
+      "id": "overlap-229",
+      "profile": "plane",
+      "y": 72,
+      "x": 200,
+      "passed": true,
+      "error_m": 1.4814282149719235e-06
+    },
+    {
+      "id": "overlap-229",
+      "profile": "plane",
+      "y": 72,
+      "x": 232,
+      "passed": true,
+      "error_m": 1.4244565008921354e-06
+    },
+    {
+      "id": "overlap-229",
+      "profile": "plane",
+      "y": 72,
+      "x": 264,
+      "passed": true,
+      "error_m": 1.0272464476802756e-06
+    },
+    {
+      "id": "overlap-229",
+      "profile": "plane",
+      "y": 72,
+      "x": 296,
+      "passed": true,
+      "error_m": 2.2483399540090958e-07
+    },
+    {
+      "id": "overlap-229",
+      "profile": "plane",
+      "y": 104,
+      "x": 8,
+      "passed": true,
+      "error_m": 3.2905603451968593e-06
+    },
+    {
+      "id": "overlap-229",
+      "profile": "plane",
+      "y": 104,
+      "x": 40,
+      "passed": true,
+      "error_m": 1.797799857097071e-06
+    },
+    {
+      "id": "overlap-229",
+      "profile": "plane",
+      "y": 104,
+      "x": 72,
+      "passed": true,
+      "error_m": 3.7316654585652145e-06
+    },
+    {
+      "id": "overlap-229",
+      "profile": "plane",
+      "y": 104,
+      "x": 104,
+      "passed": true,
+      "error_m": 6.644506361115855e-07
+    },
+    {
+      "id": "overlap-229",
+      "profile": "plane",
+      "y": 104,
+      "x": 136,
+      "passed": true,
+      "error_m": 3.878341589632059e-07
+    },
+    {
+      "id": "overlap-229",
+      "profile": "plane",
+      "y": 104,
+      "x": 168,
+      "passed": true,
+      "error_m": 4.997545826614691e-07
+    },
+    {
+      "id": "overlap-229",
+      "profile": "plane",
+      "y": 104,
+      "x": 200,
+      "passed": true,
+      "error_m": 4.008201068525129e-07
+    },
+    {
+      "id": "overlap-229",
+      "profile": "plane",
+      "y": 104,
+      "x": 232,
+      "passed": true,
+      "error_m": 7.119051258955734e-07
+    },
+    {
+      "id": "overlap-229",
+      "profile": "plane",
+      "y": 104,
+      "x": 264,
+      "passed": true,
+      "error_m": 5.894770308172056e-07
+    },
+    {
+      "id": "overlap-229",
+      "profile": "plane",
+      "y": 104,
+      "x": 296,
+      "passed": true,
+      "error_m": 1.1671341627954635e-06
+    },
+    {
+      "id": "overlap-229",
+      "profile": "plane",
+      "y": 136,
+      "x": 8,
+      "passed": true,
+      "error_m": 2.717089860362629e-06
+    },
+    {
+      "id": "overlap-229",
+      "profile": "plane",
+      "y": 136,
+      "x": 40,
+      "passed": true,
+      "error_m": 1.2267564662488927e-06
+    },
+    {
+      "id": "overlap-229",
+      "profile": "plane",
+      "y": 136,
+      "x": 72,
+      "passed": true,
+      "error_m": 5.924217524396015e-07
+    },
+    {
+      "id": "overlap-229",
+      "profile": "plane",
+      "y": 136,
+      "x": 104,
+      "passed": true,
+      "error_m": 4.167871845910389e-07
+    },
+    {
+      "id": "overlap-229",
+      "profile": "plane",
+      "y": 136,
+      "x": 136,
+      "passed": true,
+      "error_m": 4.224114316640012e-07
+    },
+    {
+      "id": "overlap-229",
+      "profile": "plane",
+      "y": 136,
+      "x": 168,
+      "passed": true,
+      "error_m": 1.5468767559671023e-07
+    },
+    {
+      "id": "overlap-229",
+      "profile": "plane",
+      "y": 136,
+      "x": 200,
+      "passed": true,
+      "error_m": 4.507119713117025e-07
+    },
+    {
+      "id": "overlap-229",
+      "profile": "plane",
+      "y": 136,
+      "x": 232,
+      "passed": true,
+      "error_m": 5.859698286264748e-07
+    },
+    {
+      "id": "overlap-229",
+      "profile": "plane",
+      "y": 136,
+      "x": 264,
+      "passed": true,
+      "error_m": 1.868680021041375e-07
+    },
+    {
+      "id": "overlap-229",
+      "profile": "plane",
+      "y": 136,
+      "x": 296,
+      "passed": true,
+      "error_m": 9.729746759540399e-07
+    },
+    {
+      "id": "overlap-229",
+      "profile": "plane",
+      "y": 168,
+      "x": 8,
+      "passed": true,
+      "error_m": 5.94817597767625e-07
+    },
+    {
+      "id": "overlap-229",
+      "profile": "plane",
+      "y": 168,
+      "x": 40,
+      "passed": true,
+      "error_m": 4.6305344809551426e-07
+    },
+    {
+      "id": "overlap-229",
+      "profile": "plane",
+      "y": 168,
+      "x": 72,
+      "passed": true,
+      "error_m": 6.638648348642834e-07
+    },
+    {
+      "id": "overlap-229",
+      "profile": "plane",
+      "y": 168,
+      "x": 104,
+      "passed": true,
+      "error_m": 3.579656341120052e-07
+    },
+    {
+      "id": "overlap-229",
+      "profile": "plane",
+      "y": 168,
+      "x": 136,
+      "passed": true,
+      "error_m": 4.6075914097067165e-07
+    },
+    {
+      "id": "overlap-229",
+      "profile": "plane",
+      "y": 168,
+      "x": 168,
+      "passed": true,
+      "error_m": 9.783535405815085e-07
+    },
+    {
+      "id": "overlap-229",
+      "profile": "plane",
+      "y": 168,
+      "x": 200,
+      "passed": true,
+      "error_m": 4.3752009947554537e-07
+    },
+    {
+      "id": "overlap-229",
+      "profile": "plane",
+      "y": 168,
+      "x": 232,
+      "passed": true,
+      "error_m": 2.771355944243564e-07
+    },
+    {
+      "id": "overlap-229",
+      "profile": "plane",
+      "y": 168,
+      "x": 264,
+      "passed": true,
+      "error_m": 6.888145170016389e-07
+    },
+    {
+      "id": "overlap-229",
+      "profile": "plane",
+      "y": 168,
+      "x": 296,
+      "passed": true,
+      "error_m": 8.858776824019892e-07
+    },
+    {
+      "id": "overlap-229",
+      "profile": "supplied_local_patch",
+      "y": 8,
+      "x": 8,
+      "passed": true,
+      "error_m": 5.7364544436846365e-06
+    },
+    {
+      "id": "overlap-229",
+      "profile": "supplied_local_patch",
+      "y": 8,
+      "x": 40,
+      "passed": true,
+      "error_m": 2.6322691084458137e-06
+    },
+    {
+      "id": "overlap-229",
+      "profile": "supplied_local_patch",
+      "y": 8,
+      "x": 72,
+      "passed": true,
+      "error_m": 1.0202399187068652e-06
+    },
+    {
+      "id": "overlap-229",
+      "profile": "supplied_local_patch",
+      "y": 8,
+      "x": 104,
+      "passed": true,
+      "error_m": 3.7604485503392547e-06
+    },
+    {
+      "id": "overlap-229",
+      "profile": "supplied_local_patch",
+      "y": 8,
+      "x": 136,
+      "passed": true,
+      "error_m": 1.1548746463858884e-06
+    },
+    {
+      "id": "overlap-229",
+      "profile": "supplied_local_patch",
+      "y": 8,
+      "x": 168,
+      "passed": true,
+      "error_m": 2.388768139451958e-07
+    },
+    {
+      "id": "overlap-229",
+      "profile": "supplied_local_patch",
+      "y": 8,
+      "x": 200,
+      "passed": true,
+      "error_m": 4.604071009185114e-07
+    },
+    {
+      "id": "overlap-229",
+      "profile": "supplied_local_patch",
+      "y": 8,
+      "x": 232,
+      "passed": true,
+      "error_m": 1.706488421350053e-06
+    },
+    {
+      "id": "overlap-229",
+      "profile": "supplied_local_patch",
+      "y": 8,
+      "x": 264,
+      "passed": true,
+      "error_m": 2.8077263747914307e-06
+    },
+    {
+      "id": "overlap-229",
+      "profile": "supplied_local_patch",
+      "y": 8,
+      "x": 296,
+      "passed": true,
+      "error_m": 5.211933207455653e-06
+    },
+    {
+      "id": "overlap-229",
+      "profile": "supplied_local_patch",
+      "y": 40,
+      "x": 8,
+      "passed": true,
+      "error_m": 4.1624845325366205e-06
+    },
+    {
+      "id": "overlap-229",
+      "profile": "supplied_local_patch",
+      "y": 40,
+      "x": 40,
+      "passed": true,
+      "error_m": 2.7701844294455697e-06
+    },
+    {
+      "id": "overlap-229",
+      "profile": "supplied_local_patch",
+      "y": 40,
+      "x": 72,
+      "passed": true,
+      "error_m": 1.6675059649632888e-06
+    },
+    {
+      "id": "overlap-229",
+      "profile": "supplied_local_patch",
+      "y": 40,
+      "x": 104,
+      "passed": true,
+      "error_m": 7.686027706014305e-07
+    },
+    {
+      "id": "overlap-229",
+      "profile": "supplied_local_patch",
+      "y": 40,
+      "x": 136,
+      "passed": true,
+      "error_m": 2.410949006760036e-06
+    },
+    {
+      "id": "overlap-229",
+      "profile": "supplied_local_patch",
+      "y": 40,
+      "x": 168,
+      "passed": true,
+      "error_m": 3.848289750963943e-06
+    },
+    {
+      "id": "overlap-229",
+      "profile": "supplied_local_patch",
+      "y": 40,
+      "x": 200,
+      "passed": true,
+      "error_m": 1.1621497486759807e-06
+    },
+    {
+      "id": "overlap-229",
+      "profile": "supplied_local_patch",
+      "y": 40,
+      "x": 232,
+      "passed": true,
+      "error_m": 7.696281302219986e-07
+    },
+    {
+      "id": "overlap-229",
+      "profile": "supplied_local_patch",
+      "y": 40,
+      "x": 264,
+      "passed": true,
+      "error_m": 7.281465745401659e-07
+    },
+    {
+      "id": "overlap-229",
+      "profile": "supplied_local_patch",
+      "y": 40,
+      "x": 296,
+      "passed": true,
+      "error_m": 9.060909361243094e-07
+    },
+    {
+      "id": "overlap-229",
+      "profile": "supplied_local_patch",
+      "y": 72,
+      "x": 8,
+      "passed": true,
+      "error_m": 1.7846575646964468e-06
+    },
+    {
+      "id": "overlap-229",
+      "profile": "supplied_local_patch",
+      "y": 72,
+      "x": 40,
+      "passed": true,
+      "error_m": 1.5755259461947853e-06
+    },
+    {
+      "id": "overlap-229",
+      "profile": "supplied_local_patch",
+      "y": 72,
+      "x": 72,
+      "passed": true,
+      "error_m": 4.718384177984091e-06
+    },
+    {
+      "id": "overlap-229",
+      "profile": "supplied_local_patch",
+      "y": 72,
+      "x": 104,
+      "passed": true,
+      "error_m": 1.9533803407804054e-06
+    },
+    {
+      "id": "overlap-229",
+      "profile": "supplied_local_patch",
+      "y": 72,
+      "x": 136,
+      "passed": true,
+      "error_m": 2.0806712746432416e-07
+    },
+    {
+      "id": "overlap-229",
+      "profile": "supplied_local_patch",
+      "y": 72,
+      "x": 168,
+      "passed": true,
+      "error_m": 8.920580160659978e-07
+    },
+    {
+      "id": "overlap-229",
+      "profile": "supplied_local_patch",
+      "y": 72,
+      "x": 200,
+      "passed": true,
+      "error_m": 1.4814282149719235e-06
+    },
+    {
+      "id": "overlap-229",
+      "profile": "supplied_local_patch",
+      "y": 72,
+      "x": 232,
+      "passed": true,
+      "error_m": 1.4244565008921354e-06
+    },
+    {
+      "id": "overlap-229",
+      "profile": "supplied_local_patch",
+      "y": 72,
+      "x": 264,
+      "passed": true,
+      "error_m": 1.0272464476802756e-06
+    },
+    {
+      "id": "overlap-229",
+      "profile": "supplied_local_patch",
+      "y": 72,
+      "x": 296,
+      "passed": true,
+      "error_m": 2.2483399540090958e-07
+    },
+    {
+      "id": "overlap-229",
+      "profile": "supplied_local_patch",
+      "y": 104,
+      "x": 8,
+      "passed": true,
+      "error_m": 3.2905603451968593e-06
+    },
+    {
+      "id": "overlap-229",
+      "profile": "supplied_local_patch",
+      "y": 104,
+      "x": 40,
+      "passed": true,
+      "error_m": 1.797799857097071e-06
+    },
+    {
+      "id": "overlap-229",
+      "profile": "supplied_local_patch",
+      "y": 104,
+      "x": 72,
+      "passed": true,
+      "error_m": 3.7316654585652145e-06
+    },
+    {
+      "id": "overlap-229",
+      "profile": "supplied_local_patch",
+      "y": 104,
+      "x": 104,
+      "passed": true,
+      "error_m": 6.644506361115855e-07
+    },
+    {
+      "id": "overlap-229",
+      "profile": "supplied_local_patch",
+      "y": 104,
+      "x": 136,
+      "passed": true,
+      "error_m": 3.878341589632059e-07
+    },
+    {
+      "id": "overlap-229",
+      "profile": "supplied_local_patch",
+      "y": 104,
+      "x": 168,
+      "passed": true,
+      "error_m": 4.997545826614691e-07
+    },
+    {
+      "id": "overlap-229",
+      "profile": "supplied_local_patch",
+      "y": 104,
+      "x": 200,
+      "passed": true,
+      "error_m": 4.008201068525129e-07
+    },
+    {
+      "id": "overlap-229",
+      "profile": "supplied_local_patch",
+      "y": 104,
+      "x": 232,
+      "passed": true,
+      "error_m": 7.119051258955734e-07
+    },
+    {
+      "id": "overlap-229",
+      "profile": "supplied_local_patch",
+      "y": 104,
+      "x": 264,
+      "passed": true,
+      "error_m": 5.894770308172056e-07
+    },
+    {
+      "id": "overlap-229",
+      "profile": "supplied_local_patch",
+      "y": 104,
+      "x": 296,
+      "passed": true,
+      "error_m": 1.1671341627954635e-06
+    },
+    {
+      "id": "overlap-229",
+      "profile": "supplied_local_patch",
+      "y": 136,
+      "x": 8,
+      "passed": true,
+      "error_m": 2.717089860362629e-06
+    },
+    {
+      "id": "overlap-229",
+      "profile": "supplied_local_patch",
+      "y": 136,
+      "x": 40,
+      "passed": true,
+      "error_m": 1.2267564662488927e-06
+    },
+    {
+      "id": "overlap-229",
+      "profile": "supplied_local_patch",
+      "y": 136,
+      "x": 72,
+      "passed": true,
+      "error_m": 5.924217524396015e-07
+    },
+    {
+      "id": "overlap-229",
+      "profile": "supplied_local_patch",
+      "y": 136,
+      "x": 104,
+      "passed": true,
+      "error_m": 4.167871845910389e-07
+    },
+    {
+      "id": "overlap-229",
+      "profile": "supplied_local_patch",
+      "y": 136,
+      "x": 136,
+      "passed": true,
+      "error_m": 4.224114316640012e-07
+    },
+    {
+      "id": "overlap-229",
+      "profile": "supplied_local_patch",
+      "y": 136,
+      "x": 168,
+      "passed": true,
+      "error_m": 1.5468767559671023e-07
+    },
+    {
+      "id": "overlap-229",
+      "profile": "supplied_local_patch",
+      "y": 136,
+      "x": 200,
+      "passed": true,
+      "error_m": 4.507119713117025e-07
+    },
+    {
+      "id": "overlap-229",
+      "profile": "supplied_local_patch",
+      "y": 136,
+      "x": 232,
+      "passed": true,
+      "error_m": 5.859698286264748e-07
+    },
+    {
+      "id": "overlap-229",
+      "profile": "supplied_local_patch",
+      "y": 136,
+      "x": 264,
+      "passed": true,
+      "error_m": 1.868680021041375e-07
+    },
+    {
+      "id": "overlap-229",
+      "profile": "supplied_local_patch",
+      "y": 136,
+      "x": 296,
+      "passed": true,
+      "error_m": 9.729746759540399e-07
+    },
+    {
+      "id": "overlap-229",
+      "profile": "supplied_local_patch",
+      "y": 168,
+      "x": 8,
+      "passed": true,
+      "error_m": 5.94817597767625e-07
+    },
+    {
+      "id": "overlap-229",
+      "profile": "supplied_local_patch",
+      "y": 168,
+      "x": 40,
+      "passed": true,
+      "error_m": 4.6305344809551426e-07
+    },
+    {
+      "id": "overlap-229",
+      "profile": "supplied_local_patch",
+      "y": 168,
+      "x": 72,
+      "passed": true,
+      "error_m": 6.638648348642834e-07
+    },
+    {
+      "id": "overlap-229",
+      "profile": "supplied_local_patch",
+      "y": 168,
+      "x": 104,
+      "passed": true,
+      "error_m": 3.579656341120052e-07
+    },
+    {
+      "id": "overlap-229",
+      "profile": "supplied_local_patch",
+      "y": 168,
+      "x": 136,
+      "passed": true,
+      "error_m": 4.6075914097067165e-07
+    },
+    {
+      "id": "overlap-229",
+      "profile": "supplied_local_patch",
+      "y": 168,
+      "x": 168,
+      "passed": true,
+      "error_m": 9.783535405815085e-07
+    },
+    {
+      "id": "overlap-229",
+      "profile": "supplied_local_patch",
+      "y": 168,
+      "x": 200,
+      "passed": true,
+      "error_m": 4.3752009947554537e-07
+    },
+    {
+      "id": "overlap-229",
+      "profile": "supplied_local_patch",
+      "y": 168,
+      "x": 232,
+      "passed": true,
+      "error_m": 2.771355944243564e-07
+    },
+    {
+      "id": "overlap-229",
+      "profile": "supplied_local_patch",
+      "y": 168,
+      "x": 264,
+      "passed": true,
+      "error_m": 6.888145170016389e-07
+    },
+    {
+      "id": "overlap-229",
+      "profile": "supplied_local_patch",
+      "y": 168,
+      "x": 296,
+      "passed": true,
+      "error_m": 8.858776824019892e-07
+    }
+  ],
+  "all_anchors_passed": true,
+  "all_metric_checks_passed": true,
+  "quality": [
+    {
+      "id": "overlap-227",
+      "profile": "plane",
+      "kind": 1,
+      "roi": "interior",
+      "pixels": 726,
+      "mae_byte": 33.64692378328742
+    },
+    {
+      "id": "overlap-227",
+      "profile": "plane",
+      "kind": 1,
+      "roi": "two_camera_visible_interior",
+      "pixels": 726,
+      "mae_byte": 33.64692378328742
+    },
+    {
+      "id": "overlap-227",
+      "profile": "plane",
+      "kind": 1,
+      "roi": "posthoc_common_domain_interior",
+      "pixels": 726,
+      "mae_byte": 33.64692378328742
+    },
+    {
+      "id": "overlap-227",
+      "profile": "plane",
+      "kind": 1,
+      "roi": "posthoc_two_camera_visible_common_domain_interior",
+      "pixels": 726,
+      "mae_byte": 33.64692378328742
+    },
+    {
+      "id": "overlap-227",
+      "profile": "plane",
+      "kind": 2,
+      "roi": "interior",
+      "pixels": 53817,
+      "mae_byte": 20.001368836365213
+    },
+    {
+      "id": "overlap-227",
+      "profile": "plane",
+      "kind": 2,
+      "roi": "two_camera_visible_interior",
+      "pixels": 28404,
+      "mae_byte": 23.69592310942121
+    },
+    {
+      "id": "overlap-227",
+      "profile": "plane",
+      "kind": 2,
+      "roi": "posthoc_common_domain_interior",
+      "pixels": 43491,
+      "mae_byte": 16.07110283353644
+    },
+    {
+      "id": "overlap-227",
+      "profile": "plane",
+      "kind": 2,
+      "roi": "posthoc_two_camera_visible_common_domain_interior",
+      "pixels": 22495,
+      "mae_byte": 20.34160183744536
+    },
+    {
+      "id": "overlap-227",
+      "profile": "supplied_local_patch",
+      "kind": 1,
+      "roi": "interior",
+      "pixels": 726,
+      "mae_byte": 23.849403122130393
+    },
+    {
+      "id": "overlap-227",
+      "profile": "supplied_local_patch",
+      "kind": 1,
+      "roi": "two_camera_visible_interior",
+      "pixels": 726,
+      "mae_byte": 23.849403122130393
+    },
+    {
+      "id": "overlap-227",
+      "profile": "supplied_local_patch",
+      "kind": 1,
+      "roi": "posthoc_common_domain_interior",
+      "pixels": 726,
+      "mae_byte": 23.849403122130393
+    },
+    {
+      "id": "overlap-227",
+      "profile": "supplied_local_patch",
+      "kind": 1,
+      "roi": "posthoc_two_camera_visible_common_domain_interior",
+      "pixels": 726,
+      "mae_byte": 23.849403122130393
+    },
+    {
+      "id": "overlap-227",
+      "profile": "supplied_local_patch",
+      "kind": 2,
+      "roi": "interior",
+      "pixels": 53817,
+      "mae_byte": 20.124087184346955
+    },
+    {
+      "id": "overlap-227",
+      "profile": "supplied_local_patch",
+      "kind": 2,
+      "roi": "two_camera_visible_interior",
+      "pixels": 28404,
+      "mae_byte": 23.934164202225038
+    },
+    {
+      "id": "overlap-227",
+      "profile": "supplied_local_patch",
+      "kind": 2,
+      "roi": "posthoc_common_domain_interior",
+      "pixels": 43491,
+      "mae_byte": 16.222958006637388
+    },
+    {
+      "id": "overlap-227",
+      "profile": "supplied_local_patch",
+      "kind": 2,
+      "roi": "posthoc_two_camera_visible_common_domain_interior",
+      "pixels": 22495,
+      "mae_byte": 20.64242424242424
+    },
+    {
+      "id": "overlap-229",
+      "profile": "plane",
+      "kind": 1,
+      "roi": "interior",
+      "pixels": 730,
+      "mae_byte": 33.82511415525114
+    },
+    {
+      "id": "overlap-229",
+      "profile": "plane",
+      "kind": 1,
+      "roi": "two_camera_visible_interior",
+      "pixels": 730,
+      "mae_byte": 33.82511415525114
+    },
+    {
+      "id": "overlap-229",
+      "profile": "plane",
+      "kind": 1,
+      "roi": "posthoc_common_domain_interior",
+      "pixels": 730,
+      "mae_byte": 33.82511415525114
+    },
+    {
+      "id": "overlap-229",
+      "profile": "plane",
+      "kind": 1,
+      "roi": "posthoc_two_camera_visible_common_domain_interior",
+      "pixels": 730,
+      "mae_byte": 33.82511415525114
+    },
+    {
+      "id": "overlap-229",
+      "profile": "plane",
+      "kind": 2,
+      "roi": "interior",
+      "pixels": 53812,
+      "mae_byte": 19.849364454025125
+    },
+    {
+      "id": "overlap-229",
+      "profile": "plane",
+      "kind": 2,
+      "roi": "two_camera_visible_interior",
+      "pixels": 28834,
+      "mae_byte": 23.46274074587871
+    },
+    {
+      "id": "overlap-229",
+      "profile": "plane",
+      "kind": 2,
+      "roi": "posthoc_common_domain_interior",
+      "pixels": 43485,
+      "mae_byte": 15.972281629680733
+    },
+    {
+      "id": "overlap-229",
+      "profile": "plane",
+      "kind": 2,
+      "roi": "posthoc_two_camera_visible_common_domain_interior",
+      "pixels": 22775,
+      "mae_byte": 20.235726308086353
+    },
+    {
+      "id": "overlap-229",
+      "profile": "supplied_local_patch",
+      "kind": 1,
+      "roi": "interior",
+      "pixels": 730,
+      "mae_byte": 24.07853881278539
+    },
+    {
+      "id": "overlap-229",
+      "profile": "supplied_local_patch",
+      "kind": 1,
+      "roi": "two_camera_visible_interior",
+      "pixels": 730,
+      "mae_byte": 24.07853881278539
+    },
+    {
+      "id": "overlap-229",
+      "profile": "supplied_local_patch",
+      "kind": 1,
+      "roi": "posthoc_common_domain_interior",
+      "pixels": 730,
+      "mae_byte": 24.07853881278539
+    },
+    {
+      "id": "overlap-229",
+      "profile": "supplied_local_patch",
+      "kind": 1,
+      "roi": "posthoc_two_camera_visible_common_domain_interior",
+      "pixels": 730,
+      "mae_byte": 24.07853881278539
+    },
+    {
+      "id": "overlap-229",
+      "profile": "supplied_local_patch",
+      "kind": 2,
+      "roi": "interior",
+      "pixels": 53812,
+      "mae_byte": 19.98416710027503
+    },
+    {
+      "id": "overlap-229",
+      "profile": "supplied_local_patch",
+      "kind": 2,
+      "roi": "two_camera_visible_interior",
+      "pixels": 28834,
+      "mae_byte": 23.7360985873159
+    },
+    {
+      "id": "overlap-229",
+      "profile": "supplied_local_patch",
+      "kind": 2,
+      "roi": "posthoc_common_domain_interior",
+      "pixels": 43485,
+      "mae_byte": 16.13909777317849
+    },
+    {
+      "id": "overlap-229",
+      "profile": "supplied_local_patch",
+      "kind": 2,
+      "roi": "posthoc_two_camera_visible_common_domain_interior",
+      "pixels": 22775,
+      "mae_byte": 20.581807537504574
+    }
+  ],
+  "virtual_semantic_checks": 2744,
+  "captures": [
+    {
+      "id": "overlap-227",
+      "profile": "plane",
+      "report_sha256": "9b67828152d6d188f052eaf9673389e07819a78c67d4a696b0121c1847eda463",
+      "device": "llvmpipe (LLVM 22.1.8, 256 bits)",
+      "source_fingerprint": "00046f907fb051260cca8ab011c850f8ff8b888eff9457bff2dbb0c1bc09e79a",
+      "metric_payload_sha256": "41188e1922c1df718cecb9977faf41d1a28b930b5e39732527a41cff560a7dfc",
+      "camera_roundtrip_max_abs": 2.220446049250313e-16
+    },
+    {
+      "id": "overlap-227",
+      "profile": "supplied_local_patch",
+      "report_sha256": "eb092ca2ca065db352c305cc78213ce6ecb272c4bde90170da24c32a277c3313",
+      "device": "llvmpipe (LLVM 22.1.8, 256 bits)",
+      "source_fingerprint": "00046f907fb051260cca8ab011c850f8ff8b888eff9457bff2dbb0c1bc09e79a",
+      "metric_payload_sha256": "30c54921819529d28f445eb3057dae5ac0552e19835f7d3f7950f8cbc0583e7d",
+      "camera_roundtrip_max_abs": 2.220446049250313e-16
+    },
+    {
+      "id": "overlap-229",
+      "profile": "plane",
+      "report_sha256": "7e0cd9bbc87d33eb421b0ca6a4d9db19323dc8e6beb7f8f8552a7f1cbbae34e4",
+      "device": "llvmpipe (LLVM 22.1.8, 256 bits)",
+      "source_fingerprint": "00046f907fb051260cca8ab011c850f8ff8b888eff9457bff2dbb0c1bc09e79a",
+      "metric_payload_sha256": "fdeb3262386dee8963d703293959487b23754aca96ad68c7f425b22bc7f09202",
+      "camera_roundtrip_max_abs": 1.1102230246251565e-16
+    },
+    {
+      "id": "overlap-229",
+      "profile": "supplied_local_patch",
+      "report_sha256": "87d6defe934eea6846d9ebd0b281cc6753bdac7e101e4bcfa47c3395f1984865",
+      "device": "llvmpipe (LLVM 22.1.8, 256 bits)",
+      "source_fingerprint": "00046f907fb051260cca8ab011c850f8ff8b888eff9457bff2dbb0c1bc09e79a",
+      "metric_payload_sha256": "f0b290b20bf8967b9e0cb42d3c0eb61157ec8953a0bbbf238822d2ebb0f9bad5",
+      "camera_roundtrip_max_abs": 1.1102230246251565e-16
+    }
+  ],
+  "limitations": [
+    "two procedural texture/pose instances, not natural-object or statistical holdout",
+    "single frame, true calibration, emission materials, no real sensor",
+    "no claim of balanced matching/nonmatching samples until measured",
+    "centre correspondence distinct from filtered RGB, semantic ghost and seam quality",
+    "geometry gate does not guarantee carrier correspondence",
+    "fixed coarse mesh; no post-result refinement or additional scene search",
+    "remaining research deferred to product ExperimentRunner"
+  ],
+  "raw_report_sha256": "359583e9959a6a8bb44630288b04e9e0cfb8c3e06eccbe8ac22d9bb60aaa23c5",
+  "preflight_sha256": "ab0445c782fc194b811112d593bd75b8d4b87fd9c8951fd7e63906603f637b15",
+  "preflight": {
+    "plan_sha256": "ab25abe6877f3bd24a8539063f1199eeafc3f5734143e8998bdd43c07936d4c3",
+    "blender_version": "5.2.2 LTS",
+    "rows": [
+      {
+        "id": "overlap-227",
+        "target_interior_pixels": 726,
+        "target_two_camera_interior_pixels": 726,
+        "paired_visibility_bit_counts": {
+          "9": 726
+        },
+        "passed": true
+      },
+      {
+        "id": "overlap-229",
+        "target_interior_pixels": 730,
+        "target_two_camera_interior_pixels": 730,
+        "paired_visibility_bit_counts": {
+          "12": 730
+        },
+        "passed": true
+      }
+    ],
+    "all_passed": true
+  },
+  "plot_sha256": "281b344a638a11a47c05dea81612a547afdc7121881e72b18b3099021f48dbb2",
+  "cells": 3520,
+  "max_rgb_byte_error": 1,
+  "summaries": [
+    {
+      "id": "overlap-227",
+      "profile": "plane",
+      "target_lattice_cells": 13,
+      "paired": 13,
+      "all_matching_2mm": 0,
+      "none_matching_2mm": 13,
+      "two_camera_target_pixels": 726,
+      "mae_byte": 33.64692378328742
+    },
+    {
+      "id": "overlap-227",
+      "profile": "supplied_local_patch",
+      "target_lattice_cells": 13,
+      "paired": 13,
+      "all_matching_2mm": 13,
+      "none_matching_2mm": 0,
+      "two_camera_target_pixels": 726,
+      "mae_byte": 23.849403122130393
+    },
+    {
+      "id": "overlap-229",
+      "profile": "plane",
+      "target_lattice_cells": 13,
+      "paired": 13,
+      "all_matching_2mm": 0,
+      "none_matching_2mm": 13,
+      "two_camera_target_pixels": 730,
+      "mae_byte": 33.82511415525114
+    },
+    {
+      "id": "overlap-229",
+      "profile": "supplied_local_patch",
+      "target_lattice_cells": 13,
+      "paired": 13,
+      "all_matching_2mm": 13,
+      "none_matching_2mm": 0,
+      "two_camera_target_pixels": 730,
+      "mae_byte": 24.07853881278539
+    }
+  ],
+  "target_same_coordinate_pairs": [
+    {
+      "id": "overlap-227",
+      "y": 140,
+      "x": 148,
+      "same_camera_pair": true,
+      "none_to_all_matching_2mm": true,
+      "plane": {
+        "id": "overlap-227",
+        "profile": "plane",
+        "y": 140,
+        "x": 148,
+        "domain": true,
+        "virtual_kind": 1,
+        "sources": [
+          {
+            "camera": 0,
+            "uv": [
+              45.23554992675781,
+              251.1991729736328
+            ],
+            "kind": 1,
+            "error_m": 0.5122270682622787,
+            "matched": {
+              "0.002": false,
+              "0.02": false
+            },
+            "rgb": [
+              139.87483521783724,
+              157.2238906796556,
+              126.17453356203623
+            ]
+          },
+          {
+            "camera": 3,
+            "uv": [
+              333.25054931640625,
+              246.74258422851562
+            ],
+            "kind": 1,
+            "error_m": 0.5104362905641051,
+            "matched": {
+              "0.002": false,
+              "0.02": false
+            },
+            "rgb": [
+              146.47141925245523,
+              169.73805844411254,
+              154.93062598444521
+            ]
+          }
+        ],
+        "native_pixel": [
+          29,
+          2,
+          255,
+          255
+        ],
+        "expected_range_byte": 28.756092422408983,
+        "metric_passed": true,
+        "byte_error": 0
+      },
+      "patch": {
+        "id": "overlap-227",
+        "profile": "supplied_local_patch",
+        "y": 140,
+        "x": 148,
+        "domain": true,
+        "virtual_kind": 1,
+        "sources": [
+          {
+            "camera": 0,
+            "uv": [
+              34.29289245605469,
+              215.62786865234375
+            ],
+            "kind": 1,
+            "error_m": 3.7289959151360647e-06,
+            "matched": {
+              "0.002": true,
+              "0.02": true
+            },
+            "rgb": [
+              123.60363364592195,
+              125.38243788201362,
+              132.22352413274348
+            ]
+          },
+          {
+            "camera": 3,
+            "uv": [
+              338.06915283203125,
+              218.78628540039062
+            ],
+            "kind": 1,
+            "error_m": 4.353793072368707e-06,
+            "matched": {
+              "0.002": true,
+              "0.02": true
+            },
+            "rgb": [
+              122.98531924374402,
+              104.97795118577778,
+              134.4418268352747
+            ]
+          }
+        ],
+        "native_pixel": [
+          20,
+          2,
+          255,
+          255
+        ],
+        "expected_range_byte": 20.404486696235836,
+        "metric_passed": true,
+        "byte_error": 0
+      }
+    },
+    {
+      "id": "overlap-227",
+      "y": 148,
+      "x": 140,
+      "same_camera_pair": true,
+      "none_to_all_matching_2mm": true,
+      "plane": {
+        "id": "overlap-227",
+        "profile": "plane",
+        "y": 148,
+        "x": 140,
+        "domain": true,
+        "virtual_kind": 1,
+        "sources": [
+          {
+            "camera": 0,
+            "uv": [
+              68.26821899414062,
+              236.35205078125
+            ],
+            "kind": 2,
+            "error_m": 0.5137608382898061,
+            "matched": {
+              "0.002": false,
+              "0.02": false
+            },
+            "rgb": [
+              83.10055541992188,
+              166.9885360300541,
+              172.40171743929386
+            ]
+          },
+          {
+            "camera": 3,
+            "uv": [
+              343.6589050292969,
+              240.7577667236328
+            ],
+            "kind": 2,
+            "error_m": 0.5137610141485787,
+            "matched": {
+              "0.002": false,
+              "0.02": false
+            },
+            "rgb": [
+              88.63562992494553,
+              165.67718147765845,
+              165.21618379792199
+            ]
+          }
+        ],
+        "native_pixel": [
+          7,
+          2,
+          255,
+          255
+        ],
+        "expected_range_byte": 7.185533641371876,
+        "metric_passed": true,
+        "byte_error": 0
+      },
+      "patch": {
+        "id": "overlap-227",
+        "profile": "supplied_local_patch",
+        "y": 148,
+        "x": 140,
+        "domain": true,
+        "virtual_kind": 1,
+        "sources": [
+          {
+            "camera": 0,
+            "uv": [
+              57.91279602050781,
+              206.68711853027344
+            ],
+            "kind": 1,
+            "error_m": 5.618188426906538e-06,
+            "matched": {
+              "0.002": true,
+              "0.02": true
+            },
+            "rgb": [
+              128.25920551735908,
+              135.70690019521862,
+              125.95351903070696
+            ]
+          },
+          {
+            "camera": 3,
+            "uv": [
+              346.749267578125,
+              216.26869201660156
+            ],
+            "kind": 1,
+            "error_m": 2.518311615759416e-07,
+            "matched": {
+              "0.002": true,
+              "0.02": true
+            },
+            "rgb": [
+              137.74854142963886,
+              128.067419603467,
+              129.4258225336671
+            ]
+          }
+        ],
+        "native_pixel": [
+          10,
+          2,
+          255,
+          255
+        ],
+        "expected_range_byte": 9.489335912279785,
+        "metric_passed": true,
+        "byte_error": 1
+      }
+    },
+    {
+      "id": "overlap-227",
+      "y": 148,
+      "x": 148,
+      "same_camera_pair": true,
+      "none_to_all_matching_2mm": true,
+      "plane": {
+        "id": "overlap-227",
+        "profile": "plane",
+        "y": 148,
+        "x": 148,
+        "domain": true,
+        "virtual_kind": 1,
+        "sources": [
+          {
+            "camera": 0,
+            "uv": [
+              49.65995788574219,
+              240.40835571289062
+            ],
+            "kind": 1,
+            "error_m": 0.5859269514229725,
+            "matched": {
+              "0.002": false,
+              "0.02": false
+            },
+            "rgb": [
+              183.61141860019416,
+              130.21104431152344,
+              57.84694594470784
+            ]
+          },
+          {
+            "camera": 3,
+            "uv": [
+              328.896240234375,
+              237.8233184814453
+            ],
+            "kind": 1,
+            "error_m": 0.5481313943389402,
+            "matched": {
+              "0.002": false,
+              "0.02": false
+            },
+            "rgb": [
+              65.38754411414266,
+              135.66907601431012,
+              79.12993059307337
+            ]
+          }
+        ],
+        "native_pixel": [
+          119,
+          2,
+          255,
+          255
+        ],
+        "expected_range_byte": 118.2238744860515,
+        "metric_passed": true,
+        "byte_error": 1
+      },
+      "patch": {
+        "id": "overlap-227",
+        "profile": "supplied_local_patch",
+        "y": 148,
+        "x": 148,
+        "domain": true,
+        "virtual_kind": 1,
+        "sources": [
+          {
+            "camera": 0,
+            "uv": [
+              40.800567626953125,
+              210.3076171875
+            ],
+            "kind": 1,
+            "error_m": 6.052722009824044e-06,
+            "matched": {
+              "0.002": true,
+              "0.02": true
+            },
+            "rgb": [
+              118.33715978264809,
+              137.53235238790512,
+              128.4122402369976
+            ]
+          },
+          {
+            "camera": 3,
+            "uv": [
+              332.75030517578125,
+              213.46157836914062
+            ],
+            "kind": 1,
+            "error_m": 5.511838498891928e-06,
+            "matched": {
+              "0.002": true,
+              "0.02": true
+            },
+            "rgb": [
+              79.39360608905554,
+              123.42227839119732,
+              120.90141183882952
+            ]
+          }
+        ],
+        "native_pixel": [
+          39,
+          2,
+          255,
+          255
+        ],
+        "expected_range_byte": 38.94355369359255,
+        "metric_passed": true,
+        "byte_error": 0
+      }
+    },
+    {
+      "id": "overlap-227",
+      "y": 148,
+      "x": 156,
+      "same_camera_pair": true,
+      "none_to_all_matching_2mm": true,
+      "plane": {
+        "id": "overlap-227",
+        "profile": "plane",
+        "y": 148,
+        "x": 156,
+        "domain": true,
+        "virtual_kind": 1,
+        "sources": [
+          {
+            "camera": 0,
+            "uv": [
+              33.26890563964844,
+              243.8621063232422
+            ],
+            "kind": 1,
+            "error_m": 0.5120199319282835,
+            "matched": {
+              "0.002": false,
+              "0.02": false
+            },
+            "rgb": [
+              119.66343366773799,
+              167.4256897782907,
+              134.20361944148317
+            ]
+          },
+          {
+            "camera": 3,
+            "uv": [
+              312.8487854003906,
+              234.49703979492188
+            ],
+            "kind": 1,
+            "error_m": 0.49878129486155115,
+            "matched": {
+              "0.002": false,
+              "0.02": false
+            },
+            "rgb": [
+              97.99025037046522,
+              170.42094495054334,
+              142.95417262986302
+            ]
+          }
+        ],
+        "native_pixel": [
+          22,
+          2,
+          255,
+          255
+        ],
+        "expected_range_byte": 21.67318329727277,
+        "metric_passed": true,
+        "byte_error": 0
+      },
+      "patch": {
+        "id": "overlap-227",
+        "profile": "supplied_local_patch",
+        "y": 148,
+        "x": 156,
+        "domain": true,
+        "virtual_kind": 1,
+        "sources": [
+          {
+            "camera": 0,
+            "uv": [
+              25.74310302734375,
+              213.7713623046875
+            ],
+            "kind": 1,
+            "error_m": 3.9666157234149927e-07,
+            "matched": {
+              "0.002": true,
+              "0.02": true
+            },
+            "rgb": [
+              99.73720262944698,
+              127.18219343572855,
+              118.06862452626228
+            ]
+          },
+          {
+            "camera": 3,
+            "uv": [
+              317.5848083496094,
+              210.54376220703125
+            ],
+            "kind": 1,
+            "error_m": 3.7209005863692962e-06,
+            "matched": {
+              "0.002": true,
+              "0.02": true
+            },
+            "rgb": [
+              76.87349520996213,
+              122.25781155191362,
+              121.42481634765863
+            ]
+          }
+        ],
+        "native_pixel": [
+          23,
+          2,
+          255,
+          255
+        ],
+        "expected_range_byte": 22.863707419484854,
+        "metric_passed": true,
+        "byte_error": 0
+      }
+    },
+    {
+      "id": "overlap-227",
+      "y": 156,
+      "x": 132,
+      "same_camera_pair": true,
+      "none_to_all_matching_2mm": true,
+      "plane": {
+        "id": "overlap-227",
+        "profile": "plane",
+        "y": 156,
+        "x": 132,
+        "domain": true,
+        "virtual_kind": 1,
+        "sources": [
+          {
+            "camera": 0,
+            "uv": [
+              86.46851348876953,
+              225.6172637939453
+            ],
+            "kind": 2,
+            "error_m": 0.5151468516736168,
+            "matched": {
+              "0.002": false,
+              "0.02": false
+            },
+            "rgb": [
+              149.0992483983282,
+              187.60895959718619,
+              156.442470373353
+            ]
+          },
+          {
+            "camera": 3,
+            "uv": [
+              350.73846435546875,
+              236.28366088867188
+            ],
+            "kind": 2,
+            "error_m": 0.515145467326519,
+            "matched": {
+              "0.002": false,
+              "0.02": false
+            },
+            "rgb": [
+              157.57851853221655,
+              174.01035664603114,
+              156.99148559570312
+            ]
+          }
+        ],
+        "native_pixel": [
+          13,
+          2,
+          255,
+          255
+        ],
+        "expected_range_byte": 13.598602951155044,
+        "metric_passed": true,
+        "byte_error": 1
+      },
+      "patch": {
+        "id": "overlap-227",
+        "profile": "supplied_local_patch",
+        "y": 156,
+        "x": 132,
+        "domain": true,
+        "virtual_kind": 1,
+        "sources": [
+          {
+            "camera": 0,
+            "uv": [
+              76.58553314208984,
+              200.4598846435547
+            ],
+            "kind": 1,
+            "error_m": 6.3486334793756384e-06,
+            "matched": {
+              "0.002": true,
+              "0.02": true
+            },
+            "rgb": [
+              105.45011038403027,
+              107.92498219036497,
+              116.31392111070454
+            ]
+          },
+          {
+            "camera": 3,
+            "uv": [
+              352.77899169921875,
+              214.39414978027344
+            ],
+            "kind": 1,
+            "error_m": 5.4373685730261395e-06,
+            "matched": {
+              "0.002": true,
+              "0.02": true
+            },
+            "rgb": [
+              114.72927006427199,
+              110.33790000900626,
+              125.73636685684323
+            ]
+          }
+        ],
+        "native_pixel": [
+          10,
+          2,
+          255,
+          255
+        ],
+        "expected_range_byte": 9.422445746138692,
+        "metric_passed": true,
+        "byte_error": 1
+      }
+    },
+    {
+      "id": "overlap-227",
+      "y": 156,
+      "x": 140,
+      "same_camera_pair": true,
+      "none_to_all_matching_2mm": true,
+      "plane": {
+        "id": "overlap-227",
+        "profile": "plane",
+        "y": 156,
+        "x": 140,
+        "domain": true,
+        "virtual_kind": 1,
+        "sources": [
+          {
+            "camera": 0,
+            "uv": [
+              69.21524047851562,
+              229.36776733398438
+            ],
+            "kind": 1,
+            "error_m": 0.5561492914403903,
+            "matched": {
+              "0.002": false,
+              "0.02": false
+            },
+            "rgb": [
+              70.1491807885468,
+              117.93022594973445,
+              88.24025820661336
+            ]
+          },
+          {
+            "camera": 3,
+            "uv": [
+              338.6138610839844,
+              233.89378356933594
+            ],
+            "kind": 1,
+            "error_m": 0.9052363247964865,
+            "matched": {
+              "0.002": false,
+              "0.02": false
+            },
+            "rgb": [
+              159.7177900238894,
+              155.0993904415518,
+              78.47430749237537
+            ]
+          }
+        ],
+        "native_pixel": [
+          90,
+          2,
+          255,
+          255
+        ],
+        "expected_range_byte": 89.56860923534259,
+        "metric_passed": true,
+        "byte_error": 0
+      },
+      "patch": {
+        "id": "overlap-227",
+        "profile": "supplied_local_patch",
+        "y": 156,
+        "x": 140,
+        "domain": true,
+        "virtual_kind": 1,
+        "sources": [
+          {
+            "camera": 0,
+            "uv": [
+              60.500152587890625,
+              203.51123046875
+            ],
+            "kind": 1,
+            "error_m": 7.449609460047255e-06,
+            "matched": {
+              "0.002": true,
+              "0.02": true
+            },
+            "rgb": [
+              122.38572537899017,
+              128.38740041851997,
+              134.22217498719692
+            ]
+          },
+          {
+            "camera": 3,
+            "uv": [
+              341.2060546875,
+              212.0135955810547
+            ],
+            "kind": 1,
+            "error_m": 5.698679406325564e-06,
+            "matched": {
+              "0.002": true,
+              "0.02": true
+            },
+            "rgb": [
+              125.91616781055927,
+              114.41363975405693,
+              125.10487116873264
+            ]
+          }
+        ],
+        "native_pixel": [
+          14,
+          2,
+          255,
+          255
+        ],
+        "expected_range_byte": 13.973760664463043,
+        "metric_passed": true,
+        "byte_error": 0
+      }
+    },
+    {
+      "id": "overlap-227",
+      "y": 156,
+      "x": 148,
+      "same_camera_pair": true,
+      "none_to_all_matching_2mm": true,
+      "plane": {
+        "id": "overlap-227",
+        "profile": "plane",
+        "y": 156,
+        "x": 148,
+        "domain": true,
+        "virtual_kind": 1,
+        "sources": [
+          {
+            "camera": 0,
+            "uv": [
+              53.159271240234375,
+              232.8379669189453
+            ],
+            "kind": 1,
+            "error_m": 0.7638604577588458,
+            "matched": {
+              "0.002": false,
+              "0.02": false
+            },
+            "rgb": [
+              132.05007768096402,
+              72.36288119200617,
+              123.60533748473972
+            ]
+          },
+          {
+            "camera": 3,
+            "uv": [
+              325.4139099121094,
+              231.2401123046875
+            ],
+            "kind": 1,
+            "error_m": 0.7182614070694425,
+            "matched": {
+              "0.002": false,
+              "0.02": false
+            },
+            "rgb": [
+              94.22702026367188,
+              174.30975126847625,
+              126.55639634281397
+            ]
+          }
+        ],
+        "native_pixel": [
+          102,
+          2,
+          255,
+          255
+        ],
+        "expected_range_byte": 101.94687007647008,
+        "metric_passed": true,
+        "byte_error": 0
+      },
+      "patch": {
+        "id": "overlap-227",
+        "profile": "supplied_local_patch",
+        "y": 156,
+        "x": 148,
+        "domain": true,
+        "virtual_kind": 1,
+        "sources": [
+          {
+            "camera": 0,
+            "uv": [
+              45.611541748046875,
+              206.58322143554688
+            ],
+            "kind": 1,
+            "error_m": 5.493607621149184e-06,
+            "matched": {
+              "0.002": true,
+              "0.02": true
+            },
+            "rgb": [
+              126.62412532698363,
+              133.56639560870826,
+              114.41436376143247
+            ]
+          },
+          {
+            "camera": 3,
+            "uv": [
+              328.66400146484375,
+              209.54531860351562
+            ],
+            "kind": 1,
+            "error_m": 2.2053875943378876e-06,
+            "matched": {
+              "0.002": true,
+              "0.02": true
+            },
+            "rgb": [
+              154.01614545844495,
+              125.5855188909918,
+              110.31354017183185
+            ]
+          }
+        ],
+        "native_pixel": [
+          28,
+          2,
+          255,
+          255
+        ],
+        "expected_range_byte": 27.392020131461322,
+        "metric_passed": true,
+        "byte_error": 1
+      }
+    },
+    {
+      "id": "overlap-227",
+      "y": 156,
+      "x": 156,
+      "same_camera_pair": true,
+      "none_to_all_matching_2mm": true,
+      "plane": {
+        "id": "overlap-227",
+        "profile": "plane",
+        "y": 156,
+        "x": 156,
+        "domain": true,
+        "virtual_kind": 1,
+        "sources": [
+          {
+            "camera": 0,
+            "uv": [
+              38.64299011230469,
+              235.95657348632812
+            ],
+            "kind": 1,
+            "error_m": 0.9984708461600157,
+            "matched": {
+              "0.002": false,
+              "0.02": false
+            },
+            "rgb": [
+              123.00576939526945,
+              78.07485664449632,
+              112.28385389735922
+            ]
+          },
+          {
+            "camera": 3,
+            "uv": [
+              311.3153991699219,
+              228.35159301757812
+            ],
+            "kind": 1,
+            "error_m": 0.5593903778008658,
+            "matched": {
+              "0.002": false,
+              "0.02": false
+            },
+            "rgb": [
+              134.63575082458556,
+              132.01094247121364,
+              76.36422691121697
+            ]
+          }
+        ],
+        "native_pixel": [
+          54,
+          2,
+          255,
+          255
+        ],
+        "expected_range_byte": 53.93608582671732,
+        "metric_passed": true,
+        "byte_error": 0
+      },
+      "patch": {
+        "id": "overlap-227",
+        "profile": "supplied_local_patch",
+        "y": 156,
+        "x": 156,
+        "domain": true,
+        "virtual_kind": 1,
+        "sources": [
+          {
+            "camera": 0,
+            "uv": [
+              32.159515380859375,
+              209.59097290039062
+            ],
+            "kind": 1,
+            "error_m": 4.446544097531122e-06,
+            "matched": {
+              "0.002": true,
+              "0.02": true
+            },
+            "rgb": [
+              124.16653114464134,
+              118.55340388789773,
+              122.3174443161115
+            ]
+          },
+          {
+            "camera": 3,
+            "uv": [
+              315.3062744140625,
+              207.03245544433594
+            ],
+            "kind": 1,
+            "error_m": 1.700475103008492e-06,
+            "matched": {
+              "0.002": true,
+              "0.02": true
+            },
+            "rgb": [
+              159.5658736806363,
+              140.42263976670802,
+              107.30622995644808
+            ]
+          }
+        ],
+        "native_pixel": [
+          35,
+          2,
+          255,
+          255
+        ],
+        "expected_range_byte": 35.39934253599495,
+        "metric_passed": true,
+        "byte_error": 0
+      }
+    },
+    {
+      "id": "overlap-227",
+      "y": 156,
+      "x": 164,
+      "same_camera_pair": true,
+      "none_to_all_matching_2mm": true,
+      "plane": {
+        "id": "overlap-227",
+        "profile": "plane",
+        "y": 156,
+        "x": 164,
+        "domain": true,
+        "virtual_kind": 1,
+        "sources": [
+          {
+            "camera": 0,
+            "uv": [
+              25.786636352539062,
+              238.70159912109375
+            ],
+            "kind": 1,
+            "error_m": 0.5298696774484875,
+            "matched": {
+              "0.002": false,
+              "0.02": false
+            },
+            "rgb": [
+              116.4258471056819,
+              156.30692933686078,
+              129.23667184635997
+            ]
+          },
+          {
+            "camera": 3,
+            "uv": [
+              296.6074523925781,
+              225.28363037109375
+            ],
+            "kind": 1,
+            "error_m": 0.4917221290482474,
+            "matched": {
+              "0.002": false,
+              "0.02": false
+            },
+            "rgb": [
+              104.33797225728631,
+              177.37286301329732,
+              163.85717197321355
+            ]
+          }
+        ],
+        "native_pixel": [
+          35,
+          2,
+          255,
+          255
+        ],
+        "expected_range_byte": 34.620500126853585,
+        "metric_passed": true,
+        "byte_error": 0
+      },
+      "patch": {
+        "id": "overlap-227",
+        "profile": "supplied_local_patch",
+        "y": 156,
+        "x": 164,
+        "domain": true,
+        "virtual_kind": 1,
+        "sources": [
+          {
+            "camera": 0,
+            "uv": [
+              20.213912963867188,
+              212.4722900390625
+            ],
+            "kind": 1,
+            "error_m": 6.438864348698929e-06,
+            "matched": {
+              "0.002": true,
+              "0.02": true
+            },
+            "rgb": [
+              132.4948825892061,
+              141.93437402695417,
+              109.41279654018581
+            ]
+          },
+          {
+            "camera": 3,
+            "uv": [
+              301.3768310546875,
+              204.5283660888672
+            ],
+            "kind": 1,
+            "error_m": 5.308427965714782e-06,
+            "matched": {
+              "0.002": true,
+              "0.02": true
+            },
+            "rgb": [
+              132.67909757979214,
+              120.37287007458508,
+              112.71517149731517
+            ]
+          }
+        ],
+        "native_pixel": [
+          21,
+          2,
+          255,
+          255
+        ],
+        "expected_range_byte": 21.561503952369094,
+        "metric_passed": true,
+        "byte_error": 1
+      }
+    },
+    {
+      "id": "overlap-227",
+      "y": 164,
+      "x": 140,
+      "same_camera_pair": true,
+      "none_to_all_matching_2mm": true,
+      "plane": {
+        "id": "overlap-227",
+        "profile": "plane",
+        "y": 164,
+        "x": 140,
+        "domain": true,
+        "virtual_kind": 1,
+        "sources": [
+          {
+            "camera": 0,
+            "uv": [
+              70.04342651367188,
+              224.26153564453125
+            ],
+            "kind": 1,
+            "error_m": 0.7271060836840573,
+            "matched": {
+              "0.002": false,
+              "0.02": false
+            },
+            "rgb": [
+              159.82175081036985,
+              99.06239305622876,
+              147.34830641001463
+            ]
+          },
+          {
+            "camera": 3,
+            "uv": [
+              334.4954833984375,
+              228.5978546142578
+            ],
+            "kind": 1,
+            "error_m": 1.123154649544045,
+            "matched": {
+              "0.002": false,
+              "0.02": false
+            },
+            "rgb": [
+              86.35140777379274,
+              74.67862434126437,
+              77.03997064195573
+            ]
+          }
+        ],
+        "native_pixel": [
+          74,
+          2,
+          255,
+          255
+        ],
+        "expected_range_byte": 73.4703430365771,
+        "metric_passed": true,
+        "byte_error": 1
+      },
+      "patch": {
+        "id": "overlap-227",
+        "profile": "supplied_local_patch",
+        "y": 164,
+        "x": 140,
+        "domain": true,
+        "virtual_kind": 1,
+        "sources": [
+          {
+            "camera": 0,
+            "uv": [
+              62.44947814941406,
+              201.185546875
+            ],
+            "kind": 1,
+            "error_m": 9.9123901521894e-06,
+            "matched": {
+              "0.002": true,
+              "0.02": true
+            },
+            "rgb": [
+              113.46471020579338,
+              112.33351776003838,
+              127.35273742675781
+            ]
+          },
+          {
+            "camera": 3,
+            "uv": [
+              336.76611328125,
+              208.73941040039062
+            ],
+            "kind": 1,
+            "error_m": 8.813569290475187e-06,
+            "matched": {
+              "0.002": true,
+              "0.02": true
+            },
+            "rgb": [
+              104.49850417673588,
+              128.48709106445312,
+              124.60724069178104
+            ]
+          }
+        ],
+        "native_pixel": [
+          17,
+          2,
+          255,
+          255
+        ],
+        "expected_range_byte": 16.15357330441475,
+        "metric_passed": true,
+        "byte_error": 1
+      }
+    },
+    {
+      "id": "overlap-227",
+      "y": 164,
+      "x": 148,
+      "same_camera_pair": true,
+      "none_to_all_matching_2mm": true,
+      "plane": {
+        "id": "overlap-227",
+        "profile": "plane",
+        "y": 164,
+        "x": 148,
+        "domain": true,
+        "virtual_kind": 1,
+        "sources": [
+          {
+            "camera": 0,
+            "uv": [
+              55.94670104980469,
+              227.26930236816406
+            ],
+            "kind": 1,
+            "error_m": 0.9750330590484322,
+            "matched": {
+              "0.002": false,
+              "0.02": false
+            },
+            "rgb": [
+              80.90752704907209,
+              103.19466195465066,
+              149.02594991540536
+            ]
+          },
+          {
+            "camera": 3,
+            "uv": [
+              322.59600830078125,
+              226.20887756347656
+            ],
+            "kind": 1,
+            "error_m": 0.9308348979542385,
+            "matched": {
+              "0.002": false,
+              "0.02": false
+            },
+            "rgb": [
+              165.5182005027309,
+              61.0901854429394,
+              105.90809584781528
+            ]
+          }
+        ],
+        "native_pixel": [
+          85,
+          2,
+          255,
+          255
+        ],
+        "expected_range_byte": 84.61067345365882,
+        "metric_passed": true,
+        "byte_error": 0
+      },
+      "patch": {
+        "id": "overlap-227",
+        "profile": "supplied_local_patch",
+        "y": 164,
+        "x": 148,
+        "domain": true,
+        "virtual_kind": 1,
+        "sources": [
+          {
+            "camera": 0,
+            "uv": [
+              49.295654296875,
+              203.84097290039062
+            ],
+            "kind": 1,
+            "error_m": 3.1793040015378572e-06,
+            "matched": {
+              "0.002": true,
+              "0.02": true
+            },
+            "rgb": [
+              119.70009376853704,
+              117.65365156531334,
+              131.27277554571629
+            ]
+          },
+          {
+            "camera": 3,
+            "uv": [
+              325.4397888183594,
+              206.55397033691406
+            ],
+            "kind": 1,
+            "error_m": 3.006161974037688e-06,
+            "matched": {
+              "0.002": true,
+              "0.02": true
+            },
+            "rgb": [
+              77.64191493671387,
+              137.61255413014442,
+              129.39785457542166
+            ]
+          }
+        ],
+        "native_pixel": [
+          41,
+          2,
+          255,
+          255
+        ],
+        "expected_range_byte": 42.05817883182317,
+        "metric_passed": true,
+        "byte_error": 1
+      }
+    },
+    {
+      "id": "overlap-227",
+      "y": 164,
+      "x": 156,
+      "same_camera_pair": true,
+      "none_to_all_matching_2mm": true,
+      "plane": {
+        "id": "overlap-227",
+        "profile": "plane",
+        "y": 164,
+        "x": 156,
+        "domain": true,
+        "virtual_kind": 1,
+        "sources": [
+          {
+            "camera": 0,
+            "uv": [
+              42.96589660644531,
+              230.06356811523438
+            ],
+            "kind": 1,
+            "error_m": 1.2245301717492807,
+            "matched": {
+              "0.002": false,
+              "0.02": false
+            },
+            "rgb": [
+              100.23903235187754,
+              78.06226128805429,
+              71.86269870167598
+            ]
+          },
+          {
+            "camera": 3,
+            "uv": [
+              310.04571533203125,
+              223.6758270263672
+            ],
+            "kind": 1,
+            "error_m": 0.7418884521443216,
+            "matched": {
+              "0.002": false,
+              "0.02": false
+            },
+            "rgb": [
+              150.18988037109375,
+              76.6493852417916,
+              99.20509846974164
+            ]
+          }
+        ],
+        "native_pixel": [
+          49,
+          2,
+          255,
+          255
+        ],
+        "expected_range_byte": 49.95084801921621,
+        "metric_passed": true,
+        "byte_error": 1
+      },
+      "patch": {
+        "id": "overlap-227",
+        "profile": "supplied_local_patch",
+        "y": 164,
+        "x": 156,
+        "domain": true,
+        "virtual_kind": 1,
+        "sources": [
+          {
+            "camera": 0,
+            "uv": [
+              37.18988037109375,
+              206.47793579101562
+            ],
+            "kind": 1,
+            "error_m": 9.420868981994362e-06,
+            "matched": {
+              "0.002": true,
+              "0.02": true
+            },
+            "rgb": [
+              128.27744348347187,
+              131.72722067311406,
+              105.65871106646955
+            ]
+          },
+          {
+            "camera": 3,
+            "uv": [
+              313.52154541015625,
+              204.35826110839844
+            ],
+            "kind": 1,
+            "error_m": 1.5257032789299942e-06,
+            "matched": {
+              "0.002": true,
+              "0.02": true
+            },
+            "rgb": [
+              78.38034218735993,
+              136.63152071554214,
+              131.53376070037484
+            ]
+          }
+        ],
+        "native_pixel": [
+          50,
+          2,
+          255,
+          255
+        ],
+        "expected_range_byte": 49.89710129611194,
+        "metric_passed": true,
+        "byte_error": 0
+      }
+    },
+    {
+      "id": "overlap-227",
+      "y": 172,
+      "x": 148,
+      "same_camera_pair": true,
+      "none_to_all_matching_2mm": true,
+      "plane": {
+        "id": "overlap-227",
+        "profile": "plane",
+        "y": 172,
+        "x": 148,
+        "domain": true,
+        "virtual_kind": 1,
+        "sources": [
+          {
+            "camera": 0,
+            "uv": [
+              58.19989013671875,
+              223.01663208007812
+            ],
+            "kind": 1,
+            "error_m": 1.1915786134204769,
+            "matched": {
+              "0.002": false,
+              "0.02": false
+            },
+            "rgb": [
+              157.16303897462785,
+              173.63297605141997,
+              67.63959288410842
+            ]
+          },
+          {
+            "camera": 3,
+            "uv": [
+              320.2829895019531,
+              222.2517852783203
+            ],
+            "kind": 1,
+            "error_m": 1.1501431387397976,
+            "matched": {
+              "0.002": false,
+              "0.02": false
+            },
+            "rgb": [
+              110.54673432093114,
+              173.95235089724883,
+              69.7883140835911
+            ]
+          }
+        ],
+        "native_pixel": [
+          46,
+          2,
+          255,
+          255
+        ],
+        "expected_range_byte": 46.616304653696716,
+        "metric_passed": true,
+        "byte_error": 1
+      },
+      "patch": {
+        "id": "overlap-227",
+        "profile": "supplied_local_patch",
+        "y": 172,
+        "x": 148,
+        "domain": true,
+        "virtual_kind": 1,
+        "sources": [
+          {
+            "camera": 0,
+            "uv": [
+              52.19969177246094,
+              201.7423858642578
+            ],
+            "kind": 1,
+            "error_m": 2.4911659196286646e-06,
+            "matched": {
+              "0.002": true,
+              "0.02": true
+            },
+            "rgb": [
+              119.02932134713046,
+              122.62548857158981,
+              108.82005051337183
+            ]
+          },
+          {
+            "camera": 3,
+            "uv": [
+              322.83734130859375,
+              204.1992950439453
+            ],
+            "kind": 1,
+            "error_m": 7.619218516217776e-06,
+            "matched": {
+              "0.002": true,
+              "0.02": true
+            },
+            "rgb": [
+              153.4163869759068,
+              122.22987094148993,
+              123.85812558978796
+            ]
+          }
+        ],
+        "native_pixel": [
+          35,
+          2,
+          255,
+          255
+        ],
+        "expected_range_byte": 34.38706562877633,
+        "metric_passed": true,
+        "byte_error": 1
+      }
+    },
+    {
+      "id": "overlap-229",
+      "y": 140,
+      "x": 172,
+      "same_camera_pair": true,
+      "none_to_all_matching_2mm": true,
+      "plane": {
+        "id": "overlap-229",
+        "profile": "plane",
+        "y": 140,
+        "x": 172,
+        "domain": true,
+        "virtual_kind": 1,
+        "sources": [
+          {
+            "camera": 2,
+            "uv": [
+              352.17144775390625,
+              251.66305541992188
+            ],
+            "kind": 1,
+            "error_m": 0.5150382536546495,
+            "matched": {
+              "0.002": false,
+              "0.02": false
+            },
+            "rgb": [
+              151.05630901269615,
+              130.006623769179,
+              128.64367814175785
+            ]
+          },
+          {
+            "camera": 3,
+            "uv": [
+              50.90007019042969,
+              240.7427978515625
+            ],
+            "kind": 1,
+            "error_m": 0.5094943953336594,
+            "matched": {
+              "0.002": false,
+              "0.02": false
+            },
+            "rgb": [
+              143.324588784948,
+              144.07593788206577,
+              104.17415745742619
+            ]
+          }
+        ],
+        "native_pixel": [
+          24,
+          2,
+          255,
+          255
+        ],
+        "expected_range_byte": 24.469520684331656,
+        "metric_passed": true,
+        "byte_error": 0
+      },
+      "patch": {
+        "id": "overlap-229",
+        "profile": "supplied_local_patch",
+        "y": 140,
+        "x": 172,
+        "domain": true,
+        "virtual_kind": 1,
+        "sources": [
+          {
+            "camera": 2,
+            "uv": [
+              364.181396484375,
+              215.52545166015625
+            ],
+            "kind": 1,
+            "error_m": 2.9576731871995427e-06,
+            "matched": {
+              "0.002": true,
+              "0.02": true
+            },
+            "rgb": [
+              142.55369356274605,
+              104.09002685546875,
+              110.7091456502676
+            ]
+          },
+          {
+            "camera": 3,
+            "uv": [
+              47.55485534667969,
+              216.66342163085938
+            ],
+            "kind": 1,
+            "error_m": 4.333114452482515e-06,
+            "matched": {
+              "0.002": true,
+              "0.02": true
+            },
+            "rgb": [
+              140.60182186448947,
+              115.03932195762172,
+              94.80866955500096
+            ]
+          }
+        ],
+        "native_pixel": [
+          16,
+          2,
+          255,
+          255
+        ],
+        "expected_range_byte": 15.90047609526664,
+        "metric_passed": true,
+        "byte_error": 0
+      }
+    },
+    {
+      "id": "overlap-229",
+      "y": 148,
+      "x": 164,
+      "same_camera_pair": true,
+      "none_to_all_matching_2mm": true,
+      "plane": {
+        "id": "overlap-229",
+        "profile": "plane",
+        "y": 148,
+        "x": 164,
+        "domain": true,
+        "virtual_kind": 1,
+        "sources": [
+          {
+            "camera": 2,
+            "uv": [
+              365.26055908203125,
+              244.530517578125
+            ],
+            "kind": 1,
+            "error_m": 0.53653941405629,
+            "matched": {
+              "0.002": false,
+              "0.02": false
+            },
+            "rgb": [
+              152.97057190537453,
+              134.28726987540722,
+              111.20126703381538
+            ]
+          },
+          {
+            "camera": 3,
+            "uv": [
+              69.0972900390625,
+              231.2586212158203
+            ],
+            "kind": 1,
+            "error_m": 0.5009860512642152,
+            "matched": {
+              "0.002": false,
+              "0.02": false
+            },
+            "rgb": [
+              168.91171983070672,
+              86.69905036874115,
+              90.76266669481993
+            ]
+          }
+        ],
+        "native_pixel": [
+          47,
+          2,
+          255,
+          255
+        ],
+        "expected_range_byte": 47.588219506666064,
+        "metric_passed": true,
+        "byte_error": 1
+      },
+      "patch": {
+        "id": "overlap-229",
+        "profile": "supplied_local_patch",
+        "y": 148,
+        "x": 164,
+        "domain": true,
+        "virtual_kind": 1,
+        "sources": [
+          {
+            "camera": 2,
+            "uv": [
+              373.57501220703125,
+              213.91806030273438
+            ],
+            "kind": 1,
+            "error_m": 3.3716250644444936e-06,
+            "matched": {
+              "0.002": true,
+              "0.02": true
+            },
+            "rgb": [
+              132.12056043744087,
+              72.76142201758921,
+              123.02046885155141
+            ]
+          },
+          {
+            "camera": 3,
+            "uv": [
+              65.39031982421875,
+              210.07156372070312
+            ],
+            "kind": 1,
+            "error_m": 5.7340100070065205e-06,
+            "matched": {
+              "0.002": true,
+              "0.02": true
+            },
+            "rgb": [
+              124.6558868419379,
+              125.67945251427591,
+              134.71194151975214
+            ]
+          }
+        ],
+        "native_pixel": [
+          52,
+          2,
+          255,
+          255
+        ],
+        "expected_range_byte": 52.9180304966867,
+        "metric_passed": true,
+        "byte_error": 1
+      }
+    },
+    {
+      "id": "overlap-229",
+      "y": 148,
+      "x": 172,
+      "same_camera_pair": true,
+      "none_to_all_matching_2mm": true,
+      "plane": {
+        "id": "overlap-229",
+        "profile": "plane",
+        "y": 148,
+        "x": 172,
+        "domain": true,
+        "virtual_kind": 1,
+        "sources": [
+          {
+            "camera": 2,
+            "uv": [
+              348.41070556640625,
+              240.50811767578125
+            ],
+            "kind": 1,
+            "error_m": 0.567438398987652,
+            "matched": {
+              "0.002": false,
+              "0.02": false
+            },
+            "rgb": [
+              104.99156203120947,
+              90.69664828106761,
+              118.8073584958911
+            ]
+          },
+          {
+            "camera": 3,
+            "uv": [
+              56.06126403808594,
+              233.7681121826172
+            ],
+            "kind": 1,
+            "error_m": 0.569050278775552,
+            "matched": {
+              "0.002": false,
+              "0.02": false
+            },
+            "rgb": [
+              115.54875995730981,
+              88.8516234443523,
+              185.39127706480213
+            ]
+          }
+        ],
+        "native_pixel": [
+          66,
+          2,
+          255,
+          255
+        ],
+        "expected_range_byte": 66.58391856891103,
+        "metric_passed": true,
+        "byte_error": 1
+      },
+      "patch": {
+        "id": "overlap-229",
+        "profile": "supplied_local_patch",
+        "y": 148,
+        "x": 172,
+        "domain": true,
+        "virtual_kind": 1,
+        "sources": [
+          {
+            "camera": 2,
+            "uv": [
+              358.0543518066406,
+              209.99818420410156
+            ],
+            "kind": 1,
+            "error_m": 6.70185993620507e-06,
+            "matched": {
+              "0.002": true,
+              "0.02": true
+            },
+            "rgb": [
+              123.21513394126669,
+              143.35979804908857,
+              125.68322824547067
+            ]
+          },
+          {
+            "camera": 3,
+            "uv": [
+              53.17762756347656,
+              212.4169464111328
+            ],
+            "kind": 1,
+            "error_m": 1.2068852690894669e-06,
+            "matched": {
+              "0.002": true,
+              "0.02": true
+            },
+            "rgb": [
+              127.23914541839622,
+              135.59092652844265,
+              119.09004263440147
+            ]
+          }
+        ],
+        "native_pixel": [
+          8,
+          2,
+          255,
+          255
+        ],
+        "expected_range_byte": 7.7688715206459165,
+        "metric_passed": true,
+        "byte_error": 0
+      }
+    },
+    {
+      "id": "overlap-229",
+      "y": 148,
+      "x": 180,
+      "same_camera_pair": true,
+      "none_to_all_matching_2mm": true,
+      "plane": {
+        "id": "overlap-229",
+        "profile": "plane",
+        "y": 148,
+        "x": 180,
+        "domain": true,
+        "virtual_kind": 1,
+        "sources": [
+          {
+            "camera": 2,
+            "uv": [
+              329.3454284667969,
+              235.872802734375
+            ],
+            "kind": 2,
+            "error_m": 0.5144353791890891,
+            "matched": {
+              "0.002": false,
+              "0.02": false
+            },
+            "rgb": [
+              168.1202417910099,
+              142.9290093705058,
+              137.2646354585886
+            ]
+          },
+          {
+            "camera": 3,
+            "uv": [
+              44.149566650390625,
+              236.0133056640625
+            ],
+            "kind": 2,
+            "error_m": 0.5144348809953998,
+            "matched": {
+              "0.002": false,
+              "0.02": false
+            },
+            "rgb": [
+              166.90621948242188,
+              141.79301046207547,
+              140.2663831859827
+            ]
+          }
+        ],
+        "native_pixel": [
+          3,
+          2,
+          255,
+          255
+        ],
+        "expected_range_byte": 3.001747727394104,
+        "metric_passed": true,
+        "byte_error": 0
+      },
+      "patch": {
+        "id": "overlap-229",
+        "profile": "supplied_local_patch",
+        "y": 148,
+        "x": 180,
+        "domain": true,
+        "virtual_kind": 1,
+        "sources": [
+          {
+            "camera": 2,
+            "uv": [
+              340.4511413574219,
+              205.93875122070312
+            ],
+            "kind": 1,
+            "error_m": 4.472688545031783e-06,
+            "matched": {
+              "0.002": true,
+              "0.02": true
+            },
+            "rgb": [
+              121.82311287894845,
+              134.79597654100507,
+              122.05506872478873
+            ]
+          },
+          {
+            "camera": 3,
+            "uv": [
+              41.960968017578125,
+              214.6672821044922
+            ],
+            "kind": 1,
+            "error_m": 8.662634144059676e-06,
+            "matched": {
+              "0.002": true,
+              "0.02": true
+            },
+            "rgb": [
+              108.98350923135877,
+              120.86802673339844,
+              113.45634386548772
+            ]
+          }
+        ],
+        "native_pixel": [
+          14,
+          2,
+          255,
+          255
+        ],
+        "expected_range_byte": 13.927949807606637,
+        "metric_passed": true,
+        "byte_error": 0
+      }
+    },
+    {
+      "id": "overlap-229",
+      "y": 156,
+      "x": 156,
+      "same_camera_pair": true,
+      "none_to_all_matching_2mm": true,
+      "plane": {
+        "id": "overlap-229",
+        "profile": "plane",
+        "y": 156,
+        "x": 156,
+        "domain": true,
+        "virtual_kind": 1,
+        "sources": [
+          {
+            "camera": 2,
+            "uv": [
+              373.41357421875,
+              239.47979736328125
+            ],
+            "kind": 1,
+            "error_m": 0.5698443727311464,
+            "matched": {
+              "0.002": false,
+              "0.02": false
+            },
+            "rgb": [
+              118.84384173154831,
+              121.68688929080963,
+              136.38908836245537
+            ]
+          },
+          {
+            "camera": 3,
+            "uv": [
+              84.35614776611328,
+              223.78367614746094
+            ],
+            "kind": 1,
+            "error_m": 0.49633285683195133,
+            "matched": {
+              "0.002": false,
+              "0.02": false
+            },
+            "rgb": [
+              101.32412487315014,
+              95.31993935292121,
+              76.58130150882062
+            ]
+          }
+        ],
+        "native_pixel": [
+          60,
+          2,
+          255,
+          255
+        ],
+        "expected_range_byte": 59.80778685363475,
+        "metric_passed": true,
+        "byte_error": 0
+      },
+      "patch": {
+        "id": "overlap-229",
+        "profile": "supplied_local_patch",
+        "y": 156,
+        "x": 156,
+        "domain": true,
+        "virtual_kind": 1,
+        "sources": [
+          {
+            "camera": 2,
+            "uv": [
+              379.609619140625,
+              212.78585815429688
+            ],
+            "kind": 1,
+            "error_m": 1.2108148286602083e-05,
+            "matched": {
+              "0.002": true,
+              "0.02": true
+            },
+            "rgb": [
+              113.74587295949459,
+              95.5581908300519,
+              127.46641144156456
+            ]
+          },
+          {
+            "camera": 3,
+            "uv": [
+              80.29154205322266,
+              205.0058135986328
+            ],
+            "kind": 1,
+            "error_m": 6.606472537847748e-06,
+            "matched": {
+              "0.002": true,
+              "0.02": true
+            },
+            "rgb": [
+              108.60969188588206,
+              134.17136950732674,
+              120.51198613538872
+            ]
+          }
+        ],
+        "native_pixel": [
+          38,
+          2,
+          255,
+          255
+        ],
+        "expected_range_byte": 38.613178677274846,
+        "metric_passed": true,
+        "byte_error": 1
+      }
+    },
+    {
+      "id": "overlap-229",
+      "y": 156,
+      "x": 164,
+      "same_camera_pair": true,
+      "none_to_all_matching_2mm": true,
+      "plane": {
+        "id": "overlap-229",
+        "profile": "plane",
+        "y": 156,
+        "x": 164,
+        "domain": true,
+        "virtual_kind": 1,
+        "sources": [
+          {
+            "camera": 2,
+            "uv": [
+              360.2449951171875,
+              236.29507446289062
+            ],
+            "kind": 1,
+            "error_m": 0.9846874972396368,
+            "matched": {
+              "0.002": false,
+              "0.02": false
+            },
+            "rgb": [
+              142.95154690369964,
+              175.47463527694345,
+              157.77158880978823
+            ]
+          },
+          {
+            "camera": 3,
+            "uv": [
+              71.94178771972656,
+              226.19239807128906
+            ],
+            "kind": 1,
+            "error_m": 0.57600884612475,
+            "matched": {
+              "0.002": false,
+              "0.02": false
+            },
+            "rgb": [
+              103.87495416146703,
+              121.2357789950911,
+              117.16339121689089
+            ]
+          }
+        ],
+        "native_pixel": [
+          55,
+          2,
+          255,
+          255
+        ],
+        "expected_range_byte": 54.23885628185235,
+        "metric_passed": true,
+        "byte_error": 1
+      },
+      "patch": {
+        "id": "overlap-229",
+        "profile": "supplied_local_patch",
+        "y": 156,
+        "x": 164,
+        "domain": true,
+        "virtual_kind": 1,
+        "sources": [
+          {
+            "camera": 2,
+            "uv": [
+              367.35107421875,
+              209.531005859375
+            ],
+            "kind": 1,
+            "error_m": 5.59809506106435e-06,
+            "matched": {
+              "0.002": true,
+              "0.02": true
+            },
+            "rgb": [
+              111.43222081661224,
+              89.09479439258575,
+              135.2893397808075
+            ]
+          },
+          {
+            "camera": 3,
+            "uv": [
+              68.65042114257812,
+              207.1031494140625
+            ],
+            "kind": 1,
+            "error_m": 3.628490251985213e-06,
+            "matched": {
+              "0.002": true,
+              "0.02": true
+            },
+            "rgb": [
+              115.86285867542028,
+              112.76865200325847,
+              117.95079103857279
+            ]
+          }
+        ],
+        "native_pixel": [
+          24,
+          2,
+          255,
+          255
+        ],
+        "expected_range_byte": 23.673857610672712,
+        "metric_passed": true,
+        "byte_error": 0
+      }
+    },
+    {
+      "id": "overlap-229",
+      "y": 156,
+      "x": 172,
+      "same_camera_pair": true,
+      "none_to_all_matching_2mm": true,
+      "plane": {
+        "id": "overlap-229",
+        "profile": "plane",
+        "y": 156,
+        "x": 172,
+        "domain": true,
+        "virtual_kind": 1,
+        "sources": [
+          {
+            "camera": 2,
+            "uv": [
+              345.3904113769531,
+              232.72254943847656
+            ],
+            "kind": 1,
+            "error_m": 0.7392553526371104,
+            "matched": {
+              "0.002": false,
+              "0.02": false
+            },
+            "rgb": [
+              53.339808656834066,
+              187.06693420000374,
+              104.1609794688411
+            ]
+          },
+          {
+            "camera": 3,
+            "uv": [
+              60.23448181152344,
+              228.45098876953125
+            ],
+            "kind": 1,
+            "error_m": 0.7348496557080417,
+            "matched": {
+              "0.002": false,
+              "0.02": false
+            },
+            "rgb": [
+              140.2204189710319,
+              118.85980579908937,
+              115.09362589940429
+            ]
+          }
+        ],
+        "native_pixel": [
+          88,
+          2,
+          255,
+          255
+        ],
+        "expected_range_byte": 86.88061031419784,
+        "metric_passed": true,
+        "byte_error": 1
+      },
+      "patch": {
+        "id": "overlap-229",
+        "profile": "supplied_local_patch",
+        "y": 156,
+        "x": 172,
+        "domain": true,
+        "virtual_kind": 1,
+        "sources": [
+          {
+            "camera": 2,
+            "uv": [
+              353.55078125,
+              206.153076171875
+            ],
+            "kind": 1,
+            "error_m": 4.597786083067966e-06,
+            "matched": {
+              "0.002": true,
+              "0.02": true
+            },
+            "rgb": [
+              122.47493648529053,
+              120.66943836212158,
+              134.57924365997314
+            ]
+          },
+          {
+            "camera": 3,
+            "uv": [
+              57.64695739746094,
+              209.1785888671875
+            ],
+            "kind": 1,
+            "error_m": 6.135343329939612e-06,
+            "matched": {
+              "0.002": true,
+              "0.02": true
+            },
+            "rgb": [
+              107.67385799437761,
+              131.39190511777997,
+              145.97399173118174
+            ]
+          }
+        ],
+        "native_pixel": [
+          15,
+          2,
+          255,
+          255
+        ],
+        "expected_range_byte": 14.801078490912914,
+        "metric_passed": true,
+        "byte_error": 0
+      }
+    },
+    {
+      "id": "overlap-229",
+      "y": 156,
+      "x": 180,
+      "same_camera_pair": true,
+      "none_to_all_matching_2mm": true,
+      "plane": {
+        "id": "overlap-229",
+        "profile": "plane",
+        "y": 156,
+        "x": 180,
+        "domain": true,
+        "virtual_kind": 1,
+        "sources": [
+          {
+            "camera": 2,
+            "uv": [
+              329.00592041015625,
+              228.8035888671875
+            ],
+            "kind": 1,
+            "error_m": 0.5406663230779872,
+            "matched": {
+              "0.002": false,
+              "0.02": false
+            },
+            "rgb": [
+              173.3409423828125,
+              143.2086181640625,
+              143.70727768540382
+            ]
+          },
+          {
+            "camera": 3,
+            "uv": [
+              49.35945129394531,
+              230.5367889404297
+            ],
+            "kind": 1,
+            "error_m": 0.9232516466973706,
+            "matched": {
+              "0.002": false,
+              "0.02": false
+            },
+            "rgb": [
+              145.15945249120705,
+              65.95091062108986,
+              101.85220398730598
+            ]
+          }
+        ],
+        "native_pixel": [
+          77,
+          2,
+          255,
+          255
+        ],
+        "expected_range_byte": 77.25770754297264,
+        "metric_passed": true,
+        "byte_error": 0
+      },
+      "patch": {
+        "id": "overlap-229",
+        "profile": "supplied_local_patch",
+        "y": 156,
+        "x": 180,
+        "domain": true,
+        "virtual_kind": 1,
+        "sources": [
+          {
+            "camera": 2,
+            "uv": [
+              338.30572509765625,
+              202.7294158935547
+            ],
+            "kind": 1,
+            "error_m": 8.157292498910163e-06,
+            "matched": {
+              "0.002": true,
+              "0.02": true
+            },
+            "rgb": [
+              133.88824581727386,
+              143.6307795792818,
+              122.69215630739927
+            ]
+          },
+          {
+            "camera": 3,
+            "uv": [
+              47.38409423828125,
+              211.20303344726562
+            ],
+            "kind": 1,
+            "error_m": 5.772206253116141e-06,
+            "matched": {
+              "0.002": true,
+              "0.02": true
+            },
+            "rgb": [
+              136.9721522256732,
+              128.2927332688123,
+              109.49563562497497
+            ]
+          }
+        ],
+        "native_pixel": [
+          16,
+          2,
+          255,
+          255
+        ],
+        "expected_range_byte": 15.338046310469508,
+        "metric_passed": true,
+        "byte_error": 1
+      }
+    },
+    {
+      "id": "overlap-229",
+      "y": 156,
+      "x": 188,
+      "same_camera_pair": true,
+      "none_to_all_matching_2mm": true,
+      "plane": {
+        "id": "overlap-229",
+        "profile": "plane",
+        "y": 156,
+        "x": 188,
+        "domain": true,
+        "virtual_kind": 1,
+        "sources": [
+          {
+            "camera": 2,
+            "uv": [
+              311.48480224609375,
+              224.6346893310547
+            ],
+            "kind": 2,
+            "error_m": 0.5160147851018865,
+            "matched": {
+              "0.002": false,
+              "0.02": false
+            },
+            "rgb": [
+              112.35913471784443,
+              121.93933638650924,
+              176.73057243973017
+            ]
+          },
+          {
+            "camera": 3,
+            "uv": [
+              39.37507629394531,
+              232.4404296875
+            ],
+            "kind": 2,
+            "error_m": 0.5160134331571886,
+            "matched": {
+              "0.002": false,
+              "0.02": false
+            },
+            "rgb": [
+              110.6657744050026,
+              129.49847720563412,
+              172.01607659459114
+            ]
+          }
+        ],
+        "native_pixel": [
+          8,
+          2,
+          255,
+          255
+        ],
+        "expected_range_byte": 7.5591408191248775,
+        "metric_passed": true,
+        "byte_error": 0
+      },
+      "patch": {
+        "id": "overlap-229",
+        "profile": "supplied_local_patch",
+        "y": 156,
+        "x": 188,
+        "domain": true,
+        "virtual_kind": 1,
+        "sources": [
+          {
+            "camera": 2,
+            "uv": [
+              321.8966979980469,
+              199.36134338378906
+            ],
+            "kind": 1,
+            "error_m": 6.7792361113621265e-06,
+            "matched": {
+              "0.002": true,
+              "0.02": true
+            },
+            "rgb": [
+              109.41446630097926,
+              100.9881423059851,
+              146.9245857601054
+            ]
+          },
+          {
+            "camera": 3,
+            "uv": [
+              37.91252136230469,
+              213.15420532226562
+            ],
+            "kind": 1,
+            "error_m": 9.819891668260397e-06,
+            "matched": {
+              "0.002": true,
+              "0.02": true
+            },
+            "rgb": [
+              97.21154251461849,
+              111.38793126028031,
+              141.11859581852332
+            ]
+          }
+        ],
+        "native_pixel": [
+          13,
+          2,
+          255,
+          255
+        ],
+        "expected_range_byte": 12.20292378636077,
+        "metric_passed": true,
+        "byte_error": 1
+      }
+    },
+    {
+      "id": "overlap-229",
+      "y": 164,
+      "x": 164,
+      "same_camera_pair": true,
+      "none_to_all_matching_2mm": true,
+      "plane": {
+        "id": "overlap-229",
+        "profile": "plane",
+        "y": 164,
+        "x": 164,
+        "domain": true,
+        "virtual_kind": 1,
+        "sources": [
+          {
+            "camera": 2,
+            "uv": [
+              356.204833984375,
+              230.1841278076172
+            ],
+            "kind": 1,
+            "error_m": 1.199974306847955,
+            "matched": {
+              "0.002": false,
+              "0.02": false
+            },
+            "rgb": [
+              98.78878598287702,
+              84.59818621352315,
+              136.03758463263512
+            ]
+          },
+          {
+            "camera": 3,
+            "uv": [
+              74.25762176513672,
+              222.2464141845703
+            ],
+            "kind": 1,
+            "error_m": 0.7476399467578932,
+            "matched": {
+              "0.002": false,
+              "0.02": false
+            },
+            "rgb": [
+              49.16441834473517,
+              175.70053331321105,
+              130.07171904540155
+            ]
+          }
+        ],
+        "native_pixel": [
+          91,
+          2,
+          255,
+          255
+        ],
+        "expected_range_byte": 91.1023470996879,
+        "metric_passed": true,
+        "byte_error": 0
+      },
+      "patch": {
+        "id": "overlap-229",
+        "profile": "supplied_local_patch",
+        "y": 164,
+        "x": 164,
+        "domain": true,
+        "virtual_kind": 1,
+        "sources": [
+          {
+            "camera": 2,
+            "uv": [
+              362.4923095703125,
+              206.28030395507812
+            ],
+            "kind": 1,
+            "error_m": 9.552979172845371e-06,
+            "matched": {
+              "0.002": true,
+              "0.02": true
+            },
+            "rgb": [
+              121.22656934335828,
+              102.35368606820703,
+              130.20444693043828
+            ]
+          },
+          {
+            "camera": 3,
+            "uv": [
+              71.2642822265625,
+              204.7837371826172
+            ],
+            "kind": 1,
+            "error_m": 9.198709409136567e-07,
+            "matched": {
+              "0.002": true,
+              "0.02": true
+            },
+            "rgb": [
+              123.45723535120487,
+              148.65340954437852,
+              136.09399682469666
+            ]
+          }
+        ],
+        "native_pixel": [
+          46,
+          2,
+          255,
+          255
+        ],
+        "expected_range_byte": 46.29972347617149,
+        "metric_passed": true,
+        "byte_error": 0
+      }
+    },
+    {
+      "id": "overlap-229",
+      "y": 164,
+      "x": 172,
+      "same_camera_pair": true,
+      "none_to_all_matching_2mm": true,
+      "plane": {
+        "id": "overlap-229",
+        "profile": "plane",
+        "y": 164,
+        "x": 172,
+        "domain": true,
+        "virtual_kind": 1,
+        "sources": [
+          {
+            "camera": 2,
+            "uv": [
+              342.9658203125,
+              227.01637268066406
+            ],
+            "kind": 1,
+            "error_m": 0.950792291900918,
+            "matched": {
+              "0.002": false,
+              "0.02": false
+            },
+            "rgb": [
+              127.17970734834671,
+              67.50031696259975,
+              175.00248941779137
+            ]
+          },
+          {
+            "camera": 3,
+            "uv": [
+              63.654815673828125,
+              224.28219604492188
+            ],
+            "kind": 1,
+            "error_m": 0.935179613390736,
+            "matched": {
+              "0.002": false,
+              "0.02": false
+            },
+            "rgb": [
+              138.32128803804517,
+              152.62323100492358,
+              143.32176157273352
+            ]
+          }
+        ],
+        "native_pixel": [
+          84,
+          2,
+          255,
+          255
+        ],
+        "expected_range_byte": 85.12291404232383,
+        "metric_passed": true,
+        "byte_error": 1
+      },
+      "patch": {
+        "id": "overlap-229",
+        "profile": "supplied_local_patch",
+        "y": 164,
+        "x": 172,
+        "domain": true,
+        "virtual_kind": 1,
+        "sources": [
+          {
+            "camera": 2,
+            "uv": [
+              350.11651611328125,
+              203.3339385986328
+            ],
+            "kind": 1,
+            "error_m": 1.432689026654612e-06,
+            "matched": {
+              "0.002": true,
+              "0.02": true
+            },
+            "rgb": [
+              132.45922098588198,
+              118.62158839125186,
+              114.3574870172888
+            ]
+          },
+          {
+            "camera": 3,
+            "uv": [
+              61.2711181640625,
+              206.63571166992188
+            ],
+            "kind": 1,
+            "error_m": 9.99497396562871e-06,
+            "matched": {
+              "0.002": true,
+              "0.02": true
+            },
+            "rgb": [
+              130.98826218396425,
+              123.64714392647147,
+              129.5856506228447
+            ]
+          }
+        ],
+        "native_pixel": [
+          16,
+          2,
+          255,
+          255
+        ],
+        "expected_range_byte": 15.228163605555892,
+        "metric_passed": true,
+        "byte_error": 1
+      }
+    },
+    {
+      "id": "overlap-229",
+      "y": 164,
+      "x": 180,
+      "same_camera_pair": true,
+      "none_to_all_matching_2mm": true,
+      "plane": {
+        "id": "overlap-229",
+        "profile": "plane",
+        "y": 164,
+        "x": 180,
+        "domain": true,
+        "virtual_kind": 1,
+        "sources": [
+          {
+            "camera": 2,
+            "uv": [
+              328.6220703125,
+              223.64505004882812
+            ],
+            "kind": 1,
+            "error_m": 0.703883988858682,
+            "matched": {
+              "0.002": false,
+              "0.02": false
+            },
+            "rgb": [
+              142.6636598110199,
+              71.99374082684517,
+              96.58425909280777
+            ]
+          },
+          {
+            "camera": 3,
+            "uv": [
+              53.683868408203125,
+              226.2030029296875
+            ],
+            "kind": 1,
+            "error_m": 1.1303448667898466,
+            "matched": {
+              "0.002": false,
+              "0.02": false
+            },
+            "rgb": [
+              147.6359501555562,
+              116.35077811032534,
+              112.5962773039937
+            ]
+          }
+        ],
+        "native_pixel": [
+          44,
+          2,
+          255,
+          255
+        ],
+        "expected_range_byte": 44.35703728348017,
+        "metric_passed": true,
+        "byte_error": 0
+      },
+      "patch": {
+        "id": "overlap-229",
+        "profile": "supplied_local_patch",
+        "y": 164,
+        "x": 180,
+        "domain": true,
+        "virtual_kind": 1,
+        "sources": [
+          {
+            "camera": 2,
+            "uv": [
+              336.69207763671875,
+              200.3859405517578
+            ],
+            "kind": 1,
+            "error_m": 1.0226833019798623e-05,
+            "matched": {
+              "0.002": true,
+              "0.02": true
+            },
+            "rgb": [
+              130.19260511826724,
+              122.17165595013648,
+              137.6734851533547
+            ]
+          },
+          {
+            "camera": 3,
+            "uv": [
+              51.84306335449219,
+              208.46261596679688
+            ],
+            "kind": 1,
+            "error_m": 2.342589344131324e-07,
+            "matched": {
+              "0.002": true,
+              "0.02": true
+            },
+            "rgb": [
+              128.46095363469794,
+              121.11599691631272,
+              126.15289131458849
+            ]
+          }
+        ],
+        "native_pixel": [
+          12,
+          2,
+          255,
+          255
+        ],
+        "expected_range_byte": 11.520593838766217,
+        "metric_passed": true,
+        "byte_error": 0
+      }
+    },
+    {
+      "id": "overlap-229",
+      "y": 172,
+      "x": 172,
+      "same_camera_pair": true,
+      "none_to_all_matching_2mm": true,
+      "plane": {
+        "id": "overlap-229",
+        "profile": "plane",
+        "y": 172,
+        "x": 172,
+        "domain": true,
+        "virtual_kind": 1,
+        "sources": [
+          {
+            "camera": 2,
+            "uv": [
+              340.9970703125,
+              222.670166015625
+            ],
+            "kind": 1,
+            "error_m": 1.1695313108273186,
+            "matched": {
+              "0.002": false,
+              "0.02": false
+            },
+            "rgb": [
+              158.9065043926239,
+              138.943745136261,
+              101.0615336894989
+            ]
+          },
+          {
+            "camera": 3,
+            "uv": [
+              66.4970703125,
+              220.93580627441406
+            ],
+            "kind": 1,
+            "error_m": 1.141304838146068,
+            "matched": {
+              "0.002": false,
+              "0.02": false
+            },
+            "rgb": [
+              91.33314055204391,
+              164.3414454907179,
+              166.83366319537163
+            ]
+          }
+        ],
+        "native_pixel": [
+          68,
+          2,
+          255,
+          255
+        ],
+        "expected_range_byte": 67.57336384057999,
+        "metric_passed": true,
+        "byte_error": 0
+      },
+      "patch": {
+        "id": "overlap-229",
+        "profile": "supplied_local_patch",
+        "y": 172,
+        "x": 172,
+        "domain": true,
+        "virtual_kind": 1,
+        "sources": [
+          {
+            "camera": 2,
+            "uv": [
+              347.41790771484375,
+              201.18299865722656
+            ],
+            "kind": 1,
+            "error_m": 1.2278534615072605e-06,
+            "matched": {
+              "0.002": true,
+              "0.02": true
+            },
+            "rgb": [
+              126.60001160483807,
+              95.14823889080435,
+              121.74867674149573
+            ]
+          },
+          {
+            "camera": 3,
+            "uv": [
+              64.26199340820312,
+              204.59034729003906
+            ],
+            "kind": 1,
+            "error_m": 1.0936492084800852e-05,
+            "matched": {
+              "0.002": true,
+              "0.02": true
+            },
+            "rgb": [
+              128.21662507019937,
+              129.42941041244194,
+              116.34879743820056
+            ]
+          }
+        ],
+        "native_pixel": [
+          34,
+          2,
+          255,
+          255
+        ],
+        "expected_range_byte": 34.28117152163759,
+        "metric_passed": true,
+        "byte_error": 0
+      }
+    }
+  ],
+  "figure_sha256": "cfe704e7c5e630d3fa8ec3fce92a23d046d69f8ae5b40706d9b2919a5fbafb0c",
+  "conclusion": "bounded control complete; next work is ConfigService/library/GUI; remaining research explicitly deferred"
+}

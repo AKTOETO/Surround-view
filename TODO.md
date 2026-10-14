@@ -1,5 +1,7 @@
 # Оставшиеся работы
 
+14.10.2026: последний bounded target-overlap control завершён: independent preflight/capture726/730 target pixels,3520/3520 metric и240/240 anchor checks;26 same-coordinate plane-none→patch-all geometry contrasts. Target RGB MAE33.65→23.85 /33.83→24.08. Следующая работа — ConfigService/library/GUI, оставшиеся исследования отложены до общего ExperimentRunner. [[validation/TARGET_OVERLAP]], §4.92.
+
 14.10.2026: baseline двух новых текстурированных Blender scenes выполнен: 3520/3520 metric checks, 240/240 anchor checks (120 уникальных rays), 1197 paired memberships: 983 all-matching /206 mixed /8 none-matching. Target two-camera-visible interior пуст; balanced target overlap, filter/resolution и exposure/noise matrix остаются обязательными. Final RGB MAE отделена от centre labels и supplementary post-hoc common-domain ROI. [[validation/TEXTURED_SOURCE]], §4.91.
 
 14.10.2026: matched current-Mesa source truth выполнена на36 native captures:78/78 geometry anchors,162/162 primary и3520/3520 lattice metric checks. Inventory1103 paired memberships содержит1101 all-centres matching и2 повторения одной nonmatching coordinate; same-pair RGB ranges1/20 дают counterexample простому confidence threshold. Historical failed2/162 сохранён; далее independent texture-rich scenes, exposure/filter ablations и separate final RGB/ghost/seam evaluation ([[validation/MESA_SOURCE_TRUTH]], §4.90).
@@ -14,7 +16,7 @@
 
 ## Приоритет 1 — доказать качество решения для диплома
 
-Ближайший исследовательский шаг: обеспечить независимо проверенный two-camera overlap на самом target (в новых scenes211/223 target interior n0), получить balanced matching/mixed/nonmatching controls; затем filter/resolution convergence, exposure/noise sensitivity и отдельную final RGB/ghost/seam evaluation. Первый baseline двух неоднородных сцен выполнен ([[validation/TEXTURED_SOURCE]]). Matched current-backend truth и первый paired inventory завершены ([[validation/MESA_SOURCE_TRUTH]]); centre geometry, filter contamination и visual seam не объединять одним confidence label. Простой high-RGB-range threshold не сертификат centre correctness, singleton остаётся undefined. Historical failed2/162 сохранён; driver/raster механизм и обоснованные endpoint uncertainty bounds — отдельные controls. [[validation/SOURCE_DISAGREEMENT]].
+Ближайшая работа: перейти к ConfigService (coherent read/schema/validate/revision-aware apply), typed sv-client-lib и GUI controls. Ограниченный target-overlap control завершён ([[validation/TARGET_OVERLAP]]); новые исследовательские ветви до перехода к коду не открывать. Filter/resolution, exposure/noise, temporal и final seam/ghost evaluation остаются открытыми для будущего общего ExperimentRunner. Полное завершение E-STITCH-01 не заявляется.
 
 Исследовательские инструменты и первые синтетические прогоны добавлены, но аудит коммитов `ee1bcc5e..HEAD` выявил, что часть опубликованных метрик не подтверждает заявленные выводы. Приоритет 1 **не закрыт**. Exit criteria для полноценного заключения: [[planning/ROADMAP#Критерии готовности исследовательского заключения]]. Проверенные ограничения и расхождения: [[planning/AUDIT]].
 

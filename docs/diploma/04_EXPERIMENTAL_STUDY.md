@@ -4674,3 +4674,43 @@ Direct RGB включает области за finite carrier и недосту
 Следующий необходимый этап — independently verified target overlap и balanced matching/mixed/nonmatching controls; затем filter/resolution, exposure/noise ablations и самостоятельные seam/ghost criteria. Следует сохранять область применимости каждого вывода: centre geometry, source filtering и final image quality различны. Natural-object holdout, temporal stability, физические камеры и Aurora остаются открытыми.
 
 Полный raw report и captures сохраняются локально; tracked [[validation/baselines/textured_source_v1.json]] содержит hashes,240 anchor checks,1197 paired cells, summaries/thresholds и32 RGB ROI measurements. Шесть новых tests и прежние matched-ray/sampler controls прошли13/13; selected CTest4/4 за0.69s. Product code не менялся, новый full regression не заявляется. Повторение и provenance: [[validation/TEXTURED_SOURCE]].
+
+
+## 4.92. Завершающий контроль двухкамерной видимости препятствия
+
+### 4.92.1. Ограниченная постановка и gate
+
+Чтобы устранить n0 target-overlap из §4.91, выполнен один заранее ограниченный опыт, после которого работа переходит к продуктовым ConfigService/library/GUI. Протокол [[research/TARGET_OVERLAP_PROTOCOL]] и plan зафиксированы в `6ce7bd8` до измерений. В Blender Python отсутствовал SciPy; импорт остановился до preflight/capture. Эквивалентная NumPy erosion и retry plan зафиксированы в `45de94d`, без изменения геометрических условий или RGB-критериев.
+
+Две новые instances seeds227/229 используют низкий box1.2×1.2×0.5m при x=±3.4,y=2.7,z=0.25m, поворот±0.12rad и новые ошибки монтажа. Для обеих scenes предварительно проверяется object-ID target interior erosion1px ∩ source visibility≥2 cameras. Frozen gate не менее16pixels пройден:726/730pixels, masks9/12 означают пары0+3/2+3. После RGB capture независимый эталон воспроизвёл те же counts. Таким образом, пустой target overlap устранён для этого control до интерпретации качества изображения.
+
+### 4.92.2. Парный native control
+
+Сохраняются прежние emission textures, Cycles8 samples, cube256, fisheye400, output320×180, true physical calibration и один frame. Сравниваются plane и supplied local patch на coarse mesh32×45; fusion default, view и inputs внутри пары одинаковы. Уточнение mesh или поиск дополнительных сцен после просмотра RGB не выполнялись.
+
+Все3520 metric checks прошли, max error1byte;240/240 anchor checks повторяют120 уникальных Blender rays, max error8.68µm при tolerance0.2mm. Virtual semantic kind совпал с independent object-ID для2744 in-domain cells. Native ordinary RGBA parity, input/config/manifest identity, source fingerprint и actual Mesa backend проверены.
+
+Таблица4.95 — Подтверждённый overlap target и независимая final RGB MAE в byte units.
+
+|Scene|Two-camera target interior n|MAE plane|MAE supplied patch|None-matching plane → all-matching patch, target lattice|
+|---|---:|---:|---:|---:|
+|227|726|33.6469|23.8494|13→13|
+|229|730|33.8251|24.0785|13→13|
+
+На26 одинаковых lattice coordinates между profiles совпадают пары камер. При point tolerance2mm plane даёт26 memberships без matching centres, patch —26 memberships с двумя matching centres. Classification при20mm совпадает. Это observed balanced within-coordinate contrast: геометрическое условие меняется при одинаковых camera RGB и independent virtual truth. Точки коррелированы и не являются26 независимыми trials. Дополнительного отбора по D или RGB MAE нет.
+
+### 4.92.3. Геометрическое улучшение не устраняет filtered RGB residual
+
+MAE вычисляется по формуле §4.91 отдельно на independent target interior ∩ visibility≥2 cameras; общий native carrier domain сохраняет те же n/MAE. Supplied patch уменьшает final RGB ошибку примерно на29% в обеих scenes. Но residual≈24byte остаётся заметным, а source disagreement plane3–119/patch8–52byte не становится нулевым при matching centres.
+
+![Target overlap control](figures/experiments/target_overlap_comparison.png)
+
+Рисунок4.173 — Independent direct RGB и native outputs при подтверждённом target overlap. Crop задан independent object mask с12px margin; nearest display показывает исходный raster без повышения его разрешения. Заметные различия filtering не объясняются одним centre-ray matching.
+
+Следовательно, supplied geometry исправляет соответствие выбранных source centres и снижает RGB residual на этом control, но не является готовым general reconstruction, confidence threshold или итоговым ranking всех fusion algorithms. Влияние filter/resolution, exposure/noise, временной согласованности и natural objects не изолировано.
+
+### 4.92.4. Граница исследовательского этапа
+
+Ограниченный control завершён, n0 gap закрыт для двух instances; новые исследовательские ответвления не предшествуют следующей продуктовой работе. Далее разрабатываются ConfigService, typed API sv-client-lib и управление/сценарии в GUI. Оставшиеся исследования должны выполняться через общий ExperimentRunner и сохраняются открытыми в планах. Реальные камеры и Aurora требуют отдельного стенда; E-STITCH-01 целиком не объявляется завершённым.
+
+Tracked [[validation/baselines/target_overlap_v1.json]] сохраняет preflight/hashes, anchors,32 RGB ROIs и26 paired coordinates с обеими conditions. Полные raw captures остаются локально; прежние failed reports не изменяются. Воспроизведение и ограничения: [[validation/TARGET_OVERLAP]].
