@@ -220,3 +220,7 @@ Tracked трёхкадровый paired temporal опыт повторён по�
 workers/reconnect и apply/restart policy должны быть доступны из client library/GUI. Сначала
 fake-adapter integration, затем реальные камеры/драйверы и Aurora. Это не реализовано текущим
 общим source.type. Контракт/границы и приёмка: [[engineering/SOURCES]], [[../TODO]].
+
+## Финальная оптимизация и рекомендации РБПО
+
+Перед финальной приёмкой выполнить code-aligned hardening audit по [[planning/HARDENING]]: перенести применимые меры из RBPO, проверить resource/latency budgets, negative/fuzz cases и target permissions/signatures. R/T IDs учебной модели не означают доказанную уязвимость текущего кода. TMR/DTLS/VLAN/WORM и иные расширения требуют отдельного решения о deployment scope.

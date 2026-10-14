@@ -63,6 +63,10 @@
 15. Подготовить отдельные Aurora target packages GLM/OpenCV требуемых ABI/версий, проверить SDK BuildRequires и `mb2 installdeps`, собрать GPU/CPU RPM без FetchContent и пройти rpm-validator, установку и запуск на устройстве. Linux RPM и developer CMake fallback уже описаны в [[engineering/AURORA]]; target SDK/устройства в текущей проверке нет.
 16. Сравнить одинаковую native test suite на Aurora с сохранёнными PC baselines, доступными API/extensions, задержкой, памятью и тепловыми условиями. Обеспечить сквозной сбор метрик на финальном стенде по сценариям S0–S5 через симулятор для сопоставления целевого стенда с базовой конфигурацией ПК. Проверить `.desktop` и icon payload на целевом validator.
 
+## Финальная оптимизация и защита
+
+После продуктовых задач сверить и применить рекомендации РБПО: protocol fuzz/DoS budgets, аутентификация/роли, producer integrity/anti-replay, calibration provenance/audit, device/process permissions, trace bounds и подписанные Aurora packages. Для каждого риска нужен проверочный сценарий; TMR/арбитр и сетевую инфраструктуру рассматривать отдельными ADR, не переносить учебную архитектуру автоматически. План с R/T/CWE mappings: [[planning/HARDENING]].
+
 ## Действия автора и финальная приёмка
 
 - Согласовать с руководителем постановку, вклад и критерии диплома; подтвердить календарь защиты и доступ к целевому стенду.
