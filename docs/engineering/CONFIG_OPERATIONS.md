@@ -124,7 +124,7 @@ historical revision≤current ACK revision. Callback исполняется на
 
 Catalog schema2 прежнего config_apply сохраняет operation_ids_supported=false для **этой команды**.
 Две новые команды обнаруживаются по отдельной HELLO capability; каталог групп не заменяет полный
-каталог команд [[engineering/PROTOCOL_SCENARIOS]]. GUI reconciliation binding ещё предстоит.
+каталог команд [[engineering/PROTOCOL_SCENARIOS]]. GUI fusion/surface reconciliation реализован: [[engineering/CONFIG_SERVICE#GUI sv-simulator: формы и восстановление результата]].
 
 ```sh
 build/svctl --unix /tmp/sv-prototype command config_read

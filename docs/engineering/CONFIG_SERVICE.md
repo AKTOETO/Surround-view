@@ -93,7 +93,7 @@ build/svctl --unix /tmp/sv-prototype command config_read
 build/svctl --tcp 127.0.0.1 53101 53102 command config_read
 ```
 
-JSON-ввод для этого запроса не нужен. GUI binding/read forms — следующий этап, не свойство текущего UI.
+JSON-ввод для этого запроса не нужен. GUI read/edit/apply для fusion/surface реализованы в sv-simulator; workflow описан ниже.
 
 ## Проверки первого read-среза и следующие шаги
 
@@ -108,7 +108,7 @@ configuration_snapshot/config_store_persistence/client_output/experiment_lease/o
 сокеты; проверка повторена вне sandbox. Full suite и Aurora в этом шаге не проверялись.
 
 Следующий этап после config_apply и process-scoped apply-once/status: GUI reconciliation; затем
-подключить формы GUI и сценарный runner. API должен различать временные settings, persisted
+расширить GUI на остальные группы и сценарный runner. API должен различать временные settings, persisted
 settings, session state и restart-required settings. Исторические configure_* не превращать
 в автоматически сохраняемые операции без явного контракта.
 
@@ -318,4 +318,72 @@ cached uploads. Output-products integration содержит12 cases: runtime/pe
 failure с неизменным RGBA, lease rejection, stale revision и typed Unix/TCP read→validate→apply.
 Target Aurora и crash durability этим Linux-прогоном не подтверждаются.
 
-Process-scoped журнал операций, новый server_instance_id в snapshot и сценарий восстановления после потерянного ACK описаны в [[engineering/CONFIG_OPERATIONS]]. Общий GUI binding и durable operation recovery остаются планом.
+Process-scoped журнал операций, новый server_instance_id в snapshot и сценарий восстановления после потерянного ACK описаны в [[engineering/CONFIG_OPERATIONS]]. GUI binding fusion/surface и process-scoped reconciliation реализованы ниже; durable operation recovery остаётся планом.
+
+## GUI sv-simulator: формы и восстановление результата
+
+14.10.2026. Кнопка **«Конфигурация»** в верхней панели прокручивает к редактору. При подключении
+GUI читает config_read/catalog и загружает active draft, привязанный к revision. Вкладки:
+
+- **Сшивка:** семь алгоритмов, diagnostics, edge width/angle power/smoothness, уровни и boundary
+  пирамиды, binary/alpha-expansion seam solver, fallback hatch. Режимы и числовые пределы берутся
+  из server catalog; defaults отображаются из canonical fusion в ACK.
+- **Носитель:** четыре server geometry types, их required размеры/сегменты и rectangular uniform
+  cells. Plane выбирается высотой края0. Geometry cell bounds берутся из каталога; начальный UI
+  диапазон метрических размеров0..100m не заменяет server constraints и расширяется для большего
+  уже загруженного значения. Cross-field/view/pixel-budget checks выполняет сервер.
+- **Операция:** ID, outcome, status check, explicit retry неизменного запроса, таблица requested/
+  active/persisted полей. При смене instance — явная сверка и checkbox подтверждения; старый запрос
+  не отправляется с новым instance.
+
+![Формы параметров ConfigService](figures/configuration-editor.png)
+
+Рисунок — Панель сшивки и явный выбор runtime/persist в sv-simulator. Снимок получен native QML
+тестом с контрактным fixture; это иллюстрация интерфейса, не измерение на целевом устройстве.
+
+**Порядок работы:** обновить snapshot → загрузить active в формы → изменить поля → проверить
+черновик → применить временно либо подтвердить «Сохранить весь active snapshot» и применить с
+сохранением. Validation не резервирует revision; apply повторяет server validation/preparation.
+Checkbox сбрасывается после отправки сохранения. Клиент не открывает server config file.
+
+Обновление snapshot само по себе не перезаписывает существующий черновик. Кнопка загрузки active
+явно отбрасывает несохранённые правки. Успешный новый commit перечитывает текущую конфигурацию и
+обновляет draft/base; отказ сохраняет черновик для исправления. Новый read сбрасывает validation
+indicator. Сервер может отвергнуть stale revision даже после успешной validation.
+
+`ConfigurationEditor` — отдельная GUI-thread модель: configuration_editor.cpp хранит чтение/
+connection state, configuration_draft.cpp — формы/replacement groups, configuration_operation.cpp —
+retained intent и reconciliation. QML изменяет QVariant поля и вызывает typed sv-client-lib API;
+product pipeline не перенесён в GUI. Отправляются изменённые группы; fusion-only edit не отправляет
+surface и не вызывает лишнюю mesh preparation. No-edit save отправляет fusion replacement, сервер
+сохраняет весь active snapshot согласно прежнему контракту.
+
+При transport failure intent/ID сохраняются в памяти GUI, редактирование и новые apply блокируются.
+После reconnect сначала read instance, затем status: committed/rejected завершают ожидание и
+обновляют snapshot, not_found разрешает **явный** retry прежнего intent. Pending/unknown не означает
+отказа. Смена instance запрещает retry; таблица и ручное подтверждение позволяют завершить сверку.
+Библиотека не выполняет автоматический replay. Закрытие GUI теряет intent: durable GUI checkpoint
+и server journal ещё не реализованы. Смена endpoint также сохраняет unresolved operation и
+проверяет instance, а не перепривязывает её к другому серверу.
+
+Optional reference_height/local_support/source_occlusion поля сохраняются при правках текущего
+носителя; отдельных форм для них пока нет. Выбор другого типа носителя создаёт начальный draft
+и явно сбрасывает optional поля. Другие root groups, lease-aware disabling всех кнопок, единый
+ExperimentRunner UI и telemetry charts остаются задачами. Старый RuntimeSettings adapter/API
+сохранён для compatibility/tests, но видимая панель больше не требует JSON ввода.
+
+GUI требует server config_operations_v1 для apply-once. Старый сервер может отдать read/catalog,
+но кнопки mutation без capability/instance отключены; небезопасного fallback на legacy apply нет.
+Для laptop сборки нужны Qt Quick Controls2 (QML≥2.2) и Layouts. SV_SIMULATOR включён по умолчанию
+только при SV_CLIENT=ON вне Aurora; Aurora spec явно задаёт OFF и не устанавливает laptop GUI.
+Host configure touch-only не является проверкой Aurora SDK/runtime.
+
+Проверки: пять новых native model tests (retained intent, lock after uncertain outcome, same-instance
+status-only recovery, restart reconciliation, preservation optional fields и unrelated ACK), native
+Unix/TCP read→validate→temporary apply→restore, отдельный native persist workflow с проверкой
+server file в integration harness; QML tabs/carrier selection/render smoke без binding warnings.
+Selected CTest client_transports/output_products/simulator_runtime_errors/simulator_session_state/simulator_configuration_qml: **5/5 за29.91s**; output suite15 live cases. Полная suite61 зарегистрирована, но в этом GUI-срезе целиком повторно не запускалась.
+
+В persistence regression baseline — **config_read.active**, уже разобранный сервером. Host Boost.JSON
+reader в default number mode может округлять последние разряды исходных double; побайтовое
+сохранение исходного JSON и численная round-trip policy этим UI-срезом не реализованы.

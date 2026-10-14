@@ -883,4 +883,63 @@ S --> C : Frame с actual settings / seam_optimization
 
 Публичные logical structs содержат unary/edge graph, результат и компактную summary; graph algorithm не зависит от Qt. Hard constraints исключают invalid camera labels. Все capacities int64, min-cut reduction использует удвоенную energy без половинного округления. До max-flow проверяется общий capacity bound, включая повторные forbidden costs; это закрывает overflow, который нельзя обнаружить проверкой одного edge. Флаги/energy передаются через renderer в metadata, сбрасываются на новом кадре и не остаются после возврата к legacy mode.
 
-Typed FusionSettings, scenario parser, simulator adapter и native CLI сохраняют optional solver. Полная Linux suite51/51; отдельные tests сравнивают exact moves с exhaustive oracle, сохраняют global gap и проверяют unavailable labels/anchors. Формулы и отрицательные результаты: [[validation/MULTILABEL_SEAM]], §4.46. Friendly GUI selector и independent quality qualification остаются следующими задачами.
+Typed FusionSettings, scenario parser, simulator adapter и native CLI сохраняют optional solver. Полная Linux suite51/51; отдельные tests сравнивают exact moves с exhaustive oracle, сохраняют global gap и проверяют unavailable labels/anchors. Формулы и отрицательные результаты: [[validation/MULTILABEL_SEAM]], §4.46. Friendly GUI selector теперь реализован (§3.26); independent quality qualification остаётся открытой.
+
+
+## 3.26 Управление конфигурацией и неопределённый результат команды
+
+На 14.10.2026 ConfigService позволяет читать согласованные active/persisted snapshots, получать
+каталог fusion/surface, проверять replacement groups и атомарно применять их с explicit persistence.
+Server prepare→revision recheck→optional atomic rename→noexcept publication сохраняет прежний renderer
+при отказе подготовки или записи. Persist=true сохраняет весь active snapshot; crash durability/fsync
+и persistent operation journal этим прототипом не обеспечиваются.
+
+Ноутбучный sv-simulator предоставляет формы алгоритмов и геометрии с server catalog, отдельными
+validation/runtime/save actions и вкладкой результата операции. Редактор не открывает config file;
+все запросы проходят через sv-client-lib. Видимые поля разделены по группам, обычная работа не
+требует ручного JSON. При смене типа геометрии создаётся новый draft; optional support/occlusion
+поля сохраняются только при правках текущего типа, их отдельные формы остаются задачей.
+
+![Формы сшивки и выбор сохранения](../engineering/figures/configuration-editor.png)
+
+Рисунок 3.33 — Панель ConfigService с параметрами сшивки и подтверждением полного сохранения.
+Иллюстрация получена QML regression с контрактным fixture, а не с аппаратной платформы Аврора.
+
+При потере ACK клиент не может заключить, была ли выполнена команда. Для управления этой
+неопределённостью сервер поддерживает process-scoped apply-once/status: GUI хранит instance,
+operation ID, base revision, immutable groups и persistence policy до отправки. Same-ID replay
+возвращает retained result, другой intent отклоняется. Журнал ограничен128 записями без eviction;
+после restart instance меняется, старый запрос нельзя автоматически выполнить в новом процессе.
+GUI intent сохраняется только в памяти текущего приложения.
+
+```plantuml
+@startuml
+[*] --> Editing : read/catalog + active draft
+Editing --> Validated : config_validate accepted
+Validated --> Editing : field edited / snapshot refreshed
+Editing --> Awaiting : explicit apply-once(runtime/persist)
+Validated --> Awaiting : explicit apply-once(runtime/persist)
+Awaiting --> Confirmed : committed/rejected receipt
+Awaiting --> Unknown : disconnect / missing ACK
+Unknown --> Checking : reconnect + same instance + status
+Checking --> Confirmed : retained committed/rejected
+Checking --> Unknown : pending/not_found; no automatic mutation
+Unknown --> Awaiting : explicit retry same ID/intent
+Unknown --> Review : different server instance
+Review --> Editing : manual comparison/acknowledgement + active reload
+Confirmed --> Editing : current snapshot read
+@enduml
+```
+
+Рисунок 3.34 — Состояния GUI при отправке конфигурации и восстановлении после потери ACK.
+Validation не резервирует revision; сервер повторно проверяет настройки при apply. Новый edit/apply
+блокируется при unresolved outcome. Схема отделяет повторное получение результата от нового intent.
+
+Проверена полная Linux сборка; selected CTest5/5 за29.91s включает model/reconnect guards,
+Unix/TCP validate→apply→restore, native persistent editor workflow с проверкой файла и QML smoke
+без binding warnings. Это подтверждает реализованный программный сценарий, но не заменяет
+измерения на целевом устройстве, длительный overload или независимое исследование качества сшивки.
+Server ConfigService/wire контракты и ограничения: [[engineering/CONFIG_SERVICE]],
+[[engineering/CONFIG_OPERATIONS]]. Следующий диагностический этап — отключаемая devel telemetry
+через библиотеку с bounded samples, графиками подсистем и отдельным измерением overhead; он пока
+остаётся планом, а текущие frame timings не равны такому полному profiler.

@@ -643,11 +643,11 @@ build/examples/sv-simulator/sv-simulator --unix /tmp/sv-prototype
 
 В примере используется заранее подготовленный Blender fixture `artifacts/blender-street/manifest.json` (подготовка описана выше); runtime сервера и GUI не запускает Blender/Python. Можно подключиться к уже работающему серверу с другим источником.
 
-В панели «Алгоритмы и геометрия сервера» нажмите «Загрузить текущий снимок» для `fusion` или `surface`. Редактируйте полный JSON и нажмите «Применить». Каталог ниже показывает семь методов сшивки, diagnostics, пределы параметров и поддерживаемые носители. Для плоскости используется `rectangular_bowl_v1` с `corner_height_m=0`; при смене типа нужны поля выбранного носителя по [[engineering/RENDERING]]. Сервер проверяет допустимость виртуальной камеры внутри нового носителя. Hybrid методы ограничены 262144 выходными пикселями.
+В верхней панели нажмите «Конфигурация». Вкладки «Сшивка», «Носитель» и «Операция» используют selectors, числовые поля и checkbox вместо ручного JSON. При подключении загружаются active/persisted/catalog; «Загрузить active в формы» явно заменяет черновик. Для плоскости задайте corner_height_m=0 у rectangular_bowl_v1. Семь алгоритмов и required geometry fields доступны, сервер проверяет view clearance и research pixel budget262144.
 
-Применение идёт через `sv-client-lib`, без Python и доступа клиента к конфигурационному файлу. Ответ сервера содержит действительный снимок и ревизию; черновик сохраняется до явной загрузки. После успешного изменения перед следующей правкой снова загрузите снимок. При `stale_config_revision` перечитайте состояние и перенесите нужную правку вручную; автоматического повторения с новой ревизией нет. При переподключении черновики сбрасываются.
+Нажмите «Проверить черновик», затем «Применить временно» либо подтвердите сохранение всего active snapshot и нажмите «Применить и сохранить на сервере». Применение выполняется через sv-client-lib; server config file меняет только сервер. После успешной операции GUI перечитывает актуальный snapshot. При stale revision обновите/загрузите active и перенесите правку вручную. Lost ACK блокирует новые изменения до operation status; same-ID retry явно использует исходный intent, новый instance требует ручной сверки. Подробности: [[engineering/CONFIG_SERVICE]].
 
-Изменения временные, но последующее persistent `apply_calibration` вне experiment lease сохраняет весь активный snapshot. Сначала восстановите исходные настройки. GUI редактор не захватывает experiment lease и не заменяет защищённый сценарный runner. GUI сценариев, общий ConfigService и постоянное сохранение через отдельную команду ещё не реализованы. Перед запуском `svctl` отключите GUI: сервер пока односессионный.
+Optional support/occlusion сохраняются для текущего типа носителя; при выборе другого типа сбрасываются с предупреждением. Формы для optional fields, остальных root groups и сценариев ещё предстоят. Editor не захватывает experiment lease; новый apply при lease будет отклонён. Перед запуском svctl отключите GUI: сервер пока односессионный.
 
 
 ### Исследование границ multiband
@@ -660,7 +660,7 @@ build/svctl --unix /tmp/sv-runtime-screen command configure_fusion --params '{"b
 build/svctl --unix /tmp/sv-runtime-screen research configs/research/pyramid-boundary-screen.json artifacts/pyramid-boundary-report.json
 ```
 
-Apply полностью заменяет fusion snapshot, остальные optional поля получают defaults. Конфигурация временная. Тот же выбор доступен в JSON редакторе симулятора и `FusionSettings` клиентской библиотеки. Прежний сценарий сравнивает четыре варианта на одном READY paused frame set. Новый sequence режим описан ниже. При NO_INPUT и наличии capability `experiment_step_v1` runner пробует один защищённый step; если READY не получен, завершает опыт с ошибкой и выполняет cleanup. Численные контролируемые опыты, отрицательный результат и ограничения: [[validation/PYRAMID_BOUNDARY]].
+Apply полностью заменяет fusion snapshot, остальные optional поля получают defaults. Конфигурация временная. Тот же выбор доступен в формах симулятора и `FusionSettings` клиентской библиотеки. Прежний сценарий сравнивает четыре варианта на одном READY paused frame set. Новый sequence режим описан ниже. При NO_INPUT и наличии capability `experiment_step_v1` runner пробует один защищённый step; если READY не получен, завершает опыт с ошибкой и выполняет cleanup. Численные контролируемые опыты, отрицательный результат и ограничения: [[validation/PYRAMID_BOUNDARY]].
 
 ### Многокадровый native эксперимент и RGBA capture
 
@@ -1250,8 +1250,12 @@ fusion fields получают defaults. Surface требует все geometry 
 
 ## Применение конфигурации сервером
 
-После read_configuration()/configuration_catalog() доступны validate_configuration(base, changes) и apply_configuration(base, changes, persist). Fusion/surface передаются полными replacement groups. persist=false оставляет файл неизменным; persist=true сохраняет весь active snapshot. Ответ разбирается parse_configuration_application(); не повторять mutation после потери ACK автоматически. GUI binding общего сервиса ещё предстоит; команды CLI, диаграмма, ограничения lease и проверки: [[engineering/CONFIG_SERVICE]].
+После read_configuration()/configuration_catalog() доступны validate_configuration(base, changes) и apply_configuration(base, changes, persist). Fusion/surface передаются полными replacement groups. persist=false оставляет файл неизменным; persist=true сохраняет весь active snapshot. Ответ разбирается parse_configuration_application(); не повторять mutation после потери ACK автоматически. GUI binding fusion/surface реализован; для других групп работа продолжается; команды CLI, диаграмма, ограничения lease и проверки: [[engineering/CONFIG_SERVICE]].
 
 ## Результат операции после потери ACK
 
 Для новых apply использовать explicit apply_configuration_once(instance, operation_id, base, changes, persist) и configuration_operation_status(instance, operation_id), затем parse_configuration_operation(). ID/intent хранит приложение; библиотека не повторяет mutation автоматически. Журнал сохраняется при reconnect, ограничен128 операциями и теряется при restart; старый instance нельзя автоматически заменять новым. Команды CLI, sequence diagram и ограничения: [[engineering/CONFIG_OPERATIONS]].
+
+## ConfigService в ноутбучном GUI
+
+В sv-simulator нажмите «Конфигурация» в верхней панели. Вкладки «Сшивка», «Носитель», «Операция» используют кнопки, selectors и числовые поля. Проверка и explicit runtime/persistent apply выполняются сервером через библиотеку; для save требуется checkbox полного active snapshot. После потери ACK сначала status/reconciliation, без автоматического replay. Подробные шаги, рисунок, optional-field ограничения и проверки: [[engineering/CONFIG_SERVICE#GUI sv-simulator: формы и восстановление результата]]. Сборка laptop GUI: SV_CLIENT=ON/SV_SIMULATOR=ON; touch-only: SV_SIMULATOR=OFF.

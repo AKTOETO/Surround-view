@@ -1,13 +1,13 @@
 # sv-simulator
 
-`sv-simulator` is a Qt 6 desktop client for connecting to `sv-server` through `sv-client-lib`. The current GUI provides connection settings, local Unix IPC discovery, remote TCP connection, the server commands currently supported by the protocol, and read-only frame/source timing diagnostics. When Qt Quick 3D is installed, the GUI also provides a procedural street preview with a drivable vehicle and four visible camera markers. This first driving scene is a visualization only: it does not yet render synchronized camera images or send them to `sv-server`, and it does not generate calibration observations. The world editor, camera-error controls and general ConfigService remain future work. Runtime fusion/surface editing is available through the client library.
+`sv-simulator` is a Qt 6 desktop client for connecting to `sv-server` through `sv-client-lib`. The current GUI provides connection settings, local Unix IPC discovery, remote TCP connection, the server commands currently supported by the protocol, and read-only frame/source timing diagnostics. When Qt Quick 3D is installed, the GUI also provides a procedural street preview with a drivable vehicle and four visible camera markers. This first driving scene is a visualization only: it does not yet render synchronized camera images or send them to `sv-server`, and it does not generate calibration observations. The world editor, camera-error controls and remaining ConfigService root groups remain future work. Typed ConfigService forms for fusion/surface, explicit runtime/persistence and process-scoped operation recovery are available through the client library.
 
 ## Connection setup
 
 Build with the project's normal CMake configuration:
 
 ```sh
-cmake -S . -B build -DSV_CLIENT=ON
+cmake -S . -B build -DSV_CLIENT=ON -DSV_SIMULATOR=ON
 cmake --build build --target sv-simulator
 ```
 
@@ -33,14 +33,14 @@ The connection panel allows editing the Unix directory or TCP host/ports. Timeou
 ## Available server controls
 
 - View presets, orbit, and zoom.
-- Runtime fusion and carrier editing: load a server snapshot, edit its JSON, and apply against the captured config revision. The panel displays server catalogs, six base fusion fields plus optional pyramid_boundary and the full active surface object. Stale revisions and invalid settings are rejected by the server. ACK updates the displayed actual state; drafts are not overwritten by incoming frames or acknowledgements. Reconnect clears drafts. Updates are temporary, with no server config file access from the client.
+- Configuration forms: use the header Configuration shortcut, then Fusion / Carrier / Operation tabs. Read active/persisted, edit controls, validate, apply temporarily or explicitly save the entire active snapshot. Replies and reconnect recovery use typed sv-client-lib apply-once/status; no JSON entry or direct server file access. Unknown outcomes lock new edits; changed server instances require reconciliation. See `docs/engineering/CONFIG_SERVICE.md`.
 - Replay pause, resume, and step. `step` is rejected by live camera/socket sources.
 - Frame metadata: source type, fusion/view identifiers, config revision, and which camera inputs were selected.
 - Coarse pipeline timing fields supplied by the server. GPU draw time is shown only when a supported timer query produced a value; the reported intervals overlap and must not be summed.
 - Calibration status, cancellation, and application for a job ID. The GUI does not fabricate observations, so starting a calibration job is disabled until it has a real observation workflow. Running native OpenCV solver cancellation is cooperative and takes effect after the solver returns.
 - Optional Qt Quick 3D street preview: drive with `W/S` or arrow keys and steer with `A/D` or arrow keys. The scene has an elevated chase view, a road, generated building blocks and four camera markers on the car. Press `Esc` to leave driving mode. The preview is not a camera stream producer.
 
-The current server protocol does not expose arbitrary config read/update, source switching, output subscriptions, or multi-client session management. Those controls should be added when the server implements their typed APIs, rather than writing the server's config file directly from this GUI. The implemented framing, command fields, ownership, calibration lifecycle and known gaps are documented in [[engineering/PROTOCOL_IMPLEMENTED]].
+The protocol exposes a scoped ConfigStore read and fusion/surface updates; remaining group updates, source switching, parallel output subscriptions and multi-client session management are not implemented. Those controls should be added when the server implements their typed APIs, rather than writing the server's config file directly from this GUI. The implemented framing, command fields, ownership, calibration lifecycle and known gaps are documented in [[engineering/PROTOCOL_IMPLEMENTED]].
 
 ## Verification limits
 
@@ -58,6 +58,27 @@ Frame image URLs include both session ID and frame ID, preventing cache/load ide
 
 В fusion snapshot сервера добавлен `pyramid_boundary` (`zero`/`normalized`). Редактор принимает шесть базовых полей и optional седьмое; normalized переключает экспериментальную поддержку пирамиды в сервере. Default zero сохраняет прежние исследования. Контракт и ограничения: [[validation/PYRAMID_BOUNDARY]].
 
-Catalog v4 additionally advertises optional `seam_solver=binary_pairs|alpha_expansion` for both graph-cut modes. The adapter accepts this field alongside pyramid_boundary and passes it through typed sv-client-lib. Loading an alpha snapshot preserves the field; omitting it on full apply resets the default binary_pairs. Unknown fields are rejected, and solver validation remains server-owned. This is a research control through the existing JSON editor; a friendly selector is still planned. Actual frame metadata includes energy/convergence diagnostics, with no local solver execution.
+Catalog v4 additionally advertises optional `seam_solver=binary_pairs|alpha_expansion` for both graph-cut modes. The adapter accepts this field alongside pyramid_boundary and passes it through typed sv-client-lib. Loading an alpha snapshot preserves the field; omitting it on full apply resets the default binary_pairs. Unknown fields are rejected, and solver validation remains server-owned. The current form provides a solver selector; validation remains server-owned. Actual frame metadata includes energy/convergence diagnostics, with no local solver execution.
 
-Catalog v5 adds optional `fusion.fallback_display={"mode":"legacy"|"hatch"}`. The runtime panel has a capability-gated button to switch the current snapshot without editing JSON. Existing server revision/rejection handling applies; legacy is omitted from normalized snapshots. Scenario variants also preserve the nested field. This marks the existing fallback branch only, not wrong-point sampling or scene confidence: [[validation/FALLBACK_DISPLAY]]. Other settings still use the existing editors; the full friendly tabbed UI remains planned.
+Catalog v5 adds optional `fusion.fallback_display={"mode":"legacy"|"hatch"}`. The configuration form has a fallback hatch checkbox; apply it through the normal validate/apply workflow. Existing server revision/rejection handling applies; legacy is omitted from normalized snapshots. Scenario variants also preserve the nested field. This marks the existing fallback branch only, not wrong-point sampling or scene confidence: [[validation/FALLBACK_DISPLAY]]. Fusion and required geometry settings now use tabbed controls. Optional support/occlusion forms and other root groups remain planned.
+
+
+## Configuration forms and build dependencies
+
+Build with `-DSV_CLIENT=ON -DSV_SIMULATOR=ON`; Qt Quick Controls2 development/runtime QML modules
+and Qt Quick Layouts must be installed. `-DSV_SIMULATOR=OFF` keeps the touchscreen client without
+the laptop GUI; Aurora RPM profiles explicitly use this mode. No new dependency is downloaded.
+
+The editor retains operation ID, instance, base, groups and persist before enqueueing. Reconnect
+reads the server instance and queries status; explicit retry keeps the original intent. The journal
+is limited to128 operations per server process; GUI intent is in-memory only. Restart needs manual
+active/persisted reconciliation. Saving writes the entire active snapshot, including earlier runtime
+changes. Optional geometry fields are preserved until switching type, which resets them with a warning.
+
+Tests: `ctest --test-dir build -R 'simulator_runtime_errors|simulator_session_state|simulator_configuration_qml|client_transports|output_products' --output-on-failure`.
+The last two require Unix/TCP bind permissions and EGL; select Mesa as described in project usage.
+The QML test uses offscreen software rendering. Optional screenshot:
+
+```sh
+QT_QPA_PLATFORM=offscreen QT_QUICK_BACKEND=software SV_QML_SCREENSHOT=/tmp/sv-config-editor.png build/sv-simulator-configuration-qml-tests
+```
