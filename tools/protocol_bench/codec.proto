@@ -1,0 +1,42 @@
+syntax = "proto3";
+package sv.bench;
+// Engineering fixtures only. This is not the production SV01 schema.
+message Orbit {
+  uint64 command_id = 1;
+  string type = 2;
+  double azimuth_delta_rad = 3;
+  double elevation_delta_rad = 4;
+}
+message Fusion {
+  string mode = 1;
+  string diagnostic = 2;
+  double edge_width_px = 3;
+  double angle_power = 4;
+  uint32 pyramid_levels = 5;
+  string pyramid_boundary = 6;
+}
+message Configure {
+  uint64 command_id = 1;
+  string type = 2;
+  uint64 base_config_revision = 3;
+  Fusion fusion = 4;
+}
+message Input {
+  uint32 camera_id = 1;
+  bool used = 2;
+  uint64 sequence_id = 3;
+  uint64 release_timestamp_ns = 4;
+  string calibration_id = 5;
+}
+message FrameSubset {
+  uint64 frame_id = 1;
+  uint64 frame_set_id = 2;
+  uint64 config_revision = 3;
+  uint32 width = 4;
+  uint32 height = 5;
+  uint32 stride_bytes = 6;
+  string pixel_format = 7;
+  string row_origin = 8;
+  string output_product = 9;
+  repeated Input inputs = 10;
+}

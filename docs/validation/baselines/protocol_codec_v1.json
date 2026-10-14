@@ -1,0 +1,161 @@
+{
+  "schema_version": 1,
+  "scope": "engineering_metadata_microbenchmark",
+  "protobuf_version": 7036001,
+  "boost_version": 109200,
+  "iterations_per_batch": 50000,
+  "repeats": 7,
+  "compiler": "16.2.1 20260810",
+  "checks_passed": true,
+  "results": [
+    {
+      "fixture": "orbit",
+      "json_bytes": 89,
+      "protobuf_bytes": 28,
+      "json_serialize_us": 0.1003092,
+      "protobuf_serialize_us": 0.016762159999999998,
+      "json_parse_id_us": 0.12816154000000002,
+      "protobuf_parse_id_us": 0.03023428,
+      "json_serialize_batches_us": [
+        0.09489033999999999,
+        0.10144216,
+        0.09695144,
+        0.10489227999999999,
+        0.09853064,
+        0.103162,
+        0.1003092
+      ],
+      "protobuf_serialize_batches_us": [
+        0.0164728,
+        0.016762159999999998,
+        0.01624316,
+        0.016785599999999998,
+        0.01743644,
+        0.018018140000000002,
+        0.01654934
+      ],
+      "json_parse_id_batches_us": [
+        0.12525746,
+        0.12500498,
+        0.1260279,
+        0.1311897,
+        0.12852664,
+        0.12905044,
+        0.12816154000000002
+      ],
+      "protobuf_parse_id_batches_us": [
+        0.03028336,
+        0.030157919999999998,
+        0.03023428,
+        0.029495459999999998,
+        0.02990224,
+        0.03033666,
+        0.030999340000000004
+      ]
+    },
+    {
+      "fixture": "fusion_subset",
+      "json_bytes": 213,
+      "protobuf_bytes": 76,
+      "json_serialize_us": 0.1193667,
+      "protobuf_serialize_us": 0.03451598,
+      "json_parse_id_us": 0.27026792,
+      "protobuf_parse_id_us": 0.10611459999999999,
+      "json_serialize_batches_us": [
+        0.12072907999999999,
+        0.11835477999999999,
+        0.11948494000000001,
+        0.11632394,
+        0.11945146000000001,
+        0.1158747,
+        0.1193667
+      ],
+      "protobuf_serialize_batches_us": [
+        0.035053,
+        0.035544940000000004,
+        0.03435808,
+        0.03451598,
+        0.03680192,
+        0.03434966,
+        0.03432542
+      ],
+      "json_parse_id_batches_us": [
+        0.27077650000000003,
+        0.26950448,
+        0.27026792,
+        0.2694632,
+        0.26858234000000003,
+        0.27530326,
+        0.27438332
+      ],
+      "protobuf_parse_id_batches_us": [
+        0.10611459999999999,
+        0.10678828,
+        0.11378972,
+        0.11298079999999999,
+        0.10591961999999999,
+        0.10462698000000001,
+        0.10565693999999999
+      ]
+    },
+    {
+      "fixture": "frame_metadata_subset",
+      "json_bytes": 779,
+      "protobuf_bytes": 255,
+      "json_serialize_us": 0.3633797,
+      "protobuf_serialize_us": 0.08249426,
+      "json_parse_id_us": 0.9563829399999999,
+      "protobuf_parse_id_us": 0.2948054,
+      "json_serialize_batches_us": [
+        0.36267716,
+        0.3633797,
+        0.36251366,
+        0.36987822,
+        0.35658962,
+        0.36344502,
+        0.36808260000000004
+      ],
+      "protobuf_serialize_batches_us": [
+        0.0800947,
+        0.08261808000000001,
+        0.08219370000000001,
+        0.08311702,
+        0.08249426,
+        0.08419848,
+        0.08213598
+      ],
+      "json_parse_id_batches_us": [
+        0.9357007399999999,
+        0.9718953,
+        0.93066602,
+        0.96420754,
+        0.95527824,
+        0.9632032399999999,
+        0.9563829399999999
+      ],
+      "protobuf_parse_id_batches_us": [
+        0.29624794000000004,
+        0.29630084,
+        0.2948054,
+        0.28969472,
+        0.29884146,
+        0.29246236000000003,
+        0.29382616
+      ]
+    }
+  ],
+  "limitations": [
+    "subsets, not complete production messages",
+    "not end-to-end pipeline or RSS measurement",
+    "decode includes extracting one numeric ID; not full semantic validation",
+    "no arena or payload copies measured"
+  ],
+  "host_cpu": "AMD Ryzen 9 9950X 16-Core Processor",
+  "host_scope": "Linux x86_64 CPU microbenchmark; no affinity/frequency controls",
+  "source_sha256": {
+    "tools/protocol_bench/CMakeLists.txt": "7ca3c763eff4527dc67f3a14af9be5e2916cc7960df569039f00b5513c94309d",
+    "tools/protocol_bench/codec.proto": "ccc57e85ebd026d26aaf4ff7361224736d596fd344ca8c50d219f304cf674b4a",
+    "tools/protocol_bench/main.cpp": "d67112f6431d02a544d3e16186ab2424050eaee7ecaea493fcc723cfdf514cf2"
+  },
+  "binary_sha256": "f174e42ae1c6302fb04a8ba29e07d903b9726af334da45f9e681bb58a0650d90"
+}
