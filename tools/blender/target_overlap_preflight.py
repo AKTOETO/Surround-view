@@ -4,7 +4,6 @@ import json
 from pathlib import Path
 import bpy
 import numpy as np
-from scipy.ndimage import binary_erosion
 from diagnostic import build_diagnostic
 from paired_truth import object_truth, virtual_pose
 
@@ -35,7 +34,9 @@ def check(root, plan_path):
             names = sorted(o.name for o in scene.objects if o.type == 'MESH')
             ids = {name:i+1 for i,name in enumerate(names)}
             labels, visibility = object_truth(scene, virtual_pose(cfg), cfg, ids, np.eye(4))
-            interior = binary_erosion(labels == ids[target.name], iterations=1)
+            mask = np.pad(labels == ids[target.name], 1, constant_values=False)
+            interior = (mask[1:-1,1:-1] & mask[:-2,1:-1] & mask[2:,1:-1]
+                        & mask[1:-1,:-2] & mask[1:-1,2:])
             paired = np.array([int(v).bit_count()>=2 for v in visibility.ravel()]).reshape(visibility.shape)
             count = int((interior & paired).sum())
             rows.append(dict(id=case['id'], target_interior_pixels=int(interior.sum()),

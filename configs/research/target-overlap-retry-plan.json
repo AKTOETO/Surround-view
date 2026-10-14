@@ -1,0 +1,190 @@
+{
+  "schema_version": 1,
+  "scope": "bounded_target_overlap_control_before_product_development",
+  "output_root": "artifacts/target-overlap-captures-v1",
+  "native_output_root": "artifacts/target-overlap-native-v1",
+  "render_samples": 8,
+  "cases": [
+    {
+      "id": "overlap-227",
+      "scenario": {
+        "schema_version": 1,
+        "seed": 227,
+        "split": "validation",
+        "world": {
+          "building_spacing_m": 8,
+          "building_height_m": [
+            4,
+            7
+          ],
+          "near_obstacle_jitter_m": 0.4
+        },
+        "mounts": {
+          "yaw_deg": 3,
+          "pitch_deg": 3,
+          "along_body_m": 0.1
+        }
+      },
+      "target": {
+        "center_m": [
+          3.4,
+          2.7,
+          0.25
+        ],
+        "size_m": [
+          1.2,
+          1.2,
+          0.5
+        ],
+        "linear_rgb": [
+          1,
+          0,
+          1
+        ],
+        "chroma_threshold": 0.15,
+        "min_component_pixels": 8
+      },
+      "capture": {
+        "frames": 1,
+        "face_size": 256,
+        "frame_step": 1,
+        "width": 320,
+        "height": 180,
+        "source_ids": false
+      },
+      "virtual_camera": {
+        "azimuth_rad": 0.8,
+        "elevation_rad": 0.9,
+        "distance_m": 8.0,
+        "fov_y_rad": 1.4,
+        "clip_m": [
+          0.1,
+          100.0
+        ]
+      },
+      "target_yaw_rad": 0.12
+    },
+    {
+      "id": "overlap-229",
+      "scenario": {
+        "schema_version": 1,
+        "seed": 229,
+        "split": "validation",
+        "world": {
+          "building_spacing_m": 8,
+          "building_height_m": [
+            4,
+            7
+          ],
+          "near_obstacle_jitter_m": 0.4
+        },
+        "mounts": {
+          "yaw_deg": 3,
+          "pitch_deg": 3,
+          "along_body_m": 0.1
+        }
+      },
+      "target": {
+        "center_m": [
+          -3.4,
+          2.7,
+          0.25
+        ],
+        "size_m": [
+          1.2,
+          1.2,
+          0.5
+        ],
+        "linear_rgb": [
+          1,
+          0,
+          1
+        ],
+        "chroma_threshold": 0.15,
+        "min_component_pixels": 8
+      },
+      "capture": {
+        "frames": 1,
+        "face_size": 256,
+        "frame_step": 1,
+        "width": 320,
+        "height": 180,
+        "source_ids": false
+      },
+      "virtual_camera": {
+        "azimuth_rad": 2.34,
+        "elevation_rad": 0.9,
+        "distance_m": 8.0,
+        "fov_y_rad": 1.4,
+        "clip_m": [
+          0.1,
+          100.0
+        ]
+      },
+      "target_yaw_rad": -0.12
+    }
+  ],
+  "geometry_tolerances_m": [
+    0.002,
+    0.02
+  ],
+  "anchor_tolerance_m": 0.0002,
+  "grid_offset": 4,
+  "grid_step": 8,
+  "rgb_byte_tolerance": 1,
+  "thresholds_byte": [
+    8,
+    16,
+    32,
+    64,
+    128
+  ],
+  "backend_environment": {
+    "__EGL_VENDOR_LIBRARY_FILENAMES": "/usr/share/glvnd/egl_vendor.d/50_mesa.json",
+    "LIBGL_ALWAYS_SOFTWARE": "1"
+  },
+  "profiles": [
+    "plane",
+    "supplied_local_patch"
+  ],
+  "ablation_stage": "baseline only; exposure/noise/filter are separate future frozen matrices",
+  "limitations": [
+    "two procedural texture/pose instances, not natural-object or statistical holdout",
+    "single frame, true calibration, emission materials, no real sensor",
+    "no claim of balanced matching/nonmatching samples until measured",
+    "centre correspondence distinct from filtered RGB, semantic ghost and seam quality",
+    "geometry gate does not guarantee carrier correspondence",
+    "fixed coarse mesh; no post-result refinement or additional scene search",
+    "remaining research deferred to product ExperimentRunner"
+  ],
+  "frozen_files": {
+    "tools/blender/textured_fixture.py": "1667ec1f31000cc51306f7a2d7b7e426e1dc4bdaa2d46f78166bf23198d74f63",
+    "tools/blender/textured_source_study.py": "bca2fd0e1ce0852a5f95361cae7183e94ca2ad986e89707ac14f9a4ef9aade04",
+    "tools/blender/diagnostic.py": "fb8c15c2a36f7bcb1dea3478bdeb3afe3b9258e984e4988433c236dba5f8b61d",
+    "tools/blender/scene.py": "0bff0bc19c8063f0294f347ce054cb149bbd7a26f600254b888a7ed45cbc621a",
+    "tools/blender/rig.py": "a31f63c433a031ca8a0c8e8645b075f0496c465a8511241389a6d9cd92c38d25",
+    "tools/blender/scenario.py": "a72648f09d5465e91004ac4b2d182e11b2ed8de017fe7dd9c42e29cca87f19b8",
+    "tools/blender/paired_truth.py": "8a6139ca15abb51ba237e5f8647982a7e31ab95daae9e6d25dbe792bd6fb69ba",
+    "tools/blender/geometry_truth.py": "ba16fd8a2be0be2d42978d15db4cbfe14de406845be439452d5e9dd96cf6a659",
+    "tools/blender/visibility.py": "466a5cada22d26bfc249125d189018afafdb349a6dd99a71b448995011350fa6",
+    "tools/blender/diagnostic_motion.py": "272fa3b55f860a7e8bf4cc060b80ca3558e0d00ac6a9d10699791eb1daf3d10f",
+    "tools/blender/board_targets.py": "8336a7a051d3a3bbaae55c6b01a89d07995fa51b40fed53d9ecaa7ab145ed5c7",
+    "tools/blender/depth.py": "adc038733709a5d52e00ee08839aba768d50ecf0d1992cbba8d03dc04bc07f24",
+    "tools/blender/convert.py": "3295110b3b6ff82fcb6984acb4f1739c9069b3ad87dbe7da6ac5facd1181f423",
+    "tools/simulator.py": "4b4214f40efc03df971bbc5c80f8aa69668bcb93fe80cd1a050c9769dd2cea0a",
+    "tools/depth_truth.py": "68881656ff26fd5720c90b28a7d99fc352bc689c704a8599922c833bd418db38",
+    "artifacts/research-binaries/source-truth-mesa-v1/sv-correspondence-probe": "2aede07323699463741f7160a7b21ec9ae4e68d315a2a9759f6bfb738c120e3f",
+    "build/sv-support-wire-probe": "f22453d4eac328ad5cab364c9a694742532dbfb40b707409a3321470bb9fe932",
+    "tools/blender/target_overlap_preflight.py": "e7745b20d9e52039a3ad2e9a5cbeea76f005047f4ec6622bb2403e5b2f7edfa6",
+    "tools/research/textured_source.py": "00097b2d47f2e9908308a3c552ababb9ef73e2ce0ec48d26d92dda875711c24c",
+    "tools/research/mesa_source_truth.py": "66cf1cddda7bd7b64950185c2637f818d5764ac7f3c560d9ce3c9a14e4770880",
+    "tools/research/source_disagreement.py": "0e32517ac660a4ba695d30d6484c3f9bd50c6618922c0c7ed2ef0767cb32f66b",
+    "tools/research/source_correspondence.py": "723e6899ee98327454c77636663ae61e3533617e0bd9b848543520230b47fbef",
+    "tools/research/residual_surface.py": "38b18adb402cdc7b848986b9c762b4c465fe8234d84ede901668eab4e2dcf2d5",
+    "tools/research/planar_correspondence.py": "c45ca82c82aabf8894573868d6d07fcfbaa50f56072420501e1b2d413d7756b4"
+  },
+  "preflight_report": "artifacts/target-overlap-preflight-v1.json",
+  "minimum_target_overlap_pixels": 16,
+  "retry_of_plan_sha256": "51b97d5aa8046e97277e2cbeb4e9f6d87660fde96ab3554896a11bc421cc40b4",
+  "retry_reason": "Blender Python has no scipy; equivalent NumPy 4-neighbour erosion, failure before preflight/capture"
+}
