@@ -13,7 +13,8 @@ int main(int argc, char **argv)
         sv::client::Options options;
         unsigned frames = 3;
         bool exercise = false, allow_reconnect = false, support = false, visibility = false,
-             disagreement = false, configuration = false, configuration_apply = false;
+             disagreement = false, configuration = false, configuration_apply = false,
+             configuration_operation = false;
         for (int i = 1; i < argc; ++i)
         {
             const std::string arg = argv[i];
@@ -70,6 +71,10 @@ int main(int argc, char **argv)
             {
                 configuration = true;
             }
+            else if (arg == "--configuration-operation")
+            {
+                configuration = configuration_operation = true;
+            }
             else if (arg == "--configuration-apply")
             {
                 configuration = configuration_apply = true;
@@ -116,12 +121,19 @@ int main(int argc, char **argv)
                                       cv.notify_one();
                                   });
         unsigned received = 0, acknowledgements = 0;
-        const unsigned expected_acks = configuration_apply ? 4
-                                       : configuration     ? 3
-                                       : exercise          ? 5
-                                       : support           ? 3
-                                                           : 1;
+        const unsigned expected_acks = configuration_operation ? 6
+                                       : configuration_apply   ? 4
+                                       : configuration         ? 3
+                                       : exercise              ? 5
+                                       : support               ? 3
+                                                               : 1;
         uint64_t configuration_revision = 0;
+        std::string configuration_instance;
+        boost::json::object operation_changes;
+        const std::string operation_id =
+            "probe-operation-" +
+            std::to_string(std::chrono::steady_clock::now().time_since_epoch().count());
+        unsigned operation_replies = 0;
         const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(15);
         while (received < frames || acknowledgements < expected_acks)
         {
@@ -202,6 +214,11 @@ int main(int argc, char **argv)
                 {
                     const auto snapshot = sv::client::parse_configuration_snapshot(*event.message);
                     configuration_revision = snapshot.revision;
+                    configuration_instance = snapshot.server_instance_id;
+                    if (configuration_operation && configuration_instance.empty())
+                    {
+                        throw std::runtime_error("configuration operations unsupported");
+                    }
                     header["validated_configuration_revision"] = std::to_string(snapshot.revision);
                     client.configuration_catalog();
                 }
@@ -222,9 +239,39 @@ int main(int argc, char **argv)
                     const auto result = sv::client::parse_configuration_validation(*event.message);
                     header["validated_configuration_base_revision"] =
                         std::to_string(result.base_revision);
-                    if (configuration_apply)
+                    if (configuration_operation)
+                    {
+                        operation_changes = result.changes;
+                        client.apply_configuration_once(configuration_instance, operation_id,
+                                                        result.base_revision, result.changes,
+                                                        false);
+                    }
+                    else if (configuration_apply)
                     {
                         client.apply_configuration(result.base_revision, result.changes, false);
+                    }
+                }
+                else if (header.contains("configuration_operation"))
+                {
+                    const auto result = sv::client::parse_configuration_operation(*event.message);
+                    if (result.server_instance_id != configuration_instance ||
+                        result.operation_id != operation_id || result.state != "committed" ||
+                        result.revision != configuration_revision + 1 || result.persisted ||
+                        result.replayed != (operation_replies == 1))
+                    {
+                        throw std::runtime_error("inconsistent configuration operation response");
+                    }
+                    header["validated_configuration_operation"] = true;
+                    ++operation_replies;
+                    if (operation_replies == 1)
+                    {
+                        client.apply_configuration_once(configuration_instance, operation_id,
+                                                        configuration_revision, operation_changes,
+                                                        false);
+                    }
+                    else if (operation_replies == 2)
+                    {
+                        client.configuration_operation_status(configuration_instance, operation_id);
                     }
                 }
                 else

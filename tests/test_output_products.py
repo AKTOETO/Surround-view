@@ -13,7 +13,7 @@ import numpy as np
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / 'tools'))
-from ipc import Client, receive
+from ipc import Client, receive, pack
 from simulator import generate
 
 BUILD, CONFIG = [Path(p).resolve() for p in sys.argv[1:3]]
@@ -101,16 +101,25 @@ class OutputProducts(unittest.TestCase):
         original = self.config.read_bytes()
         self.start()
         for endpoint in (['--unix', str(self.ipc)], ['--tcp', '127.0.0.1', str(ctl), str(data)]):
-            result = subprocess.run([str(BUILD / 'sv-client-probe'), *endpoint,
-                '--frames', '1', '--configuration-apply'], text=True, capture_output=True, timeout=20)
-            self.assertEqual(result.returncode, 0, result.stderr)
-            messages = [json.loads(line) for line in result.stdout.splitlines()]
-            receipts = [m for m in messages if 'validated_configuration_application_revision' in m]
-            self.assertEqual(len(receipts), 1)
-            receipt = receipts[0]['configuration_application']
-            self.assertEqual(int(receipt['revision']), int(receipt['base_config_revision']) + 1)
-            self.assertFalse(receipt['persisted'])
-            self.assertEqual(receipts[0]['config_revision'], receipt['revision'])
+            for mode in ('--configuration-apply', '--configuration-operation'):
+                result = subprocess.run([str(BUILD / 'sv-client-probe'), *endpoint,
+                    '--frames', '1', mode], text=True, capture_output=True, timeout=20)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                messages = [json.loads(line) for line in result.stdout.splitlines()]
+                if mode == '--configuration-operation':
+                    receipts = [m for m in messages if m.get('validated_configuration_operation')]
+                    self.assertEqual(len(receipts), 3)
+                    self.assertEqual([m['configuration_operation']['replayed'] for m in receipts],
+                                     [False, True, False])
+                    self.assertEqual(len({m['state_revision'] for m in receipts}), 1)
+                    self.assertEqual(len({m['config_revision'] for m in receipts}), 1)
+                else:
+                    receipts = [m for m in messages if 'validated_configuration_application_revision' in m]
+                    self.assertEqual(len(receipts), 1)
+                    receipt = receipts[0]['configuration_application']
+                    self.assertEqual(int(receipt['revision']), int(receipt['base_config_revision']) + 1)
+                    self.assertFalse(receipt['persisted'])
+                    self.assertEqual(receipts[0]['config_revision'], receipt['revision'])
         self.assertEqual(self.config.read_bytes(), original)
 
     def test_configuration_apply_runtime_persistence_stale_and_restart(self):
@@ -168,6 +177,110 @@ class OutputProducts(unittest.TestCase):
         self.assertEqual(restored['revision'], '0')  # Revisions are process-local.
         self.assertEqual(restored['active'], snapshot['active'])
         self.assertEqual(frame['fusion_mode'], 'angular_feather')
+
+    def test_configuration_operation_lost_ack_reconnect_and_historical_result(self):
+        self.start()
+        self.client = Client(self.ipc)
+        self.frame_after(self.client.command('pause'))
+        snapshot = self.client.command('config_read')['configuration']
+        instance = snapshot['server_instance_id']
+        parameters = dict(server_instance_id=instance, operation_id='integration-lost-ack-0001',
+            base_config_revision=snapshot['revision'], persist=True,
+            changes={'fusion': {'mode': 'angular_feather'}})
+        # Intentionally do not read the ACK. Observe persistence before disconnect so execution
+        # is known to have happened; recovery must discover it without replaying the mutation.
+        self.client.command_id += 1
+        self.client.control.sendall(pack(20, dict(type='config_apply_once',
+            command_id=str(self.client.command_id), **parameters)))
+        deadline = time.monotonic() + 3
+        while json.loads(self.config.read_text()).get('fusion', {}).get('mode') != 'angular_feather':
+            self.assertLess(time.monotonic(), deadline)
+            time.sleep(.01)
+        self.client.close()
+        self.client = None
+        self.client = Client(self.ipc)
+        status = self.client.command('config_operation_status', server_instance_id=instance,
+            operation_id=parameters['operation_id'])
+        self.assertTrue(status['accepted'], status)
+        self.assertEqual(status['configuration_operation']['state'], 'committed')
+        self.assertEqual(status['configuration_operation']['revision'], '1')
+        before = self.client.command('state')
+        replay = self.client.command('config_apply_once', **parameters)
+        self.assertTrue(replay['accepted'], replay)
+        self.assertTrue(replay['configuration_operation']['replayed'])
+        self.assertEqual(replay['state_revision'], before['state_revision'])
+        self.assertEqual(replay['config_revision'], before['config_revision'])
+        # Advance the current revision. Old operation results retain the original committed one.
+        advanced = self.client.command('config_apply', base_config_revision=before['config_revision'],
+            changes={'fusion': {'mode': 'hard_best_angle'}}, persist=False)
+        self.assertTrue(advanced['accepted'], advanced)
+        old = self.client.command('config_apply_once', **parameters)
+        self.assertEqual(old['configuration_operation']['revision'], '1')
+        self.assertEqual(old['config_revision'], '2')
+        self.assertEqual(old['state_revision'], advanced['state_revision'])
+        conflict = self.client.command('config_apply_once', **dict(parameters, persist=False))
+        self.assertFalse(conflict['accepted'], conflict)
+        self.assertEqual(conflict['reason'], 'configuration_operation_id_conflict')
+        # Cached results are readable during lease; a new mutation is retained as rejected.
+        lease = self.client.command('experiment_acquire', ttl_ms=5000)
+        self.assertTrue(lease['accepted'], lease)
+        replay = self.client.command('config_apply_once', **parameters)
+        self.assertTrue(replay['accepted'], replay)
+        self.assertEqual(replay['state_revision'], lease['state_revision'])
+        rejected_args = dict(parameters, operation_id='integration-lease-0002', base_config_revision='2')
+        rejected = self.client.command('config_apply_once', **rejected_args)
+        self.assertFalse(rejected['accepted'], rejected)
+        self.assertEqual(rejected['reason'], 'experiment_lease_conflict')
+        retained = self.client.command('config_operation_status', server_instance_id=instance,
+            operation_id=rejected_args['operation_id'])
+        self.assertTrue(retained['accepted'], retained)
+        self.assertEqual(retained['configuration_operation']['state'], 'rejected')
+
+    def test_configuration_operation_restart_namespace_and_failed_request_retention(self):
+        self.start()
+        self.client = Client(self.ipc)
+        snapshot = self.client.command('config_read')['configuration']
+        instance = snapshot['server_instance_id']
+        parameters = dict(server_instance_id=instance, operation_id='integration-stale-0001',
+            base_config_revision='99', persist=False, changes={'fusion': {'mode': 'hard_best_angle'}})
+        for _ in range(2):
+            result = self.client.command('config_apply_once', **parameters)
+            self.assertFalse(result['accepted'], result)
+            self.assertEqual(result['configuration_operation']['state'], 'rejected')
+            self.assertEqual(result['reason'], 'stale_config_revision')
+            self.assertEqual(result['config_revision'], '0')
+        self.assertTrue(result['configuration_operation']['replayed'])
+        absent = self.client.command('config_operation_status', server_instance_id=instance,
+            operation_id='integration-unknown-0001')
+        self.assertEqual(absent['configuration_operation']['state'], 'not_found')
+        original = self.config.read_bytes()
+        self.config.unlink()
+        self.config.mkdir()
+        disk_args = dict(parameters, operation_id='integration-disk-0002',
+                         base_config_revision='0', persist=True)
+        failed = self.client.command('config_apply_once', **disk_args)
+        self.assertFalse(failed['accepted'], failed)
+        self.assertEqual(failed['configuration_operation']['state'], 'rejected')
+        self.config.rmdir()
+        self.config.write_bytes(original)
+        retained = self.client.command('config_apply_once', **disk_args)
+        self.assertFalse(retained['accepted'], retained)
+        self.assertTrue(retained['configuration_operation']['replayed'])
+        self.assertEqual(retained['reason'], failed['reason'])
+        self.assertEqual(retained['config_revision'], '0')
+        self.assertEqual(self.config.read_bytes(), original)
+        self.shutdown()
+        self.start()
+        self.client = Client(self.ipc)
+        new_snapshot = self.client.command('config_read')['configuration']
+        self.assertNotEqual(new_snapshot['server_instance_id'], instance)
+        for kind in ('config_apply_once', 'config_operation_status'):
+            args = parameters if kind == 'config_apply_once' else {
+                'server_instance_id': instance, 'operation_id': parameters['operation_id']}
+            result = self.client.command(kind, **args)
+            self.assertFalse(result['accepted'], result)
+            self.assertEqual(result['reason'], 'configuration_server_instance_mismatch')
+            self.assertEqual(result['config_revision'], '0')
 
     def test_configuration_apply_disk_failure_preserves_renderer_and_store(self):
         self.start()

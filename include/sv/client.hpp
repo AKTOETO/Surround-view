@@ -132,6 +132,26 @@ class Client
                                         {"persist", persist}});
     }
 
+    // Explicit retry/status API scoped to one server process. No automatic replay.
+    uint64_t apply_configuration_once(const std::string &server_instance_id,
+                                      const std::string &operation_id, uint64_t base_revision,
+                                      boost::json::object changes, bool persist)
+    {
+        return command("config_apply_once",
+                       {{"server_instance_id", server_instance_id},
+                        {"operation_id", operation_id},
+                        {"base_config_revision", std::to_string(base_revision)},
+                        {"changes", std::move(changes)},
+                        {"persist", persist}});
+    }
+
+    uint64_t configuration_operation_status(const std::string &server_instance_id,
+                                            const std::string &operation_id)
+    {
+        return command("config_operation_status", {{"server_instance_id", server_instance_id},
+                                                   {"operation_id", operation_id}});
+    }
+
     uint64_t fusion_catalog()
     {
         return command("fusion_catalog");

@@ -331,7 +331,7 @@ if(BUILD_TESTING AND SV_GTEST_TESTS)
   target_compile_definitions(sv-config-store-tests PRIVATE
     SV_TEST_CONFIG_PATH="${CMAKE_CURRENT_SOURCE_DIR}/configs/synthetic.json")
   add_test(NAME config_store_persistence COMMAND sv-config-store-tests)
-  add_executable(sv-configuration-tests tests/configuration_tests.cpp tests/configuration_validation_tests.cpp tests/configuration_apply_tests.cpp)
+  add_executable(sv-configuration-tests tests/configuration_tests.cpp tests/configuration_validation_tests.cpp tests/configuration_apply_tests.cpp tests/configuration_operation_tests.cpp)
   target_link_libraries(sv-configuration-tests PRIVATE sv-core sv-client-lib GTest::gtest_main)
   target_compile_definitions(sv-configuration-tests PRIVATE SV_TEST_CONFIG_PATH="${CMAKE_CURRENT_SOURCE_DIR}/configs/synthetic.json")
   add_test(NAME configuration_snapshot COMMAND sv-configuration-tests)

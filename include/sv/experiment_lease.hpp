@@ -123,9 +123,9 @@ class ExperimentLease
                 uint64_t now) const
     {
         if (operation == "state" || operation == "config_read" || operation == "config_catalog" ||
-            operation == "config_validate" || operation == "fusion_catalog" ||
-            operation == "surface_catalog" || operation == "output_catalog" ||
-            operation == "calibration_status")
+            operation == "config_validate" || operation == "config_operation_status" ||
+            operation == "fusion_catalog" || operation == "surface_catalog" ||
+            operation == "output_catalog" || operation == "calibration_status")
         {
             return true;
         }

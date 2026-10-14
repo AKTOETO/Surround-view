@@ -4,6 +4,7 @@
 #include "renderer_configuration.hpp"
 #include "sv/build_info.hpp"
 #include "sv/calibration_job.hpp"
+#include "sv/config_operations.hpp"
 #include "sv/config_service.hpp"
 #include "sv/config_store.hpp"
 #include "sv/experiment_lease.hpp"
@@ -375,6 +376,7 @@ ServerIO::ServerIO(const sv::Connections &n, const std::string &source_type,
                     "config_catalog_v1",
                     "config_validate_v1",
                     "config_apply_v1",
+                    "config_operations_v1",
                     "fusion_runtime_v1",
                     "research_fusion_v1",
                     "runtime_surface_v1",
@@ -659,6 +661,19 @@ int main(int argc, char **argv)
 
         sv::ConfigStore config_store(initial_cfg, std::filesystem::absolute(cfg_path));
         sv::ConfigService config_service(config_store);
+        unsigned char instance_bytes[16];
+        if (RAND_bytes(instance_bytes, sizeof(instance_bytes)) != 1)
+        {
+            throw std::runtime_error("configuration_instance_random_failed");
+        }
+        std::string instance_id;
+        constexpr char instance_hex[] = "0123456789abcdef";
+        for (auto byte : instance_bytes)
+        {
+            instance_id += instance_hex[byte >> 4];
+            instance_id += instance_hex[byte & 15];
+        }
+        sv::ConfigOperations config_operations(std::move(instance_id));
         sv::CalibrationJobManager calib_jobs;
 
         std::unique_ptr<sv::FrameSource> source;
@@ -865,6 +880,7 @@ int main(int argc, char **argv)
                 std::string id, type;
                 std::optional<sv::SourceAction> source_action;
                 bool fatal_renderer_error = false;
+                bool operation_replayed = false;
                 try
                 {
                     id = std::string(m.header.at("command_id").as_string());
@@ -874,7 +890,8 @@ int main(int argc, char **argv)
                     const auto *lease_value = m.header.if_contains("lease_id");
                     const std::string lease_id =
                         lease_value ? std::string(lease_value->as_string()) : "";
-                    if (!experiment.allows(type, origin->bound_session_id, lease_id, sv::now_ns()))
+                    if (type != "config_apply_once" &&
+                        !experiment.allows(type, origin->bound_session_id, lease_id, sv::now_ns()))
                     {
                         throw std::runtime_error("experiment_lease_conflict");
                     }
@@ -916,7 +933,9 @@ int main(int argc, char **argv)
                     }
                     else if (type == "config_read")
                     {
-                        extra_res["configuration"] = config_service.read();
+                        auto snapshot = config_service.read();
+                        snapshot["server_instance_id"] = config_operations.instance_id();
+                        extra_res["configuration"] = std::move(snapshot);
                     }
                     else if (type == "config_catalog")
                     {
@@ -935,12 +954,57 @@ int main(int argc, char **argv)
                             std::string(m.header.at("base_config_revision").as_string()));
                         const auto &changes = m.header.at("changes").as_object();
                         extra_res["configuration_application"] = config_service.apply(
-                            revision, changes, m.header.at("persist").as_bool(), view, output_product,
+                            revision, changes, m.header.at("persist").as_bool(), view,
+                            output_product,
                             [&](const sv::Config &prepared)
                             {
                                 return std::make_unique<sv::RendererConfigurationUpdate>(
                                     *renderer, prepared, changes.contains("surface"));
                             });
+                    }
+                    else if (type == "config_operation_status")
+                    {
+                        extra_res["configuration_operation"] = config_operations.status(
+                            std::string(m.header.at("server_instance_id").as_string()),
+                            std::string(m.header.at("operation_id").as_string()));
+                    }
+                    else if (type == "config_apply_once")
+                    {
+                        const std::string instance(m.header.at("server_instance_id").as_string());
+                        const std::string operation(m.header.at("operation_id").as_string());
+                        const auto applied_id = sv::parse_decimal_u64(id);
+                        sv::ConfigOperations::Request request{
+                            sv::parse_decimal_u64(
+                                std::string(m.header.at("base_config_revision").as_string())),
+                            m.header.at("changes").as_object(), m.header.at("persist").as_bool()};
+                        const auto execution = config_operations.execute(
+                            instance, operation, std::move(request),
+                            [&](const sv::ConfigOperations::Request &requested)
+                            {
+                                if (!experiment.allows("config_apply", origin->bound_session_id, "",
+                                                       sv::now_ns()))
+                                {
+                                    throw std::runtime_error("experiment_lease_conflict");
+                                }
+                                (void)config_service.apply(
+                                    requested.base_revision, requested.changes, requested.persist,
+                                    view, output_product,
+                                    [&](const sv::Config &prepared)
+                                    {
+                                        return std::make_unique<sv::RendererConfigurationUpdate>(
+                                            *renderer, prepared,
+                                            requested.changes.contains("surface"));
+                                    });
+                                applied_command = applied_id;
+                                ++state_revision;
+                                dirty = true;
+                            });
+                        operation_replayed = execution.replayed;
+                        accepted =
+                            execution.entry.state == sv::ConfigOperations::Entry::State::Committed;
+                        reason = accepted ? "ok" : execution.entry.reason;
+                        extra_res["configuration_operation"] =
+                            config_operations.status(instance, operation, operation_replayed);
                     }
                     else if (type == "fusion_catalog")
                     {
@@ -1279,11 +1343,13 @@ int main(int argc, char **argv)
                     }
                 }
                 if (accepted && type != "state" && type != "config_read" &&
-                    type != "config_catalog" && type != "config_validate" && type != "fusion_catalog" &&
-                    type != "output_catalog" && type != "surface_catalog" &&
-                    type != "experiment_acquire" && type != "experiment_renew" &&
-                    type != "experiment_release" && type != "calibrate" &&
-                    type != "calibration_status" && type != "apply_calibration")
+                    type != "config_catalog" && type != "config_validate" &&
+                    type != "config_operation_status" && type != "config_apply_once" &&
+                    type != "fusion_catalog" && type != "output_catalog" &&
+                    type != "surface_catalog" && type != "experiment_acquire" &&
+                    type != "experiment_renew" && type != "experiment_release" &&
+                    type != "calibrate" && type != "calibration_status" &&
+                    type != "apply_calibration")
                 {
                     view = candidate;
                     applied_command = sv::parse_decimal_u64(id);

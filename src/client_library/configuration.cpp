@@ -64,6 +64,14 @@ ConfigurationSnapshot parse_configuration_snapshot(const Message &message)
     {
         throw std::invalid_argument("configuration snapshot revision mismatch");
     }
+    if (const auto *instance = fields.if_contains("server_instance_id"))
+    {
+        result.server_instance_id = std::string(instance->as_string());
+        if (result.server_instance_id.empty())
+        {
+            throw std::invalid_argument("empty configuration server instance");
+        }
+    }
     result.active = fields.at("active").as_object();
     result.persisted = fields.at("persisted").as_object();
     result.has_runtime_changes = fields.at("has_runtime_changes").as_bool();
@@ -154,6 +162,61 @@ ConfigurationApplication parse_configuration_application(const Message &message)
             parse_decimal_u64(std::string(message.header.at("config_revision").as_string())))
     {
         throw std::invalid_argument("inconsistent configuration application result");
+    }
+    return result;
+}
+
+ConfigurationOperation parse_configuration_operation(const Message &message)
+{
+    if (message.type != 21 || !message.payload.empty())
+    {
+        throw std::invalid_argument("configuration operation requires ACK");
+    }
+    (void)parse_decimal_u64(std::string(message.header.at("command_id").as_string()));
+    const auto accepted = message.header.at("accepted").as_bool();
+    const auto &fields = message.header.at("configuration_operation").as_object();
+    if (!fields.at("schema_version").is_int64() || fields.at("schema_version").as_int64() != 1 ||
+        fields.at("scope").as_string() != "config_store_operation")
+    {
+        throw std::invalid_argument("unsupported configuration operation schema");
+    }
+    ConfigurationOperation result;
+    result.server_instance_id = std::string(fields.at("server_instance_id").as_string());
+    result.operation_id = std::string(fields.at("operation_id").as_string());
+    result.state = std::string(fields.at("state").as_string());
+    result.replayed = fields.at("replayed").as_bool();
+    if (result.server_instance_id.empty() || result.operation_id.empty())
+    {
+        throw std::invalid_argument("empty configuration operation identity");
+    }
+    if (result.state == "not_found")
+    {
+        if (!accepted || result.replayed || fields.contains("revision") ||
+            fields.contains("base_config_revision"))
+        {
+            throw std::invalid_argument("inconsistent absent configuration operation");
+        }
+        return result;
+    }
+    result.base_revision =
+        parse_decimal_u64(std::string(fields.at("base_config_revision").as_string()));
+    result.persisted = fields.at("persisted").as_bool();
+    result.reason = std::string(fields.at("reason").as_string());
+    if (result.state == "committed")
+    {
+        result.revision = parse_decimal_u64(std::string(fields.at("revision").as_string()));
+        const auto current =
+            parse_decimal_u64(std::string(message.header.at("config_revision").as_string()));
+        if (!accepted || !result.reason.empty() || result.base_revision == UINT64_MAX ||
+            result.revision != result.base_revision + 1 || result.revision > current)
+        {
+            throw std::invalid_argument("inconsistent committed configuration operation");
+        }
+    }
+    else if ((result.state != "rejected" && result.state != "pending") || result.persisted ||
+             fields.contains("revision") || (result.state == "rejected" && result.reason.empty()))
+    {
+        throw std::invalid_argument("inconsistent configuration operation state");
     }
     return result;
 }
