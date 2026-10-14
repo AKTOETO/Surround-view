@@ -6,12 +6,39 @@ Item {
     focus: true
     property real vehicleX: 0
     property real vehicleZ: 0
-    property real heading: 0
+    property real headingRad: 0
     property real speed: 0
     property bool forward: false
     property bool reverse: false
-    property bool left: false
-    property bool right: false
+    property bool steerLeft: false
+    property bool steerRight: false
+
+    signal exitRequested()
+
+    function resetInput() {
+        forward = reverse = steerLeft = steerRight = false
+    }
+    function handleKey(key, pressed) {
+        if (key === Qt.Key_W || key === Qt.Key_Up) forward = pressed
+        else if (key === Qt.Key_S || key === Qt.Key_Down) reverse = pressed
+        else if (key === Qt.Key_A || key === Qt.Key_Left) steerLeft = pressed
+        else if (key === Qt.Key_D || key === Qt.Key_Right) steerRight = pressed
+        else if (key === Qt.Key_Escape) {
+            if (pressed) { resetInput(); exitRequested() }
+        } else return false
+        return true
+    }
+    function advanceVehicle(dt) {
+        var acceleration = (forward ? 7.0 : 0.0) - (reverse ? 5.0 : 0.0)
+        speed = Math.max(-4.0, Math.min(12.0, speed + acceleration * dt))
+        if (!forward && !reverse) speed *= Math.max(0, 1 - 1.8 * dt)
+        var steering = (steerRight ? 1.0 : 0.0) - (steerLeft ? 1.0 : 0.0)
+        headingRad += steering * speed * Math.tan(0.45) / 1.9 * dt
+        vehicleX += Math.sin(headingRad) * speed * dt
+        vehicleZ -= Math.cos(headingRad) * speed * dt
+    }
+    onActiveFocusChanged: if (!activeFocus) resetInput()
+    onVisibleChanged: if (!visible) resetInput()
 
     View3D {
         anchors.fill: parent
@@ -26,8 +53,10 @@ Item {
             id: world
             PerspectiveCamera {
                 id: camera
-                position: Qt.vector3d(root.vehicleX + 14, 18, root.vehicleZ + 19)
-                eulerRotation: Qt.vector3d(-34, 0, 0)
+                position: Qt.vector3d(root.vehicleX - Math.sin(root.headingRad) * 10, 6,
+                                      root.vehicleZ + Math.cos(root.headingRad) * 10)
+                eulerRotation: Qt.vector3d(-28, -root.headingRad * 180 / Math.PI, 0)
+                clipNear: 0.05
                 clipFar: 500
                 fieldOfView: 52
             }
@@ -39,14 +68,14 @@ Item {
 
             Model {
                 source: "#Cube"
-                position: Qt.vector3d(0, -0.35, 0)
-                scale: Qt.vector3d(18, 0.2, 70)
+                position: Qt.vector3d(0, -0.11, 0)
+                scale: Qt.vector3d(0.32, 0.002, 1.4)
                 materials: PrincipledMaterial { baseColor: "#52745e"; roughness: 1 }
             }
             Model {
                 source: "#Cube"
-                position: Qt.vector3d(0, -0.18, 0)
-                scale: Qt.vector3d(8, 0.08, 70)
+                position: Qt.vector3d(0, -0.04, 0)
+                scale: Qt.vector3d(0.08, 0.0008, 1.4)
                 materials: PrincipledMaterial { baseColor: "#343a42"; roughness: 1 }
             }
 
@@ -54,8 +83,8 @@ Item {
                 model: 18
                 delegate: Model {
                     source: "#Cube"
-                    position: Qt.vector3d(0, -0.125, (index - 9) * 4)
-                    scale: Qt.vector3d(0.12, 0.02, 2.0)
+                    position: Qt.vector3d(0, 0.011, (index - 9) * 4)
+                    scale: Qt.vector3d(0.0012, 0.0002, 0.02)
                     materials: PrincipledMaterial { baseColor: "#e4d9ae"; roughness: 1 }
                 }
             }
@@ -67,9 +96,9 @@ Item {
                     property real row: Math.floor(index / 2)
                     property real buildingHeight: 2.5 + (index * 7 % 6)
                     source: "#Cube"
-                    position: Qt.vector3d(side * (7.5 + (row % 3) * 1.4), buildingHeight / 2 - 0.25,
+                    position: Qt.vector3d(side * (7.5 + (row % 3) * 1.4), buildingHeight / 2 - 0.01,
                                           (row - 6) * 10 + (row % 2) * 3)
-                    scale: Qt.vector3d(3.0, buildingHeight, 5.5)
+                    scale: Qt.vector3d(0.03, buildingHeight / 100, 0.055)
                     materials: PrincipledMaterial {
                         baseColor: ["#b98f75", "#c7bda4", "#7f9293", "#a77c6c"][index % 4]
                         roughness: 0.9
@@ -79,19 +108,21 @@ Item {
 
             Node {
                 id: vehicle
+                objectName: "driveVehicle"
                 position: Qt.vector3d(root.vehicleX, 0, root.vehicleZ)
-                eulerRotation: Qt.vector3d(0, root.heading, 0)
+                eulerRotation: Qt.vector3d(0, -root.headingRad * 180 / Math.PI, 0)
 
                 Model {
                     source: "#Cube"
                     position: Qt.vector3d(0, 0.55, 0)
-                    scale: Qt.vector3d(1.55, 0.42, 3.1)
+                    objectName: "driveVehicleBody"
+                    scale: Qt.vector3d(0.0155, 0.0042, 0.031)
                     materials: PrincipledMaterial { baseColor: "#d94f3d"; roughness: 0.42; metalness: 0.12 }
                 }
                 Model {
                     source: "#Cube"
                     position: Qt.vector3d(0, 0.94, -0.12)
-                    scale: Qt.vector3d(1.25, 0.45, 1.45)
+                    scale: Qt.vector3d(0.0125, 0.0045, 0.0145)
                     materials: PrincipledMaterial { baseColor: "#88b8c9"; roughness: 0.25; metalness: 0.18 }
                 }
                 Repeater3D {
@@ -102,7 +133,7 @@ Item {
                         source: "#Cylinder"
                         position: Qt.vector3d(side * 0.81, 0.31, axle * 0.95)
                         eulerRotation: Qt.vector3d(0, 0, 90)
-                        scale: Qt.vector3d(0.30, 0.16, 0.30)
+                        scale: Qt.vector3d(0.006, 0.0016, 0.006)
                         materials: PrincipledMaterial { baseColor: "#202329"; roughness: 0.9 }
                     }
                 }
@@ -113,7 +144,7 @@ Item {
                         property real axle: index < 2 ? -1 : 1
                         source: "#Sphere"
                         position: Qt.vector3d(side * 0.68, 1.16, axle * 1.22)
-                        scale: Qt.vector3d(0.13, 0.13, 0.13)
+                        scale: Qt.vector3d(0.0013, 0.0013, 0.0013)
                         materials: PrincipledMaterial { baseColor: "#ffd65a"; emissiveFactor: Qt.vector3d(0.65, 0.48, 0.12) }
                     }
                 }
@@ -121,35 +152,26 @@ Item {
         }
     }
 
-    Timer {
-        interval: 16
-        repeat: true
-        running: true
-        onTriggered: {
-            var dt = interval / 1000.0;
-            var acceleration = (root.forward ? 7.0 : 0.0) - (root.reverse ? 5.0 : 0.0);
-            root.speed = Math.max(-4.0, Math.min(12.0, root.speed + acceleration * dt));
-            if (!root.forward && !root.reverse)
-                root.speed *= Math.max(0, 1 - 1.8 * dt);
-            var steering = (root.right ? 1.0 : 0.0) - (root.left ? 1.0 : 0.0);
-            root.heading += steering * root.speed * 2.3 * dt / 12.0;
-            root.vehicleX += Math.sin(root.heading) * root.speed * dt;
-            root.vehicleZ -= Math.cos(root.heading) * root.speed * dt;
+    MouseArea {
+        anchors.fill: parent
+        onPressed: function(mouse) {
+            root.forceActiveFocus()
+            mouse.accepted = true
         }
     }
 
-    Keys.onPressed: {
-        if (event.key === Qt.Key_W || event.key === Qt.Key_Up) root.forward = true;
-        else if (event.key === Qt.Key_S || event.key === Qt.Key_Down) root.reverse = true;
-        else if (event.key === Qt.Key_A || event.key === Qt.Key_Left) root.left = true;
-        else if (event.key === Qt.Key_D || event.key === Qt.Key_Right) root.right = true;
-        else if (event.key === Qt.Key_Escape) root.visible = false;
+    Timer {
+        interval: 16
+        repeat: true
+        running: root.visible
+        onTriggered: root.advanceVehicle(interval / 1000.0)
     }
-    Keys.onReleased: {
-        if (event.key === Qt.Key_W || event.key === Qt.Key_Up) root.forward = false;
-        else if (event.key === Qt.Key_S || event.key === Qt.Key_Down) root.reverse = false;
-        else if (event.key === Qt.Key_A || event.key === Qt.Key_Left) root.left = false;
-        else if (event.key === Qt.Key_D || event.key === Qt.Key_Right) root.right = false;
+
+    Keys.onPressed: function(event) {
+        if (root.handleKey(event.key, true)) event.accepted = true
+    }
+    Keys.onReleased: function(event) {
+        if (!event.isAutoRepeat && root.handleKey(event.key, false)) event.accepted = true
     }
 
     Rectangle {

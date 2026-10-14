@@ -72,11 +72,11 @@ Window {
             property real deltaY: 0
 
             anchors.fill: parent
-            onPressed: {
+            onPressed: function(mouse) {
                 lastX = mouse.x;
                 lastY = mouse.y;
             }
-            onPositionChanged: {
+            onPositionChanged: function(mouse) {
                 if (pressed) {
                     deltaX += mouse.x - lastX;
                     deltaY += mouse.y - lastY;
@@ -84,7 +84,7 @@ Window {
                     lastY = mouse.y;
                 }
             }
-            onWheel: backend.zoom(-wheel.angleDelta.y / 480)
+            onWheel: function(wheel) { backend.zoom(-wheel.angleDelta.y / 480) }
 
             Timer {
                 interval: 33

@@ -11,6 +11,7 @@ Window {
     title: "sv-simulator — 3D Surround View Simulator & Control Center"
     color: "#141820"
     property bool showDriveWorld: startDrivingWorld
+    property bool drivingWorldLoaded: driveLoader.status === Loader.Ready
 
     // Top Header Bar
     Rectangle {
@@ -91,11 +92,11 @@ Window {
 
             anchors.fill: parent
             visible: !window.showDriveWorld
-            onPressed: {
+            onPressed: function(mouse) {
                 lastX = mouse.x;
                 lastY = mouse.y;
             }
-            onPositionChanged: {
+            onPositionChanged: function(mouse) {
                 if (pressed) {
                     deltaX += mouse.x - lastX;
                     deltaY += mouse.y - lastY;
@@ -103,7 +104,7 @@ Window {
                     lastY = mouse.y;
                 }
             }
-            onWheel: bridge.zoom(-wheel.angleDelta.y / 480)
+            onWheel: function(wheel) { bridge.zoom(-wheel.angleDelta.y / 480) }
 
             Timer {
                 interval: 33
@@ -120,11 +121,15 @@ Window {
         }
 
         Loader {
+            id: driveLoader
             anchors.fill: parent
             active: window.showDriveWorld
             visible: active
             source: driveWorldAvailable ? "qrc:/DriveWorld.qml" : ""
-            onLoaded: item.forceActiveFocus()
+            onLoaded: {
+                item.exitRequested.connect(function() { window.showDriveWorld = false })
+                item.forceActiveFocus()
+            }
         }
     }
 

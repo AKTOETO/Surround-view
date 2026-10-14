@@ -115,7 +115,17 @@ int main(int argc, char **argv)
     engine.rootContext()->setContextProperty(QStringLiteral("startDrivingWorld"), world_smoke);
     if (world_smoke)
     {
-        QTimer::singleShot(3000, &app, &QCoreApplication::quit);
+        QTimer::singleShot(
+            3000, &app,
+            [&engine, &app, &smoke_result]
+            {
+                smoke_result =
+                    !engine.rootObjects().isEmpty() &&
+                            engine.rootObjects().front()->property("drivingWorldLoaded").toBool()
+                        ? 0
+                        : 2;
+                app.quit();
+            });
     }
 
     const QUrl url(QStringLiteral("qrc:/main.qml"));
@@ -132,5 +142,5 @@ int main(int argc, char **argv)
 
     engine.load(url);
     const int app_result = app.exec();
-    return smoke ? smoke_result : app_result;
+    return (smoke || world_smoke) ? smoke_result : app_result;
 }
