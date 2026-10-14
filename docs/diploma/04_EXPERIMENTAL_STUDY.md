@@ -2367,11 +2367,11 @@ Direct target mask воспроизведён побитно для всех ч�
 ### 4.64.1. Known-answer oracle и критерии
 
 Virtual rays проходят через166/161 pixel centers заранее сохранённой z020 mask. Здесь маска задаёт только координаты выборки, а не объект в новой сцене. Независимый Blender nearest hit сопоставляется с аналитическим пересечением:
+$$
 
-\[
 t=-\frac{o_z}{d_z},\qquad P=o+td,\quad t>0,\quad |d_z|>10^{-12}.
-\]
 
+$$
 Для source rays используются фактические native UV и inverse equidistant optics данного zero-distortion fixture. Collector независимо проверяет direct/source plane hits, world/vehicle transforms и strict native validity. Analytical look-at вычисляется отдельно от Blender helper. Known-answer test проверяет vertical/oblique rays, масштаб direction, отказ parallel/behind/nonfinite cases.
 
 ```plantuml
@@ -2443,10 +2443,10 @@ Double look-at/perspective MVP независимо восстановлена �
 
 Второй контроль округляет MVP до float32, после чего inverse/unprojection снова вычисляются в double. Так изолируется только matrix-upload rounding:
 
-\[
+$$
 M_f=\operatorname{float64}(\operatorname{float32}(M)),\qquad
 \Delta P_M=\|P(M_f)-P(M)\|.
-\]
+$$
 
 Модель намеренно не воспроизводит vertex arithmetic, clipping, raster quantization и perspective interpolation. Она не является CPU реализацией GPU rasterizer. Actual GPU uniforms не захвачены; реконструкция основана на проверенных формулах и зафиксированном native source.
 
@@ -4587,3 +4587,90 @@ Historical report §4.88 остаётся failed2/162. Новый успешны
 Четыре новых known-answer tests проверяют virtual pixel centre/clip segment, world translation, missing/wrong-kind hit и point tolerance. С sampler/residual/endpoint tests18/18 Python controls; selected CTest4/4 за1.30s. Native product code не менялся; предыдущий full59/59 не объявляется новым прогоном. Full raw collector при повторении побайтно идентичен. Команды/ограничения: [[validation/MESA_SOURCE_TRUTH]].
 
 Matched source truth текущего backend и первая paired-control inventory завершены. Теперь следует получить independent texture-rich/nonuniform object scenes с balanced correct/incorrect paired controls, провести exposure/filter/noise ablations и отдельно проверить final RGB/seam/ghost quality. До нового selection/abstention rule нужно определить его target: centre geometry, filter contamination либо perceptual seam; их нельзя объединять одним confidence label. Настоящий natural-object holdout, general reconstruction, physical cameras, overhead и Aurora остаются открытыми.
+
+
+## 4.91. Независимые текстурированные сцены: геометрия и итоговый RGB
+
+### 4.91.1. Постановка и независимость эталона
+
+После §4.90 следующий вопрос состоит в том, сохраняется ли разделение геометрической корректности и RGB-разногласия на неоднородных поверхностях с новыми монтажами и положениями объекта. Созданы две новые procedural instances seeds211/223: разные физические camera poses, положение, размер и поворот box, azimuth виртуальной камеры. Дорога и объект получают разные воспроизводимые RGB textures128² с world-space box projection. Это отдельные captures, но прежнее семейство road/box/ego; natural-object holdout ими не заменяется.
+
+Протокол [[research/TEXTURED_SOURCE_PROTOCOL]] и plan зафиксированы до захвата в `09e4397`. Первый запуск остановился до первого изображения из-за float64 buffer, не поддержанного Blender5.2 foreach_set. Исправление float32 и отдельный retry plan зафиксированы в `02a462b`; первоначальная постановка и seeds сохранены. Успешный capture выполнен в Blender5.2.2 LTS, Cycles CPU8 samples, denoising off; cube256, fisheye400, virtual RGB320×180, один frame. Emission shader намеренно исключает различия освещения этих материалов; это не photorealistic lighting experiment.
+
+Независимый эталон включает direct virtual RGB, полные object-ID и visibility arrays, evaluated world triangles и120 уникальных Blender ray anchors. Сервер получает физически верную calibration с погрешностями монтажа, а не результат estimation. Native serialization roundtrip≤2.22e−16 проверяется при tolerance1e−12; inverse physical rays используют архивную истинную calibration. Сопоставление не допускает реальных изменений extrinsic/intrinsic под видом roundtrip.
+
+```plantuml
+@startuml
+participant "Frozen recipe / bitmap generator" as R
+participant "Blender independent world" as B
+participant "C++ native renderer (Mesa)" as N
+participant "Independent evaluator" as E
+R -> B : new mount/pose seeds + road/target textures
+B -> E : virtual RGB / object-ID / visibility\nworld triangles + ray anchors
+B -> N : four fisheye inputs + true calibration
+loop plane / supplied local patch
+  N -> E : ordinary RGBA + retained UV/status\nsource_disagreement_v1 (separate static repeat)
+  E -> E : verify hashes/backend/parity\ncentre intersections != filtered RGB quality
+end
+E -> E : report denominators, failures, limitations
+@enduml
+```
+
+Рисунок4.170 — Независимые ветви получения эталона и native result. Geometry oracle и direct RGB не подменяются carrier-rendered truth. Metric и correspondence получают отдельные static repeat renders с одинаковыми inputs/fingerprint/backend, а не один новый joint payload.
+
+### 4.91.2. Носители и геометрические результаты
+
+Проверяются flat plane и supplied local support patch до верхней грани box. Patch использует axis-aligned bounding footprint повёрнутого объекта и transition0.2m, не воспроизводит вертикальные грани. Source occlusion отключена. Это диагностический supplied-geometry control, а не автоматически восстановленная сцена. Внутри каждой пары неизменны inputs, view и native fusion default; сравнения fusion algorithms в этом шаге нет.
+
+Предварительно заданная lattice offset4/step8 даёт3520 cells. Все count/domain/defined/RGB checks прошли; max RGB error1byte. Для двух profiles выполнены240/240 anchor checks, max point error7.61µm при tolerance0.2mm; проверки повторяют120 уникальных rays. Virtual semantic kinds внутри carrier domain совпали с независимыми object-ID. Native ordinary RGBA parity, input/config/manifest identity, fingerprints и фактический llvmpipe backend проверены.
+
+Таблица4.93 — Lattice source-centre correspondence при2mm; classification при20mm в этой выборке совпадает.
+
+|Scene/profile|Cells|Outside|Singleton|All matching paired|Mixed paired|None matching paired|
+|---|---:|---:|---:|---:|---:|---:|
+|211 plane|880|362|233|234|50|1|
+|211 patch|880|361|233|234|50|2|
+|223 plane|880|364|203|258|53|2|
+|223 patch|880|364|203|257|53|3|
+|Всего|3520|1451|872|983|206|8|
+
+Все1197 paired memberships используют две eligible cameras. Mixed означает, что только одна source centre соответствует virtual point; none matching — ни одна. Outside domain отделён от потери наблюдаемости, singleton comparison undefined. Между profiles используются одинаковые inputs, поэтому memberships зависимы; balanced design и число независимых trials таблица не задаёт.
+
+![Textured centre inventory](figures/experiments/textured_source_inventory.png)
+
+Рисунок4.171 — Распределение paired centre labels и native RGB range на новых textures; counts справа имеют logarithmic scale. Classification относится к геометрии центров, не к качеству filtered RGB.
+
+У all-matching centres D=2–152byte, у mixed17–128, у none-matching1–93. Для заранее заданных thresholds8/16/32/64/128 counts flagged all-matching равны788/408/62/4/2 из983; mixed206/206/174/86/0 из206; none-matching7/7/6/5/0 из8. Перекрытие диапазонов согласуется с контрпримером §4.90. Эти counts не являются ROC, population false-positive rates либо основанием выбрать production threshold. Разные source footprints и фильтрация могут менять RGB при геометрически правильных centres; причина каждого большого residual пока не атрибутирована.
+
+### 4.91.3. Отдельная оценка итогового изображения
+
+Предварительно заданный RGB ROI строится erosion1px от independent object-ID для road и target. Для encoded RGB byte arrays I и независимого B:
+
+$$
+E_{RGB}(M)=\frac{1}{3|M|}\sum_{p\in M}\sum_{c\in\{R,G,B\}}|I_c(p)-B_c(p)|.
+$$
+
+При |M|=0 метрика undefined/null. Маска centre correspondence не подменяет M: правильный луч не гарантирует одинаковый filtered color. Независимая видимость≥2 камер также не доказывает, что carrier проецирует именно эту точку.
+
+Таблица4.94 — Direct object-interior RGB MAE в byte units; n — число pixels, не независимых scenes.
+
+|Scene|Target n|Target plane→patch|Road n|Road plane→patch|
+|---|---:|---:|---:|---:|
+|211|117|40.618→26.980|41246|23.274→23.305|
+|223|109|36.602→23.468|41264|24.093→24.138|
+
+Direct RGB включает области за finite carrier и недоступные физическим камерам поверхности. Поэтому full interior MAE не является чистым fusion error. После просмотра full-frame outputs добавлен **post-hoc supplementary control**, сохраняющий прежние denominators: общий native domain двух profiles ∩ independent two-camera visibility ∩ object interior. На road n15086/16521, MAE20.812→20.845 /22.024→22.071. Значимый residual остаётся и на этом subset; его нельзя целиком объяснить finite domain. Отдельная filter/resolution convergence ещё не выполнена.
+
+В обеих сценах **target two-camera-visible interior n0**. Это null, а не нулевая ошибка. Уменьшение target MAE при заданной local height не подтверждает улучшение двухкамерной сшивки самого препятствия, поскольку такого overlap эталон не обнаружил. Для следующего опыта следует обеспечить более низкий объект либо иной физический монтаж и проверить target overlap независимо до интерпретации fusion quality.
+
+![New textured native outputs](figures/experiments/textured_source_comparison.png)
+
+Рисунок4.172 — Independent Blender RGB и ordinary native frames plane/patch для двух instances. Cyan обозначает bounding box direct target mask. Видимые различия резкости/moire требуют исследования sampling/filter; это не изображение natural world и не validated ghost segmentation.
+
+### 4.91.4. Вывод и оставшиеся проверки
+
+Сквозной baseline на новых неоднородных материалах выполнен: получение независимого эталона, compiled native render, matched UV/source intersections, проверка RGB metric и отдельная оценка final RGB. Local supplied height уменьшила target-interior MAE в двух instances при небольшом увеличении road MAE. Из-за пустого target overlap, одного frame, true calibration и ограниченного procedural family этот результат не ранжирует методы сшивки и не закрывает E-STITCH-01.
+
+Следующий необходимый этап — independently verified target overlap и balanced matching/mixed/nonmatching controls; затем filter/resolution, exposure/noise ablations и самостоятельные seam/ghost criteria. Следует сохранять область применимости каждого вывода: centre geometry, source filtering и final image quality различны. Natural-object holdout, temporal stability, физические камеры и Aurora остаются открытыми.
+
+Полный raw report и captures сохраняются локально; tracked [[validation/baselines/textured_source_v1.json]] содержит hashes,240 anchor checks,1197 paired cells, summaries/thresholds и32 RGB ROI measurements. Шесть новых tests и прежние matched-ray/sampler controls прошли13/13; selected CTest4/4 за0.69s. Product code не менялся, новый full regression не заявляется. Повторение и provenance: [[validation/TEXTURED_SOURCE]].

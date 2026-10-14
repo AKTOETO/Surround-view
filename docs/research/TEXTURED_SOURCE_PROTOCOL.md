@@ -38,3 +38,12 @@ ghost/seam quality score и не ранжирует fusion algorithms по од�
 После baseline: balanced controls, exposure/filter/noise matrix, отдельная атрибуция filtered RGB,
 ghost/seam metric и дополнительные scene families. Новые seeds сами по себе не делают эти procedural
 boxes natural-object holdout. Не подменять centre geometry метрикой perceptual quality.
+
+## Отметки после захвата
+
+Первоначальный протокол сохранён в `09e4397`. Retry plan после float32 compatibility fix —
+`02a462b`, до успешных captures. Collector допускает лишь camera matrix serialization roundtrip≤1e−12,
+как предыдущий matched audit; physical inverse rays используют original calibration.
+После просмотра outputs добавлены отдельные **posthoc common-domain** ROI, без замены
+предварительно заданных interior/two-camera-visible interior. Результаты и обнаруженный пустой
+target overlap: [[validation/TEXTURED_SOURCE]].

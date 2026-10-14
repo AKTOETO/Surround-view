@@ -212,3 +212,5 @@ Native radial footprint visibility (bilinear_radial_v1, guard0/1) реализо
 §4.89: Decimal80 finite-face oracle,32 precision replays и axis substitutions объясняют central decision flip от endpoint drift; strict predicate/defaults сохранены. Таблица4.91, рисунки4.164–4.166. [[validation/ENDPOINT_PRECISION]].
 
 §4.90: matched current-Mesa UV/source truth,36 native captures и3520-cell lattice inventory; same-pair RGB1/20 counterexample centre-confidence threshold. Таблица4.92, рисунки4.167–4.169. [[validation/MESA_SOURCE_TRUTH]].
+
+§4.91: две новые неоднородные Blender scenes, native plane/patch baseline и separate RGB ROI evaluation; target overlap отсутствует и остаётся следующим этапом. Таблицы4.93–4.94, рисунки4.170–4.172. [[validation/TEXTURED_SOURCE]].

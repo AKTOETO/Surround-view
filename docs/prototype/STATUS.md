@@ -1,5 +1,7 @@
 # Состояние прототипа и границы подтверждения
 
+14.10.2026: baseline двух новых текстурированных Blender scenes выполнен: 3520/3520 metric checks, 240/240 anchor checks (120 уникальных rays), 1197 paired memberships: 983 all-matching /206 mixed /8 none-matching. Target two-camera-visible interior пуст; balanced target overlap, filter/resolution и exposure/noise matrix остаются обязательными. Final RGB MAE отделена от centre labels и supplementary post-hoc common-domain ROI. [[validation/TEXTURED_SOURCE]], §4.91.
+
 14.10.2026: matched current-Mesa source truth выполнена на36 native captures:78/78 geometry anchors,162/162 primary и3520/3520 lattice metric checks. Inventory1103 paired memberships содержит1101 all-centres matching и2 повторения одной nonmatching coordinate; same-pair RGB ranges1/20 дают counterexample простому confidence threshold. Historical failed2/162 сохранён; далее independent texture-rich scenes, exposure/filter ablations и separate final RGB/ghost/seam evaluation ([[validation/MESA_SOURCE_TRUTH]], §4.90).
 
 14.10.2026: численная атрибуция двух historical pairing failures выполнена:85.268918µm endpoint drift (Z73.015690µm) меняет central gap20.505999→19.193569mm при bias20mm. Decimal80/32 host precision replays и axis substitutions объясняют flip на записанных q; native predicate/defaults не менялись. Primary2 failures сохранены. Далее matched source truth текущего backend и balanced nonuniform paired controls; точный driver/raster механизм не изолирован ([[validation/ENDPOINT_PRECISION]], §4.89).

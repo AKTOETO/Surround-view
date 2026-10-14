@@ -173,3 +173,13 @@ sha256sum assets/demo/urban_street_01_1k.hdr \
 Производный геометрический пилот A08: `configs/research/carrier-positions-plan.json` закрепляет пять прежних configs/reference reports одного case; новой Blender-сцены или внешних ассетов нет. Generated points/region masks/native replay/XML/executable archives остаются в `artifacts/carrier-inspection-v1`. Tracked иллюстрации `carrier_positions_fields.png`/`carrier_positions_errors.png` восстанавливаются скриптом `docs/diploma/plot_carrier_positions.py`; baseline и ограничения: [[validation/CARRIER_POSITIONS]]. Это результаты диагностики, а не исходные изображения мира.
 
 Исследование source correspondence использует прежний procedural case из `assets/scenarios/parallax-sensor-v1.json`, без новых скачанных ассетов. `tools/blender/source_surface_truth.py` восстанавливает его geometry для independent rays; raw arrays/native captures/binary находятся в игнорируемом `artifacts/source-correspondence-v1`. Tracked baseline и три производные иллюстрации документированы в [[validation/SOURCE_CORRESPONDENCE]]; рисунки создаёт `docs/diploma/plot_source_correspondence.py`. Исходный открытый Blender world не изменяется.
+
+## Процедурные fixtures исследования текстур
+
+Recipes `configs/research/textured-source-plan.json` и отдельный retry plan, генераторы
+`tools/blender/textured_fixture.py`/`textured_source_study.py` восстанавливают новые world fixtures
+seeds211/223 без скачиваний. Это исходные текстовые recipes в Git; PNG textures, packed .blend,
+independent RGB/IDs и triangles в `artifacts/textured-source-captures-v2` — результаты эксперимента.
+Они не являются сторонними исходными ассетами и не требуют Git LFS. Hashes, Blender version и
+ограничения воспроизводимости: [[validation/TEXTURED_SOURCE]]. Удаление artifacts удалит локальные
+captures; для нового Blender/backend требуется новый versioned plan, а не обещание byte identity.

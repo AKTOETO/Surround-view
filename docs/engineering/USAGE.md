@@ -1215,3 +1215,11 @@ if (sv::client::validate_output_product(*event.message) == sv::OutputProduct::So
 ## Повторить matched Mesa source-truth опыт
 
 `python3 tools/research/mesa_source_truth.py --output-report /tmp/mesa-source-truth-repeat.json` проверяет сохранённые compiled captures по frozen plan. `--capture` предназначен только для первого создания output directory; нужны archived correspondence binary, source images и проверенный Blender geometry export. Основная метрика остаётся в серверном source_disagreement_v1, Python выполняет independent evaluation/plots. Полные команды, hashes, ограничения и текущие counterexamples: [[validation/MESA_SOURCE_TRUTH]]. Новый build/backend требует отдельного versioned plan/report, а не подмены frozen hashes.
+
+## Повторить baseline новых текстурированных сцен
+
+Blender fixture и independent validation: [[validation/TEXTURED_SOURCE]]. После первого native capture
+повторный collector запускается командой `python3 tools/research/textured_source.py --output-report /tmp/textured-source-repeat.json`.
+Основной renderer/metric выполняются compiled C++/GLSL probes; Python используется для независимой
+проверки и figures, не как продуктовый camera source. Для первого запуска нужны Blender export,
+frozen binaries и EGL/Mesa; существующие output directories не перезаписываются.
