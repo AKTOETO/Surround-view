@@ -148,3 +148,10 @@ Client::output_catalog() и configure_output(OutputProduct::FinalFrame/RenderSup
 ## SourceDisagreementView
 
 Check output_catalog for `source_disagreement_v1`, then `configure_output(OutputProduct::SourceDisagreement)`. Filter type11 by product/revision and release previous in-flight packets. `SourceDisagreementView(message)` owns immutable Message without payload copy/Qt/OpenCV; at(x,y) returns encoded_rgb_range, eligible_cameras, defined, carrier. Undefined means fewer than two eligible sources; it is not zero error or acceptance. Exact schema, shape/provenance, count≤used inputs and domain/defined invariants are validated. release(header) preserves owning view lifetime; bounded server slot still must be released promptly. Selector is temporary, one product per generation, default on reconnect final_frame; active lease forbids switching. [[validation/SOURCE_DISAGREEMENT]].
+
+## Чтение конфигурации через ConfigService
+
+При capability config_read_v1 отправить Client::read_configuration(); accepted ACK разобрать
+parse_configuration_snapshot(). Owning ConfigurationSnapshot содержит active/persisted objects,
+uint64 revision и flags. Полная серверная validation не дублируется в библиотеке. Scope, limits,
+порядок взаимодействия и оставшиеся операции: [[engineering/CONFIG_SERVICE]].

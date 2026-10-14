@@ -1,5 +1,7 @@
 # Подробный план реализации
 
+14.10.2026: первый продуктовый ConfigService read реализован: config_read_v1, coherent active/persisted/revision snapshot, typed C++ parser и read_configuration(), Unix/TCP consumer parity, read during lease, bounded oversize rejection без disconnect. Selected CTest5/5; general schema/validate/update/apply ещё не реализованы. [[engineering/CONFIG_SERVICE]].
+
 14.10.2026: последний bounded target-overlap control завершён: independent preflight/capture726/730 target pixels,3520/3520 metric и240/240 anchor checks;26 same-coordinate plane-none→patch-all geometry contrasts. Target RGB MAE33.65→23.85 /33.83→24.08. Следующая работа — ConfigService/library/GUI, оставшиеся исследования отложены до общего ExperimentRunner. [[validation/TARGET_OVERLAP]], §4.92.
 
 14.10.2026: baseline двух новых текстурированных Blender scenes выполнен: 3520/3520 metric checks, 240/240 anchor checks (120 уникальных rays), 1197 paired memberships: 983 all-matching /206 mixed /8 none-matching. Target two-camera-visible interior пуст; balanced target overlap, filter/resolution и exposure/noise matrix остаются обязательными. Final RGB MAE отделена от centre labels и supplementary post-hoc common-domain ROI. [[validation/TEXTURED_SOURCE]], §4.91.

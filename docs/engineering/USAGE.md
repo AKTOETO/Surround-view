@@ -1223,3 +1223,14 @@ Blender fixture и independent validation: [[validation/TEXTURED_SOURCE]]. По�
 Основной renderer/metric выполняются compiled C++/GLSL probes; Python используется для независимой
 проверки и figures, не как продуктовый camera source. Для первого запуска нужны Blender export,
 frozen binaries и EGL/Mesa; существующие output directories не перезаписываются.
+
+## Прочитать активную и сохранённую конфигурацию
+
+```sh
+build/svctl --unix /tmp/sv-prototype command config_read
+build/svctl --tcp 127.0.0.1 53101 53102 command config_read
+```
+
+Запрос не требует JSON-ввода и не изменяет конфиг. ACK configuration содержит coherent
+active/persisted/revision snapshot ConfigStore, без session view и launch-only overrides.
+Нужен сервер с capability config_read_v1. Подробный C++ API и ограничения: [[engineering/CONFIG_SERVICE]].

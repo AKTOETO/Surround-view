@@ -10,14 +10,15 @@
 
 ## Полный каталог текущих операций
 
-Все 20 серверных команд передаются как type 20; результат — type 21. Typed API перечислен там, где он есть; остальные доступны через `command(type, parameters)`. Наличие generic API не означает поддержку неизвестной команды сервером.
+Каталог содержит21 серверную команду; запросы передаются как type20, результат — type21. Typed API перечислен там, где он есть; остальные доступны через `command(type, parameters)`. Наличие generic API не означает поддержку неизвестной команды сервером.
 
 | Команда | Запрос помимо command_id/type | Успешный результат / сценарий |
 |---|---|---|
 | `state` | Нет | Snapshot, revisions, lease; С02 |
-| `fusion_catalog` | Нет | Каталог fusion версии 4, capabilities параметров; С02 |
+| `config_read` | Нет; capability config_read_v1 | Coherent ConfigStore active/persisted/revision, read-only; С13 |
+| `fusion_catalog` | Нет | Каталог fusion версии 5, capabilities параметров; С02 |
 | `output_catalog` | Нет | Каталог продуктов/формат маски; С12 |
-| `configure_output` | `product=final_frame/render_support_v1/source_visibility_v1` | Выбор одного data product до следующего render; С12 |
+| `configure_output` | `product=final_frame/render_support_v1/source_visibility_v1/source_disagreement_v1` | Выбор одного data product до следующего render; С12 |
 | `surface_catalog` | Нет | Типы носителей и описание plane; С02 |
 | `orbit` | `azimuth_delta_rad`, `elevation_delta_rad` | Допустимый view; С03 |
 | `zoom` | `distance_delta_m` | Допустимая дистанция; С03 |
@@ -347,3 +348,7 @@ end note
 ### Расширение С12: encoded RGB disagreement
 
 Вместо render_support_v1 выбрать source_disagreement_v1, проверив catalog/schema. Сервер вычисляет обычный кадр и отдельный native eligible RGB pass, передаёт выбранную integer matrix с теми же frame/config/input identities. Client validator проверяет exact schema/shape/domain/counts, SourceDisagreementView различает undefined и defined-zero; release/old in-flight filtering прежние. Смена non-color/active lease отвергается без mutation. Диагностика не включает rejection threshold, не меняет cameras/fusion и не доказывает scene correspondence. Sequence: [[diploma/04_EXPERIMENTAL_STUDY#4.88.2. Реализация server/library и формат]].
+
+## С13. Согласованное чтение ConfigStore
+
+Реализованы read_configuration() и owning parse_configuration_snapshot(); snapshot доступен без lease token и не меняет revisions/рендер/файл. Scope исключает session view и launch-only CLI overrides. Диаграмма request/ACK, oversize rejection и поля: [[engineering/CONFIG_SERVICE]]. General validate/update/apply остаются будущими сценариями.

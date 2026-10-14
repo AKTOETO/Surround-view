@@ -1,10 +1,10 @@
 # Реализованный протокол SV01
 
-Срез реализации Linux 0.6.x. Это описание текущего wire-контракта, сверенное с `include/sv/protocol.hpp`, `src/core/protocol.cpp`, `src/apps/server.cpp` и `src/client_library/client.cpp`. Runtime fusion API `fusion_runtime_v1` описан ниже; общий ConfigService ещё не реализован. Целевая расширенная архитектура и подписки описаны отдельно в [[architecture/CLIENT_SERVER_MODEL]] и пока не являются возможностями сервера.
+Срез реализации Linux 0.6.x. Это описание текущего wire-контракта, сверенное с `include/sv/protocol.hpp`, `src/core/protocol.cpp`, `src/apps/server.cpp` и `src/client_library/client.cpp`. Runtime fusion API `fusion_runtime_v1` описан ниже; первый ConfigService read config_read_v1 реализован ([[engineering/CONFIG_SERVICE]]), general validate/update/apply ещё отсутствуют. Целевая расширенная архитектура и подписки описаны отдельно в [[architecture/CLIENT_SERVER_MODEL]] и пока не являются возможностями сервера.
 
 ## Транспорт и кадрирование
 
-Полный каталог 20 команд и 12 сценариев подключения, применения, обработки кадров и отказов с PlantUML: [[engineering/PROTOCOL_SCENARIOS]]. Сценарии описывают текущий код; проектируемые API остаются отдельно.
+Полный каталог 21 команды и 13 сценариев подключения, применения, обработки кадров и отказов с PlantUML: [[engineering/PROTOCOL_SCENARIOS]]. Сценарии описывают текущий код; проектируемые API остаются отдельно.
 
 Один логический клиент использует две независимые stream-связи: control и data. Поддерживаются Unix domain sockets либо TCP; транспорт выбирается только конфигурацией endpoint/listeners. Клиентская библиотека сама не переключается на другой транспорт. UDP, TLS, несколько одновременных клиентов и control-only пока отсутствуют. Серверная сторона ограничена одной сессией: второй клиент не образует независимое пространство состояния.
 
@@ -296,3 +296,7 @@ The existing full-surface `Client::configure_surface` call applies/restores thes
 ### source_disagreement_v1 через output_selection_v1
 
 Additive HELLO/output_catalog product `source_disagreement_v1` with exact source_disagreement_schema version1: channels encoded_rgb_max_range_u8, eligible_camera_count, defined_pair_comparison, carrier_domain; scope eligible_samples_not_fusion_weights_or_scene_confidence; sampling bilinear_encoded_rgb_before_color_compensation; defined=count_at_least_two. Integer RGBA8: R0..255, G0..4, B255 iff G≥2, A255 carrier outside footprint/ego, otherwise all0. R0 forced when undefined. Uses existing configure_output/type11/release; no new operation, color only. Non-color selection or configure_fusion rejected before mutation with source_disagreement_requires_color. Product/schema isolation, generation/reset/lease and revision/input identity contracts remain unchanged. Output catalog version1 remains additive; do not confuse it with fusion catalog version5. [[validation/SOURCE_DISAGREEMENT]].
+
+## ConfigService read config_read_v1
+
+`config_read` возвращает coherent active/persisted/revision snapshot в ACK configuration; доступен при lease, не меняет revisions/файл/render dirty. Typed API: read_configuration()/parse_configuration_snapshot(). Лимит snapshot32KiB, oversize отклоняется без disconnect. Scope config_store исключает launch-only overrides и session state. Поля, диаграмма, проверки и оставшиеся операции: [[engineering/CONFIG_SERVICE]].
