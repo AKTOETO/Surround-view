@@ -137,3 +137,8 @@ runner: default looping replay может выполнить cold load до пе
 [[engineering/SOURCES#Восстановление camera worker после ошибки OpenCV]]. Остаются configurable
 retry/timeout policy, restart отдельного worker после release failure и durations failed operations;
 camera health/reconnect counters выполнены; вызовы OpenCV не стали прерываемыми.
+
+
+Camera source: stop guards на границах is_open/open/read и ожидание concurrent stop завершены,
+[[engineering/SOURCES#Остановка на границах camera backend]]. Остаётся ограничить сами
+блокирующие OpenCV/V4L2 calls; эти guards не закрывают bounded shutdown на физических камерах.

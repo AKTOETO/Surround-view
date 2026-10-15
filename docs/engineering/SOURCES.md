@@ -244,7 +244,7 @@ V4L2-устройства; negotiation, driver timestamps и bounded blocking ca
 | Поле | Что учитывается | Что не следует из значения |
 |---|---|---|
 | open_attempts | Каждый вызов open, включая первый, false и exception | Это не число успешных подключений |
-| read_failures | false, пустой Mat либо cv::Exception из read | Отклонённые размеры/depth/channels сюда не входят |
+| read_failures | Обработанные false, пустой Mat либо cv::Exception из read; результат, отменённый сразу после read из-за stop, не учитывается | Отклонённые размеры/depth/channels сюда не входят |
 | opencv_exceptions | Перехваченные cv::Exception при open/read/prepare/close | Это не все ошибки устройства: false не является exception |
 | reconnects | Успешное повторное open после хотя бы одного успешного open | Открытие после первоначально неудачных попыток не является reconnect; успешный read не требуется |
 | release_failures | cv::Exception из close, включая штатный stop | Это не failed read; один отказ read+close увеличивает разные показатели |
@@ -350,3 +350,71 @@ Ready не доказывает синхронизацию четырёх кам
 hardware performance. Physical negotiation и зависший V4L2 read остаются открытыми.
 
 Проверки дополнения: полная Linux сборка и выбранные CTest 5/5 за 6,73 с; source-work executable содержит 16 GTest. Первая попытка sources внутри sandbox получила запрет bind, повтор с разрешёнными локальными сокетами прошёл. Полный набор CTest, физические камеры и Аврора не проверялись.
+
+
+## Остановка на границах camera backend
+
+Добавлены проверки atomic stop flag после `is_open`, перед `read` и после его возврата.
+Прежде, если stop поступал во время open, worker после возврата open всё равно начинал read;
+это могло добавить ещё один блокирующий вызов к shutdown. После read он также мог подготовить
+RGB и сообщить ready, хотя итоговая публикация Frame уже запрещалась существующей проверкой
+под source mutex. Теперь замеченный на этих границах stop ведёт сразу к cleanup.
+
+Новый успешный результат read, отменённый этой проверкой, не доходит до received counter,
+validation, ready, Frame или source_work. Существующие ранее поставленные события при stop
+не очищаются: poll по-прежнему может вернуть старую очередь. Ошибки OpenCV и release имеют
+прежнюю политику обработки; это не запрет всех диагностических сообщений во время остановки.
+
+Одновременные вызовы camera source stop сериализованы отдельным shutdown mutex:
+второй вызов ждёт join первого и не возвращается только потому, что stop flag уже установлен.
+Source mutex не удерживается при join и вызовах driver. Межэтапные проверки читают atomic flag,
+не добавляя захват source mutex на каждую границу. Все callers обязаны сохранять lifetime
+FrameSource до окончания своих вызовов; синхронизация stop не решает произвольное разрушение
+объекта одновременно с чужим методом.
+
+```plantuml
+@startuml
+participant "Caller A" as A
+participant "Caller B" as B
+participant "Camera source" as S
+participant "Worker" as W
+participant "Capture backend" as C
+W -> C : open или read
+activate C
+A -> S : stop()
+activate S
+S -> S : shutdown mutex
+stop flag = true
+wake retry waits
+S -> W : join (ожидание)
+B -> S : stop()
+note right of B : Ждёт shutdown mutex,
+не возвращается по одному flag.
+C --> W : возврат вызова
+ deactivate C
+W -> W : проверить stop flag
+пропустить следующий этап
+W -> C : close()
+W --> S : worker завершён
+S --> A : все workers joined
+ deactivate S
+S --> B : остановка уже завершена
+@enduml
+```
+
+*Рисунок И.6 — Остановка, пришедшая во время backend call, и второй concurrent stop.
+Возврат backend показан явно: сервер не умеет принудительно вызвать этот возврат.*
+
+Три управляемых GTest блокируют is_open/open/read, затем дожидаются наблюдаемого отказа
+новых control requests при stop. Очередь control при этом опустошается, чтобы capacity rejection
+не имитировал stopped state. Второй stop должен оставаться незавершённым до освобождения gate.
+После возврата backend проверяются отсутствие следующего open/read, ready/Frame, нулевые
+received/decoded для отменённого результата, один cleanup и worker_stopped. Gate имеет конечный
+test timeout и освобождается перед assertions/join; это проверка lifecycle, не physical driver.
+
+Проверки уменьшают лишнюю работу на границах, но проверка flag и вызов driver не атомарны:
+stop, пришедший сразу после проверки, всё ещё может застать начавшийся вызов. Ни open/read/release
+не стали прерываемыми, bounded shutdown deadline и timeout для V4L2 не заявляются. Требуются
+отдельная архитектура отменяемого захвата и реальные испытания отключения/зависания устройства.
+
+Проверки: полная Linux сборка; выбранные CTest 5/5 за 6,86 с, включая 19 source-work GTest, telemetry/archive, source config/lifecycle и 7 live telemetry cases. Полный набор CTest, physical V4L2 и Аврора в этом шаге не проверялись.
