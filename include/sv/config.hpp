@@ -1,4 +1,5 @@
 #pragma once
+#include "sv/camera_capture_config.hpp"
 #include "sv/fallback_display.hpp"
 #include "sv/math.hpp"
 #include "sv/telemetry_config.hpp"
@@ -36,6 +37,7 @@ struct SourceConfig
     std::string type = "replay", manifest;
     unsigned message_timeout_ms = 2000;
     std::array<CameraEndpoint, 4> cameras;
+    std::array<CameraCaptureSettings, 4> camera_capture;
     std::array<std::string, 4> camera_devices = {"/dev/video0", "/dev/video1", "/dev/video2",
                                                  "/dev/video3"};
 };

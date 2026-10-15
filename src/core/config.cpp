@@ -391,7 +391,7 @@ Config parse_config(const boost::json::value &value)
         }
         else if (c.source.type == "camera")
         {
-            keys(s, {"type"}, "source", {"devices"});
+            keys(s, {"type"}, "source", {"devices", "capture"});
             if (const auto *devices = s.if_contains("devices"))
             {
                 const auto &list = devices->as_array();
@@ -406,6 +406,39 @@ Config parse_config(const boost::json::value &value)
                             "source.devices: absolute paths up to 255 bytes required");
                     require(unique.insert(c.source.camera_devices[id]).second,
                             "source.devices: duplicate camera path");
+                }
+            }
+            if (const auto *capture = s.if_contains("capture"))
+            {
+                const auto &list = capture->as_array();
+                require(list.size() == 4, "source.capture: four ordered camera records required");
+                for (int id = 0; id < 4; ++id)
+                {
+                    const auto &entry = list[id].as_object();
+                    keys(entry, {"camera_id"}, "source.capture", {"fps", "fourcc", "buffer_count"});
+                    require(integer(entry.at("camera_id"), 0, 3) == id,
+                            "source.capture: camera_id order");
+                    auto &settings = c.source.camera_capture[id];
+                    if (const auto *fps = entry.if_contains("fps"))
+                    {
+                        const double value = num(*fps);
+                        require(value >= .1 && value <= 240,
+                                "source.capture.fps: expected 0.1..240");
+                        settings.fps = value;
+                    }
+                    if (const auto *fourcc = entry.if_contains("fourcc"))
+                    {
+                        settings.fourcc = str(*fourcc);
+                        require(settings.fourcc.size() == 4 &&
+                                    std::all_of(settings.fourcc.begin(), settings.fourcc.end(),
+                                                [](unsigned char ch)
+                                                { return ch >= 32 && ch <= 126; }),
+                                "source.capture.fourcc: four printable ASCII bytes required");
+                    }
+                    if (const auto *count = entry.if_contains("buffer_count"))
+                    {
+                        settings.buffer_count = unsigned(integer(*count, 1, 32));
+                    }
                 }
             }
         }
