@@ -207,11 +207,13 @@ boost::json::object TelemetryCollector::sample_json(const Sample &sample) const
              {"rss_bytes", sample.rss_bytes ? boost::json::value(std::to_string(*sample.rss_bytes))
                                             : boost::json::value(nullptr)}}},
         {"source",
-         boost::json::object{{"received", std::to_string(sample.source.received)},
-                             {"rejected", std::to_string(sample.source.rejected)},
-                             {"decoded", std::to_string(sample.source.decoded)},
-                             {"dropped", std::to_string(sample.source.dropped)},
-                             {"queued_batches", std::to_string(sample.source.queued_batches)}}},
+         boost::json::object{
+             {"camera_diagnostics", sv::camera_diagnostics_json(sample.source.camera_diagnostics)},
+             {"received", std::to_string(sample.source.received)},
+             {"rejected", std::to_string(sample.source.rejected)},
+             {"decoded", std::to_string(sample.source.decoded)},
+             {"dropped", std::to_string(sample.source.dropped)},
+             {"queued_batches", std::to_string(sample.source.queued_batches)}}},
         {"paused", sample.paused},
         {"data_ready", sample.data_ready},
         {"data_busy", sample.data_busy},

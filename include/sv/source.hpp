@@ -1,4 +1,5 @@
 #pragma once
+#include "sv/camera_diagnostics.hpp"
 #include "sv/frame.hpp"
 #include <functional>
 #include <memory>
@@ -35,6 +36,7 @@ struct SourceStats
     uint64_t decoded = 0, dropped = 0, received = 0;
     uint64_t rejected = 0;
     size_t queued_batches = 0;
+    std::optional<CameraDiagnosticsSet> camera_diagnostics = {};
 };
 
 class FrameSource

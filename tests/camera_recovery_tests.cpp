@@ -224,6 +224,15 @@ TEST_P(CameraRecovery, FailedOperationClosesAndReopensBeforePublishing)
         }
     }
     EXPECT_TRUE(recovered_frame);
+    const auto diagnostics = source->stats().camera_diagnostics;
+    ASSERT_TRUE(diagnostics);
+    const auto &camera = (*diagnostics)[0];
+    EXPECT_EQ(camera.open_attempts, 2U);
+    EXPECT_EQ(camera.read_failures, fail_open ? 0U : 1U);
+    EXPECT_EQ(camera.opencv_exceptions, GetParam() <= 1 ? 1U : 0U);
+    EXPECT_EQ(camera.reconnects, fail_open ? 0U : 1U);
+    EXPECT_EQ(camera.release_failures, 0U);
+    EXPECT_TRUE(camera.worker_stopped);
 }
 
 INSTANTIATE_TEST_SUITE_P(OpenAndRead, CameraRecovery, testing::Values(0, 1, 2, 3));
@@ -247,6 +256,14 @@ TEST(CameraRecovery, ReleaseFailureStopsOnlyAffectedWorkerWithoutReopen)
     EXPECT_EQ(state->opens.load(), 1);
     EXPECT_EQ(state->reads.load(), 1);
     EXPECT_EQ(state->closes.load(), 1);
+    const auto camera = source->stats().camera_diagnostics->at(0);
+    EXPECT_EQ(camera.open_attempts, 1U);
+    EXPECT_EQ(camera.read_failures, 1U);
+    EXPECT_EQ(camera.opencv_exceptions, 2U);
+    EXPECT_EQ(camera.release_failures, 1U);
+    EXPECT_EQ(camera.reconnects, 0U);
+    EXPECT_TRUE(camera.worker_stopped);
+    EXPECT_EQ(source->stats().camera_diagnostics->at(1).read_failures, 0U);
     EXPECT_GT(source->stats().decoded, 0U);
     EXPECT_TRUE(
         std::any_of(events.begin(), events.end(), [](const auto &e) { return bool(e.frames[1]); }));

@@ -318,9 +318,15 @@ TEST(SourceWork, BoundedReadPagesBeforeHeaderLimitWithFourCameraRecords)
     frame.frame_id = 1;
     frame.timestamp_ns = base + 50000000;
     collector.frame(frame, &inputs);
+    sv::SourceStats source;
+    source.camera_diagnostics = sv::CameraDiagnosticsSet{};
+    for (auto &camera : *source.camera_diagnostics)
+    {
+        camera = {UINT64_MAX, UINT64_MAX, UINT64_MAX, UINT64_MAX, UINT64_MAX, true};
+    }
     for (uint64_t i = 0; i < 16; ++i)
     {
-        collector.sample(base + 100000000 + i * 50000000, 0, {}, false, true, false);
+        collector.sample(base + 100000000 + i * 50000000, 0, source, false, true, false);
     }
     const auto fields = collector.read("test", 0, 0, 16);
     EXPECT_LE(boost::json::serialize(fields).size(), sv::max_header / 2);
@@ -331,9 +337,22 @@ TEST(SourceWork, BoundedReadPagesBeforeHeaderLimitWithFourCameraRecords)
     {
         EXPECT_TRUE(batch.has_more);
     }
-    const auto rest =
-        sv::client::parse_telemetry_batch(reply(collector.read("test", 0, batch.next_cursor, 16)));
-    EXPECT_EQ(batch.samples.size() + rest.samples.size(), 16U);
+    auto cursor = batch.next_cursor;
+    size_t count = batch.samples.size();
+    ASSERT_LT(count, 16U); // Four-camera health and work force byte-budget pagination.
+    for (unsigned page = 0; cursor < 16 && page < 16; ++page)
+    {
+        const auto wire = collector.read("test", 0, cursor, 16);
+        EXPECT_LE(boost::json::serialize(wire).size(), sv::max_header / 2);
+        const auto rest = sv::client::parse_telemetry_batch(reply(wire));
+        ASSERT_FALSE(rest.samples.empty());
+        EXPECT_EQ(rest.samples[0].cursor, cursor + 1);
+        EXPECT_EQ(rest.samples[0].source.camera_diagnostics->at(3).open_attempts, UINT64_MAX);
+        count += rest.samples.size();
+        cursor = rest.next_cursor;
+    }
+    EXPECT_EQ(cursor, 16U);
+    EXPECT_EQ(count, 16U);
 }
 
 TEST(SourceWork, ReplayDefaultLoaderTimesRealOpenCvPngRead)

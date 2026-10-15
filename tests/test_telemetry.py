@@ -32,6 +32,42 @@ class Telemetry(unittest.TestCase):
         return self.client.command('config_apply', base_config_revision=str(revision),
             changes={'telemetry': dict(enabled=enabled, **settings)}, persist=False)
 
+    def test_missing_camera_devices_report_health_without_input_frames(self):
+        self.cfg['source'] = dict(type='camera', devices=[
+            str(self.directory / f'absent-camera-{i}') for i in range(4)])
+        self.cfg['telemetry'] = dict(enabled=True, period_ms=50, history_capacity=32)
+        self.config.write_text(json.dumps(self.cfg))
+        self.server = subprocess.Popen([
+            str(BUILD / 'sv-server'), '--config', str(self.config), '--ipc-dir', str(self.ipc)],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        deadline = time.monotonic() + 8
+        while not (self.ipc / 'data.sock').exists():
+            if self.server.poll() is not None:
+                self.fail(self.server.communicate()[1])
+            if time.monotonic() > deadline:
+                self.fail('camera server startup timeout')
+            time.sleep(.01)
+        self.client = Client(self.ipc)
+        catalog = self.catalog()
+        deadline = time.monotonic() + 3
+        latest = None
+        while time.monotonic() < deadline:
+            samples = self.read(catalog)['telemetry']['samples']
+            if samples:
+                latest = samples[-1]['source']['camera_diagnostics']
+                if latest and all(int(camera['open_attempts']) >= 2 for camera in latest):
+                    break
+            time.sleep(.03)
+        self.assertIsNotNone(latest)
+        self.assertEqual([camera['camera_id'] for camera in latest], list(range(4)))
+        for camera in latest:
+            self.assertGreaterEqual(int(camera['open_attempts']), 2)
+            self.assertEqual(camera['read_failures'], '0')
+            self.assertEqual(camera['reconnects'], '0')
+            self.assertEqual(camera['release_failures'], '0')
+            self.assertFalse(camera['worker_stopped'])
+        self.assertIsNone(self.server.poll())
+
     def test_hot_enable_sampling_while_paused_and_disable(self):
         self.start()
         self.client = Client(self.ipc)

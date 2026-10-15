@@ -231,3 +231,63 @@ TEST(ClientTelemetry, SourceWorkChecksCameraKindEpochClockAndDurationBounds)
     missing_frame.at("samples").as_array()[0].as_object()["frame"] = nullptr;
     EXPECT_THROW(sv::client::parse_telemetry_batch(reply(missing_frame)), std::invalid_argument);
 }
+
+TEST(Telemetry, CameraHealthIsOptionalTypedAndIndependentOfFrameAndEpoch)
+{
+    sv::TelemetryCollector collector("instance", {true, 50, 8});
+    sv::SourceStats source;
+    source.camera_diagnostics = sv::CameraDiagnosticsSet{};
+    source.camera_diagnostics->at(0) = {UINT64_MAX, 9, 8, 7, 6, true};
+    collector.sample(50000000, 0, source, false, true, false);
+    auto wire = collector.read("instance", 0, 0, 16);
+    const auto batch = sv::client::parse_telemetry_batch(reply(wire));
+    ASSERT_TRUE(batch.samples.at(0).source.camera_diagnostics);
+    EXPECT_FALSE(batch.samples[0].frame);
+    const auto &camera = batch.samples[0].source.camera_diagnostics->at(0);
+    EXPECT_EQ(camera.open_attempts, UINT64_MAX);
+    EXPECT_EQ(camera.read_failures, 9U);
+    EXPECT_EQ(camera.opencv_exceptions, 8U);
+    EXPECT_EQ(camera.reconnects, 7U);
+    EXPECT_EQ(camera.release_failures, 6U);
+    EXPECT_TRUE(camera.worker_stopped);
+    collector.prepare({true, 100, 8})->commit();
+    collector.sample(150000000, 0, source, false, true, false);
+    EXPECT_EQ(sv::client::parse_telemetry_batch(reply(collector.read("instance", 1, 0, 16)))
+                  .samples[0]
+                  .source.camera_diagnostics->at(0)
+                  .open_attempts,
+              UINT64_MAX);
+
+    auto &fields = wire.at("samples").as_array()[0].as_object().at("source").as_object();
+    fields.erase("camera_diagnostics"); // Old schema-1 messages remain valid.
+    EXPECT_FALSE(
+        sv::client::parse_telemetry_batch(reply(wire)).samples[0].source.camera_diagnostics);
+    fields["camera_diagnostics"] = nullptr;
+    EXPECT_FALSE(
+        sv::client::parse_telemetry_batch(reply(wire)).samples[0].source.camera_diagnostics);
+}
+
+TEST(Telemetry, CameraHealthRejectsInvalidShapeIdentityCounterAndFlag)
+{
+    sv::TelemetryCollector collector("instance", {true, 50, 8});
+    sv::SourceStats source;
+    source.camera_diagnostics = sv::CameraDiagnosticsSet{};
+    collector.sample(50000000, 0, source, false, true, false);
+    const auto original = collector.read("instance", 0, 0, 16);
+    auto change = [&](auto mutate)
+    {
+        auto wire = original;
+        auto &value = wire.at("samples").as_array()[0].as_object().at("source").as_object().at(
+            "camera_diagnostics");
+        mutate(value);
+        EXPECT_ANY_THROW(sv::client::parse_telemetry_batch(reply(wire)));
+    };
+    change([](auto &value) { value = boost::json::object{}; });
+    change([](auto &value) { value.as_array().pop_back(); });
+    change([](auto &value) { value.as_array()[1].as_object()["camera_id"] = 0; });
+    change([](auto &value) { value.as_array()[0].as_object()["camera_id"] = "0"; });
+    change([](auto &value) { value.as_array()[0].as_object()["read_failures"] = -1; });
+    change([](auto &value)
+           { value.as_array()[0].as_object()["open_attempts"] = "18446744073709551616"; });
+    change([](auto &value) { value.as_array()[0].as_object()["worker_stopped"] = "false"; });
+}

@@ -162,3 +162,30 @@ TEST(TelemetryArchive, SourceWorkSurvivesArchiveAndOldOptionalFieldIsAccepted)
                     .samples[0]
                     .source_work.empty());
 }
+
+TEST(TelemetryArchive, CameraHealthRoundTripRetainsNullAndExactCounters)
+{
+    auto archive = example();
+    archive.samples[1].source.camera_diagnostics = sv::CameraDiagnosticsSet{};
+    archive.samples[1].source.camera_diagnostics->at(3) = {UINT64_MAX, UINT64_MAX, UINT64_MAX,
+                                                           UINT64_MAX, UINT64_MAX, true};
+    const auto text = sv::client::serialize_telemetry_archive(archive);
+    const auto result = sv::client::parse_telemetry_archive(text);
+    EXPECT_FALSE(result.samples[0].source.camera_diagnostics);
+    ASSERT_TRUE(result.samples[1].source.camera_diagnostics);
+    const auto &camera = result.samples[1].source.camera_diagnostics->at(3);
+    EXPECT_EQ(camera.open_attempts, UINT64_MAX);
+    EXPECT_EQ(camera.read_failures, UINT64_MAX);
+    EXPECT_EQ(camera.opencv_exceptions, UINT64_MAX);
+    EXPECT_EQ(camera.reconnects, UINT64_MAX);
+    EXPECT_EQ(camera.release_failures, UINT64_MAX);
+    EXPECT_TRUE(camera.worker_stopped);
+    auto legacy = boost::json::parse(text).as_object();
+    for (auto &sample : legacy.at("samples").as_array())
+    {
+        sample.as_object().at("source").as_object().erase("camera_diagnostics");
+    }
+    EXPECT_FALSE(sv::client::parse_telemetry_archive(boost::json::serialize(legacy))
+                     .samples[1]
+                     .source.camera_diagnostics);
+}

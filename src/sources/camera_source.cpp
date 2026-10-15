@@ -9,6 +9,7 @@
 #include <mutex>
 #include <opencv2/imgproc.hpp>
 #include <opencv2/videoio.hpp>
+#include <string_view>
 #include <thread>
 
 namespace sv
@@ -140,6 +141,7 @@ class CameraFrameSource : public FrameSource
         s.received = received_count_.load();
         s.dropped = dropped_count_.load();
         s.queued_batches = pending_events_.size();
+        s.camera_diagnostics = diagnostics_;
         return s;
     }
 
@@ -173,6 +175,7 @@ class CameraFrameSource : public FrameSource
         cv::Mat frame_mat;
         uint64_t camera_sequence = 0;
         std::string last_status;
+        bool previously_opened = false;
 
         while (true)
         {
@@ -189,12 +192,18 @@ class CameraFrameSource : public FrameSource
             {
                 if (!cap.is_open())
                 {
+                    update_camera(camera_id, [](auto &state) { ++state.open_attempts; });
                     if (!cap.open(dev_path, cam_cfg.width, cam_cfg.height))
                     {
                         emit_status(camera_id, last_status, "camera_unavailable:" + dev_path);
                         wait_retry(std::chrono::milliseconds(250));
                         continue;
                     }
+                    if (previously_opened)
+                    {
+                        update_camera(camera_id, [](auto &state) { ++state.reconnects; });
+                    }
+                    previously_opened = true;
                 }
 
                 phase = "read";
@@ -204,6 +213,7 @@ class CameraFrameSource : public FrameSource
                 const auto read_done = timing ? now_ns() : 0;
                 if (!read_ok || frame_mat.empty())
                 {
+                    update_camera(camera_id, [](auto &state) { ++state.read_failures; });
                     emit_status(camera_id, last_status, "camera_read_failed:" + dev_path);
                     if (!close_capture(cap, camera_id, last_status))
                     {
@@ -332,6 +342,15 @@ class CameraFrameSource : public FrameSource
             }
             catch (const cv::Exception &)
             {
+                update_camera(camera_id,
+                              [phase](auto &state)
+                              {
+                                  ++state.opencv_exceptions;
+                                  if (std::string_view(phase) == "read")
+                                  {
+                                      ++state.read_failures;
+                                  }
+                              });
                 // Do not publish partially prepared frames or leave a failed driver open.
                 emit_status(camera_id, last_status, std::string("camera_exception:") + phase);
                 if (!close_capture(cap, camera_id, last_status))
@@ -343,6 +362,13 @@ class CameraFrameSource : public FrameSource
         }
 
         close_capture(cap, camera_id, last_status);
+        update_camera(camera_id, [](auto &state) { state.worker_stopped = true; });
+    }
+
+    template <typename Update> void update_camera(int camera_id, Update update)
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        update(diagnostics_[camera_id]);
     }
 
     void wait_retry(std::chrono::milliseconds delay)
@@ -360,6 +386,13 @@ class CameraFrameSource : public FrameSource
         }
         catch (const cv::Exception &)
         {
+            update_camera(camera_id,
+                          [](auto &state)
+                          {
+                              ++state.opencv_exceptions;
+                              ++state.release_failures;
+                              state.worker_stopped = true;
+                          });
             emit_status(camera_id, last_status, "camera_exception:close_worker_stopped");
             return false;
         }
@@ -398,6 +431,7 @@ class CameraFrameSource : public FrameSource
     static constexpr size_t queue_capacity = 64;
     Config config_;
     SourceTimingGate timing_;
+    CameraDiagnosticsSet diagnostics_;
     mutable std::mutex mutex_;
     std::condition_variable wake_;
     bool stopped_ = false;

@@ -61,7 +61,9 @@ boost::json::object sample_json(const TelemetrySample &sample)
                                    ? boost::json::value(std::to_string(*sample.process.rss_bytes))
                                    : boost::json::value(nullptr)}}},
             {"source",
-             boost::json::object{{"received", std::to_string(sample.source.received)},
+             boost::json::object{{"camera_diagnostics",
+                                  sv::camera_diagnostics_json(sample.source.camera_diagnostics)},
+                                 {"received", std::to_string(sample.source.received)},
                                  {"rejected", std::to_string(sample.source.rejected)},
                                  {"decoded", std::to_string(sample.source.decoded)},
                                  {"dropped", std::to_string(sample.source.dropped)},

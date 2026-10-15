@@ -1,4 +1,5 @@
 #pragma once
+#include "sv/camera_diagnostics.hpp"
 #include "sv/protocol.hpp"
 #include "sv/source_work_timing.hpp"
 #include <optional>
@@ -30,6 +31,7 @@ struct TelemetryProcess
 struct TelemetrySource
 {
     uint64_t received = 0, rejected = 0, decoded = 0, dropped = 0, queued_batches = 0;
+    std::optional<sv::CameraDiagnosticsSet> camera_diagnostics = {};
 };
 
 struct TelemetryFrame

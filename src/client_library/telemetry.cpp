@@ -140,6 +140,29 @@ TelemetryBatch parse_telemetry_batch(const Message &message)
         sample.source = {integer(source, "received"), integer(source, "rejected"),
                          integer(source, "decoded"), integer(source, "dropped"),
                          integer(source, "queued_batches")};
+        if (const auto *diagnostics = source.if_contains("camera_diagnostics");
+            diagnostics && !diagnostics->is_null())
+        {
+            const auto &cameras = diagnostics->as_array();
+            if (cameras.size() != 4)
+            {
+                throw std::invalid_argument("camera diagnostics requires four ordered cameras");
+            }
+            sv::CameraDiagnosticsSet parsed;
+            for (unsigned id = 0; id < 4; ++id)
+            {
+                const auto &camera = cameras[id].as_object();
+                if (bounded(camera.at("camera_id"), 0, 3) != id)
+                {
+                    throw std::invalid_argument("invalid camera diagnostics identity");
+                }
+                parsed[id] = {
+                    integer(camera, "open_attempts"),     integer(camera, "read_failures"),
+                    integer(camera, "opencv_exceptions"), integer(camera, "reconnects"),
+                    integer(camera, "release_failures"),  camera.at("worker_stopped").as_bool()};
+            }
+            sample.source.camera_diagnostics = parsed;
+        }
         sample.paused = item.at("paused").as_bool();
         sample.data_ready = item.at("data_ready").as_bool();
         sample.data_busy = item.at("data_busy").as_bool();
