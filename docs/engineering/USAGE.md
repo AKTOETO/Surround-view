@@ -1289,3 +1289,32 @@ cache_hit=true не доказывает, что cold load не выполнял
 
 
 В telemetry → I/O выберите «Камера N: Ошибки чтения», «Переподключения» либо «Worker остановлен». Это cumulative source counters/flag, не rate/latency. Без camera backend значения отсутствуют. Diagnostics доступны даже без новых входных кадров; подробности и exact counts находятся под графиком и в сохранённом окне. [[engineering/SOURCES#Диагностика состояния каждой аппаратной камеры]].
+
+
+### Профили аппаратного захвата
+
+Для четырёх OpenCV/V4L2 камер необязательная source.capture задаёт FPS, FOURCC и buffer_count
+по camera_id. Полный пример и limits: [[engineering/SOURCES#Настройки и проверка согласования OpenCV/V4L2]].
+Размер в cameras[id].resolution должен соответствовать реальной калибровке; пример
+configs/v4l2-camera.json содержит синтетическую калибровку и не является готовым аппаратным rig.
+
+```sh
+cmake --build build -j4
+build/sv-server --config configs/v4l2-camera.json --ipc-dir /tmp/sv-v4l2
+build/examples/sv-simulator/sv-simulator
+```
+
+Во второй программе подключитесь к Unix endpoint /tmp/sv-v4l2. Если драйвер не подтвердил
+явно заданную настройку, смотрите source_status camera_configuration_rejected в журнале сервера:
+исправьте профиль, сохраните config и перезапустите сервер. Открытие выполняется заново после
+retry; source profile пока не меняется через ConfigService. Если FPS/FOURCC/buffers не требуется
+фиксировать, опустите соответствующее поле. Requested FPS/readback не заменяют измерения
+реального межкадрового интервала.
+
+MOCK-проверки без устройств:
+
+```sh
+build/sv-source-work-tests --gtest_filter='CameraNegotiation.*:WidthHeightConversionFpsFourccBuffers/CameraNegotiation.*:CameraCaptureConfig.*'
+```
+
+MOCK моделируют negotiation и lifecycle; подключение реальных камер этим не проверяется.

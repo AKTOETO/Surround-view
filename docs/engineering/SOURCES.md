@@ -21,7 +21,7 @@ Linux-профиль **0.6.0**. Реализован C++ `FrameSource` с неб
 }
 ```
 
-Каждый путь должен быть уникальным. Сервер открывает все четыре потока независимо, просит разрешение из camera config и принимает только совпадающие размеры; Только8-bit (CV_8U) BGR, grayscale и BGRA приводятся к RGB8; другая глубина отклоняется со status camera_unsupported_depth до публикации Image. Несовпадающее разрешение публикуется как source status и кадр пропускается, потому что автоматическое изменение intrinsics не выполняется. Буфер событий ограничен 64 записями и при насыщении вытесняет старейший кадр. Pause прекращает добавление новых кадров в очередь; Step для live capture не поддерживается. Поток повторяет попытку открытия после ошибки, но блокирующий драйверный `VideoCapture::read` может задержать остановку процесса. Физические камеры не были доступны при создании этого baseline; `camera_source_lifecycle` проверяет только API/control queue, а не сенсор.
+Каждый путь должен быть уникальным. Сервер открывает все четыре потока независимо, запрашивает разрешение из camera config, проверяет readback настроек перед чтением и затем принимает только совпадающие размеры кадров; Только8-bit (CV_8U) BGR, grayscale и BGRA приводятся к RGB8; другая глубина отклоняется со status camera_unsupported_depth до публикации Image. Несовпадающее разрешение публикуется как source status и кадр пропускается, потому что автоматическое изменение intrinsics не выполняется. Буфер событий ограничен 64 записями и при насыщении вытесняет старейший кадр. Pause прекращает добавление новых кадров в очередь; Step для live capture не поддерживается. Поток повторяет попытку открытия после ошибки, но блокирующий драйверный `VideoCapture::read` может задержать остановку процесса. Физические камеры не были доступны при создании этого baseline; `camera_source_lifecycle` проверяет только API/control queue, а не сенсор.
 
 ```json
 "source": {
@@ -418,3 +418,111 @@ stop, пришедший сразу после проверки, всё ещё �
 отдельная архитектура отменяемого захвата и реальные испытания отключения/зависания устройства.
 
 Проверки: полная Linux сборка; выбранные CTest 5/5 за 6,86 с, включая 19 source-work GTest, telemetry/archive, source config/lifecycle и 7 live telemetry cases. Полный набор CTest, physical V4L2 и Аврора в этом шаге не проверялись.
+
+
+## Настройки и проверка согласования OpenCV/V4L2
+
+До этого этапа сервер вызывал set(width/height), но игнорировал фактическое согласование.
+Теперь внутренний OpenCvCapture отделён от worker и делегирует операции VideoDevice:
+в production это настоящий cv::VideoCapture, в GTest — MockVideoDevice. Настройки применяются
+при каждом открытии, включая reconnect; source остаётся startup-only, ConfigService hot apply
+для него ещё отсутствует.
+
+```json
+"source": {
+  "type": "camera",
+  "devices": ["/dev/v4l/by-id/front", "/dev/v4l/by-id/rear", "/dev/v4l/by-id/left", "/dev/v4l/by-id/right"],
+  "capture": [
+    {"camera_id": 0, "fps": 30, "fourcc": "MJPG", "buffer_count": 2},
+    {"camera_id": 1, "fps": 25, "fourcc": "YUYV"},
+    {"camera_id": 2, "fps": 15},
+    {"camera_id": 3}
+  ]
+}
+```
+
+Пути в этом примере условные; используйте реальные стабильные symlinks конкретного стенда.
+Capture необязателен. Если указан, это ровно четыре ordered записи camera_id0…3; неизвестные
+поля/неверный порядок/типы отвергаются. FPS — finite число0.1…240, FOURCC — четыре printable
+ASCII bytes, buffer_count — integer1…32. Пустой FOURCC/null не являются значением «по умолчанию»:
+для default поле следует опустить. Параметры каждой камеры независимы. Разрешение берётся
+исключительно из cameras[id].resolution вместе с соответствующей калибровкой; отдельное width
+в source.capture запрещено, чтобы не рассогласовать intrinsics.
+
+| Параметр | Применение и проверка | Ограничение |
+|---|---|---|
+| width/height | Запрос и exact get после всех set | Нельзя молча менять калибровку под другое разрешение |
+| convert_rgb | Запрос1 и exact get1 | Требуется decoded output; raw encoded Mat не принимается как grayscale |
+| fourcc | Если задан, запрос первым и exact readback | Codec устройства, не формат конечного RGB Image |
+| fps | Если задан, readback с допуском max(0.01, 1% requested) | 29.97 при запросе30 допустим; реальный cadence отдельно не измерен |
+| buffer_count | Если задан, exact readback | Backend может не поддерживать property; это ошибка явного запроса |
+
+FOURCC задаётся до размера/FPS, поскольку смена формата может менять другие параметры;
+все readback проверки выполняются после всех запросов. False от set сам по себе не является
+отказом, если фактическое значение уже соответствует запросу; true также не доказывает успех.
+Nonfinite/нулевой неподдерживаемый get для обязательного или явно заданного параметра приводит
+к отказу. Отсутствующие optional поля не запрашиваются и не проверяются.
+
+OpenCV отдельно предупреждает о зависимости set/get от backend/driver/hardware и о том, что
+успешный set не гарантирует принятие значения: [VideoCapture](https://docs.opencv.org/4.x/d8/dfe/classcv_1_1VideoCapture.html).
+Здесь readback — контракт backend, а не независимое измерение сенсора; validation фактического
+Mat перед RGB остаётся обязательной. Список свойств: [Video I/O flags](https://docs.opencv.org/4.x/d4/d15/group__videoio__flags__base.html).
+
+При несовпадении worker выдаёт source_status reason
+`camera_configuration_rejected:<property>:requested=<value>:actual=<value>`, закрывает capture
+и ждёт существующие250 мс перед retry. Даже false open может оставить частично открытый
+capture: worker теперь закрывает его перед повтором. При close exception сохраняется
+close_worker_stopped policy. До успешного согласования read не вызывается и ready не выдаётся.
+Status находится в серверном журнале, не является новым SDK command или надёжной event history.
+Health open_attempts растёт, read_failures не растёт от одного negotiation rejection; первое
+успешное open после отказов ещё не считается reconnect.
+
+```plantuml
+@startuml
+participant "Camera worker" as W
+participant "OpenCvCapture" as A
+participant "VideoDevice
+cv::VideoCapture / MOCK" as D
+W -> A : open(path, calibrated width/height)
+A -> D : open(path, CAP_V4L2)
+A -> D : set FOURCC (optional)
+A -> D : set width/height, FPS/buffers (optional), convert_rgb
+A -> D : get requested properties after all set
+D --> A : reported negotiated values
+alt mismatch / unsupported
+  A --> W : false + open_failure
+  W -> W : source_status configuration_rejected
+  W -> A : close()
+  W -> W : interruptible retry250ms
+else matches
+  A --> W : true
+  W -> A : read(Mat)
+  W -> W : validate actual Mat, prepare RGB, ready
+end
+@enduml
+```
+
+*Рисунок И.7 — Согласование свойств до чтения. Backend readback и валидация фактического Mat
+остаются разными проверками; блокирующие calls не стали отменяемыми.*
+
+### Матрица MOCK-камер
+
+| Вариант | Ожидание |
+|---|---|
+| 640×480 YUYV25, 1280×720 MJPG30, 1920×1080 MJPG29.97, 320×240 GREY15; buffers1/2/4/8 | Правильные property requests/readback и размеры синтетического Mat |
+| FPS29.97 при requested30 | Успех в пределах допуска |
+| Неподдерживаемые width/height/conversion/FPS/FOURCC/buffers | Отказ до read |
+| Set=true, значение проигнорировано | Отказ по get |
+| Set=false, значение уже совпадает | Успех по get |
+| Последний set сбрасывает width | Отказ при финальном readback |
+| NaN get / invalid direct settings | Отказ/validation exception |
+| Первый open partially succeeds либо negotiation rejected, второй succeeds | Close перед повтором, затем валидный Frame |
+| Release failure после negotiation rejection | Worker останавливается без read |
+
+MockVideoDevice моделирует property API и создаёт Mat. Он **не эмулирует** USB, MJPEG decoding,
+реальный pixel format/cadence, sensor timestamps, kernel buffers и driver blocking. Реальные
+OpenCV RGB conversion/PNG decode ранее проверены отдельно. В текущем окружении /dev/video*
+и /dev/v4l/by-id/* отсутствуют. Физическая приёмка, bounded capture cancellation и сравнение
+Aurora/PC остаются открытыми; MOCK нужны для воспроизводимых программных lifecycle проверок.
+
+Проверки дополнения: полная Linux сборка, выбранные CTest 6/6 за 2,99 с (camera_source_config, core, config_store_persistence, source_work_timing, telemetry, configuration_snapshot) и 4/4 за 29,80 с (sources, camera_sources, replay_ipc, telemetry_ipc). Camera/source target: 34 GTest, включая 15 новых negotiation/config cases. Полный набор CTest и physical V4L2/Aurora acceptance не выполнялись.

@@ -72,7 +72,7 @@
 
 ## Приоритет 3 — проверить отказы, производительность и перенос
 
-12. Подготовить per-camera source config: для каждого camera_id независимо выбирать OpenCV/V4L2 device path (/dev/video* или стабильный /dev/v4l/by-id/*), simulator socket (Unix/TCP) либо replay; поддержать четыре реальные камеры и смешанные реальные/виртуальные входы. Задать для каждой камеры resolution/pixel format/FPS, timestamps/clock mapping, calibration_id, reconnect/backoff и timeout policy. Реализовать составной FrameSource с bounded очередями, согласованными pause/resume semantics и общей синхронизацией; не открывать ненастроенные устройства/порты. Связать schema/validate/apply policy с ConfigService и формами sv-simulator, явно отличать hot-restart конкретного capture worker от перезапуска сервера. Проверить fake adapters, mixed-source skew, disconnect/reconnect и завершение без оборудования, затем реальные драйверы. Текущий source.type выбирает один общий backend для всех четырёх камер; смешанные источники ещё не реализованы. [[engineering/SOURCES]].
+12. Подготовить per-camera source config: для каждого camera_id независимо выбирать OpenCV/V4L2 device path (/dev/video* или стабильный /dev/v4l/by-id/*), simulator socket (Unix/TCP) либо replay; поддержать четыре реальные камеры и смешанные реальные/виртуальные входы. Задать для каждой камеры resolution/pixel format/FPS, timestamps/clock mapping, calibration_id, reconnect/backoff и timeout policy. Реализовать составной FrameSource с bounded очередями, согласованными pause/resume semantics и общей синхронизацией; не открывать ненастроенные устройства/порты. Связать schema/validate/apply policy с ConfigService и формами sv-simulator, явно отличать hot-restart конкретного capture worker от перезапуска сервера. Проверить fake adapters, mixed-source skew, disconnect/reconnect и завершение без оборудования, затем реальные драйверы. Текущий source.type выбирает один общий backend для всех четырёх камер; смешанные источники ещё не реализованы. Для общего camera backend startup source.capture уже задаёт per-camera FPS/FOURCC/buffers с проверкой readback; hot schema/forms и actual negotiation metadata ещё отсутствуют. [[engineering/SOURCES]].
 
 Аппаратная приёмка пункта12 — проверить V4L2 на реальных камерах: negotiated format/resolution, sensor timestamps, disconnect/reconnect и ограниченное завершение при зависшем `VideoCapture::read`.
 13. Выполнить two-host испытания `sv-client-lib` и producer: разделённые control/data, RGBA markers, clock mapping/skew, reconnect, пропуски/перестановки, длительный overload, RSS и thermal. TCP loopback и localhost не заменяют эту проверку.
@@ -142,3 +142,11 @@ camera health/reconnect counters выполнены; вызовы OpenCV не с
 Camera source: stop guards на границах is_open/open/read и ожидание concurrent stop завершены,
 [[engineering/SOURCES#Остановка на границах camera backend]]. Остаётся ограничить сами
 блокирующие OpenCV/V4L2 calls; эти guards не закрывают bounded shutdown на физических камерах.
+
+
+MOCK-проверки характеристик камер и startup capture profiles FPS/FOURCC/buffers реализованы:
+[[engineering/SOURCES#Настройки и проверка согласования OpenCV/V4L2]]. Остаются actual negotiated
+metadata через SDK/GUI, source ConfigService/schema/forms, измерение sensor cadence и timestamps,
+перечень supported driver modes, physical disconnect/reconnect и отменяемые driver calls.
+Строгий readback настроек не закрывает аппаратную приёмку. Продолжать без устройств на MOCK
+с ошибками, частичным open и разными профилями по запросу автора.
