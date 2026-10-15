@@ -147,13 +147,14 @@ class CameraFrameSource : public FrameSource
 
     void stop() override
     {
+        std::lock_guard<std::mutex> shutdown_lock(shutdown_mutex_);
         {
             std::lock_guard<std::mutex> lock(mutex_);
             if (stopped_)
             {
                 return;
             }
-            stopped_ = true;
+            stopped_.store(true, std::memory_order_release);
         }
         wake_.notify_all();
         for (auto &worker : workers_)
@@ -179,12 +180,9 @@ class CameraFrameSource : public FrameSource
 
         while (true)
         {
+            if (stopping())
             {
-                std::unique_lock<std::mutex> lock(mutex_);
-                if (stopped_)
-                {
-                    break;
-                }
+                break;
             }
 
             const char *phase = "open";
@@ -192,6 +190,10 @@ class CameraFrameSource : public FrameSource
             {
                 if (!cap.is_open())
                 {
+                    if (stopping())
+                    {
+                        break;
+                    }
                     update_camera(camera_id, [](auto &state) { ++state.open_attempts; });
                     if (!cap.open(dev_path, cam_cfg.width, cam_cfg.height))
                     {
@@ -206,11 +208,19 @@ class CameraFrameSource : public FrameSource
                     previously_opened = true;
                 }
 
+                if (stopping())
+                {
+                    break;
+                }
                 phase = "read";
                 const auto timing = timing_.get();
                 const auto read_start = timing ? now_ns() : 0;
                 const bool read_ok = cap.read(frame_mat);
                 const auto read_done = timing ? now_ns() : 0;
+                if (stopping())
+                {
+                    break;
+                }
                 if (!read_ok || frame_mat.empty())
                 {
                     update_camera(camera_id, [](auto &state) { ++state.read_failures; });
@@ -364,6 +374,11 @@ class CameraFrameSource : public FrameSource
         update_camera(camera_id, [](auto &state) { state.worker_stopped = true; });
     }
 
+    bool stopping() const
+    {
+        return stopped_.load(std::memory_order_acquire);
+    }
+
     template <typename Update> void update_camera(int camera_id, Update update)
     {
         std::lock_guard<std::mutex> lock(mutex_);
@@ -373,7 +388,7 @@ class CameraFrameSource : public FrameSource
     void wait_retry(std::chrono::milliseconds delay)
     {
         std::unique_lock<std::mutex> lock(mutex_);
-        wake_.wait_for(lock, delay, [this] { return stopped_; });
+        wake_.wait_for(lock, delay, [this] { return stopping(); });
     }
 
     bool close_capture(CameraCapture &capture, int camera_id, std::string &last_status)
@@ -433,7 +448,8 @@ class CameraFrameSource : public FrameSource
     CameraDiagnosticsSet diagnostics_;
     mutable std::mutex mutex_;
     std::condition_variable wake_;
-    bool stopped_ = false;
+    std::mutex shutdown_mutex_;
+    std::atomic<bool> stopped_{false};
     std::atomic<bool> paused_{false};
     uint64_t batch_counter_ = 0;
 
