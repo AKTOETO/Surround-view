@@ -228,6 +228,24 @@ QString TelemetryModel::sourceDetails() const
                 details +=
                     QString(" %1=%2").arg(cameraMetrics[i].first).arg(QString::number(values[i]));
             }
+            const auto &mode = source.camera_diagnostics->at(camera).negotiated_mode;
+            if (mode)
+            {
+                details +=
+                    QString("\n  Checked mode: %1×%2 · open_attempt=%3 · fps=%4 · FOURCC=%5 · "
+                            "buffers=%6")
+                        .arg(mode->width)
+                        .arg(mode->height)
+                        .arg(QString::number(mode->open_attempt))
+                        .arg(mode->fps ? QString::number(*mode->fps, 'g', 8) : "не проверен")
+                        .arg(mode->fourcc ? QString::fromStdString(*mode->fourcc) : "не проверен")
+                        .arg(mode->buffer_count ? QString::number(*mode->buffer_count)
+                                                : "не проверен");
+            }
+            else
+            {
+                details += "\n  Checked mode: недоступен (закрыт/не поддерживается)";
+            }
         }
     }
     else

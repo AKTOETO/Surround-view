@@ -55,6 +55,8 @@ struct TelemetryModelTestAccess
             sample.source.queued_batches = i % 4;
             sample.source.camera_diagnostics = sv::CameraDiagnosticsSet{};
             (*sample.source.camera_diagnostics)[0] = {i, i / 2, i / 3, i / 4, 0, false};
+            sample.source.camera_diagnostics->at(0).negotiated_mode =
+                sv::CameraCaptureMode{1280, 720, i, 29.97, "MJPG", 2};
             sample.data_busy = i % 4 == 0;
             sample.frame->spans_ms["render_wall"] = double(15 + i % 5);
             batch.samples.push_back(sample);

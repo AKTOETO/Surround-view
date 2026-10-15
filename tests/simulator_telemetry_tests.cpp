@@ -405,3 +405,24 @@ TEST(TelemetryUnit, CameraHealthGraphsPreserveMissingAndLargeValuesWithoutFreshR
     EXPECT_TRUE(model.sourceDetails().contains("open_attempts=" + QString::number(UINT64_MAX)));
     EXPECT_FALSE(last.value("render_wall").isValid());
 }
+
+TEST(TelemetryUnit, CheckedCameraModeIsShownWithoutNewMetricChoices)
+{
+    TelemetryModel model;
+    TelemetryModelTestAccess::catalog(model);
+    TelemetryModelTestAccess::batch(
+        model, 1, 1, 0,
+        [](auto &sample)
+        {
+            sample.source.camera_diagnostics = sv::CameraDiagnosticsSet{};
+            sample.source.camera_diagnostics->at(0).open_attempts = UINT64_MAX;
+            sample.source.camera_diagnostics->at(0).negotiated_mode =
+                sv::CameraCaptureMode{1280, 720, UINT64_MAX, 29.97, "MJPG", 2};
+        });
+    EXPECT_TRUE(model.sourceDetails().contains("1280×720"));
+    EXPECT_TRUE(model.sourceDetails().contains("fps=29.97"));
+    EXPECT_TRUE(model.sourceDetails().contains("FOURCC=MJPG"));
+    EXPECT_TRUE(model.sourceDetails().contains("buffers=2"));
+    EXPECT_TRUE(model.sourceDetails().contains("open_attempt=" + QString::number(UINT64_MAX)));
+    EXPECT_EQ(model.sourceMetrics().size(), 42);
+}
