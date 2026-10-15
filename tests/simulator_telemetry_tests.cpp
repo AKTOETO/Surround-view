@@ -196,7 +196,7 @@ TEST(TelemetryUnit, DeliveryGaugesAndRecordAgeContinueForRepeatedFrames)
     EXPECT_TRUE(model.sourceDetails().contains(QString::number(UINT64_MAX)));
     model.clear();
     EXPECT_TRUE(model.sourceDetails().contains("Нет source"));
-    EXPECT_EQ(model.sourceMetrics().size(), 6);
+    EXPECT_EQ(model.sourceMetrics().size(), 18);
 }
 
 TEST(TelemetryUnit, NoRenderRecordProducesMissingFrameMetrics)

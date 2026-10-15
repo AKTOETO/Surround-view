@@ -38,6 +38,10 @@ struct TelemetryModelTestAccess
             sample.process.rss_bytes = (120 + i) * 1048576;
             sample.frame.emplace();
             sample.frame->fresh = i % 3 != 0;
+            sample.frame->timestamp_ns = sample.timestamp_ns - 1000000;
+            sample.source_work.push_back({0, "camera_read", 0, i, sample.timestamp_ns - 2000000,
+                                          sample.timestamp_ns - 1000000, .25, std::nullopt, .25,
+                                          false});
             for (const auto *span :
                  {"source_poll", "pre_render_prepare", "fusion_cpu", "layer_readback_cpu",
                   "upload_cpu", "readback_copy_cpu", "publish_enqueue"})
@@ -122,6 +126,15 @@ TEST(SimulatorTelemetryQml, RendersTabsMissingMetricsAndFreshFramesWithoutWarnin
     {
         source_choice->setProperty("currentIndex", i);
         draw();
+    }
+    const auto capture_screenshot = qEnvironmentVariable("SV_TELEMETRY_CAPTURE_SCREENSHOT");
+    if (!capture_screenshot.isEmpty())
+    {
+        source_choice->setProperty("currentIndex", 6); // Camera 0 read wall.
+        window.resize(430, 1400);
+        draw();
+        ASSERT_TRUE(window.grabWindow().save(capture_screenshot));
+        window.resize(430, 840);
     }
     tabs->setProperty("currentIndex", 0);
     draw();

@@ -41,22 +41,39 @@ QVariantList TelemetryModel::pipelineMetrics() const
 
 QVariantList TelemetryModel::sourceMetrics() const
 {
-    return {metric("queued_batches", "Очередь FrameSource", "count",
-                   "Backend-specific gauge: replay/socket batches; camera backend считает pending "
-                   "events (включая status/control)."),
-            metric("data_busy", "Вывод занят", "0/1",
-                   "Не завершена доставка/release. Это sampled flag, не измерение send latency."),
-            metric("data_ready", "Data channel готов", "0/1",
-                   "Текущее состояние подключения output channel, независимо от нового render."),
-            metric("paused", "Источник на паузе", "0/1",
-                   "Состояние pause при sampling. Повторные frame spans не считаются новыми render "
-                   "events."),
-            metric("frame_record_age", "Возраст render record", "ms",
-                   "Sample timestamp − timestamp последнего завершённого render. Рост при "
-                   "pause/busy не означает, что render стал медленнее."),
-            metric("collection_wall", "Collection CPU wall", "ms",
-                   "Process read и подготовка sample; без ring write, JSON, network и старых frame "
-                   "timers. Не полный overhead collection.")};
+    QVariantList result{
+        metric("queued_batches", "Очередь FrameSource", "count",
+               "Backend-specific gauge: replay/socket batches; camera backend считает pending "
+               "events (включая status/control)."),
+        metric("data_busy", "Вывод занят", "0/1",
+               "Не завершена доставка/release. Это sampled flag, не измерение send latency."),
+        metric("data_ready", "Data channel готов", "0/1",
+               "Текущее состояние подключения output channel, независимо от нового render."),
+        metric("paused", "Источник на паузе", "0/1",
+               "Состояние pause при sampling. Повторные frame spans не считаются новыми render "
+               "events."),
+        metric("frame_record_age", "Возраст render record", "ms",
+               "Sample timestamp − timestamp последнего завершённого render. Рост при "
+               "pause/busy не означает, что render стал медленнее."),
+        metric("collection_wall", "Collection CPU wall", "ms",
+               "Process read и подготовка sample; без ring write, JSON, network и старых frame "
+               "timers. Не полный overhead collection.")};
+    for (int camera = 0; camera < 4; ++camera)
+    {
+        for (const auto &entry : {std::pair<const char *, const char *>{"read", "OpenCV read"},
+                                  {"load", "Replay image load"},
+                                  {"prepare", "RGB prepare/copy"}})
+        {
+            result.append(
+                QVariantMap{{"key", QString("input_%1_%2").arg(camera).arg(entry.first)},
+                            {"label", QString("Камера %1: %2").arg(camera).arg(entry.second)},
+                            {"unit", "ms"},
+                            {"note", "Успешная операция выбранного входа; source_sequence см. "
+                                     "ниже. Fresh render не означает новый capture: при rerender "
+                                     "возможны повторы. Нет failed-read/exposure/send latency."}});
+        }
+    }
+    return result;
 }
 
 QVariantMap TelemetryModel::makePoint(const sv::client::TelemetrySample &sample, uint64_t origin,
@@ -88,6 +105,29 @@ QVariantMap TelemetryModel::makePoint(const sv::client::TelemetrySample &sample,
     {
         const auto *value = fresh ? frame->spans_ms.if_contains(key) : nullptr;
         point[key] = value && !value->is_null() ? QVariant(value->to_number<double>()) : QVariant{};
+    }
+    for (int camera = 0; camera < 4; ++camera)
+    {
+        for (const auto *name : {"read", "load", "prepare"})
+        {
+            point[QString("input_%1_%2").arg(camera).arg(name)] = QVariant{};
+        }
+    }
+    if (fresh)
+    {
+        for (const auto &timing : sample.source_work)
+        {
+            auto put = [&](const char *name, const std::optional<double> &value)
+            {
+                if (value)
+                {
+                    point[QString("input_%1_%2").arg(timing.camera_id).arg(name)] = *value;
+                }
+            };
+            put("read", timing.camera_read_wall_ms);
+            put("load", timing.image_load_wall_ms);
+            put("prepare", timing.image_prepare_wall_ms);
+        }
     }
     point["render"] = point.value("render_wall"); // Preserve existing chart/summary contract.
     return point;
@@ -125,14 +165,24 @@ QString TelemetryModel::sourceDetails() const
     }
     const auto &sample = samples_.back();
     const auto &source = sample.source;
-    return QString("Последний sample: queue=%1 · paused=%2 · ready=%3 · busy=%4\n"
-                   "Counters: received=%5 · decoded=%6\ndropped=%7 · rejected=%8\n"
-                   "Counters/queue имеют backend-specific смысл; ноль может означать отсутствие "
-                   "инструментации.")
-        .arg(QString::number(source.queued_batches))
-        .arg(sample.paused ? 1 : 0)
-        .arg(sample.data_ready ? 1 : 0)
-        .arg(sample.data_busy ? 1 : 0)
-        .arg(QString::number(source.received), QString::number(source.decoded),
-             QString::number(source.dropped), QString::number(source.rejected));
+    auto details =
+        QString("Последний sample: queue=%1 · paused=%2 · ready=%3 · busy=%4\n"
+                "Counters: received=%5 · decoded=%6\ndropped=%7 · rejected=%8\n"
+                "Counters/queue имеют backend-specific смысл; ноль может означать отсутствие "
+                "инструментации.")
+            .arg(QString::number(source.queued_batches))
+            .arg(sample.paused ? 1 : 0)
+            .arg(sample.data_ready ? 1 : 0)
+            .arg(sample.data_busy ? 1 : 0)
+            .arg(QString::number(source.received), QString::number(source.decoded),
+                 QString::number(source.dropped), QString::number(source.rejected));
+    for (const auto &timing : sample.source_work)
+    {
+        details += QString("\nCamera %1: %2 · source_sequence=%3 · epoch=%4 · cache=%5")
+                       .arg(timing.camera_id)
+                       .arg(QString::fromStdString(timing.kind))
+                       .arg(QString::number(timing.source_sequence), QString::number(timing.epoch))
+                       .arg(timing.cache_hit ? 1 : 0);
+    }
+    return details;
 }
