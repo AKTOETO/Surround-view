@@ -252,3 +252,13 @@ fake-adapter integration, затем реальные камеры/драйве�
 ## Devel telemetry через клиентскую библиотеку
 
 Первый server-owned default-off collector и typed bounded polling API реализованы: [[engineering/TELEMETRY]]. GUI settings и CPU/RSS/render graphs выполнены; existing pipeline/source graphs и bounded archive view также выполнены; далее — новая subsystem instrumentation, streaming/timed replay, paired comparison, profiling и bounded subscriptions. Разделять CPU wall/GPU execution, привязывать samples к instance/config/frame/experiment; сравнить overhead disabled/minimal/detailed на одном replay. Telemetry-only connection не должна требовать final-frame delivery. Подробная приёмка: [[../TODO#Отключаемая серверная телеметрия для devel-тестирования]]. Первый collector/window exporter реализован; полный subsystem sampler, streaming exporter и overhead acceptance остаются открытыми.
+
+
+## Запланированная перегруппировка интерфейса симулятора
+
+Текущие панели перегружены; наличие всех форм не означает удобство workflow. После текущих
+исправлений провести отдельную UI-итерацию: навигация по задачам, вложенные смысловые группы,
+постепенное раскрытие экспертных параметров, выбор подсистемы/камеры перед metric вместо
+растущего плоского списка. Сохранить понятную цепочку connect → edit → validate → apply/save →
+inspect/run и явно показывать pending/active state. Приёмка и ограничения записаны в
+[[../TODO#Требования к интерфейсу sv-simulator (пункт 9)]]. Это план; текущий UI пока не изменён.
