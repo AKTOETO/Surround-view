@@ -1,6 +1,7 @@
 #include "configuration_editor.hpp"
 #include "qml_warning_capture.hpp"
 #include "sv/surface_runtime.hpp"
+#include "sv/telemetry_config.hpp"
 #include <QGuiApplication>
 #include <QImage>
 #include <QJsonDocument>
@@ -36,6 +37,13 @@ struct ConfigurationEditorTestAccess
                                                     boost::json::serialize(sv::surface_catalog())))
                             .object()
                             .toVariantMap()}};
+        editor.catalog_["telemetry"] =
+            QJsonDocument::fromJson(
+                QByteArray::fromStdString(boost::json::serialize(sv::telemetry_config_catalog())))
+                .object()
+                .toVariantMap();
+        editor.telemetry_ = editor.active_telemetry_ = {
+            {"enabled", false}, {"period_ms", 100}, {"history_capacity", 128}};
         editor.setSurfaceType("dome_floor_v1");
     }
 };
@@ -146,6 +154,14 @@ TEST(SimulatorConfigurationQml, LoadsFormsChangesTabsAndRendersWithoutBindingErr
     EXPECT_FALSE(editor.surface().contains("source_occlusion_box"));
     EXPECT_FALSE(editor.surface().contains("reference_height_m"));
     EXPECT_FALSE(editor.surface().contains("local_support_patch"));
+    object->findChild<QObject *>("configurationTabs")->setProperty("currentIndex", 3);
+    QCoreApplication::processEvents();
+    ASSERT_TRUE(toggle("telemetryEnabled", true));
+    auto *period = object->findChild<QObject *>("telemetryPeriod");
+    ASSERT_TRUE(period);
+    ASSERT_TRUE(QMetaObject::invokeMethod(period, "edited", Q_ARG(double, 500)));
+    EXPECT_TRUE(editor.telemetry().value("enabled").toBool());
+    EXPECT_EQ(editor.telemetry().value("period_ms").toInt(), 500);
     object->findChild<QObject *>("configurationTabs")->setProperty("currentIndex", 0);
     QEventLoop loop;
     QTimer::singleShot(120, &loop, &QEventLoop::quit);

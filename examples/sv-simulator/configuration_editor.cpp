@@ -46,6 +46,8 @@ void ConfigurationEditor::disconnected()
     }
     fusion_.clear();
     surface_.clear();
+    telemetry_.clear();
+    active_telemetry_.clear();
     catalog_.clear();
     base_revision_.clear();
     status_ = unresolved() ? "Результат операции неизвестен; подключитесь и проверьте статус"
@@ -89,6 +91,7 @@ void ConfigurationEditor::loadActive()
     }
     fusion_ = active_fusion_;
     surface_ = map(snapshot_.active.at("surface"));
+    telemetry_ = active_telemetry_;
     base_revision_ = QString::number(snapshot_.revision);
     validated_ = false;
     status_ = "Черновик active загружен; проверка и применение выполняются сервером";
@@ -153,6 +156,15 @@ void ConfigurationEditor::consume(const sv::Message &message)
     {
         snapshot_ = sv::client::parse_configuration_snapshot(message);
         active_fusion_ = map(message.header.at("fusion"));
+        active_telemetry_ = {{"enabled", false}, {"period_ms", 100}, {"history_capacity", 128}};
+        if (const auto *settings = snapshot_.active.if_contains("telemetry"))
+        {
+            const auto supplied = map(*settings);
+            for (auto it = supplied.begin(); it != supplied.end(); ++it)
+            {
+                active_telemetry_[it.key()] = it.value();
+            }
+        }
         read_id_ = 0;
         snapshot_loaded_ = true;
         reconcile();
@@ -162,6 +174,10 @@ void ConfigurationEditor::consume(const sv::Message &message)
         const auto result = sv::client::parse_configuration_catalog(message);
         apply_supported_ = result.apply_supported;
         catalog_ = {{"fusion", map(result.fusion)}, {"surface", map(result.surface)}};
+        if (!result.telemetry.empty())
+        {
+            catalog_["telemetry"] = map(result.telemetry);
+        }
         catalog_id_ = 0;
         catalog_loaded_ = true;
     }

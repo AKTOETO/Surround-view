@@ -221,7 +221,7 @@ int main(int argc, char **argv)
     }
     argc = 1;
     ::testing::InitGoogleTest(&argc, argv);
-    ::testing::GTEST_FLAG(filter) = unit         ? "SimulatorRuntimeUnit.*:EditorUnit.*"
+    ::testing::GTEST_FLAG(filter) = unit         ? "SimulatorRuntimeUnit.*:EditorUnit.*:TelemetryUnit.*"
                                     : persistent ? "SimulatorConfigurationPersistent.*"
                                                  : "SimulatorRuntime.*";
     return RUN_ALL_TESTS();

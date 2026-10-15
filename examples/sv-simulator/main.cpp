@@ -110,6 +110,8 @@ int main(int argc, char **argv)
                                              bridge.runtimeSettings());
     engine.rootContext()->setContextProperty(QStringLiteral("configurationEditor"),
                                              bridge.configurationEditor());
+    engine.rootContext()->setContextProperty(QStringLiteral("telemetryModel"),
+                                             bridge.telemetryModel());
     engine.rootContext()->setContextProperty(QStringLiteral("driveWorldAvailable"),
                                              SV_SIMULATOR_QUICK3D_AVAILABLE != 0);
     engine.rootContext()->setContextProperty(QStringLiteral("startDrivingWorld"), world_smoke);

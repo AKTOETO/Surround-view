@@ -102,6 +102,7 @@ void SimulatorBridge::consumeChecked(sv::client::Event event)
         {
             runtime_settings_.commandFailed(event.message->header, event.detail);
             configuration_editor_.commandFailed(event.message->header, event.detail);
+            telemetry_model_.commandFailed(event.message->header, event.detail);
             const auto *id = event.message->header.if_contains("command_id");
             if (id &&
                 calibration_commands_.erase(sv::parse_decimal_u64(std::string(id->as_string()))))
@@ -115,6 +116,7 @@ void SimulatorBridge::consumeChecked(sv::client::Event event)
         {
             runtime_settings_.refresh();
             configuration_editor_.connected();
+            telemetry_model_.connected();
             discovery_candidates_.clear();
             status_ = "Подключено к серверу";
             if (active_unix_endpoint_)
@@ -133,6 +135,7 @@ void SimulatorBridge::consumeChecked(sv::client::Event event)
             resetSessionState();
             runtime_settings_.attach(client_);
             configuration_editor_.attach(client_);
+            telemetry_model_.attach(client_);
         }
         emit changed();
         return;
@@ -141,6 +144,7 @@ void SimulatorBridge::consumeChecked(sv::client::Event event)
     const auto &h = m.header;
 
     configuration_editor_.consume(m);
+    telemetry_model_.consume(m);
 
     if (m.type == 21)
     {
@@ -319,6 +323,7 @@ void SimulatorBridge::beginConnection(sv::client::Endpoint endpoint, int timeout
     resetSessionState();
     runtime_settings_.attach({});
     configuration_editor_.attach({});
+    telemetry_model_.attach({});
     status_ = "Подключение: " + label;
     timeoutMs_ = timeout;
     reconnectMs_ = reconnect;
@@ -399,6 +404,7 @@ void SimulatorBridge::beginConnection(sv::client::Endpoint endpoint, int timeout
         }
         runtime_settings_.attach(client_);
         configuration_editor_.attach(client_);
+        telemetry_model_.attach(client_);
     }
     catch (const std::exception &error)
     {
@@ -462,6 +468,7 @@ void SimulatorBridge::discoverLocal(int timeout, int reconnect)
     resetSessionState();
     runtime_settings_.attach({});
     configuration_editor_.attach({});
+    telemetry_model_.attach({});
     discovery_index_ = 0;
     discovery_timeout_ms_ = timeout;
     discovery_reconnect_ms_ = reconnect;
@@ -520,6 +527,7 @@ void SimulatorBridge::disconnectFromServer()
     resetSessionState();
     runtime_settings_.attach({});
     configuration_editor_.attach({});
+    telemetry_model_.attach({});
     ++connection_generation_;
     discovery_candidates_.clear();
     if (client_)

@@ -23,10 +23,11 @@ Column {
         TabButton { text: "Сшивка" }
         TabButton { text: "Носитель" }
         TabButton { text: "Операция" }
+        TabButton { text: "Телеметрия" }
     }
     StackLayout {
         width: parent.width; currentIndex: tabs.currentIndex
-        height: currentIndex === 0 ? fusionForm.implicitHeight : currentIndex === 1 ? surfaceForm.implicitHeight : operationForm.implicitHeight
+        height: currentIndex === 0 ? fusionForm.implicitHeight : currentIndex === 1 ? surfaceForm.implicitHeight : currentIndex === 2 ? operationForm.implicitHeight : telemetryForm.implicitHeight
         Column {
             id: fusionForm; spacing: 7; enabled: panel.editable
             ConfigChoice {
@@ -103,6 +104,36 @@ Column {
                 visible: panel.editor.serverChanged
                 enabled: reviewed.checked && panel.editor.ready && !panel.editor.busy
                 onClicked: { panel.editor.acknowledgeUnknown(); reviewed.checked = false }
+            }
+        }
+        Column {
+            id: telemetryForm; spacing: 7
+            enabled: panel.editable && !!panel.editor.catalog.telemetry
+            ConfigCheck {
+                objectName: "telemetryEnabled"
+                text: "Собирать телеметрию на сервере"
+                checked: panel.editor.telemetry.enabled || false
+                onClicked: panel.editor.setField("telemetry", "enabled", checked)
+            }
+            ConfigNumber {
+                objectName: "telemetryPeriod"; width: parent.width
+                title: "Период sampling, мс"; decimals: 0
+                number: panel.editor.telemetry.period_ms || 100
+                minimum: panel.editor.catalog.telemetry ? panel.editor.catalog.telemetry.period_ms.min : 50
+                maximum: panel.editor.catalog.telemetry ? panel.editor.catalog.telemetry.period_ms.max : 5000
+                onEdited: function(value) { panel.editor.setField("telemetry", "period_ms", value) }
+            }
+            ConfigNumber {
+                objectName: "telemetryCapacity"; width: parent.width
+                title: "Server history, samples"; decimals: 0
+                number: panel.editor.telemetry.history_capacity || 128
+                minimum: panel.editor.catalog.telemetry ? panel.editor.catalog.telemetry.history_capacity.min : 8
+                maximum: panel.editor.catalog.telemetry ? panel.editor.catalog.telemetry.history_capacity.max : 256
+                onEdited: function(value) { panel.editor.setField("telemetry", "history_capacity", value) }
+            }
+            Text {
+                width: parent.width; color: "#8e9bb0"; wrapMode: Text.Wrap
+                text: "Изменение настроек сбрасывает серверную историю/epoch. Применить временно или сохранить — общие кнопки ниже. Остановка чтения графиков не выключает сбор."
             }
         }
     }

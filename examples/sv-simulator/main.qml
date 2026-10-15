@@ -397,6 +397,7 @@ Window {
             Rectangle { width: parent.width; height: 1; color: "#2d3748" }
 
             RuntimePanel { id: configurationPanel; width: parent.width }
+            TelemetryPanel { width: parent.width }
 
             Text {
                 text: "СЕРВЕРНАЯ КАЛИБРОВКА"

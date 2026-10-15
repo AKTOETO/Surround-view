@@ -3,6 +3,8 @@
         <file>main.qml</file>
         <file>DriveWorld.qml</file>
         <file>RuntimePanel.qml</file>
+        <file>TelemetryPanel.qml</file>
+        <file>TelemetryChart.qml</file>
         <file>SurfacePanel.qml</file>
         <file>SupportPanel.qml</file>
         <file>OcclusionPanel.qml</file>

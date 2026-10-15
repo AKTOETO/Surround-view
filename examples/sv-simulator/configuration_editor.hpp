@@ -8,6 +8,7 @@
 class ConfigurationEditor : public QObject
 {
     Q_OBJECT
+    Q_PROPERTY(QVariantMap telemetry READ telemetry NOTIFY draftChanged)
     Q_PROPERTY(QVariantMap fusion READ fusion NOTIFY draftChanged)
     Q_PROPERTY(QVariantMap surface READ surface NOTIFY draftChanged)
     Q_PROPERTY(QVariantMap catalog READ catalog NOTIFY changed)
@@ -30,6 +31,11 @@ class ConfigurationEditor : public QObject
   public:
 
     using QObject::QObject;
+
+    QVariantMap telemetry() const
+    {
+        return telemetry_;
+    }
 
     QVariantMap fusion() const
     {
@@ -151,7 +157,7 @@ class ConfigurationEditor : public QObject
     bool connected_ = false, snapshot_loaded_ = false, catalog_loaded_ = false;
     bool operations_supported_ = false, apply_supported_ = false, validated_ = false;
     sv::client::ConfigurationSnapshot snapshot_;
-    QVariantMap fusion_, surface_, catalog_, active_fusion_;
+    QVariantMap fusion_, surface_, catalog_, active_fusion_, telemetry_, active_telemetry_;
     QString base_revision_, status_ = "Загрузите конфигурацию сервера";
     std::optional<Operation> operation_;
     uint64_t read_id_ = 0, catalog_id_ = 0, validate_id_ = 0, apply_id_ = 0, status_id_ = 0;

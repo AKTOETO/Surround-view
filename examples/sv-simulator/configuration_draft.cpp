@@ -23,6 +23,10 @@ boost::json::object ConfigurationEditor::changes() const
     {
         groups["surface"] = surface_;
     }
+    if (catalog_.contains("telemetry") && telemetry_ != active_telemetry_)
+    {
+        groups["telemetry"] = telemetry_;
+    }
     // A no-edit save still needs a supported replacement; fusion avoids unnecessary mesh work.
     if (groups.isEmpty())
     {
@@ -40,7 +44,10 @@ void ConfigurationEditor::setField(const QString &group, const QString &field,
     {
         return;
     }
-    auto *draft = group == "fusion" ? &fusion_ : group == "surface" ? &surface_ : nullptr;
+    auto *draft = group == "fusion"                                        ? &fusion_
+                  : group == "surface"                                     ? &surface_
+                  : group == "telemetry" && catalog_.contains("telemetry") ? &telemetry_
+                                                                           : nullptr;
     if (!draft)
     {
         return;
