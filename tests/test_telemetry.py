@@ -66,6 +66,7 @@ class Telemetry(unittest.TestCase):
             self.assertEqual(camera['reconnects'], '0')
             self.assertEqual(camera['release_failures'], '0')
             self.assertFalse(camera['worker_stopped'])
+            self.assertIsNone(camera.get('negotiated_mode'))
         self.assertIsNone(self.server.poll())
 
     def test_hot_enable_sampling_while_paused_and_disable(self):

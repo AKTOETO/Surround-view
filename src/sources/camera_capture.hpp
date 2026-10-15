@@ -16,6 +16,11 @@ class CameraCapture
     virtual bool read(cv::Mat &) = 0;
     virtual void close() = 0;
 
+    virtual std::optional<CameraCaptureMode> negotiated_mode() const
+    {
+        return {};
+    }
+
     virtual std::string open_failure() const
     {
         return {};

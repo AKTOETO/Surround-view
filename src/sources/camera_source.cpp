@@ -161,7 +161,12 @@ class CameraFrameSource : public FrameSource
                     {
                         break;
                     }
-                    update_camera(camera_id, [](auto &state) { ++state.open_attempts; });
+                    update_camera(camera_id,
+                                  [](auto &state)
+                                  {
+                                      ++state.open_attempts;
+                                      state.negotiated_mode.reset();
+                                  });
                     if (!cap.open(dev_path, cam_cfg.width, cam_cfg.height))
                     {
                         const auto failure = cap.open_failure();
@@ -174,6 +179,16 @@ class CameraFrameSource : public FrameSource
                         wait_retry(std::chrono::milliseconds(250));
                         continue;
                     }
+                    auto mode = cap.negotiated_mode();
+                    update_camera(camera_id,
+                                  [&mode](auto &state)
+                                  {
+                                      if (mode)
+                                      {
+                                          mode->open_attempt = state.open_attempts;
+                                      }
+                                      state.negotiated_mode = std::move(mode);
+                                  });
                     if (previously_opened)
                     {
                         update_camera(camera_id, [](auto &state) { ++state.reconnects; });
@@ -366,6 +381,7 @@ class CameraFrameSource : public FrameSource
 
     bool close_capture(CameraCapture &capture, int camera_id, std::string &last_status)
     {
+        update_camera(camera_id, [](auto &state) { state.negotiated_mode.reset(); });
         try
         {
             capture.close();

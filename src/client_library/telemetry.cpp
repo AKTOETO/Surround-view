@@ -1,4 +1,5 @@
 #include "sv/client_telemetry.hpp"
+#include <algorithm>
 #include <array>
 #include <cmath>
 #include <stdexcept>
@@ -160,6 +161,44 @@ TelemetryBatch parse_telemetry_batch(const Message &message)
                     integer(camera, "open_attempts"),     integer(camera, "read_failures"),
                     integer(camera, "opencv_exceptions"), integer(camera, "reconnects"),
                     integer(camera, "release_failures"),  camera.at("worker_stopped").as_bool()};
+                if (const auto *mode = camera.if_contains("negotiated_mode");
+                    mode && !mode->is_null())
+                {
+                    const auto &value = mode->as_object();
+                    sv::CameraCaptureMode negotiated;
+                    negotiated.width = bounded(value.at("width"), 1, 16384);
+                    negotiated.height = bounded(value.at("height"), 1, 16384);
+                    negotiated.open_attempt = integer(value, "open_attempt");
+                    if (!negotiated.open_attempt ||
+                        negotiated.open_attempt != parsed[id].open_attempts ||
+                        parsed[id].worker_stopped)
+                    {
+                        throw std::invalid_argument("inconsistent negotiated camera mode");
+                    }
+                    if (!value.at("fps").is_null())
+                    {
+                        negotiated.fps = duration(value.at("fps"));
+                        if (*negotiated.fps == 0)
+                        {
+                            throw std::invalid_argument("invalid camera FPS");
+                        }
+                    }
+                    if (!value.at("fourcc").is_null())
+                    {
+                        negotiated.fourcc = std::string(value.at("fourcc").as_string());
+                        if (negotiated.fourcc->size() != 4 ||
+                            !std::all_of(negotiated.fourcc->begin(), negotiated.fourcc->end(),
+                                         [](unsigned char c) { return c >= 32 && c <= 126; }))
+                        {
+                            throw std::invalid_argument("invalid camera FOURCC");
+                        }
+                    }
+                    if (!value.at("buffer_count").is_null())
+                    {
+                        negotiated.buffer_count = bounded(value.at("buffer_count"), 1, 32);
+                    }
+                    parsed[id].negotiated_mode = std::move(negotiated);
+                }
             }
             sample.source.camera_diagnostics = parsed;
         }

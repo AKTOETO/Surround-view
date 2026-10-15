@@ -291,3 +291,56 @@ TEST(Telemetry, CameraHealthRejectsInvalidShapeIdentityCounterAndFlag)
            { value.as_array()[0].as_object()["open_attempts"] = "18446744073709551616"; });
     change([](auto &value) { value.as_array()[0].as_object()["worker_stopped"] = "false"; });
 }
+
+TEST(Telemetry, NegotiatedModePreservesCheckedFieldsAndRejectsStaleOrMalformedRecords)
+{
+    sv::TelemetryCollector collector("instance", {true, 50, 8});
+    sv::SourceStats source;
+    source.camera_diagnostics = sv::CameraDiagnosticsSet{};
+    auto &camera = source.camera_diagnostics->at(0);
+    camera.open_attempts = UINT64_MAX;
+    camera.negotiated_mode = sv::CameraCaptureMode{1280, 720, UINT64_MAX, 29.97, "MJPG", 2};
+    collector.sample(50000000, 0, source, false, true, false);
+    const auto wire = collector.read("instance", 0, 0, 16);
+    const auto sample = sv::client::parse_telemetry_batch(reply(wire)).samples[0];
+    ASSERT_TRUE(sample.source.camera_diagnostics->at(0).negotiated_mode);
+    const auto &mode = *sample.source.camera_diagnostics->at(0).negotiated_mode;
+    EXPECT_EQ(mode.width, 1280U);
+    EXPECT_EQ(mode.open_attempt, UINT64_MAX);
+    EXPECT_EQ(mode.fps, 29.97);
+    EXPECT_EQ(mode.fourcc, "MJPG");
+    EXPECT_EQ(mode.buffer_count, 2U);
+    auto change = [&](auto mutate, bool valid = false)
+    {
+        auto data = wire;
+        auto &camera = data.at("samples")
+                           .as_array()[0]
+                           .as_object()
+                           .at("source")
+                           .as_object()
+                           .at("camera_diagnostics")
+                           .as_array()[0]
+                           .as_object();
+        mutate(camera);
+        if (valid)
+        {
+            EXPECT_NO_THROW(sv::client::parse_telemetry_batch(reply(data)));
+        }
+        else
+        {
+            EXPECT_ANY_THROW(sv::client::parse_telemetry_batch(reply(data)));
+        }
+    };
+    change([](auto &c) { c.erase("negotiated_mode"); }, true);
+    change([](auto &c) { c["negotiated_mode"] = nullptr; }, true);
+    change([](auto &c) { c["negotiated_mode"].as_object()["fps"] = nullptr; }, true);
+    change([](auto &c) { c["worker_stopped"] = true; });
+    change([](auto &c) { c["open_attempts"] = "1"; });
+    change([](auto &c) { c["negotiated_mode"].as_object()["open_attempt"] = "0"; });
+    change([](auto &c) { c["negotiated_mode"].as_object()["open_attempt"] = "1"; });
+    change([](auto &c) { c["negotiated_mode"].as_object()["width"] = 0; });
+    change([](auto &c) { c["negotiated_mode"].as_object()["height"] = "720"; });
+    change([](auto &c) { c["negotiated_mode"].as_object()["fps"] = 0; });
+    change([](auto &c) { c["negotiated_mode"].as_object()["fourcc"] = "MJPEG"; });
+    change([](auto &c) { c["negotiated_mode"].as_object()["buffer_count"] = 33; });
+}

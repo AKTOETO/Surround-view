@@ -189,3 +189,36 @@ TEST(TelemetryArchive, CameraHealthRoundTripRetainsNullAndExactCounters)
                      .samples[1]
                      .source.camera_diagnostics);
 }
+
+TEST(TelemetryArchive, NegotiatedCameraModeSurvivesRoundTripAndLegacyOmission)
+{
+    auto archive = example();
+    auto &source = archive.samples[0].source;
+    source.camera_diagnostics = sv::CameraDiagnosticsSet{};
+    auto &camera = source.camera_diagnostics->at(3);
+    camera.open_attempts = UINT64_MAX;
+    camera.negotiated_mode = sv::CameraCaptureMode{640, 480, UINT64_MAX, 29.97, "YUYV", 4};
+    const auto text = sv::client::serialize_telemetry_archive(archive);
+    const auto restored = sv::client::parse_telemetry_archive(text);
+    const auto mode = restored.samples[0].source.camera_diagnostics->at(3).negotiated_mode;
+    ASSERT_TRUE(mode);
+    EXPECT_EQ(mode->open_attempt, UINT64_MAX);
+    EXPECT_EQ(mode->fps, 29.97);
+    EXPECT_EQ(mode->fourcc, "YUYV");
+    EXPECT_EQ(mode->buffer_count, 4U);
+    auto old = boost::json::parse(text).as_object();
+    for (auto &camera : old.at("samples")
+                            .as_array()[0]
+                            .as_object()
+                            .at("source")
+                            .as_object()
+                            .at("camera_diagnostics")
+                            .as_array())
+    {
+        camera.as_object().erase("negotiated_mode");
+    }
+    EXPECT_FALSE(sv::client::parse_telemetry_archive(boost::json::serialize(old))
+                     .samples[0]
+                     .source.camera_diagnostics->at(3)
+                     .negotiated_mode);
+}

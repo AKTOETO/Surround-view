@@ -69,6 +69,7 @@ class OpenCvCapture final : public CameraCapture
     bool open(const std::string &path, int width, int height) override
     {
         failure_.clear();
+        mode_.reset();
         if (!device_->open(path, cv::CAP_V4L2))
         {
             return false;
@@ -106,13 +107,26 @@ class OpenCvCapture final : public CameraCapture
                 return false;
             }
         }
-        if (settings_.fps &&
-            !matches("fps", cv::CAP_PROP_FPS, *settings_.fps, std::max(.01, *settings_.fps * .01)))
+        double actual_fps = 0;
+        if (settings_.fps && !matches("fps", cv::CAP_PROP_FPS, *settings_.fps,
+                                      std::max(.01, *settings_.fps * .01), &actual_fps))
         {
             return false;
         }
-        return !settings_.buffer_count ||
-               matches("buffer_count", cv::CAP_PROP_BUFFERSIZE, *settings_.buffer_count);
+        if (settings_.buffer_count &&
+            !matches("buffer_count", cv::CAP_PROP_BUFFERSIZE, *settings_.buffer_count))
+        {
+            return false;
+        }
+        CameraCaptureMode mode;
+        mode.width = unsigned(width);
+        mode.height = unsigned(height);
+        mode.fps = settings_.fps ? std::optional<double>(actual_fps) : std::nullopt;
+        mode.fourcc =
+            settings_.fourcc.empty() ? std::nullopt : std::optional<std::string>(settings_.fourcc);
+        mode.buffer_count = settings_.buffer_count;
+        mode_ = std::move(mode);
+        return true;
     }
 
     bool read(cv::Mat &image) override
@@ -122,12 +136,19 @@ class OpenCvCapture final : public CameraCapture
 
     void close() override
     {
+        mode_.reset();
         device_->close();
+    }
+
+    std::optional<CameraCaptureMode> negotiated_mode() const override
+    {
+        return mode_;
     }
 
   private:
 
-    bool matches(const char *name, int property, double requested, double tolerance = 0)
+    bool matches(const char *name, int property, double requested, double tolerance = 0,
+                 double *readback = nullptr)
     {
         const double actual = device_->get(property);
         if (!std::isfinite(actual) || std::abs(actual - requested) > tolerance)
@@ -137,12 +158,17 @@ class OpenCvCapture final : public CameraCapture
                        ":actual=" + std::to_string(actual);
             return false;
         }
+        if (readback)
+        {
+            *readback = actual;
+        }
         return true;
     }
 
     CameraCaptureSettings settings_;
     std::unique_ptr<VideoDevice> device_;
     std::string failure_;
+    std::optional<CameraCaptureMode> mode_;
 };
 } // namespace
 

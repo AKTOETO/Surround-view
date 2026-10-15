@@ -322,7 +322,8 @@ TEST(SourceWork, BoundedReadPagesBeforeHeaderLimitWithFourCameraRecords)
     source.camera_diagnostics = sv::CameraDiagnosticsSet{};
     for (auto &camera : *source.camera_diagnostics)
     {
-        camera = {UINT64_MAX, UINT64_MAX, UINT64_MAX, UINT64_MAX, UINT64_MAX, true};
+        camera = {UINT64_MAX, UINT64_MAX, UINT64_MAX, UINT64_MAX, UINT64_MAX, false};
+        camera.negotiated_mode = sv::CameraCaptureMode{1920, 1080, UINT64_MAX, 29.97, "MJPG", 32};
     }
     for (uint64_t i = 0; i < 16; ++i)
     {

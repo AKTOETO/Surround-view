@@ -148,7 +148,13 @@ TEST(CameraNegotiation,
               (std::vector<int>{cv::CAP_PROP_FRAME_WIDTH, cv::CAP_PROP_FRAME_HEIGHT,
                                 cv::CAP_PROP_CONVERT_RGB}));
     EXPECT_TRUE(camera->open_failure().empty());
+    ASSERT_TRUE(camera->negotiated_mode());
+    EXPECT_EQ(camera->negotiated_mode()->width, 2U);
+    EXPECT_FALSE(camera->negotiated_mode()->fps);
+    EXPECT_FALSE(camera->negotiated_mode()->fourcc);
+    EXPECT_FALSE(camera->negotiated_mode()->buffer_count);
     camera->close();
+    EXPECT_FALSE(camera->negotiated_mode());
 }
 
 TEST(CameraNegotiation, ExplicitProfileAppliesFourccBeforeDimensionsAndAcceptsFractionalFps)
@@ -175,6 +181,7 @@ TEST_P(CameraNegotiation, MismatchedOrUnsupportedPropertyRejectsBeforeRead)
     EXPECT_FALSE(camera->open("/dev/mock", 2, 2));
     EXPECT_EQ(camera->open_failure().find("camera_configuration_rejected:"), 0U);
     EXPECT_EQ(state->reads, 0U);
+    EXPECT_FALSE(camera->negotiated_mode());
     camera->close();
 }
 
@@ -261,8 +268,13 @@ TEST(CameraNegotiation, WorkerClosesRejectedOrPartiallyOpenedDeviceBeforeRetry)
                           std::make_move_iterator(next.end()));
             std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
+        const auto mode = source->stats().camera_diagnostics->at(0).negotiated_mode;
         source->stop();
         EXPECT_TRUE(ready_frame);
+        ASSERT_TRUE(mode);
+        EXPECT_EQ(mode->open_attempt, 2U);
+        EXPECT_EQ(mode->width, 2U);
+        EXPECT_FALSE(source->stats().camera_diagnostics->at(0).negotiated_mode);
         ASSERT_GE(state->operations.size(), 4U);
         EXPECT_EQ(state->operations[0], "open");
         EXPECT_EQ(state->operations[1], "close");
@@ -380,4 +392,23 @@ TEST(CameraNegotiation, ReleaseFailureAfterRejectedProfileStopsWorkerBeforeAnyRe
     EXPECT_EQ(state->reads, 0U);
     EXPECT_EQ(state->closes, 1U);
     EXPECT_EQ(source->stats().camera_diagnostics->at(0).release_failures, 1U);
+}
+
+TEST(CameraNegotiation, RejectedReopenAndFailedReleaseClearPreviousMode)
+{
+    auto state = std::make_shared<DeviceState>();
+    auto camera = capture(state);
+    ASSERT_TRUE(camera->open("/dev/mock", 2, 2));
+    ASSERT_TRUE(camera->negotiated_mode());
+    camera->close();
+    state->ignored_property = cv::CAP_PROP_FRAME_WIDTH;
+    state->properties[cv::CAP_PROP_FRAME_WIDTH] = 3;
+    EXPECT_FALSE(camera->open("/dev/mock", 2, 2));
+    EXPECT_FALSE(camera->negotiated_mode());
+    camera->close();
+    state->ignored_property = -1;
+    ASSERT_TRUE(camera->open("/dev/mock", 2, 2));
+    state->fail_close = true;
+    EXPECT_THROW(camera->close(), cv::Exception);
+    EXPECT_FALSE(camera->negotiated_mode());
 }
