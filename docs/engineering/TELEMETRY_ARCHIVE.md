@@ -145,3 +145,6 @@ duration. Для локального archive reader на Boost≥1.83 вклю�
 Обновлённый codec сохраняет до4 input observations в каждом sample, в прежней schema1.
 Kind/clock/epoch/duration guards, old missing-field compatibility и selected-input interpretation:
 [[engineering/SOURCE_TIMING]]. Старые SDK могут проигнорировать эти additive fields при resave.
+
+
+Optional source.camera_diagnostics сохраняется при export/import без изменения schema1. Null и отсутствие поля означают отсутствие поддержки. Exact uint64 round-trip, malformed input и old-field omission проверены; старый SDK может проигнорировать extension и потерять его при повторном сохранении. [[engineering/TELEMETRY#Camera diagnostics в telemetry samples]].

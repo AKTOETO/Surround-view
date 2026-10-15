@@ -289,5 +289,26 @@ per-worker/per-camera queues, GPU load/memory и controlled overhead experiment.
 
 Отключаемые source operation timings, shared-session epoch guard, optional SDK/source_work records,
 byte-budget pagination и per-camera I/O choices реализованы: [[engineering/SOURCE_TIMING]].
-Число I/O choices теперь18 (прежние6 +12 per-camera); capture quantiles не выводятся из повторяемых
+На timing-срезе число I/O choices достигло18 (прежние6 +12 per-camera); capture quantiles не выводятся из повторяемых
 selected-input measurements. Physical capture/decode separation и полноценный worker trace ещё отсутствуют.
+
+
+## Camera diagnostics в telemetry samples
+
+Optional `source.camera_diagnostics` передаёт накопительное состояние четырёх camera workers;
+формат и смысл: [[engineering/SOURCES#Диагностика состояния каждой аппаратной камеры]].
+В wire это null для неподдерживаемого backend либо массив ровно четырёх записей по camera_id
+0…3, с пятью decimal-string uint64 и bool worker_stopped. Отсутствующее поле старой schema1
+равнозначно null. Это additive extension без новых команд; C++ DTO/SDK необходимо пересобрать.
+
+Typed `TelemetrySource::camera_diagnostics` и archive codec сохраняют отсутствие данных и точные
+целые. Неверные shape/order/type/range отклоняются. Счётчики допускаются без frame record и
+при fresh=false; они не принадлежат selected source_sequence и не отфильтровываются как старые
+source_work. Counter lifetime связан с источником, epoch — только с серией collection.
+
+В I/O добавлены 24 выбора (шесть показателей × четыре камеры), всего42. Графики показывают
+накопленные значения, не частоту ошибок; stopped является флагом0/1. Nullable графики не
+превращают отсутствие поддержки в ноль. Значения больше2^53 не рисуются через double, но
+полностью доступны в точных latest details и архиве. Latency-квантили к этим счётчикам не
+применяются. Existing byte-budget pagination ограничивает ответы также при четырёх work и
+diagnostic records; клиент должен читать has_more, не ожидать всегда16 samples.

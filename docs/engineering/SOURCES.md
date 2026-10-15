@@ -221,8 +221,8 @@ repeat while (worker работает)
 Status события проходят обычную bounded очередь и не являются надёжным журналом всех ошибок.
 
 Неуспешная операция не создаёт Frame/source_work; существующая sequence продолжает расти
-только при подготовке следующего валидного кадра. Отдельные счётчики ошибок/reconnect и durations
-неуспешных операций пока не добавлены. Это важно при интерпретации телеметрии: наличие timing
+только при подготовке следующего валидного кадра. Счётчики ошибок/reconnect добавлены следующим этапом (см. ниже); durations
+неуспешных операций пока отсутствуют. Это важно при интерпретации телеметрии: наличие timing
 успешного кадра не характеризует предшествующие retry delays.
 
 GTest с подставным CameraCapture проверяет исключения open/read, false/empty read,
@@ -232,3 +232,62 @@ V4L2-устройства; negotiation, driver timestamps и bounded blocking ca
 приёмкой.
 
 Проверка Linux: полная сборка успешна, выбранные CTest 6/6 за 21,17 с (sources, camera_source_config, camera_sources, telemetry_ipc, source_work_timing и telemetry). Source-work executable включает 7 прежних и 6 новых GTest. Полный набор CTest и физические камеры в этом шаге не проверялись.
+
+
+## Диагностика состояния каждой аппаратной камеры
+
+`FrameSource::stats()` для camera backend теперь содержит optional `camera_diagnostics`:
+четыре упорядоченные записи camera_id 0…3. Replay/socket возвращают отсутствие диагностики,
+а не четыре нулевых результата. Снимок состояния всех камер защищён существующим source mutex.
+Обновления выполняются при открытии/ошибке/завершении, без нового lock на каждом успешном кадре.
+
+| Поле | Что учитывается | Что не следует из значения |
+|---|---|---|
+| open_attempts | Каждый вызов open, включая первый, false и exception | Это не число успешных подключений |
+| read_failures | false, пустой Mat либо cv::Exception из read | Отклонённые размеры/depth/channels сюда не входят |
+| opencv_exceptions | Перехваченные cv::Exception при open/read/prepare/close | Это не все ошибки устройства: false не является exception |
+| reconnects | Успешное повторное open после хотя бы одного успешного open | Открытие после первоначально неудачных попыток не является reconnect; успешный read не требуется |
+| release_failures | cv::Exception из close, включая штатный stop | Это не failed read; один отказ read+close увеличивает разные показатели |
+| worker_stopped | Worker завершён штатно либо из-за close failure | false означает, что worker ещё работает/retry, а не что камера исправна |
+
+Счётчики принадлежат lifetime источника; смена telemetry epoch их не обнуляет. Они остаются
+диагностикой backend при отключённом сборе телеметрии. Default-off collector не создаёт samples
+и не отправляет их автоматически; zero-cost режим этим не заявляется. Пока нет независимых
+per-camera drop/rejected/queue counters, durations ошибок или надёжного журнала всех операций.
+После рестарта сервера показатели нужно рассматривать в новом server_instance_id.
+
+```plantuml
+@startuml
+participant "Camera worker 0…3" as W
+participant "FrameSource stats" as S
+participant "Server main loop / commands" as M
+participant "TelemetryCollector" as T
+participant "sv-client-lib" as L
+participant "sv-simulator" as G
+W -> S : open / failure / reconnect / stop
+update under mutex
+M -> S : stats snapshot
+S --> M : optional four-camera diagnostics
+M -> T : sample(stats)
+note over T : Collection disabled: no telemetry samples.
+Counters follow source lifetime, not epoch.
+L -> M : telemetry_read(instance, epoch, cursor)
+M -> T : read(instance, epoch, cursor)
+T --> M : bounded samples
+M --> L : source.camera_diagnostics
+L -> L : validate shape, camera IDs, decimal uint64, bool
+L --> G : typed optional diagnostics
+G -> G : per-camera counter graphs and exact details
+G -> G : save/open archive including diagnostics
+@enduml
+```
+
+*Рисунок И.4 — Передача накопительной диагностики аппаратных камер. Polling выполняется
+через существующий протокол; отдельная подписка и поток worker events не добавлены.*
+
+Проверки восстановления дополнены точными assertions счётчиков для open/read exceptions,
+false/empty read и close failure. Live server test использует четыре уникальных несуществующих
+пути, дожидается повторных open и читает диагностику без входных кадров. Это проверка поведения
+на unavailable paths с настоящим OpenCV adapter, а не физического отключения V4L2-устройства.
+
+Проверки этого дополнения: выбранные CTest двумя наборами — 4/4 за 7,93 с и 3/3 за 49,37 с (source_work_timing, telemetry, simulator_runtime_errors, simulator_configuration_qml, camera_sources, client_transports, telemetry_ipc). Source-work: 13 GTest; telemetry/archive: 18 GTest; runtime: 21 cases; QML: 3 cases; live telemetry: 7 cases. Physical V4L2/Aurora и полный набор CTest не проверялись.

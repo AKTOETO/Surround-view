@@ -1286,3 +1286,6 @@ record age или collection wall. Пояснения под selector разли
 Для проверки epoch guard на replay: pause → изменить telemetry period/history → apply → step.
 Стартующий по умолчанию looping replay может успеть повторно использовать cache до первого render;
 cache_hit=true не доказывает, что cold load не выполнялся. [[engineering/SOURCE_TIMING]].
+
+
+В telemetry → I/O выберите «Камера N: Ошибки чтения», «Переподключения» либо «Worker остановлен». Это cumulative source counters/flag, не rate/latency. Без camera backend значения отсутствуют. Diagnostics доступны даже без новых входных кадров; подробности и exact counts находятся под графиком и в сохранённом окне. [[engineering/SOURCES#Диагностика состояния каждой аппаратной камеры]].

@@ -327,3 +327,6 @@ Instance/epoch/cursor guards, bounds, schema, units и PlantUML последов
 [[engineering/SOURCE_TIMING]]. Records привязаны к выбранным render inputs и текущему telemetry
 session epoch. Большой telemetry batch может сократиться по32KiB budget; next_cursor/has_more
 остаются обязательными для pagination. Это не отдельный worker event stream.
+
+
+telemetry_read schema1 дополнен optional source.camera_diagnostics: null или ровно четыре ordered camera_id0…3, decimal-string open_attempts/read_failures/opencv_exceptions/reconnects/release_failures и bool worker_stopped. Команд и framing не добавлено. [[engineering/TELEMETRY#Camera diagnostics в telemetry samples]].

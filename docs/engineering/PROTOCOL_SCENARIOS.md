@@ -386,3 +386,10 @@ Telemetry catalog/HELLO объявляют source_work_timing_v1. Read може�
 SDK проверяет epoch, IDs, clocks/durations. При hot telemetry settings old-session work исключается,
 а новому источнику/step требуется создать observation текущей серии. Looping replay следует явно
 поставить на pause для такого теста. Контракт/PlantUML: [[engineering/SOURCE_TIMING]].
+
+
+Дополнение telemetry сценария: source.camera_diagnostics передаётся независимо от frame.fresh,
+включая недоступные камеры без кадров. Это optional состояние источника, не событие source_work;
+reset epoch не обнуляет lifetime counters. SDK валидирует ordered camera_id0…3 и типы, архив
+сохраняет точные значения. Новые команды/сценарии подключения не добавлены.
+[[engineering/SOURCES#Диагностика состояния каждой аппаратной камеры]].

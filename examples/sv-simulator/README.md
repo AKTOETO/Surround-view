@@ -117,3 +117,6 @@ Per-camera source work appears in I/O (read/load/prepare choices) when telemetry
 These are successful operations of selected render inputs; rerender can repeat the same source_sequence,
 so capture quantiles are not displayed. Null means unavailable/not applicable, and replay cache hit
 means skipped load (0ms). See `docs/engineering/SOURCE_TIMING.md` for clock/epoch guards and limits.
+
+
+I/O also exposes six health counters/flags per camera (24 additional choices, 42 total): open attempts, read failures, OpenCV exceptions, reconnects, release failures and worker stopped. They follow source lifetime, not telemetry epoch, and remain available without a fresh frame. Unsupported backend values are missing; exact counters remain in details/archive when too large for graph doubles. See [[engineering/SOURCES#Диагностика состояния каждой аппаратной камеры]].

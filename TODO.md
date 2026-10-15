@@ -96,7 +96,7 @@ provider; disabled/reset/paused/busy/lease/persistence rollback и Unix/TCP пр
 Контракт и ограничения: [[engineering/TELEMETRY]].
 
 - Расширить settings уровнями детализации, перечнем подсистем/metric IDs и buffer budget в bytes.
-- Camera read wall/RGB prepare и replay load/cache observations для selected inputs выполнены ([[engineering/SOURCE_TIMING]]). Добавить failed-operation/independent worker events, раздельные physical capture/decode, sync/skew, calibration, projection/seam/multiband, encode/send; process threads, GPU utilisation/memory, per-camera/per-worker drop и reconnect counters. Сейчас доступные stage wall spans перекрываются, current RSS приближённый; frame.fresh=false не считать новым render. Проверить платформенную доступность, GPU timestamp semantics.
+- Camera read wall/RGB prepare и replay load/cache observations для selected inputs выполнены ([[engineering/SOURCE_TIMING]]). Добавить failed-operation/independent worker events, раздельные physical capture/decode, sync/skew, calibration, projection/seam/multiband, encode/send; process threads, GPU utilisation/memory и per-camera/per-worker drop counters. Camera open/read/exception/reconnect/release counters реализованы, socket/replay reconnect instrumentation остаётся отдельной работой. Сейчас доступные stage wall spans перекрываются, current RSS приближённый; frame.fresh=false не считать новым render. Проверить платформенную доступность, GPU timestamp semantics.
 - Дополнить bounded polling subscriptions/downsampling, experiment identity и независимым control-only/channel lifecycle. Sampling сейчас идёт в render loop: долгие вызовы задерживают samples. Не требовать передачи final_frame; обязательный data attachment пока сохраняется.
 
 Формы telemetry settings, bounded polling, CPU/RSS/render, existing pipeline spans, source/delivery и per-camera work tabs в sv-simulator выполнены. Окно120 samples, loss/gaps, fresh-only render quantiles p50/p95/p99 и последняя revision отображаются; series reset/reconnect учтены: [[engineering/TELEMETRY]].
@@ -124,5 +124,5 @@ runner: default looping replay может выполнить cold load до пе
 
 Обработка OpenCV exceptions camera worker и прерываемое ожидание retry выполнены:
 [[engineering/SOURCES#Восстановление camera worker после ошибки OpenCV]]. Остаются configurable
-retry/timeout policy, restart отдельного worker после release failure и failed-operation/reconnect
-counters; вызовы OpenCV не стали прерываемыми.
+retry/timeout policy, restart отдельного worker после release failure и durations failed operations;
+camera health/reconnect counters выполнены; вызовы OpenCV не стали прерываемыми.

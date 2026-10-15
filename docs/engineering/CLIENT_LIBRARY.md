@@ -195,3 +195,6 @@ bounded window snapshot. Нет Qt/file I/O/server mutation. Поля, units,120
 Optional `TelemetrySample::source_work` содержит owning per-camera DTO из installed
 `source_work_timing.hpp`; Qt/OpenCV dependency не добавлена. Старое отсутствие поля допустимо;
 validation и archive compatibility: [[engineering/SOURCE_TIMING]].
+
+
+Optional TelemetrySource::camera_diagnostics содержит четыре CameraDiagnostics (public installed camera_diagnostics.hpp): exact counters и worker_stopped. Старые сообщения без поля и null принимаются; malformed array/order/types/range отклоняются. Поля доступны без fresh frame. [[engineering/SOURCES#Диагностика состояния каждой аппаратной камеры]].
