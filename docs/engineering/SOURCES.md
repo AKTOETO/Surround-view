@@ -526,3 +526,62 @@ OpenCV RGB conversion/PNG decode ранее проверены отдельно.
 Aurora/PC остаются открытыми; MOCK нужны для воспроизводимых программных lifecycle проверок.
 
 Проверки дополнения: полная Linux сборка, выбранные CTest 6/6 за 2,99 с (camera_source_config, core, config_store_persistence, source_work_timing, telemetry, configuration_snapshot) и 4/4 за 29,80 с (sources, camera_sources, replay_ipc, telemetry_ipc). Camera/source target: 34 GTest, включая 15 новых negotiation/config cases. Полный набор CTest и physical V4L2/Aurora acceptance не выполнялись.
+
+
+## Проверенный режим камеры через SDK
+
+Успешное согласование теперь создаёт optional `negotiated_mode` в camera diagnostics.
+Он содержит width/height, номер open_attempt (decimal uint64), nullable fps/fourcc/buffer_count.
+Width/height подтверждены точным readback; FPS сохраняется фактический проверенный double
+(например29.97 при requested30), FOURCC/buffers — значения с exact readback. Optional параметры,
+не запрошенные профилем, остаются null: автоматический режим драйвера дополнительно не опрашивается.
+Decoded conversion проверена adapter до создания mode, отдельного raw-mode этот DTO не описывает.
+
+Worker присваивает номер текущей попытки из open_attempts под source mutex. Mode очищается
+в начале следующего open и перед close, включая release failure; при отсутствии поддержки
+CameraCapture возвращает null. Null может означать закрытый, ещё не согласованный или
+неинструментированный capture, а не разрешение0/FPS0. У stopped worker mode отсутствует.
+
+```plantuml
+@startuml
+[*] --> Unknown : startup / unsupported driver seam
+Unknown --> Opening : clear old mode, increment open_attempts
+Opening --> Unknown : open/negotiation rejected, close
+Opening --> Checked : successful readback
+attach current open_attempt
+Checked --> Unknown : read failure / close / stop
+clear before release
+Checked --> Opening : backend closed itself
+clear at next open attempt
+Checked --> Checked : successful reads / invalid Mat
+mode remains backend evidence
+Unknown --> [*] : worker stopped
+@enduml
+```
+
+*Рисунок И.8 — Lifetime checked mode. Наличие mode не означает camera_ready, новый кадр или
+синхронность набора; неверный Mat может быть отклонён после успешного backend readback.*
+
+В `sv-client-lib` используется Qt/OpenCV-free public CameraCaptureMode
+(installed camera_capture_mode.hpp). SDK принимает прежние сообщения без negotiated_mode и null;
+для непустого mode проверяет dimensions1…16384, finite positive FPS, FOURCC ASCII4,
+buffers1…32 и nonzero open_attempt, равный open_attempts камеры. Mode у worker_stopped отвергается.
+Это additive schema1 extension, без новых команд; зависимые C++ приложения нужно пересобрать.
+
+Archive codec сохраняет снимок и exact attempt identity, включая uint64 max. Старый SDK может
+проигнорировать поле и потерять его при повторном export. В I/O details симулятора появляются
+checked resolution/FPS/FOURCC/buffers/attempt; число metric choices остаётся42. Archived samples
+хранят исторические режимы, даже если текущая камера уже закрыта.
+
+Mode относится к source snapshot в момент sample, а не к selected input frame. После reconnect
+старый выбранный кадр и текущий mode могут относиться к разным открытиям: нельзя переносить
+номер попытки на Frame автоматически. Frame-level capture attempt provenance ещё не реализована.
+Backend readback, measured sensor mode, frame readiness и final delivery остаются разными понятиями.
+
+MOCK assertions проверяют actual29.97 вместо requested30, nullable незапрошенные свойства,
+номер второй успешной попытки после отказа, очистку при close/rejected reopen/failed release.
+Parser/архив проверяют legacy omission, null, stale/zero attempt, stopped inconsistency и malformed
+поля; byte-budget pagination проверяется с четырьмя source_work и mode records. QML fixture
+сохраняет checked mode при offline archive restoration; это не live physical-camera acceptance.
+
+Проверки этого среза: полная Linux сборка; выбранные CTest 7/7 за 39,26 с, включая 35 camera/source GTest, typed telemetry/archive, installed SDK consumer/Unix/TCP, live unavailable-device path и offscreen QML archive checks. Полный набор CTest и physical V4L2/Aurora acceptance не выполнялись.

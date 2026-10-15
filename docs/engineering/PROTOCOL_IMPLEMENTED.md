@@ -330,3 +330,6 @@ session epoch. Большой telemetry batch может сократиться 
 
 
 telemetry_read schema1 дополнен optional source.camera_diagnostics: null или ровно четыре ordered camera_id0…3, decimal-string open_attempts/read_failures/opencv_exceptions/reconnects/release_failures и bool worker_stopped. Команд и framing не добавлено. [[engineering/TELEMETRY#Camera diagnostics в telemetry samples]].
+
+
+Optional source.camera_diagnostics[i].negotiated_mode: null либо width/height (positive integers), open_attempt (nonzero decimal uint64 == open_attempts), fps (finite positive number/null), fourcc (ASCII4/null), buffer_count (integer1…32/null). Non-null запрещён у worker_stopped; old omission принимается. Команды/transport framing не менялись. [[engineering/SOURCES#Проверенный режим камеры через SDK]].

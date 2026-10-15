@@ -1318,3 +1318,6 @@ build/sv-source-work-tests --gtest_filter='CameraNegotiation.*:WidthHeightConver
 ```
 
 MOCK моделируют negotiation и lifecycle; подключение реальных камер этим не проверяется.
+
+
+В telemetry → I/O смотрите Checked mode в сведениях камеры: разрешение, checked FPS/FOURCC/buffers и open_attempt. «Не проверен» означает, что optional свойство не запрашивалось; «недоступен» — capture закрыт/ещё не согласован/не поддерживает этот snapshot. Сравнивайте с startup source.capture и calibrated resolution; FPS readback не равен измеренному cadence. Снимок сохраняется в окне отчёта. [[engineering/SOURCES#Проверенный режим камеры через SDK]].

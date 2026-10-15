@@ -120,3 +120,6 @@ means skipped load (0ms). See `docs/engineering/SOURCE_TIMING.md` for clock/epoc
 
 
 I/O also exposes six health counters/flags per camera (24 additional choices, 42 total): open attempts, read failures, OpenCV exceptions, reconnects, release failures and worker stopped. They follow source lifetime, not telemetry epoch, and remain available without a fresh frame. Unsupported backend values are missing; exact counters remain in details/archive when too large for graph doubles. See [[engineering/SOURCES#Диагностика состояния каждой аппаратной камеры]].
+
+
+I/O details now show the checked backend mode and open-attempt identity without extra metric choices. Unrequested properties remain unavailable; closed/rejected capture clears the mode. Archive views show historical snapshots, not current camera availability. See [[engineering/SOURCES#Проверенный режим камеры через SDK]].

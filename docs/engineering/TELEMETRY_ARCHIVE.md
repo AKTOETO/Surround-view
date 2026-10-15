@@ -148,3 +148,6 @@ Kind/clock/epoch/duration guards, old missing-field compatibility и selected-in
 
 
 Optional source.camera_diagnostics сохраняется при export/import без изменения schema1. Null и отсутствие поля означают отсутствие поддержки. Exact uint64 round-trip, malformed input и old-field omission проверены; старый SDK может проигнорировать extension и потерять его при повторном сохранении. [[engineering/TELEMETRY#Camera diagnostics в telemetry samples]].
+
+
+Camera negotiated_mode сохраняется как additive schema1 поле. Non-null snapshots и exact open_attempt проходят те же SDK validators; omission/null старого архива допустимы. Сохранённый mode исторический, не утверждение о текущем подключении камеры. [[engineering/SOURCES#Проверенный режим камеры через SDK]].

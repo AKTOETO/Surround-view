@@ -198,3 +198,6 @@ validation и archive compatibility: [[engineering/SOURCE_TIMING]].
 
 
 Optional TelemetrySource::camera_diagnostics содержит четыре CameraDiagnostics (public installed camera_diagnostics.hpp): exact counters и worker_stopped. Старые сообщения без поля и null принимаются; malformed array/order/types/range отклоняются. Поля доступны без fresh frame. [[engineering/SOURCES#Диагностика состояния каждой аппаратной камеры]].
+
+
+CameraDiagnostics::negotiated_mode содержит optional CameraCaptureMode (installed camera_capture_mode.hpp): width/height, exact open_attempt и nullable checked fps/fourcc/buffer_count. SDK отвергает stale attempt и mode у stopped worker, принимает omission/null от прежнего сервера. Это snapshot источника, не metadata выбранного Frame. [[engineering/SOURCES#Проверенный режим камеры через SDK]].

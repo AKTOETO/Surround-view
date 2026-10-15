@@ -312,3 +312,6 @@ source_work. Counter lifetime связан с источником, epoch — т
 полностью доступны в точных latest details и архиве. Latency-квантили к этим счётчикам не
 применяются. Existing byte-budget pagination ограничивает ответы также при четырёх work и
 diagnostic records; клиент должен читать has_more, не ожидать всегда16 samples.
+
+
+Camera diagnostics дополнены optional negotiated_mode: проверенный backend readback и open_attempt identity, очищаемые при open/close. Запись независима от frame.fresh и может отсутствовать у работающего, но неинструментированного capture. Формат, lifecycle и ограничения: [[engineering/SOURCES#Проверенный режим камеры через SDK]].

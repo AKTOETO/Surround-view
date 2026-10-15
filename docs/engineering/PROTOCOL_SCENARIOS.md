@@ -393,3 +393,9 @@ SDK проверяет epoch, IDs, clocks/durations. При hot telemetry settin
 reset epoch не обнуляет lifetime counters. SDK валидирует ordered camera_id0…3 и типы, архив
 сохраняет точные значения. Новые команды/сценарии подключения не добавлены.
 [[engineering/SOURCES#Диагностика состояния каждой аппаратной камеры]].
+
+
+Дополнение telemetry сценария: optional negotiated_mode относится к текущему source open attempt,
+очищается при начале open/close и допускается без frame record. Оно не связывает автоматически
+selected Frame с новым capture generation после reconnect. Legacy omission/null принимаются;
+stale attempt/stopped inconsistency отклоняются. [[engineering/SOURCES#Проверенный режим камеры через SDK]].
