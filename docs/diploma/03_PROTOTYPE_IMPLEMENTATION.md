@@ -974,3 +974,60 @@ OpenGL/Mesa проверка завершилась без сообщений. P
 placeholder автомобилем; физическая модель, синхронный camera producer и target performance
 этим исправлением не подтверждены. Контракты/команды и первичная Qt ссылка:
 [[engineering/CONFIG_SERVICE#Исправления QML и driving preview]].
+
+## 3.28. Отключаемая телеметрия как инструмент дальнейшей проверки
+
+Для измерения узких мест введён отдельный C++ TelemetryCollector и typed reader в sv-client-lib.
+Сбор default off и принадлежит серверу; клиент не включает его одним запросом чтения. Hot изменения
+settings проходят тот же ConfigService transaction, что и настройки алгоритмов. История выделяется
+до сохранения config; неудачный persist не оставляет включённого sampler. После изменения настроек
+новый epoch отделяет серии, restart меняет server instance. Это позволяет не соединять наблюдения
+из разных экспериментальных условий автоматически.
+
+```plantuml
+@startuml
+component "FrameSource
+counters" as I
+component "Renderer
+existing frame spans" as R
+component "Linux process provider
+getrusage / statm" as P
+component "sv-server TelemetryCollector
+periodic bounded ring; default off" as T
+component "ConfigService
+prepared hot settings" as C
+component "sv-client-lib
+typed cursor reader" as L
+component "Будущие GUI graphs / experiment reports" as G <<planned>>
+I --> T
+R --> T : последний завершённый frame
+P --> T : CPU / approximate RSS
+C --> T : commit / reset epoch
+T --> L : type21 <=16 samples + lost_samples
+L ..> G : запланировано
+@enduml
+```
+
+Рисунок 3.36 — Реализованный путь devel telemetry и планируемый потребитель графиков.
+
+| Задача диагностики | Реализованная информация | Что пока нельзя заключить |
+|---|---|---|
+| Нагрузка процесса | CPU delta, approximate current RSS | Нет распределения по threads/подсистемам, GPU utilisation |
+| Длительность кадра | Перекрывающиеся существующие stage wall spans и nullable GPU draw | Сумма spans не является полным latency; hybrid GPU total отсутствует |
+| Застой вывода | data_ready/busy, samples продолжаются на paused/busy | Не измерена отдельная длительность send/encode |
+| Смена режима | Sample/frame config revision, instance/epoch | Нет experiment markers/автоматической причинной атрибуции |
+| Медленный reader | Bounded ring, next cursor, lost_samples | Lost samples не равны числу пропущенных frames |
+
+Периодический sample хранит последний frame с признаком fresh. При pause повторный frame не
+является новым render; его input age нельзя выдавать за время вычисления. Sampling выполняется
+в render loop, поэтому длительный вызов образует временной gap, а не достоверный ряд значений
+внутри заблокированного участка. CPU100% соответствует одному logical CPU и может превышаться
+многопоточным процессом. RSS statm приближённый; первичные определения и формулы приведены
+в [[engineering/TELEMETRY#Метрики и границы интерпретации]].
+
+Проверены disable/provider calls, периодичность, fresh/repeated frame, counter reset, bounded
+ring loss/pagination, foreign instance/epoch/cursor rejection, strict settings и malformed replies.
+Live Linux tests проверяют hot apply-once/replay, pause/backpressure, lease, persistent restart,
+rollback при disk error и typed Unix/TCP consumption. Это проверка корректности инструмента,
+а не опыт, доказывающий ускорение алгоритма. Измерение overhead disabled/minimal/detailed,
+полная инструментализация подсистем, GUI графики и target Aurora validation остаются необходимыми.

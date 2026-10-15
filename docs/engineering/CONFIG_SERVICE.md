@@ -1,7 +1,7 @@
 # ConfigService: чтение, проверка и атомарное применение
 
 14.10.2026. Продуктовые шаги после bounded research [[validation/TARGET_OVERLAP]].
-Серверный `ConfigService` предоставляет read, discovery, проверку и атомарное применение групп fusion/surface с явным выбором сохранения. Process-scoped operation IDs/status добавлены отдельно: [[engineering/CONFIG_OPERATIONS]]. Другие root groups, durable journal/retention и restart orchestration ещё не реализованы. Временные configure_fusion/surface
+Серверный `ConfigService` предоставляет read, discovery, проверку и атомарное применение групп fusion/surface/telemetry с явным выбором сохранения. Process-scoped operation IDs/status добавлены отдельно: [[engineering/CONFIG_OPERATIONS]]. Другие root groups, durable journal/retention и restart orchestration ещё не реализованы. Временные configure_fusion/surface
 и persistent calibration apply сохраняют прежние контракты.
 
 ## Wire-контракт config_read_v1
@@ -35,7 +35,7 @@ Persistence configured указывает наличие серверного pe
 Scope `config_store` намеренно исключает текущий session view, pause/output selection,
 фактическое состояние listeners и launch-only CLI overrides `--ipc-dir`/`--manifest`/`--loop`.
 Для текущего view/lease/runtime state использовать `state`; не считать snapshot полным паспортом
-запущенного процесса. Для discovery fusion/surface использовать отдельный config_catalog ниже.
+запущенного процесса. Для discovery fusion/surface/telemetry использовать отдельный config_catalog ниже.
 
 Read доступен и при удерживаемом/recovering experiment lease без lease token. Не меняет
 config_revision/state_revision/applied_command, не помечает render dirty и не сохраняет файл.
@@ -484,3 +484,12 @@ QT_QPA_PLATFORM=offscreen QT_QUICK_BACKEND=software SV_QML_SURFACE_SCREENSHOT=/t
 
 Component/unit test не измеряет интерактивный FPS, camera production, аппаратную пригодность или
 физическую точность модели. Эти этапы остаются отдельными задачами.
+
+## Аддитивная группа telemetry (15.10.2026)
+
+Catalog schema2 теперь объявляет третью replaceable group `telemetry`. Parser поддерживает её
+canonical validate и apply/apply-once; подготовка collector history выполняется до persistence,
+публикация после commit. Отключение по умолчанию, sampling/history bounds и epoch reset описаны
+в [[engineering/TELEMETRY]]. GUI формы на этой странице пока редактируют только fusion/surface;
+группа telemetry доступна через библиотеку и CLI. `operations` catalogue сохраняет четыре
+ConfigService операции; process journal и telemetry reads объявляются отдельными capabilities.

@@ -25,3 +25,8 @@
 ## Повторение опытов и построение графиков
 
 [[engineering/PLATFORM_TEST|Native suite на ПК/устройстве и строгое сравнение]]. Исторические данные 0.1.0 — [[prototype/MEASUREMENTS]]; новые первичные baselines — [[validation/baselines/PC_RTX]] и [[validation/baselines/PC_MESA]]. Скрипты и команды рисунков — [[diploma/README]].
+
+## Отключаемая devel telemetry
+
+[[engineering/TELEMETRY|Process CPU/RSS, source counters и frame spans через typed bounded polling]].
+Default off, hot ConfigService settings, epoch/cursor/loss; GUI графиков и full subsystem profiler пока нет.

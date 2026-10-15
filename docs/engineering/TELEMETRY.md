@@ -1,0 +1,179 @@
+# Отключаемая телеметрия сервера
+
+15.10.2026. Первый реализованный срез `telemetry_v1`: process CPU/RSS, counters источника,
+состояние доставки и существующие frame spans. Сервер собирает данные на C++, клиент читает
+их через typed `sv-client-lib`. GUI графиков, subscriptions и полного subsystem profiler пока нет.
+
+## Настройка и жизненный цикл
+
+Необязательная корневая группа:
+
+```json
+"telemetry": {"enabled": false, "period_ms": 100, "history_capacity": 128}
+```
+
+`enabled` обязателен внутри группы и принимает только bool; остальные поля необязательны.
+`period_ms` — JSON integer50..5000, `history_capacity` — integer8..256. Неизвестные поля
+отклоняются. При отсутствии группы сбор выключен. ConfigService поддерживает полную замену
+этой группы через validate/apply/apply-once; пропущенные поля получают defaults.
+Остальные пропущенные root groups сохраняются. Catalog schema2 расширен аддитивно:
+`replaceable_groups` теперь содержит fusion/surface/telemetry и отдельный telemetry bounds object.
+
+Перед сохранением сервер выделяет ограниченный ring buffer; после успешной публикации config
+меняет collector без исключений. Ошибка preparation/CAS/persistence сохраняет прежний collector.
+Изменение эффективных настроек очищает историю, CPU baseline и последний frame, увеличивает
+`epoch`. Повторное применение тех же настроек не сбрасывает epoch/history, хотя обычная config
+revision увеличивается. Disable также очищает историю. Restart создаёт новый server instance.
+
+При disabled новый collector не вызывает process provider, не хранит samples и не создаёт
+дополнительных GPU queries. Уже существующие frame timers, PipelineSpanTracker и trace остаются
+независимыми; это не режим полного отключения всей инструментализации и не доказательство
+нулевых накладных расходов.
+
+```plantuml
+@startuml
+actor Оператор
+participant "Клиент / sv-client-lib" as C
+participant "sv-server ConfigService" as S
+participant "TelemetryCollector" as T
+database "server config" as F
+Оператор -> C : enabled / period / capacity
+C -> S : config_apply_once(instance, operation, revision, changes, persist)
+S -> T : prepare(settings): выделить ring при enabled
+T --> S : prepared update
+S -> S : повторно проверить revision
+opt persist=true
+  S -> F : atomic rename полного active snapshot
+end
+alt подготовка / CAS / сохранение не удались
+  S -> T : уничтожить update без commit
+  S --> C : retained rejected result
+else успешно
+  S -> T : commit noexcept; при изменении epoch++, clear
+  S --> C : committed result + config revision
+end
+@enduml
+```
+
+Рисунок 1 — Сервер владеет настройкой и публикацией сборщика; сборщик не включается до успешного commit.
+
+## Метрики и границы интерпретации
+
+| Поле | Единица и смысл | Ограничение |
+|---|---|---|
+| timestamp_ns | server steady clock, наносекунды | Не UTC; нельзя вычитать clock другого host |
+| process.cpu_percent | 100 × Δ(user+system CPU ns)/Δsample timestamp ns | 100% соответствует одному logical CPU; может быть >100%; первый/недоступный интервал null |
+| process.rss_bytes | resident pages × page size, decimal uint64 | Приближённый current RSS Linux `/proc/self/statm`; null при недоступности, не peak RSS |
+| source | received/rejected/decoded/dropped/queued_batches, decimal uint64 | Смысл counters задаёт backend; не длительность decode и не отдельная очередь каждой камеры |
+| paused/data_ready/data_busy | bool | Состояние при sampling; busy — незавершённая доставка, не длительность send |
+| frame | Последний завершённый render record либо null | Может относиться к прежней config revision; fresh=false при повторе |
+| spans_ms | source_poll, pre_render_prepare, render_wall, fusion_cpu, layer_readback_cpu, upload_cpu, readback_copy_cpu, publish_enqueue, nullable gpu_draw | Интервалы перекрываются; сумма не равна latency |
+| input_age_at_render_ms | Старейший selected input receive → render completion | Возраст входа, а не чистая длительность вычислений; растёт на paused input |
+| collection_wall_ms | Process read и подготовка sample, мс | Не включает запись в ring, JSON serialization, network, влияние cache/scheduling и старые frame timers |
+
+CPU основан на `getrusage(RUSAGE_SELF)`: user/system время всего процесса, включая его threads.
+Семантика подтверждается [Linux getrusage(2)](https://man7.org/linux/man-pages/man2/getrusage.2.html).
+Resident column statm измеряется в pages и имеет ограниченную точность из-за оптимизаций kernel;
+это описано в [Linux proc_pid_statm(5)](https://man7.org/linux/man-pages/man5/proc_pid_statm.5.html).
+В текущем non-Linux build обе process metrics null. Проверка Aurora SDK/устройства ещё не проведена.
+
+GPU draw берётся из существующего renderer query при available и non-disjoint результате;
+null означает отсутствие пригодного измерения. В hybrid fusion полный GPU путь не измеряется.
+Это не GPU utilisation/memory и не wall time CPU. Отдельных timers calibration, seam, pyramid,
+projection, capture/decode, encode/send и per-worker load в этом срезе нет.
+
+Sampling идёт в главном server/render loop без отдельного thread. Если render/command блокирует
+loop, период увеличивается: анализировать фактические timestamp gaps. Между samples берётся
+только последний завершённый frame; быстрые кадры могут не попасть в периодическую историю.
+`lost_samples` считает перезаписанные samples, а не все пропущенные кадры. На paused/backpressured
+выводе process samples продолжаются; повторные frame spans нельзя считать новыми render events.
+
+## Wire и typed API
+
+HELLO capability `telemetry_v1`; SV01 type20 → type21, JSON envelope без image payload.
+
+- `telemetry_catalog()` → `parse_telemetry_catalog(message)`: schema1/scope devel_telemetry,
+  instance, epoch, clock domain, settings, max_read_samples=16, CPU basis и ограничения.
+- `read_telemetry(instance, epoch, after_cursor, limit=16)` → `parse_telemetry_batch(message)`:
+  samples, enabled, after/next/oldest/latest cursor, lost_samples, has_more.
+
+Instance проверяется как точная строка текущего процесса. Epoch, cursors, timestamps, config
+revision и counters передаются decimal uint64 strings. Limit — JSON integer1..16. Запрос с чужим
+instance/epoch, cursor ahead или неверным limit отклоняется без изменения конфигурации/состояния.
+Catalog/read разрешены и под experiment lease; изменение группы под lease запрещено.
+
+При потере истории первый cursor = after_cursor + lost_samples + 1; далее cursors непрерывны.
+Если samples пусты, next_cursor=after_cursor. `has_more` означает next_cursor<latest_cursor.
+Read возвращает максимум16 records и ограничивает serialized result32KiB, без усечения record.
+При epoch mismatch перечитать catalog и начать новый ряд с cursor0. При reconnect сверить instance
+и epoch; значения разных серий не объединять. Ответ может быть историческим относительно ACK
+config_revision; typed parser проверяет sample revision≤ACK revision и frame revision≤sample revision.
+
+```plantuml
+@startuml
+participant "Приложение" as A
+participant "sv-client-lib" as L
+participant "sv-server" as S
+collections "Bounded sample ring" as R
+A -> L : telemetry_catalog()
+L -> S : type20 telemetry_catalog
+S --> L : type21 catalog(instance, epoch, settings)
+L --> A : callback; parse_telemetry_catalog
+loop пока сбор включён
+  S -> S : loop due? process read + last frame
+  S -> R : append; overwrite oldest при заполнении
+  A -> L : read_telemetry(instance, epoch, after, limit)
+  L -> S : type20 telemetry_read
+  S -> R : snapshot <=16 records
+  R --> S : cursors + loss
+  S --> L : type21 telemetry batch
+  L --> A : callback; parse_telemetry_batch
+  A -> A : отметить gaps; after=next_cursor
+end
+@enduml
+```
+
+Рисунок 2 — Bounded polling: медленный клиент теряет старые samples явно, без роста server history.
+
+Обе transport connections control/data пока обязательны, сервер односессионный. Telemetry read
+не ждёт освобождения frame buffer и не требует нового final frame, но data channel всё равно
+нужно подключить; большой control ACK может задерживать следующие команды в том же stream.
+Push subscriptions, отдельный telemetry transport, control-only и отключение final output ещё не реализованы.
+Installed SDK включает `client_telemetry.hpp`; не требует Qt/OpenCV/GLM.
+
+## Использование
+
+Закрыть GUI перед отдельным svctl: сервер пока принимает одну сессию. Путь — Unix IPC directory
+запущенного сервера; для TCP доступны обычные `--tcp HOST CONTROL_PORT DATA_PORT`.
+
+```sh
+build/examples/svctl/svctl --unix /tmp/sv-prototype command telemetry_catalog
+build/examples/svctl/svctl --unix /tmp/sv-prototype command config_read
+# Подставить актуальную revision из config_read; runtime apply без записи файла:
+build/examples/svctl/svctl --unix /tmp/sv-prototype command config_apply --params '{"base_config_revision":"0","changes":{"telemetry":{"enabled":true,"period_ms":100,"history_capacity":128}},"persist":false}'
+# Подставить instance и epoch из нового telemetry_catalog:
+build/examples/svctl/svctl --unix /tmp/sv-prototype command telemetry_read --params '{"server_instance_id":"INSTANCE","epoch":"EPOCH","after_cursor":"0","limit":16}'
+```
+
+Отдельные CLI sessions не сбрасывают process history. Для длительного reader использовать один
+Client и его callback с correlation command_id, очередью bounded размера и explicit release
+при получении frame. Чтение нового API само по себе не включает сбор и не обходит enabled=false.
+Изменения production settings следует выполнять с apply-once/status для reconciliation неизвестного исхода;
+пример config_apply выше предназначен для ручного smoke, не автоматического retry.
+
+## Проверка и следующая работа
+
+`telemetry` GTest проверяет disabled/provider calls, periodic CPU/freshness, ring loss/pagination,
+instance/epoch/limit guards, prepare/discard/commit/reset, configuration bounds и malformed replies.
+`telemetry_ipc` проверяет Linux server hot enable/disable, paused/busy sampling, read-only lease,
+rejection guards, rollback при persistence failure и typed C++ consumer на Unix/TCP.
+
+Остаются: формы telemetry settings и графики sv-simulator, p50/p95/p99/export/replay, experiment
+markers, детализация подсистем, metric IDs/levels, GPU/threads, independent/control-only delivery
+и overhead experiment disabled/minimal/detailed на одинаковых входах. Этот срез не является
+новым сравнительным исследованием производительности или доказательством выбора алгоритма.
+
+Итоговая проверка Linux/Mesa: полная сборка успешна. Первичный selected CTest6/6 за10.66s
+(telemetry/output/configuration/lease/QML); после расширения restart/apply-once проверок —
+CTest5/5 за24.12s (7 telemetry GTests,5 live telemetry cases, client transports, ConfigStore,
+pipeline spans). Полный63-test suite и Aurora SDK в этом шаге не запускались.

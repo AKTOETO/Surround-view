@@ -6,7 +6,7 @@
 
 В 0.5.0 GUI использует `sv-client-lib`. Настройка `connections`, Unix-only/TCP-only/combined, команды запуска с Blender и внешний CMake consumer: [[engineering/CLIENT_LIBRARY]]. Без блока connections прежние Unix-команды ниже сохраняются. `state` запрашивает состояние; replay следует интервалам manifest, на wrap используется первый интервал (для одного ряда — 33.333333 ms).
 
-Laptop GUI принимает `--unix DIR` или `--tcp HOST CONTROL_PORT DATA_PORT`; без аргументов он ищет локальные Unix IPC endpoints в ограниченном списке стандартных мест. Панель соединения позволяет редактировать endpoint, timeout/reconnect/retries, а Qt сохраняет последние значения. GUI показывает доступную frame/source telemetry, но сервер пока не предоставляет общего API чтения и изменения конфигурации. Подробности discovery и его ограничения: [README sv-simulator](../../examples/sv-simulator/README.md).
+Laptop GUI принимает `--unix DIR` или `--tcp HOST CONTROL_PORT DATA_PORT`; без аргументов он ищет локальные Unix IPC endpoints в ограниченном списке стандартных мест. Панель соединения позволяет редактировать endpoint, timeout/reconnect/retries, а Qt сохраняет последние значения. GUI показывает frame/source metrics и формы ConfigService fusion/surface. Сервер поддерживает hot telemetry settings и typed polling; отдельные GUI графики/формы telemetry ещё не реализованы: [[engineering/TELEMETRY]]. Подробности discovery и его ограничения: [README sv-simulator](../../examples/sv-simulator/README.md).
 
 ## Быстрый запуск с фотографической улицей
 
@@ -389,7 +389,7 @@ build/svctl --unix /tmp/sv-blender resume
 build/svctl --tcp 127.0.0.1 53101 53102 orbit 0.1 0
 ```
 
-Вывод — JSON ACK; exit 0 accepted, 2 arguments, 3 connection/timeout, 4 rejected. По умолчанию общий deadline 5000 ms; `--timeout-ms` задаётся перед командой. GUI следует закрыть перед запуском CLI: сервер пока односессионный. CLI открывает legacy data channel и освобождает кадры; calibration job commands доступны через generic command path. Typed runtime config/subscription APIs и полный покадровый trace остаются в плане. Библиотека не повторяет CLI мутацию после потери соединения. `sv-simulator` поддерживает Qt 6 GUI и визуальную driving scene, но live camera production и редактор наблюдений ещё не реализованы.
+Вывод — JSON ACK; exit 0 accepted, 2 arguments, 3 connection/timeout, 4 rejected. По умолчанию общий deadline 5000 ms; `--timeout-ms` задаётся перед командой. GUI следует закрыть перед запуском CLI: сервер пока односессионный. CLI открывает legacy data channel и освобождает кадры; calibration job commands доступны через generic command path. Typed ConfigService fusion/surface/telemetry и telemetry polling реализованы; subscriptions и полный покадровый trace остаются в плане. Библиотека не повторяет CLI мутацию после потери соединения. `sv-simulator` поддерживает Qt 6 GUI и визуальную driving scene, но live camera production и редактор наблюдений ещё не реализованы.
 
 ## Мир с погрешностями крепления и сравнение калибровки
 
@@ -1261,3 +1261,9 @@ fusion fields получают defaults. Surface требует все geometry 
 В sv-simulator нажмите «Конфигурация» в верхней панели. Вкладки «Сшивка», «Носитель», «Операция» используют кнопки, selectors и числовые поля. Проверка и explicit runtime/persistent apply выполняются сервером через библиотеку; для save требуется checkbox полного active snapshot. После потери ACK сначала status/reconciliation, без автоматического replay. Подробные шаги, рисунок, optional-field ограничения и проверки: [[engineering/CONFIG_SERVICE#GUI sv-simulator: формы и восстановление результата]]. Сборка laptop GUI: SV_CLIENT=ON/SV_SIMULATOR=ON; touch-only: SV_SIMULATOR=OFF.
 
 В «Носитель → Опора/Видимость» можно включить и отключить reference height, local support patch, AABB и uncertainty без JSON. Выключение удаляет optional поле; смена visibility mode очищает несовместимые guard/facing/support параметры. Bounds/units читаются из catalog, сервер проверяет cross-field constraints и optics. Пошаговый контракт, рисунок и проверки: [[engineering/CONFIG_SERVICE#Расширения геометрии: Опора и Видимость]]. После обновления бинарника перезапустите GUI; старый процесс продолжает использовать прежние QML ресурсы.
+
+## Devel telemetry: выключенный по умолчанию сбор
+
+Группа telemetry, CLI hot enable/read/disable, typed C++ API, cursor reset/loss и единицы:
+[[engineering/TELEMETRY#Использование]]. Read не включает сбор; при disabled history пуста.
+Клиенту всё ещё нужны control/data; GUI и svctl не могут одновременно владеть сервером.

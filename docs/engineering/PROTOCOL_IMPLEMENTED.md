@@ -1,10 +1,10 @@
 # Реализованный протокол SV01
 
-Срез реализации Linux 0.6.x. Это описание текущего wire-контракта, сверенное с `include/sv/protocol.hpp`, `src/core/protocol.cpp`, `src/apps/server.cpp` и `src/client_library/client.cpp`. Runtime fusion API `fusion_runtime_v1` описан ниже; ConfigService read/catalog/validate и atomic apply с explicit persistence для fusion/surface реализованы ([[engineering/CONFIG_SERVICE]]); process-scoped apply-once/status реализованы ([[engineering/CONFIG_OPERATIONS]]), durable recovery и другие группы отсутствуют. Целевая расширенная архитектура и подписки описаны отдельно в [[architecture/CLIENT_SERVER_MODEL]] и пока не являются возможностями сервера.
+Срез реализации Linux 0.6.x. Это описание текущего wire-контракта, сверенное с `include/sv/protocol.hpp`, `src/core/protocol.cpp`, `src/apps/server.cpp` и `src/client_library/client.cpp`. Runtime fusion API `fusion_runtime_v1` описан ниже; ConfigService read/catalog/validate и atomic apply с explicit persistence для fusion/surface/telemetry реализованы ([[engineering/CONFIG_SERVICE]]); process-scoped apply-once/status реализованы ([[engineering/CONFIG_OPERATIONS]]), durable recovery и другие группы отсутствуют. Целевая расширенная архитектура и подписки описаны отдельно в [[architecture/CLIENT_SERVER_MODEL]] и пока не являются возможностями сервера.
 
 ## Транспорт и кадрирование
 
-Полный каталог 23 команд и 14 сценариев подключения, применения, обработки кадров и отказов с PlantUML: [[engineering/PROTOCOL_SCENARIOS]]. Сценарии описывают текущий код; проектируемые API остаются отдельно.
+Полный каталог 28 команд и 17 сценариев подключения, применения, обработки кадров и отказов с PlantUML: [[engineering/PROTOCOL_SCENARIOS]]. Сценарии описывают текущий код; проектируемые API остаются отдельно.
 
 Один логический клиент использует две независимые stream-связи: control и data. Поддерживаются Unix domain sockets либо TCP; транспорт выбирается только конфигурацией endpoint/listeners. Клиентская библиотека сама не переключается на другой транспорт. UDP, TLS, несколько одновременных клиентов и control-only пока отсутствуют. Серверная сторона ограничена одной сессией: второй клиент не образует независимое пространство состояния.
 
@@ -312,3 +312,11 @@ Capabilities config_catalog_v1/config_validate_v1, команды config_catalog
 ## ConfigService process-scoped operation journal
 
 Capability config_operations_v1 добавляет config_apply_once и config_operation_status, а config_read — server_instance_id. Wire fields, bounded retention, rejected/status ACK semantics и reconnect/restart сценарии: [[engineering/CONFIG_OPERATIONS]]. Прежние config_apply/configure_* не получили автоматическую идемпотентность.
+
+## Отключаемая devel telemetry_v1
+
+`telemetry_catalog` и `telemetry_read` реализованы как read-only type20/type21 с typed API библиотеки.
+Instance/epoch/cursor guards, bounds, schema, units и PlantUML последовательности:
+[[engineering/TELEMETRY]]. Группа telemetry применяется через ConfigService; сбор default off.
+Это bounded polling process CPU/RSS и последних существующих frame spans, без subscriptions
+и полного subsystem profiler. Control-only/multi-client пока отсутствуют.

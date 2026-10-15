@@ -40,7 +40,7 @@ The connection panel allows editing the Unix directory or TCP host/ports. Timeou
 - Calibration status, cancellation, and application for a job ID. The GUI does not fabricate observations, so starting a calibration job is disabled until it has a real observation workflow. Running native OpenCV solver cancellation is cooperative and takes effect after the solver returns.
 - Optional Qt Quick 3D street preview: drive with `W/S` or arrow keys and steer with `A/D` or arrow keys. The scene has an elevated chase view, a road, generated building blocks and four camera markers on the car. Press `Esc` to leave driving mode. The preview is not a camera stream producer.
 
-The protocol exposes a scoped ConfigStore read and fusion/surface updates; remaining group updates, source switching, parallel output subscriptions and multi-client session management are not implemented. Those controls should be added when the server implements their typed APIs, rather than writing the server's config file directly from this GUI. The implemented framing, command fields, ownership, calibration lifecycle and known gaps are documented in [[engineering/PROTOCOL_IMPLEMENTED]].
+The protocol exposes a scoped ConfigStore read and fusion/surface/telemetry updates; remaining group updates, source switching, parallel output subscriptions and multi-client session management are not implemented. Those controls should be added when the server implements their typed APIs, rather than writing the server's config file directly from this GUI. The implemented framing, command fields, ownership, calibration lifecycle and known gaps are documented in [[engineering/PROTOCOL_IMPLEMENTED]].
 
 ## Verification limits
 
@@ -102,3 +102,7 @@ Qt Quick3D≥6.3 is required for preview. --world-smoke now fails if the lazy Lo
 accepting only a successful main-window load. Native QML regression captures framework warnings,
 loads DriveWorld and checks input/motion/units; a host Mesa OpenGL smoke also passed. Existing GUI
 processes must be restarted to load rebuilt resources.
+
+Server capability `telemetry_v1` adds opt-in process CPU/RSS and existing frame-span polling through
+sv-client-lib. This simulator still displays its earlier frame diagnostics; dedicated polling graphs
+and telemetry settings forms are pending. Contract: `docs/engineering/TELEMETRY.md`.

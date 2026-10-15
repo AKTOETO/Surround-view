@@ -27,3 +27,5 @@
 - [Подробный план реализации](docs/planning/ROADMAP.md).
 
 Папку `docs` можно открыть как отдельное хранилище Obsidian. Документация хранится в Markdown, диаграммы — в блоках `plantuml` внутри заметок.
+
+Отключаемая server telemetry и typed API: [контракт и запуск](docs/engineering/TELEMETRY.md).

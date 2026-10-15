@@ -1,5 +1,7 @@
 # Подробный план реализации
 
+15.10.2026: первый default-off telemetry_v1 срез реализован на C++: process CPU/приближённый RSS, source counters, existing frame spans с fresh flag, bounded ring и typed polling sv-client-lib с instance/epoch/cursor/loss. Hot ConfigService telemetry group подготовлена до persistence; disable/reset/restart/apply-once и rollback проверены. Полная сборка; selected CTest6/6, затем5/5 с расширенными cases;7 GTest/5 live telemetry cases, Unix/TCP. GUI графиков/настроек, полный subsystem profiler, control-only и overhead experiment остаются открытыми. [[engineering/TELEMETRY]].
+
 14.10.2026: формы reference height/local support/source occlusion/uncertainty реализованы в sv-simulator с server catalog, omission при выключении и cleanup зависимых полей при смене visibility mode. Исправлены QML signal parameters и DriveWorld FINAL left/right, масштаб/углы/Esc. Полная сборка; selected CTest5/5 за29.86s, world-smoke exit0 без сообщений. [[engineering/CONFIG_SERVICE]].
 
 14.10.2026: sv-simulator получил формы ConfigService (fusion/required geometry), validate, explicit runtime/save и process-scoped operation reconciliation. Без ввода JSON; changed groups, immutable retry intent, restart guard и requested/active/persisted comparison. Полная сборка; selected CTest5/5 за29.91s,15 live output cases, native Unix/TCP adapter и offscreen QML checks. SV_SIMULATOR отделён от touchscreen/Aurora. [[engineering/CONFIG_SERVICE]].
@@ -237,4 +239,4 @@ fake-adapter integration, затем реальные камеры/драйве�
 
 ## Devel telemetry через клиентскую библиотеку
 
-Добавить server-owned отключаемый сбор (по умолчанию off), bounded sampling/subscriptions, typed sv-client-lib API и графики subsystem load/queues/latency в sv-simulator. Разделять CPU wall/GPU execution, привязывать samples к instance/config/frame/experiment; сравнить overhead disabled/minimal/detailed на одном replay. Telemetry-only connection не должна требовать final-frame delivery. Подробная приёмка: [[../TODO#Отключаемая серверная телеметрия для devel-тестирования]]. Сам sampler/exporter этого расширения ещё не реализован.
+Первый server-owned default-off collector и typed bounded polling API реализованы: [[engineering/TELEMETRY]]. Далее — GUI settings/graphs, subsystem profiling и bounded subscriptions. Разделять CPU wall/GPU execution, привязывать samples к instance/config/frame/experiment; сравнить overhead disabled/minimal/detailed на одном replay. Telemetry-only connection не должна требовать final-frame delivery. Подробная приёмка: [[../TODO#Отключаемая серверная телеметрия для devel-тестирования]]. Сам sampler/exporter этого расширения ещё не реализован.

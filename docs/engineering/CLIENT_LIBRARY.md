@@ -173,3 +173,15 @@ parse_configuration_catalog()/parse_configuration_validation(). Для rejected 
 ## Результат операции после потери ACK
 
 Для новых apply использовать explicit apply_configuration_once(instance, operation_id, base, changes, persist) и configuration_operation_status(instance, operation_id), затем parse_configuration_operation(). ID/intent хранит приложение; библиотека не повторяет mutation автоматически. Журнал сохраняется при reconnect, ограничен128 операциями и теряется при restart; старый instance нельзя автоматически заменять новым. Команды CLI, sequence diagram и ограничения: [[engineering/CONFIG_OPERATIONS]].
+
+## Devel telemetry_v1 (15.10.2026)
+
+`Client::telemetry_catalog()` и `Client::read_telemetry(instance, epoch, after_cursor, limit=16)`
+возвращают command IDs; accepted ACK в callback разбирается owning typed parsers
+`parse_telemetry_catalog` / `parse_telemetry_batch` из installed `client_telemetry.hpp`.
+Это process-scoped bounded polling default-off collector, без Qt/OpenCV dependencies и без
+автоматического enable/retry. Instance/epoch сверяются вызывающим приложением с ожидаемым запросом;
+parser проверяет envelope, window/cursors, units, finite metrics и исторические revisions.
+После reconnect перечитать catalog; новые instance/epoch начинают отдельную серию.
+Настройки применяет только сервер через ConfigService; control/data пока обязательны.
+Wire fields, fresh/loss semantics, CLI и ограничения: [[engineering/TELEMETRY]].

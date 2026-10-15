@@ -1,6 +1,6 @@
 # Сценарии взаимодействия sv-server и sv-client-lib
 
-Сверено с кодом 14.10.2026. Это каталог **реализованных** взаимодействий SV01, а не обещание полного ConfigService. Формат сообщений, параметры и ограничения: [[engineering/PROTOCOL_IMPLEMENTED]]. Целевые расширения: [[architecture/CLIENT_SERVER_MODEL]], [[requirements/PROTOCOL]]. Любое клиентское приложение выполняет описанные операции через `sv-client-lib`; конфигурационный файл изменяет только сервер.
+Сверено с кодом 15.10.2026. Это каталог **реализованных** взаимодействий SV01, а не обещание полного ConfigService. Формат сообщений, параметры и ограничения: [[engineering/PROTOCOL_IMPLEMENTED]]. Целевые расширения: [[architecture/CLIENT_SERVER_MODEL]], [[requirements/PROTOCOL]]. Любое клиентское приложение выполняет описанные операции через `sv-client-lib`; конфигурационный файл изменяет только сервер.
 
 ## Границы и обозначения
 
@@ -10,17 +10,19 @@
 
 ## Полный каталог текущих операций
 
-Каталог содержит 26 серверных команд; запросы передаются как type20, результат — type21. Typed API перечислен там, где он есть; остальные доступны через `command(type, parameters)`. Наличие generic API не означает поддержку неизвестной команды сервером.
+Каталог содержит 28 серверных команд; запросы передаются как type20, результат — type21. Typed API перечислен там, где он есть; остальные доступны через `command(type, parameters)`. Наличие generic API не означает поддержку неизвестной команды сервером.
 
 | Команда | Запрос помимо command_id/type | Успешный результат / сценарий |
 |---|---|---|
 | `state` | Нет | Snapshot, revisions, lease; С02 |
 | `config_read` | Нет; capability config_read_v1 | Coherent ConfigStore active/persisted/revision, read-only; С13 |
-| `config_catalog` | Нет; capability config_catalog_v1 | Fusion/surface bounds и replacement/validation policy; С14 |
+| `config_catalog` | Нет; capability config_catalog_v1 | Fusion/surface/telemetry bounds и replacement/validation policy; С14 |
 | `config_validate` | base_config_revision, changes object; capability config_validate_v1 | Read-only candidate check, без renderer preparation/persistence; С14 |
-| `config_apply` | base_config_revision, changes, required persist boolean; capability config_apply_v1 | Atomic runtime/persist apply fusion/surface; С15 |
+| `config_apply` | base_config_revision, changes, required persist boolean; capability config_apply_v1 | Atomic runtime/persist apply fusion/surface/telemetry; С15 |
 | `config_apply_once` | server_instance_id, operation_id, base_config_revision, changes, persist; capability config_operations_v1 | Process-scoped dedup apply; С16 |
 | `config_operation_status` | server_instance_id, operation_id; capability config_operations_v1 | Retained committed/rejected/pending/not_found; С16 |
+| `telemetry_catalog` | Нет; capability telemetry_v1 | Instance/epoch/settings/units; С17 |
+| `telemetry_read` | server_instance_id, epoch, after_cursor, limit integer1..16 | Bounded samples/cursors/loss; С17 |
 | `fusion_catalog` | Нет | Каталог fusion версии 5, capabilities параметров; С02 |
 | `output_catalog` | Нет | Каталог продуктов/формат маски; С12 |
 | `configure_output` | `product=final_frame/render_support_v1/source_visibility_v1/source_disagreement_v1` | Выбор одного data product до следующего render; С12 |
@@ -369,3 +371,11 @@ end note
 ## С16. Восстановление результата после потери ACK
 
 Приложение сохраняет server_instance_id, уникальный operation ID и неизменный intent до apply_configuration_once(). При потере ACK переподключается, проверяет instance, получает configuration_operation_status(). Explicit retry того же запроса возвращает retained результат без новых revisions/dirty. Конфликт intent отклоняется; отказ тоже сохраняется. После restart старый instance отклоняется: автоматического replay нет. Bounded journal без eviction, lease semantics, historical revision, API, sequence diagram и проверки: [[engineering/CONFIG_OPERATIONS]].
+
+## С17 — Чтение отключаемой devel telemetry
+
+Catalog → typed read с instance/epoch/cursor → проверка schema/sequence/revision → отметка потерь →
+следующий cursor. При epoch/instance смене начать новую серию. Read не включает sampler, не
+меняет revisions/dirty и разрешён под lease; hot изменение группы telemetry выполняется по С15/С16.
+Последовательности, sample fields и null/fresh semantics: [[engineering/TELEMETRY]].
+Sampling не зависит от нового frame/release, но control/data по-прежнему обязательны.

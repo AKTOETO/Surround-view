@@ -26,7 +26,7 @@
 
 ## Приоритет 1 — доказать качество решения для диплома
 
-Ближайшая работа: отключаемая devel telemetry через sv-client-lib и остальные ConfigService root groups; формы support/occlusion завершены. Read, discovery, validation и atomic runtime/persistent apply fusion/surface уже реализованы ([[engineering/CONFIG_SERVICE]]); остальные root groups пока не поддержаны. Ограниченный target-overlap control завершён ([[validation/TARGET_OVERLAP]]); новые исследовательские ветви до перехода к коду не открывать. Filter/resolution, exposure/noise, temporal и final seam/ghost evaluation остаются открытыми для будущего общего ExperimentRunner. Полное завершение E-STITCH-01 не заявляется.
+Ближайшая работа: формы/графики devel telemetry в sv-simulator, детализация метрик и остальные ConfigService root groups; формы support/occlusion завершены. Read, discovery, validation и atomic runtime/persistent apply fusion/surface/telemetry уже реализованы ([[engineering/CONFIG_SERVICE]]); остальные root groups пока не поддержаны. Ограниченный target-overlap control завершён ([[validation/TARGET_OVERLAP]]); новые исследовательские ветви до перехода к коду не открывать. Filter/resolution, exposure/noise, temporal и final seam/ghost evaluation остаются открытыми для будущего общего ExperimentRunner. Полное завершение E-STITCH-01 не заявляется.
 
 Исследовательские инструменты и первые синтетические прогоны добавлены, но аудит коммитов `ee1bcc5e..HEAD` выявил, что часть опубликованных метрик не подтверждает заявленные выводы. Приоритет 1 **не закрыт**. Exit criteria для полноценного заключения: [[planning/ROADMAP#Критерии готовности исследовательского заключения]]. Проверенные ограничения и расхождения: [[planning/AUDIT]].
 
@@ -89,11 +89,17 @@
 
 ## Отключаемая серверная телеметрия для devel-тестирования
 
-- Добавить отдельную server config group telemetry с enabled=false по умолчанию, уровнями детализации, периодом/частотой sampling, перечнем подсистем и bounded history/buffer budget. При disabled не запускать sampler/exporter и дополнительные GPU queries/таймеры; отдельно определить минимальные метрики, уже необходимые рабочему pipeline. Клиент не должен обходить server-side запрет сбора.
-- Собирать длительность и очередь каждого этапа: capture/decode, синхронизация и возраст/skew кадров, calibration jobs, projection/fusion/seam/multiband, upload/render/readback, encode/send/backpressure. Добавить process CPU/RSS/threads, доступную GPU utilisation/memory и drop/reconnect counters; явно отмечать недоступные платформенные показатели и асинхронность GPU timestamps, не выдавать CPU wall time за GPU execution time.
-- Доставлять timestamped samples через typed sv-client-lib API с server instance/config revision/frame/experiment identity, units, clock domain, capability discovery, bounded subscriptions, sampling/downsampling, dropped-sample counters и независимым от кадров backpressure. Не требовать передачи final_frame для получения telemetry; control-only и channel lifecycle нужно спроектировать явно.
+Первый C++ срез выполнен: default-off group telemetry (period/history), prepared hot apply,
+process CPU/RSS, source counters, существующие frame spans, instance/epoch/cursor guards,
+bounded16-record polling и loss counters через typed sv-client-lib. Disabled не вызывает process
+provider; disabled/reset/paused/busy/lease/persistence rollback и Unix/TCP проверены.
+Контракт и ограничения: [[engineering/TELEMETRY]].
+
+- Расширить settings уровнями детализации, перечнем подсистем/metric IDs и buffer budget в bytes.
+- Добавить отдельные длительности/очереди capture/decode, sync/skew, calibration, projection/seam/multiband, encode/send; process threads, GPU utilisation/memory и drop/reconnect counters. Сейчас доступные stage wall spans перекрываются, current RSS приближённый; frame.fresh=false не считать новым render. Проверить платформенную доступность, GPU timestamp semantics.
+- Дополнить bounded polling subscriptions/downsampling, experiment identity и независимым control-only/channel lifecycle. Sampling сейчас идёт в render loop: долгие вызовы задерживают samples. Не требовать передачи final_frame; обязательный data attachment пока сохраняется.
 - В sv-simulator добавить вкладки графиков нагрузки/очередей/latency по подсистемам, p50/p95/p99 по окнам, связь всплесков с изменением алгоритмов/config revision и experiment markers, export/replay отчётов. Переключение алгоритма выполнять через существующий server API; автоматический выбор алгоритма — отдельная будущая политика.
-- Измерить overhead disabled/minimal/detailed на одинаковом replay: CPU, RSS, throughput, frame latency и потери. Проверить config validate/apply, отсутствие sampler при disabled, bounded memory, slow/disconnected consumers и неизвестные metric IDs. Телеметрия нужна для поиска узких мест и обоснования выбора алгоритмов/архитектуры, но её собственные расходы должны входить в отчёт.
+- Измерить overhead disabled/minimal/detailed на одинаковом replay: CPU, RSS, throughput, frame latency и потери. Первичные validate/apply, disabled/provider и bounded ring checks выполнены; добавить byte-budget/RSS проверки, slow/disconnected delivery и неизвестные metric IDs. Телеметрия нужна для поиска узких мест и обоснования выбора алгоритмов/архитектуры, но её собственные расходы должны входить в отчёт.
 
 ## Численная стабильность JSON-конфигурации
 
