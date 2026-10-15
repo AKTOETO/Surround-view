@@ -15,6 +15,11 @@ class CameraCapture
     virtual bool open(const std::string &, int width, int height) = 0;
     virtual bool read(cv::Mat &) = 0;
     virtual void close() = 0;
+
+    virtual std::string open_failure() const
+    {
+        return {};
+    }
 };
 
 using CameraCaptureFactory = std::function<std::unique_ptr<CameraCapture>(int camera_id)>;

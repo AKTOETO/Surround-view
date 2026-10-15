@@ -1,4 +1,4 @@
-#include "camera_capture.hpp"
+#include "opencv_capture.hpp"
 #include "sv/vision.hpp"
 #include <algorithm>
 #include <atomic>
@@ -8,7 +8,6 @@
 #include <filesystem>
 #include <mutex>
 #include <opencv2/imgproc.hpp>
-#include <opencv2/videoio.hpp>
 #include <string_view>
 #include <thread>
 
@@ -16,39 +15,6 @@ namespace sv
 {
 namespace
 {
-class OpenCvCapture final : public CameraCapture
-{
-    cv::VideoCapture capture_;
-
-  public:
-
-    bool is_open() const override
-    {
-        return capture_.isOpened();
-    }
-
-    bool open(const std::string &path, int width, int height) override
-    {
-        if (!capture_.open(path, cv::CAP_V4L2))
-        {
-            return false;
-        }
-        capture_.set(cv::CAP_PROP_FRAME_WIDTH, width);
-        capture_.set(cv::CAP_PROP_FRAME_HEIGHT, height);
-        return true;
-    }
-
-    bool read(cv::Mat &image) override
-    {
-        return capture_.read(image);
-    }
-
-    void close() override
-    {
-        capture_.release();
-    }
-};
-
 class CameraFrameSource : public FrameSource
 {
   public:
@@ -61,7 +27,8 @@ class CameraFrameSource : public FrameSource
         timing_.set(std::move(timing));
         for (int i = 0; i < 4; ++i)
         {
-            captures_[i] = factory ? factory(i) : std::make_unique<OpenCvCapture>();
+            captures_[i] =
+                factory ? factory(i) : make_opencv_capture(config.source.camera_capture[i]);
             if (!captures_[i])
             {
                 throw std::invalid_argument("null camera capture");
@@ -197,7 +164,13 @@ class CameraFrameSource : public FrameSource
                     update_camera(camera_id, [](auto &state) { ++state.open_attempts; });
                     if (!cap.open(dev_path, cam_cfg.width, cam_cfg.height))
                     {
-                        emit_status(camera_id, last_status, "camera_unavailable:" + dev_path);
+                        const auto failure = cap.open_failure();
+                        emit_status(camera_id, last_status,
+                                    failure.empty() ? "camera_unavailable:" + dev_path : failure);
+                        if (!close_capture(cap, camera_id, last_status))
+                        {
+                            return;
+                        }
                         wait_retry(std::chrono::milliseconds(250));
                         continue;
                     }
