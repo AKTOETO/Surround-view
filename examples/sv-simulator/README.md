@@ -105,8 +105,10 @@ processes must be restarted to load rebuilt resources.
 
 Server capability `telemetry_v1` adds opt-in process CPU/RSS and existing frame-span polling through
 sv-client-lib. Configure collection in the Telemetry configuration tab, then enable the separate 500ms reader
-in the telemetry panel. CPU/RSS/render tabs keep at most120 samples and show loss/gaps,
+in the telemetry panel. CPU/RSS/render, Pipeline and I/O tabs keep at most120 samples and show loss/gaps,
 fresh-only render quantiles and the latest config revision. Stopping the reader does not disable
 server collection; epoch/disconnect resets the local window. Use Save window to export up to120 raw samples, then disconnect and Open offline report
 to view the same charts. This is a static bounded snapshot; streaming/timed replay and other
-subsystem graphs remain pending. See `docs/engineering/TELEMETRY_ARCHIVE.md`. Contract: `docs/engineering/TELEMETRY.md`.
+new subsystem instrumentation remains pending. Existing span selectors include fresh-only quantiles;
+I/O shows backend-specific queues/counters, delivery flags and the age of the last render record.
+These are not dedicated capture/decode/send timers. Small Y values autoscale and metric switches repaint. See `docs/engineering/TELEMETRY_ARCHIVE.md`. Contract: `docs/engineering/TELEMETRY.md`.

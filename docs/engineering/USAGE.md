@@ -1275,3 +1275,8 @@ fusion fields получают defaults. Surface требует все geometry 
 Сохранение и offline-просмотр: **Сохранить окно в отчёт** → выбрать JSON; для **Открыть отчёт offline**
 остановить reader и отключиться от сервера. Файл содержит до120 raw samples, не весь experiment
 trace. Подробности и ограничения: [[engineering/TELEMETRY_ARCHIVE]].
+
+В telemetry **Этапы** выбрать существующий span/input age; **I/O** — source queue, delivery flags,
+record age или collection wall. Пояснения под selector различают CPU wall/GPU query/возраст,
+а stage quantiles считают только fresh records. Backend counters и ограничения:
+[[engineering/TELEMETRY#Pipeline и source/delivery графики]]. Работает и для сохранённого window.

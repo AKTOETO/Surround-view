@@ -96,14 +96,16 @@ provider; disabled/reset/paused/busy/lease/persistence rollback и Unix/TCP пр
 Контракт и ограничения: [[engineering/TELEMETRY]].
 
 - Расширить settings уровнями детализации, перечнем подсистем/metric IDs и buffer budget в bytes.
-- Добавить отдельные длительности/очереди capture/decode, sync/skew, calibration, projection/seam/multiband, encode/send; process threads, GPU utilisation/memory и drop/reconnect counters. Сейчас доступные stage wall spans перекрываются, current RSS приближённый; frame.fresh=false не считать новым render. Проверить платформенную доступность, GPU timestamp semantics.
+- Добавить отдельные длительности/очереди capture/decode, sync/skew, calibration, projection/seam/multiband, encode/send; process threads, GPU utilisation/memory, per-camera/per-worker drop и reconnect counters. Сейчас доступные stage wall spans перекрываются, current RSS приближённый; frame.fresh=false не считать новым render. Проверить платформенную доступность, GPU timestamp semantics.
 - Дополнить bounded polling subscriptions/downsampling, experiment identity и независимым control-only/channel lifecycle. Sampling сейчас идёт в render loop: долгие вызовы задерживают samples. Не требовать передачи final_frame; обязательный data attachment пока сохраняется.
 
-Формы telemetry settings, bounded polling и CPU/RSS/render tabs в sv-simulator выполнены. Окно120 samples, loss/gaps, fresh-only render quantiles p50/p95/p99 и последняя revision отображаются; series reset/reconnect учтены: [[engineering/TELEMETRY]].
+Формы telemetry settings, bounded polling, CPU/RSS/render, existing pipeline spans и source/delivery tabs в sv-simulator выполнены. Окно120 samples, loss/gaps, fresh-only render quantiles p50/p95/p99 и последняя revision отображаются; series reset/reconnect учтены: [[engineering/TELEMETRY]].
 
-- Расширить графики на очереди/остальные подсистемы, quantiles по ним, timeline config/experiment markers, streaming trace/timed replay и paired comparison. Bounded window export/static offline view уже выполнены: [[engineering/TELEMETRY_ARCHIVE]]. Переключение алгоритма выполнять через существующий server API; автоматический выбор алгоритма — отдельная будущая политика.
+- Добавить графики новых инструментированных подсистем/очередей после реализации их timers, timeline config/experiment markers, streaming trace/timed replay и paired comparison. Source queue/flags, existing stages/fresh-only quantiles и record age уже визуализированы: [[engineering/TELEMETRY]]. Bounded window export/static offline view уже выполнены: [[engineering/TELEMETRY_ARCHIVE]]. Переключение алгоритма выполнять через существующий server API; автоматический выбор алгоритма — отдельная будущая политика.
 - Измерить overhead disabled/minimal/detailed на одинаковом replay: CPU, RSS, throughput, frame latency и потери. Первичные validate/apply, disabled/provider и bounded ring checks выполнены; добавить byte-budget/RSS проверки, slow/disconnected delivery и неизвестные metric IDs. Телеметрия нужна для поиска узких мест и обоснования выбора алгоритмов/архитектуры, но её собственные расходы должны входить в отчёт.
 
 ## Численная стабильность JSON-конфигурации
+
+Локальный telemetry archive reader использует precise parsing на Boost≥1.83; repeated fractional save/load regression выполнен ([[engineering/TELEMETRY_ARCHIVE#Точность дробных метрик]]). Остальные пути и Boost<1.83 не закрыты.
 
 Проверить политику double parsing/serialization на поддерживаемых Boost версиях и Qt↔wire↔ConfigStore: на host default Boost.JSON number mode меняет последние разряды отдельных исходных camera matrix значений уже при загрузке. Нужны контролируемые round-trip/repeated-save tests и явно выбранная точность с учётом Aurora Boost1.86 и minimum1.75; не менять исторические исследовательские inputs/reports молча. Текущий GUI persistence regression сравнивает unrelated groups с authoritative config_read.active, не с исходным текстом файла.

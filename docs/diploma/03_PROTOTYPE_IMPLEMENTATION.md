@@ -1118,3 +1118,70 @@ GTest и real Unix/TCP проверки связывают цепочку live s
 invalid-file rollback и failed save. Следующий этап — host/config/build provenance, streaming trace,
 scenario markers и paired platform reports; текущий snapshot не заменяет эти требования и не
 является новым сравнительным исследованием производительности.
+
+## 3.31. Разделение этапных измерений, очередей и давности результата
+
+Для диагностики существующие telemetry fields подключены к отдельным metric selectors в GUI.
+Fresh-only stage records формируют distributions CPU wall и nullable GPU query; source/delivery
+gauges обновляются независимо от нового render. Это расширение наблюдаемости существующих данных,
+а не добавление ещё одного алгоритма сшивки или нового фонового profiler.
+
+![Stage telemetry selector](../engineering/figures/telemetry-stages.png)
+
+Рисунок 3.40 — Выбор метрики с пояснением и quantiles. Малые duration values заданы QML fixture;
+кривая показывает корректность масштаба и переключения, не hardware performance.
+
+| Диагностический вопрос | Доступное наблюдение | Ограничение вывода |
+|---|---|---|
+| Как меняется fusion wall? | Fresh fusion_cpu и sampled p50/p95/p99 | Нет отдельных seam/pyramid timers, интервалы вложенные |
+| Растёт ли backlog источника? | Source queue gauge и точные counters | Backend units различаются; main-loop sampler не видит все peaks |
+| Почему нет новых render metrics? | paused/data_busy/data_ready и возраст последнего record | Нельзя считать record age временем исполнения render |
+| Есть ли пригодный GPU timer? | Fresh nullable gpu_draw | Нет GPU utilisation/memory/полного hybrid execution measurement |
+| Сохранились ли маленькие duration? | Adaptive Y scale и archive precise parser≥1.83 | Legacy/wire/config numeric policies требуют отдельной проверки |
+
+```plantuml
+@startuml
+component "sv-server main loop
+source poll / prepare / render / enqueue wall" as M
+component "Renderer
+CPU wall spans + nullable GPU query" as R
+component "FrameSource
+backend counters / queue gauge" as S
+component "TelemetryCollector
+periodic samples; frame fresh flag" as T
+component "sv-client-lib
+typed samples / archive" as L
+component "C++ point builder" as B
+component "Этапы
+fresh-only values + quantiles" as P
+component "I/O
+queue / flags / record age" as I
+M --> T
+R --> T
+S --> T
+T --> L
+L --> B
+B --> P
+B --> I
+note right of P
+CPU wall intervals могут
+перекрываться; не суммировать.
+end note
+@enduml
+```
+
+Рисунок 3.41 — Один набор typed records формирует два различных представления наблюдаемости.
+
+Render record age вычисляется как sample timestamp минус timestamp последнего завершённого
+render. Он остаётся определённым для repeated frame и растёт при paused/backpressured выводе.
+Input age at render, напротив, относится к выбранным входам прежнего render и не является текущей
+сетевой или вычислительной latency. Backend-specific meanings и формулы сверены с реализацией:
+[[engineering/TELEMETRY#Pipeline и source/delivery графики]]. Доступные нулевые counters не доказывают
+отсутствия операций: socket decoded и camera rejected отдельно не инструментированы.
+
+QML regression переключает5 tabs,10 stage choices и6 I/O choices, проверяет repaint и ненулевой
+масштаб малых duration. Native tests проверяют fresh-only selection, nullable GPU, repeated-frame
+record age, точный uint64 text и подавление queue conversion>2^53. Archive equality и real Unix/TCP
+adapter tests проверяют тот же point builder после offline import. Найденный drift дробных archive
+values исправлен только в local archive parser для Boost≥1.83 и проверен repeated save/load;
+общая конфигурационная/wire precision и performance overhead остаются отдельными задачами.

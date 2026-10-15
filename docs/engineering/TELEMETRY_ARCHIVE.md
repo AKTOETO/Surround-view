@@ -13,7 +13,7 @@ Server wire не меняется: это локальный клиентски�
    File chooser запрашивает подтверждение перезаписи существующего файла.
 3. Остановить reader и нажать **Отключить** в панели соединения. Затем выбрать
    **Открыть отчёт offline**. Нужен local file URL; сеть и сервер не используются для импорта.
-4. В режиме OFFLINE доступны CPU/Память/Render и прежние квантили. Это статическое окно,
+4. В режиме OFFLINE доступны CPU/Память/Render/Этапы/I/O и те же квантили. Это статическое окно,
    а не покадровое проигрывание во времени. Подключение к серверу очищает offline series;
    для live monitoring подключиться заново. Неверный файл оставляет прежние графики.
 
@@ -125,3 +125,17 @@ host/build/config provenance, experiment markers и сценарная запи�
 polling и экспортного I/O надо измерять отдельно на одинаковом replay, затем на целевом устройстве.
 
 Linux сборка успешна; selected CTest6/6 за25.06s:12 telemetry/archive GTests,17 runtime unit cases,8 session cases,3 QML cases, real Unix/TCP adapters и installed consumer. Полный63-test suite, Qt5 chooser и Aurora в этом шаге не проверялись.
+
+## Точность дробных метрик
+
+QML stage regression обнаружил drift последних разрядов при default Boost.JSON parsing дробных
+duration. Для локального archive reader на Boost≥1.83 включён number_precision::precise.
+Наличие этого режима с1.83 подтверждается [Boost.JSON release notes](https://www.boost.org/doc/libs/1_83_0/libs/json/doc/html/json/release_notes.html).
+Регрессия проверяет пять repeated save/load passes для малых fusion durations, nextafter CPU%
+и collection wall; host round-trip сохраняет исходные double. uint64 strings не затронуты.
+
+На Boost<1.83 сохранён прежний parser для source compatibility; точный floating round-trip там
+не гарантирован и precise-specific test пропускается. Legacy numeric stability остаётся задачей.
+Изменён только локальный archive parsing; live SV01 decoder, config parser, Qt↔config conversions
+и исторические research inputs/reports этим шагом не менялись. Archive сохраняет полученные
+клиентом значения и не восстанавливает precision, уже потерянную раньше в wire/config pipeline.

@@ -2,7 +2,7 @@
 
 15.10.2026. Первый реализованный срез `telemetry_v1`: process CPU/RSS, counters источника,
 состояние доставки и существующие frame spans. Сервер собирает данные на C++, клиент читает
-их через typed `sv-client-lib`. sv-simulator предоставляет формы настроек и CPU/RSS/render графики; subscriptions и полного subsystem profiler пока нет.
+их через typed `sv-client-lib`. sv-simulator предоставляет формы настроек и CPU/RSS/render, pipeline и source/delivery графики; subscriptions и полного subsystem profiler пока нет.
 
 ## Настройка и жизненный цикл
 
@@ -186,7 +186,7 @@ pipeline spans). Полный63-test suite и Aurora SDK в этом шаге н
    исход блокирует новые изменения. Если telemetry group не объявлена, её поля недоступны.
 2. В панели **Телеметрия сервера** включить «Читать каждые500мс». Чтение по умолчанию выключено.
    Оно не включает серверный sampler: disabled catalog показывает подсказку о настройке.
-3. Переключать CPU / Память / Render. Память отображается в MiB; CPU100% — одно logical CPU.
+3. Переключать CPU / Память / Render / Этапы / I/O. Память отображается в MiB; CPU100% — одно logical CPU.
    X использует фактические server timestamps относительно первого sample серии, не arrival time.
 4. «Очистить графики локально» удаляет только точки; cursor сохраняется. Остановка чтения не
    выключает сбор. Для отключения сбора применить enabled=false в серверных настройках.
@@ -223,3 +223,63 @@ TelemetryModel и восстанавливает настройки по Unix/TC
 C++ codec, поля/лимиты, файловые диалоги, static offline view и ограничения:
 [[engineering/TELEMETRY_ARCHIVE]]. Сохраняются полные typed samples текущего окна, не только
 нарисованные точки. Streaming/timed playback и полный experiment report остаются открытыми.
+
+## Pipeline и source/delivery графики
+
+Во вкладке **Этапы** список выбирает один из9 существующих spans либо input age at render.
+Для каждого выбора выводятся ms, пояснение смысла, число доступных значений и nearest-rank
+p50/p95/p99 по retained window. Все frame-показатели здесь используют **только fresh records**;
+GPU null/repeated frames не заменяются нулями. Вызовы renderer могут включать другие spans:
+графики нельзя складывать для получения общей latency или CPU utilisation.
+
+| Выбор | Откуда берётся | Что не измеряет |
+|---|---|---|
+| render_wall | Вход → выход renderer.render в server main loop | Полную capture-to-display latency |
+| source_poll | FrameSource.poll в текущем main loop | Capture/decode worker duration |
+| pre_render_prepare | Конец poll → начало render, включая events/commands | Отдельную GPU projection stage |
+| fusion_cpu | Hybrid CPU fusion и вложенные операции | Полную CPU нагрузку процесса/отдельные seam/pyramid timers |
+| layer_readback_cpu | Подготовку/чтение hybrid layers | Чистую GPU execution time |
+| upload_cpu | CPU wall upload изменившихся входов | GPU execution time |
+| readback_copy_cpu | CPU wall readback/copy результата | Отдельное время каждого GL call |
+| publish_enqueue | Постановку результата в output delivery | Send/release round-trip |
+| gpu_draw | Пригодный renderer timer query | GPU utilisation/memory/полный hybrid GPU путь |
+| input_age_at_render | Старейший selected input receive → render done | Чистую длительность вычислений |
+
+Во вкладке **I/O** доступны queue gauge, paused/data_ready/data_busy0/1, возраст последнего
+render record и collection wall. `frame_record_age = (sample.timestamp_ns − frame.timestamp_ns)/1e6`
+вычисляется из той же server clock domain и обновляется даже при fresh=false. При отсутствии frame
+показатель null. Рост record age при paused/busy не означает рост renderer duration; показывает
+давность последнего render measurement. Input age at render остаётся отдельным frozen measurement.
+
+Collection wall охватывает process read и подготовку record, но не все издержки инструментализации.
+Для I/O flags квантили latency не выводятся. Точные latest source counters показаны строками;
+queue graph подавляет значения выше2^53, чтобы не выдавать округлённый double за точный count.
+Исходные uint64 сохраняются в details и archive.
+
+| Backend | queue gauge | Пример семантики counters |
+|---|---|---|
+| Replay | Число queued Frames batches, не все события | received — камера в созданном frame set; decoded — загрузка нового image path; dropped — batch eviction |
+| Socket | Суммарные queued per-camera Frames events | received — принятый frame; dropped — paused/evicted frame; rejected — rejected input; decoded всегда0, decode не измеряется |
+| Camera | Все pending events, включая control/status | received — успешный camera read; decoded — подготовленный и поставленный frame; dropped — rejected/paused/evicted frame; rejected отдельным counter не собирается |
+
+Нельзя напрямую сравнивать decoded/drop fractions этих backend без нормализации единиц.
+Sampling в main loop также не даёт peak queue внутри заблокированного render. Семантика сверена
+с `src/apps/server.cpp`, `src/render/renderer.cpp`, `src/sources/{replay,socket,camera_source}.cpp`.
+Новых server timers/threads/commands этот GUI шаг не добавляет.
+
+![Pipeline metric picker и малые длительности](figures/telemetry-stages.png)
+
+Рисунок 4 — Выбор CPU fusion wall и масштаб малых значений. Контролируемый QML fixture,
+не измерение производительности hardware. Ось автоматически подстраивается к ненулевому максимуму;
+для малых значений используется scientific notation. Смена метрики вызывает repaint, даже если
+новых samples не поступало.
+
+Live и offline view используют один C++ point builder. Archive schema1 не менялась: исходные
+spans/counters/flags уже сохранялись. Информация о точности дробных archive values на версиях
+Boost и отдельном regression test: [[engineering/TELEMETRY_ARCHIVE#Точность дробных метрик]].
+
+Остаются реальные отдельные capture/decode/sync/calibration/projection/seam/pyramid/send timers,
+per-worker/per-camera queues, GPU load/memory и controlled overhead experiment. Наличие selector
+не означает наличия нового profiler или доказательства причины performance spike.
+
+Полная Linux сборка успешна; selected CTest6/6 за26.95s:13 telemetry/archive GTests,20 runtime unit cases,8 session cases,3 QML cases и real Unix/TCP adapters/installed consumer. Полный63-test suite и Aurora SDK/устройство в этом шаге не проверялись.
