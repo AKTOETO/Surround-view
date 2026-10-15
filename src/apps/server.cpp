@@ -14,6 +14,7 @@
 #include "sv/renderer.hpp"
 #include "sv/server_session.hpp"
 #include "sv/source.hpp"
+#include "sv/telemetry.hpp"
 #include "sv/vision.hpp"
 #include <atomic>
 #include <boost/asio.hpp>
@@ -377,6 +378,7 @@ ServerIO::ServerIO(const sv::Connections &n, const std::string &source_type,
                     "config_validate_v1",
                     "config_apply_v1",
                     "config_operations_v1",
+                    "telemetry_v1",
                     "fusion_runtime_v1",
                     "research_fusion_v1",
                     "runtime_surface_v1",
@@ -674,6 +676,7 @@ int main(int argc, char **argv)
             instance_id += instance_hex[byte & 15];
         }
         sv::ConfigOperations config_operations(std::move(instance_id));
+        sv::TelemetryCollector telemetry(config_operations.instance_id(), initial_cfg.telemetry);
         sv::CalibrationJobManager calib_jobs;
 
         std::unique_ptr<sv::FrameSource> source;
@@ -959,7 +962,8 @@ int main(int argc, char **argv)
                             [&](const sv::Config &prepared)
                             {
                                 return std::make_unique<sv::RendererConfigurationUpdate>(
-                                    *renderer, prepared, changes.contains("surface"));
+                                    *renderer, prepared, changes.contains("surface"), &telemetry,
+                                    changes.contains("telemetry"));
                             });
                     }
                     else if (type == "config_operation_status")
@@ -993,7 +997,8 @@ int main(int argc, char **argv)
                                     {
                                         return std::make_unique<sv::RendererConfigurationUpdate>(
                                             *renderer, prepared,
-                                            requested.changes.contains("surface"));
+                                            requested.changes.contains("surface"), &telemetry,
+                                            requested.changes.contains("telemetry"));
                                     });
                                 applied_command = applied_id;
                                 ++state_revision;
@@ -1005,6 +1010,31 @@ int main(int argc, char **argv)
                         reason = accepted ? "ok" : execution.entry.reason;
                         extra_res["configuration_operation"] =
                             config_operations.status(instance, operation, operation_replayed);
+                    }
+                    else if (type == "telemetry_catalog")
+                    {
+                        extra_res["telemetry_catalog"] = telemetry.catalog();
+                    }
+                    else if (type == "telemetry_read")
+                    {
+                        const auto &limit = m.header.at("limit");
+                        if (!limit.is_int64() && !limit.is_uint64())
+                        {
+                            throw std::invalid_argument("telemetry_limit_integer_required");
+                        }
+                        const auto limit_value = limit.is_int64() && limit.as_int64() < 0
+                                                     ? uint64_t(0)
+                                                     : limit.to_number<uint64_t>();
+                        if (limit_value < 1 || limit_value > 16)
+                        {
+                            throw std::invalid_argument("telemetry_read_limit_out_of_range");
+                        }
+                        extra_res["telemetry"] = telemetry.read(
+                            std::string(m.header.at("server_instance_id").as_string()),
+                            sv::parse_decimal_u64(std::string(m.header.at("epoch").as_string())),
+                            sv::parse_decimal_u64(
+                                std::string(m.header.at("after_cursor").as_string())),
+                            unsigned(limit_value));
                     }
                     else if (type == "fusion_catalog")
                     {
@@ -1345,6 +1375,7 @@ int main(int argc, char **argv)
                 if (accepted && type != "state" && type != "config_read" &&
                     type != "config_catalog" && type != "config_validate" &&
                     type != "config_operation_status" && type != "config_apply_once" &&
+                    type != "telemetry_catalog" && type != "telemetry_read" &&
                     type != "fusion_catalog" && type != "output_catalog" &&
                     type != "surface_catalog" && type != "experiment_acquire" &&
                     type != "experiment_renew" && type != "experiment_release" &&
@@ -1520,6 +1551,7 @@ int main(int argc, char **argv)
                 const bool published = network.publish(std::move(output), render_generation);
                 ft.publish_enqueue_ms = static_cast<double>(sv::now_ns() - publish_start) / 1e6;
                 span_tracker.record_frame(ft);
+                telemetry.frame(ft);
                 record({{"event", "pipeline_span"},
                         {"frame_id", std::to_string(frame_id)},
                         {"telemetry", ft.to_json()}});
@@ -1544,6 +1576,15 @@ int main(int argc, char **argv)
                              span_tracker.median_total_latency_ms()}});
                     dirty = false;
                     last_render = done;
+                }
+            }
+            if (telemetry.enabled())
+            {
+                const auto sample_now = sv::now_ns();
+                if (telemetry.due(sample_now))
+                {
+                    telemetry.sample(sample_now, config_store.revision(), source->stats(), paused,
+                                     network.ready.load(), network.busy.load() != 0);
                 }
             }
             std::this_thread::sleep_for(std::chrono::milliseconds(2));

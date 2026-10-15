@@ -340,7 +340,7 @@ class OutputProducts(unittest.TestCase):
         catalog = self.client.command('config_catalog')
         self.assertTrue(catalog['accepted'], catalog)
         fields = catalog['configuration_catalog']
-        self.assertEqual(fields['replaceable_groups'], ['fusion', 'surface'])
+        self.assertEqual(fields['replaceable_groups'], ['fusion', 'surface', 'telemetry'])
         self.assertTrue(fields['generic_apply_supported'])
         self.assertFalse(fields['prepares_renderer'])
         surface = self.client.command('surface_catalog')['surface_catalog']

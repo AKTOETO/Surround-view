@@ -27,7 +27,7 @@ class ConfigService
         auto effective = state.active->effective;
         for (const auto &field : changes)
         {
-            if (field.key() != "fusion" && field.key() != "surface")
+            if (field.key() != "fusion" && field.key() != "surface" && field.key() != "telemetry")
             {
                 throw std::invalid_argument("configuration_group_unsupported");
             }
@@ -88,6 +88,10 @@ class ConfigService
         if (validated.contains("fusion"))
         {
             validated["fusion"] = fusion_settings(candidate.fusion);
+        }
+        if (validated.contains("telemetry"))
+        {
+            validated["telemetry"] = telemetry_settings(candidate.telemetry);
         }
         return {{"schema_version", 1},
                 {"scope", "config_store_groups"},

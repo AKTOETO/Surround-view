@@ -1,6 +1,7 @@
 #pragma once
 #include "sv/client_configuration.hpp"
 #include "sv/client_output.hpp"
+#include "sv/client_telemetry.hpp"
 #include "sv/fallback_display.hpp"
 #include "sv/protocol.hpp"
 #include <functional>
@@ -117,7 +118,8 @@ class Client
         return command("config_catalog");
     }
 
-    // Complete replacements of supplied fusion/surface groups; validates without applying.
+    // Complete replacements of supplied fusion/surface/telemetry groups; validates without
+    // applying.
     uint64_t validate_configuration(uint64_t base_revision, boost::json::object changes)
     {
         return command("config_validate", {{"base_config_revision", std::to_string(base_revision)},
@@ -150,6 +152,25 @@ class Client
     {
         return command("config_operation_status", {{"server_instance_id", server_instance_id},
                                                    {"operation_id", operation_id}});
+    }
+
+    // HELLO capability telemetry_v1; read-only, bounded polling, no automatic retry.
+    uint64_t telemetry_catalog()
+    {
+        return command("telemetry_catalog");
+    }
+
+    uint64_t read_telemetry(const std::string &server_instance_id, uint64_t epoch,
+                            uint64_t after_cursor, unsigned limit = 16)
+    {
+        if (!limit || limit > 16)
+        {
+            throw std::invalid_argument("telemetry_read_limit_out_of_range");
+        }
+        return command("telemetry_read", {{"server_instance_id", server_instance_id},
+                                          {"epoch", std::to_string(epoch)},
+                                          {"after_cursor", std::to_string(after_cursor)},
+                                          {"limit", limit}});
     }
 
     uint64_t fusion_catalog()

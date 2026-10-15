@@ -116,8 +116,17 @@ ConfigurationCatalog parse_configuration_catalog(const Message &message)
             throw std::invalid_argument("unsupported configuration apply policy");
         }
     }
-    return {strings(fields.at("operations")), strings(fields.at("replaceable_groups")),
-            fields.at("fusion").as_object(), fields.at("surface").as_object(), version == 2};
+    ConfigurationCatalog result{strings(fields.at("operations")),
+                                strings(fields.at("replaceable_groups")),
+                                fields.at("fusion").as_object(),
+                                fields.at("surface").as_object(),
+                                version == 2,
+                                {}};
+    if (const auto *telemetry = fields.if_contains("telemetry"))
+    {
+        result.telemetry = telemetry->as_object();
+    }
+    return result;
 }
 
 ConfigurationValidation parse_configuration_validation(const Message &message)
@@ -140,7 +149,8 @@ ConfigurationValidation parse_configuration_validation(const Message &message)
     }
     for (const auto &field : result.changes)
     {
-        if ((field.key() != "fusion" && field.key() != "surface") || !field.value().is_object())
+        if ((field.key() != "fusion" && field.key() != "surface" && field.key() != "telemetry") ||
+            !field.value().is_object())
         {
             throw std::invalid_argument("invalid validated configuration group");
         }

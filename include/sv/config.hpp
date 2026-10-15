@@ -1,6 +1,7 @@
 #pragma once
 #include "sv/fallback_display.hpp"
 #include "sv/math.hpp"
+#include "sv/telemetry_config.hpp"
 #include <boost/json.hpp>
 #include <filesystem>
 
@@ -47,6 +48,7 @@ struct Config
     Fusion fusion;
     Connections connections;
     SourceConfig source;
+    TelemetryConfig telemetry;
     int width = 640, height = 360, queue_size = 3;
     double vehicle_length = 4.6, vehicle_width = 1.8, margin = .1;
     uint64_t skew_ns = 10000000, age_ns = 100000000;

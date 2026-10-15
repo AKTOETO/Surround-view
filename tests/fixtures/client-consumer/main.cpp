@@ -14,7 +14,7 @@ int main(int argc, char **argv)
         unsigned frames = 3;
         bool exercise = false, allow_reconnect = false, support = false, visibility = false,
              disagreement = false, configuration = false, configuration_apply = false,
-             configuration_operation = false;
+             configuration_operation = false, telemetry = false;
         for (int i = 1; i < argc; ++i)
         {
             const std::string arg = argv[i];
@@ -66,6 +66,10 @@ int main(int argc, char **argv)
             else if (arg == "--disagreement")
             {
                 disagreement = true;
+            }
+            else if (arg == "--telemetry")
+            {
+                telemetry = true;
             }
             else if (arg == "--configuration")
             {
@@ -121,12 +125,13 @@ int main(int argc, char **argv)
                                       cv.notify_one();
                                   });
         unsigned received = 0, acknowledgements = 0;
-        const unsigned expected_acks = configuration_operation ? 6
-                                       : configuration_apply   ? 4
-                                       : configuration         ? 3
-                                       : exercise              ? 5
-                                       : support               ? 3
-                                                               : 1;
+        const unsigned expected_acks = telemetry                 ? 2
+                                       : configuration_operation ? 6
+                                       : configuration_apply     ? 4
+                                       : configuration           ? 3
+                                       : exercise                ? 5
+                                       : support                 ? 3
+                                                                 : 1;
         uint64_t configuration_revision = 0;
         std::string configuration_instance;
         boost::json::object operation_changes;
@@ -176,7 +181,11 @@ int main(int argc, char **argv)
                 }
                 if (event.detail == "ready")
                 {
-                    if (configuration)
+                    if (telemetry)
+                    {
+                        client.telemetry_catalog();
+                    }
+                    else if (configuration)
                     {
                         client.read_configuration();
                     }
@@ -208,6 +217,26 @@ int main(int argc, char **argv)
             }
             auto header = event.message->header;
             header["message_type"] = event.message->type;
+            if (telemetry && event.message->type == 21)
+            {
+                if (header.contains("telemetry_catalog"))
+                {
+                    const auto catalog = sv::client::parse_telemetry_catalog(*event.message);
+                    configuration_instance = catalog.server_instance_id;
+                    configuration_revision = catalog.epoch;
+                    client.read_telemetry(catalog.server_instance_id, catalog.epoch, 0);
+                }
+                else
+                {
+                    const auto batch = sv::client::parse_telemetry_batch(*event.message);
+                    if (batch.server_instance_id != configuration_instance ||
+                        batch.epoch != configuration_revision)
+                    {
+                        throw std::runtime_error("telemetry identity mismatch");
+                    }
+                    header["validated_telemetry_batch"] = true;
+                }
+            }
             if (configuration && event.message->type == 21)
             {
                 if (header.contains("configuration"))

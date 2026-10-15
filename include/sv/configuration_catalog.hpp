@@ -10,7 +10,7 @@ inline boost::json::object configuration_catalog()
             {"scope", "config_store_groups"},
             {"operations", boost::json::array{"config_read", "config_catalog", "config_validate",
                                               "config_apply"}},
-            {"replaceable_groups", boost::json::array{"fusion", "surface"}},
+            {"replaceable_groups", boost::json::array{"fusion", "surface", "telemetry"}},
             {"changes_semantics", "replace_each_supplied_group"},
             {"omitted_groups", "keep_active"},
             {"base_config_revision_required", true},
@@ -24,6 +24,7 @@ inline boost::json::object configuration_catalog()
                                                  {"allowed_during_experiment", false},
                                                  {"operation_ids_supported", false},
                                                  {"automatic_retry", false}}},
+            {"telemetry", telemetry_config_catalog()},
             {"fusion", fusion_catalog()},
             {"surface", surface_catalog()}};
 }

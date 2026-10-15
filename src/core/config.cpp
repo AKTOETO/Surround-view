@@ -190,11 +190,28 @@ Config parse_config(const boost::json::value &value)
     keys(o,
          {"schema_version", "profile_id", "units", "vehicle", "cameras", "surface",
           "virtual_camera", "output", "runtime"},
-         "config", {"fusion", "connections", "source"});
+         "config", {"fusion", "connections", "source", "telemetry"});
     require(integer(o.at("schema_version"), 1, 1) == 1, "schema_version");
     Config c;
     c.effective = value;
     c.profile_id = str(o.at("profile_id"));
+    if (const auto *value = o.if_contains("telemetry"))
+    {
+        const auto &settings = value->as_object();
+        keys(settings, {"enabled"}, "telemetry", {"period_ms", "history_capacity"});
+        c.telemetry.enabled = settings.at("enabled").as_bool();
+        if (const auto *period = settings.if_contains("period_ms"))
+        {
+            require(period->is_int64() || period->is_uint64(), "telemetry period requires integer");
+            c.telemetry.period_ms = integer(*period, 50, 5000);
+        }
+        if (const auto *capacity = settings.if_contains("history_capacity"))
+        {
+            require(capacity->is_int64() || capacity->is_uint64(),
+                    "telemetry capacity requires integer");
+            c.telemetry.history_capacity = integer(*capacity, 8, 256);
+        }
+    }
     if (const auto *value = o.if_contains("fusion"))
     {
         const auto &fusion = value->as_object();

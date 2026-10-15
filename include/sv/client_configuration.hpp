@@ -20,6 +20,7 @@ struct ConfigurationCatalog
     std::vector<std::string> operations, replaceable_groups;
     boost::json::object fusion, surface;
     bool apply_supported = false;
+    boost::json::object telemetry;
 };
 
 struct ConfigurationValidation

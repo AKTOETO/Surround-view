@@ -93,7 +93,8 @@ TEST(ConfigurationDiscovery, CatalogSharesFusionSurfaceBoundsAndExplicitPolicies
         sv::client::parse_configuration_catalog(validation_reply(fields, "configuration_catalog"));
     EXPECT_EQ(result.operations.size(), 4U);
     EXPECT_TRUE(result.apply_supported);
-    EXPECT_EQ(result.replaceable_groups, (std::vector<std::string>{"fusion", "surface"}));
+    EXPECT_EQ(result.replaceable_groups,
+              (std::vector<std::string>{"fusion", "surface", "telemetry"}));
     EXPECT_EQ(result.fusion, sv::fusion_catalog());
     EXPECT_EQ(result.surface, sv::surface_catalog());
     EXPECT_EQ(result.surface.at("geometry_fields").as_object().size(), 4U);
