@@ -168,7 +168,7 @@ instance/epoch/limit guards, prepare/discard/commit/reset, configuration bounds 
 `telemetry_ipc` проверяет Linux server hot enable/disable, paused/busy sampling, read-only lease,
 rejection guards, rollback при persistence failure и typed C++ consumer на Unix/TCP.
 
-Остаются: графики остальных подсистем/очередей и их квантили, export/replay, experiment
+Остаются: графики остальных подсистем/очередей и их квантили, streaming trace/timed playback и paired comparison, experiment
 markers, детализация подсистем, metric IDs/levels, GPU/threads, independent/control-only delivery
 и overhead experiment disabled/minimal/detailed на одинаковых входах. Этот срез не является
 новым сравнительным исследованием производительности или доказательством выбора алгоритма.
@@ -207,7 +207,7 @@ config revision. Это не квантили всех серверных frames
 
 ![Панель телеметрии, контролируемый QML fixture](figures/telemetry-panel.png)
 
-Рисунок 3 — Native QML панель и CPU graph с отсутствующим sample. Значения заданы тестовым fixture
+Рисунок 3 — Native QML панель offline report и CPU graph с отсутствующим sample. Значения заданы тестовым fixture
 для проверки визуализации; это не измерения автомобиля, host performance или Aurora.
 
 Модель проверена на bounded window, freshness/known-answer quantiles, gaps/loss, series reset,
@@ -217,3 +217,9 @@ Native adapter integration включает collection через ConfigurationE
 TelemetryModel и восстанавливает настройки по Unix/TCP, без записи server file клиентом.
 
 Полная Linux сборка успешна; selected CTest5/5 за31.84s (Unix/TCP GUI adapters, telemetry IPC,14 runtime unit cases, session cleanup и3 QML cases). Full63-test suite/Aurora в этом шаге не запускались.
+
+## Сохранение окна и offline view
+
+C++ codec, поля/лимиты, файловые диалоги, static offline view и ограничения:
+[[engineering/TELEMETRY_ARCHIVE]]. Сохраняются полные typed samples текущего окна, не только
+нарисованные точки. Streaming/timed playback и полный experiment report остаются открытыми.

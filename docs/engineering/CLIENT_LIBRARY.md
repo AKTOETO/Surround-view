@@ -185,3 +185,9 @@ parser проверяет envelope, window/cursors, units, finite metrics и и�
 После reconnect перечитать catalog; новые instance/epoch начинают отдельную серию.
 Настройки применяет только сервер через ConfigService; control/data пока обязательны.
 Wire fields, fresh/loss semantics, CLI и ограничения: [[engineering/TELEMETRY]].
+
+## Локальный archive codec
+
+Installed `client_telemetry_archive.hpp` предоставляет TelemetryArchive и serialize/parse API для
+bounded window snapshot. Нет Qt/file I/O/server mutation. Поля, units,120-record/2MiB limits,
+проверки cursor/time/loss и отличия от experiment trace: [[engineering/TELEMETRY_ARCHIVE]].

@@ -1271,3 +1271,7 @@ fusion fields получают defaults. Surface требует все geometry 
 В sv-simulator серверный сбор включается через Конфигурация → Телеметрия → validate/apply.
 Чтение включается отдельно в панели Телеметрия сервера; CPU/Память/Render находятся в её вкладках.
 Полный workflow и трактовка квантилей: [[engineering/TELEMETRY#sv-simulator: настройки и графики]].
+
+Сохранение и offline-просмотр: **Сохранить окно в отчёт** → выбрать JSON; для **Открыть отчёт offline**
+остановить reader и отключиться от сервера. Файл содержит до120 raw samples, не весь experiment
+trace. Подробности и ограничения: [[engineering/TELEMETRY_ARCHIVE]].

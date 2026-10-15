@@ -1087,3 +1087,34 @@ Gap после потери samples, недоступной metric или дли
 восстанавливает settings через реальные Unix/TCP подключения; QML tests переключают вкладки
 и формы без framework warnings. Требуются дальнейшие subsystem spans, export/replay и одинаковый
 replay для измерения overhead; проверка целевой Aurora platform остаётся отдельным этапом.
+
+## 3.30. Воспроизводимый просмотр сохранённого telemetry window
+
+В sv-client-lib введён Qt-free C++ archive codec, в sv-simulator — save/open window через file chooser.
+Полные typed records сохраняются вместе с instance/epoch, units, sampling settings, cursor/loss и
+первоначальным временным origin. uint64 остаются decimal strings; повторные кадры и null metrics
+не превращаются в нули. Это обеспечивает одинаковые графики/квантили после offline import.
+
+![Offline telemetry window](../engineering/figures/telemetry-panel.png)
+
+Рисунок 3.39 — Статический offline view сохранённого окна. Изображение получено QML regression
+с контролируемыми значениями; оно демонстрирует интерфейс, а не сравнение аппаратных платформ.
+
+| Свойство | Реализованная проверка | Граница |
+|---|---|---|
+| Точность metadata | uint64 max и null round-trip | Clock разных hosts нельзя вычитать напрямую |
+| Порядок серии | Instance/epoch в catalog, cursor/time order, original origin | Полного server config/host fingerprint в файле нет |
+| Потери | Cumulative loss и внутренние cursor holes | UI eviction не равен server loss; прежние потери не доказываются retained window |
+| Ограниченность |120 records,2MiB reader limit | Нет streaming rotation/полного trace |
+| Целостность GUI | Candidate до замены окна, неверный файл сохраняет прежние графики | JSON schema не доказывает подлинность файла |
+| Сохранение | QSaveFile temporary write/commit без direct fallback | Power-loss acceptance не проводилась |
+
+Импорт доступен только после остановки reader и отключения attached Client. Подключение к серверу
+очищает offline series; импорт не исполняет сетевых команд и не изменяет server config. Формат/API,
+sequence diagram, первичные Qt ссылки и процедура запуска: [[engineering/TELEMETRY_ARCHIVE]].
+
+GTest и real Unix/TCP проверки связывают цепочку live settings → samples → archive → offline model.
+Проверяются совпадение points/quantiles, bounded truncated window, прежний origin, local clear,
+invalid-file rollback и failed save. Следующий этап — host/config/build provenance, streaming trace,
+scenario markers и paired platform reports; текущий snapshot не заменяет эти требования и не
+является новым сравнительным исследованием производительности.

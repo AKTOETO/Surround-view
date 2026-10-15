@@ -107,5 +107,6 @@ Server capability `telemetry_v1` adds opt-in process CPU/RSS and existing frame-
 sv-client-lib. Configure collection in the Telemetry configuration tab, then enable the separate 500ms reader
 in the telemetry panel. CPU/RSS/render tabs keep at most120 samples and show loss/gaps,
 fresh-only render quantiles and the latest config revision. Stopping the reader does not disable
-server collection; epoch/disconnect resets the local window. Export/replay and other subsystem
-graphs remain pending. Contract: `docs/engineering/TELEMETRY.md`.
+server collection; epoch/disconnect resets the local window. Use Save window to export up to120 raw samples, then disconnect and Open offline report
+to view the same charts. This is a static bounded snapshot; streaming/timed replay and other
+subsystem graphs remain pending. See `docs/engineering/TELEMETRY_ARCHIVE.md`. Contract: `docs/engineering/TELEMETRY.md`.

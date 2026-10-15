@@ -122,3 +122,8 @@ GTest ищется как системный REQUIRED package только пр�
 ## Laptop GUI независимо от автомобильного клиента
 
 SV_SIMULATOR=ON при SV_CLIENT=ON добавляет sv-simulator и требует Qt Quick Controls2 development package, runtime QtQuick.Controls≥2.2 и QtQuick.Layouts. SV_SIMULATOR=OFF оставляет sv-client без этих дополнительных laptop GUI зависимостей. Default simulator OFF для SV_AURORA и SV_CLIENT=OFF; оба spec явно выключают simulator. Host проверка touch-only target graph выполнена с Qt6; это не Aurora SDK/package acceptance.
+
+Для файловых диалогов telemetry laptop GUI требуется QML module `QtQuick.Dialogs`
+(Qt6 API начиная с6.2; отдельный Qt5 Dialogs1.3 adapter). Qt6 picker проверен offscreen с Quick
+fallback; Qt5 adapter в этом шаге не проверялся. Codec в installed sv-client-lib использует только
+Boost/STL, не добавляет Qt/OpenCV dependency внешним клиентам. [[engineering/TELEMETRY_ARCHIVE]].
