@@ -490,6 +490,6 @@ Component/unit test не измеряет интерактивный FPS, camera
 Catalog schema2 теперь объявляет третью replaceable group `telemetry`. Parser поддерживает её
 canonical validate и apply/apply-once; подготовка collector history выполняется до persistence,
 публикация после commit. Отключение по умолчанию, sampling/history bounds и epoch reset описаны
-в [[engineering/TELEMETRY]]. GUI формы на этой странице пока редактируют только fusion/surface;
-группа telemetry доступна через библиотеку и CLI. `operations` catalogue сохраняет четыре
+в [[engineering/TELEMETRY]]. GUI формы теперь также редактируют telemetry через отдельную вкладку RuntimePanel;
+используют тот же guarded apply-once workflow. `operations` catalogue сохраняет четыре
 ConfigService операции; process journal и telemetry reads объявляются отдельными capabilities.

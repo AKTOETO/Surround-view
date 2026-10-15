@@ -29,4 +29,4 @@
 ## Отключаемая devel telemetry
 
 [[engineering/TELEMETRY|Process CPU/RSS, source counters и frame spans через typed bounded polling]].
-Default off, hot ConfigService settings, epoch/cursor/loss; GUI графиков и full subsystem profiler пока нет.
+Default off, hot ConfigService settings, epoch/cursor/loss; CPU/RSS/render GUI графики и settings forms реализованы; full subsystem profiler пока нет.

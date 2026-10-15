@@ -26,7 +26,7 @@
 
 ## Приоритет 1 — доказать качество решения для диплома
 
-Ближайшая работа: формы/графики devel telemetry в sv-simulator, детализация метрик и остальные ConfigService root groups; формы support/occlusion завершены. Read, discovery, validation и atomic runtime/persistent apply fusion/surface/telemetry уже реализованы ([[engineering/CONFIG_SERVICE]]); остальные root groups пока не поддержаны. Ограниченный target-overlap control завершён ([[validation/TARGET_OVERLAP]]); новые исследовательские ветви до перехода к коду не открывать. Filter/resolution, exposure/noise, temporal и final seam/ghost evaluation остаются открытыми для будущего общего ExperimentRunner. Полное завершение E-STITCH-01 не заявляется.
+Ближайшая работа: детализация telemetry метрик/графиков и export/replay и остальные ConfigService root groups; формы support/occlusion завершены. Read, discovery, validation и atomic runtime/persistent apply fusion/surface/telemetry уже реализованы ([[engineering/CONFIG_SERVICE]]); остальные root groups пока не поддержаны. Ограниченный target-overlap control завершён ([[validation/TARGET_OVERLAP]]); новые исследовательские ветви до перехода к коду не открывать. Filter/resolution, exposure/noise, temporal и final seam/ghost evaluation остаются открытыми для будущего общего ExperimentRunner. Полное завершение E-STITCH-01 не заявляется.
 
 Исследовательские инструменты и первые синтетические прогоны добавлены, но аудит коммитов `ee1bcc5e..HEAD` выявил, что часть опубликованных метрик не подтверждает заявленные выводы. Приоритет 1 **не закрыт**. Exit criteria для полноценного заключения: [[planning/ROADMAP#Критерии готовности исследовательского заключения]]. Проверенные ограничения и расхождения: [[planning/AUDIT]].
 
@@ -98,7 +98,10 @@ provider; disabled/reset/paused/busy/lease/persistence rollback и Unix/TCP пр
 - Расширить settings уровнями детализации, перечнем подсистем/metric IDs и buffer budget в bytes.
 - Добавить отдельные длительности/очереди capture/decode, sync/skew, calibration, projection/seam/multiband, encode/send; process threads, GPU utilisation/memory и drop/reconnect counters. Сейчас доступные stage wall spans перекрываются, current RSS приближённый; frame.fresh=false не считать новым render. Проверить платформенную доступность, GPU timestamp semantics.
 - Дополнить bounded polling subscriptions/downsampling, experiment identity и независимым control-only/channel lifecycle. Sampling сейчас идёт в render loop: долгие вызовы задерживают samples. Не требовать передачи final_frame; обязательный data attachment пока сохраняется.
-- В sv-simulator добавить вкладки графиков нагрузки/очередей/latency по подсистемам, p50/p95/p99 по окнам, связь всплесков с изменением алгоритмов/config revision и experiment markers, export/replay отчётов. Переключение алгоритма выполнять через существующий server API; автоматический выбор алгоритма — отдельная будущая политика.
+
+Формы telemetry settings, bounded polling и CPU/RSS/render tabs в sv-simulator выполнены. Окно120 samples, loss/gaps, fresh-only render quantiles p50/p95/p99 и последняя revision отображаются; series reset/reconnect учтены: [[engineering/TELEMETRY]].
+
+- Расширить графики на очереди/остальные подсистемы, quantiles по ним, timeline config/experiment markers и export/replay отчётов. Переключение алгоритма выполнять через существующий server API; автоматический выбор алгоритма — отдельная будущая политика.
 - Измерить overhead disabled/minimal/detailed на одинаковом replay: CPU, RSS, throughput, frame latency и потери. Первичные validate/apply, disabled/provider и bounded ring checks выполнены; добавить byte-budget/RSS проверки, slow/disconnected delivery и неизвестные metric IDs. Телеметрия нужна для поиска узких мест и обоснования выбора алгоритмов/архитектуры, но её собственные расходы должны входить в отчёт.
 
 ## Численная стабильность JSON-конфигурации

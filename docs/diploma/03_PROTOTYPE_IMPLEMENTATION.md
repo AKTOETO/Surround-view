@@ -1031,3 +1031,59 @@ Live Linux tests проверяют hot apply-once/replay, pause/backpressure, l
 rollback при disk error и typed Unix/TCP consumption. Это проверка корректности инструмента,
 а не опыт, доказывающий ускорение алгоритма. Измерение overhead disabled/minimal/detailed,
 полная инструментализация подсистем, GUI графики и target Aurora validation остаются необходимыми.
+
+## 3.29. Управление сбором и наблюдение telemetry в GUI
+
+В ноутбучный sv-simulator добавлена вкладка server settings (enabled/period/history) и отдельная
+панель чтения. Настройки проходят server catalog/validation/apply-once; графики используют только
+typed reader sv-client-lib. Чтение выключено по умолчанию и не включает collection автоматически.
+Оператор различает серверную инструментализацию и её клиентское отображение; остановка reader
+оставляет серверный sampler в прежнем состоянии.
+
+![Native telemetry panel](../engineering/figures/telemetry-panel.png)
+
+Рисунок 3.37 — CPU graph и вкладки RAM/render. Контролируемый QML fixture проверяет окно/пропуски;
+значения на рисунке не являются результатами сравнительного performance experiment.
+
+```plantuml
+@startuml
+actor Оператор
+participant "ConfigurationEditor" as C
+participant "TelemetryModel / sv-client-lib" as T
+participant "sv-server" as S
+participant "QML Canvas tabs" as Q
+Оператор -> C : collection enabled / period / history
+C -> S : validate → apply-once с explicit persist
+S --> C : committed / rejected / unknown reconciliation
+Оператор -> T : включить reader
+loop tick 500 ms, максимум один pending telemetry request
+  T -> S : telemetry_catalog
+  S --> T : instance / epoch / settings
+  alt instance или epoch изменились
+    T -> T : очистить окно и cursor
+  end
+  opt collection enabled
+    T -> S : telemetry_read(after, limit<=16)
+    S --> T : samples / next_cursor / loss
+    T -> T : bounded window120; fresh-only render quantiles
+    T -> Q : точки с null/gap и фактическим server time
+  end
+end
+@enduml
+```
+
+Рисунок 3.38 — Последовательность управления collection и отдельного bounded reader.
+
+CPU и RSS представлены самостоятельными series; render wall рисуется только для fresh records.
+Метод nearest rank определяет p50/p95/p99 в локальном окне выбранных кадров. Это descriptive
+статистика sampled records, не оценка всех кадров pipeline и не доказательство причин торможения.
+Gap после потери samples, недоступной metric или длительной задержки не заполняется интерполяцией.
+Последняя config revision позволяет начать сопоставление режимов; timeline experiment markers и
+автоматическая причинная атрибуция ещё не реализованы. Окно очищается при disconnect/смене серии,
+поэтому данные разных серверов не смешиваются. Подробный контракт: [[engineering/TELEMETRY]].
+
+Проверки охватывают known-answer quantiles, bounded window, repeated frame omission, loss/gaps,
+серии/clock guards, unrelated ACK и transport failure. Native GUI adapter включает/читает/
+восстанавливает settings через реальные Unix/TCP подключения; QML tests переключают вкладки
+и формы без framework warnings. Требуются дальнейшие subsystem spans, export/replay и одинаковый
+replay для измерения overhead; проверка целевой Aurora platform остаётся отдельным этапом.

@@ -33,7 +33,7 @@ The connection panel allows editing the Unix directory or TCP host/ports. Timeou
 ## Available server controls
 
 - View presets, orbit, and zoom.
-- Configuration forms: use the header Configuration shortcut, then Fusion / Carrier / Operation tabs. Read active/persisted, edit controls, validate, apply temporarily or explicitly save the entire active snapshot. Replies and reconnect recovery use typed sv-client-lib apply-once/status; no JSON entry or direct server file access. Unknown outcomes lock new edits; changed server instances require reconciliation. See `docs/engineering/CONFIG_SERVICE.md`.
+- Configuration forms: use the header Configuration shortcut, then Fusion / Carrier / Operation / Telemetry tabs. Read active/persisted, edit controls, validate, apply temporarily or explicitly save the entire active snapshot. Replies and reconnect recovery use typed sv-client-lib apply-once/status; no JSON entry or direct server file access. Unknown outcomes lock new edits; changed server instances require reconciliation. See `docs/engineering/CONFIG_SERVICE.md`.
 - Replay pause, resume, and step. `step` is rejected by live camera/socket sources.
 - Frame metadata: source type, fusion/view identifiers, config revision, and which camera inputs were selected.
 - Coarse pipeline timing fields supplied by the server. GPU draw time is shown only when a supported timer query produced a value; the reported intervals overlap and must not be summed.
@@ -104,5 +104,8 @@ loads DriveWorld and checks input/motion/units; a host Mesa OpenGL smoke also pa
 processes must be restarted to load rebuilt resources.
 
 Server capability `telemetry_v1` adds opt-in process CPU/RSS and existing frame-span polling through
-sv-client-lib. This simulator still displays its earlier frame diagnostics; dedicated polling graphs
-and telemetry settings forms are pending. Contract: `docs/engineering/TELEMETRY.md`.
+sv-client-lib. Configure collection in the Telemetry configuration tab, then enable the separate 500ms reader
+in the telemetry panel. CPU/RSS/render tabs keep at most120 samples and show loss/gaps,
+fresh-only render quantiles and the latest config revision. Stopping the reader does not disable
+server collection; epoch/disconnect resets the local window. Export/replay and other subsystem
+graphs remain pending. Contract: `docs/engineering/TELEMETRY.md`.

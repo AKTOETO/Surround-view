@@ -6,7 +6,7 @@
 
 В 0.5.0 GUI использует `sv-client-lib`. Настройка `connections`, Unix-only/TCP-only/combined, команды запуска с Blender и внешний CMake consumer: [[engineering/CLIENT_LIBRARY]]. Без блока connections прежние Unix-команды ниже сохраняются. `state` запрашивает состояние; replay следует интервалам manifest, на wrap используется первый интервал (для одного ряда — 33.333333 ms).
 
-Laptop GUI принимает `--unix DIR` или `--tcp HOST CONTROL_PORT DATA_PORT`; без аргументов он ищет локальные Unix IPC endpoints в ограниченном списке стандартных мест. Панель соединения позволяет редактировать endpoint, timeout/reconnect/retries, а Qt сохраняет последние значения. GUI показывает frame/source metrics и формы ConfigService fusion/surface. Сервер поддерживает hot telemetry settings и typed polling; отдельные GUI графики/формы telemetry ещё не реализованы: [[engineering/TELEMETRY]]. Подробности discovery и его ограничения: [README sv-simulator](../../examples/sv-simulator/README.md).
+Laptop GUI принимает `--unix DIR` или `--tcp HOST CONTROL_PORT DATA_PORT`; без аргументов он ищет локальные Unix IPC endpoints в ограниченном списке стандартных мест. Панель соединения позволяет редактировать endpoint, timeout/reconnect/retries, а Qt сохраняет последние значения. GUI показывает frame/source metrics и формы ConfigService fusion/surface/telemetry. Сервер поддерживает hot telemetry settings и typed polling; CPU/RSS/render tabs, loss и fresh-only render quantiles доступны в GUI: [[engineering/TELEMETRY]]. Подробности discovery и его ограничения: [README sv-simulator](../../examples/sv-simulator/README.md).
 
 ## Быстрый запуск с фотографической улицей
 
@@ -1267,3 +1267,7 @@ fusion fields получают defaults. Surface требует все geometry 
 Группа telemetry, CLI hot enable/read/disable, typed C++ API, cursor reset/loss и единицы:
 [[engineering/TELEMETRY#Использование]]. Read не включает сбор; при disabled history пуста.
 Клиенту всё ещё нужны control/data; GUI и svctl не могут одновременно владеть сервером.
+
+В sv-simulator серверный сбор включается через Конфигурация → Телеметрия → validate/apply.
+Чтение включается отдельно в панели Телеметрия сервера; CPU/Память/Render находятся в её вкладках.
+Полный workflow и трактовка квантилей: [[engineering/TELEMETRY#sv-simulator: настройки и графики]].

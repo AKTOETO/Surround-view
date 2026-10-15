@@ -2,7 +2,7 @@
 
 15.10.2026. Первый реализованный срез `telemetry_v1`: process CPU/RSS, counters источника,
 состояние доставки и существующие frame spans. Сервер собирает данные на C++, клиент читает
-их через typed `sv-client-lib`. GUI графиков, subscriptions и полного subsystem profiler пока нет.
+их через typed `sv-client-lib`. sv-simulator предоставляет формы настроек и CPU/RSS/render графики; subscriptions и полного subsystem profiler пока нет.
 
 ## Настройка и жизненный цикл
 
@@ -168,7 +168,7 @@ instance/epoch/limit guards, prepare/discard/commit/reset, configuration bounds 
 `telemetry_ipc` проверяет Linux server hot enable/disable, paused/busy sampling, read-only lease,
 rejection guards, rollback при persistence failure и typed C++ consumer на Unix/TCP.
 
-Остаются: формы telemetry settings и графики sv-simulator, p50/p95/p99/export/replay, experiment
+Остаются: графики остальных подсистем/очередей и их квантили, export/replay, experiment
 markers, детализация подсистем, metric IDs/levels, GPU/threads, independent/control-only delivery
 и overhead experiment disabled/minimal/detailed на одинаковых входах. Этот срез не является
 новым сравнительным исследованием производительности или доказательством выбора алгоритма.
@@ -177,3 +177,43 @@ markers, детализация подсистем, metric IDs/levels, GPU/threa
 (telemetry/output/configuration/lease/QML); после расширения restart/apply-once проверок —
 CTest5/5 за24.12s (7 telemetry GTests,5 live telemetry cases, client transports, ConfigStore,
 pipeline spans). Полный63-test suite и Aurora SDK в этом шаге не запускались.
+
+## sv-simulator: настройки и графики
+
+1. Подключиться к серверу. В **Конфигурация → Телеметрия** отметить сбор, задать период и размер
+   history. Нажать «Проверить черновик», затем «Применить временно» либо явно сохранить snapshot.
+   UI использует server catalog bounds и существующий apply-once/status workflow; неизвестный
+   исход блокирует новые изменения. Если telemetry group не объявлена, её поля недоступны.
+2. В панели **Телеметрия сервера** включить «Читать каждые500мс». Чтение по умолчанию выключено.
+   Оно не включает серверный sampler: disabled catalog показывает подсказку о настройке.
+3. Переключать CPU / Память / Render. Память отображается в MiB; CPU100% — одно logical CPU.
+   X использует фактические server timestamps относительно первого sample серии, не arrival time.
+4. «Очистить графики локально» удаляет только точки; cursor сохраняется. Остановка чтения не
+   выключает сбор. Для отключения сбора применить enabled=false в серверных настройках.
+
+Модель хранит максимум120 samples, опрашивает catalog перед каждым bounded batch, держит только
+один telemetry request в ожидании и читает не более16 records за tick. Даже при has_more следующий
+batch ждёт tick; низкая частота/маленький server buffer могут вести к loss. При instance/epoch смене
+или disconnect окно очищается; при epoch race rejected read следующий tick перечитывает catalog.
+Transport failure завершает pending read и останавливает timer; возобновление выполняется явно.
+Ответы связываются по command_id, batch — также по instance/epoch/after_cursor. Сам Client может
+переподключиться по общей transport policy; новый ready возобновляет ранее выбранный monitoring.
+
+Линия разрывается при lost_samples, отсутствующей metric или timestamp gap больше2.5 sampling
+periods. Для render берутся только fresh frame records; repeated frames остаются отсутствующими
+точками. Dots показывают и одиночные значения. На окне выводятся render wall p50/p95/p99 методом
+nearest rank по **выбранным fresh records**, число таких records, cumulative ring loss и последняя
+config revision. Это не квантили всех серверных frames: промежуточные кадры могут не попасть в sampling.
+
+![Панель телеметрии, контролируемый QML fixture](figures/telemetry-panel.png)
+
+Рисунок 3 — Native QML панель и CPU graph с отсутствующим sample. Значения заданы тестовым fixture
+для проверки визуализации; это не измерения автомобиля, host performance или Aurora.
+
+Модель проверена на bounded window, freshness/known-answer quantiles, gaps/loss, series reset,
+foreign reply/time guards и command failure correlation. QML regression переключает все три вкладки
+и рисует nullable/fresh records без Qt warnings; формы проверены реальными сигналами controls.
+Native adapter integration включает collection через ConfigurationEditor, читает samples через
+TelemetryModel и восстанавливает настройки по Unix/TCP, без записи server file клиентом.
+
+Полная Linux сборка успешна; selected CTest5/5 за31.84s (Unix/TCP GUI adapters, telemetry IPC,14 runtime unit cases, session cleanup и3 QML cases). Full63-test suite/Aurora в этом шаге не запускались.
