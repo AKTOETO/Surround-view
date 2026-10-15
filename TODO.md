@@ -112,11 +112,17 @@ provider; disabled/reset/paused/busy/lease/persistence rollback и Unix/TCP пр
 
 ## Physical camera backend: оставшаяся приёмка
 
-Проверить V4L2 stop/reconnect при зависшем VideoCapture.read, обработку OpenCV exceptions,
+Проверить V4L2 stop/reconnect при зависшем VideoCapture.read и поведение реальных драйверов при ошибках,
 форматы/размеры/FPS/backend buffers и реальные device timestamps. Driver seam и fake capture
-тестируют RGB conversion/queue/timing lifecycle; это не проверка физических камер. Совместное
+тестируют RGB conversion/queue/timing lifecycle и восстановление после cv::Exception/false/empty read; это не проверка физических камер. Совместное
 использование real/socket/replay cameras в одном rig всё ещё требует отдельного mixed source backend.
 
 Для cold/warm source experiments предусмотреть управляемый replay start/cache reset в compiled
 runner: default looping replay может выполнить cold load до первого render. Первый отображённый
 кадр нельзя автоматически считать первым image load; selected-input timing не заменяет worker trace.
+
+
+Обработка OpenCV exceptions camera worker и прерываемое ожидание retry выполнены:
+[[engineering/SOURCES#Восстановление camera worker после ошибки OpenCV]]. Остаются configurable
+retry/timeout policy, restart отдельного worker после release failure и failed-operation/reconnect
+counters; вызовы OpenCV не стали прерываемыми.

@@ -165,4 +165,70 @@ set, а не унаследованы молча от replay. ConfigService до
 
 Отключаемые successful camera/replay work timings, camera driver seam, настоящие RGB conversions
 и PNG loader в GTest, clock/epoch guards и byte-bounded SDK polling: [[engineering/SOURCE_TIMING]].
-Физическая проверка/остановка зависшего V4L2 read и политика exceptions остаются открытыми.
+Обработка OpenCV exceptions и прерываемое ожидание reconnect реализованы ниже; физическая проверка и остановка зависшего V4L2 read остаются открытыми.
+
+
+## Восстановление camera worker после ошибки OpenCV
+
+Рабочий поток перехватывает `cv::Exception` при проверке/открытии устройства, чтении
+и подготовке RGB. Вместо выхода исключения из `std::thread` он публикует Status
+`camera_exception:open`, `camera_exception:read` либо `camera_exception:prepare`, закрывает
+capture и повторяет открытие через 250 мс. Неуспешный read (`false` или пустой Mat)
+сохраняет прежний `camera_read_failed:<path>` и задержку 100 мс. Недоступное устройство
+повторяется через 250 мс. Эти интервалы фиксированы; configurable backoff ещё отсутствует.
+
+Ошибка `close` имеет отдельную политику: `camera_exception:close_worker_stopped` и завершение
+только соответствующего worker, без повторного использования capture с неизвестным состоянием.
+Остальные камеры продолжают работу. Для восстановления остановленного worker сейчас требуется
+перезапуск источника/сервера; команды restart отдельной камеры пока нет. Ошибка release при
+штатном stop тоже перехватывается. Детали `what()` не включаются в сетевой статус.
+
+```plantuml
+@startuml
+start
+repeat
+  :Проверить stop;
+  if (stop?) then (да)
+    :Закрыть capture;
+    :При cv::Exception опубликовать close_worker_stopped;
+    stop
+  endif
+  :Открыть / прочитать / подготовить RGB;
+  if (cv::Exception или read failed?) then (да)
+    :Опубликовать Status;
+    :Закрыть capture;
+    if (Ошибка close?) then (да)
+      :Status close_worker_stopped;
+      stop
+    endif
+    :Прерываемое ожидание retry;
+  else (нет)
+    :Проверить pause / очередь;
+    :Опубликовать валидный Frame;
+  endif
+repeat while (worker работает)
+@enduml
+```
+
+*Рисунок И.3 — Политика восстановления аппаратного camera worker. Неподдерживаемые
+размеры/форматы отклоняются до подготовки и публикации Frame; на диаграмме показана ветвь
+успешной проверки формата.*
+
+Ожидание reconnect использует condition variable и пробуждается при stop всех workers.
+Это убирает обязательное ожидание остатка retry delay, но **не прерывает вызов OpenCV**:
+зависшие `open`, `read` или `release` всё ещё могут задержать join. Исключения выделения памяти
+и произвольные C++ exceptions не объявлены recoverable; обработка относится к `cv::Exception`.
+Status события проходят обычную bounded очередь и не являются надёжным журналом всех ошибок.
+
+Неуспешная операция не создаёт Frame/source_work; существующая sequence продолжает расти
+только при подготовке следующего валидного кадра. Отдельные счётчики ошибок/reconnect и durations
+неуспешных операций пока не добавлены. Это важно при интерпретации телеметрии: наличие timing
+успешного кадра не характеризует предшествующие retry delays.
+
+GTest с подставным CameraCapture проверяет исключения open/read, false/empty read,
+повторное открытие и RGB следующего кадра, отказ close с продолжением соседней камеры,
+исключение close при stop и повторный stop. Это программная проверка lifecycle, без физического
+V4L2-устройства; negotiation, driver timestamps и bounded blocking calls остаются аппаратной
+приёмкой.
+
+Проверка Linux: полная сборка успешна, выбранные CTest 6/6 за 21,17 с (sources, camera_source_config, camera_sources, telemetry_ipc, source_work_timing и telemetry). Source-work executable включает 7 прежних и 6 новых GTest. Полный набор CTest и физические камеры в этом шаге не проверялись.

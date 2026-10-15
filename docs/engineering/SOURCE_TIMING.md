@@ -133,9 +133,11 @@ optional-field compatibility. Live test явно ставит looping replay н�
 в отсутствии old work и делает step для нового cache-hit observation.
 
 Остаются physical V4L2 acceptance (форматы/FPS/backend buffers/timestamps), bounded stop/reconnect
-при зависшем read и политика OpenCV exceptions, failed-operation timings, independent worker event
+при зависшем read, failed-operation timings, independent worker event
 stream/dedup, mixed per-camera sources, separate capture/decode, sync/calibration/seam/send timers,
 levels/subsystem budgets и одинаковый replay для overhead on/off. Измерения успешного selected input
 не доказывают worst-case latency устройства и не заменяют сравнение целевых платформ.
 
 Полная сборка Linux успешна. Итоговый выбранный набор CTest: 7/7 за 53,00 с, включая 7 source-work GTest, 15 telemetry/archive GTest, 20 runtime unit cases, 3 QML cases, 6 live telemetry cases и проверки camera/Unix/TCP/installed consumer. Ранее также прошли регрессионные проверки sources/config/replay/output. Полный набор из 64 CTest, физические V4L2-камеры и приёмка на Авроре в этом шаге не проверялись.
+
+Обработка cv::Exception и прерываемое retry wait добавлены после timing-среза: [[engineering/SOURCES#Восстановление camera worker после ошибки OpenCV]]. Failed-operation timings это не добавляет.
