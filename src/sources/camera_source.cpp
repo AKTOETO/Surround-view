@@ -223,11 +223,6 @@ class CameraFrameSource : public FrameSource
                     continue;
                 }
 
-                if (last_status != "camera_ready:" + dev_path)
-                {
-                    emit_status(camera_id, last_status, "camera_ready:" + dev_path);
-                }
-
                 const uint64_t ts_ns = now_ns();
                 received_count_++;
 
@@ -237,6 +232,7 @@ class CameraFrameSource : public FrameSource
                     emit_status(camera_id, last_status,
                                 "camera_resolution_mismatch:" + std::to_string(frame_mat.cols) +
                                     "x" + std::to_string(frame_mat.rows));
+                    wait_retry(std::chrono::milliseconds(100));
                     continue;
                 }
 
@@ -245,6 +241,7 @@ class CameraFrameSource : public FrameSource
                     dropped_count_++;
                     emit_status(camera_id, last_status,
                                 "camera_unsupported_depth:" + std::to_string(frame_mat.depth()));
+                    wait_retry(std::chrono::milliseconds(100));
                     continue;
                 }
 
@@ -269,6 +266,7 @@ class CameraFrameSource : public FrameSource
                     emit_status(camera_id, last_status,
                                 "camera_unsupported_channels:" +
                                     std::to_string(frame_mat.channels()));
+                    wait_retry(std::chrono::milliseconds(100));
                     continue;
                 }
 
@@ -279,6 +277,7 @@ class CameraFrameSource : public FrameSource
                 img->pixels.assign(rgb.data, rgb.data + rgb.total() * rgb.elemSize());
 
                 const auto prepare_done = timing ? now_ns() : 0;
+                emit_status(camera_id, last_status, "camera_ready:" + dev_path);
                 Frame frame;
                 frame.camera_id = camera_id;
                 frame.sequence = ++camera_sequence;
