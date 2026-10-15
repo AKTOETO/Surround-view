@@ -141,3 +141,8 @@ levels/subsystem budgets и одинаковый replay для overhead on/off. 
 Полная сборка Linux успешна. Итоговый выбранный набор CTest: 7/7 за 53,00 с, включая 7 source-work GTest, 15 telemetry/archive GTest, 20 runtime unit cases, 3 QML cases, 6 live telemetry cases и проверки camera/Unix/TCP/installed consumer. Ранее также прошли регрессионные проверки sources/config/replay/output. Полный набор из 64 CTest, физические V4L2-камеры и приёмка на Авроре в этом шаге не проверялись.
 
 Обработка cv::Exception и прерываемое retry wait добавлены после timing-среза: [[engineering/SOURCES#Восстановление camera worker после ошибки OpenCV]]. Failed-operation timings это не добавляет.
+
+Несовместимый размер/depth/channels теперь вызывает прерываемый retry wait 100 мс без ready;
+ready следует после owned RGB preparation. Отброшенные форматы по-прежнему не дают source_work,
+а retry wait не включён в successful-operation timing.
+[[engineering/SOURCES#Валидность кадра и статус camera_ready]].

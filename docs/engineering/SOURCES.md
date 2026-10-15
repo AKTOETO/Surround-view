@@ -291,3 +291,62 @@ false/empty read и close failure. Live server test использует чет�
 на unavailable paths с настоящим OpenCV adapter, а не физического отключения V4L2-устройства.
 
 Проверки этого дополнения: выбранные CTest двумя наборами — 4/4 за 7,93 с и 3/3 за 49,37 с (source_work_timing, telemetry, simulator_runtime_errors, simulator_configuration_qml, camera_sources, client_transports, telemetry_ipc). Source-work: 13 GTest; telemetry/archive: 18 GTest; runtime: 21 cases; QML: 3 cases; live telemetry: 7 cases. Physical V4L2/Aurora и полный набор CTest не проверялись.
+
+
+## Валидность кадра и статус camera_ready
+
+Исправлена преждевременная публикация ready: ранее непустой результат read уже переключал
+статус в `camera_ready:<path>`, до проверки размера/depth/channels и преобразования RGB.
+Постоянно неверный формат поэтому давал чередование ready → format error на каждом read.
+Теперь ready публикуется только после проверки и создания owned RGB Image. Повторное одинаковое
+состояние подавляется существующим emit_status. Ошибка подготовки OpenCV попадает в прежнюю
+exception/reopen policy; для неё ready не публикуется.
+
+Для resolution mismatch, unsupported depth и unsupported channels добавлено прерываемое ожидание
+100 мс перед следующим read. Capture остаётся открытым; это не reconnect. Задержка защищает от
+неограниченного повторения rejected read при быстро возвращающем backend и даёт восстановиться
+формату без рестарта. Настройка интервала пока отсутствует. Drop остаётся существующим source
+counter; read_failures и opencv_exceptions не растут от одной только несовместимости формата.
+
+```plantuml
+@startuml
+start
+:Непустой кадр после read;
+if (Размер, CV_8U и channels поддержаны?) then (нет)
+  :Увеличить dropped;
+  :Status format error
+подавить повтор одинакового статуса;
+  :Прерываемое ожидание 100 мс;
+  :Следующий read / stop;
+  stop
+else (да)
+  :Подготовить owned RGB Image;
+  :Status camera_ready
+подавить повтор одинакового статуса;
+  :Сформировать Frame / source_work;
+  if (stop / pause / очередь?) then (отклонить)
+    :Не публиковать Frame;
+  else (принять)
+    :Поставить Frame в очередь;
+  endif
+endif
+stop
+@enduml
+```
+
+*Рисунок И.5 — Порядок валидации и ready. Исключения OpenCV обрабатываются по рисунку И.3;
+ready относится к подготовке корректного изображения, а не к доставке клиенту.*
+
+Ready не доказывает синхронизацию четырёх камер, свежесть выбранного набора, вывод результата
+клиенту или отсутствие последующих drop. В частности, pause может блокировать публикацию Frame
+после подготовки валидного изображения. Status проходит bounded очередь и не является
+гарантированной историей каждого перехода.
+
+Три параметризованных GTest используют fake capture с переключением invalid → valid → invalid
+для размера/depth/channels. Проверяются отсутствие ложного ready/Frame, один status при повторной
+ошибке, минимальные retry waits, RGB и первый sequence после восстановления, второй error
+после валидного кадра и отсутствие read/exception counter increments от rejected format.
+Проверка задержки имеет только нижнюю границу и не заявляет real-time deadline или measured
+hardware performance. Physical negotiation и зависший V4L2 read остаются открытыми.
+
+Проверки дополнения: полная Linux сборка и выбранные CTest 5/5 за 6,73 с; source-work executable содержит 16 GTest. Первая попытка sources внутри sandbox получила запрет bind, повтор с разрешёнными локальными сокетами прошёл. Полный набор CTest, физические камеры и Аврора не проверялись.
