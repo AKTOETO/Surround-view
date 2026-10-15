@@ -140,18 +140,7 @@ void TelemetryModel::acceptBatch(const sv::client::TelemetryBatch &batch)
         const bool delayed =
             last_timestamp_ && sample.timestamp_ns - *last_timestamp_ >
                                    uint64_t(catalog_->settings.period_ms) * 2500000ULL;
-        QVariantMap point{
-            {"seconds", double(sample.timestamp_ns - *origin_) / 1e9},
-            {"gap", gap || delayed},
-            {"revision", QString::number(sample.config_revision)},
-            {"cpu",
-             sample.process.cpu_percent ? QVariant(*sample.process.cpu_percent) : QVariant{}},
-            {"rss", sample.process.rss_bytes
-                        ? QVariant(double(*sample.process.rss_bytes) / 1048576.0)
-                        : QVariant{}},
-            {"render", sample.frame && sample.frame->fresh
-                           ? QVariant(sample.frame->spans_ms.at("render_wall").to_number<double>())
-                           : QVariant{}}};
+        const auto point = makePoint(sample, *origin_, gap || delayed);
         points_.append(point);
         samples_.push_back(sample);
         while (points_.size() > 120)

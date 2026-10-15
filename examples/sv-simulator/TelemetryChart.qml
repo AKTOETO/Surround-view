@@ -5,10 +5,11 @@ Column {
     property var points: []
     property string metric
     property string title
+    function axis(value) { return value > 0 && value < 0.01 ? value.toExponential(2) : value.toFixed(2) }
     spacing: 4
-    Text { text: chart.title; color: "#cbd5e0" }
+    Text { width: parent.width; wrapMode: Text.Wrap; text: chart.title; color: "#cbd5e0" }
     Canvas {
-        id: canvas
+        id: canvas; objectName: "telemetryCanvas"
         width: parent.width; height: 110
         property real upper: 1
         onWidthChanged: requestPaint()
@@ -19,12 +20,12 @@ Column {
             ctx.fillStyle = "#111827"
             ctx.fillRect(0, 0, width, height)
             var rows = chart.points
-            var maximum = 1
+            var maximum = 0
             for (var i = 0; i < rows.length; ++i) {
                 var value = rows[i][chart.metric]
                 if (typeof value === "number" && isFinite(value)) maximum = Math.max(maximum, value)
             }
-            upper = maximum * 1.1
+            upper = maximum > 0 ? maximum * 1.1 : 1
             if (!rows.length) return
             var first = rows[0].seconds
             var span = Math.max(0.001, rows[rows.length - 1].seconds - first)
@@ -48,6 +49,7 @@ Column {
             ctx.stroke()
         }
     }
-    Text { text: "Y: 0 … " + canvas.upper.toFixed(2) + " · X: " + (chart.points.length ? chart.points[0].seconds.toFixed(1) + " … " + chart.points[chart.points.length - 1].seconds.toFixed(1) : "—") + " s"; color: "#8e9bb0"; font.pixelSize: 10 }
+    Text { text: "Y: 0 … " + chart.axis(canvas.upper) + " · X: " + (chart.points.length ? chart.points[0].seconds.toFixed(1) + " … " + chart.points[chart.points.length - 1].seconds.toFixed(1) : "—") + " s"; color: "#8e9bb0"; font.pixelSize: 10 }
     onPointsChanged: canvas.requestPaint()
+    onMetricChanged: canvas.requestPaint()
 }

@@ -1,5 +1,7 @@
 #include "sv/client_telemetry_archive.hpp"
 #include "sv/telemetry.hpp"
+#include <boost/version.hpp>
+#include <cmath>
 #include <gtest/gtest.h>
 
 namespace
@@ -53,6 +55,29 @@ TEST(TelemetryArchive, RoundTripRetainsExactIntegersNullsAndRepeatedFrames)
     EXPECT_FALSE(result.samples[1].frame->fresh);
     EXPECT_EQ(result.samples[1].frame->spans_ms, archive.samples[1].frame->spans_ms);
     EXPECT_EQ(result.label, "host sample");
+}
+
+TEST(TelemetryArchive, PreciseParserPreservesFractionalMetricsAcrossRepeatedSaves)
+{
+#if BOOST_VERSION >= 108300
+    auto archive = example();
+    archive.samples[0].frame->spans_ms["fusion_cpu"] = .000001 * 23;
+    archive.samples[1].process.cpu_percent = std::nextafter(.1, 1.0);
+    archive.samples[2].collection_wall_ms = std::nextafter(.000001, 1.0);
+    const auto original = archive;
+    for (unsigned i = 0; i < 5; ++i)
+    {
+        archive =
+            sv::client::parse_telemetry_archive(sv::client::serialize_telemetry_archive(archive));
+    }
+    EXPECT_DOUBLE_EQ(archive.samples[0].frame->spans_ms.at("fusion_cpu").as_double(),
+                     original.samples[0].frame->spans_ms.at("fusion_cpu").as_double());
+    EXPECT_EQ(archive.samples[1].process.cpu_percent, original.samples[1].process.cpu_percent);
+    EXPECT_DOUBLE_EQ(archive.samples[2].collection_wall_ms, original.samples[2].collection_wall_ms);
+#else
+    GTEST_SKIP()
+        << "Boost <1.83 lacks precise number parsing; legacy parser fidelity remains unverified";
+#endif
 }
 
 TEST(TelemetryArchive, TruncatedWindowAndCursorHolesAreDifferentFromTotalLoss)

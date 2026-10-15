@@ -11,6 +11,9 @@
 class TelemetryModel : public QObject
 {
     Q_OBJECT
+    Q_PROPERTY(QVariantList pipelineMetrics READ pipelineMetrics CONSTANT)
+    Q_PROPERTY(QVariantList sourceMetrics READ sourceMetrics CONSTANT)
+    Q_PROPERTY(QString sourceDetails READ sourceDetails NOTIFY changed)
     Q_PROPERTY(bool offline READ offline NOTIFY changed)
     Q_PROPERTY(bool canImport READ canImport NOTIFY changed)
     Q_PROPERTY(bool canExport READ canExport NOTIFY changed)
@@ -57,6 +60,11 @@ class TelemetryModel : public QObject
         return points_;
     }
 
+    QVariantList pipelineMetrics() const;
+    QVariantList sourceMetrics() const;
+    QString sourceDetails() const;
+    Q_INVOKABLE QString metricSummary(const QString &) const;
+
     void attach(const std::shared_ptr<sv::client::Client> &);
     void connected();
     void consume(const sv::Message &);
@@ -71,6 +79,7 @@ class TelemetryModel : public QObject
   private:
 
     friend struct TelemetryModelTestAccess;
+    static QVariantMap makePoint(const sv::client::TelemetrySample &, uint64_t origin, bool gap);
     void poll();
     void acceptCatalog(const sv::client::TelemetryCatalog &);
     void acceptBatch(const sv::client::TelemetryBatch &);

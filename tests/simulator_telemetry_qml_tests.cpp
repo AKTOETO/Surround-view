@@ -44,7 +44,12 @@ struct TelemetryModelTestAccess
             {
                 sample.frame->spans_ms[span] = 0;
             }
-            sample.frame->spans_ms["gpu_draw"] = nullptr;
+            sample.frame->spans_ms["fusion_cpu"] = double(i) * .000001;
+            sample.frame->spans_ms["gpu_draw"] =
+                i % 2 ? boost::json::value(.20) : boost::json::value(nullptr);
+            sample.frame->input_age_at_render_ms = 50 + i;
+            sample.source.queued_batches = i % 4;
+            sample.data_busy = i % 4 == 0;
             sample.frame->spans_ms["render_wall"] = double(15 + i % 5);
             batch.samples.push_back(sample);
         }
@@ -81,9 +86,41 @@ TEST(SimulatorTelemetryQml, RendersTabsMissingMetricsAndFreshFramesWithoutWarnin
         QTimer::singleShot(100, &loop, &QEventLoop::quit);
         loop.exec();
     };
-    for (int i = 0; i < 3; ++i)
+    for (int i = 0; i < 5; ++i)
     {
         tabs->setProperty("currentIndex", i);
+        draw();
+    }
+    tabs->setProperty("currentIndex", 3);
+    auto *stage_choice = object->findChild<QObject *>("pipelineMetricChoice");
+    ASSERT_TRUE(stage_choice);
+    for (int i = 0; i < model.pipelineMetrics().size(); ++i)
+    {
+        stage_choice->setProperty("currentIndex", i);
+        draw();
+    }
+    stage_choice->setProperty("currentIndex", 3); // Tiny fusion durations remain visible.
+    draw();
+    auto *stage_chart = object->findChild<QObject *>("pipelineMetricChoiceChart");
+    ASSERT_TRUE(stage_chart);
+    auto *canvas = stage_chart->findChild<QObject *>("telemetryCanvas");
+    ASSERT_TRUE(canvas);
+    EXPECT_GT(canvas->property("upper").toDouble(), 0);
+    EXPECT_LT(canvas->property("upper").toDouble(), .001);
+    const auto stage_screenshot = qEnvironmentVariable("SV_TELEMETRY_STAGE_SCREENSHOT");
+    if (!stage_screenshot.isEmpty())
+    {
+        window.resize(430, 1100);
+        draw();
+        ASSERT_TRUE(window.grabWindow().save(stage_screenshot));
+        window.resize(430, 840);
+    }
+    tabs->setProperty("currentIndex", 4);
+    auto *source_choice = object->findChild<QObject *>("sourceMetricChoice");
+    ASSERT_TRUE(source_choice);
+    for (int i = 0; i < model.sourceMetrics().size(); ++i)
+    {
+        source_choice->setProperty("currentIndex", i);
         draw();
     }
     tabs->setProperty("currentIndex", 0);

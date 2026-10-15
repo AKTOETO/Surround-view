@@ -6,6 +6,7 @@
 #include <QTemporaryDir>
 #include <QThread>
 #include <algorithm>
+#include <functional>
 #include <gtest/gtest.h>
 
 extern sv::client::Endpoint simulator_runtime_endpoint;
@@ -23,7 +24,8 @@ struct TelemetryModelTestAccess
         model.acceptCatalog(catalog);
     }
 
-    static void batch(TelemetryModel &model, uint64_t first, uint64_t count, uint64_t lost = 0)
+    static void batch(TelemetryModel &model, uint64_t first, uint64_t count, uint64_t lost = 0,
+                      const std::function<void(sv::client::TelemetrySample &)> &modify = {})
     {
         sv::client::TelemetryBatch batch;
         batch.server_instance_id = "instance";
@@ -47,6 +49,10 @@ struct TelemetryModelTestAccess
             }
             sample.frame->spans_ms["gpu_draw"] = nullptr;
             sample.frame->spans_ms["render_wall"] = double(i);
+            if (modify)
+            {
+                modify(sample);
+            }
             batch.samples.push_back(sample);
         }
         batch.next_cursor = first + count - 1;
@@ -133,6 +139,76 @@ TEST(TelemetryUnit, TelemetryCorrelatesTransportFailuresAndIgnoresUnrelatedRepli
     model.commandFailed({{"command_id", "7"}}, "not_ready_or_queue_full");
     EXPECT_FALSE(TelemetryModelTestAccess::pending(model));
     EXPECT_TRUE(model.status().contains("не подтверждено"));
+}
+
+TEST(TelemetryUnit, PipelineSpansOnlyUseFreshFramesAndKeepTinyDurations)
+{
+    TelemetryModel model;
+    TelemetryModelTestAccess::catalog(model);
+    TelemetryModelTestAccess::batch(
+        model, 1, 3, 0,
+        [](auto &sample)
+        {
+            sample.frame->spans_ms["fusion_cpu"] = double(sample.cursor) * .000001;
+            sample.frame->spans_ms["gpu_draw"] =
+                sample.cursor == 1 ? boost::json::value(.25) : boost::json::value(nullptr);
+            sample.frame->input_age_at_render_ms = 42;
+        });
+    const auto rows = model.points();
+    EXPECT_DOUBLE_EQ(rows[0].toMap().value("fusion_cpu").toDouble(), .000001);
+    EXPECT_FALSE(rows[1].toMap().value("fusion_cpu").isValid());
+    EXPECT_FALSE(rows[1].toMap().value("input_age_at_render").isValid());
+    EXPECT_FALSE(rows[2].toMap().value("gpu_draw").isValid());
+    EXPECT_DOUBLE_EQ(rows[0].toMap().value("input_age_at_render").toDouble(), 42);
+    EXPECT_TRUE(model.metricSummary("fusion_cpu").contains("n=2"));
+    EXPECT_TRUE(model.metricSummary("gpu_draw").contains("n=1"));
+    EXPECT_TRUE(model.metricSummary("revision").contains("Нет пригодных"));
+    EXPECT_EQ(model.pipelineMetrics().size(), 10);
+}
+
+TEST(TelemetryUnit, DeliveryGaugesAndRecordAgeContinueForRepeatedFrames)
+{
+    TelemetryModel model;
+    TelemetryModelTestAccess::catalog(model);
+    TelemetryModelTestAccess::batch(model, 1, 2, 0,
+                                    [](auto &sample)
+                                    {
+                                        sample.paused = true;
+                                        sample.data_ready = true;
+                                        sample.data_busy = true;
+                                        sample.frame->fresh = false;
+                                        sample.frame->timestamp_ns = 10000000;
+                                        sample.collection_wall_ms = .012;
+                                        sample.source.queued_batches =
+                                            sample.cursor == 1 ? (uint64_t(1) << 53) + 1 : 2;
+                                        sample.source.received = UINT64_MAX;
+                                    });
+    const auto first = model.points().first().toMap();
+    const auto last = model.points().last().toMap();
+    EXPECT_FALSE(first.value("queued_batches").isValid());
+    EXPECT_DOUBLE_EQ(last.value("queued_batches").toDouble(), 2);
+    EXPECT_DOUBLE_EQ(first.value("frame_record_age").toDouble(), 40);
+    EXPECT_DOUBLE_EQ(last.value("frame_record_age").toDouble(), 90);
+    EXPECT_DOUBLE_EQ(last.value("data_busy").toDouble(), 1);
+    EXPECT_DOUBLE_EQ(last.value("paused").toDouble(), 1);
+    EXPECT_DOUBLE_EQ(last.value("collection_wall").toDouble(), .012);
+    EXPECT_FALSE(last.value("render_wall").isValid());
+    EXPECT_TRUE(model.sourceDetails().contains(QString::number(UINT64_MAX)));
+    model.clear();
+    EXPECT_TRUE(model.sourceDetails().contains("Нет source"));
+    EXPECT_EQ(model.sourceMetrics().size(), 6);
+}
+
+TEST(TelemetryUnit, NoRenderRecordProducesMissingFrameMetrics)
+{
+    TelemetryModel model;
+    TelemetryModelTestAccess::catalog(model);
+    TelemetryModelTestAccess::batch(model, 1, 1, 0, [](auto &sample) { sample.frame.reset(); });
+    const auto first = model.points().first().toMap();
+    EXPECT_FALSE(first.value("frame_record_age").isValid());
+    EXPECT_FALSE(first.value("source_poll").isValid());
+    EXPECT_TRUE(first.value("queued_batches").isValid());
+    EXPECT_TRUE(model.metricSummary("source_poll").contains("Нет пригодных"));
 }
 
 TEST(TelemetryUnit, FileRoundTripPreservesWindowAndInvalidImportIsAtomic)

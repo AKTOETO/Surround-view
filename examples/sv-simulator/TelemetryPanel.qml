@@ -48,12 +48,20 @@ Column {
         TabButton { text: "CPU" }
         TabButton { text: "Память" }
         TabButton { text: "Render" }
+        TabButton { text: "Этапы" }
+        TabButton { text: "I/O" }
     }
     StackLayout {
-        width: parent.width; height: 155; currentIndex: tabs.currentIndex
+        width: parent.width; height: tabs.currentIndex < 3 ? 155 : tabs.currentIndex === 3 ? stages.implicitHeight : io.implicitHeight; currentIndex: tabs.currentIndex
         TelemetryChart { points: panel.model.points; metric: "cpu"; title: "CPU, % (100% = одно ядро)" }
         TelemetryChart { points: panel.model.points; metric: "rss"; title: "Current RSS, MiB (приближённо)" }
         TelemetryChart { points: panel.model.points; metric: "render"; title: "Render wall, мс (fresh frames)" }
+        TelemetryMetricPanel { id: stages; model: panel.model; choices: panel.model.pipelineMetrics; choiceName: "pipelineMetricChoice" }
+        Column {
+            id: io; spacing: 7
+            TelemetryMetricPanel { width: parent.width; model: panel.model; choices: panel.model.sourceMetrics; choiceName: "sourceMetricChoice"; quantiles: false }
+            Text { width: parent.width; text: panel.model.sourceDetails; color: "#cbd5e0"; wrapMode: Text.Wrap }
+        }
     }
     Text {
         width: parent.width; color: "#8e9bb0"; wrapMode: Text.Wrap

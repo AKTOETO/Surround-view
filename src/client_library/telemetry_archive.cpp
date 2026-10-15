@@ -1,4 +1,5 @@
 #include "sv/client_telemetry_archive.hpp"
+#include <boost/version.hpp>
 #include <stdexcept>
 
 namespace sv::client
@@ -81,7 +82,12 @@ TelemetryArchive parse_telemetry_archive(std::string_view text)
     {
         throw std::length_error("telemetry_archive_too_large");
     }
-    const auto root = boost::json::parse(text);
+    boost::json::parse_options options;
+#if BOOST_VERSION >= 108300
+    // Local report fidelity only; do not silently change protocol/config/research parsing.
+    options.numbers = boost::json::number_precision::precise;
+#endif
+    const auto root = boost::json::parse(text, {}, options);
     const auto &object = root.as_object();
     if (object.at("schema_version").as_int64() != 1 ||
         object.at("kind").as_string() != "sv_telemetry_window")

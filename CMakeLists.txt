@@ -361,7 +361,7 @@ if(BUILD_TESTING AND SV_GTEST_TESTS)
       examples/sv-simulator/configuration_editor.hpp examples/sv-simulator/configuration_editor.cpp
       examples/sv-simulator/configuration_draft.cpp examples/sv-simulator/configuration_surface.cpp examples/sv-simulator/configuration_operation.cpp
       tests/simulator_configuration_tests.cpp tests/simulator_telemetry_tests.cpp
-      examples/sv-simulator/telemetry_model.cpp examples/sv-simulator/telemetry_files.cpp examples/sv-simulator/telemetry_model.hpp)
+      examples/sv-simulator/telemetry_model.cpp examples/sv-simulator/telemetry_metrics.cpp examples/sv-simulator/telemetry_files.cpp examples/sv-simulator/telemetry_model.hpp)
     set_target_properties(sv-simulator-runtime-tests PROPERTIES AUTOMOC ON)
     target_include_directories(sv-simulator-runtime-tests PRIVATE examples/sv-simulator)
     target_link_libraries(sv-simulator-runtime-tests PRIVATE
@@ -369,7 +369,7 @@ if(BUILD_TESTING AND SV_GTEST_TESTS)
     add_test(NAME simulator_runtime_errors COMMAND sv-simulator-runtime-tests --unit)
     add_executable(sv-simulator-session-tests tests/simulator_session_tests.cpp
       examples/sv-client/bridge.cpp examples/sv-client/bridge.hpp
-      examples/sv-simulator/telemetry_model.cpp examples/sv-simulator/telemetry_files.cpp examples/sv-simulator/telemetry_model.hpp
+      examples/sv-simulator/telemetry_model.cpp examples/sv-simulator/telemetry_metrics.cpp examples/sv-simulator/telemetry_files.cpp examples/sv-simulator/telemetry_model.hpp
       examples/sv-simulator/simulator_bridge.cpp examples/sv-simulator/simulator_bridge.hpp
       examples/sv-simulator/runtime_settings.cpp examples/sv-simulator/runtime_settings.hpp
       examples/sv-simulator/ipc_discovery.cpp
@@ -383,7 +383,7 @@ if(BUILD_TESTING AND SV_GTEST_TESTS)
     if(SV_SIMULATOR)
       add_executable(sv-simulator-configuration-qml-tests tests/simulator_configuration_qml_tests.cpp
         tests/simulator_drive_world_qml_tests.cpp tests/simulator_telemetry_qml_tests.cpp
-        examples/sv-simulator/telemetry_model.cpp examples/sv-simulator/telemetry_files.cpp examples/sv-simulator/telemetry_model.hpp
+        examples/sv-simulator/telemetry_model.cpp examples/sv-simulator/telemetry_metrics.cpp examples/sv-simulator/telemetry_files.cpp examples/sv-simulator/telemetry_model.hpp
         examples/sv-simulator/configuration_editor.hpp examples/sv-simulator/configuration_editor.cpp
         examples/sv-simulator/configuration_draft.cpp examples/sv-simulator/configuration_surface.cpp examples/sv-simulator/configuration_operation.cpp
         examples/sv-simulator/simulator.qrc)

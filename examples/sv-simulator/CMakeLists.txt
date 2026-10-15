@@ -22,6 +22,7 @@ add_executable(sv-simulator
     ipc_discovery.cpp
     ipc_discovery.hpp
     telemetry_model.cpp
+    telemetry_metrics.cpp
     telemetry_files.cpp
     telemetry_model.hpp
     simulator_bridge.cpp
