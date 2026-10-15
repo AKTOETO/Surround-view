@@ -11,6 +11,7 @@ TelemetryModel::TelemetryModel()
 void TelemetryModel::resetHistory()
 {
     points_.clear();
+    samples_.clear();
     origin_.reset();
     last_timestamp_.reset();
     cursor_ = lost_ = 0;
@@ -21,7 +22,7 @@ void TelemetryModel::attach(const std::shared_ptr<sv::client::Client> &client)
 {
     timer_.stop();
     client_ = client;
-    connected_ = supported_ = false;
+    connected_ = supported_ = offline_ = false;
     catalog_id_ = read_id_ = 0;
     catalog_.reset();
     resetHistory();
@@ -41,6 +42,12 @@ void TelemetryModel::connected()
 
 void TelemetryModel::setMonitoring(bool enabled)
 {
+    if (offline_ && enabled)
+    {
+        status_ = "Offline report: подключитесь к серверу для live чтения";
+        emit changed();
+        return;
+    }
     monitoring_ = enabled;
     if (enabled && connected_)
     {
@@ -59,6 +66,7 @@ void TelemetryModel::clear()
 {
     // Preserve cursor/time baseline: local clear must not replay the server's history.
     points_.clear();
+    samples_.clear();
     updateSummary();
     emit changed();
 }
@@ -145,9 +153,11 @@ void TelemetryModel::acceptBatch(const sv::client::TelemetryBatch &batch)
                            ? QVariant(sample.frame->spans_ms.at("render_wall").to_number<double>())
                            : QVariant{}}};
         points_.append(point);
+        samples_.push_back(sample);
         while (points_.size() > 120)
         {
             points_.removeFirst();
+            samples_.pop_front();
         }
         gap = false;
         last_timestamp_ = sample.timestamp_ns;

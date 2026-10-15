@@ -5,6 +5,8 @@
         <file>RuntimePanel.qml</file>
         <file>TelemetryPanel.qml</file>
         <file>TelemetryChart.qml</file>
+        <file>TelemetryFilesQt6.qml</file>
+        <file>TelemetryFilesQt5.qml</file>
         <file>SurfacePanel.qml</file>
         <file>SupportPanel.qml</file>
         <file>OcclusionPanel.qml</file>

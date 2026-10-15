@@ -1,4 +1,5 @@
 #include "sv/client.hpp"
+#include "sv/client_telemetry_archive.hpp"
 #include <chrono>
 #include <condition_variable>
 #include <deque>

@@ -1,12 +1,15 @@
 #include "qml_warning_capture.hpp"
 #include "telemetry_model.hpp"
 #include <QEventLoop>
+#include <QFileInfo>
 #include <QGuiApplication>
 #include <QImage>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QQuickItem>
 #include <QQuickWindow>
+#include <QTemporaryDir>
+#include <QTimer>
 #include <gtest/gtest.h>
 
 struct TelemetryModelTestAccess
@@ -15,6 +18,8 @@ struct TelemetryModelTestAccess
     {
         sv::client::TelemetryCatalog catalog;
         catalog.server_instance_id = "qml-fixture";
+        catalog.clock_domain = "server_steady_clock_ns";
+        catalog.cpu_percent_basis = "one_logical_cpu_100_percent";
         catalog.settings = {true, 100, 128};
         model.acceptCatalog(catalog);
         sv::client::TelemetryBatch batch;
@@ -33,6 +38,13 @@ struct TelemetryModelTestAccess
             sample.process.rss_bytes = (120 + i) * 1048576;
             sample.frame.emplace();
             sample.frame->fresh = i % 3 != 0;
+            for (const auto *span :
+                 {"source_poll", "pre_render_prepare", "fusion_cpu", "layer_readback_cpu",
+                  "upload_cpu", "readback_copy_cpu", "publish_enqueue"})
+            {
+                sample.frame->spans_ms[span] = 0;
+            }
+            sample.frame->spans_ms["gpu_draw"] = nullptr;
             sample.frame->spans_ms["render_wall"] = double(15 + i % 5);
             batch.samples.push_back(sample);
         }
@@ -46,6 +58,7 @@ TEST(SimulatorTelemetryQml, RendersTabsMissingMetricsAndFreshFramesWithoutWarnin
     TelemetryModel model;
     TelemetryModelTestAccess::seed(model);
     QQmlApplicationEngine engine;
+    engine.rootContext()->setContextProperty("simulatorQtMajorVersion", QT_VERSION_MAJOR);
     engine.rootContext()->setContextProperty("telemetryModel", &model);
     QQmlComponent component(&engine, QUrl("qrc:/TelemetryPanel.qml"));
     std::unique_ptr<QObject> object(component.create());
@@ -53,7 +66,7 @@ TEST(SimulatorTelemetryQml, RendersTabsMissingMetricsAndFreshFramesWithoutWarnin
     auto *item = qobject_cast<QQuickItem *>(object.get());
     ASSERT_TRUE(item);
     QQuickWindow window;
-    window.resize(430, 640);
+    window.resize(430, 840);
     window.setColor(QColor("#1a1f2c"));
     item->setParentItem(window.contentItem());
     item->setWidth(390);
@@ -74,6 +87,31 @@ TEST(SimulatorTelemetryQml, RendersTabsMissingMetricsAndFreshFramesWithoutWarnin
         draw();
     }
     tabs->setProperty("currentIndex", 0);
+    draw();
+    auto *loader = object->findChild<QObject *>("telemetryFilesLoader");
+    ASSERT_TRUE(loader);
+    ASSERT_EQ(loader->property("status").toInt(), 1); // Ready
+    auto *dialogs = loader->property("item").value<QObject *>();
+    ASSERT_TRUE(dialogs);
+#if QT_VERSION_MAJOR >= 6
+    ASSERT_TRUE(QMetaObject::invokeMethod(dialogs, "open"));
+    draw();
+    auto *open = dialogs->findChild<QObject *>("telemetryOpenDialog");
+    ASSERT_TRUE(open);
+    EXPECT_TRUE(open->property("visible").toBool());
+    ASSERT_TRUE(QMetaObject::invokeMethod(open, "reject"));
+    draw();
+#endif
+    QTemporaryDir directory;
+    const auto report = QUrl::fromLocalFile(directory.filePath("window.json"));
+    const auto before = model.points();
+    ASSERT_TRUE(
+        QMetaObject::invokeMethod(dialogs, "chosen", Q_ARG(QUrl, report), Q_ARG(bool, true)));
+    ASSERT_TRUE(QFileInfo::exists(report.toLocalFile())) << model.status().toStdString();
+    ASSERT_TRUE(
+        QMetaObject::invokeMethod(dialogs, "chosen", Q_ARG(QUrl, report), Q_ARG(bool, false)));
+    EXPECT_TRUE(model.offline()) << model.status().toStdString();
+    EXPECT_EQ(model.points(), before);
     draw();
     const auto screenshot = qEnvironmentVariable("SV_TELEMETRY_SCREENSHOT");
     if (!screenshot.isEmpty())

@@ -68,7 +68,7 @@ add_library(sv-wire STATIC src/core/protocol.cpp src/core/output_product.cpp)
 set_target_properties(sv-wire PROPERTIES EXPORT_NAME wire)
 target_include_directories(sv-wire PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 target_link_libraries(sv-wire PUBLIC Boost::json)
-add_library(sv-client-lib STATIC src/client_library/client.cpp src/client_library/output.cpp src/client_library/source_disagreement.cpp src/client_library/configuration.cpp src/client_library/telemetry.cpp)
+add_library(sv-client-lib STATIC src/client_library/client.cpp src/client_library/output.cpp src/client_library/source_disagreement.cpp src/client_library/configuration.cpp src/client_library/telemetry.cpp src/client_library/telemetry_archive.cpp)
 add_library(sv::client ALIAS sv-client-lib)
 add_executable(sv-client-probe tests/fixtures/client-consumer/main.cpp)
 target_link_libraries(sv-client-probe PRIVATE sv-client-lib)
@@ -79,7 +79,7 @@ set_target_properties(sv-client-lib PROPERTIES EXPORT_NAME client)
 target_include_directories(sv-client-lib PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 target_link_libraries(sv-client-lib PUBLIC sv-wire Threads::Threads)
 install(TARGETS sv-wire sv-client-lib EXPORT svClientTargets ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
-install(FILES include/sv/fallback_display.hpp include/sv/client.hpp include/sv/client_configuration.hpp include/sv/client_telemetry.hpp include/sv/protocol.hpp include/sv/client_output.hpp include/sv/render_support.hpp include/sv/output_product.hpp include/sv/source_visibility.hpp DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/sv)
+install(FILES include/sv/fallback_display.hpp include/sv/client.hpp include/sv/client_configuration.hpp include/sv/client_telemetry.hpp include/sv/client_telemetry_archive.hpp include/sv/protocol.hpp include/sv/client_output.hpp include/sv/render_support.hpp include/sv/output_product.hpp include/sv/source_visibility.hpp DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/sv)
 install(EXPORT svClientTargets NAMESPACE sv:: DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/svClient)
 include(CMakePackageConfigHelpers)
 configure_package_config_file(cmake/svClientConfig.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/svClientConfig.cmake INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/svClient)
@@ -341,7 +341,7 @@ if(BUILD_TESTING AND SV_GTEST_TESTS)
   target_compile_definitions(sv-config-store-tests PRIVATE
     SV_TEST_CONFIG_PATH="${CMAKE_CURRENT_SOURCE_DIR}/configs/synthetic.json")
   add_test(NAME config_store_persistence COMMAND sv-config-store-tests)
-  add_executable(sv-telemetry-tests tests/telemetry_tests.cpp)
+  add_executable(sv-telemetry-tests tests/telemetry_tests.cpp tests/telemetry_archive_tests.cpp)
   target_link_libraries(sv-telemetry-tests PRIVATE sv-core sv-client-lib GTest::gtest_main)
   target_compile_definitions(sv-telemetry-tests PRIVATE SV_TEST_CONFIG_PATH="${CMAKE_CURRENT_SOURCE_DIR}/configs/synthetic.json")
   add_test(NAME telemetry COMMAND sv-telemetry-tests)
@@ -361,7 +361,7 @@ if(BUILD_TESTING AND SV_GTEST_TESTS)
       examples/sv-simulator/configuration_editor.hpp examples/sv-simulator/configuration_editor.cpp
       examples/sv-simulator/configuration_draft.cpp examples/sv-simulator/configuration_surface.cpp examples/sv-simulator/configuration_operation.cpp
       tests/simulator_configuration_tests.cpp tests/simulator_telemetry_tests.cpp
-      examples/sv-simulator/telemetry_model.cpp examples/sv-simulator/telemetry_model.hpp)
+      examples/sv-simulator/telemetry_model.cpp examples/sv-simulator/telemetry_files.cpp examples/sv-simulator/telemetry_model.hpp)
     set_target_properties(sv-simulator-runtime-tests PROPERTIES AUTOMOC ON)
     target_include_directories(sv-simulator-runtime-tests PRIVATE examples/sv-simulator)
     target_link_libraries(sv-simulator-runtime-tests PRIVATE
@@ -369,7 +369,7 @@ if(BUILD_TESTING AND SV_GTEST_TESTS)
     add_test(NAME simulator_runtime_errors COMMAND sv-simulator-runtime-tests --unit)
     add_executable(sv-simulator-session-tests tests/simulator_session_tests.cpp
       examples/sv-client/bridge.cpp examples/sv-client/bridge.hpp
-      examples/sv-simulator/telemetry_model.cpp examples/sv-simulator/telemetry_model.hpp
+      examples/sv-simulator/telemetry_model.cpp examples/sv-simulator/telemetry_files.cpp examples/sv-simulator/telemetry_model.hpp
       examples/sv-simulator/simulator_bridge.cpp examples/sv-simulator/simulator_bridge.hpp
       examples/sv-simulator/runtime_settings.cpp examples/sv-simulator/runtime_settings.hpp
       examples/sv-simulator/ipc_discovery.cpp
@@ -383,7 +383,7 @@ if(BUILD_TESTING AND SV_GTEST_TESTS)
     if(SV_SIMULATOR)
       add_executable(sv-simulator-configuration-qml-tests tests/simulator_configuration_qml_tests.cpp
         tests/simulator_drive_world_qml_tests.cpp tests/simulator_telemetry_qml_tests.cpp
-        examples/sv-simulator/telemetry_model.cpp examples/sv-simulator/telemetry_model.hpp
+        examples/sv-simulator/telemetry_model.cpp examples/sv-simulator/telemetry_files.cpp examples/sv-simulator/telemetry_model.hpp
         examples/sv-simulator/configuration_editor.hpp examples/sv-simulator/configuration_editor.cpp
         examples/sv-simulator/configuration_draft.cpp examples/sv-simulator/configuration_surface.cpp examples/sv-simulator/configuration_operation.cpp
         examples/sv-simulator/simulator.qrc)

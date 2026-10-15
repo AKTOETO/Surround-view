@@ -2,6 +2,8 @@
 #include "telemetry_model.hpp"
 #include <QCoreApplication>
 #include <QElapsedTimer>
+#include <QFile>
+#include <QTemporaryDir>
 #include <QThread>
 #include <algorithm>
 #include <gtest/gtest.h>
@@ -14,6 +16,8 @@ struct TelemetryModelTestAccess
     {
         sv::client::TelemetryCatalog catalog;
         catalog.server_instance_id = "instance";
+        catalog.clock_domain = "server_steady_clock_ns";
+        catalog.cpu_percent_basis = "one_logical_cpu_100_percent";
         catalog.epoch = epoch;
         catalog.settings = {true, 50, 8};
         model.acceptCatalog(catalog);
@@ -35,6 +39,13 @@ struct TelemetryModelTestAccess
             sample.process.rss_bytes = 1048576;
             sample.frame.emplace();
             sample.frame->fresh = i % 2 == 1;
+            for (const auto *span :
+                 {"source_poll", "pre_render_prepare", "render_wall", "fusion_cpu",
+                  "layer_readback_cpu", "upload_cpu", "readback_copy_cpu", "publish_enqueue"})
+            {
+                sample.frame->spans_ms[span] = 0;
+            }
+            sample.frame->spans_ms["gpu_draw"] = nullptr;
             sample.frame->spans_ms["render_wall"] = double(i);
             batch.samples.push_back(sample);
         }
@@ -124,6 +135,74 @@ TEST(TelemetryUnit, TelemetryCorrelatesTransportFailuresAndIgnoresUnrelatedRepli
     EXPECT_TRUE(model.status().contains("не подтверждено"));
 }
 
+TEST(TelemetryUnit, FileRoundTripPreservesWindowAndInvalidImportIsAtomic)
+{
+    QTemporaryDir directory;
+    ASSERT_TRUE(directory.isValid());
+    const auto url = QUrl::fromLocalFile(directory.filePath("window.json"));
+    TelemetryModel live;
+    TelemetryModelTestAccess::catalog(live);
+    TelemetryModelTestAccess::batch(live, 1, 4);
+    TelemetryModelTestAccess::batch(live, 7, 2, 2);
+    ASSERT_TRUE(live.saveReport(url, "window test")) << live.status().toStdString();
+    TelemetryModel restored;
+    ASSERT_TRUE(restored.loadReport(url)) << restored.status().toStdString();
+    EXPECT_TRUE(restored.offline());
+    EXPECT_EQ(restored.points(), live.points());
+    EXPECT_EQ(restored.summary(), live.summary());
+    const auto before = restored.points();
+    QFile file(url.toLocalFile());
+    ASSERT_TRUE(file.open(QIODevice::WriteOnly));
+    file.write("{broken");
+    file.close();
+    EXPECT_FALSE(restored.loadReport(url));
+    EXPECT_EQ(restored.points(), before);
+    EXPECT_TRUE(restored.offline());
+    restored.setMonitoring(true);
+    EXPECT_FALSE(restored.monitoring());
+    restored.attach({});
+    EXPECT_FALSE(restored.offline());
+    EXPECT_TRUE(restored.points().empty());
+}
+
+TEST(TelemetryUnit, TruncatedWindowRoundTripPreservesAbsoluteOriginAndTotalLoss)
+{
+    QTemporaryDir directory;
+    TelemetryModel model;
+    TelemetryModelTestAccess::catalog(model);
+    for (uint64_t first = 1; first <= 130; first += 16)
+    {
+        TelemetryModelTestAccess::batch(model, first, std::min<uint64_t>(16, 131 - first));
+    }
+    const auto url = QUrl::fromLocalFile(directory.filePath("truncated.json"));
+    ASSERT_TRUE(model.saveReport(url, "retained window")) << model.status().toStdString();
+    TelemetryModel restored;
+    ASSERT_TRUE(restored.loadReport(url)) << restored.status().toStdString();
+    EXPECT_EQ(restored.points(), model.points());
+    EXPECT_EQ(restored.summary(), model.summary());
+    EXPECT_GT(restored.points().first().toMap().value("seconds").toDouble(), 0);
+}
+
+TEST(TelemetryUnit, LocalClearDoesNotReexportOldSamplesAndWriteFailurePreservesGraph)
+{
+    QTemporaryDir directory;
+    TelemetryModel model;
+    TelemetryModelTestAccess::catalog(model);
+    TelemetryModelTestAccess::batch(model, 1, 3);
+    const auto before = model.points();
+    EXPECT_FALSE(
+        model.saveReport(QUrl::fromLocalFile(directory.path()), "cannot replace directory"));
+    EXPECT_EQ(model.points(), before);
+    EXPECT_FALSE(model.loadReport(QUrl("https://example.invalid/report.json")));
+    model.clear();
+    const auto url = QUrl::fromLocalFile(directory.filePath("empty.json"));
+    ASSERT_TRUE(model.saveReport(url, ""));
+    TelemetryModel restored;
+    ASSERT_TRUE(restored.loadReport(url));
+    EXPECT_TRUE(restored.points().empty());
+    EXPECT_EQ(TelemetryModelTestAccess::cursor(restored), 3U);
+}
+
 namespace
 {
 bool waitForTelemetry(const std::function<bool()> &done)
@@ -202,6 +281,14 @@ TEST(SimulatorRuntime, TelemetryEditorHotApplyAndTypedPolling)
     model.setMonitoring(true);
     ASSERT_TRUE(waitForTelemetry([&] { return !model.points().empty() || !failure.isEmpty(); }));
     EXPECT_TRUE(failure.isEmpty()) << failure.toStdString();
+    QTemporaryDir report_directory;
+    const auto report_url = QUrl::fromLocalFile(report_directory.filePath("live.json"));
+    ASSERT_TRUE(model.saveReport(report_url, "live transport")) << model.status().toStdString();
+    TelemetryModel offline;
+    ASSERT_TRUE(offline.loadReport(report_url)) << offline.status().toStdString();
+    EXPECT_EQ(offline.points(), model.points());
+    EXPECT_FALSE(
+        model.loadReport(report_url)); // A live attached client must be disconnected first.
     model.setMonitoring(false);
     for (auto it = original.begin(); it != original.end(); ++it)
     {

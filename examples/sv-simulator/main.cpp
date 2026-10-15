@@ -104,6 +104,7 @@ int main(int argc, char **argv)
     }
 
     QQmlApplicationEngine engine;
+    engine.rootContext()->setContextProperty("simulatorQtMajorVersion", QT_VERSION_MAJOR);
     engine.addImageProvider(QStringLiteral("frames"), provider);
     engine.rootContext()->setContextProperty(QStringLiteral("bridge"), &bridge);
     engine.rootContext()->setContextProperty(QStringLiteral("runtimeSettings"),
