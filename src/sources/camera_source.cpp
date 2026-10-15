@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <atomic>
 #include <chrono>
+#include <condition_variable>
 #include <deque>
 #include <filesystem>
 #include <mutex>
@@ -152,6 +153,7 @@ class CameraFrameSource : public FrameSource
             }
             stopped_ = true;
         }
+        wake_.notify_all();
         for (auto &worker : workers_)
         {
             if (worker.joinable())
@@ -182,146 +184,184 @@ class CameraFrameSource : public FrameSource
                 }
             }
 
-            if (!cap.is_open())
+            const char *phase = "open";
+            try
             {
-                if (!cap.open(dev_path, cam_cfg.width, cam_cfg.height))
+                if (!cap.is_open())
                 {
-                    emit_status(camera_id, last_status, "camera_unavailable:" + dev_path);
-                    std::this_thread::sleep_for(std::chrono::milliseconds(250));
+                    if (!cap.open(dev_path, cam_cfg.width, cam_cfg.height))
+                    {
+                        emit_status(camera_id, last_status, "camera_unavailable:" + dev_path);
+                        wait_retry(std::chrono::milliseconds(250));
+                        continue;
+                    }
+                }
+
+                phase = "read";
+                const auto timing = timing_.get();
+                const auto read_start = timing ? now_ns() : 0;
+                const bool read_ok = cap.read(frame_mat);
+                const auto read_done = timing ? now_ns() : 0;
+                if (!read_ok || frame_mat.empty())
+                {
+                    emit_status(camera_id, last_status, "camera_read_failed:" + dev_path);
+                    if (!close_capture(cap, camera_id, last_status))
+                    {
+                        return;
+                    }
+                    wait_retry(std::chrono::milliseconds(100));
                     continue;
                 }
-            }
 
-            const auto timing = timing_.get();
-            const auto read_start = timing ? now_ns() : 0;
-            const bool read_ok = cap.read(frame_mat);
-            const auto read_done = timing ? now_ns() : 0;
-            if (!read_ok || frame_mat.empty())
-            {
-                emit_status(camera_id, last_status, "camera_read_failed:" + dev_path);
-                cap.close();
-                std::this_thread::sleep_for(std::chrono::milliseconds(100));
-                continue;
-            }
-
-            if (last_status != "camera_ready:" + dev_path)
-            {
-                emit_status(camera_id, last_status, "camera_ready:" + dev_path);
-            }
-
-            const uint64_t ts_ns = now_ns();
-            received_count_++;
-
-            if (frame_mat.cols != cam_cfg.width || frame_mat.rows != cam_cfg.height)
-            {
-                dropped_count_++;
-                emit_status(camera_id, last_status,
-                            "camera_resolution_mismatch:" + std::to_string(frame_mat.cols) + "x" +
-                                std::to_string(frame_mat.rows));
-                continue;
-            }
-
-            if (frame_mat.depth() != CV_8U)
-            {
-                dropped_count_++;
-                emit_status(camera_id, last_status,
-                            "camera_unsupported_depth:" + std::to_string(frame_mat.depth()));
-                continue;
-            }
-
-            const auto prepare_start = timing ? now_ns() : 0;
-            cv::Mat rgb;
-            if (frame_mat.channels() == 3)
-            {
-                cv::cvtColor(frame_mat, rgb, cv::COLOR_BGR2RGB);
-            }
-            else if (frame_mat.channels() == 1)
-            {
-                cv::cvtColor(frame_mat, rgb, cv::COLOR_GRAY2RGB);
-            }
-            else if (frame_mat.channels() == 4)
-            {
-                cv::cvtColor(frame_mat, rgb, cv::COLOR_BGRA2RGB);
-            }
-            else
-            {
-                dropped_count_++;
-                emit_status(camera_id, last_status,
-                            "camera_unsupported_channels:" + std::to_string(frame_mat.channels()));
-                continue;
-            }
-
-            auto img = std::make_shared<Image>();
-            img->width = rgb.cols;
-            img->height = rgb.rows;
-            img->channels = 3;
-            img->pixels.assign(rgb.data, rgb.data + rgb.total() * rgb.elemSize());
-
-            const auto prepare_done = timing ? now_ns() : 0;
-            Frame frame;
-            frame.camera_id = camera_id;
-            frame.sequence = ++camera_sequence;
-            frame.release_ns = ts_ns;
-            frame.scenario_ns = ts_ns;
-            frame.source_sequence = camera_sequence;
-            frame.source_timestamp_ns = ts_ns;
-            frame.source_session = "camera-hw-v1";
-            frame.source_clock_domain = "host_delivery_monotonic";
-            frame.image = img;
-            if (timing)
-            {
-                auto record = std::make_shared<SourceWorkRecord>();
-                record->session = timing;
-                record->timing = {camera_id,
-                                  "camera_read",
-                                  timing->epoch,
-                                  camera_sequence,
-                                  read_start,
-                                  prepare_done,
-                                  double(read_done - read_start) / 1e6,
-                                  std::nullopt,
-                                  double(prepare_done - prepare_start) / 1e6,
-                                  false};
-                frame.source_work = std::move(record);
-            }
-
-            {
-                std::lock_guard<std::mutex> lock(mutex_);
-                if (stopped_)
+                if (last_status != "camera_ready:" + dev_path)
                 {
-                    break;
+                    emit_status(camera_id, last_status, "camera_ready:" + dev_path);
                 }
-                if (paused_.load())
+
+                const uint64_t ts_ns = now_ns();
+                received_count_++;
+
+                if (frame_mat.cols != cam_cfg.width || frame_mat.rows != cam_cfg.height)
                 {
                     dropped_count_++;
+                    emit_status(camera_id, last_status,
+                                "camera_resolution_mismatch:" + std::to_string(frame_mat.cols) +
+                                    "x" + std::to_string(frame_mat.rows));
                     continue;
                 }
-                SourceEvent ev;
-                ev.kind = SourceEvent::Kind::Frames;
-                ev.batch_id = ++batch_counter_;
-                ev.paused = false;
-                ev.frames[camera_id] = frame;
-                if (pending_events_.size() >= queue_capacity)
+
+                if (frame_mat.depth() != CV_8U)
                 {
-                    const auto oldest_frame = std::find_if(
-                        pending_events_.begin(), pending_events_.end(), [](const SourceEvent &item)
-                        { return item.kind == SourceEvent::Kind::Frames; });
-                    if (oldest_frame == pending_events_.end())
+                    dropped_count_++;
+                    emit_status(camera_id, last_status,
+                                "camera_unsupported_depth:" + std::to_string(frame_mat.depth()));
+                    continue;
+                }
+
+                phase = "prepare";
+                const auto prepare_start = timing ? now_ns() : 0;
+                cv::Mat rgb;
+                if (frame_mat.channels() == 3)
+                {
+                    cv::cvtColor(frame_mat, rgb, cv::COLOR_BGR2RGB);
+                }
+                else if (frame_mat.channels() == 1)
+                {
+                    cv::cvtColor(frame_mat, rgb, cv::COLOR_GRAY2RGB);
+                }
+                else if (frame_mat.channels() == 4)
+                {
+                    cv::cvtColor(frame_mat, rgb, cv::COLOR_BGRA2RGB);
+                }
+                else
+                {
+                    dropped_count_++;
+                    emit_status(camera_id, last_status,
+                                "camera_unsupported_channels:" +
+                                    std::to_string(frame_mat.channels()));
+                    continue;
+                }
+
+                auto img = std::make_shared<Image>();
+                img->width = rgb.cols;
+                img->height = rgb.rows;
+                img->channels = 3;
+                img->pixels.assign(rgb.data, rgb.data + rgb.total() * rgb.elemSize());
+
+                const auto prepare_done = timing ? now_ns() : 0;
+                Frame frame;
+                frame.camera_id = camera_id;
+                frame.sequence = ++camera_sequence;
+                frame.release_ns = ts_ns;
+                frame.scenario_ns = ts_ns;
+                frame.source_sequence = camera_sequence;
+                frame.source_timestamp_ns = ts_ns;
+                frame.source_session = "camera-hw-v1";
+                frame.source_clock_domain = "host_delivery_monotonic";
+                frame.image = img;
+                if (timing)
+                {
+                    auto record = std::make_shared<SourceWorkRecord>();
+                    record->session = timing;
+                    record->timing = {camera_id,
+                                      "camera_read",
+                                      timing->epoch,
+                                      camera_sequence,
+                                      read_start,
+                                      prepare_done,
+                                      double(read_done - read_start) / 1e6,
+                                      std::nullopt,
+                                      double(prepare_done - prepare_start) / 1e6,
+                                      false};
+                    frame.source_work = std::move(record);
+                }
+
+                {
+                    std::lock_guard<std::mutex> lock(mutex_);
+                    if (stopped_)
+                    {
+                        break;
+                    }
+                    if (paused_.load())
                     {
                         dropped_count_++;
                         continue;
                     }
-                    pending_events_.erase(oldest_frame);
-                    dropped_count_++;
+                    SourceEvent ev;
+                    ev.kind = SourceEvent::Kind::Frames;
+                    ev.batch_id = ++batch_counter_;
+                    ev.paused = false;
+                    ev.frames[camera_id] = frame;
+                    if (pending_events_.size() >= queue_capacity)
+                    {
+                        const auto oldest_frame =
+                            std::find_if(pending_events_.begin(), pending_events_.end(),
+                                         [](const SourceEvent &item)
+                                         { return item.kind == SourceEvent::Kind::Frames; });
+                        if (oldest_frame == pending_events_.end())
+                        {
+                            dropped_count_++;
+                            continue;
+                        }
+                        pending_events_.erase(oldest_frame);
+                        dropped_count_++;
+                    }
+                    pending_events_.push_back(std::move(ev));
+                    decoded_count_++;
                 }
-                pending_events_.push_back(std::move(ev));
-                decoded_count_++;
+            }
+            catch (const cv::Exception &)
+            {
+                // Do not publish partially prepared frames or leave a failed driver open.
+                emit_status(camera_id, last_status, std::string("camera_exception:") + phase);
+                if (!close_capture(cap, camera_id, last_status))
+                {
+                    return; // The driver state after a failed release is unknown.
+                }
+                wait_retry(std::chrono::milliseconds(250));
             }
         }
 
-        if (cap.is_open())
+        close_capture(cap, camera_id, last_status);
+    }
+
+    void wait_retry(std::chrono::milliseconds delay)
+    {
+        std::unique_lock<std::mutex> lock(mutex_);
+        wake_.wait_for(lock, delay, [this] { return stopped_; });
+    }
+
+    bool close_capture(CameraCapture &capture, int camera_id, std::string &last_status)
+    {
+        try
         {
-            cap.close();
+            capture.close();
+            return true;
+        }
+        catch (const cv::Exception &)
+        {
+            emit_status(camera_id, last_status, "camera_exception:close_worker_stopped");
+            return false;
         }
     }
 
@@ -359,6 +399,7 @@ class CameraFrameSource : public FrameSource
     Config config_;
     SourceTimingGate timing_;
     mutable std::mutex mutex_;
+    std::condition_variable wake_;
     bool stopped_ = false;
     std::atomic<bool> paused_{false};
     uint64_t batch_counter_ = 0;
