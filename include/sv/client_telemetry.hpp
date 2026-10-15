@@ -1,5 +1,6 @@
 #pragma once
 #include "sv/protocol.hpp"
+#include "sv/source_work_timing.hpp"
 #include <optional>
 #include <vector>
 
@@ -17,6 +18,7 @@ struct TelemetryCatalog
     uint64_t epoch = 0;
     TelemetrySettings settings;
     unsigned max_read_samples = 16;
+    bool source_work_supported = false;
 };
 
 struct TelemetryProcess
@@ -47,6 +49,7 @@ struct TelemetrySample
     std::optional<TelemetryFrame> frame;
     bool paused = false, data_ready = false, data_busy = false;
     double collection_wall_ms = 0;
+    std::vector<sv::SourceWorkTiming> source_work;
 };
 
 struct TelemetryBatch

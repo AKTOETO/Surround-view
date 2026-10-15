@@ -47,6 +47,7 @@ TEST(TelemetryArchive, RoundTripRetainsExactIntegersNullsAndRepeatedFrames)
     const auto text = sv::client::serialize_telemetry_archive(archive);
     const auto result = sv::client::parse_telemetry_archive(text);
     EXPECT_EQ(result.catalog.epoch, UINT64_MAX);
+    EXPECT_TRUE(result.catalog.source_work_supported);
     ASSERT_EQ(result.samples.size(), 3U);
     EXPECT_EQ(result.samples[2].source.received, UINT64_MAX);
     EXPECT_EQ(result.samples[2].process.rss_bytes, UINT64_MAX);
@@ -142,4 +143,22 @@ TEST(TelemetryArchive, EmptyDisabledWindowIsSupported)
     EXPECT_TRUE(
         sv::client::parse_telemetry_archive(sv::client::serialize_telemetry_archive(archive))
             .samples.empty());
+}
+
+TEST(TelemetryArchive, SourceWorkSurvivesArchiveAndOldOptionalFieldIsAccepted)
+{
+    auto archive = example();
+    archive.samples[0].frame->timestamp_ns = 3000000;
+    archive.samples[0].source_work.push_back(
+        {0, "camera_read", 0, UINT64_MAX, 1, 1000001, .2, std::nullopt, .3, false});
+    const auto text = sv::client::serialize_telemetry_archive(archive);
+    const auto result = sv::client::parse_telemetry_archive(text);
+    ASSERT_EQ(result.samples[0].source_work.size(), 1U);
+    EXPECT_EQ(result.samples[0].source_work[0].source_sequence, UINT64_MAX);
+    EXPECT_EQ(result.samples[0].source_work[0].image_prepare_wall_ms, .3);
+    auto old = boost::json::parse(text).as_object();
+    old.at("samples").as_array()[0].as_object().erase("source_work");
+    EXPECT_TRUE(sv::client::parse_telemetry_archive(boost::json::serialize(old))
+                    .samples[0]
+                    .source_work.empty());
 }

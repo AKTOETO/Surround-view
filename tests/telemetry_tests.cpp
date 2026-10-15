@@ -181,3 +181,53 @@ TEST(ClientTelemetry, RejectsMalformedEnvelopesWindowsAndMetrics)
     ack.header["accepted"] = false;
     EXPECT_THROW(sv::client::parse_telemetry_batch(ack), std::invalid_argument);
 }
+
+TEST(ClientTelemetry, SourceWorkChecksCameraKindEpochClockAndDurationBounds)
+{
+    sv::TelemetryCollector collector("instance", {true, 50, 8},
+                                     [] { return sv::ProcessObservation{}; });
+    sv::FrameSet inputs;
+    inputs.frames[0] = sv::Frame{};
+    auto record = std::make_shared<sv::SourceWorkRecord>();
+    record->session = collector.source_session();
+    record->timing = {0, "camera_read", 0, 0, 1, 1000001, .2, std::nullopt, .3, false};
+    inputs.frames[0]->source_work = record;
+    sv::FrameTelemetry frame;
+    frame.frame_id = 1;
+    frame.timestamp_ns = 2000000;
+    collector.frame(frame, &inputs);
+    collector.sample(3000000, 0, {}, false, true, false);
+    const auto good = collector.read("instance", 0, 0, 16);
+    const auto parsed = sv::client::parse_telemetry_batch(reply(good));
+    ASSERT_EQ(parsed.samples[0].source_work.size(), 1U);
+    EXPECT_EQ(parsed.samples[0].source_work[0].image_prepare_wall_ms, .3);
+    for (const auto &[key, value] : std::vector<std::pair<std::string, boost::json::value>>{
+             {"camera_id", true},
+             {"camera_id", 4},
+             {"kind", "unknown"},
+             {"epoch", "1"},
+             {"started_ns", "1000002"},
+             {"completed_ns", "2000001"},
+             {"camera_read_wall_ms", -1},
+             {"camera_read_wall_ms", 10},
+             {"cache_hit", true},
+             {"image_load_wall_ms", 0},
+             {"image_prepare_wall_ms", nullptr}})
+    {
+        auto bad = good;
+        bad.at("samples")
+            .as_array()[0]
+            .as_object()
+            .at("source_work")
+            .as_array()[0]
+            .as_object()[key] = value;
+        EXPECT_ANY_THROW(sv::client::parse_telemetry_batch(reply(bad))) << key;
+    }
+    auto duplicate = good;
+    auto &records = duplicate.at("samples").as_array()[0].as_object().at("source_work").as_array();
+    records.push_back(records.front());
+    EXPECT_THROW(sv::client::parse_telemetry_batch(reply(duplicate)), std::invalid_argument);
+    auto missing_frame = good;
+    missing_frame.at("samples").as_array()[0].as_object()["frame"] = nullptr;
+    EXPECT_THROW(sv::client::parse_telemetry_batch(reply(missing_frame)), std::invalid_argument);
+}

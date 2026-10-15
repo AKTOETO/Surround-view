@@ -22,6 +22,7 @@ boost::json::object catalog_json(const TelemetryCatalog &catalog)
         {"cpu_percent_basis", catalog.cpu_percent_basis},
         {"delivery", "bounded_control_poll"},
         {"max_read_samples", catalog.max_read_samples},
+        {"source_work_timing_v1", catalog.source_work_supported},
         {"settings", boost::json::object{{"enabled", catalog.settings.enabled},
                                          {"period_ms", catalog.settings.period_ms},
                                          {"history_capacity", catalog.settings.history_capacity}}}};
@@ -41,7 +42,13 @@ boost::json::object sample_json(const TelemetrySample &sample)
                                     {"spans_ms", value.spans_ms},
                                     {"input_age_at_render_ms", value.input_age_at_render_ms}};
     }
-    return {{"cursor", std::to_string(sample.cursor)},
+    boost::json::array work;
+    for (const auto &timing : sample.source_work)
+    {
+        work.push_back(sv::source_work_json(timing));
+    }
+    return {{"source_work", std::move(work)},
+            {"cursor", std::to_string(sample.cursor)},
             {"timestamp_ns", std::to_string(sample.timestamp_ns)},
             {"config_revision", std::to_string(sample.config_revision)},
             {"frame", std::move(frame)},

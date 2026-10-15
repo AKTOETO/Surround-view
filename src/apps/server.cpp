@@ -379,6 +379,7 @@ ServerIO::ServerIO(const sv::Connections &n, const std::string &source_type,
                     "config_apply_v1",
                     "config_operations_v1",
                     "telemetry_v1",
+                    "source_work_timing_v1",
                     "fusion_runtime_v1",
                     "research_fusion_v1",
                     "runtime_surface_v1",
@@ -686,13 +687,15 @@ int main(int argc, char **argv)
         }
         else if (initial_cfg.source.type == "camera")
         {
-            source = sv::make_camera_source(*config_store.active());
+            source = sv::make_camera_source(*config_store.active(), telemetry.source_session());
         }
         else
         {
-            source = sv::make_replay_source(*config_store.active(), manifest_path, looping);
+            source = sv::make_replay_source(*config_store.active(), manifest_path, looping, {},
+                                            telemetry.source_session());
         }
 
+        auto source_timing_epoch = telemetry.epoch();
         auto renderer = std::make_unique<sv::Renderer>(*config_store.active());
         sv::Synchronizer sync(*config_store.active());
         ServerIO network(config_store.active()->connections, config_store.active()->source.type,
@@ -1389,6 +1392,11 @@ int main(int argc, char **argv)
                 }
                 answer(cmd, accepted, reason, extra_res);
             }
+            if (source_timing_epoch != telemetry.epoch())
+            {
+                source->set_timing_session(telemetry.source_session());
+                source_timing_epoch = telemetry.epoch();
+            }
             const auto now = sv::now_ns();
             if (!paused)
             {
@@ -1551,7 +1559,7 @@ int main(int argc, char **argv)
                 const bool published = network.publish(std::move(output), render_generation);
                 ft.publish_enqueue_ms = static_cast<double>(sv::now_ns() - publish_start) / 1e6;
                 span_tracker.record_frame(ft);
-                telemetry.frame(ft);
+                telemetry.frame(ft, &last_set);
                 record({{"event", "pipeline_span"},
                         {"frame_id", std::to_string(frame_id)},
                         {"telemetry", ft.to_json()}});

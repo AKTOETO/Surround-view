@@ -1,5 +1,6 @@
 #pragma once
 #include "sv/config.hpp"
+#include "sv/source_work.hpp"
 #include <deque>
 #include <memory>
 #include <optional>
@@ -22,6 +23,7 @@ struct Frame
     std::shared_ptr<const Image> image;
     std::string source_session = "", source_clock_domain = "";
     uint64_t source_sequence = 0, source_timestamp_ns = 0;
+    std::shared_ptr<const SourceWorkRecord> source_work = {};
 };
 
 struct FrameSet

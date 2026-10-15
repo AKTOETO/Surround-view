@@ -1,4 +1,5 @@
 #include "sv/client_telemetry.hpp"
+#include <array>
 #include <cmath>
 #include <stdexcept>
 
@@ -76,6 +77,10 @@ TelemetryCatalog parse_telemetry_catalog(const Message &message)
     result.settings.period_ms = bounded(settings.at("period_ms"), 50, 5000);
     result.settings.history_capacity = bounded(settings.at("history_capacity"), 8, 256);
     result.max_read_samples = bounded(data.at("max_read_samples"), 1, 16);
+    if (const auto *supported = data.if_contains("source_work_timing_v1"))
+    {
+        result.source_work_supported = supported->as_bool();
+    }
     return result;
 }
 
@@ -166,6 +171,72 @@ TelemetryBatch parse_telemetry_batch(const Message &message)
                 throw std::invalid_argument("inconsistent telemetry frame identity");
             }
             sample.frame = std::move(parsed);
+        }
+        if (const auto *work = item.if_contains("source_work"))
+        {
+            std::array<bool, 4> seen{};
+            if (work->as_array().size() > 4 || (!work->as_array().empty() && !sample.frame))
+            {
+                throw std::invalid_argument("invalid source work count or missing frame");
+            }
+            for (const auto &entry : work->as_array())
+            {
+                const auto &value = entry.as_object();
+                sv::SourceWorkTiming timing;
+                timing.camera_id = int(bounded(value.at("camera_id"), 0, 3));
+                if (seen[timing.camera_id])
+                {
+                    throw std::invalid_argument("duplicate source work camera");
+                }
+                seen[timing.camera_id] = true;
+                timing.kind = std::string(value.at("kind").as_string());
+                timing.epoch = integer(value, "epoch");
+                timing.source_sequence = integer(value, "source_sequence");
+                timing.started_ns = integer(value, "started_ns");
+                timing.completed_ns = integer(value, "completed_ns");
+                timing.cache_hit = value.at("cache_hit").as_bool();
+                auto metric = [&](const char *name) -> std::optional<double>
+                {
+                    return value.at(name).is_null()
+                               ? std::nullopt
+                               : std::optional<double>(duration(value.at(name)));
+                };
+                timing.camera_read_wall_ms = metric("camera_read_wall_ms");
+                timing.image_load_wall_ms = metric("image_load_wall_ms");
+                timing.image_prepare_wall_ms = metric("image_prepare_wall_ms");
+                if (timing.epoch != result.epoch || timing.started_ns > timing.completed_ns ||
+                    timing.completed_ns > sample.frame->timestamp_ns)
+                {
+                    throw std::invalid_argument("invalid source work series or clock");
+                }
+                const double elapsed = double(timing.completed_ns - timing.started_ns) / 1e6;
+                if (timing.kind == "camera_read")
+                {
+                    if (!timing.camera_read_wall_ms || !timing.image_prepare_wall_ms ||
+                        timing.image_load_wall_ms || timing.cache_hit ||
+                        *timing.camera_read_wall_ms + *timing.image_prepare_wall_ms >
+                            elapsed + .000001)
+                    {
+                        throw std::invalid_argument("invalid camera work durations");
+                    }
+                }
+                else if (timing.kind == "replay_load")
+                {
+                    if (!timing.image_load_wall_ms || timing.camera_read_wall_ms ||
+                        timing.image_prepare_wall_ms ||
+                        *timing.image_load_wall_ms > elapsed + .000001 ||
+                        (timing.cache_hit && (*timing.image_load_wall_ms != 0 ||
+                                              timing.started_ns != timing.completed_ns)))
+                    {
+                        throw std::invalid_argument("invalid replay work durations");
+                    }
+                }
+                else
+                {
+                    throw std::invalid_argument("unsupported source work kind");
+                }
+                sample.source_work.push_back(std::move(timing));
+            }
         }
         result.samples.push_back(std::move(sample));
     }

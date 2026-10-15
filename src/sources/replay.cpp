@@ -19,6 +19,7 @@ class ReplaySource final : public FrameSource
     };
 
     Config config_;
+    SourceTimingGate timing_;
     std::vector<ReplayRow> rows_;
     ImageLoader loader_;
     bool loop_;
@@ -63,11 +64,32 @@ class ReplaySource final : public FrameSource
     SourceEvent decode(size_t row, uint64_t sequence, bool paused)
     {
         const auto &r = rows_[row];
+        const auto timing = timing_.get();
+        std::unique_ptr<std::array<SourceWorkTiming, 4>> work;
+        if (timing)
+        {
+            work = std::make_unique<std::array<SourceWorkTiming, 4>>();
+        }
         for (int k = 0; k < 4; ++k)
         {
             if (!r.paths[k].empty() && cached_paths_[k] != r.paths[k])
             {
+                const auto load_start = timing ? now_ns() : 0;
                 auto image = loader_(r.paths[k]);
+                const auto load_done = timing ? now_ns() : 0;
+                if (work)
+                {
+                    (*work)[k] = {k,
+                                  "replay_load",
+                                  timing->epoch,
+                                  sequence,
+                                  load_start,
+                                  load_done,
+                                  std::nullopt,
+                                  double(load_done - load_start) / 1e6,
+                                  std::nullopt,
+                                  false};
+                }
                 if (image.width != config_.cameras[k].width ||
                     image.height != config_.cameras[k].height || image.channels != 3 ||
                     image.pixels.size() != size_t(image.width) * image.height * 3)
@@ -103,6 +125,19 @@ class ReplaySource final : public FrameSource
             event.frames[k]->source_clock_domain = "scenario";
             event.frames[k]->source_sequence = sequence;
             event.frames[k]->source_timestamp_ns = r.scenario_ns;
+            if (work)
+            {
+                auto record = std::make_shared<SourceWorkRecord>();
+                record->session = timing;
+                record->timing = (*work)[k];
+                if (record->timing.kind.empty())
+                {
+                    record->timing = {
+                        k,         "replay_load", timing->epoch, sequence,     delivered,
+                        delivered, std::nullopt,  0.0,           std::nullopt, true};
+                }
+                event.frames[k]->source_work = std::move(record);
+            }
             ++received_;
         }
         return event;
@@ -208,10 +243,11 @@ class ReplaySource final : public FrameSource
   public:
 
     ReplaySource(const Config &config, const std::filesystem::path &manifest, bool loop,
-                 ImageLoader loader)
+                 ImageLoader loader, std::shared_ptr<const SourceTimingSession> timing)
         : config_(config), rows_(load_manifest(manifest, config)), loader_(std::move(loader)),
           loop_(loop)
     {
+        timing_.set(std::move(timing));
         if (!loader_)
         {
             loader_ = read_image;
@@ -222,6 +258,11 @@ class ReplaySource final : public FrameSource
     ~ReplaySource() override
     {
         stop();
+    }
+
+    void set_timing_session(std::shared_ptr<const SourceTimingSession> timing) noexcept override
+    {
+        timing_.set(std::move(timing));
     }
 
     bool request(SourceAction action, uint64_t id) override
@@ -270,8 +311,10 @@ class ReplaySource final : public FrameSource
 
 std::unique_ptr<FrameSource> make_replay_source(const Config &config,
                                                 const std::filesystem::path &manifest, bool loop,
-                                                ImageLoader loader)
+                                                ImageLoader loader,
+                                                std::shared_ptr<const SourceTimingSession> timing)
 {
-    return std::make_unique<ReplaySource>(config, manifest, loop, std::move(loader));
+    return std::make_unique<ReplaySource>(config, manifest, loop, std::move(loader),
+                                          std::move(timing));
 }
 } // namespace sv

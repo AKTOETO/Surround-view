@@ -1,4 +1,4 @@
-#include "sv/source.hpp"
+#include "camera_capture.hpp"
 #include "sv/vision.hpp"
 #include <algorithm>
 #include <atomic>
@@ -14,15 +14,68 @@ namespace sv
 {
 namespace
 {
+class OpenCvCapture final : public CameraCapture
+{
+    cv::VideoCapture capture_;
+
+  public:
+
+    bool is_open() const override
+    {
+        return capture_.isOpened();
+    }
+
+    bool open(const std::string &path, int width, int height) override
+    {
+        if (!capture_.open(path, cv::CAP_V4L2))
+        {
+            return false;
+        }
+        capture_.set(cv::CAP_PROP_FRAME_WIDTH, width);
+        capture_.set(cv::CAP_PROP_FRAME_HEIGHT, height);
+        return true;
+    }
+
+    bool read(cv::Mat &image) override
+    {
+        return capture_.read(image);
+    }
+
+    void close() override
+    {
+        capture_.release();
+    }
+};
+
 class CameraFrameSource : public FrameSource
 {
-public:
-    explicit CameraFrameSource(const Config &config)
+  public:
+
+    explicit CameraFrameSource(const Config &config,
+                               std::shared_ptr<const SourceTimingSession> timing,
+                               CameraCaptureFactory factory)
         : config_(config), stopped_(false)
     {
+        timing_.set(std::move(timing));
         for (int i = 0; i < 4; ++i)
         {
-            workers_.emplace_back(&CameraFrameSource::capture_loop, this, i);
+            captures_[i] = factory ? factory(i) : std::make_unique<OpenCvCapture>();
+            if (!captures_[i])
+            {
+                throw std::invalid_argument("null camera capture");
+            }
+        }
+        try
+        {
+            for (int i = 0; i < 4; ++i)
+            {
+                workers_.emplace_back(&CameraFrameSource::capture_loop, this, i);
+            }
+        }
+        catch (...)
+        {
+            stop();
+            throw;
         }
     }
 
@@ -73,6 +126,11 @@ public:
         return result;
     }
 
+    void set_timing_session(std::shared_ptr<const SourceTimingSession> timing) noexcept override
+    {
+        timing_.set(std::move(timing));
+    }
+
     SourceStats stats() const override
     {
         std::lock_guard<std::mutex> lock(mutex_);
@@ -103,12 +161,13 @@ public:
         }
     }
 
-private:
+  private:
+
     void capture_loop(int camera_id)
     {
         const auto &cam_cfg = config_.cameras[camera_id];
         const auto &dev_path = config_.source.camera_devices[camera_id];
-        cv::VideoCapture cap;
+        auto &cap = *captures_[camera_id];
         cv::Mat frame_mat;
         uint64_t camera_sequence = 0;
         std::string last_status;
@@ -123,22 +182,24 @@ private:
                 }
             }
 
-            if (!cap.isOpened())
+            if (!cap.is_open())
             {
-                if (!cap.open(dev_path, cv::CAP_V4L2))
+                if (!cap.open(dev_path, cam_cfg.width, cam_cfg.height))
                 {
                     emit_status(camera_id, last_status, "camera_unavailable:" + dev_path);
                     std::this_thread::sleep_for(std::chrono::milliseconds(250));
                     continue;
                 }
-                cap.set(cv::CAP_PROP_FRAME_WIDTH, cam_cfg.width);
-                cap.set(cv::CAP_PROP_FRAME_HEIGHT, cam_cfg.height);
             }
 
-            if (!cap.read(frame_mat) || frame_mat.empty())
+            const auto timing = timing_.get();
+            const auto read_start = timing ? now_ns() : 0;
+            const bool read_ok = cap.read(frame_mat);
+            const auto read_done = timing ? now_ns() : 0;
+            if (!read_ok || frame_mat.empty())
             {
                 emit_status(camera_id, last_status, "camera_read_failed:" + dev_path);
-                cap.release();
+                cap.close();
                 std::this_thread::sleep_for(std::chrono::milliseconds(100));
                 continue;
             }
@@ -160,6 +221,15 @@ private:
                 continue;
             }
 
+            if (frame_mat.depth() != CV_8U)
+            {
+                dropped_count_++;
+                emit_status(camera_id, last_status,
+                            "camera_unsupported_depth:" + std::to_string(frame_mat.depth()));
+                continue;
+            }
+
+            const auto prepare_start = timing ? now_ns() : 0;
             cv::Mat rgb;
             if (frame_mat.channels() == 3)
             {
@@ -177,8 +247,7 @@ private:
             {
                 dropped_count_++;
                 emit_status(camera_id, last_status,
-                            "camera_unsupported_channels:" +
-                                std::to_string(frame_mat.channels()));
+                            "camera_unsupported_channels:" + std::to_string(frame_mat.channels()));
                 continue;
             }
 
@@ -188,6 +257,7 @@ private:
             img->channels = 3;
             img->pixels.assign(rgb.data, rgb.data + rgb.total() * rgb.elemSize());
 
+            const auto prepare_done = timing ? now_ns() : 0;
             Frame frame;
             frame.camera_id = camera_id;
             frame.sequence = ++camera_sequence;
@@ -198,6 +268,22 @@ private:
             frame.source_session = "camera-hw-v1";
             frame.source_clock_domain = "host_delivery_monotonic";
             frame.image = img;
+            if (timing)
+            {
+                auto record = std::make_shared<SourceWorkRecord>();
+                record->session = timing;
+                record->timing = {camera_id,
+                                  "camera_read",
+                                  timing->epoch,
+                                  camera_sequence,
+                                  read_start,
+                                  prepare_done,
+                                  double(read_done - read_start) / 1e6,
+                                  std::nullopt,
+                                  double(prepare_done - prepare_start) / 1e6,
+                                  false};
+                frame.source_work = std::move(record);
+            }
 
             {
                 std::lock_guard<std::mutex> lock(mutex_);
@@ -218,8 +304,8 @@ private:
                 if (pending_events_.size() >= queue_capacity)
                 {
                     const auto oldest_frame = std::find_if(
-                        pending_events_.begin(), pending_events_.end(),
-                        [](const SourceEvent &item) { return item.kind == SourceEvent::Kind::Frames; });
+                        pending_events_.begin(), pending_events_.end(), [](const SourceEvent &item)
+                        { return item.kind == SourceEvent::Kind::Frames; });
                     if (oldest_frame == pending_events_.end())
                     {
                         dropped_count_++;
@@ -233,9 +319,9 @@ private:
             }
         }
 
-        if (cap.isOpened())
+        if (cap.is_open())
         {
-            cap.release();
+            cap.close();
         }
     }
 
@@ -271,6 +357,7 @@ private:
 
     static constexpr size_t queue_capacity = 64;
     Config config_;
+    SourceTimingGate timing_;
     mutable std::mutex mutex_;
     bool stopped_ = false;
     std::atomic<bool> paused_{false};
@@ -280,13 +367,22 @@ private:
     std::atomic<uint64_t> received_count_{0};
     std::atomic<uint64_t> dropped_count_{0};
 
+    std::array<std::unique_ptr<CameraCapture>, 4> captures_;
     std::vector<std::thread> workers_;
     std::deque<SourceEvent> pending_events_;
 };
 } // namespace
 
-std::unique_ptr<FrameSource> make_camera_source(const Config &config)
+std::unique_ptr<FrameSource> make_camera_source(const Config &config,
+                                                std::shared_ptr<const SourceTimingSession> timing)
 {
-    return std::make_unique<CameraFrameSource>(config);
+    return make_camera_source(config, std::move(timing), {});
+}
+
+std::unique_ptr<FrameSource> make_camera_source(const Config &config,
+                                                std::shared_ptr<const SourceTimingSession> timing,
+                                                CameraCaptureFactory factory)
+{
+    return std::make_unique<CameraFrameSource>(config, std::move(timing), std::move(factory));
 }
 } // namespace sv

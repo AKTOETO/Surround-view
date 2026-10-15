@@ -19,6 +19,8 @@ ProcessObservation read_process_observation();
 // Render-thread only. No background thread or process sampler calls when disabled.
 class TelemetryCollector
 {
+    using SourceWorkSet = std::array<std::shared_ptr<const SourceWorkRecord>, 4>;
+
     struct Sample
     {
         uint64_t cursor, timestamp_ns, config_revision;
@@ -28,6 +30,7 @@ class TelemetryCollector
         bool fresh_frame, paused, data_ready, data_busy;
         SourceStats source;
         double collection_ms = 0;
+        std::shared_ptr<const SourceWorkSet> source_work = {};
     };
 
     struct Storage
@@ -46,6 +49,8 @@ class TelemetryCollector
     std::unique_ptr<Storage> storage_;
     std::function<ProcessObservation()> process_;
     std::optional<FrameTelemetry> last_frame_;
+    std::shared_ptr<const SourceTimingSession> source_session_;
+    std::shared_ptr<const SourceWorkSet> last_source_work_;
     std::optional<uint64_t> last_cpu_, last_sample_ns_;
     uint64_t epoch_ = 0, cursor_ = 0, last_emitted_frame_ = 0;
 
@@ -60,6 +65,7 @@ class TelemetryCollector
         TelemetryConfig config_;
         std::unique_ptr<Storage> storage_;
         bool changed_;
+        std::shared_ptr<const SourceTimingSession> session_;
         Update(TelemetryCollector &, TelemetryConfig);
 
       public:
@@ -78,13 +84,17 @@ class TelemetryCollector
 
     bool due(uint64_t now) const noexcept;
 
-    void frame(const FrameTelemetry &frame)
+    std::shared_ptr<const SourceTimingSession> source_session() const noexcept
     {
-        if (enabled())
-        {
-            last_frame_ = frame;
-        }
+        return source_session_;
     }
+
+    uint64_t epoch() const noexcept
+    {
+        return epoch_;
+    }
+
+    void frame(const FrameTelemetry &, const FrameSet *inputs = nullptr);
 
     void sample(uint64_t now, uint64_t config_revision, SourceStats, bool paused, bool ready,
                 bool busy);

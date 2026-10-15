@@ -46,11 +46,17 @@ class FrameSource
     virtual std::vector<SourceEvent> poll() = 0;
     virtual SourceStats stats() const = 0;
     virtual void stop() = 0;
+
+    virtual void set_timing_session(std::shared_ptr<const SourceTimingSession>) noexcept
+    {
+    }
 };
 
 using ImageLoader = std::function<Image(const std::filesystem::path &)>;
-std::unique_ptr<FrameSource> make_replay_source(const Config &, const std::filesystem::path &,
-                                                bool loop, ImageLoader loader = {});
+std::unique_ptr<FrameSource> make_replay_source(
+    const Config &, const std::filesystem::path &, bool loop, ImageLoader loader = {},
+    std::shared_ptr<const SourceTimingSession> timing = {});
 std::unique_ptr<FrameSource> make_socket_source(const Config &);
-std::unique_ptr<FrameSource> make_camera_source(const Config &);
+std::unique_ptr<FrameSource> make_camera_source(
+    const Config &, std::shared_ptr<const SourceTimingSession> timing = {});
 } // namespace sv

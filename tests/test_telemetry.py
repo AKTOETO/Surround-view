@@ -82,6 +82,46 @@ class Telemetry(unittest.TestCase):
         self.assertEqual(self.read(stopped)['telemetry']['latest_cursor'], '0')
         self.assertEqual(self.config.read_bytes(), original)
 
+    def test_selected_source_work_initial_hot_epoch_and_disable(self):
+        self.cfg['telemetry'] = dict(enabled=True, period_ms=50, history_capacity=32)
+        self.config.write_text(json.dumps(self.cfg))
+        self.start()
+        self.client = Client(self.ipc)
+        self.client.frame()
+        self.assertTrue(self.client.command("pause")["accepted"])
+        time.sleep(.08)
+        catalog = self.catalog()
+        initial = self.read(catalog)['telemetry']['samples']
+        measured = [s for s in initial if s.get('source_work')]
+        self.assertTrue(measured, initial)
+        self.assertEqual(len(measured[-1]['source_work']), 4)
+        for work in measured[-1]['source_work']:
+            self.assertEqual(work['kind'], 'replay_load')
+            # Server defaults to looping; the selected frame need not be the cold load.
+            if work['cache_hit']:
+                self.assertEqual(work['image_load_wall_ms'], 0)
+            self.assertEqual(work['epoch'], catalog['epoch'])
+            self.assertLessEqual(int(work['completed_ns']), int(measured[-1]['frame']['timestamp_ns']))
+        self.assertTrue(self.apply(0, True, period_ms=100, history_capacity=32)['accepted'])
+        current = self.catalog()
+        self.assertNotEqual(current['epoch'], catalog['epoch'])
+        time.sleep(.12)
+        before_step = self.read(current)['telemetry']['samples']
+        self.assertTrue(before_step)
+        self.assertTrue(all(not s['source_work'] for s in before_step))
+        self.assertTrue(self.client.command('step')['accepted'])
+        self.client.frame()
+        time.sleep(.12)
+        after = self.read(current)['telemetry']['samples']
+        cached = [s for s in after if s.get('source_work')]
+        self.assertTrue(cached, after)
+        for work in cached[-1]['source_work']:
+            self.assertEqual(work['epoch'], current['epoch'])
+            self.assertTrue(work['cache_hit'])
+            self.assertEqual(work['image_load_wall_ms'], 0)
+        self.assertTrue(self.apply(1, False)['accepted'])
+        self.assertEqual(self.read(self.catalog())['telemetry']['samples'], [])
+
     def test_persistent_settings_survive_restart_with_new_instance(self):
         self.start()
         self.client = Client(self.ipc)
