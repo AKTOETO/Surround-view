@@ -53,6 +53,8 @@ struct TelemetryModelTestAccess
                 i % 2 ? boost::json::value(.20) : boost::json::value(nullptr);
             sample.frame->input_age_at_render_ms = 50 + i;
             sample.source.queued_batches = i % 4;
+            sample.source.camera_diagnostics = sv::CameraDiagnosticsSet{};
+            (*sample.source.camera_diagnostics)[0] = {i, i / 2, i / 3, i / 4, 0, false};
             sample.data_busy = i % 4 == 0;
             sample.frame->spans_ms["render_wall"] = double(15 + i % 5);
             batch.samples.push_back(sample);

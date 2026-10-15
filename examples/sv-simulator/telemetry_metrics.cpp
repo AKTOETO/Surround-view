@@ -11,6 +11,20 @@ QVariantMap metric(const char *key, const char *label, const char *unit, const c
             {"unit", QString::fromLatin1(unit)},
             {"note", QString::fromUtf8(note)}};
 }
+
+const std::array<std::pair<const char *, const char *>, 6> cameraMetrics{
+    {{"open_attempts", "Попытки открытия"},
+     {"read_failures", "Ошибки чтения"},
+     {"opencv_exceptions", "Исключения OpenCV"},
+     {"reconnects", "Переподключения"},
+     {"release_failures", "Ошибки закрытия"},
+     {"worker_stopped", "Worker остановлен"}}};
+
+std::array<uint64_t, 6> cameraValues(const sv::CameraDiagnostics &camera)
+{
+    return {camera.open_attempts, camera.read_failures,    camera.opencv_exceptions,
+            camera.reconnects,    camera.release_failures, uint64_t(camera.worker_stopped)};
+}
 } // namespace
 
 QVariantList TelemetryModel::pipelineMetrics() const
@@ -73,6 +87,20 @@ QVariantList TelemetryModel::sourceMetrics() const
                                      "возможны повторы. Нет failed-read/exposure/send latency."}});
         }
     }
+    for (int camera = 0; camera < 4; ++camera)
+    {
+        for (const auto &entry : cameraMetrics)
+        {
+            result.append(QVariantMap{
+                {"key", QString("camera_%1_%2").arg(camera).arg(entry.first)},
+                {"label",
+                 QString("Камера %1: %2").arg(camera).arg(QString::fromUtf8(entry.second))},
+                {"unit", "count"},
+                {"note", "Накопительный счётчик текущего camera source; worker stopped — флаг 0/1. "
+                         "Не сбрасывается при смене telemetry epoch. Null: backend не поддерживает "
+                         "диагностику. Это не частота ошибок и не latency."}});
+        }
+    }
     return result;
 }
 
@@ -129,6 +157,19 @@ QVariantMap TelemetryModel::makePoint(const sv::client::TelemetrySample &sample,
             put("prepare", timing.image_prepare_wall_ms);
         }
     }
+    for (size_t camera = 0; camera < 4; ++camera)
+    {
+        const auto values = sample.source.camera_diagnostics
+                                ? cameraValues((*sample.source.camera_diagnostics)[camera])
+                                : std::array<uint64_t, 6>{};
+        for (size_t i = 0; i < cameraMetrics.size(); ++i)
+        {
+            point[QString("camera_%1_%2").arg(camera).arg(cameraMetrics[i].first)] =
+                sample.source.camera_diagnostics && values[i] <= (uint64_t(1) << 53)
+                    ? QVariant(double(values[i]))
+                    : QVariant{};
+        }
+    }
     point["render"] = point.value("render_wall"); // Preserve existing chart/summary contract.
     return point;
 }
@@ -176,6 +217,23 @@ QString TelemetryModel::sourceDetails() const
             .arg(sample.data_busy ? 1 : 0)
             .arg(QString::number(source.received), QString::number(source.decoded),
                  QString::number(source.dropped), QString::number(source.rejected));
+    if (source.camera_diagnostics)
+    {
+        for (size_t camera = 0; camera < 4; ++camera)
+        {
+            const auto values = cameraValues((*source.camera_diagnostics)[camera]);
+            details += QString("\nCamera %1 diagnostics:").arg(camera);
+            for (size_t i = 0; i < cameraMetrics.size(); ++i)
+            {
+                details +=
+                    QString(" %1=%2").arg(cameraMetrics[i].first).arg(QString::number(values[i]));
+            }
+        }
+    }
+    else
+    {
+        details += "\nCamera diagnostics: недоступно";
+    }
     for (const auto &timing : sample.source_work)
     {
         details += QString("\nCamera %1: %2 · source_sequence=%3 · epoch=%4 · cache=%5")

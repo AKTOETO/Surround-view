@@ -196,7 +196,7 @@ TEST(TelemetryUnit, DeliveryGaugesAndRecordAgeContinueForRepeatedFrames)
     EXPECT_TRUE(model.sourceDetails().contains(QString::number(UINT64_MAX)));
     model.clear();
     EXPECT_TRUE(model.sourceDetails().contains("Нет source"));
-    EXPECT_EQ(model.sourceMetrics().size(), 18);
+    EXPECT_EQ(model.sourceMetrics().size(), 42);
 }
 
 TEST(TelemetryUnit, NoRenderRecordProducesMissingFrameMetrics)
@@ -376,4 +376,32 @@ TEST(SimulatorRuntime, TelemetryEditorHotApplyAndTypedPolling)
     EXPECT_TRUE(failure.isEmpty()) << failure.toStdString();
     client->stop();
     QCoreApplication::processEvents();
+}
+
+TEST(TelemetryUnit, CameraHealthGraphsPreserveMissingAndLargeValuesWithoutFreshRender)
+{
+    TelemetryModel model;
+    TelemetryModelTestAccess::catalog(model);
+    TelemetryModelTestAccess::batch(
+        model, 1, 2, 0,
+        [](auto &sample)
+        {
+            sample.frame.reset();
+            if (sample.cursor == 2)
+            {
+                sample.source.camera_diagnostics = sv::CameraDiagnosticsSet{};
+                sample.source.camera_diagnostics->at(2) = {UINT64_MAX, 4, 3, 2, 1, true};
+            }
+        });
+    const auto first = model.points().first().toMap();
+    const auto last = model.points().last().toMap();
+    EXPECT_FALSE(first.value("camera_2_read_failures").isValid());
+    EXPECT_FALSE(last.value("camera_2_open_attempts").isValid());
+    EXPECT_DOUBLE_EQ(last.value("camera_2_read_failures").toDouble(), 4);
+    EXPECT_DOUBLE_EQ(last.value("camera_2_opencv_exceptions").toDouble(), 3);
+    EXPECT_DOUBLE_EQ(last.value("camera_2_reconnects").toDouble(), 2);
+    EXPECT_DOUBLE_EQ(last.value("camera_2_release_failures").toDouble(), 1);
+    EXPECT_DOUBLE_EQ(last.value("camera_2_worker_stopped").toDouble(), 1);
+    EXPECT_TRUE(model.sourceDetails().contains("open_attempts=" + QString::number(UINT64_MAX)));
+    EXPECT_FALSE(last.value("render_wall").isValid());
 }
