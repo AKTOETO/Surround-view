@@ -139,3 +139,9 @@ duration. Для локального archive reader на Boost≥1.83 вклю�
 Изменён только локальный archive parsing; live SV01 decoder, config parser, Qt↔config conversions
 и исторические research inputs/reports этим шагом не менялись. Archive сохраняет полученные
 клиентом значения и не восстанавливает precision, уже потерянную раньше в wire/config pipeline.
+
+## Optional source_work
+
+Обновлённый codec сохраняет до4 input observations в каждом sample, в прежней schema1.
+Kind/clock/epoch/duration guards, old missing-field compatibility и selected-input interpretation:
+[[engineering/SOURCE_TIMING]]. Старые SDK могут проигнорировать эти additive fields при resave.

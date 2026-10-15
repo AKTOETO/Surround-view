@@ -379,3 +379,10 @@ Catalog → typed read с instance/epoch/cursor → проверка schema/sequ
 меняет revisions/dirty и разрешён под lease; hot изменение группы telemetry выполняется по С15/С16.
 Последовательности, sample fields и null/fresh semantics: [[engineering/TELEMETRY]].
 Sampling не зависит от нового frame/release, но control/data по-прежнему обязательны.
+
+### С17: input operation observations
+
+Telemetry catalog/HELLO объявляют source_work_timing_v1. Read может включать selected input work;
+SDK проверяет epoch, IDs, clocks/durations. При hot telemetry settings old-session work исключается,
+а новому источнику/step требуется создать observation текущей серии. Looping replay следует явно
+поставить на pause для такого теста. Контракт/PlantUML: [[engineering/SOURCE_TIMING]].

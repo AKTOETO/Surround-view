@@ -112,3 +112,8 @@ to view the same charts. This is a static bounded snapshot; streaming/timed repl
 new subsystem instrumentation remains pending. Existing span selectors include fresh-only quantiles;
 I/O shows backend-specific queues/counters, delivery flags and the age of the last render record.
 These are not dedicated capture/decode/send timers. Small Y values autoscale and metric switches repaint. See `docs/engineering/TELEMETRY_ARCHIVE.md`. Contract: `docs/engineering/TELEMETRY.md`.
+
+Per-camera source work appears in I/O (read/load/prepare choices) when telemetry collection is enabled.
+These are successful operations of selected render inputs; rerender can repeat the same source_sequence,
+so capture quantiles are not displayed. Null means unavailable/not applicable, and replay cache hit
+means skipped load (0ms). See `docs/engineering/SOURCE_TIMING.md` for clock/epoch guards and limits.

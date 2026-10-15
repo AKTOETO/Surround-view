@@ -79,8 +79,9 @@ Resident column statm измеряется в pages и имеет огранич
 
 GPU draw берётся из существующего renderer query при available и non-disjoint результате;
 null означает отсутствие пригодного измерения. В hybrid fusion полный GPU путь не измеряется.
-Это не GPU utilisation/memory и не wall time CPU. Отдельных timers calibration, seam, pyramid,
-projection, capture/decode, encode/send и per-worker load в этом срезе нет.
+Это не GPU utilisation/memory и не wall time CPU. Отдельных timers calibration, seam, pyramid, projection, encode/send и per-worker load в первом срезе нет.
+Последующий camera/replay selected-input work описан в [[engineering/SOURCE_TIMING]]; это ещё не
+разделённые physical capture/decode timers.
 
 Sampling идёт в главном server/render loop без отдельного thread. Если render/command блокирует
 loop, период увеличивается: анализировать фактические timestamp gaps. Между samples берётся
@@ -283,3 +284,10 @@ per-worker/per-camera queues, GPU load/memory и controlled overhead experiment.
 не означает наличия нового profiler или доказательства причины performance spike.
 
 Полная Linux сборка успешна; selected CTest6/6 за26.95s:13 telemetry/archive GTests,20 runtime unit cases,8 session cases,3 QML cases и real Unix/TCP adapters/installed consumer. Полный63-test suite и Aurora SDK/устройство в этом шаге не проверялись.
+
+## Camera/replay input work (16.10.2026)
+
+Отключаемые source operation timings, shared-session epoch guard, optional SDK/source_work records,
+byte-budget pagination и per-camera I/O choices реализованы: [[engineering/SOURCE_TIMING]].
+Число I/O choices теперь18 (прежние6 +12 per-camera); capture quantiles не выводятся из повторяемых
+selected-input measurements. Physical capture/decode separation и полноценный worker trace ещё отсутствуют.

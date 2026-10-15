@@ -191,3 +191,7 @@ Wire fields, fresh/loss semantics, CLI и ограничения: [[engineering/
 Installed `client_telemetry_archive.hpp` предоставляет TelemetryArchive и serialize/parse API для
 bounded window snapshot. Нет Qt/file I/O/server mutation. Поля, units,120-record/2MiB limits,
 проверки cursor/time/loss и отличия от experiment trace: [[engineering/TELEMETRY_ARCHIVE]].
+
+Optional `TelemetrySample::source_work` содержит owning per-camera DTO из installed
+`source_work_timing.hpp`; Qt/OpenCV dependency не добавлена. Старое отсутствие поля допустимо;
+validation и archive compatibility: [[engineering/SOURCE_TIMING]].

@@ -320,3 +320,10 @@ Instance/epoch/cursor guards, bounds, schema, units и PlantUML последов
 [[engineering/TELEMETRY]]. Группа telemetry применяется через ConfigService; сбор default off.
 Это bounded polling process CPU/RSS и последних существующих frame spans, без subscriptions
 и полного subsystem profiler. Control-only/multi-client пока отсутствуют.
+
+## source_work_timing_v1
+
+Аддитивный optional массив в telemetry samples, без новых команд/изменения SV01 framing:
+[[engineering/SOURCE_TIMING]]. Records привязаны к выбранным render inputs и текущему telemetry
+session epoch. Большой telemetry batch может сократиться по32KiB budget; next_cursor/has_more
+остаются обязательными для pagination. Это не отдельный worker event stream.

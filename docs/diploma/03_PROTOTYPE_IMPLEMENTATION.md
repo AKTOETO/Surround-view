@@ -1185,3 +1185,56 @@ record age, точный uint64 text и подавление queue conversion>2^
 adapter tests проверяют тот же point builder после offline import. Найденный drift дробных archive
 values исправлен только в local archive parser для Boost≥1.83 и проверен repeated save/load;
 общая конфигурационная/wire precision и performance overhead остаются отдельными задачами.
+
+## 3.32. Измерения работы источников и защита от смешивания серий
+
+В существующие camera/replay workers добавлены отключаемые timing boundaries. Camera read wall
+охватывает вызов OpenCV, RGB preparation — conversion/copy; replay load охватывает ImageLoader,
+а cache hit обозначает skipped load. OpenCV read объединяет получение/декодирование кадра, поэтому
+эти данные нельзя назвать раздельными hardware acquisition/decode measurements. Первичная API
+ссылка и точные границы: [[engineering/SOURCE_TIMING]].
+
+![Source work graph](../engineering/figures/telemetry-source-work.png)
+
+Рисунок 3.42 — Per-camera input-operation graph с source_sequence/epoch/cache provenance. Показаны
+контролируемые значения QML fixture, не физические измерения или ranking hardware.
+
+Prepared config transaction выделяет immutable session заранее; workers получают atomic snapshots.
+Если read начался до commit и завершился после него, его metadata сохраняет старую session.
+Collector сопоставляет session pointer/epoch/camera/sequence с выбранным Frame и исключает старый
+timing, продолжая использовать само корректное изображение. Это предотвращает приписывание
+раньше начатой операции новой серии. Disabled запрещает начало дополнительных timing measurements;
+in-flight work может закончиться, но не входит в новую историю. Постоянные pointer checks/поля и
+существующие frame clocks остаются, поэтому overhead нельзя объявлять нулевым.
+
+| Проверяемое свойство | Программная проверка | Что ещё требуется |
+|---|---|---|
+| Настоящий processing path | BGR/GRAY/BGRA→RGB через OpenCV и fake capture driver | Физический V4L2 capture |
+| Load/cache distinction | Real PNG OpenCV loader и repeated-path cache controls | Cold/warm filesystem scenarios на target |
+| Epoch lifecycle | Blocking read через commit, old-input rejection, hot replay pause/step | Hardware reconnect/blocking read acceptance |
+| Delivery bounds |32KiB pagination, SDK clock/kind/IDs/duration guards | Независимый worker event channel/byte budgets |
+| Reproducibility | Optional source_work archive round-trip, live Linux Unix/TCP tests | Полный experiment provenance и platform comparison |
+
+Source timings в samples относятся к inputs последнего render, а не ко всем worker operations.
+Fresh render может повторно выбрать прежнее изображение и его timing. GUI поэтому не строит
+capture-rate/quantile claims из этого набора; source identity доступна для последующего dedup.
+Failed/dropped/unselected operations не представлены. Current implementation полезна для выявления
+нагрузки на успешном source path, но не доказывает worst-case device latency. Общая sequence diagram,
+контракт и границы приёмки: [[engineering/SOURCE_TIMING]]. Отдельные sync/calibration/seam/send
+spans, уровни/budgets и controlled overhead comparison остаются следующими инженерными этапами.
+
+Дополнительно устранена ошибка layout camera input: CV_16U и другие неподдерживаемые depths
+не выдаются за RGB8 после cvtColor. Кадр отклоняется с source status/drop до публикации, а fake
+16-bit capture test проверяет отсутствие такого Frame. Это программная validation guarantee,
+не свидетельство поддержки конкретного набора физических camera formats.
+
+Граница camera read в миллисекундах определяется из серверного monotonic clock:
+
+$$
+\Delta t_{\mathrm{read}} = (t_{\mathrm{read,end}} - t_{\mathrm{read,start}}) / 10^6.
+$$
+
+Аналогично вычисляется preparation wall. Это host interval операции OpenCV, а не измерение
+времени экспозиции. Ключ series/input provenance необходим для интерпретации даже при совпадении
+числовой duration в двух соседних samples. Финальные проверки и ограничения зафиксированы в
+[[engineering/SOURCE_TIMING#Проверка и следующий шаг]].

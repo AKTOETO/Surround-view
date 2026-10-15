@@ -1280,3 +1280,9 @@ trace. Подробности и ограничения: [[engineering/TELEMETRY
 record age или collection wall. Пояснения под selector различают CPU wall/GPU query/возраст,
 а stage quantiles считают только fresh records. Backend counters и ограничения:
 [[engineering/TELEMETRY#Pipeline и source/delivery графики]]. Работает и для сохранённого window.
+
+При включённом telemetry collection camera/replay source измеряет успешные input operations.
+В I/O появились12 per-camera choices read/load/prepare; подходящие значения зависят от source kind.
+Для проверки epoch guard на replay: pause → изменить telemetry period/history → apply → step.
+Стартующий по умолчанию looping replay может успеть повторно использовать cache до первого render;
+cache_hit=true не доказывает, что cold load не выполнялся. [[engineering/SOURCE_TIMING]].

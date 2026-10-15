@@ -107,3 +107,5 @@ Multilabel server candidate/cost/global-gap controls: [[validation/MULTILABEL_SE
 [[engineering/CONFIG_SERVICE|Read/catalog/validate и atomic runtime/persistent apply]], [[engineering/CONFIG_OPERATIONS|Process-scoped операции и потеря ACK]], [[engineering/PROTOCOL_SCENARIOS|Сценарии взаимодействия]], [[engineering/PROTOBUF|Оценка protobuf и C++ benchmark]]. Первый default-off collector и typed polling API реализованы: [[engineering/TELEMETRY]]. CPU/RSS/render графики sv-simulator и формы settings реализованы; полный subsystem profiler запланирован: [[../TODO#Отключаемая серверная телеметрия для devel-тестирования]].
 
 Сохранение telemetry window и offline view: [[engineering/TELEMETRY_ARCHIVE]].
+
+Отключаемые camera/replay input timers и provenance: [[engineering/SOURCE_TIMING]].

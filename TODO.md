@@ -96,10 +96,10 @@ provider; disabled/reset/paused/busy/lease/persistence rollback и Unix/TCP пр
 Контракт и ограничения: [[engineering/TELEMETRY]].
 
 - Расширить settings уровнями детализации, перечнем подсистем/metric IDs и buffer budget в bytes.
-- Добавить отдельные длительности/очереди capture/decode, sync/skew, calibration, projection/seam/multiband, encode/send; process threads, GPU utilisation/memory, per-camera/per-worker drop и reconnect counters. Сейчас доступные stage wall spans перекрываются, current RSS приближённый; frame.fresh=false не считать новым render. Проверить платформенную доступность, GPU timestamp semantics.
+- Camera read wall/RGB prepare и replay load/cache observations для selected inputs выполнены ([[engineering/SOURCE_TIMING]]). Добавить failed-operation/independent worker events, раздельные physical capture/decode, sync/skew, calibration, projection/seam/multiband, encode/send; process threads, GPU utilisation/memory, per-camera/per-worker drop и reconnect counters. Сейчас доступные stage wall spans перекрываются, current RSS приближённый; frame.fresh=false не считать новым render. Проверить платформенную доступность, GPU timestamp semantics.
 - Дополнить bounded polling subscriptions/downsampling, experiment identity и независимым control-only/channel lifecycle. Sampling сейчас идёт в render loop: долгие вызовы задерживают samples. Не требовать передачи final_frame; обязательный data attachment пока сохраняется.
 
-Формы telemetry settings, bounded polling, CPU/RSS/render, existing pipeline spans и source/delivery tabs в sv-simulator выполнены. Окно120 samples, loss/gaps, fresh-only render quantiles p50/p95/p99 и последняя revision отображаются; series reset/reconnect учтены: [[engineering/TELEMETRY]].
+Формы telemetry settings, bounded polling, CPU/RSS/render, existing pipeline spans, source/delivery и per-camera work tabs в sv-simulator выполнены. Окно120 samples, loss/gaps, fresh-only render quantiles p50/p95/p99 и последняя revision отображаются; series reset/reconnect учтены: [[engineering/TELEMETRY]].
 
 - Добавить графики новых инструментированных подсистем/очередей после реализации их timers, timeline config/experiment markers, streaming trace/timed replay и paired comparison. Source queue/flags, existing stages/fresh-only quantiles и record age уже визуализированы: [[engineering/TELEMETRY]]. Bounded window export/static offline view уже выполнены: [[engineering/TELEMETRY_ARCHIVE]]. Переключение алгоритма выполнять через существующий server API; автоматический выбор алгоритма — отдельная будущая политика.
 - Измерить overhead disabled/minimal/detailed на одинаковом replay: CPU, RSS, throughput, frame latency и потери. Первичные validate/apply, disabled/provider и bounded ring checks выполнены; добавить byte-budget/RSS проверки, slow/disconnected delivery и неизвестные metric IDs. Телеметрия нужна для поиска узких мест и обоснования выбора алгоритмов/архитектуры, но её собственные расходы должны входить в отчёт.
@@ -109,3 +109,14 @@ provider; disabled/reset/paused/busy/lease/persistence rollback и Unix/TCP пр
 Локальный telemetry archive reader использует precise parsing на Boost≥1.83; repeated fractional save/load regression выполнен ([[engineering/TELEMETRY_ARCHIVE#Точность дробных метрик]]). Остальные пути и Boost<1.83 не закрыты.
 
 Проверить политику double parsing/serialization на поддерживаемых Boost версиях и Qt↔wire↔ConfigStore: на host default Boost.JSON number mode меняет последние разряды отдельных исходных camera matrix значений уже при загрузке. Нужны контролируемые round-trip/repeated-save tests и явно выбранная точность с учётом Aurora Boost1.86 и minimum1.75; не менять исторические исследовательские inputs/reports молча. Текущий GUI persistence regression сравнивает unrelated groups с authoritative config_read.active, не с исходным текстом файла.
+
+## Physical camera backend: оставшаяся приёмка
+
+Проверить V4L2 stop/reconnect при зависшем VideoCapture.read, обработку OpenCV exceptions,
+форматы/размеры/FPS/backend buffers и реальные device timestamps. Driver seam и fake capture
+тестируют RGB conversion/queue/timing lifecycle; это не проверка физических камер. Совместное
+использование real/socket/replay cameras в одном rig всё ещё требует отдельного mixed source backend.
+
+Для cold/warm source experiments предусмотреть управляемый replay start/cache reset в compiled
+runner: default looping replay может выполнить cold load до первого render. Первый отображённый
+кадр нельзя автоматически считать первым image load; selected-input timing не заменяет worker trace.
