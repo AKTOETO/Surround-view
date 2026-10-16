@@ -123,3 +123,6 @@ I/O also exposes six health counters/flags per camera (24 additional choices, 42
 
 
 I/O details now show the checked backend mode and open-attempt identity without extra metric choices. Unrequested properties remain unavailable; closed/rejected capture clears the mode. Archive views show historical snapshots, not current camera availability. See [[engineering/SOURCES#Проверенный режим камеры через SDK]].
+
+
+I/O details separate current checked camera mode from selected-frame capture provenance. A retained frame may belong to an older opening after reconnect; its attempt/mode is preserved in telemetry archives. No metric choices were added. [[engineering/SOURCES#Происхождение выбранного кадра при reconnect]].

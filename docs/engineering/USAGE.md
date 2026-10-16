@@ -1321,3 +1321,6 @@ MOCK моделируют negotiation и lifecycle; подключение ре�
 
 
 В telemetry → I/O смотрите Checked mode в сведениях камеры: разрешение, checked FPS/FOURCC/buffers и open_attempt. «Не проверен» означает, что optional свойство не запрашивалось; «недоступен» — capture закрыт/ещё не согласован/не поддерживает этот snapshot. Сравнивайте с startup source.capture и calibrated resolution; FPS readback не равен измеренному cadence. Снимок сохраняется в окне отчёта. [[engineering/SOURCES#Проверенный режим камеры через SDK]].
+
+
+В I/O details сравнивайте Current checked mode камеры со строкой Selected camera: после reconnect используемый кадр может иметь прежний capture open_attempt/FPS. Это не ошибка SDK. Для camera metadata результата используйте parse_frame_camera_inputs(); он не валидирует pixel payload. Запись Selected сохраняется в offline report. [[engineering/SOURCES#Происхождение выбранного кадра при reconnect]].

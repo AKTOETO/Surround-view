@@ -333,3 +333,6 @@ telemetry_read schema1 дополнен optional source.camera_diagnostics: null
 
 
 Optional source.camera_diagnostics[i].negotiated_mode: null либо width/height (positive integers), open_attempt (nonzero decimal uint64 == open_attempts), fps (finite positive number/null), fourcc (ASCII4/null), buffer_count (integer1…32/null). Non-null запрещён у worker_stopped; old omission принимается. Команды/transport framing не менялись. [[engineering/SOURCES#Проверенный режим камеры через SDK]].
+
+
+Type11 inputs[].camera_capture дополнен optional immutable open_attempt и negotiated_mode выбранного hardware Frame. Telemetry frame.camera_inputs содержит до4 typed selected records с source_sequence_id. Identities decimal uint64; nonzero attempt должен совпасть с nested mode attempt, но не обязательно с current diagnostics. Existing framing/commands сохраняются. [[engineering/SOURCES#Происхождение выбранного кадра при reconnect]].

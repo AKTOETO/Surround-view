@@ -151,3 +151,6 @@ Optional source.camera_diagnostics сохраняется при export/import �
 
 
 Camera negotiated_mode сохраняется как additive schema1 поле. Non-null snapshots и exact open_attempt проходят те же SDK validators; omission/null старого архива допустимы. Сохранённый mode исторический, не утверждение о текущем подключении камеры. [[engineering/SOURCES#Проверенный режим камеры через SDK]].
+
+
+frame.camera_inputs сохраняет immutable historical capture attempt/mode выбранных входов, даже если camera diagnostics уже описывает другое открытие или закрыта. Legacy omission принимается; malformed/duplicate/context identity проверяются SDK. Это additive schema1, прежний export SDK может потерять extension. [[engineering/SOURCES#Происхождение выбранного кадра при reconnect]].

@@ -201,3 +201,6 @@ Optional TelemetrySource::camera_diagnostics содержит четыре Camer
 
 
 CameraDiagnostics::negotiated_mode содержит optional CameraCaptureMode (installed camera_capture_mode.hpp): width/height, exact open_attempt и nullable checked fps/fourcc/buffer_count. SDK отвергает stale attempt и mode у stopped worker, принимает omission/null от прежнего сервера. Это snapshot источника, не metadata выбранного Frame. [[engineering/SOURCES#Проверенный режим камеры через SDK]].
+
+
+Public parse_frame_camera_inputs(const Message&) извлекает typed CameraInputProvenance из type11 inputs. Это scoped metadata parser, без проверки pixel payload. TelemetryFrame::camera_inputs сохраняет выбранные hardware frames независимо от текущих diagnostics; historical attempts не обязаны совпадать с current open_attempts. Новый installed camera_frame_provenance.hpp не зависит от Qt/OpenCV. [[engineering/SOURCES#Происхождение выбранного кадра при reconnect]].

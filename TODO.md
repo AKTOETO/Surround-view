@@ -153,6 +153,12 @@ MOCK-проверки характеристик камер и startup capture p
 
 Checked camera mode через SDK/archive/I/O details выполнен:
 [[engineering/SOURCES#Проверенный режим камеры через SDK]]. Остаются автоматические свойства
-без explicit profile, связывание каждого Frame с capture open_attempt, формализованные requested/
+без explicit profile, формализованные requested/
 active/observed camera states и режимы capability discovery. Snapshot не заменяет measured cadence,
 sensor timestamps и physical acceptance.
+
+
+Frame-level capture attempt/mode provenance и selected/current comparison реализованы:
+[[engineering/SOURCES#Происхождение выбранного кадра при reconnect]]. Остаются real driver
+cancellation/disconnect, per-camera source hot lifecycle, capability inventory и измеренные sensor
+характеристики. MOCK проверяет ownership и атрибуцию, не real-time поведение драйвера.

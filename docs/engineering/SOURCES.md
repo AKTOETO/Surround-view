@@ -575,7 +575,7 @@ checked resolution/FPS/FOURCC/buffers/attempt; число metric choices ост�
 
 Mode относится к source snapshot в момент sample, а не к selected input frame. После reconnect
 старый выбранный кадр и текущий mode могут относиться к разным открытиям: нельзя переносить
-номер попытки на Frame автоматически. Frame-level capture attempt provenance ещё не реализована.
+номер попытки на Frame автоматически. Frame-level capture attempt provenance реализована следующим срезом, см. ниже.
 Backend readback, measured sensor mode, frame readiness и final delivery остаются разными понятиями.
 
 MOCK assertions проверяют actual29.97 вместо requested30, nullable незапрошенные свойства,
@@ -585,3 +585,94 @@ Parser/архив проверяют legacy omission, null, stale/zero attempt, 
 сохраняет checked mode при offline archive restoration; это не live physical-camera acceptance.
 
 Проверки этого среза: полная Linux сборка; выбранные CTest 7/7 за 39,26 с, включая 35 camera/source GTest, typed telemetry/archive, installed SDK consumer/Unix/TCP, live unavailable-device path и offscreen QML archive checks. Полный набор CTest и physical V4L2/Aurora acceptance не выполнялись.
+
+
+## Происхождение выбранного кадра при reconnect
+
+Каждое успешное open создаёт один immutable CameraFrameProvenance: open_attempt и optional
+проверенный режим этого открытия. Camera worker разделяет const shared pointer между его
+Frames; следующее open создаёт новый объект. Старый Frame сохраняет собственную ссылку,
+даже после close, reconnect или stop источника. Timing collection для этого не требуется.
+У уже открытого внешнего test adapter без наблюдаемого open такой записи может не быть:
+источник не выдумывает номер открытия.
+
+В metadata результата type11 для used hardware input добавлено optional camera_capture:
+
+```json
+{
+  "camera_id": 0,
+  "used": true,
+  "source_sequence_id": "9",
+  "camera_capture": {
+    "open_attempt": "1",
+    "negotiated_mode": {
+      "width": 640, "height": 480, "open_attempt": "1",
+      "fps": 15, "fourcc": "YUYV", "buffer_count": 2
+    }
+  }
+}
+```
+
+Это фрагмент inputs одного результата, не полный type11 packet. Source_session, calibration_id,
+receive/source timestamps и output revision остаются в прежних полях. Attempt identity имеет
+смысл внутри server_instance_id и camera_id; номер1 у разных камер/после restart не означает
+общее открытие. Source_sequence позволяет связать запись с конкретным выбранным Frame.
+
+```plantuml
+@startuml
+participant "Camera worker" as W
+participant "Synchronizer / renderer" as R
+participant "Current diagnostics" as D
+participant "sv-client-lib" as L
+W -> W : open1, immutable provenance1
+W -> R : Frame(seq1, provenance1)
+W -> D : current mode1
+W -> W : read failed, close
+W -> D : clear current mode
+W -> W : open2, immutable provenance2
+W -> D : current mode2
+W -> R : Frame(seq2, provenance2)
+R -> L : output using retained Frame seq1
+inputs.camera_capture = provenance1
+D -> L : telemetry source snapshot: current mode2
+R -> L : telemetry frame.camera_inputs: selected provenance1
+note over L : Selected and current identities may differ.
+Do not overwrite old Frame metadata with mode2.
+@enduml
+```
+
+*Рисунок И.9 — Сохранение происхождения кадра после переподключения. Удержание старого Frame
+возможно при очередях/rerender; диаграмма не гарантирует, что Synchronizer выберет его всегда.*
+
+Public SDK parse_frame_camera_inputs(Message) возвращает typed CameraInputProvenance для
+hardware inputs; проверяет type11, четыре уникальных IDs, used/source_type=camera для non-null
+camera_capture, decimal identities и согласованность вложенного режима. Метод проверяет
+только camera metadata, не изображение/payload или весь протокол результата. Прежние inputs
+без camera_capture/null принимаются. Nullable negotiated_mode означает известное открытие
+без проверенных характеристик, а не нулевые характеристики.
+
+В telemetry frame.camera_inputs хранится до четырёх выбранных hardware records (camera_id,
+source_sequence_id, camera_capture). Это snapshot **последнего render**, не новая операция
+захвата при каждом sample. Fresh=false сохраняет его, смена collection epoch не меняет identity
+самого Frame. Collector копирует только маленькие metadata, не удерживает Image буферы.
+В archive поле сохраняется; omission прежней schema1 означает пустой список. Source_work и
+selected provenance одной камеры должны иметь одинаковый source_sequence. Текущий diagnostic
+mode намеренно не сравнивается с selected attempt: после reconnect они могут различаться.
+
+SDK отклоняет duplicate/>4 selected records, zero/mismatched attempts и противоречие source_work
+sequence. Frame helper отклоняет capture на unused/replay/socket input. Нет новых команд или
+framing. Существующий bounded polling подбирает число samples по byte budget также с четырьмя
+current modes и selected provenance. Старый SDK может игнорировать и терять extension при export.
+
+В I/O details отдельно показаны current checked mode и Selected camera с source_sequence,
+capture attempt и проверенным режимом выбранного кадра. Новых metric choices нет. До внедрения
+планируемой UI-перегруппировки это диагностические строки в существующей панели.
+
+MOCK reconnect test хранит Frame от открытия1 (15 FPS), затем получает Frame от открытия2
+(30 FPS); после stop оба сохраняют исходные объекты и последовательность не сбрасывается.
+Render/telemetry/archive со старым Frame должны показывать selected1 одновременно с current2,
+в том числе при повторном sample и новом telemetry epoch. Это тест владения/атрибуции, а не
+hot смена startup profile, реального FPS или аппаратного reconnect. Типовые тесты также проверяют
+legacy packets, uint64 max, неверный context, дубли, inconsistent identity и byte pagination.
+
+Проверки этого среза: полная Linux сборка; выбранные CTest 4/4 за 9,70 с (source_work_timing, telemetry, simulator_runtime_errors, simulator_configuration_qml) и 3/3 за 30,87 с (sources, client_transports/installed consumer, telemetry_ipc). Camera/source executable содержит 39 GTest. Полный набор CTest, physical V4L2/Aurora и overhead measurements не выполнялись.

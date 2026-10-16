@@ -399,3 +399,6 @@ reset epoch не обнуляет lifetime counters. SDK валидирует or
 очищается при начале open/close и допускается без frame record. Оно не связывает автоматически
 selected Frame с новым capture generation после reconnect. Legacy omission/null принимаются;
 stale attempt/stopped inconsistency отклоняются. [[engineering/SOURCES#Проверенный режим камеры через SDK]].
+
+
+Reconnect сценарий дополнен разделением current capture mode и selected Frame provenance: старый выбранный Frame сохраняет opening identity; повторный render/sample не переписывает её текущим состоянием. SDK сравнивает source_work/selected source_sequence, а не historical attempt с current counter. [[engineering/SOURCES#Происхождение выбранного кадра при reconnect]].
