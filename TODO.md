@@ -72,7 +72,7 @@
 
 ## Приоритет 3 — проверить отказы, производительность и перенос
 
-12. Подготовить per-camera source config: для каждого camera_id независимо выбирать OpenCV/V4L2 device path (/dev/video* или стабильный /dev/v4l/by-id/*), simulator socket (Unix/TCP) либо replay; поддержать четыре реальные камеры и смешанные реальные/виртуальные входы. Задать для каждой камеры resolution/pixel format/FPS, timestamps/clock mapping, calibration_id, reconnect/backoff и timeout policy. Реализовать составной FrameSource с bounded очередями, согласованными pause/resume semantics и общей синхронизацией; не открывать ненастроенные устройства/порты. Связать schema/validate/apply policy с ConfigService и формами sv-simulator, явно отличать hot-restart конкретного capture worker от перезапуска сервера. Проверить fake adapters, mixed-source skew, disconnect/reconnect и завершение без оборудования, затем реальные драйверы. Текущий source.type выбирает один общий backend для всех четырёх камер; смешанные источники ещё не реализованы. Для общего camera backend startup source.capture уже задаёт per-camera FPS/FOURCC/buffers с проверкой readback; hot schema/forms и полный automatic-mode inventory ещё отсутствуют; checked mode передаётся через telemetry SDK/archive. [[engineering/SOURCES]].
+12. Подготовить per-camera source config: для каждого camera_id независимо выбирать OpenCV/V4L2 device path (/dev/video* или стабильный /dev/v4l/by-id/*), simulator socket (Unix/TCP) либо replay; поддержать четыре реальные камеры и смешанные реальные/виртуальные входы. Задать для каждой камеры resolution/pixel format/FPS, timestamps/clock mapping, calibration_id, reconnect/backoff и timeout policy. Реализовать составной FrameSource с bounded очередями, согласованными pause/resume semantics и общей синхронизацией; не открывать ненастроенные устройства/порты. Связать schema/validate/apply policy с ConfigService и формами sv-simulator, явно отличать hot-restart конкретного capture worker от перезапуска сервера. Проверить fake adapters, mixed-source skew, disconnect/reconnect и завершение без оборудования, затем реальные драйверы. Текущий source.type выбирает один общий backend для всех четырёх камер; смешанные источники ещё не реализованы. Для общего camera backend startup source.capture уже задаёт per-camera FPS/FOURCC/buffers с проверкой readback и recovery policy; hot schema/forms и полный automatic-mode inventory ещё отсутствуют; checked mode передаётся через telemetry SDK/archive. [[engineering/SOURCES]].
 
 Аппаратная приёмка пункта12 — проверить V4L2 на реальных камерах: negotiated format/resolution, sensor timestamps, disconnect/reconnect и ограниченное завершение при зависшем `VideoCapture::read`.
 13. Выполнить two-host испытания `sv-client-lib` и producer: разделённые control/data, RGBA markers, clock mapping/skew, reconnect, пропуски/перестановки, длительный overload, RSS и thermal. TCP loopback и localhost не заменяют эту проверку.
@@ -134,8 +134,8 @@ runner: default looping replay может выполнить cold load до пе
 
 
 Обработка OpenCV exceptions camera worker и прерываемое ожидание retry выполнены:
-[[engineering/SOURCES#Восстановление camera worker после ошибки OpenCV]]. Остаются configurable
-retry/timeout policy, restart отдельного worker после release failure и durations failed operations;
+[[engineering/SOURCES#Восстановление camera worker после ошибки OpenCV]]. Настраиваемый startup retry/backoff/budget выполнен; остаются
+driver timeout/cancellation, restart отдельного worker после release failure и durations failed operations;
 camera health/reconnect counters выполнены; вызовы OpenCV не стали прерываемыми.
 
 
@@ -162,3 +162,9 @@ Frame-level capture attempt/mode provenance и selected/current comparison ре�
 [[engineering/SOURCES#Происхождение выбранного кадра при reconnect]]. Остаются real driver
 cancellation/disconnect, per-camera source hot lifecycle, capability inventory и измеренные sensor
 характеристики. MOCK проверяет ownership и атрибуцию, не real-time поведение драйвера.
+
+
+Per-camera recovery delays/capped backoff/finite failure budget реализованы с MOCK и unavailable-path
+server checks: [[engineering/SOURCES#Политика повторов и backoff аппаратной камеры]]. Остаются
+source ConfigService/forms/hot worker restart, typed failure streak/terminal reason и physical
+read/open/release cancellation. Finite retry budget не равен driver timeout.

@@ -175,7 +175,7 @@ set, а не унаследованы молча от replay. ConfigService до
 `camera_exception:open`, `camera_exception:read` либо `camera_exception:prepare`, закрывает
 capture и повторяет открытие через 250 мс. Неуспешный read (`false` или пустой Mat)
 сохраняет прежний `camera_read_failed:<path>` и задержку 100 мс. Недоступное устройство
-повторяется через 250 мс. Эти интервалы фиксированы; configurable backoff ещё отсутствует.
+повторяется через 250 мс. Это значения по умолчанию; per-camera recovery policy описана ниже.
 
 Ошибка `close` имеет отдельную политику: `camera_exception:close_worker_stopped` и завершение
 только соответствующего worker, без повторного использования capture с неизвестным состоянием.
@@ -264,13 +264,14 @@ participant "Server main loop / commands" as M
 participant "TelemetryCollector" as T
 participant "sv-client-lib" as L
 participant "sv-simulator" as G
-W -> S : open / failure / reconnect / stop
-update under mutex
+W -> S : open / failure / reconnect / stop\nupdate under mutex
 M -> S : stats snapshot
 S --> M : optional four-camera diagnostics
 M -> T : sample(stats)
-note over T : Collection disabled: no telemetry samples.
+note over T
+Collection disabled: no telemetry samples.
 Counters follow source lifetime, not epoch.
+end note
 L -> M : telemetry_read(instance, epoch, cursor)
 M -> T : read(instance, epoch, cursor)
 T --> M : bounded samples
@@ -305,7 +306,7 @@ exception/reopen policy; для неё ready не публикуется.
 Для resolution mismatch, unsupported depth и unsupported channels добавлено прерываемое ожидание
 100 мс перед следующим read. Capture остаётся открытым; это не reconnect. Задержка защищает от
 неограниченного повторения rejected read при быстро возвращающем backend и даёт восстановиться
-формату без рестарта. Настройка интервала пока отсутствует. Drop остаётся существующим source
+формату без рестарта. Интервал теперь настраивается через recovery.invalid_frame_delay_ms (см. ниже). Drop остаётся существующим source
 counter; read_failures и opencv_exceptions не растут от одной только несовместимости формата.
 
 ```plantuml
@@ -316,7 +317,7 @@ if (Размер, CV_8U и channels поддержаны?) then (нет)
   :Увеличить dropped;
   :Status format error
 подавить повтор одинакового статуса;
-  :Прерываемое ожидание 100 мс;
+  :Прерываемое ожидание invalid_frame_delay_ms (default100);
   :Следующий read / stop;
   stop
 else (да)
@@ -383,17 +384,16 @@ W -> C : open или read
 activate C
 A -> S : stop()
 activate S
-S -> S : shutdown mutex
-stop flag = true
-wake retry waits
+S -> S : shutdown mutex\nstop flag = true\nwake retry waits
 S -> W : join (ожидание)
 B -> S : stop()
-note right of B : Ждёт shutdown mutex,
+note right of B
+Ждёт shutdown mutex,
 не возвращается по одному flag.
+end note
 C --> W : возврат вызова
  deactivate C
-W -> W : проверить stop flag
-пропустить следующий этап
+W -> W : проверить stop flag\nпропустить следующий этап
 W -> C : close()
 W --> S : worker завершён
 S --> A : все workers joined
@@ -470,7 +470,7 @@ Mat перед RGB остаётся обязательной. Список св�
 
 При несовпадении worker выдаёт source_status reason
 `camera_configuration_rejected:<property>:requested=<value>:actual=<value>`, закрывает capture
-и ждёт существующие250 мс перед retry. Даже false open может оставить частично открытый
+и ждёт recovery delay перед retry (default250 мс). Даже false open может оставить частично открытый
 capture: worker теперь закрывает его перед повтором. При close exception сохраняется
 close_worker_stopped policy. До успешного согласования read не вызывается и ready не выдаётся.
 Status находится в серверном журнале, не является новым SDK command или надёжной event history.
@@ -481,8 +481,7 @@ Health open_attempts растёт, read_failures не растёт от одно
 @startuml
 participant "Camera worker" as W
 participant "OpenCvCapture" as A
-participant "VideoDevice
-cv::VideoCapture / MOCK" as D
+participant "VideoDevice\ncv::VideoCapture / MOCK" as D
 W -> A : open(path, calibrated width/height)
 A -> D : open(path, CAP_V4L2)
 A -> D : set FOURCC (optional)
@@ -493,7 +492,7 @@ alt mismatch / unsupported
   A --> W : false + open_failure
   W -> W : source_status configuration_rejected
   W -> A : close()
-  W -> W : interruptible retry250ms
+  W -> W : interruptible recovery wait (default250ms)
 else matches
   A --> W : true
   W -> A : read(Mat)
@@ -547,14 +546,10 @@ CameraCapture возвращает null. Null может означать зак
 [*] --> Unknown : startup / unsupported driver seam
 Unknown --> Opening : clear old mode, increment open_attempts
 Opening --> Unknown : open/negotiation rejected, close
-Opening --> Checked : successful readback
-attach current open_attempt
-Checked --> Unknown : read failure / close / stop
-clear before release
-Checked --> Opening : backend closed itself
-clear at next open attempt
-Checked --> Checked : successful reads / invalid Mat
-mode remains backend evidence
+Opening --> Checked : successful readback\nattach current open_attempt
+Checked --> Unknown : read failure / close / stop\nclear before release
+Checked --> Opening : backend closed itself\nclear at next open attempt
+Checked --> Checked : successful reads / invalid Mat\nmode remains backend evidence
 Unknown --> [*] : worker stopped
 @enduml
 ```
@@ -632,12 +627,13 @@ W -> D : clear current mode
 W -> W : open2, immutable provenance2
 W -> D : current mode2
 W -> R : Frame(seq2, provenance2)
-R -> L : output using retained Frame seq1
-inputs.camera_capture = provenance1
+R -> L : output using retained Frame seq1\ninputs.camera_capture = provenance1
 D -> L : telemetry source snapshot: current mode2
 R -> L : telemetry frame.camera_inputs: selected provenance1
-note over L : Selected and current identities may differ.
+note over L
+Selected and current identities may differ.
 Do not overwrite old Frame metadata with mode2.
+end note
 @enduml
 ```
 
@@ -676,3 +672,104 @@ hot смена startup profile, реального FPS или аппаратно
 legacy packets, uint64 max, неверный context, дубли, inconsistent identity и byte pagination.
 
 Проверки этого среза: полная Linux сборка; выбранные CTest 4/4 за 9,70 с (source_work_timing, telemetry, simulator_runtime_errors, simulator_configuration_qml) и 3/3 за 30,87 с (sources, client_transports/installed consumer, telemetry_ipc). Camera/source executable содержит 39 GTest. Полный набор CTest, physical V4L2/Aurora и overhead measurements не выполнялись.
+
+
+## Политика повторов и backoff аппаратной камеры
+
+В каждой startup source.capture записи добавлена optional группа recovery. Она применяется
+camera worker, а не VideoCapture property API, и не превращает driver calls в отменяемые.
+Если группу опустить, прежние интервалы250/100/100/250 мс и бесконечный retry сохраняются.
+
+```json
+"capture": [
+  {"camera_id": 0, "recovery": {
+    "open_delay_ms": 250,
+    "read_delay_ms": 100,
+    "invalid_frame_delay_ms": 100,
+    "exception_delay_ms": 250,
+    "max_delay_ms": 5000,
+    "backoff_multiplier": 2,
+    "max_consecutive_failures": 8
+  }},
+  {"camera_id": 1}, {"camera_id": 2}, {"camera_id": 3}
+]
+```
+
+Это вложенный capture fragment source.type=camera, не полный config. Камеры1…3 остаются
+на default policy; режимы и пути задаются как раньше. Recovery startup-only: hot apply/формы
+ConfigService и restart одного worker ещё не реализованы.
+
+| Поле | Default / bounds | Смысл |
+|---|---|---|
+| open_delay_ms | 250 / integer1…60000 | False open и negotiation rejection после cleanup |
+| read_delay_ms | 100 / integer1…60000 | False/empty read после close |
+| invalid_frame_delay_ms | 100 / integer1…60000 | Неверные size/depth/channels; capture остаётся открытым |
+| exception_delay_ms | 250 / integer1…60000 | Recoverable cv::Exception после cleanup |
+| max_delay_ms | 5000 / integer1…60000 | Верхняя граница requested wait; не меньше всех четырёх base delays |
+| backoff_multiplier | 1 / integer1…8 | Рост delay по общему числу последовательных отказов |
+| max_consecutive_failures | 0 / integer0…1000000 | 0 — unlimited; N>0 останавливает worker на N-м отказе |
+
+Для failure ordinal n≥1 и его категории k рассчитывается:
+
+$$
+d_n = \min(d_{\max}, b_k \cdot m^{n-1}).
+$$
+
+Реализация использует integer multiplication только до cap, а не floating pow. При multiplier1
+вычисление не обходит весь failure history. Failure counter насыщается на uint64 max.
+При finite budget и n≥N delay уже не выполняется, следующего open/read нет. N означает
+максимум последовательных failed cycles, включая первый, а не N дополнительных повторов.
+
+Цепочка общая для open/read/invalid-frame/exception: успешный open её не сбрасывает. Сброс
+происходит только после создания валидного owned RGB Image, до проверки pause/output queue.
+Поэтому работающий сенсор при pause/busy всё ещё восстанавливает health policy, а камера,
+которая каждый раз открывается и сразу возвращает failed read, достигает finite limit.
+Rejected output delivery/queue saturation сами по себе не являются camera failures.
+
+```plantuml
+@startuml
+start
+:Open / read / validate / prepare;
+if (Валидный RGB?) then (да)
+  :Сбросить failure streak;
+  :Ready и обычная pause/queue policy;
+else (нет)
+  :Обновить прежние counters/status;
+  :Cleanup если open/read/exception;
+  :Увеличить failure streak;
+  if (Finite limit достигнут?) then (да)
+    :Status camera_retry_exhausted;
+    :Закрыть capture, clear current mode;
+    :worker_stopped = true;
+    stop
+  else (нет)
+    :Рассчитать capped delay;
+    :Прерываемое ожидание / stop;
+  endif
+endif
+stop
+@enduml
+```
+
+*Рисунок И.10 — Один цикл recovery policy. Успешный open не является успешным RGB; stop
+прерывает wait, но не драйверный вызов. Release failure имеет прежнюю terminal policy.*
+
+На исчерпании budget `camera_retry_exhausted` публикуется в bounded status queue/серверном
+журнале, worker завершается и current mode очищается. Остальные камеры и сервер продолжают
+работу. Source-wide resume не пересоздаёт остановленный worker; нужен restart источника/сервера.
+Существующие counters сохраняют смысл; отдельный failure streak/terminal reason DTO пока не
+добавлен. Status может быть вытеснен, worker_stopped остаётся наблюдаемым через stats/telemetry.
+
+Max delay ограничивает только ожидание между операциями. Backend call duration и scheduling
+в него не входят; wall deadline, read timeout, cancellation open/read/release и physical recovery
+не реализованы этой политикой. Не задавайте finite budget как гарантию доступности кругового
+обзора: потерянная камера остаётся потерянной до восстановления source lifecycle.
+
+MOCK tests проверяют exact capped delays и reset, лимит первого/третьего отказа, unlimited/default
+policy, persistent open/read/format/exception с независимым здоровым соседом, valid RGB при pause,
+invalid bounds и wakeup из60000-мс retry wait. Live server test с несуществующими paths проверяет
+camera0 budget2, продолжающийся retry camera1 и доступность state/telemetry. Это не проверка
+физического disconnect или bounded V4L2 calls. Source-work CTest имеет30-секундный test timeout
+на случай regression зависания; это ограничение CI, не эксплуатационный deadline сервера.
+
+Проверки среза: полная Linux сборка; выбранные CTest 6/6 за 3,05 с (camera_source_config, core, config_store_persistence, source_work_timing, telemetry, configuration_snapshot) и 3/3 за 9,49 с (sources, replay_ipc, telemetry_ipc). Camera/source executable: 48 GTest, live telemetry: 8 cases. Все10 PlantUML-блоков этого файла прошли local PlantUML1.2026.6 -checkonly после исправления переносов в labels/notes; это syntax check, не визуальная приёмка layout. Полный набор CTest и physical V4L2/Aurora acceptance не выполнялись.

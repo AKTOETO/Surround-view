@@ -1324,3 +1324,21 @@ MOCK моделируют negotiation и lifecycle; подключение ре�
 
 
 В I/O details сравнивайте Current checked mode камеры со строкой Selected camera: после reconnect используемый кадр может иметь прежний capture open_attempt/FPS. Это не ошибка SDK. Для camera metadata результата используйте parse_frame_camera_inputs(); он не валидирует pixel payload. Запись Selected сохраняется в offline report. [[engineering/SOURCES#Происхождение выбранного кадра при reconnect]].
+
+
+### Повторное подключение камер
+
+Для недоступных устройств можно увеличить задержки и включить capped backoff в
+source.capture[camera_id].recovery; если нужен конечный лимит, задайте max_consecutive_failures.
+Полный fragment, bounds и semantics: [[engineering/SOURCES#Политика повторов и backoff аппаратной камеры]].
+Default unlimited сохраняет прежнее поведение. После изменения startup config перезапустите
+сервер. Если worker исчерпал лимит, I/O Worker stopped будет1, а в журнале появится
+camera_retry_exhausted; resume не перезапускает его. Изменение max_delay не задаёт timeout read.
+
+```sh
+cmake --build build -j4
+build/sv-source-work-tests --gtest_filter='CameraRecoveryPolicy.*:OpenReadFormatException/CameraRecoveryBudget.*'
+```
+
+Это MOCK/контрактные проверки recovery, без физических камер. Длительное ожидание retry
+прерывается stop; зависший вызов драйвера по-прежнему может задерживать shutdown.
