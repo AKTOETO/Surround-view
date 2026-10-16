@@ -318,3 +318,6 @@ Camera diagnostics дополнены optional negotiated_mode: проверен
 
 
 frame.camera_inputs содержит optional additive selected-frame capture provenance, до4 records; absence старой schema1 означает empty. Current source mode и selected frame mode различаются после reconnect. Source_work sequence проверяется против selected record, если присутствуют оба. Fresh=false сохраняет прежнюю provenance; это не новая capture event. [[engineering/SOURCES#Происхождение выбранного кадра при reconnect]].
+
+
+CameraDiagnostics дополнены optional `recovery`: exact decimal uint64 `consecutive_failures`, nullable integer1…60000 `retry_delay_ms` текущего wait и nullable enum-string `terminal_reason` (stop_requested/retry_exhausted/release_failure). Legacy omission/null допустимы; SDK проверяет согласованность со stopped и streak, archive schema1 сохраняет объект. Новых команд нет. [[engineering/SOURCES#Снимок восстановления камеры]].

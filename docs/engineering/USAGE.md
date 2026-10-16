@@ -1342,3 +1342,6 @@ build/sv-source-work-tests --gtest_filter='CameraRecoveryPolicy.*:OpenReadFormat
 
 Это MOCK/контрактные проверки recovery, без физических камер. Длительное ожидание retry
 прерывается stop; зависший вызов драйвера по-прежнему может задерживать shutdown.
+
+
+Для диагностики конечного retry budget откройте I/O details в sv-simulator: `Recovery` показывает streak, полный интервал текущего ожидания и terminal reason. `retry_exhausted` требует перезапуска источника/сервера; Resume worker не пересоздаёт. `release_failure` сообщает об ошибке close; `stop_requested` — о штатном запросе stop после успешного close. В экспортированной telemetry эти поля находятся в `samples[].source.camera_diagnostics[].recovery`. Архив содержит исторические snapshots, а не полную трассу. [[engineering/SOURCES#Снимок восстановления камеры]].

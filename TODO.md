@@ -166,5 +166,5 @@ cancellation/disconnect, per-camera source hot lifecycle, capability inventory �
 
 Per-camera recovery delays/capped backoff/finite failure budget реализованы с MOCK и unavailable-path
 server checks: [[engineering/SOURCES#Политика повторов и backoff аппаратной камеры]]. Остаются
-source ConfigService/forms/hot worker restart, typed failure streak/terminal reason и physical
+source ConfigService/forms/hot worker restart и physical
 read/open/release cancellation. Finite retry budget не равен driver timeout.

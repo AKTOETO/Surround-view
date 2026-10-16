@@ -402,3 +402,6 @@ stale attempt/stopped inconsistency отклоняются. [[engineering/SOURCE
 
 
 Reconnect сценарий дополнен разделением current capture mode и selected Frame provenance: старый выбранный Frame сохраняет opening identity; повторный render/sample не переписывает её текущим состоянием. SDK сравнивает source_work/selected source_sequence, а не historical attempt с current counter. [[engineering/SOURCES#Происхождение выбранного кадра при reconnect]].
+
+
+Дополнение telemetry сценария восстановления камеры: клиент получает recovery snapshot даже без frame. Во время retry наблюдаем streak+назначенный wait; после завершения worker — stopped и terminal reason. Stop очищает wait, release failure приоритетен над исходной причиной выхода. Resume не пересоздаёт завершённый worker. Отсутствие snapshot у старого сервера принимается. Новых команд нет. [[engineering/SOURCES#Снимок восстановления камеры]].

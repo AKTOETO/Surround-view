@@ -336,3 +336,6 @@ Optional source.camera_diagnostics[i].negotiated_mode: null либо width/heigh
 
 
 Type11 inputs[].camera_capture дополнен optional immutable open_attempt и negotiated_mode выбранного hardware Frame. Telemetry frame.camera_inputs содержит до4 typed selected records с source_sequence_id. Identities decimal uint64; nonzero attempt должен совпасть с nested mode attempt, но не обязательно с current diagnostics. Existing framing/commands сохраняются. [[engineering/SOURCES#Происхождение выбранного кадра при reconnect]].
+
+
+CameraDiagnostics дополнены optional `recovery`: exact decimal uint64 `consecutive_failures`, nullable integer1…60000 `retry_delay_ms` текущего wait и nullable enum-string `terminal_reason` (stop_requested/retry_exhausted/release_failure). Legacy omission/null допустимы; SDK проверяет согласованность со stopped и streak, archive schema1 сохраняет объект. Новых команд нет. [[engineering/SOURCES#Снимок восстановления камеры]].

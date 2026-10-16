@@ -757,8 +757,8 @@ stop
 На исчерпании budget `camera_retry_exhausted` публикуется в bounded status queue/серверном
 журнале, worker завершается и current mode очищается. Остальные камеры и сервер продолжают
 работу. Source-wide resume не пересоздаёт остановленный worker; нужен restart источника/сервера.
-Существующие counters сохраняют смысл; отдельный failure streak/terminal reason DTO пока не
-добавлен. Status может быть вытеснен, worker_stopped остаётся наблюдаемым через stats/telemetry.
+Существующие counters сохраняют смысл. Status может быть вытеснен; typed recovery snapshot
+сохраняет streak, текущее ожидание и причину завершения: [[#Снимок восстановления камеры]].
 
 Max delay ограничивает только ожидание между операциями. Backend call duration и scheduling
 в него не входят; wall deadline, read timeout, cancellation open/read/release и physical recovery
@@ -773,3 +773,81 @@ camera0 budget2, продолжающийся retry camera1 и доступно�
 на случай regression зависания; это ограничение CI, не эксплуатационный deadline сервера.
 
 Проверки среза: полная Linux сборка; выбранные CTest 6/6 за 3,05 с (camera_source_config, core, config_store_persistence, source_work_timing, telemetry, configuration_snapshot) и 3/3 за 9,49 с (sources, replay_ipc, telemetry_ipc). Camera/source executable: 48 GTest, live telemetry: 8 cases. Все10 PlantUML-блоков этого файла прошли local PlantUML1.2026.6 -checkonly после исправления переносов в labels/notes; это syntax check, не визуальная приёмка layout. Полный набор CTest и physical V4L2/Aurora acceptance не выполнялись.
+
+
+## Снимок восстановления камеры
+
+`source.camera_diagnostics[i].recovery` — optional объект `CameraRecoveryStatus` из installed
+`camera_diagnostics.hpp`. Camera backend создаёт его для всех четырёх workers до запуска потоков.
+Отсутствие поля или `null` у прежнего сервера означает отсутствие инструментации, а не нулевой streak.
+SDK принимает оба legacy случая; archive schema1 сохраняет новый объект без смены framing/команд.
+
+| Поле | Wire type | Смысл |
+|---|---|---|
+| `consecutive_failures` | decimal string uint64 | Число отказов, переданных recovery policy с последнего valid RGB |
+| `retry_delay_ms` | integer1…60000 или null | Назначенный полный интервал текущего retry wait; не остаток времени |
+| `terminal_reason` | string или null | `stop_requested`, `retry_exhausted`, `release_failure`; null до завершения |
+
+Streak включает open/read/invalid-frame/OpenCV failures, дошедшие до policy. При stop или
+терминальном release failure policy уже не вызывается: соответствующие counters остаются
+источником числа таких ошибок. Streak сбрасывается только после подготовки valid RGB, даже при
+pause; успешное open не сбрасывает его. Telemetry epoch и pause/resume его не обнуляют.
+
+Retry interval публикуется непосредственно перед ожиданием и очищается сразу после выхода из него,
+включая stop. Это снимок логического состояния, не точный таймер потока: допустим короткий переход
+между публикацией и входом/выходом condition-variable wait. Null не означает готовность камеры:
+worker может находиться в open/read/prepare/close или завершаться.
+
+Terminal reason публикуется под тем же mutex, что и `worker_stopped=true`, после финального close.
+`release_failure` имеет приоритет над stop и exhaustion: неизвестное состояние драйвера нельзя
+скрыть исходной причиной выхода из цикла. Во время блокирующего close stopped остаётся false и
+terminal null. Причина означает логическую остановку захвата; подтверждение join даёт только
+возврат `FrameSource::stop()`. В уже остановленном worker причина не меняется после source-wide stop.
+
+SDK отвергает неизвестную причину, terminal без stopped (и stopped без terminal при наличии
+recovery), wait у stopped или при нулевом streak, exhaustion с нулевым streak, неверные типы и
+границы. Старые stopped snapshots без recovery по-прежнему принимаются. `retry_delay_ms` не
+передаётся строкой, в отличие от uint64 streak. Current negotiated mode очищается до close;
+selected Frame provenance сохраняется независимо от terminal snapshot.
+
+sv-simulator показывает recovery в существующем блоке I/O details. Новых metric choices нет.
+Telemetry может пропустить краткий wait между samples; исторический архив показывает лишь
+наблюдённые состояния и не заменяет полный event trace. Сбор отключённой telemetry не мешает
+source поддерживать bounded O(1) snapshot; overhead этой инструментации отдельно не измерен.
+
+```plantuml
+@startuml
+start
+:Ошибка, переданная recovery policy;
+:Увеличить consecutive_failures;
+if (Budget исчерпан?) then (да)
+  :Запомнить retry_exhausted;
+else (нет)
+  :Опубликовать retry_delay_ms;
+  :Ожидать delay или stop;
+  :Очистить retry_delay_ms;
+  if (Stop запрошен?) then (нет)
+    :Продолжить capture loop;
+    stop
+  else (да)
+    :Запомнить stop_requested;
+  endif
+endif
+:Очистить current mode;
+:Закрыть capture;
+if (Release выбросил cv::Exception?) then (да)
+  :Причина = release_failure;
+endif
+:Атомарно опубликовать worker_stopped\nи terminal_reason;
+stop
+@enduml
+```
+
+*Рисунок I.11 — публикация ожидания и терминального состояния. Освобождение драйвера может
+блокироваться; диаграмма не задаёт deadline операции close.*
+
+Проверки: MOCK exhaustion всех четырёх категорий, wait60000/stop, release failure при stop и
+после exhaustion; SDK legacy/null/shape/type/bounds/invariants, exact uint64 archive round-trip,
+GUI details без увеличения списка metrics, live missing-path budget. Physical V4L2/Aurora не проверены.
+
+Финальные проверки этого дополнения: полная Linux сборка; source_work_timing49 GTest (3,01 с), telemetry, simulator_runtime_errors и simulator_configuration_qml прошли. Отдельный интеграционный набор sources/client_transports/telemetry_ipc —3/3 за26,52 с, включая installed SDK consumer и8 live cases. Все11 PlantUML blocks этого файла и21 блока главы3 прошли local1.2026.6 -checkonly; два прежних diagram labels главы3 исправлены. Полный набор CTest не запускался.

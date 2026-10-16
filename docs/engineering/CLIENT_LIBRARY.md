@@ -204,3 +204,6 @@ CameraDiagnostics::negotiated_mode содержит optional CameraCaptureMode (
 
 
 Public parse_frame_camera_inputs(const Message&) извлекает typed CameraInputProvenance из type11 inputs. Это scoped metadata parser, без проверки pixel payload. TelemetryFrame::camera_inputs сохраняет выбранные hardware frames независимо от текущих diagnostics; historical attempts не обязаны совпадать с current open_attempts. Новый installed camera_frame_provenance.hpp не зависит от Qt/OpenCV. [[engineering/SOURCES#Происхождение выбранного кадра при reconnect]].
+
+
+CameraDiagnostics дополнены optional `recovery`: exact decimal uint64 `consecutive_failures`, nullable integer1…60000 `retry_delay_ms` текущего wait и nullable enum-string `terminal_reason` (stop_requested/retry_exhausted/release_failure). Legacy omission/null допустимы; SDK проверяет согласованность со stopped и streak, archive schema1 сохраняет объект. Новых команд нет. [[engineering/SOURCES#Снимок восстановления камеры]].

@@ -154,3 +154,6 @@ Camera negotiated_mode сохраняется как additive schema1 поле. 
 
 
 frame.camera_inputs сохраняет immutable historical capture attempt/mode выбранных входов, даже если camera diagnostics уже описывает другое открытие или закрыта. Legacy omission принимается; malformed/duplicate/context identity проверяются SDK. Это additive schema1, прежний export SDK может потерять extension. [[engineering/SOURCES#Происхождение выбранного кадра при reconnect]].
+
+
+CameraDiagnostics дополнены optional `recovery`: exact decimal uint64 `consecutive_failures`, nullable integer1…60000 `retry_delay_ms` текущего wait и nullable enum-string `terminal_reason` (stop_requested/retry_exhausted/release_failure). Legacy omission/null допустимы; SDK проверяет согласованность со stopped и streak, archive schema1 сохраняет объект. Новых команд нет. [[engineering/SOURCES#Снимок восстановления камеры]].

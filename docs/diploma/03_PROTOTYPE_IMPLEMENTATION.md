@@ -986,25 +986,19 @@ settings проходят тот же ConfigService transaction, что и на�
 
 ```plantuml
 @startuml
-component "FrameSource
-counters" as I
-component "Renderer
-existing frame spans" as R
-component "Linux process provider
-getrusage / statm" as P
-component "sv-server TelemetryCollector
-periodic bounded ring; default off" as T
-component "ConfigService
-prepared hot settings" as C
-component "sv-client-lib
-typed cursor reader" as L
-component "Будущие GUI graphs / experiment reports" as G <<planned>>
+component "FrameSource\ncounters" as I
+component "Renderer\nexisting frame spans" as R
+component "Linux process provider\ngetrusage / statm" as P
+component "sv-server TelemetryCollector\nperiodic bounded ring; default off" as T
+component "ConfigService\nprepared hot settings" as C
+component "sv-client-lib\ntyped cursor reader" as L
+component "sv-simulator graphs / archive" as G
 I --> T
 R --> T : последний завершённый frame
 P --> T : CPU / approximate RSS
 C --> T : commit / reset epoch
 T --> L : type21 <=16 samples + lost_samples
-L ..> G : запланировано
+L --> G : typed samples
 @enduml
 ```
 
@@ -1141,21 +1135,14 @@ gauges обновляются независимо от нового render. Э�
 
 ```plantuml
 @startuml
-component "sv-server main loop
-source poll / prepare / render / enqueue wall" as M
-component "Renderer
-CPU wall spans + nullable GPU query" as R
-component "FrameSource
-backend counters / queue gauge" as S
-component "TelemetryCollector
-periodic samples; frame fresh flag" as T
-component "sv-client-lib
-typed samples / archive" as L
+component "sv-server main loop\nsource poll / prepare / render / enqueue wall" as M
+component "Renderer\nCPU wall spans + nullable GPU query" as R
+component "FrameSource\nbackend counters / queue gauge" as S
+component "TelemetryCollector\nperiodic samples; frame fresh flag" as T
+component "sv-client-lib\ntyped samples / archive" as L
 component "C++ point builder" as B
-component "Этапы
-fresh-only values + quantiles" as P
-component "I/O
-queue / flags / record age" as I
+component "Этапы\nfresh-only values + quantiles" as P
+component "I/O\nqueue / flags / record age" as I
 M --> T
 R --> T
 S --> T
@@ -1437,3 +1424,57 @@ open/read/format/exception, независимость соседа, сброс 
 одного worker. Ни один из этих опытов не ограничивает длительность driver call: max_delay
 ограничивает только wait между операциями, а зависший V4L2 read/open/release всё ещё может
 задержать завершение процесса. Hardware deadlines и performance выводы этим не подтверждаются.
+
+
+### 3.41. Наблюдаемость восстановления и причин остановки камеры
+
+Ограниченная очередь статусов не гарантирует сохранение события остановки. Поэтому сервер
+дополнен постоянным снимком recovery каждой аппаратной камеры. Клиентская библиотека и архив
+передают точное число последовательных отказов, назначенную задержку текущего повтора и причину
+завершения worker. Реализация использует общий mutex диагностик и небольшой вложенный DTO;
+новый транспорт или команда не требуются. Контракт и исходные ограничения OpenCV рассмотрены
+в [[engineering/SOURCES#Снимок восстановления камеры]] и в разделах 3.37–3.40.
+
+Это позволяет различать исчерпание retry budget и ошибку освобождения драйвера. При второй
+причине состояние устройства неизвестно, поэтому `release_failure` имеет приоритет даже после
+уже зафиксированного exhaustion. Terminal публикуется после close совместно с stopped; зависший
+close не объявляется завершённым. Метод не решает отмену физических драйверных вызовов.
+
+```plantuml
+@startuml
+participant "Camera worker" as W
+participant "Capture backend" as C
+participant "Source diagnostics\nmutex" as D
+participant "Telemetry / SDK" as T
+W -> D : streak увеличен, budget исчерпан
+W -> C : close()
+alt release success
+  C --> W : закрыт
+  W -> D : stopped=true\nterminal=retry_exhausted
+else cv::Exception
+  C --> W : ошибка освобождения
+  W -> D : stopped=true\nterminal=release_failure
+end
+T -> D : скопировать snapshot
+D --> T : counters + recovery + current mode
+note over D,T
+Копирование не зависит от сохранности status events.
+Historical selected Frame mode живёт отдельно.
+end note
+@enduml
+```
+
+*Рисунок 3.41 — различение исчерпания повторов и отказа освобождения камеры в клиентской диагностике.*
+
+| Проверка | Наблюдаемое поведение | Граница вывода |
+|---|---|---|
+| Постоянные open/read/format/exception отказы | Streak 3, exhaustion, соседний worker продолжает работу | MOCK backend |
+| Stop во время 60000-мс wait | Delay очищен, причина stop_requested | Прерывается retry wait |
+| Ошибка final close после exhaustion | Итог release_failure, счётчик release увеличен | Отмена зависшего close не проверена |
+| SDK/архив | Exact uint64, legacy omission/null, отклонение противоречивых состояний | Совместимость schema1 |
+| Симулятор | Recovery в деталях камеры, прежние 42 metric choices | Без нового UI перегруженного списка |
+
+Таким образом, экспериментальный отчёт может фиксировать причину потери камеры без зависимости
+от lossy очереди статусов. Snapshot не равен трассе событий: короткие ожидания могут не попасть
+между samples. Диагностика полезна для воспроизводимости отказов; она не подтверждает физическую
+скорость камеры, точность sensor timestamps или bounded shutdown на целевом оборудовании.
