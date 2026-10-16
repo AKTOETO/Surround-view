@@ -1,4 +1,5 @@
 #include "sv/config.hpp"
+#include "sv/json.hpp"
 #include "sv/vision.hpp"
 #include <iostream>
 
@@ -12,7 +13,7 @@ int main(int argc, char **argv)
         }
         auto c = sv::load_config(argv[1]);
         std::string input((std::istreambuf_iterator<char>(std::cin)), {});
-        auto v = boost::json::parse(input);
+        auto v = sv::parse_json(input);
         boost::json::array result;
         std::array<std::vector<sv::Vec3>, 4> points;
         std::vector<std::pair<int, size_t>> order;

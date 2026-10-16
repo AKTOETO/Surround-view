@@ -1,5 +1,6 @@
 #include "options.hpp"
 #include "scenario.hpp"
+#include "sv/json.hpp"
 #include <chrono>
 #include <condition_variable>
 #include <deque>
@@ -21,7 +22,8 @@ int execute(const Options &options)
         {
             throw std::runtime_error("cannot open scenario");
         }
-        const auto scenario = research::parse_scenario(boost::json::parse(input));
+        const auto scenario =
+            research::parse_scenario(boost::json::parse(input, {}, sv::json_parse_options()));
         // Validate output access before changing the server; do not overwrite scenario input.
         const auto scenario_path = std::filesystem::weakly_canonical(
             std::string(parameters.at("scenario_path").as_string()));

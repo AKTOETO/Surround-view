@@ -1,4 +1,5 @@
 #include "runtime_settings.hpp"
+#include "sv/json.hpp"
 #include <QJsonDocument>
 #include <limits>
 #include <stdexcept>
@@ -116,7 +117,7 @@ void RuntimeSettings::apply(const QString &json, const QString &baseRevision, bo
             throw std::runtime_error("update_pending");
         }
         const auto revision = sv::parse_decimal_u64(baseRevision.toStdString());
-        const auto object = boost::json::parse(json.toStdString()).as_object();
+        const auto object = sv::parse_json(json.toStdString()).as_object();
         if (fusion)
         {
             // Preserve historical snapshots; reject unknown optional fields.
@@ -190,7 +191,7 @@ QString RuntimeSettings::fallbackMode() const
     {
         return "legacy";
     }
-    const auto fusion = boost::json::parse(fusion_.toStdString()).as_object();
+    const auto fusion = sv::parse_json(fusion_.toStdString()).as_object();
     const auto *display = fusion.if_contains("fallback_display");
     return display ? QString::fromStdString(std::string(display->at("mode").as_string()))
                    : "legacy";
@@ -204,7 +205,7 @@ void RuntimeSettings::setFallbackDisplay(const QString &mode)
         emit changed();
         return;
     }
-    auto fusion = boost::json::parse(fusion_.isEmpty() ? "{}" : fusion_.toStdString()).as_object();
+    auto fusion = sv::parse_json(fusion_.isEmpty() ? "{}" : fusion_.toStdString()).as_object();
     fusion["fallback_display"] = boost::json::object{{"mode", mode.toStdString()}};
     applyFusion(pretty(fusion), revision_);
 }

@@ -1,4 +1,5 @@
 #include "options.hpp"
+#include "sv/json.hpp"
 #include <gtest/gtest.h>
 
 TEST(SvctlOptions, DefaultsAndHelp)
@@ -79,4 +80,15 @@ TEST(SvctlOptions, ResearchScenarioAndReportPaths)
     EXPECT_EQ(options.request.parameters.at("report_path").as_string(), "report.json");
     EXPECT_ANY_THROW(sv::ctl::parse({"research", "scenario.json"}));
     EXPECT_ANY_THROW(sv::ctl::parse({"research", "scenario.json", "report.json", "extra"}));
+}
+
+TEST(SvctlOptions, GenericCommandPreservesFractionalParametersExactly)
+{
+    if (!sv::json_precise_numbers_available)
+    {
+        GTEST_SKIP() << "Precise Boost.JSON mode requires Boost >= 1.83";
+    }
+    const auto options =
+        sv::ctl::parse({"command", "extension", "--params", "{\"value\":-1.1959916878056157e-7}"});
+    EXPECT_EQ(options.request.parameters.at("value").as_double(), -1.1959916878056157e-7);
 }

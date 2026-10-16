@@ -1,4 +1,5 @@
 #include "configuration_editor.hpp"
+#include "sv/json.hpp"
 #include "sv/surface_runtime.hpp"
 #include <QCoreApplication>
 #include <QElapsedTimer>
@@ -138,6 +139,31 @@ bool waitFor(const std::function<bool()> &done)
     return done();
 }
 } // namespace
+
+TEST_F(EditorUnit, FractionalDraftSurvivesQtJsonAndProtocolRoundTrip)
+{
+    if (!sv::json_precise_numbers_available)
+    {
+        GTEST_SKIP() << "Precise Boost.JSON mode requires Boost >= 1.83";
+    }
+    const double value = 1.1959916878056157e-7;
+    editor.setField("fusion", "smoothness_weight", value);
+    editor.apply(false);
+    const auto changes = ConfigurationEditorTestAccess::intent(editor);
+    EXPECT_EQ(changes.at("fusion").as_object().at("smoothness_weight").as_double(), value);
+    const auto bytes = sv::encode({21, {{"changes", changes}}, {}});
+    sv::Decoder decoder;
+    const auto messages = decoder.feed(bytes.data(), bytes.size());
+    ASSERT_EQ(messages.size(), 1U);
+    EXPECT_EQ(messages[0]
+                  .header.at("changes")
+                  .as_object()
+                  .at("fusion")
+                  .as_object()
+                  .at("smoothness_weight")
+                  .as_double(),
+              value);
+}
 
 TEST_F(EditorUnit, UncertainOutcomeLocksDraftAndRetainsExactRetryIntent)
 {

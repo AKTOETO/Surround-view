@@ -1,4 +1,5 @@
 #include "options.hpp"
+#include "sv/json.hpp"
 #include <cmath>
 #include <stdexcept>
 
@@ -158,7 +159,7 @@ Options parse(const std::vector<std::string> &args)
             {
                 throw std::invalid_argument("expected --params JSON_OBJECT");
             }
-            auto value = boost::json::parse(next());
+            auto value = sv::parse_json(next());
             if (!value.is_object())
             {
                 throw std::invalid_argument("parameters must be a JSON object");

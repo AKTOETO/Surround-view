@@ -1,4 +1,5 @@
 #include "configuration_editor.hpp"
+#include "sv/json.hpp"
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <stdexcept>
@@ -34,7 +35,7 @@ boost::json::object ConfigurationEditor::changes() const
     }
     const auto json =
         QJsonDocument(QJsonObject::fromVariantMap(groups)).toJson(QJsonDocument::Compact);
-    return boost::json::parse(std::string(json.constData(), size_t(json.size()))).as_object();
+    return sv::parse_json(std::string(json.constData(), size_t(json.size()))).as_object();
 }
 
 void ConfigurationEditor::setField(const QString &group, const QString &field,
