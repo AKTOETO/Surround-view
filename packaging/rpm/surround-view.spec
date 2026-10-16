@@ -1,18 +1,41 @@
+%bcond_with bundled_opencv
+%bcond_with bundled_glm
+%{!?sv_opencv_min_version:%global sv_opencv_min_version 4.5}
+%{!?sv_opencv_version:%global sv_opencv_version 4.10.0}
+%{!?sv_glm_version:%global sv_glm_version 1.0.1}
+%if %{with bundled_opencv}
+# Private OpenCV must not satisfy dependencies of unrelated installed applications.
+%global __provides_exclude ^libopencv_.*
+%global __requires_exclude ^libopencv_.*
+%endif
+
 %{!?sv_with_client:%global sv_with_client 0}
 
 Name:           surround-view
 Version:        0.6.0
-Release:        3
+Release:        4
 Summary:        Surround view research tools and native platform qualification
 License:        LicenseRef-Proprietary AND CC0-1.0 AND Apache-2.0 AND MIT
 Source0:        surround-view-%{version}.tar.gz
+%if %{with bundled_opencv}
+Source1:        surround-view-opencv-%{sv_opencv_version}-%{_target_cpu}.tar.gz
+%endif
+%if %{with bundled_glm}
+Source2:        surround-view-glm-%{sv_glm_version}.tar.gz
+%endif
 
 BuildRequires:  gcc-c++
 # CMake is a build-host tool supplied by the Aurora SDK/mb2 environment.
 BuildRequires:  ninja
 BuildRequires:  boost-devel >= 1.75
+%if !%{with bundled_glm}
 BuildRequires:  glm-devel
-BuildRequires:  opencv-devel >= 4.5
+%endif
+%if !%{with bundled_opencv}
+BuildRequires:  opencv-devel >= %{sv_opencv_min_version}
+%else
+BuildRequires:  binutils
+%endif
 BuildRequires:  pkgconfig(openssl)
 BuildRequires:  pkgconfig(egl)
 BuildRequires:  pkgconfig(glesv2)
@@ -34,6 +57,15 @@ This is a laboratory package, not a certified Aurora application.
 %prep
 %autosetup
 
+%if %{with bundled_opencv}
+mkdir -p vendor
+tar -xf %{SOURCE1} -C vendor
+%endif
+%if %{with bundled_glm}
+mkdir -p vendor
+tar -xf %{SOURCE2} -C vendor
+%endif
+
 %build
 cmake -S . -B build -G Ninja \
     -DCMAKE_BUILD_TYPE=Release \
@@ -46,6 +78,14 @@ cmake -S . -B build -G Ninja \
     -DSV_SIMULATOR=OFF \
     -DSV_PLATFORM_TEST=ON \
     -DSV_FETCH_MISSING_DEPS=OFF \
+    -DSV_OPENCV_MIN_VERSION=%{sv_opencv_min_version} \
+%if %{with bundled_opencv}
+    -DSV_BUNDLE_OPENCV=ON \
+    -DSV_OPENCV_BUNDLE_ROOT="$PWD/vendor/opencv" \
+%endif
+%if %{with bundled_glm}
+    -DSV_GLM_INCLUDE_DIR="$PWD/vendor/glm" \
+%endif
     -DSV_PYTHON_TESTS=OFF \
     -DBUILD_TESTING=OFF
 ninja -C build %{?_smp_mflags}
@@ -76,3 +116,8 @@ DESTDIR="%{buildroot}" cmake --install build
 %{_libdir}/cmake/svClient
 %{_includedir}/sv
 %{_datadir}/surround-view
+
+%license %{_datadir}/licenses/surround-view
+%if %{with bundled_opencv}
+%{_libdir}/surround-view/opencv
+%endif

@@ -10,3 +10,7 @@
 /installroot/
 __pycache__/
 *.pyc
+
+# Offline target dependencies are supplied as RPM sources, not committed binaries.
+/vendor/opencv/
+/vendor/glm/
