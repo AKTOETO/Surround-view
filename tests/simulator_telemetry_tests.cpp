@@ -419,7 +419,9 @@ TEST(TelemetryUnit, CheckedCameraModeIsShownWithoutNewMetricChoices)
             sample.source.camera_diagnostics->at(0).recovery =
                 sv::CameraRecoveryStatus{UINT64_MAX, 5000, {}};
             sample.source.camera_diagnostics->at(0).negotiated_mode =
-                sv::CameraCaptureMode{1280, 720, UINT64_MAX, 29.97, "MJPG", 2};
+                sv::CameraCaptureMode{1280, 720, UINT64_MAX, 29.97, "MJPG", {}};
+            sample.source.camera_diagnostics->at(0).negotiated_mode->automatic_properties =
+                sv::CameraAutomaticProperties{{}, {}, 64};
         });
     EXPECT_TRUE(model.sourceDetails().contains("1280×720"));
     EXPECT_TRUE(model.sourceDetails().contains("fps=29.97"));
@@ -427,7 +429,8 @@ TEST(TelemetryUnit, CheckedCameraModeIsShownWithoutNewMetricChoices)
         model.sourceDetails().contains("consecutive_failures=" + QString::number(UINT64_MAX)));
     EXPECT_TRUE(model.sourceDetails().contains("retry_delay_ms=5000"));
     EXPECT_TRUE(model.sourceDetails().contains("FOURCC=MJPG"));
-    EXPECT_TRUE(model.sourceDetails().contains("buffers=2"));
+    EXPECT_TRUE(model.sourceDetails().contains("Automatic readback"));
+    EXPECT_TRUE(model.sourceDetails().contains("buffers=64"));
     EXPECT_TRUE(model.sourceDetails().contains("open_attempt=" + QString::number(UINT64_MAX)));
     EXPECT_EQ(model.sourceMetrics().size(), 42);
 }
@@ -445,7 +448,9 @@ TEST(TelemetryUnit, SelectedFrameCaptureIsDistinctFromCurrentCameraMode)
             sample.source.camera_diagnostics->at(0).negotiated_mode =
                 sv::CameraCaptureMode{1280, 720, 2, 30, "MJPG", 2};
             sample.frame->camera_inputs.push_back(
-                {0, UINT64_MAX, {1, sv::CameraCaptureMode{640, 480, 1, 15, "YUYV", 4}}});
+                {0, UINT64_MAX, {1, sv::CameraCaptureMode{640, 480, 1, 15, "YUYV", {}}}});
+            sample.frame->camera_inputs.back().capture.negotiated_mode->automatic_properties =
+                sv::CameraAutomaticProperties{{}, {}, 8};
         });
     const auto details = model.sourceDetails();
     EXPECT_TRUE(details.contains("1280×720"));
@@ -453,6 +458,8 @@ TEST(TelemetryUnit, SelectedFrameCaptureIsDistinctFromCurrentCameraMode)
     EXPECT_TRUE(details.contains("capture open_attempt=1"));
     EXPECT_TRUE(details.contains("640×480"));
     EXPECT_TRUE(details.contains("checked fps=15"));
+    EXPECT_TRUE(details.contains("Selected Automatic readback"));
+    EXPECT_TRUE(details.contains("buffers=8"));
     EXPECT_TRUE(details.contains("source_sequence=" + QString::number(UINT64_MAX)));
     EXPECT_EQ(model.sourceMetrics().size(), 42);
 }

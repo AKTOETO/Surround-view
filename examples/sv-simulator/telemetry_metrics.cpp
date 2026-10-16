@@ -12,6 +12,14 @@ QVariantMap metric(const char *key, const char *label, const char *unit, const c
             {"note", QString::fromUtf8(note)}};
 }
 
+QString automaticPropertiesText(const sv::CameraAutomaticProperties &automatic)
+{
+    return QString("Automatic readback (без проверки запроса): fps=%1 · FOURCC=%2 · buffers=%3")
+        .arg(automatic.fps ? QString::number(*automatic.fps, 'g', 8) : "неизвестно")
+        .arg(automatic.fourcc ? QString::fromStdString(*automatic.fourcc) : "неизвестно")
+        .arg(automatic.buffer_count ? QString::number(*automatic.buffer_count) : "неизвестно");
+}
+
 const std::array<std::pair<const char *, const char *>, 6> cameraMetrics{
     {{"open_attempts", "Попытки открытия"},
      {"read_failures", "Ошибки чтения"},
@@ -258,6 +266,10 @@ QString TelemetryModel::sourceDetails() const
                         .arg(mode->fourcc ? QString::fromStdString(*mode->fourcc) : "не проверен")
                         .arg(mode->buffer_count ? QString::number(*mode->buffer_count)
                                                 : "не проверен");
+                if (mode->automatic_properties)
+                {
+                    details += "\n  " + automaticPropertiesText(*mode->automatic_properties);
+                }
             }
             else
             {
@@ -284,6 +296,11 @@ QString TelemetryModel::sourceDetails() const
                         .arg(mode->width)
                         .arg(mode->height)
                         .arg(mode->fps ? QString::number(*mode->fps, 'g', 8) : "не проверен");
+                if (mode->automatic_properties)
+                {
+                    details +=
+                        "\n  Selected " + automaticPropertiesText(*mode->automatic_properties);
+                }
             }
         }
     }

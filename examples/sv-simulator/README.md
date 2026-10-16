@@ -122,10 +122,13 @@ means skipped load (0ms). See `docs/engineering/SOURCE_TIMING.md` for clock/epoc
 I/O also exposes six health counters/flags per camera (24 additional choices, 42 total): open attempts, read failures, OpenCV exceptions, reconnects, release failures and worker stopped. They follow source lifetime, not telemetry epoch, and remain available without a fresh frame. Unsupported backend values are missing; exact counters remain in details/archive when too large for graph doubles. See [[engineering/SOURCES#Диагностика состояния каждой аппаратной камеры]].
 
 
-I/O details now show the checked backend mode and open-attempt identity without extra metric choices. Unrequested properties remain unavailable; closed/rejected capture clears the mode. Archive views show historical snapshots, not current camera availability. See [[engineering/SOURCES#Проверенный режим камеры через SDK]].
+I/O details now show the checked backend mode and open-attempt identity without extra metric choices. Unrequested properties remain null in checked fields; separate best-effort Automatic readback is available when supported; closed/rejected capture clears the mode. Archive views show historical snapshots, not current camera availability. See [[engineering/SOURCES#Проверенный режим камеры через SDK]].
 
 
 I/O details separate current checked camera mode from selected-frame capture provenance. A retained frame may belong to an older opening after reconnect; its attempt/mode is preserved in telemetry archives. No metric choices were added. [[engineering/SOURCES#Происхождение выбранного кадра при reconnect]].
 
 
 I/O details include optional per-camera recovery snapshots: exact failure streak, full current retry interval (not time remaining), and terminal reason. Unsupported/legacy data stays unavailable. No additional metric choices; archive values are historical. See [[engineering/SOURCES#Снимок восстановления камеры]].
+
+
+Current and Selected I/O details distinguish checked profile fields from optional Automatic readback (FPS/FOURCC/buffers). Invalid/unsupported readback is unknown and does not imply capture failure. The selected Frame retains its opening snapshot across reconnect. [[engineering/SOURCES#Наблюдаемые свойства автоматического профиля камеры]].
