@@ -411,3 +411,62 @@ TEST(Telemetry, RecoveryStatusAcceptsLegacyAndRejectsInconsistentWaitAndTerminal
         },
         true);
 }
+
+TEST(Telemetry, AutomaticCameraReadbackRoundTripLegacyAndValidation)
+{
+    sv::TelemetryCollector collector("instance", {true, 50, 8});
+    sv::SourceStats source;
+    source.camera_diagnostics = sv::CameraDiagnosticsSet{};
+    auto &camera = source.camera_diagnostics->at(0);
+    camera.open_attempts = 1;
+    camera.negotiated_mode = sv::CameraCaptureMode{1280, 720, 1, {}, {}, {}};
+    camera.negotiated_mode->automatic_properties = sv::CameraAutomaticProperties{29.97, "YUYV", 64};
+    collector.sample(50000000, 0, source, false, false, false);
+    const auto wire = collector.read("instance", 0, 0, 16);
+    const auto parsed = sv::client::parse_telemetry_batch(reply(wire));
+    const auto &mode = *parsed.samples[0].source.camera_diagnostics->at(0).negotiated_mode;
+    EXPECT_FALSE(mode.fps);
+    ASSERT_TRUE(mode.automatic_properties);
+    EXPECT_EQ(mode.automatic_properties->fps, 29.97);
+    EXPECT_EQ(mode.automatic_properties->fourcc, "YUYV");
+    EXPECT_EQ(mode.automatic_properties->buffer_count, 64U);
+    auto change = [&](auto mutate, bool valid = false)
+    {
+        auto copy = wire;
+        auto &m = copy.at("samples")
+                      .as_array()[0]
+                      .as_object()
+                      .at("source")
+                      .as_object()
+                      .at("camera_diagnostics")
+                      .as_array()[0]
+                      .as_object()
+                      .at("negotiated_mode")
+                      .as_object();
+        mutate(m);
+        if (valid)
+        {
+            EXPECT_NO_THROW(sv::client::parse_telemetry_batch(reply(copy)));
+        }
+        else
+        {
+            EXPECT_ANY_THROW(sv::client::parse_telemetry_batch(reply(copy)));
+        }
+    };
+    change([](auto &m) { m.erase("automatic_properties"); }, true);
+    change([](auto &m) { m["automatic_properties"] = nullptr; }, true);
+    change([](auto &m) { m["automatic_properties"] = boost::json::object{}; });
+    change([](auto &m) { m["fps"] = 30; });
+    change([](auto &m) { m["fourcc"] = "MJPG"; });
+    change([](auto &m) { m["buffer_count"] = 2; });
+    change([](auto &m) { m.at("automatic_properties").as_object()["fps"] = 0; });
+    change([](auto &m) { m.at("automatic_properties").as_object()["fps"] = "30"; });
+    change([](auto &m) { m.at("automatic_properties").as_object()["fourcc"] = "YUV"; });
+    change([](auto &m) { m.at("automatic_properties").as_object()["buffer_count"] = 1.5; });
+    change([](auto &m)
+           { m.at("automatic_properties").as_object()["buffer_count"] = uint64_t(4294967296ULL); });
+    change([](auto &m) { m.at("automatic_properties").as_object()["buffer_count"] = 0; });
+    change([](auto &m)
+           { m.at("automatic_properties").as_object()["buffer_count"] = uint64_t(UINT32_MAX); },
+           true);
+}

@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <limits>
 #include <stdexcept>
 
 namespace sv::client
@@ -44,29 +45,45 @@ std::optional<CameraCaptureMode> parse_camera_mode(const boost::json::value &val
     {
         throw std::invalid_argument("zero camera attempt");
     }
-    if (!fields.at("fps").is_null())
+    auto read_properties = [](const boost::json::object &fields, auto &target, unsigned max_buffers)
     {
-        const auto &fps = fields.at("fps");
-        if (!fps.is_number() || !std::isfinite(fps.to_number<double>()) ||
-            fps.to_number<double>() <= 0)
+        if (!fields.at("fps").is_null())
         {
-            throw std::invalid_argument("invalid camera FPS");
+            const auto &fps = fields.at("fps");
+            if (!fps.is_number() || !std::isfinite(fps.to_number<double>()) ||
+                fps.to_number<double>() <= 0)
+            {
+                throw std::invalid_argument("invalid camera FPS");
+            }
+            target.fps = fps.to_number<double>();
         }
-        result.fps = fps.to_number<double>();
-    }
-    if (!fields.at("fourcc").is_null())
-    {
-        result.fourcc = std::string(fields.at("fourcc").as_string());
-        if (result.fourcc->size() != 4 ||
-            !std::all_of(result.fourcc->begin(), result.fourcc->end(),
-                         [](unsigned char c) { return c >= 32 && c <= 126; }))
+        if (!fields.at("fourcc").is_null())
         {
-            throw std::invalid_argument("invalid camera FOURCC");
+            target.fourcc = std::string(fields.at("fourcc").as_string());
+            if (target.fourcc->size() != 4 ||
+                !std::all_of(target.fourcc->begin(), target.fourcc->end(),
+                             [](unsigned char c) { return c >= 32 && c <= 126; }))
+            {
+                throw std::invalid_argument("invalid camera FOURCC");
+            }
         }
-    }
-    if (!fields.at("buffer_count").is_null())
+        if (!fields.at("buffer_count").is_null())
+        {
+            target.buffer_count = integer(fields.at("buffer_count"), 1, max_buffers);
+        }
+    };
+    read_properties(fields, result, 32);
+    if (const auto *automatic = fields.if_contains("automatic_properties");
+        automatic && !automatic->is_null())
     {
-        result.buffer_count = integer(fields.at("buffer_count"), 1, 32);
+        CameraAutomaticProperties properties;
+        read_properties(automatic->as_object(), properties, std::numeric_limits<uint32_t>::max());
+        if ((result.fps && properties.fps) || (result.fourcc && properties.fourcc) ||
+            (result.buffer_count && properties.buffer_count))
+        {
+            throw std::invalid_argument("camera property is both explicit and automatic");
+        }
+        result.automatic_properties = std::move(properties);
     }
     return result;
 }

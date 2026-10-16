@@ -45,7 +45,9 @@ class ReconnectingCapture final : public sv::CameraCapture
 
     std::optional<sv::CameraCaptureMode> negotiated_mode() const override
     {
-        return sv::CameraCaptureMode{2, 2, 0, attempt_ == 1 ? 15. : 30., "YUYV", 2};
+        sv::CameraCaptureMode mode{2, 2, 0, attempt_ == 1 ? 15. : 30., "YUYV", {}};
+        mode.automatic_properties = sv::CameraAutomaticProperties{{}, {}, attempt_ == 1 ? 4U : 8U};
+        return mode;
     }
 
   private:
@@ -180,6 +182,14 @@ TEST(CameraProvenance, OldFrameKeepsModeAndIdentityAfterReconnectAndTelemetryEpo
     const auto restored =
         sv::client::parse_telemetry_archive(sv::client::serialize_telemetry_archive(archive));
     EXPECT_EQ(restored.samples[0].frame->camera_inputs[0].capture.open_attempt, 1U);
+    EXPECT_EQ(restored.samples[0]
+                  .frame->camera_inputs[0]
+                  .capture.negotiated_mode->automatic_properties->buffer_count,
+              4U);
+    EXPECT_EQ(restored.samples[0]
+                  .source.camera_diagnostics->at(0)
+                  .negotiated_mode->automatic_properties->buffer_count,
+              8U);
     collector.prepare({true, 100, 8})->commit();
     collector.frame(frame, &selected);
     collector.sample(sv::now_ns(), 0, current, false, true, false);
@@ -199,6 +209,20 @@ TEST(CameraProvenance, OutputParserAcceptsExactIdentityAndLegacyAbsence)
     EXPECT_EQ(parsed[0].source_sequence, UINT64_MAX);
     EXPECT_EQ(parsed[0].capture.open_attempt, UINT64_MAX);
     EXPECT_EQ(parsed[0].capture.negotiated_mode->fourcc, "MJPG");
+    auto automatic_wire = wire;
+    auto &mode = automatic_wire.header.at("inputs")
+                     .as_array()[0]
+                     .as_object()
+                     .at("camera_capture")
+                     .as_object()
+                     .at("negotiated_mode")
+                     .as_object();
+    mode["fps"] = nullptr;
+    mode["automatic_properties"] =
+        boost::json::object{{"fps", 29.97}, {"fourcc", nullptr}, {"buffer_count", nullptr}};
+    const auto automatic = sv::client::parse_frame_camera_inputs(automatic_wire);
+    ASSERT_TRUE(automatic[0].capture.negotiated_mode->automatic_properties);
+    EXPECT_EQ(automatic[0].capture.negotiated_mode->automatic_properties->fps, 29.97);
     wire.header.at("inputs").as_array()[0].as_object().erase("camera_capture");
     wire.header.erase("source_type");
     EXPECT_TRUE(sv::client::parse_frame_camera_inputs(wire).empty());

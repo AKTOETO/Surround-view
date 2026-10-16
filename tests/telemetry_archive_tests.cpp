@@ -204,15 +204,20 @@ TEST(TelemetryArchive, NegotiatedCameraModeSurvivesRoundTripAndLegacyOmission)
     source.camera_diagnostics = sv::CameraDiagnosticsSet{};
     auto &camera = source.camera_diagnostics->at(3);
     camera.open_attempts = UINT64_MAX;
-    camera.negotiated_mode = sv::CameraCaptureMode{640, 480, UINT64_MAX, 29.97, "YUYV", 4};
+    camera.negotiated_mode = sv::CameraCaptureMode{640, 480, UINT64_MAX, {}, "YUYV", {}};
+    camera.negotiated_mode->automatic_properties = sv::CameraAutomaticProperties{29.97, {}, 64};
     const auto text = sv::client::serialize_telemetry_archive(archive);
     const auto restored = sv::client::parse_telemetry_archive(text);
     const auto mode = restored.samples[0].source.camera_diagnostics->at(3).negotiated_mode;
     ASSERT_TRUE(mode);
     EXPECT_EQ(mode->open_attempt, UINT64_MAX);
-    EXPECT_EQ(mode->fps, 29.97);
+    EXPECT_FALSE(mode->fps);
     EXPECT_EQ(mode->fourcc, "YUYV");
-    EXPECT_EQ(mode->buffer_count, 4U);
+    EXPECT_FALSE(mode->buffer_count);
+    ASSERT_TRUE(mode->automatic_properties);
+    EXPECT_EQ(mode->automatic_properties->fps, 29.97);
+    EXPECT_FALSE(mode->automatic_properties->fourcc);
+    EXPECT_EQ(mode->automatic_properties->buffer_count, 64U);
     auto old = boost::json::parse(text).as_object();
     for (auto &camera : old.at("samples")
                             .as_array()[0]

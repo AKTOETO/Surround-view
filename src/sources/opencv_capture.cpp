@@ -1,6 +1,7 @@
 #include "opencv_capture.hpp"
 #include <algorithm>
 #include <cmath>
+#include <limits>
 #include <opencv2/videoio.hpp>
 #include <stdexcept>
 
@@ -125,6 +126,37 @@ class OpenCvCapture final : public CameraCapture
         mode.fourcc =
             settings_.fourcc.empty() ? std::nullopt : std::optional<std::string>(settings_.fourcc);
         mode.buffer_count = settings_.buffer_count;
+        CameraAutomaticProperties automatic;
+        if (!settings_.fps)
+        {
+            const auto value = observe(cv::CAP_PROP_FPS);
+            if (value && *value > 0)
+            {
+                automatic.fps = *value;
+            }
+        }
+        if (settings_.fourcc.empty())
+        {
+            const auto value = observe_integer(cv::CAP_PROP_FOURCC);
+            if (value)
+            {
+                std::string code;
+                for (unsigned byte = 0; byte < 4; ++byte)
+                {
+                    code.push_back(char((*value >> (byte * 8)) & 0xff));
+                }
+                if (std::all_of(code.begin(), code.end(),
+                                [](unsigned char c) { return c >= 32 && c <= 126; }))
+                {
+                    automatic.fourcc = std::move(code);
+                }
+            }
+        }
+        if (!settings_.buffer_count)
+        {
+            automatic.buffer_count = observe_integer(cv::CAP_PROP_BUFFERSIZE);
+        }
+        mode.automatic_properties = std::move(automatic);
         mode_ = std::move(mode);
         return true;
     }
@@ -146,6 +178,31 @@ class OpenCvCapture final : public CameraCapture
     }
 
   private:
+
+    std::optional<double> observe(int property) const
+    {
+        try
+        {
+            const double value = device_->get(property);
+            return std::isfinite(value) ? std::optional<double>(value) : std::nullopt;
+        }
+        catch (const cv::Exception &)
+        {
+            // Optional inventory must not reject an otherwise valid capture profile.
+            return {};
+        }
+    }
+
+    std::optional<unsigned> observe_integer(int property) const
+    {
+        const auto value = observe(property);
+        if (!value || *value < 1 || *value > std::numeric_limits<uint32_t>::max() ||
+            std::floor(*value) != *value)
+        {
+            return {};
+        }
+        return static_cast<unsigned>(*value);
+    }
 
     bool matches(const char *name, int property, double requested, double tolerance = 0,
                  double *readback = nullptr)

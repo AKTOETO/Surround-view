@@ -22,7 +22,8 @@ struct DeviceState
     std::vector<int> set_order;
     std::vector<std::string> operations;
     std::atomic<unsigned> opens{0}, reads{0}, closes{0};
-    int ignored_property = -1, backend = -1;
+    int ignored_property = -1, backend = -1, throwing_get = -1;
+    mutable std::vector<int> queried_properties;
     bool return_false_on_set = false, drift_after_set = false, ignore_first_open_only = false;
     bool fail_open_once = false, fail_close = false;
     std::string path;
@@ -70,6 +71,11 @@ class MockVideoDevice final : public sv::VideoDevice
 
     double get(int property) const override
     {
+        state_->queried_properties.push_back(property);
+        if (property == state_->throwing_get)
+        {
+            CV_Error(cv::Error::StsError, "injected property query failure");
+        }
         return state_->properties.at(property);
     }
 
@@ -153,6 +159,11 @@ TEST(CameraNegotiation,
     EXPECT_FALSE(camera->negotiated_mode()->fps);
     EXPECT_FALSE(camera->negotiated_mode()->fourcc);
     EXPECT_FALSE(camera->negotiated_mode()->buffer_count);
+    ASSERT_TRUE(camera->negotiated_mode()->automatic_properties);
+    const auto automatic = *camera->negotiated_mode()->automatic_properties;
+    EXPECT_EQ(automatic.fps, 30);
+    EXPECT_EQ(automatic.fourcc, "YUYV");
+    EXPECT_EQ(automatic.buffer_count, 4U);
     camera->close();
     EXPECT_FALSE(camera->negotiated_mode());
 }
@@ -411,4 +422,82 @@ TEST(CameraNegotiation, RejectedReopenAndFailedReleaseClearPreviousMode)
     state->fail_close = true;
     EXPECT_THROW(camera->close(), cv::Exception);
     EXPECT_FALSE(camera->negotiated_mode());
+}
+
+TEST(CameraNegotiation, AutomaticReadbackIsBestEffortAndDoesNotRepeatExplicitQueries)
+{
+    for (int property : {cv::CAP_PROP_FPS, cv::CAP_PROP_FOURCC, cv::CAP_PROP_BUFFERSIZE})
+    {
+        auto state = std::make_shared<DeviceState>();
+        state->throwing_get = property;
+        auto camera = capture(state);
+        ASSERT_TRUE(camera->open("/dev/mock", 2, 2));
+        ASSERT_TRUE(camera->negotiated_mode()->automatic_properties);
+        const auto automatic = *camera->negotiated_mode()->automatic_properties;
+        EXPECT_EQ(bool(automatic.fps), property != cv::CAP_PROP_FPS);
+        EXPECT_EQ(bool(automatic.fourcc), property != cv::CAP_PROP_FOURCC);
+        EXPECT_EQ(bool(automatic.buffer_count), property != cv::CAP_PROP_BUFFERSIZE);
+        EXPECT_TRUE(camera->open_failure().empty());
+        auto strict_state = std::make_shared<DeviceState>();
+        strict_state->throwing_get = property;
+        auto strict = capture(strict_state, {30, "MJPG", 2});
+        EXPECT_THROW(strict->open("/dev/mock", 2, 2), cv::Exception);
+        EXPECT_FALSE(strict->negotiated_mode());
+    }
+    auto state = std::make_shared<DeviceState>();
+    auto camera = capture(state, {30, "MJPG", 2});
+    ASSERT_TRUE(camera->open("/dev/mock", 2, 2));
+    const auto automatic = *camera->negotiated_mode()->automatic_properties;
+    EXPECT_FALSE(automatic.fps);
+    EXPECT_FALSE(automatic.fourcc);
+    EXPECT_FALSE(automatic.buffer_count);
+    for (int property : {cv::CAP_PROP_FPS, cv::CAP_PROP_FOURCC, cv::CAP_PROP_BUFFERSIZE})
+    {
+        EXPECT_EQ(std::count(state->queried_properties.begin(), state->queried_properties.end(),
+                             property),
+                  1);
+    }
+}
+
+TEST(CameraNegotiation, AutomaticReadbackRejectsNonfiniteInvalidAndFractionalValuesIndependently)
+{
+    const double nan = std::numeric_limits<double>::quiet_NaN();
+    const double infinity = std::numeric_limits<double>::infinity();
+    for (double invalid : {0., -1., nan, infinity})
+    {
+        auto state = std::make_shared<DeviceState>();
+        state->properties[cv::CAP_PROP_FPS] = invalid;
+        state->properties[cv::CAP_PROP_FOURCC] = invalid;
+        state->properties[cv::CAP_PROP_BUFFERSIZE] = invalid;
+        auto camera = capture(state);
+        ASSERT_TRUE(camera->open("/dev/mock", 2, 2));
+        const auto automatic = *camera->negotiated_mode()->automatic_properties;
+        EXPECT_FALSE(automatic.fps);
+        EXPECT_FALSE(automatic.fourcc);
+        EXPECT_FALSE(automatic.buffer_count);
+    }
+    for (double invalid :
+         {1.5, 4294967295., 4294967296., double(cv::VideoWriter::fourcc('M', 'J', 'P', '\0'))})
+    {
+        auto state = std::make_shared<DeviceState>();
+        state->properties[cv::CAP_PROP_FOURCC] = invalid;
+        state->properties[cv::CAP_PROP_BUFFERSIZE] =
+            invalid == 1.5 || invalid == 4294967296. ? invalid : 0;
+        auto camera = capture(state);
+        ASSERT_TRUE(camera->open("/dev/mock", 2, 2));
+        const auto automatic = *camera->negotiated_mode()->automatic_properties;
+        EXPECT_FALSE(automatic.fourcc);
+        EXPECT_FALSE(automatic.buffer_count);
+        EXPECT_EQ(automatic.fps, 30);
+    }
+    auto state = std::make_shared<DeviceState>();
+    state->properties[cv::CAP_PROP_FPS] = 29.97;
+    state->properties[cv::CAP_PROP_BUFFERSIZE] = 64;
+    auto camera = capture(state, {{}, "MJPG", {}});
+    ASSERT_TRUE(camera->open("/dev/mock", 2, 2));
+    const auto automatic = *camera->negotiated_mode()->automatic_properties;
+    EXPECT_EQ(automatic.fps, 29.97);
+    EXPECT_FALSE(automatic.fourcc);
+    EXPECT_EQ(automatic.buffer_count,
+              64U); // Observed values are not bounded by config's 32-buffer limit.
 }
