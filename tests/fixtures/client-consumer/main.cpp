@@ -1,5 +1,6 @@
 #include "sv/client.hpp"
 #include "sv/client_telemetry_archive.hpp"
+#include "sv/json.hpp"
 #include <chrono>
 #include <condition_variable>
 #include <deque>
@@ -11,6 +12,12 @@ int main(int argc, char **argv)
 {
     try
     {
+        // Exercise the installed JSON policy header as well as linked SDK symbols.
+        const auto fractional = sv::parse_json("-1.1959916878056157e-7");
+        if (sv::json_precise_numbers_available && fractional.as_double() != -1.1959916878056157e-7)
+        {
+            throw std::runtime_error("installed SDK JSON precision mismatch");
+        }
         sv::client::Options options;
         unsigned frames = 3;
         bool exercise = false, allow_reconnect = false, support = false, visibility = false,

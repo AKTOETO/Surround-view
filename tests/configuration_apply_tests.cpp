@@ -72,12 +72,12 @@ TEST_F(ConfigurationApply, RuntimeThenPersistentSnapshotPublishesExactlyOnceEach
     EXPECT_FALSE(runtime.at("persisted").as_bool());
     EXPECT_EQ(store.revision(), 1U);
     EXPECT_EQ(store.active()->fusion.mode, "angular_feather");
-    EXPECT_EQ(sv::read_json(path), initial.effective);
+    EXPECT_EQ(sv::load_config(path).effective, initial.effective);
     const auto saved = service.apply(1, {{"surface", initial.effective.as_object().at("surface")}},
                                      true, initial.view, sv::OutputProduct::FinalFrame, prepare);
     EXPECT_TRUE(saved.at("persisted").as_bool());
     EXPECT_EQ(store.revision(), 2U);
-    EXPECT_EQ(sv::read_json(path), store.active()->effective);
+    EXPECT_EQ(sv::load_config(path).effective, store.active()->effective);
     EXPECT_EQ(store.persisted()->effective, store.active()->effective);
     EXPECT_EQ(store.persisted()->fusion.mode,
               "angular_feather"); // Full active snapshot, not a selective save.
@@ -104,7 +104,7 @@ TEST_F(ConfigurationApply, PreparationAndPersistenceFailureKeepActiveBaseline)
     EXPECT_THROW(
         service.apply(0, changes, true, initial.view, sv::OutputProduct::FinalFrame, failing),
         std::runtime_error);
-    EXPECT_EQ(sv::read_json(path), initial.effective);
+    EXPECT_EQ(sv::load_config(path).effective, initial.effective);
     std::filesystem::remove(path);
     std::filesystem::create_directory(path); // Deterministic rename failure.
     EXPECT_ANY_THROW(
@@ -139,7 +139,7 @@ TEST_F(ConfigurationApply, RechecksRevisionAfterPreparationBeforeWritingFile)
     EXPECT_EQ(store.active()->profile_id, "other-publication");
     EXPECT_EQ(counts.published, 0U);
     EXPECT_EQ(counts.discarded, 1U);
-    EXPECT_EQ(sv::read_json(path), initial.effective);
+    EXPECT_EQ(sv::load_config(path).effective, initial.effective);
 }
 
 TEST_F(ConfigurationApply, RejectsMissingPersistenceStaleInvalidAndEmptyPreparation)

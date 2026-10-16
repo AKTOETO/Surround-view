@@ -135,7 +135,7 @@ std::vector<double> roots(std::vector<double> c, double lo, double hi)
 }
 } // namespace
 
-boost::json::value read_json(const std::filesystem::path &p)
+boost::json::value read_json(const std::filesystem::path &p, JsonNumberPolicy policy)
 {
     std::ifstream f(p, std::ios::binary);
     if (!f)
@@ -155,7 +155,7 @@ boost::json::value read_json(const std::filesystem::path &p)
     {
         throw std::runtime_error("truncated JSON");
     }
-    return boost::json::parse(text);
+    return parse_json(text, policy);
 }
 
 void write_json(const std::filesystem::path &p, const boost::json::value &v)
@@ -172,11 +172,11 @@ void write_json(const std::filesystem::path &p, const boost::json::value &v)
     }
 }
 
-Config load_config(const std::filesystem::path &p)
+Config load_config(const std::filesystem::path &p, JsonNumberPolicy policy)
 {
     try
     {
-        return parse_config(read_json(p));
+        return parse_config(read_json(p, policy));
     }
     catch (const std::exception &e)
     {

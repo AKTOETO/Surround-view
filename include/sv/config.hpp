@@ -1,6 +1,7 @@
 #pragma once
 #include "sv/camera_capture_config.hpp"
 #include "sv/fallback_display.hpp"
+#include "sv/json.hpp"
 #include "sv/math.hpp"
 #include "sv/telemetry_config.hpp"
 #include <boost/json.hpp>
@@ -59,8 +60,10 @@ struct Config
 };
 
 Config parse_config(const boost::json::value &);
-Config load_config(const std::filesystem::path &);
-boost::json::value read_json(const std::filesystem::path &);
+Config load_config(const std::filesystem::path &, JsonNumberPolicy = JsonNumberPolicy::Precise);
+// Dataset/manifest loaders retain legacy parsing unless they explicitly select a policy.
+boost::json::value read_json(const std::filesystem::path &,
+                             JsonNumberPolicy = JsonNumberPolicy::Legacy);
 void write_json(const std::filesystem::path &, const boost::json::value &);
 uint64_t now_ns();
 } // namespace sv

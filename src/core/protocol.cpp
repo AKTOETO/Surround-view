@@ -1,4 +1,5 @@
 #include "sv/protocol.hpp"
+#include "sv/json.hpp"
 #include <algorithm>
 #include <charconv>
 #include <stdexcept>
@@ -85,8 +86,8 @@ std::vector<Message> Decoder::feed(const unsigned char *data, size_t n)
         {
             break;
         }
-        auto value = boost::json::parse(
-            boost::json::string_view(reinterpret_cast<const char *>(p + 24), hs - 24));
+        auto value = parse_json(
+            std::string_view(reinterpret_cast<const char *>(p + 24), static_cast<size_t>(hs - 24)));
         if (!value.is_object())
         {
             throw std::runtime_error("metadata object required");
