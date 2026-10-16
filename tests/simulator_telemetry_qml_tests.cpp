@@ -52,11 +52,16 @@ struct TelemetryModelTestAccess
             sample.frame->spans_ms["gpu_draw"] =
                 i % 2 ? boost::json::value(.20) : boost::json::value(nullptr);
             sample.frame->input_age_at_render_ms = 50 + i;
+            sample.frame->camera_inputs.push_back(
+                {0, i, {i, sv::CameraCaptureMode{1280, 720, i, 29.97, "MJPG", 2}}});
             sample.source.queued_batches = i % 4;
             sample.source.camera_diagnostics = sv::CameraDiagnosticsSet{};
-            (*sample.source.camera_diagnostics)[0] = {i, i / 2, i / 3, i / 4, 0, false};
-            sample.source.camera_diagnostics->at(0).negotiated_mode =
-                sv::CameraCaptureMode{1280, 720, i, 29.97, "MJPG", 2};
+            auto &camera = sample.source.camera_diagnostics->at(0);
+            camera.open_attempts = i;
+            camera.read_failures = i / 2;
+            camera.opencv_exceptions = i / 3;
+            camera.reconnects = i / 4;
+            camera.negotiated_mode.emplace(sv::CameraCaptureMode{1280, 720, i, 29.97, "MJPG", 2});
             sample.data_busy = i % 4 == 0;
             sample.frame->spans_ms["render_wall"] = double(15 + i % 5);
             batch.samples.push_back(sample);

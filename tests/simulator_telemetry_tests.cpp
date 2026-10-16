@@ -426,3 +426,28 @@ TEST(TelemetryUnit, CheckedCameraModeIsShownWithoutNewMetricChoices)
     EXPECT_TRUE(model.sourceDetails().contains("open_attempt=" + QString::number(UINT64_MAX)));
     EXPECT_EQ(model.sourceMetrics().size(), 42);
 }
+
+TEST(TelemetryUnit, SelectedFrameCaptureIsDistinctFromCurrentCameraMode)
+{
+    TelemetryModel model;
+    TelemetryModelTestAccess::catalog(model);
+    TelemetryModelTestAccess::batch(
+        model, 1, 1, 0,
+        [](auto &sample)
+        {
+            sample.source.camera_diagnostics = sv::CameraDiagnosticsSet{};
+            sample.source.camera_diagnostics->at(0).open_attempts = 2;
+            sample.source.camera_diagnostics->at(0).negotiated_mode =
+                sv::CameraCaptureMode{1280, 720, 2, 30, "MJPG", 2};
+            sample.frame->camera_inputs.push_back(
+                {0, UINT64_MAX, {1, sv::CameraCaptureMode{640, 480, 1, 15, "YUYV", 4}}});
+        });
+    const auto details = model.sourceDetails();
+    EXPECT_TRUE(details.contains("1280×720"));
+    EXPECT_TRUE(details.contains("Selected camera 0"));
+    EXPECT_TRUE(details.contains("capture open_attempt=1"));
+    EXPECT_TRUE(details.contains("640×480"));
+    EXPECT_TRUE(details.contains("checked fps=15"));
+    EXPECT_TRUE(details.contains("source_sequence=" + QString::number(UINT64_MAX)));
+    EXPECT_EQ(model.sourceMetrics().size(), 42);
+}

@@ -252,6 +252,24 @@ QString TelemetryModel::sourceDetails() const
     {
         details += "\nCamera diagnostics: недоступно";
     }
+    if (sample.frame)
+    {
+        for (const auto &input : sample.frame->camera_inputs)
+        {
+            details += QString("\nSelected camera %1: source_sequence=%2 · capture open_attempt=%3")
+                           .arg(input.camera_id)
+                           .arg(QString::number(input.source_sequence))
+                           .arg(QString::number(input.capture.open_attempt));
+            if (const auto &mode = input.capture.negotiated_mode; mode)
+            {
+                details +=
+                    QString(" · %1×%2 · checked fps=%3")
+                        .arg(mode->width)
+                        .arg(mode->height)
+                        .arg(mode->fps ? QString::number(*mode->fps, 'g', 8) : "не проверен");
+            }
+        }
+    }
     for (const auto &timing : sample.source_work)
     {
         details += QString("\nCamera %1: %2 · source_sequence=%3 · epoch=%4 · cache=%5")
