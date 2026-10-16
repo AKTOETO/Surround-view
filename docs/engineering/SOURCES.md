@@ -461,7 +461,8 @@ FOURCC задаётся до размера/FPS, поскольку смена �
 все readback проверки выполняются после всех запросов. False от set сам по себе не является
 отказом, если фактическое значение уже соответствует запросу; true также не доказывает успех.
 Nonfinite/нулевой неподдерживаемый get для обязательного или явно заданного параметра приводит
-к отказу. Отсутствующие optional поля не запрашиваются и не проверяются.
+к отказу. Отсутствующие optional поля не задаются через set и не проверяются относительно запроса.
+Их best-effort get передаётся отдельно: [[#Наблюдаемые свойства автоматического профиля камеры]].
 
 OpenCV отдельно предупреждает о зависимости set/get от backend/driver/hardware и о том, что
 успешный set не гарантирует принятие значения: [VideoCapture](https://docs.opencv.org/4.x/d8/dfe/classcv_1_1VideoCapture.html).
@@ -533,7 +534,8 @@ Aurora/PC остаются открытыми; MOCK нужны для воспр
 Он содержит width/height, номер open_attempt (decimal uint64), nullable fps/fourcc/buffer_count.
 Width/height подтверждены точным readback; FPS сохраняется фактический проверенный double
 (например29.97 при requested30), FOURCC/buffers — значения с exact readback. Optional параметры,
-не запрошенные профилем, остаются null: автоматический режим драйвера дополнительно не опрашивается.
+не запрошенные профилем, остаются null на уровне checked fields. Best-effort readback
+автоматического режима передаётся в отдельном automatic_properties: [[#Наблюдаемые свойства автоматического профиля камеры]].
 Decoded conversion проверена adapter до создания mode, отдельного raw-mode этот DTO не описывает.
 
 Worker присваивает номер текущей попытки из open_attempts под source mutex. Mode очищается
@@ -851,3 +853,86 @@ stop
 GUI details без увеличения списка metrics, live missing-path budget. Physical V4L2/Aurora не проверены.
 
 Финальные проверки этого дополнения: полная Linux сборка; source_work_timing49 GTest (3,01 с), telemetry, simulator_runtime_errors и simulator_configuration_qml прошли. Отдельный интеграционный набор sources/client_transports/telemetry_ipc —3/3 за26,52 с, включая installed SDK consumer и8 live cases. Все11 PlantUML blocks этого файла и21 блока главы3 прошли local1.2026.6 -checkonly; два прежних diagram labels главы3 исправлены. Полный набор CTest не запускался.
+
+
+## Наблюдаемые свойства автоматического профиля камеры
+
+Если FPS, FOURCC или число буферов отсутствуют в `source.capture`, сервер теперь читает их
+через OpenCV после всех set и обязательных/explicit проверок. `CameraCaptureMode::automatic_properties`
+(структура `CameraAutomaticProperties` в installed `camera_capture_mode.hpp`) отделяет такие
+наблюдения от checked fields. Явно запрошенное свойство остаётся в checked поле; в automatic
+его аналог равен null, повторного get для него нет. При полном explicit профиле automatic объект
+существует, но все три его поля null.
+
+Это readback текущего открытия, а не перечень доступных конфигураций. OpenCV указывает, что
+неподдерживаемое свойство возвращает0, а значения зависят от backend/driver и могут отличаться
+от реально используемых устройством. Поэтому успешный get не принимается как измерение
+sensor cadence или доказательство поддержки других режимов.
+[OpenCV VideoCapture::get](https://docs.opencv.org/4.13.0/d8/dfe/classcv_1_1VideoCapture.html).
+
+| Свойство | Допустимое автоматическое наблюдение | Недоступное значение |
+|---|---|---|
+| `fps` | Finite positive double; границы config0.1…240 не применяются | Ноль, отрицательное, NaN/Inf, cv::Exception → null |
+| `fourcc` | Целый положительный uint32, декодированный младшим байтом вперёд в четыре ASCII32…126 символа | Fractional/out-of-range, нулевой/непечатный байт, cv::Exception → null |
+| `buffer_count` | Целое1…4294967295 | Ноль, отрицательное, fractional/nonfinite/out-of-range, cv::Exception → null |
+
+Config разрешает запрос1…32 буферов, но наблюдаемое64 не является ошибкой: сервер не выбирал
+его через explicit profile. Число не говорит о фактической задержке buffering. Ошибка optional
+get локальна только этому полю; остальные опрашиваются. `open_failure()` остаётся пустым,
+worker не переподключается из-за такой ошибки. Она не увеличивает `opencv_exceptions`: этот
+счётчик относится к ошибкам операций, дошедшим до worker recovery. Явная проверка get сохраняет
+строгое поведение: mismatch/nonfinite или исключение отклоняют capture, как раньше.
+
+Пример фрагмента mode после default open (width/height проверены отдельно):
+
+```json
+{
+  "width": 1280, "height": 720, "open_attempt": "1",
+  "fps": null, "fourcc": null, "buffer_count": null,
+  "automatic_properties": {"fps": 29.97, "fourcc": "YUYV", "buffer_count": 64}
+}
+```
+
+При partial profile, например explicit FOURCC="MJPG", checked fourcc="MJPG", а automatic
+fourcc=null; автоматические FPS/buffers всё ещё могут быть доступны. SDK отвергает поле,
+одновременно non-null в checked и automatic. Missing/null automatic object у старого сервера
+принимается. Present объект требует все три nullable поля, проверяет types/ranges/ASCII.
+
+```plantuml
+@startuml
+start
+:Открыть VideoCapture;
+:Применить explicit профиль;
+:Проверить обязательные и explicit свойства;
+if (Проверки успешны?) then (да)
+  :Для каждого отсутствующего optional поля\nвыполнить best-effort get;
+  if (Результат корректен?) then (да)
+    :Сохранить automatic значение;
+  else (нет / cv::Exception)
+    :Сохранить null только для этого поля;
+  endif
+  :Опубликовать mode + automatic_properties;
+  :Начать read;
+else (нет)
+  :Отклонить открытие и перейти к recovery;
+endif
+stop
+@enduml
+```
+
+*Рисунок I.12 — отделение строгой настройки захвата от диагностического чтения автоматических свойств.*
+
+Наблюдения снимаются один раз на успешное open. Runtime изменения драйвера без reopen не
+отслеживаются. Snapshot очищается вместе с mode на новом open/close; immutable metadata ранее
+полученного Frame сохраняет старые automatic values после reconnect, stop и смены telemetry epoch.
+Extension проходит type11 selected provenance, telemetry SDK и schema1 archive. sv-simulator
+показывает отдельную строку Automatic readback для current и Selected mode без новых metrics.
+Omission/null прежнего сообщения означает отсутствие snapshot; present all-null может означать
+полный explicit profile либо недоступность всех автоматических запросов. Контекст даёт checked mode.
+
+Каждый дополнительный get синхронен и потенциально блокирующий. Выполняется максимум три
+таких вызова на open, без новых потоков и per-frame queries. Driver timeout/cancellation и overhead
+не подтверждены этим дополнением. Full V4L2 format/size/FPS enumeration, physical device tests,
+measured cadence и sensor timestamps остаются открытыми.
+
+Проверки дополнения: полная Linux сборка; выбранные CTest4/4 за9,65 с (source_work_timing51 GTest, telemetry, simulator_runtime_errors, simulator_configuration_qml) и3/3 за25,74 с (sources, client_transports/installed SDK, telemetry_ipc). Все12 PlantUML blocks этого файла и22 блока главы3 прошли local1.2026.6 -checkonly. Полный набор CTest, реальные камеры и Аврора не проверялись.

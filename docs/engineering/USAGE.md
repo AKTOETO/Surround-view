@@ -1345,3 +1345,6 @@ build/sv-source-work-tests --gtest_filter='CameraRecoveryPolicy.*:OpenReadFormat
 
 
 Для диагностики конечного retry budget откройте I/O details в sv-simulator: `Recovery` показывает streak, полный интервал текущего ожидания и terminal reason. `retry_exhausted` требует перезапуска источника/сервера; Resume worker не пересоздаёт. `release_failure` сообщает об ошибке close; `stop_requested` — о штатном запросе stop после успешного close. В экспортированной telemetry эти поля находятся в `samples[].source.camera_diagnostics[].recovery`. Архив содержит исторические snapshots, а не полную трассу. [[engineering/SOURCES#Снимок восстановления камеры]].
+
+
+Если optional FPS/FOURCC/buffers в source.capture не заданы, смотрите отдельную строку Automatic readback в I/O details. Она показывает наблюдаемый драйверный режим, а «неизвестно» означает unavailable get; это не measured sensor FPS и не строго проверенный запрос. Current и Selected mode могут относиться к разным открытиям. Эти поля сохраняются в telemetry report под negotiated_mode.automatic_properties. [[engineering/SOURCES#Наблюдаемые свойства автоматического профиля камеры]].

@@ -1478,3 +1478,52 @@ end note
 от lossy очереди статусов. Snapshot не равен трассе событий: короткие ожидания могут не попасть
 между samples. Диагностика полезна для воспроизводимости отказов; она не подтверждает физическую
 скорость камеры, точность sensor timestamps или bounded shutdown на целевом оборудовании.
+
+
+### 3.42. Разделение явных настроек и наблюдений автоматического режима камеры
+
+Отсутствие explicit FPS/FOURCC/buffers в профиле не означает, что устройство не имеет этих
+характеристик. Чтобы отчёт эксперимента описывал выбранный драйвером режим, после обязательного
+согласования добавлено best-effort чтение незаданных свойств. Наблюдения хранятся в отдельной
+подструктуре `automatic_properties`, проходят клиентскую библиотеку и сохраняются вместе с
+metadata выбранного кадра. Условия приведены в [[engineering/SOURCES#Наблюдаемые свойства автоматического профиля камеры]].
+
+Такое разделение следует ограничению OpenCV: поддержка и смысл get зависят от промежуточных
+слоёв, а ноль может означать неподдерживаемое свойство. Readback не является независимым измерением
+камеры. [OpenCV VideoCapture::get](https://docs.opencv.org/4.13.0/d8/dfe/classcv_1_1VideoCapture.html).
+
+| Состояние | Действие сервера | Значение для исследования |
+|---|---|---|
+| Explicit FPS30, get29.97 в допуске | Сохранить checked fps29.97 | Запрос согласован по принятому допуску |
+| FPS не задан, get29.97 | Checked fps=null, automatic fps29.97 | Наблюдение выбранного backend режима |
+| Optional get возвращает0/NaN или исключение | Только соответствующее automatic поле=null | Избежать ложной остановки работоспособной камеры |
+| Explicit get не подтверждает запрос | Отклонить open | Сохранить строгость experiment configuration |
+| Reconnect изменяет automatic buffers4→8 | Current8, retained Frame4 | Не приписывать старому кадру новый режим |
+
+```plantuml
+@startuml
+component "Startup capture profile" as P
+component "Strict checks" as C
+component "Best-effort automatic get" as A
+component "Mode snapshot\nchecked + automatic" as M
+component "Immutable Frame metadata" as F
+component "sv-client-lib\ntelemetry / archive / output" as L
+component "sv-simulator\ncurrent и Selected details" as G
+P --> C : только explicit optional + mandatory
+C --> A : после успешной проверки
+A --> M : незаданные свойства; unavailable=null
+C --> M : подтверждённые значения
+M --> F : копия в capture provenance
+M --> L : current source diagnostics
+F --> L : selected result provenance
+L --> G
+@enduml
+```
+
+*Рисунок 3.42 — пути наблюдаемых автоматических свойств до отчёта клиента.*
+
+MOCK-проверки охватывают fractional FPS, invalid/nonfinite/fractional readback, неизвестные
+FOURCC bytes, исключение отдельного get, partial/explicit профили и отсутствие повторных запросов.
+Проверены SDK legacy/contradiction rejection, archive round-trip и сохранность свойств старого
+Frame после reconnect. Эти результаты относятся к программной обработке свойства; полная
+таблица режимов V4L2, реальная частота доставки и latency buffers требуют аппаратного испытания.

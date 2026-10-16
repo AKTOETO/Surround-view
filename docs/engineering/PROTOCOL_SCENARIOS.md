@@ -405,3 +405,6 @@ Reconnect сценарий дополнен разделением current captu
 
 
 Дополнение telemetry сценария восстановления камеры: клиент получает recovery snapshot даже без frame. Во время retry наблюдаем streak+назначенный wait; после завершения worker — stopped и terminal reason. Stop очищает wait, release failure приоритетен над исходной причиной выхода. Resume не пересоздаёт завершённый worker. Отсутствие snapshot у старого сервера принимается. Новых команд нет. [[engineering/SOURCES#Снимок восстановления камеры]].
+
+
+CameraCaptureMode дополнен optional `automatic_properties` (nullable fps/fourcc/buffer_count) для best-effort readback незаданных свойств. Checked и automatic значения одного свойства одновременно non-null запрещены. SDK принимает legacy omission/null; extension сохраняется в current telemetry, selected type11 provenance и archive schema1. Новых команд нет. [[engineering/SOURCES#Наблюдаемые свойства автоматического профиля камеры]].

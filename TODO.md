@@ -152,8 +152,8 @@ MOCK-проверки характеристик камер и startup capture p
 
 
 Checked camera mode через SDK/archive/I/O details выполнен:
-[[engineering/SOURCES#Проверенный режим камеры через SDK]]. Остаются автоматические свойства
-без explicit profile, формализованные requested/
+[[engineering/SOURCES#Проверенный режим камеры через SDK]]. Автоматический best-effort readback незаданных FPS/FOURCC/buffers реализован:
+[[engineering/SOURCES#Наблюдаемые свойства автоматического профиля камеры]]. Остаются формализованные requested/
 active/observed camera states и режимы capability discovery. Snapshot не заменяет measured cadence,
 sensor timestamps и physical acceptance.
 
