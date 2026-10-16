@@ -92,6 +92,9 @@ class Telemetry(unittest.TestCase):
         self.assertIsNotNone(latest)
         self.assertTrue(latest[0]['worker_stopped'])
         self.assertEqual(latest[0]['open_attempts'], '2')
+        self.assertEqual(latest[0]['recovery'], dict(consecutive_failures='2',
+                         retry_delay_ms=None, terminal_reason='retry_exhausted'))
+        self.assertIsNone(latest[1]['recovery']['terminal_reason'])
         self.assertIsNone(latest[0]['negotiated_mode'])
         self.assertFalse(latest[1]['worker_stopped'])
         self.assertGreaterEqual(int(latest[1]['open_attempts']), 2)

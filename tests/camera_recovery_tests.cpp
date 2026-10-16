@@ -233,6 +233,10 @@ TEST_P(CameraRecovery, FailedOperationClosesAndReopensBeforePublishing)
     EXPECT_EQ(camera.reconnects, fail_open ? 0U : 1U);
     EXPECT_EQ(camera.release_failures, 0U);
     EXPECT_TRUE(camera.worker_stopped);
+    ASSERT_TRUE(camera.recovery);
+    EXPECT_EQ(camera.recovery->terminal_reason, "stop_requested");
+    EXPECT_EQ(camera.recovery->consecutive_failures, 0U);
+    EXPECT_FALSE(camera.recovery->retry_delay_ms);
 }
 
 INSTANTIATE_TEST_SUITE_P(OpenAndRead, CameraRecovery, testing::Values(0, 1, 2, 3));
@@ -263,6 +267,9 @@ TEST(CameraRecovery, ReleaseFailureStopsOnlyAffectedWorkerWithoutReopen)
     EXPECT_EQ(camera.release_failures, 1U);
     EXPECT_EQ(camera.reconnects, 0U);
     EXPECT_TRUE(camera.worker_stopped);
+    ASSERT_TRUE(camera.recovery);
+    EXPECT_EQ(camera.recovery->terminal_reason, "release_failure");
+    EXPECT_FALSE(camera.recovery->retry_delay_ms);
     EXPECT_EQ(source->stats().camera_diagnostics->at(1).read_failures, 0U);
     EXPECT_GT(source->stats().decoded, 0U);
     EXPECT_TRUE(
@@ -288,4 +295,7 @@ TEST(CameraRecovery, ReleaseExceptionDuringStopDoesNotEscapeWorker)
     source->stop();
     EXPECT_TRUE(has_status(source->poll(), "camera_exception:close_worker_stopped"));
     source->stop(); // Idempotent shutdown.
+    const auto camera = source->stats().camera_diagnostics->at(0);
+    ASSERT_TRUE(camera.recovery);
+    EXPECT_EQ(camera.recovery->terminal_reason, "release_failure");
 }

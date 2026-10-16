@@ -169,6 +169,8 @@ TEST(TelemetryArchive, CameraHealthRoundTripRetainsNullAndExactCounters)
     archive.samples[1].source.camera_diagnostics = sv::CameraDiagnosticsSet{};
     archive.samples[1].source.camera_diagnostics->at(3) = {UINT64_MAX, UINT64_MAX, UINT64_MAX,
                                                            UINT64_MAX, UINT64_MAX, true};
+    archive.samples[1].source.camera_diagnostics->at(3).recovery =
+        sv::CameraRecoveryStatus{UINT64_MAX, {}, "release_failure"};
     const auto text = sv::client::serialize_telemetry_archive(archive);
     const auto result = sv::client::parse_telemetry_archive(text);
     EXPECT_FALSE(result.samples[0].source.camera_diagnostics);
@@ -180,6 +182,11 @@ TEST(TelemetryArchive, CameraHealthRoundTripRetainsNullAndExactCounters)
     EXPECT_EQ(camera.reconnects, UINT64_MAX);
     EXPECT_EQ(camera.release_failures, UINT64_MAX);
     EXPECT_TRUE(camera.worker_stopped);
+    ASSERT_TRUE(camera.recovery);
+    EXPECT_EQ(camera.recovery->consecutive_failures, UINT64_MAX);
+    EXPECT_EQ(camera.recovery->terminal_reason, "release_failure");
+    EXPECT_FALSE(camera.recovery->retry_delay_ms);
+
     auto legacy = boost::json::parse(text).as_object();
     for (auto &sample : legacy.at("samples").as_array())
     {

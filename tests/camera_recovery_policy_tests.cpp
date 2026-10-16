@@ -21,6 +21,7 @@ struct FailureState
     std::mutex mutex;
     std::condition_variable changed;
     bool entered = false, released = false;
+    bool fail_final_close = false;
 };
 
 class FailingCapture final : public sv::CameraCapture
@@ -69,6 +70,10 @@ class FailingCapture final : public sv::CameraCapture
 
     void close() override
     {
+        if (state_->fail_final_close && state_->reads == 3)
+        {
+            CV_Error(cv::Error::StsError, "injected final release failure");
+        }
         opened_ = false;
     }
 
@@ -211,7 +216,12 @@ TEST_P(CameraRecoveryBudget, PersistentFailureStopsOnlyConfiguredWorkerWithoutRe
                                    return std::make_unique<OtherCapture>(id == 1);
                                });
     const auto events = wait_stopped(*source, true);
-    EXPECT_TRUE(source->stats().camera_diagnostics->at(0).worker_stopped);
+    const auto diagnostic = source->stats().camera_diagnostics->at(0);
+    EXPECT_TRUE(diagnostic.worker_stopped);
+    ASSERT_TRUE(diagnostic.recovery);
+    EXPECT_EQ(diagnostic.recovery->consecutive_failures, 3U);
+    EXPECT_FALSE(diagnostic.recovery->retry_delay_ms);
+    EXPECT_EQ(diagnostic.recovery->terminal_reason, "retry_exhausted");
     EXPECT_TRUE(source->request(sv::SourceAction::Resume,
                                 1)); // Source-wide resume cannot restart a dead worker.
     source->stop();
@@ -279,7 +289,8 @@ TEST(CameraRecoveryPolicy, StopInterruptsConfiguredSixtySecondWait)
                                          [](int) { return std::make_unique<OtherCapture>(false); });
     const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(2);
     bool unavailable = false;
-    while (!unavailable && std::chrono::steady_clock::now() < deadline)
+    while ((!unavailable || !source->stats().camera_diagnostics->at(0).recovery->retry_delay_ms) &&
+           std::chrono::steady_clock::now() < deadline)
     {
         for (const auto &event : source->poll())
         {
@@ -288,10 +299,20 @@ TEST(CameraRecoveryPolicy, StopInterruptsConfiguredSixtySecondWait)
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
+    const auto waiting = source->stats().camera_diagnostics->at(0).recovery;
+    ASSERT_TRUE(waiting);
+    EXPECT_EQ(waiting->consecutive_failures, 1U);
+    EXPECT_EQ(waiting->retry_delay_ms, 60000U);
+    EXPECT_FALSE(waiting->terminal_reason);
     auto stopped = std::async(std::launch::async, [&] { source->stop(); });
     EXPECT_EQ(stopped.wait_for(std::chrono::seconds(2)), std::future_status::ready);
     stopped.get();
     EXPECT_TRUE(unavailable);
+    const auto terminal = source->stats().camera_diagnostics->at(0).recovery;
+    ASSERT_TRUE(terminal);
+    EXPECT_FALSE(terminal->retry_delay_ms);
+    EXPECT_EQ(terminal->consecutive_failures, 1U);
+    EXPECT_EQ(terminal->terminal_reason, "stop_requested");
 }
 
 TEST(CameraRecoveryPolicy, ConfigParsesIndependentPartialPoliciesAndRejectsInvalidBounds)
@@ -336,4 +357,34 @@ TEST(CameraRecoveryPolicy, ConfigParsesIndependentPartialPoliciesAndRejectsInval
     EXPECT_THROW(sv::make_camera_source(direct, {},
                                         [](int) { return std::make_unique<OtherCapture>(false); }),
                  std::invalid_argument);
+}
+
+TEST(CameraRecoveryPolicy, FinalReleaseFailureOverridesExhaustedBudget)
+{
+    auto config = sv::load_config(SV_TEST_CONFIG_PATH);
+    for (auto &camera : config.cameras)
+    {
+        camera.width = camera.height = 2;
+    }
+    config.source.camera_capture[0].recovery = short_policy();
+    auto state = std::make_shared<FailureState>();
+    state->fail_final_close = true;
+    auto source = sv::make_camera_source(config, {},
+                                         [state](int id) -> std::unique_ptr<sv::CameraCapture>
+                                         {
+                                             if (id == 0)
+                                             {
+                                                 return std::make_unique<FailingCapture>(state, 2);
+                                             }
+                                             return std::make_unique<OtherCapture>(false);
+                                         });
+    wait_stopped(*source, false);
+    source->stop();
+    const auto camera = source->stats().camera_diagnostics->at(0);
+    ASSERT_TRUE(camera.recovery);
+    EXPECT_TRUE(camera.worker_stopped);
+    EXPECT_EQ(camera.release_failures, 1U);
+    EXPECT_EQ(camera.recovery->consecutive_failures, 3U);
+    EXPECT_EQ(camera.recovery->terminal_reason, "release_failure");
+    EXPECT_FALSE(camera.recovery->retry_delay_ms);
 }

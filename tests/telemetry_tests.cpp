@@ -344,3 +344,70 @@ TEST(Telemetry, NegotiatedModePreservesCheckedFieldsAndRejectsStaleOrMalformedRe
     change([](auto &c) { c["negotiated_mode"].as_object()["fourcc"] = "MJPEG"; });
     change([](auto &c) { c["negotiated_mode"].as_object()["buffer_count"] = 33; });
 }
+
+TEST(Telemetry, RecoveryStatusAcceptsLegacyAndRejectsInconsistentWaitAndTerminalStates)
+{
+    sv::TelemetryCollector collector("instance", {true, 50, 8});
+    sv::SourceStats source;
+    source.camera_diagnostics = sv::CameraDiagnosticsSet{};
+    source.camera_diagnostics->at(0).recovery = sv::CameraRecoveryStatus{UINT64_MAX, 60000, {}};
+    collector.sample(50000000, 0, source, false, false, false);
+    const auto wire = collector.read("instance", 0, 0, 16);
+    const auto parsed = sv::client::parse_telemetry_batch(reply(wire));
+    const auto &status = parsed.samples[0].source.camera_diagnostics->at(0).recovery;
+    ASSERT_TRUE(status);
+    EXPECT_EQ(status->consecutive_failures, UINT64_MAX);
+    EXPECT_EQ(status->retry_delay_ms, 60000U);
+    EXPECT_FALSE(status->terminal_reason);
+    auto change = [&](auto mutate, bool valid = false)
+    {
+        auto copy = wire;
+        auto &camera = copy.at("samples")
+                           .as_array()[0]
+                           .as_object()
+                           .at("source")
+                           .as_object()
+                           .at("camera_diagnostics")
+                           .as_array()[0]
+                           .as_object();
+        mutate(camera);
+        if (valid)
+        {
+            EXPECT_NO_THROW(sv::client::parse_telemetry_batch(reply(copy)));
+        }
+        else
+        {
+            EXPECT_ANY_THROW(sv::client::parse_telemetry_batch(reply(copy)));
+        }
+    };
+    change([](auto &c) { c.erase("recovery"); }, true);
+    change([](auto &c) { c["recovery"] = nullptr; }, true);
+    change([](auto &c) { c["recovery"] = boost::json::object{}; });
+    change([](auto &c) { c.at("recovery").as_object()["retry_delay_ms"] = 0; });
+    change([](auto &c) { c.at("recovery").as_object()["retry_delay_ms"] = 60001; });
+    change([](auto &c) { c.at("recovery").as_object()["retry_delay_ms"] = "100"; });
+    change([](auto &c) { c.at("recovery").as_object()["consecutive_failures"] = "0"; });
+    change([](auto &c)
+           { c.at("recovery").as_object()["consecutive_failures"] = "18446744073709551616"; });
+    change([](auto &c) { c["worker_stopped"] = true; });
+    change([](auto &c) { c.at("recovery").as_object()["terminal_reason"] = "unexpected"; });
+    change([](auto &c) { c.at("recovery").as_object()["terminal_reason"] = "stop_requested"; });
+    change(
+        [](auto &c)
+        {
+            c["worker_stopped"] = true;
+            auto &r = c.at("recovery").as_object();
+            r["retry_delay_ms"] = nullptr;
+            r["terminal_reason"] = "retry_exhausted";
+            r["consecutive_failures"] = "0";
+        });
+    change(
+        [](auto &c)
+        {
+            c["worker_stopped"] = true;
+            auto &r = c.at("recovery").as_object();
+            r["retry_delay_ms"] = nullptr;
+            r["terminal_reason"] = "retry_exhausted";
+        },
+        true);
+}

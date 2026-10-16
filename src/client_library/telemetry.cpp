@@ -162,6 +162,36 @@ TelemetryBatch parse_telemetry_batch(const Message &message)
                     integer(camera, "open_attempts"),     integer(camera, "read_failures"),
                     integer(camera, "opencv_exceptions"), integer(camera, "reconnects"),
                     integer(camera, "release_failures"),  camera.at("worker_stopped").as_bool()};
+                if (const auto *value = camera.if_contains("recovery"); value && !value->is_null())
+                {
+                    const auto &fields = value->as_object();
+                    CameraRecoveryStatus status;
+                    status.consecutive_failures = integer(fields, "consecutive_failures");
+                    if (!fields.at("retry_delay_ms").is_null())
+                    {
+                        status.retry_delay_ms = bounded(fields.at("retry_delay_ms"), 1, 60000);
+                    }
+                    if (!fields.at("terminal_reason").is_null())
+                    {
+                        status.terminal_reason =
+                            std::string(fields.at("terminal_reason").as_string());
+                        if (*status.terminal_reason != "stop_requested" &&
+                            *status.terminal_reason != "retry_exhausted" &&
+                            *status.terminal_reason != "release_failure")
+                        {
+                            throw std::invalid_argument("unknown camera terminal reason");
+                        }
+                    }
+                    if (bool(status.terminal_reason) != parsed[id].worker_stopped ||
+                        (status.retry_delay_ms &&
+                         (parsed[id].worker_stopped || !status.consecutive_failures)) ||
+                        (status.terminal_reason == "retry_exhausted" &&
+                         !status.consecutive_failures))
+                    {
+                        throw std::invalid_argument("inconsistent camera recovery status");
+                    }
+                    parsed[id].recovery = std::move(status);
+                }
                 if (const auto *mode = camera.if_contains("negotiated_mode");
                     mode && !mode->is_null())
                 {

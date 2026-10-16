@@ -29,6 +29,7 @@ class CameraFrameSource : public FrameSource
         for (int i = 0; i < 4; ++i)
         {
             validate_camera_recovery(config.source.camera_capture[i].recovery);
+            diagnostics_[i].recovery.emplace();
             captures_[i] =
                 factory ? factory(i) : make_opencv_capture(config.source.camera_capture[i]);
             if (!captures_[i])
@@ -148,6 +149,7 @@ class CameraFrameSource : public FrameSource
         bool previously_opened = false;
         std::shared_ptr<const CameraFrameProvenance> active_capture;
         CameraRecoveryPolicy recovery(config_.source.camera_capture[camera_id].recovery);
+        std::string terminal_reason = "stop_requested";
         auto retry = [&](CameraFailure failure)
         {
             if (stopping())
@@ -155,12 +157,20 @@ class CameraFrameSource : public FrameSource
                 return false;
             }
             const auto delay = recovery.failure(failure);
+            update_camera(
+                camera_id, [&](auto &state)
+                { state.recovery->consecutive_failures = recovery.consecutive_failures(); });
             if (!delay)
             {
+                terminal_reason = "retry_exhausted";
                 emit_status(camera_id, last_status, "camera_retry_exhausted");
                 return false;
             }
+            update_camera(
+                camera_id, [&](auto &state)
+                { state.recovery->retry_delay_ms = static_cast<unsigned>(delay->count()); });
             wait_retry(*delay);
+            update_camera(camera_id, [](auto &state) { state.recovery->retry_delay_ms.reset(); });
             return !stopping();
         };
 
@@ -318,6 +328,8 @@ class CameraFrameSource : public FrameSource
 
                 const auto prepare_done = timing ? now_ns() : 0;
                 recovery.success();
+                update_camera(camera_id,
+                              [](auto &state) { state.recovery->consecutive_failures = 0; });
                 emit_status(camera_id, last_status, "camera_ready:" + dev_path);
                 Frame frame;
                 frame.camera_id = camera_id;
@@ -405,8 +417,15 @@ class CameraFrameSource : public FrameSource
             }
         }
 
-        close_capture(cap, camera_id, last_status);
-        update_camera(camera_id, [](auto &state) { state.worker_stopped = true; });
+        if (close_capture(cap, camera_id, last_status))
+        {
+            update_camera(camera_id,
+                          [&](auto &state)
+                          {
+                              state.worker_stopped = true;
+                              state.recovery->terminal_reason = terminal_reason;
+                          });
+        }
     }
 
     bool stopping() const
@@ -442,6 +461,8 @@ class CameraFrameSource : public FrameSource
                               ++state.opencv_exceptions;
                               ++state.release_failures;
                               state.worker_stopped = true;
+                              state.recovery->retry_delay_ms.reset();
+                              state.recovery->terminal_reason = "release_failure";
                           });
             emit_status(camera_id, last_status, "camera_exception:close_worker_stopped");
             return false;
