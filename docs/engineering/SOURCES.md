@@ -936,3 +936,6 @@ Omission/null прежнего сообщения означает отсутс�
 measured cadence и sensor timestamps остаются открытыми.
 
 Проверки дополнения: полная Linux сборка; выбранные CTest4/4 за9,65 с (source_work_timing51 GTest, telemetry, simulator_runtime_errors, simulator_configuration_qml) и3/3 за25,74 с (sources, client_transports/installed SDK, telemetry_ipc). Все12 PlantUML blocks этого файла и22 блока главы3 прошли local1.2026.6 -checkonly. Полный набор CTest, реальные камеры и Аврора не проверялись.
+
+
+Матрицы камер и startup capture параметры теперь загружаются общей Precise JSON policy на Boost≥1.83; generic dataset loader сохраняет Legacy. Это может изменить последние binary64 bits нового config/wire baseline; input artifacts не переписываются. [[engineering/JSON_PRECISION]].

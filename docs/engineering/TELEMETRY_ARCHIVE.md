@@ -136,8 +136,10 @@ duration. Для локального archive reader на Boost≥1.83 вклю�
 
 На Boost<1.83 сохранён прежний parser для source compatibility; точный floating round-trip там
 не гарантирован и precise-specific test пропускается. Legacy numeric stability остаётся задачей.
-Изменён только локальный archive parsing; live SV01 decoder, config parser, Qt↔config conversions
-и исторические research inputs/reports этим шагом не менялись. Archive сохраняет полученные
+Первоначально менялся только archive parsing. Теперь общая политика применяется также к live
+SV01 decoder, config loader и Qt↔config conversions: [[engineering/JSON_PRECISION]].
+Исторические research inputs/reports не переписаны; новые config/wire численные результаты
+могут отличаться последними binary64 bits. Archive сохраняет полученные
 клиентом значения и не восстанавливает precision, уже потерянную раньше в wire/config pipeline.
 
 ## Optional source_work

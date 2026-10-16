@@ -109,3 +109,6 @@ Multilabel server candidate/cost/global-gap controls: [[validation/MULTILABEL_SE
 Сохранение telemetry window и offline view: [[engineering/TELEMETRY_ARCHIVE]].
 
 Отключаемые camera/replay input timers и provenance: [[engineering/SOURCE_TIMING]].
+
+
+Численная воспроизводимость JSON конфигурации, протокола и Qt/CLI conversions: [[engineering/JSON_PRECISION]].

@@ -493,3 +493,6 @@ canonical validate и apply/apply-once; подготовка collector history �
 в [[engineering/TELEMETRY]]. GUI формы теперь также редактируют telemetry через отдельную вкладку RuntimePanel;
 используют тот же guarded apply-once workflow. `operations` catalogue сохраняет четыре
 ConfigService операции; process journal и telemetry reads объявляются отдельными capabilities.
+
+
+На Boost≥1.83 продуктовые JSON-пути используют общую Precise number policy: SV01 decoder, load_config, GUI/CLI intents и archive import. В installed SDK доступен sv/json.hpp. Framing/команды не меняются; Legacy dataset reader и старый Boost имеют отдельные ограничения. Новые config/wire baseline могут отличаться последними binary64 bits. Контракт, regression и миграция: [[engineering/JSON_PRECISION]].

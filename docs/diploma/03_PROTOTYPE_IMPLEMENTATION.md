@@ -1527,3 +1527,56 @@ FOURCC bytes, исключение отдельного get, partial/explicit п
 Проверены SDK legacy/contradiction rejection, archive round-trip и сохранность свойств старого
 Frame после reconnect. Эти результаты относятся к программной обработке свойства; полная
 таблица режимов V4L2, реальная частота доставки и latency buffers требуют аппаратного испытания.
+
+
+### 3.43. Численная воспроизводимость передачи и сохранения параметров
+
+Проверка цепочки конфигурации выявила изменение одного binary64 на1 ULP после encode→decode.
+Для исходного значения -1.1959916878056157e-7 ожидаемые bits как uint64 были13726986393446128461,
+полученные —13726986393446128460. Это программная погрешность обмена: ни вычисления калибровки,
+ни рендер для её появления не требовались. Regression использует exact bit comparison, поскольку
+сравнение с ULP-допуском способно скрыть такой дефект.
+
+Введён общий parser policy для startup конфигурации, SV01, GUI/CLI и telemetry archive.
+На Boost≥1.83 используется Precise; на более раннем Boost сохранена совместимость сборки с
+legacy parser без гарантии exact fidelity. Boost характеризует Precise как более точный и более
+медленный режим; влияние на runtime нужно измерять отдельно.
+[Boost.JSON number_precision](https://www.boost.org/doc/libs/1_86_0/libs/json/doc/html/json/ref/boost__json__number_precision.html).
+
+```plantuml
+@startuml
+participant "Qt / CLI client" as U
+participant "Shared precise parser" as P
+participant "SV01 Decoder\nserver / SDK" as D
+participant "ConfigStore" as C
+participant "Config file" as F
+U -> P : draft / command JSON
+P --> U : binary64 parameters
+U -> D : encode message
+D -> C : validated parameters
+C -> F : explicit persist; Boost serialize
+F -> P : load_config after restart
+P --> C : same binary64 (tested cases)
+note over U,F
+Metadata/payload framing сохранён.
+Legacy datasets и old Boost требуют отдельной политики.
+end note
+@enduml
+```
+
+*Рисунок 3.43 — точки применения точного разбора в цепочке управления сервером.*
+
+| Контроль | Метод | Что подтверждается |
+|---|---|---|
+| Wire metadata | 520 finite/boundary doubles, десять циклов | Exact bits, int64/uint64 kinds, payload и repeated bytes |
+| Матрица калибровки | Десять load→wire→persist→restart циклов | Отсутствие drift typed translation и effective config |
+| Qt draft / CLI params | Проблемная дробь через реальные converters | Точность соответствующего intent |
+| Legacy loader | Явный policy и default read_json | Сохранение прежней интерпретации datasets |
+| Невалидный JSON | NaN/Infinity/comments/trailing input | Синтаксис не ослаблен ради точности |
+
+Generic dataset reader оставлен в legacy режиме, тексты исторических artifacts не меняются.
+Однако новый load_config и wire decoder изменяют численную интерпретацию отдельных decimals;
+новые эксперименты следует обозначать новым build fingerprint и версией Boost. Исторические
+quality metrics не пересчитаны. Изменение не доказывает визуального улучшения сшивки: оно
+устраняет неконтролируемую погрешность при перемещении исследуемых параметров.
+Контракт и оставшиеся ограничения: [[engineering/JSON_PRECISION]].

@@ -117,9 +117,15 @@ provider; disabled/reset/paused/busy/lease/persistence rollback и Unix/TCP пр
 
 ## Численная стабильность JSON-конфигурации
 
-Локальный telemetry archive reader использует precise parsing на Boost≥1.83; repeated fractional save/load regression выполнен ([[engineering/TELEMETRY_ARCHIVE#Точность дробных метрик]]). Остальные пути и Boost<1.83 не закрыты.
+Единая Precise policy для Boost≥1.83 в SV01/config/GUI/CLI/archive реализована с exact bit
+round-trip и repeated ConfigStore persistence regressions: [[engineering/JSON_PRECISION]].
+Generic dataset/manifest read_json сохраняет Legacy default; исторические inputs/reports не
+переписывались. Новые load_config/wire experiments могут отличаться последними binary64 bits.
 
-Проверить политику double parsing/serialization на поддерживаемых Boost версиях и Qt↔wire↔ConfigStore: на host default Boost.JSON number mode меняет последние разряды отдельных исходных camera matrix значений уже при загрузке. Нужны контролируемые round-trip/repeated-save tests и явно выбранная точность с учётом Aurora Boost1.86 и minimum1.75; не менять исторические исследовательские inputs/reports молча. Текущий GUI persistence regression сравнивает unrelated groups с authoritative config_read.active, не с исходным текстом файла.
+- Проверить сборку/численную совместимость на Boost1.75 и Aurora1.86; precise mode отсутствует в1.75.
+- Расширить Qt boundary cases (включая -0 и представление больших целых), измерить overhead precise parsing.
+- Фиксировать parser policy и Boost version в experiment metadata; согласовать отдельную миграцию
+  legacy observation/dataset loaders, не подменяя исторические результаты новыми.
 
 ## Physical camera backend: оставшаяся приёмка
 

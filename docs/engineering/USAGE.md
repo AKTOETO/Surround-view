@@ -1348,3 +1348,6 @@ build/sv-source-work-tests --gtest_filter='CameraRecoveryPolicy.*:OpenReadFormat
 
 
 Если optional FPS/FOURCC/buffers в source.capture не заданы, смотрите отдельную строку Automatic readback в I/O details. Она показывает наблюдаемый драйверный режим, а «неизвестно» означает unavailable get; это не measured sensor FPS и не строго проверенный запрос. Current и Selected mode могут относиться к разным открытиям. Эти поля сохраняются в telemetry report под negotiated_mode.automatic_properties. [[engineering/SOURCES#Наблюдаемые свойства автоматического профиля камеры]].
+
+
+На Boost≥1.83 продуктовые JSON-пути используют общую Precise number policy: SV01 decoder, load_config, GUI/CLI intents и archive import. В installed SDK доступен sv/json.hpp. Framing/команды не меняются; Legacy dataset reader и старый Boost имеют отдельные ограничения. Новые config/wire baseline могут отличаться последними binary64 bits. Контракт, regression и миграция: [[engineering/JSON_PRECISION]].
