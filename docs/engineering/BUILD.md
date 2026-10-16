@@ -22,7 +22,8 @@ Python **не нужен на устройстве** для `sv-platform-test`, 
 
 В OpenCV 4 требуются `core`, `calib3d`, `imgproc`, `imgcodecs`, `videoio`. В OpenCV 5 CMake выбирает `geometry`, `calib`, `objdetect` вместо прежнего монолитного `calib3d`; исходники учитывают перенос детектора. Проверен OpenCV 5; совместимость с веткой 4 заложена в сборке, но требует проверки на соответствующем SDK.
 
-GLM и OpenCV сначала ищутся в системных пакетах. Для обычной Linux-разработки `SV_FETCH_MISSING_DEPS=ON` (по умолчанию) может получить закреплённые исходники через CMake `FetchContent` и собрать их вместе с проектом. Для OpenCV включаются только используемые модули; nested build наследует компилятор, sysroot и toolchain-файл. Первый запуск требует сети и может занять значительное время. Это fallback разработчика, не способ поставки Aurora RPM: оба Aurora spec задают `SV_FETCH_MISSING_DEPS=OFF` и требуют отдельные GLM/OpenCV development RPM. Для offline-сборки также нужны уже установленные system packages.
+GLM и OpenCV сначала ищутся в системных пакетах. Для обычной Linux-разработки `SV_FETCH_MISSING_DEPS=ON` (по умолчанию) может получить закреплённые исходники через CMake `FetchContent` и собрать их вместе с проектом. Для OpenCV включаются только используемые модули; nested build наследует компилятор, sysroot и toolchain-файл. Первый запуск требует сети и может занять значительное время. Это fallback разработчика, не способ поставки Aurora RPM: оба Aurora spec задают `SV_FETCH_MISSING_DEPS=OFF`; default требует GLM/OpenCV development RPM,
+а optional bundled profile использует заранее подготовленные offline target inputs: [[engineering/PRIVATE_DEPENDENCIES]]. Для offline-сборки нужны system packages либо явно подготовленные bundle inputs.
 
 Fallback не применяется к Boost.JSON/Asio, OpenSSL, EGL/GLES и Qt: это платформенные зависимости, которые должны приходить из системных/SDK пакетов. При исходной сборке OpenCV её shared libraries устанавливаются в приватный каталог пакета с `$ORIGIN` RPATH; лицензии OpenCV и GLM включаются в package payload. CMake как исполняемый build tool тоже должен уже быть предоставлен SDK: FetchContent запускается только после старта CMake. RPM build tool dependencies относятся к build environment, а GLM/OpenCV fallback работает на этапе `%build`, после разрешения `BuildRequires`. Название `opencv5` в `pkg-config` этого ПК отличается от часто встречающегося `opencv4`; проект использует CMake-конфигурацию OpenCV, а не угадывает имя `.pc`.
 
@@ -69,7 +70,7 @@ ctest --test-dir build-cpu --output-on-failure
 | `SV_QT_MAJOR` | Автовыбор | Принудительно 5 или 6 |
 | `SV_PLATFORM_TEST` | ON | Native отчёт и `sv-core-tests` для устройства |
 | `SV_AURORA` | OFF | Offline SDK-профиль, отключает host Python-тесты |
-| `SV_FETCH_MISSING_DEPS` | ON for Linux, OFF for Aurora | Скачать и собрать отсутствующие GLM/OpenCV для development builds; Aurora использует отдельные SDK RPM |
+| `SV_FETCH_MISSING_DEPS` | ON for Linux, OFF for Aurora | Скачать и собрать отсутствующие GLM/OpenCV для development builds; Aurora использует SDK RPM либо prepared offline inputs; fetch запрещён |
 | `SV_PYTHON_TESTS` | ON | Регистрация Python-тестов; принудительно OFF при cross-compiling |
 | `SV_SANITIZERS` | OFF | ASan/UBSan для исследования CPU-кода |
 | `BUILD_TESTING` | ON | Регистрация CTest; RPM собирается с OFF |
@@ -127,3 +128,9 @@ SV_SIMULATOR=ON при SV_CLIENT=ON добавляет sv-simulator и треб�
 (Qt6 API начиная с6.2; отдельный Qt5 Dialogs1.3 adapter). Qt6 picker проверен offscreen с Quick
 fallback; Qt5 adapter в этом шаге не проверялся. Codec в installed sv-client-lib использует только
 Boost/STL, не добавляет Qt/OpenCV dependency внешним клиентам. [[engineering/TELEMETRY_ARCHIVE]].
+
+
+Offline bundle knobs: SV_BUNDLE_OPENCV=ON и SV_OPENCV_BUNDLE_ROOT задают подготовленный target
+install prefix; SV_OPENCV_MIN_VERSION (default4.5) меняет minimum; SV_GLM_INCLUDE_DIR содержит
+glm/glm.hpp для header-only input. ELF/SONAME/RPATH/closure checks и RPM flags:
+[[engineering/PRIVATE_DEPENDENCIES]]. Системный профиль остаётся default, скачиваний в Aurora нет.

@@ -31,7 +31,9 @@ sb2 -t "$SV_TARGET" rpm --eval '%ninja_install'
 
 Переменная `SV_TARGET` — шаблон для замены, а не существующий комплект. Не угадывать точный номер релиза по версии страницы документации. В [[validation/ACCEPTANCE]] записать выпуск/архитектуру/SDK/Qt/драйвер и результат проверки пакетов. Все библиотеки для целевого RPM, включая GLM и OpenCV, должны предоставляться SDK или отдельными target RPM необходимой версии.
 
-Boost должен предоставлять именно JSON ≥1.75, OpenSSL — Crypto; EGL/GLES нужны GPU-профилю. Оба Aurora spec используют `SV_FETCH_MISSING_DEPS=OFF` и объявляют GLM/OpenCV как BuildRequires: целевой RPM не должен скачивать или собирать большие зависимости внутри приложения. Сейчас проверка пользователя показала, что целевой SDK не предоставляет `cmake >= 3.20`, `glm-devel` и `opencv-devel >= 4.5`; значит, до сборки приложения нужно подготовить/подключить подходящие target RPM и репозиторий. GLM и OpenCV из зафиксированных upstream-версий можно отдельно упаковать под ABI Авроры. CMake/Ninja/compiler — build-host инструменты SDK; CMake сам не может загрузить собственную замену, так как FetchContent запускается лишь после старта CMake. Проверить наличие исполняемого CMake в build environment и его версию отдельно от target BuildRequires.
+Boost должен предоставлять именно JSON ≥1.75, OpenSSL — Crypto; EGL/GLES нужны GPU-профилю. Оба Aurora spec используют `SV_FETCH_MISSING_DEPS=OFF`; default объявляет GLM/OpenCV как BuildRequires,
+optional bundle принимает подготовленные Source1/Source2: целевой RPM не должен скачивать или собирать большие зависимости внутри приложения. Сейчас проверка пользователя показала, что целевой SDK не предоставляет `cmake >= 3.20`, `glm-devel` и `opencv-devel >= 4.5`; значит, до сборки приложения нужно подготовить подходящие target RPM/репозиторий либо
+выбрать реализованный offline bundle для OpenCV/GLM: [[engineering/PRIVATE_DEPENDENCIES]]. GLM и OpenCV из зафиксированных upstream-версий можно отдельно упаковать под ABI Авроры. CMake/Ninja/compiler — build-host инструменты SDK; CMake сам не может загрузить собственную замену, так как FetchContent запускается лишь после старта CMake. Проверить наличие исполняемого CMake в build environment и его версию отдельно от target BuildRequires.
 
 Корневой CMake-проект сохраняет `SV_FETCH_MISSING_DEPS=ON` как удобный fallback для Linux-разработки и изолированных проверок. Это не политика Aurora RPM: отдельная упаковка GLM/OpenCV позволяет менеджеру пакетов разрешать ABI-зависимости, переиспользовать их несколькими приложениями и собирать приложение без сетевого доступа.
 
@@ -85,7 +87,7 @@ sb2 -t "$SV_TARGET" rpmbuild -bb --define "_topdir $SV_RPM_TOP" \
   "$SV_RPM_TOP/SPECS/surround-view.spec"
 ```
 
-Для CPU заменить имя spec на `surround-view-cpu.spec`, оставив Source0 `surround-view-0.6.0.tar.gz`. В этом режиме результаты в `artifacts/rpmbuild/RPMS/<архитектура>/`. **Не использовать `--nodeps` для целевой сборки**: необходимо подтвердить целевые BuildRequires, включая GLM/OpenCV отдельными target RPM; остальные SDK dependencies должны быть доступны штатно. RPM автоматически формирует runtime ELF dependencies; проверить:
+Для CPU заменить имя spec на `surround-view-cpu.spec`, оставив Source0 `surround-view-0.6.0.tar.gz`. В этом режиме результаты в `artifacts/rpmbuild/RPMS/<архитектура>/`. **Не использовать `--nodeps` для целевой сборки**: необходимо подтвердить целевые BuildRequires: GLM/OpenCV через target RPM либо выбранный offline bundle; остальные SDK dependencies должны быть доступны штатно. RPM автоматически формирует runtime ELF dependencies; проверить:
 
 ```sh
 rpm -qp --requires 'путь_к_полученному.rpm'
@@ -163,3 +165,13 @@ GUI RPM включает `packaging/aurora/surround-view.desktop` и иконк�
 Оба research spec 0.6.0 включают static `sv-client-lib`/`sv-wire`, публичные headers и installed CMake export. GUI остаётся optional. Это позволяет собирать отдельного клиента из установленного пакета; инструкция — [[engineering/CLIENT_LIBRARY]]. UDP и target ABI этой упаковкой не подтверждаются.
 
 В spec `CMAKE_INSTALL_LIBDIR=%{_lib}` согласует относительный lib/lib64 с архитектурным RPM macro. Это сохраняет relocation installed CMake package и предотвращает расхождение с `%{_libdir}` в `%files`. Host verifier дополнительно проверяет development files и собирает отдельного consumer из распакованного RPM.
+
+
+## Тестовый RPM с приватными библиотеками
+
+Оба spec поддерживают `--with bundled_opencv` и `--with bundled_glm`. Первый исключает
+opencv-devel BuildRequires, принимает Source1 target OpenCV prefix и включает private .so;
+второй заменяет glm-devel подготовленными headers Source2. Остальные OS/SDK зависимости сохраняются.
+RPATH, version/architecture/closure validation, подготовка архивов и команды:
+[[engineering/PRIVATE_DEPENDENCIES]]. Это optional development/lab profile, не подтверждённый
+сертифицированный формат поставки приложения. Реальная Aurora сборка/установка пока не проверены.

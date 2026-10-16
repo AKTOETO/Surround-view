@@ -174,3 +174,14 @@ Per-camera recovery delays/capped backoff/finite failure budget реализов
 server checks: [[engineering/SOURCES#Политика повторов и backoff аппаратной камеры]]. Остаются
 source ConfigService/forms/hot worker restart и physical
 read/open/release cancellation. Finite retry budget не равен driver timeout.
+
+
+## Offline зависимости тестового Aurora RPM
+
+Prepared target OpenCV bundle/private .so и header-only GLM profile реализованы:
+[[engineering/PRIVATE_DEPENDENCIES]]. В SDK FetchContent запрещён; system-package profile сохраняется.
+
+- Подготовить OpenCV4.10.0 и GLM1.0.1 архивы реальным Aurora SDK/toolchain и зафиксировать hashes/build flags.
+- Собрать CPU/GPU RPM с bundle conditionals внутри SDK, проверить Requires/Provides, notices и target installation.
+- Проверить target ABI/symbol versions, V4L2 codecs, private transitive loading и startup на устройстве.
+- Поддерживать обновления приватных библиотек вместе с приложением; отдельные target RPM остаются предпочтительным reusable deployment вариантом.

@@ -1351,3 +1351,10 @@ build/sv-source-work-tests --gtest_filter='CameraRecoveryPolicy.*:OpenReadFormat
 
 
 На Boost≥1.83 продуктовые JSON-пути используют общую Precise number policy: SV01 decoder, load_config, GUI/CLI intents и archive import. В installed SDK доступен sv/json.hpp. Framing/команды не меняются; Legacy dataset reader и старый Boost имеют отдельные ограничения. Новые config/wire baseline могут отличаться последними binary64 bits. Контракт, regression и миграция: [[engineering/JSON_PRECISION]].
+
+
+Если тестовый Aurora SDK не предоставляет opencv-devel/glm-devel, доступен offline bundle профиль
+обоих RPM spec. Он использует заранее собранные target .so и заголовки; внутри SDK приложение
+ничего не скачивает. Подготовка Source1/Source2, CMake/RPM commands и target проверки:
+[[engineering/PRIVATE_DEPENDENCIES]]. Команды запуска установленных sv-server/sv-client не меняются;
+приватный OpenCV ищется по package RPATH.

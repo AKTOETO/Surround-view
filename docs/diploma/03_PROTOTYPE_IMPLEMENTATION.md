@@ -1580,3 +1580,26 @@ Generic dataset reader оставлен в legacy режиме, тексты и�
 quality metrics не пересчитаны. Изменение не доказывает визуального улучшения сшивки: оно
 устраняет неконтролируемую погрешность при перемещении исследуемых параметров.
 Контракт и оставшиеся ограничения: [[engineering/JSON_PRECISION]].
+
+
+### 3.44. Offline поставка зависимостей для испытаний на Авроре
+
+Для испытательного стенда добавлен optional профиль RPM с приватными OpenCV shared libraries.
+Он нужен, когда development package отсутствует в SDK repository. Headers/CMake-config и `.so`
+предварительно собираются тем же target toolchain и передаются как Source1; GLM передаётся
+как header-only Source2. Сервер приложения не скачивает и не устанавливает зависимости.
+Default deployment через системные packages сохраняется.
+
+| Проверка | Назначение | Ограничение |
+|---|---|---|
+| Version и imported locations | Исключить случайное использование host OpenCV | Package config должен быть подготовленным target input |
+| ELF machine/class/endianness | Отклонить библиотеку чужой архитектуры | Не доказывает полную glibc/ARM floating-point ABI совместимость |
+| SONAME и OpenCV DT_NEEDED closure | Не скрыть отсутствующий внутренний модуль фильтром RPM | External OS dependencies остаются Requires |
+| `$ORIGIN` executable и каждой `.so` | Разрешить direct/transitive libraries после переноса | Loader behavior проверен на Linux fixture, не target Aurora |
+| Notices и private Provides | Сохранить лицензии и изоляцию зависимостей | Полнота notices и SDK package validation требуют отдельной приёмки |
+
+Схема поставки приведена на рисунке P.1 в [[engineering/PRIVATE_DEPENDENCIES]], там же находятся
+команды подготовки и установки. Native test строит собственные ELF libraries, переносит install
+root, скрывает исходный prefix и запускает приложение без LD_LIBRARY_PATH. Проверки spec conditionals
+подтверждают выбор BuildRequires/payload для обоих профилей. Это проверка механизма упаковки;
+реальный bundled OpenCV под Аврору, RPM signing и запуск на автомобильной платформе ещё не выполнены.

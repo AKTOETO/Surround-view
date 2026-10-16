@@ -112,3 +112,6 @@ Multilabel server candidate/cost/global-gap controls: [[validation/MULTILABEL_SE
 
 
 Численная воспроизводимость JSON конфигурации, протокола и Qt/CLI conversions: [[engineering/JSON_PRECISION]].
+
+
+Тестовый Aurora RPM с приватным target OpenCV и offline GLM: [[engineering/PRIVATE_DEPENDENCIES]].
