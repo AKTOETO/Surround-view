@@ -1,5 +1,6 @@
 #pragma once
 #include "sv/camera_diagnostics.hpp"
+#include "sv/camera_frame_provenance.hpp"
 #include "sv/protocol.hpp"
 #include "sv/source_work_timing.hpp"
 #include <optional>
@@ -41,6 +42,7 @@ struct TelemetryFrame
     double input_age_at_render_ms = 0;
     // Wall spans overlap; gpu_draw is nullable and does not cover the complete hybrid path.
     boost::json::object spans_ms;
+    std::vector<sv::CameraInputProvenance> camera_inputs = {};
 };
 
 struct TelemetrySample

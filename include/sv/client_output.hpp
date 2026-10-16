@@ -1,8 +1,10 @@
 #pragma once
+#include "sv/camera_frame_provenance.hpp"
 #include "sv/output_product.hpp"
 #include "sv/render_support.hpp"
 #include "sv/source_visibility.hpp"
 #include <memory>
+#include <vector>
 
 namespace sv::client
 {
@@ -10,6 +12,9 @@ using sv::OutputProduct;
 
 // Missing product means legacy final_frame. Unknown/malformed products are rejected.
 OutputProduct validate_output_product(const Message &);
+
+// Parses additive camera identity only; does not validate image payload or infer current mode.
+std::vector<CameraInputProvenance> parse_frame_camera_inputs(const Message &);
 
 struct SupportPixel
 {

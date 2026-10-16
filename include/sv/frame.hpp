@@ -1,4 +1,5 @@
 #pragma once
+#include "sv/camera_frame_provenance.hpp"
 #include "sv/config.hpp"
 #include "sv/source_work.hpp"
 #include <deque>
@@ -24,6 +25,7 @@ struct Frame
     std::string source_session = "", source_clock_domain = "";
     uint64_t source_sequence = 0, source_timestamp_ns = 0;
     std::shared_ptr<const SourceWorkRecord> source_work = {};
+    std::shared_ptr<const CameraFrameProvenance> camera_capture = {};
 };
 
 struct FrameSet

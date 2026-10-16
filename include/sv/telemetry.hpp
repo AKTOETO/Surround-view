@@ -31,6 +31,7 @@ class TelemetryCollector
         SourceStats source;
         double collection_ms = 0;
         std::shared_ptr<const SourceWorkSet> source_work = {};
+        std::shared_ptr<const std::vector<CameraInputProvenance>> camera_inputs = {};
     };
 
     struct Storage
@@ -51,6 +52,7 @@ class TelemetryCollector
     std::optional<FrameTelemetry> last_frame_;
     std::shared_ptr<const SourceTimingSession> source_session_;
     std::shared_ptr<const SourceWorkSet> last_source_work_;
+    std::shared_ptr<const std::vector<CameraInputProvenance>> last_camera_inputs_;
     std::optional<uint64_t> last_cpu_, last_sample_ns_;
     uint64_t epoch_ = 0, cursor_ = 0, last_emitted_frame_ = 0;
 

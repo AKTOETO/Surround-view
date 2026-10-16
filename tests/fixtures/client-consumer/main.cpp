@@ -313,6 +313,11 @@ int main(int argc, char **argv)
             }
             if (event.message->type == 11)
             {
+                if (event.message->header.contains("inputs"))
+                {
+                    header["validated_camera_input_count"] =
+                        sv::client::parse_frame_camera_inputs(*event.message).size();
+                }
                 const auto product = sv::client::validate_output_product(*event.message);
                 if ((support && product != sv::client::OutputProduct::RenderSupport) ||
                     (visibility && product != sv::client::OutputProduct::SourceVisibility) ||

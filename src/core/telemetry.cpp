@@ -56,6 +56,7 @@ void TelemetryCollector::Update::commit() noexcept
     owner_.config_ = config_;
     owner_.source_session_.swap(session_);
     owner_.last_source_work_.reset();
+    owner_.last_camera_inputs_.reset();
     ++owner_.epoch_;
     owner_.cursor_ = owner_.last_emitted_frame_ = 0;
     owner_.last_cpu_.reset();
@@ -104,10 +105,19 @@ void TelemetryCollector::frame(const FrameTelemetry &frame, const FrameSet *inpu
         return;
     }
     std::shared_ptr<SourceWorkSet> work;
+    std::shared_ptr<std::vector<CameraInputProvenance>> camera_inputs;
     if (inputs)
     {
         for (size_t i = 0; i < inputs->frames.size(); ++i)
         {
+            if (const auto &input = inputs->frames[i]; input && input->camera_capture)
+            {
+                if (!camera_inputs)
+                {
+                    camera_inputs = std::make_shared<std::vector<CameraInputProvenance>>();
+                }
+                camera_inputs->push_back({int(i), input->source_sequence, *input->camera_capture});
+            }
             if (const auto &input = inputs->frames[i];
                 input && input->source_work && input->source_work->session == source_session_ &&
                 input->source_work->timing.camera_id == int(i) &&
@@ -124,6 +134,7 @@ void TelemetryCollector::frame(const FrameTelemetry &frame, const FrameSet *inpu
     }
     last_frame_ = frame;
     last_source_work_ = std::move(work);
+    last_camera_inputs_ = std::move(camera_inputs);
 }
 
 void TelemetryCollector::sample(uint64_t now, uint64_t revision, SourceStats source, bool paused,
@@ -157,6 +168,7 @@ void TelemetryCollector::sample(uint64_t now, uint64_t revision, SourceStats sou
                   busy,
                   source};
     sample.source_work = last_source_work_;
+    sample.camera_inputs = last_camera_inputs_;
     last_emitted_frame_ = last_frame_ ? last_frame_->frame_id : 0;
     last_cpu_ = process.cpu_ns;
     last_sample_ns_ = now;
@@ -182,6 +194,15 @@ boost::json::object TelemetryCollector::sample_json(const Sample &sample) const
         object["fresh"] = sample.fresh_frame;
         object["input_age_at_render_ms"] = object.at("server_receive_to_render_ms");
         object.erase("server_receive_to_render_ms");
+        boost::json::array camera_inputs;
+        if (sample.camera_inputs)
+        {
+            for (const auto &input : *sample.camera_inputs)
+            {
+                camera_inputs.push_back(camera_input_provenance_json(input));
+            }
+        }
+        object["camera_inputs"] = std::move(camera_inputs);
     }
     boost::json::array source_work;
     if (sample.source_work)

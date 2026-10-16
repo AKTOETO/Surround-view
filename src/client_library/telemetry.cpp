@@ -1,3 +1,4 @@
+#include "camera_provenance.hpp"
 #include "sv/client_telemetry.hpp"
 #include <algorithm>
 #include <array>
@@ -164,38 +165,11 @@ TelemetryBatch parse_telemetry_batch(const Message &message)
                 if (const auto *mode = camera.if_contains("negotiated_mode");
                     mode && !mode->is_null())
                 {
-                    const auto &value = mode->as_object();
-                    sv::CameraCaptureMode negotiated;
-                    negotiated.width = bounded(value.at("width"), 1, 16384);
-                    negotiated.height = bounded(value.at("height"), 1, 16384);
-                    negotiated.open_attempt = integer(value, "open_attempt");
-                    if (!negotiated.open_attempt ||
-                        negotiated.open_attempt != parsed[id].open_attempts ||
+                    auto negotiated = parse_camera_mode(*mode);
+                    if (negotiated->open_attempt != parsed[id].open_attempts ||
                         parsed[id].worker_stopped)
                     {
                         throw std::invalid_argument("inconsistent negotiated camera mode");
-                    }
-                    if (!value.at("fps").is_null())
-                    {
-                        negotiated.fps = duration(value.at("fps"));
-                        if (*negotiated.fps == 0)
-                        {
-                            throw std::invalid_argument("invalid camera FPS");
-                        }
-                    }
-                    if (!value.at("fourcc").is_null())
-                    {
-                        negotiated.fourcc = std::string(value.at("fourcc").as_string());
-                        if (negotiated.fourcc->size() != 4 ||
-                            !std::all_of(negotiated.fourcc->begin(), negotiated.fourcc->end(),
-                                         [](unsigned char c) { return c >= 32 && c <= 126; }))
-                        {
-                            throw std::invalid_argument("invalid camera FOURCC");
-                        }
-                    }
-                    if (!value.at("buffer_count").is_null())
-                    {
-                        negotiated.buffer_count = bounded(value.at("buffer_count"), 1, 32);
                     }
                     parsed[id].negotiated_mode = std::move(negotiated);
                 }
@@ -231,6 +205,10 @@ TelemetryBatch parse_telemetry_batch(const Message &message)
                 parsed.config_revision > sample.config_revision)
             {
                 throw std::invalid_argument("inconsistent telemetry frame identity");
+            }
+            if (const auto *inputs = frame.if_contains("camera_inputs"))
+            {
+                parsed.camera_inputs = parse_selected_camera_inputs(*inputs);
             }
             sample.frame = std::move(parsed);
         }
@@ -298,6 +276,21 @@ TelemetryBatch parse_telemetry_batch(const Message &message)
                     throw std::invalid_argument("unsupported source work kind");
                 }
                 sample.source_work.push_back(std::move(timing));
+            }
+        }
+        if (sample.frame)
+        {
+            for (const auto &work : sample.source_work)
+            {
+                const auto input = std::find_if(
+                    sample.frame->camera_inputs.begin(), sample.frame->camera_inputs.end(),
+                    [&](const auto &value) { return value.camera_id == work.camera_id; });
+                if (input != sample.frame->camera_inputs.end() &&
+                    input->source_sequence != work.source_sequence)
+                {
+                    throw std::invalid_argument(
+                        "source work and selected camera identity disagree");
+                }
             }
         }
         result.samples.push_back(std::move(sample));

@@ -1447,6 +1447,11 @@ int main(int argc, char **argv)
                         input["source_clock_domain"] = frame.source_clock_domain;
                         input["source_sequence_id"] = std::to_string(frame.source_sequence);
                         input["source_timestamp_ns"] = std::to_string(frame.source_timestamp_ns);
+                        if (frame.camera_capture)
+                        {
+                            input["camera_capture"] =
+                                sv::camera_frame_provenance_json(*frame.camera_capture);
+                        }
                         oldest = std::min(oldest, frame.release_ns);
                     }
                     inputs.push_back(input);

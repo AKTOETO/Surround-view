@@ -313,6 +313,9 @@ TEST(SourceWork, BoundedReadPagesBeforeHeaderLimitWithFourCameraRecords)
         inputs.frames[i]->camera_id = i;
         inputs.frames[i]->source_sequence = UINT64_MAX;
         inputs.frames[i]->source_work = work;
+        inputs.frames[i]->camera_capture =
+            std::make_shared<const sv::CameraFrameProvenance>(sv::CameraFrameProvenance{
+                UINT64_MAX, sv::CameraCaptureMode{1920, 1080, UINT64_MAX, 29.97, "MJPG", 32}});
     }
     sv::FrameTelemetry frame;
     frame.frame_id = 1;
@@ -334,6 +337,8 @@ TEST(SourceWork, BoundedReadPagesBeforeHeaderLimitWithFourCameraRecords)
     const auto batch = sv::client::parse_telemetry_batch(reply(fields));
     ASSERT_FALSE(batch.samples.empty());
     EXPECT_EQ(batch.samples[0].source_work.size(), 4U);
+    ASSERT_TRUE(batch.samples[0].frame);
+    EXPECT_EQ(batch.samples[0].frame->camera_inputs.size(), 4U);
     if (batch.samples.size() < 16)
     {
         EXPECT_TRUE(batch.has_more);

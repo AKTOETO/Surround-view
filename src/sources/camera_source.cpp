@@ -144,6 +144,7 @@ class CameraFrameSource : public FrameSource
         uint64_t camera_sequence = 0;
         std::string last_status;
         bool previously_opened = false;
+        std::shared_ptr<const CameraFrameProvenance> active_capture;
 
         while (true)
         {
@@ -161,10 +162,12 @@ class CameraFrameSource : public FrameSource
                     {
                         break;
                     }
+                    active_capture.reset();
+                    uint64_t open_attempt = 0;
                     update_camera(camera_id,
-                                  [](auto &state)
+                                  [&open_attempt](auto &state)
                                   {
-                                      ++state.open_attempts;
+                                      open_attempt = ++state.open_attempts;
                                       state.negotiated_mode.reset();
                                   });
                     if (!cap.open(dev_path, cam_cfg.width, cam_cfg.height))
@@ -180,6 +183,12 @@ class CameraFrameSource : public FrameSource
                         continue;
                     }
                     auto mode = cap.negotiated_mode();
+                    if (mode)
+                    {
+                        mode->open_attempt = open_attempt;
+                    }
+                    active_capture = std::make_shared<const CameraFrameProvenance>(
+                        CameraFrameProvenance{open_attempt, mode});
                     update_camera(camera_id,
                                   [&mode](auto &state)
                                   {
@@ -286,6 +295,7 @@ class CameraFrameSource : public FrameSource
                 frame.source_session = "camera-hw-v1";
                 frame.source_clock_domain = "host_delivery_monotonic";
                 frame.image = img;
+                frame.camera_capture = active_capture;
                 if (timing)
                 {
                     auto record = std::make_shared<SourceWorkRecord>();

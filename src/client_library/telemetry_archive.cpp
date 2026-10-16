@@ -34,7 +34,13 @@ boost::json::object sample_json(const TelemetrySample &sample)
     if (sample.frame)
     {
         const auto &value = *sample.frame;
-        frame = boost::json::object{{"frame_id", std::to_string(value.frame_id)},
+        boost::json::array camera_inputs;
+        for (const auto &input : value.camera_inputs)
+        {
+            camera_inputs.push_back(sv::camera_input_provenance_json(input));
+        }
+        frame = boost::json::object{{"camera_inputs", std::move(camera_inputs)},
+                                    {"frame_id", std::to_string(value.frame_id)},
                                     {"sequence_id", std::to_string(value.sequence_id)},
                                     {"config_revision", std::to_string(value.config_revision)},
                                     {"timestamp_ns", std::to_string(value.timestamp_ns)},
