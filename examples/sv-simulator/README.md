@@ -126,3 +126,6 @@ I/O details now show the checked backend mode and open-attempt identity without 
 
 
 I/O details separate current checked camera mode from selected-frame capture provenance. A retained frame may belong to an older opening after reconnect; its attempt/mode is preserved in telemetry archives. No metric choices were added. [[engineering/SOURCES#Происхождение выбранного кадра при reconnect]].
+
+
+I/O details include optional per-camera recovery snapshots: exact failure streak, full current retry interval (not time remaining), and terminal reason. Unsupported/legacy data stays unavailable. No additional metric choices; archive values are historical. See [[engineering/SOURCES#Снимок восстановления камеры]].

@@ -228,6 +228,23 @@ QString TelemetryModel::sourceDetails() const
                 details +=
                     QString(" %1=%2").arg(cameraMetrics[i].first).arg(QString::number(values[i]));
             }
+            const auto &recovery = source.camera_diagnostics->at(camera).recovery;
+            if (recovery)
+            {
+                details +=
+                    QString("\n  Recovery: consecutive_failures=%1 · retry_delay_ms=%2 · "
+                            "terminal_reason=%3")
+                        .arg(QString::number(recovery->consecutive_failures))
+                        .arg(recovery->retry_delay_ms ? QString::number(*recovery->retry_delay_ms)
+                                                      : "нет ожидания")
+                        .arg(recovery->terminal_reason
+                                 ? QString::fromStdString(*recovery->terminal_reason)
+                                 : "worker активен");
+            }
+            else
+            {
+                details += "\n  Recovery: недоступно";
+            }
             const auto &mode = source.camera_diagnostics->at(camera).negotiated_mode;
             if (mode)
             {
