@@ -32,9 +32,11 @@ class Telemetry(unittest.TestCase):
         return self.client.command('config_apply', base_config_revision=str(revision),
             changes={'telemetry': dict(enabled=enabled, **settings)}, persist=False)
 
-    def test_missing_camera_devices_report_health_without_input_frames(self):
+    def start_missing_cameras(self, capture=None):
         self.cfg['source'] = dict(type='camera', devices=[
             str(self.directory / f'absent-camera-{i}') for i in range(4)])
+        if capture is not None:
+            self.cfg['source']['capture'] = capture
         self.cfg['telemetry'] = dict(enabled=True, period_ms=50, history_capacity=32)
         self.config.write_text(json.dumps(self.cfg))
         self.server = subprocess.Popen([
@@ -48,6 +50,9 @@ class Telemetry(unittest.TestCase):
                 self.fail('camera server startup timeout')
             time.sleep(.01)
         self.client = Client(self.ipc)
+
+    def test_missing_camera_devices_report_health_without_input_frames(self):
+        self.start_missing_cameras()
         catalog = self.catalog()
         deadline = time.monotonic() + 3
         latest = None
@@ -68,6 +73,30 @@ class Telemetry(unittest.TestCase):
             self.assertFalse(camera['worker_stopped'])
             self.assertIsNone(camera.get('negotiated_mode'))
         self.assertIsNone(self.server.poll())
+
+    def test_camera_retry_budget_stops_one_worker_and_keeps_server_available(self):
+        capture = [dict(camera_id=i) for i in range(4)]
+        capture[0]['recovery'] = dict(open_delay_ms=10, backoff_multiplier=2,
+                                      max_consecutive_failures=2)
+        self.start_missing_cameras(capture)
+        catalog = self.catalog()
+        deadline = time.monotonic() + 3
+        latest = None
+        while time.monotonic() < deadline:
+            samples = self.read(catalog)['telemetry']['samples']
+            if samples:
+                latest = samples[-1]['source']['camera_diagnostics']
+                if latest[0]['worker_stopped'] and int(latest[1]['open_attempts']) >= 2:
+                    break
+            time.sleep(.03)
+        self.assertIsNotNone(latest)
+        self.assertTrue(latest[0]['worker_stopped'])
+        self.assertEqual(latest[0]['open_attempts'], '2')
+        self.assertIsNone(latest[0]['negotiated_mode'])
+        self.assertFalse(latest[1]['worker_stopped'])
+        self.assertGreaterEqual(int(latest[1]['open_attempts']), 2)
+        self.assertIsNone(self.server.poll())
+        self.assertTrue(self.client.command('state')['accepted'])
 
     def test_hot_enable_sampling_while_paused_and_disable(self):
         self.start()

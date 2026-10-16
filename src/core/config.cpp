@@ -415,7 +415,8 @@ Config parse_config(const boost::json::value &value)
                 for (int id = 0; id < 4; ++id)
                 {
                     const auto &entry = list[id].as_object();
-                    keys(entry, {"camera_id"}, "source.capture", {"fps", "fourcc", "buffer_count"});
+                    keys(entry, {"camera_id"}, "source.capture",
+                         {"fps", "fourcc", "buffer_count", "recovery"});
                     require(integer(entry.at("camera_id"), 0, 3) == id,
                             "source.capture: camera_id order");
                     auto &settings = c.source.camera_capture[id];
@@ -438,6 +439,31 @@ Config parse_config(const boost::json::value &value)
                     if (const auto *count = entry.if_contains("buffer_count"))
                     {
                         settings.buffer_count = unsigned(integer(*count, 1, 32));
+                    }
+                    if (const auto *recovery = entry.if_contains("recovery"))
+                    {
+                        const auto &fields = recovery->as_object();
+                        keys(fields, {}, "source.capture.recovery",
+                             {"open_delay_ms", "read_delay_ms", "invalid_frame_delay_ms",
+                              "exception_delay_ms", "max_delay_ms", "backoff_multiplier",
+                              "max_consecutive_failures"});
+                        auto read = [&](const char *name, unsigned &target, int min, int max)
+                        {
+                            if (const auto *value = fields.if_contains(name))
+                            {
+                                target = unsigned(integer(*value, min, max));
+                            }
+                        };
+                        auto &policy = settings.recovery;
+                        read("open_delay_ms", policy.open_delay_ms, 1, 60000);
+                        read("read_delay_ms", policy.read_delay_ms, 1, 60000);
+                        read("invalid_frame_delay_ms", policy.invalid_frame_delay_ms, 1, 60000);
+                        read("exception_delay_ms", policy.exception_delay_ms, 1, 60000);
+                        read("max_delay_ms", policy.max_delay_ms, 1, 60000);
+                        read("backoff_multiplier", policy.backoff_multiplier, 1, 8);
+                        read("max_consecutive_failures", policy.max_consecutive_failures, 0,
+                             1000000);
+                        validate_camera_recovery(policy);
                     }
                 }
             }
@@ -756,4 +782,22 @@ uint64_t now_ns()
                                      std::chrono::steady_clock::now().time_since_epoch())
                                      .count());
 }
+
+void validate_camera_recovery(const CameraRecoverySettings &policy)
+{
+    const unsigned delays[] = {policy.open_delay_ms, policy.read_delay_ms,
+                               policy.invalid_frame_delay_ms, policy.exception_delay_ms,
+                               policy.max_delay_ms};
+    require(std::all_of(std::begin(delays), std::end(delays),
+                        [](unsigned value) { return value >= 1 && value <= 60000; }),
+            "camera recovery delay: expected 1..60000 ms");
+    require(policy.max_delay_ms >=
+                std::max({policy.open_delay_ms, policy.read_delay_ms, policy.invalid_frame_delay_ms,
+                          policy.exception_delay_ms}),
+            "camera recovery max_delay_ms below base delay");
+    require(policy.backoff_multiplier >= 1 && policy.backoff_multiplier <= 8 &&
+                policy.max_consecutive_failures <= 1000000,
+            "camera recovery bounds invalid");
+}
+
 } // namespace sv

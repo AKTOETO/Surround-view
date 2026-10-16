@@ -1,3 +1,4 @@
+#include "camera_recovery.hpp"
 #include "opencv_capture.hpp"
 #include "sv/vision.hpp"
 #include <algorithm>
@@ -27,6 +28,7 @@ class CameraFrameSource : public FrameSource
         timing_.set(std::move(timing));
         for (int i = 0; i < 4; ++i)
         {
+            validate_camera_recovery(config.source.camera_capture[i].recovery);
             captures_[i] =
                 factory ? factory(i) : make_opencv_capture(config.source.camera_capture[i]);
             if (!captures_[i])
@@ -145,6 +147,22 @@ class CameraFrameSource : public FrameSource
         std::string last_status;
         bool previously_opened = false;
         std::shared_ptr<const CameraFrameProvenance> active_capture;
+        CameraRecoveryPolicy recovery(config_.source.camera_capture[camera_id].recovery);
+        auto retry = [&](CameraFailure failure)
+        {
+            if (stopping())
+            {
+                return false;
+            }
+            const auto delay = recovery.failure(failure);
+            if (!delay)
+            {
+                emit_status(camera_id, last_status, "camera_retry_exhausted");
+                return false;
+            }
+            wait_retry(*delay);
+            return !stopping();
+        };
 
         while (true)
         {
@@ -179,7 +197,10 @@ class CameraFrameSource : public FrameSource
                         {
                             return;
                         }
-                        wait_retry(std::chrono::milliseconds(250));
+                        if (!retry(CameraFailure::Open))
+                        {
+                            break;
+                        }
                         continue;
                     }
                     auto mode = cap.negotiated_mode();
@@ -226,7 +247,10 @@ class CameraFrameSource : public FrameSource
                     {
                         return;
                     }
-                    wait_retry(std::chrono::milliseconds(100));
+                    if (!retry(CameraFailure::Read))
+                    {
+                        break;
+                    }
                     continue;
                 }
 
@@ -239,7 +263,10 @@ class CameraFrameSource : public FrameSource
                     emit_status(camera_id, last_status,
                                 "camera_resolution_mismatch:" + std::to_string(frame_mat.cols) +
                                     "x" + std::to_string(frame_mat.rows));
-                    wait_retry(std::chrono::milliseconds(100));
+                    if (!retry(CameraFailure::InvalidFrame))
+                    {
+                        break;
+                    }
                     continue;
                 }
 
@@ -248,7 +275,10 @@ class CameraFrameSource : public FrameSource
                     dropped_count_++;
                     emit_status(camera_id, last_status,
                                 "camera_unsupported_depth:" + std::to_string(frame_mat.depth()));
-                    wait_retry(std::chrono::milliseconds(100));
+                    if (!retry(CameraFailure::InvalidFrame))
+                    {
+                        break;
+                    }
                     continue;
                 }
 
@@ -273,7 +303,10 @@ class CameraFrameSource : public FrameSource
                     emit_status(camera_id, last_status,
                                 "camera_unsupported_channels:" +
                                     std::to_string(frame_mat.channels()));
-                    wait_retry(std::chrono::milliseconds(100));
+                    if (!retry(CameraFailure::InvalidFrame))
+                    {
+                        break;
+                    }
                     continue;
                 }
 
@@ -284,6 +317,7 @@ class CameraFrameSource : public FrameSource
                 img->pixels.assign(rgb.data, rgb.data + rgb.total() * rgb.elemSize());
 
                 const auto prepare_done = timing ? now_ns() : 0;
+                recovery.success();
                 emit_status(camera_id, last_status, "camera_ready:" + dev_path);
                 Frame frame;
                 frame.camera_id = camera_id;
@@ -364,7 +398,10 @@ class CameraFrameSource : public FrameSource
                 {
                     return; // The driver state after a failed release is unknown.
                 }
-                wait_retry(std::chrono::milliseconds(250));
+                if (!retry(CameraFailure::Exception))
+                {
+                    break;
+                }
             }
         }
 
