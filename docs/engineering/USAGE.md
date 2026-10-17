@@ -1358,3 +1358,22 @@ build/sv-source-work-tests --gtest_filter='CameraRecoveryPolicy.*:OpenReadFormat
 ничего не скачивает. Подготовка Source1/Source2, CMake/RPM commands и target проверки:
 [[engineering/PRIVATE_DEPENDENCIES]]. Команды запуска установленных sv-server/sv-client не меняются;
 приватный OpenCV ищется по package RPATH.
+
+### Матрица параметров общего C++ runner
+
+Сервер должен быть запущен с replay dataset, поддерживающим последовательное получение кадров.
+Готовый пример `configs/research/multiband-matrix.json` разворачивает4 variants,3 frame sets,
+2 warmup и5 measured blocks:84 trials,60 измеряемых RGBA captures.
+
+```sh
+mkdir -p artifacts/multiband-matrix-run
+build/svctl --unix /tmp/sv-prototype --timeout-ms 10000 research \
+  configs/research/multiband-matrix.json artifacts/multiband-matrix-run/report.json
+```
+
+Путь отчёта и `report.json.frames` должны быть новыми. Даже metadata-only запуск больше не
+перезаписывает существующий report. Для следующего запуска выбирайте новую папку/имя.
+В report проверяйте success/restored, scenario_sha256, trial_order_algorithm, trial_plan_sha256,
+trial_plan и trial_index samples. Matrix разворачивается в report.scenario.variants; seed задаёт
+порядок, не мир. Продолжение после аварии, возврат cursor и cold-cache reset пока не реализованы.
+Полный контракт: [[architecture/RESEARCH_RUNTIME#Ограниченные матрицы и фиксированный план испытаний]].

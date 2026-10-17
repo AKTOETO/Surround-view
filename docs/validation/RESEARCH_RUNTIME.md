@@ -118,3 +118,20 @@ Catalog v3 и C++ scenario runner дополнены `pyramid_boundary=zero|norm
 Typed library/scenario/GUI adapter поддерживают optional seam_solver. Unix/TCP live native GUI-adapter test применяет graph_cut_multi_band + normalized + alpha_expansion, проверяет snapshot и прежний stale-revision/restore flow. CLI sequential capture regression переключает binary/alpha, проверяет одинаковые inputs, solver setting и монотонную energy/sweep budget actual frame diagnostics; legacy frames не сохраняют старые alpha stats. Schema/core отвергают unknown solver. Legacy default mathematical parity suites сохранены; новые alpha controls используют exhaustive graph oracle ([[validation/MULTILABEL_SEAM]]).
 
 После total-capacity guard финальная полная сборка успешна, CTest **51/51**, 22.54 s. Нативный GTest содержит шесть случаев, в том числе 512 exhaustive moves и 128 complete label enumerations; это не 512 независимых визуальных сцен. Синтетический over-limit graph отклоняется до max-flow, runtime перегрузка и RSS/thermal на target ещё не квалифицированы.
+
+
+## 17.10.2026 — матрицы и versioned trial plan
+
+Общий C++ runner получил bounded Cartesian expansion и фиксированную перестановку без
+std::shuffle/uniform_int_distribution; plan/hash и trial_index позволяют проверить полный
+план и выполненный префикс. Проверки: golden schedule, complete blocks/frames, seed repeat,
+trial budget, axis order/invalid matrix, exclusive report reservation/dangling symlink.
+Live Unix/TCP использует matrix для трёхкадровой capture серии; проверены plan/sample identities,
+restore при cancel/callback/capture failure и сохранность прежнего metadata-only report.
+
+Полная Linux сборка; research_scenarios/svctl_options2/2 за0,01 с и client_transports1/1 за23,05 с.
+14 GTest в scenario target: live case пропускается standalone, но выполняется с endpoints
+интеграционным harness. Все25 PlantUML blocks runtime/главы3 прошли local1.2026.6 -checkonly.
+Это инженерная проверка runner, не новая E-STITCH quality series. Новый order algorithm может
+изменить порядок по сравнению с историческим std::shuffle; прежние результаты не переписаны.
+Reset cursor/cache/history, scene orchestration, GUI и durable resume не реализованы.

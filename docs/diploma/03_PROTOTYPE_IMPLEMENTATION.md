@@ -1603,3 +1603,27 @@ Default deployment через системные packages сохраняется
 root, скрывает исходный prefix и запускает приложение без LD_LIBRARY_PATH. Проверки spec conditionals
 подтверждают выбор BuildRequires/payload для обоих профилей. Это проверка механизма упаковки;
 реальный bundled OpenCV под Аврору, RPM signing и запуск на автомобильной платформе ещё не выполнены.
+
+
+### 3.45. Воспроизводимый план сценарного эксперимента
+
+Общий C++ runner расширен декартовыми матрицами параметров и явным планом trials. Вместо
+зависимого от реализации std::shuffle применяется versioned mt19937/Fisher–Yates с rejection
+sampling. Full plan, algorithm ID и SHA-256 записываются до соединения, а каждый завершённый
+sample ссылается на trial_index. Это позволяет отличить запланированный опыт от фактически
+выполненного префикса после отмены или ошибки.
+
+| Механизм | Подтверждаемое свойство | Ограничение |
+|---|---|---|
+| Matrix axes в сортированном порядке | Стабильные индексы combinations | Не генерация независимых сцен |
+| Complete randomized blocks | Каждый вариант один раз в каждом block | Не устранение thermal/cache carryover |
+| Warmup исключён из summaries | Раздельные прогрев и измерения | Paused frame experiment, не live FPS |
+| Plan hash и sample trial_index | Проверяемый порядок выполнения | Hash не заменяет input/config/build provenance |
+| Lease restore и cancellation tests | Восстановление fusion/surface/pause | Cursor/history не возвращаются |
+| Exclusive report reservation | Повтор не уничтожает предыдущий report | Аварийный файл может быть частичным |
+
+Процессы и диаграмма приведены в [[architecture/RESEARCH_RUNTIME#Ограниченные матрицы и фиксированный план испытаний]].
+Golden-order unit test фиксирует известный schedule; другие tests проверяют block completeness,
+budget, matrix validation, report protection и live Unix/TCP restore. Изменение предоставляет
+воспроизводимый инструмент для будущей подтверждающей серии; новые quality conclusions здесь
+не получены. Следующий обязательный этап — управляемый reset источника и затем независимые datasets.

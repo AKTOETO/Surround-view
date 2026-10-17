@@ -93,3 +93,90 @@ Dataset truth и критерии финальной выборки замора
 GTest unit/contract tests покрывают catalog, конфликты revisions, lifecycle и ошибки; интеграционные tests проверяют команды через настоящую sv-client-lib, идентичность входов, границу переключения и восстановление. Отдельные parity tests связывают независимые fixtures с реальным серверным output. До выполнения этих этапов новые исследования offline остаются exploratory; закрывать весь исследовательский backlog наличием переключателя нельзя.
 
 Многометочный кандидат 11.10.2026: native weighted Potts alpha-expansion выбран optional fusion.seam_solver, catalog v4; default legacy path сохранён. Renderer передаёт per-frame energy/convergence diagnostics через сервер; общий runner/capture не выполняет оптимизацию локально. Tests и empirical cost: [[validation/MULTILABEL_SEAM]].
+
+## Ограниченные матрицы и фиксированный план испытаний
+
+C++ service `examples/common/research` принимает либо прежний `variants`, либо `matrix`:
+
+```json
+{
+  "schema_version": 1,
+  "frames": 3, "warmup": 2, "repeats": 5, "seed": 17,
+  "capture_frames": true,
+  "matrix": {
+    "base": {"mode": "multi_band"},
+    "axes": {"pyramid_levels": [2, 4], "pyramid_boundary": ["zero", "normalized"]}
+  }
+}
+```
+
+`base` — optional объект начальных полей варианта; `axes` —1…16 именованных массивов значений.
+Имена осей сортируются лексикографически, порядок значений массива сохраняется. Каждое значение
+оси заменяет одно одноимённое поле base; последняя по имени ось меняется быстрее остальных.
+Можно варьировать mode, параметры fusion и полные surface objects; dotted-path patching нет.
+Расширенные варианты проходят тот же strict parser, что и explicit variants, затем server catalog/
+configure validation. Одновременные variants/matrix, пустые оси, неизвестные поля и более32
+комбинаций отклоняются до соединения. Duplicate values не удаляются: индексы вариантов сохраняются.
+
+Лимит10000 trials включает frames × variants × (warmup+repeats). Сохранены границы frames1…256,
+repeats1…1000, warmup0…100, seed0…2147483647. Все проверки выполняются до выделения полного
+плана/соединения. API для будущего GUI использует тот же Scenario/runner; GUI редактора пока нет.
+
+Вместо std::shuffle используется версионированный `mt19937_fisher_yates_reject_v1`: стандартный
+mt19937, обратный Fisher–Yates и явный unbiased bounded-index draw. Для bound=n порог
+`2^32 mod n`; слова меньше порога отбрасываются, остальные дают word mod n. Нет зависимости
+от реализации std::shuffle/uniform_int_distribution. Состояние engine непрерывно между blocks
+и frames, reset order к0…N−1 происходит перед каждым блоком. Каждый блок содержит каждый вариант
+ровно один раз; первые warmup blocks каждого кадра исключаются из summaries.
+
+Seed относится **только к порядку trials**, а не к генерации Blender scene/mount/noise.
+Каждый вариант получает одно измерение после повторного применения профиля. Это прогрев на
+paused frame set, не доказательство steady-state live FPS и не гарантия cold cache/источника.
+
+До соединения строится полный `trial_plan`: trial_index/frame_index/variant/block/warmup.
+В report schema1 добавлены `trial_order_algorithm`, `trial_plan`, `trial_plan_sha256`.
+SHA-256 вычислен по компактной Boost.JSON serialization плана; scenario_sha256 относится к
+нормализованному сценарию с **развёрнутыми variants**, не к исходному тексту matrix. Sample
+содержит trial_index; при отмене/ошибке записанные samples являются выполненным префиксом плана.
+Вызов capture может завершиться ошибкой до добавления sample — такой trial в successful prefix
+не входит. Full plan не свидетельствует о выполнении всех пунктов: проверяйте success/error,
+samples и restored/restore_error.
+
+Прежние reports не переписываются. Порядок с тем же seed может отличаться от исторического
+std::shuffle; сравнивать новые серии нужно по algorithm ID, plan hash и scenario hash, а также
+по прежним config/input/build identities. Реальные cross-standard-library/target trials ещё нужны.
+
+```plantuml
+@startuml
+start
+:Прочитать explicit variants или matrix;
+:Развернуть оси в фиксированном порядке;
+:Проверить варианты и общий trial budget;
+:Эксклюзивно зарезервировать новый report path;
+:Построить план и SHA-256;
+:Подключиться и получить replay lease;
+repeat
+  :Применить профиль следующего trial;
+  :Получить кадр и проверить provenance;
+  :Сохранить sample с trial_index;
+repeat while (Остались trials и нет отмены/ошибки?) is (да) not (нет)
+:Восстановить fusion/surface/pause;
+:Записать итоговый report;
+stop
+@enduml
+```
+
+*Рисунок R.1 — общий C++ workflow плана, выполнения и восстановления. Ошибки соединения/lease
+и невозможность restore фиксируются отдельно; схема не обещает возврат replay cursor.*
+
+CLI резервирует report через O_CREAT|O_EXCL до подключения к серверу, включая metadata-only
+режим. Существующий файл, параллельно зарезервированный путь или dangling symlink отклоняются
+без truncate и запуска эксперимента. Report writer проверяет write/close и не допускает повторной
+записи через тот же объект. При аварии может остаться пустой/частичный файл: это **не** atomic
+publication, durable checkpoint или automatic resume. Для повтора используйте новый путь;
+успешность определяется только завершённым JSON report и его полями. RGBA directory также должна
+быть новой. Продуктовая реализация — C++; Python используется только integration tests.
+
+Остаются replay/history/cache reset, оркестрация независимых scene/mount seeds, GUI сценариев,
+quality-oracle/критерии финальной серии, durable resume и общий experiment provenance. Изменения
+не являются новым подтверждающим quality исследованием и не закрывают E-STITCH-01.
