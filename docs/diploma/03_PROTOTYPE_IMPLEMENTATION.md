@@ -1892,3 +1892,63 @@ C++ runner исполнил multi_band/graph_cut_multi_band ×zero/normalized ×
 внешнюю валидность; независимые семейства окружения, конфигурации камер и дополнительные метрики
 ещё нужны. Генератор рисунка сохранён рядом с главой: plot_native_quality.py. Native отчёт и
 RGBA — ignored artifacts/q-native-v1; воспроизведение: [[engineering/RESEARCH_QUALITY]].
+
+### 3.51. Управляемые семейства fixture и граница продуктового кода
+
+Для испытаний добавлено второе процедурное окружение cargo_yard, отличающееся от улицы
+расположением стен, грузов, рёбер и разметки. Геометрия задаётся сохранённым recipe и отдельным
+scene_seed; mount_seed управляет двумя поворотами и сдвигом четырёх камер. Изменение сцены не
+изменяет монтаж, и наоборот; legacy seed остаётся fallback. Blender exporter создаёт отдельные
+scenes и snapshots. Через живой MCP проверены4 новых мира и сохранённая исходная Scene/Cube.
+
+План до начала захвата записан в Git. Очередь экспортера проходит pure preflight: допустимые
+семейства, uint32 seeds, безопасные уникальные IDs, bounded dimensions/frames и строгие types.
+Job journal публикует queued/running/complete/failed/cancelled; cancel действует между случаями.
+Это средство генерации fixture/независимого truth. Оно не является продуктовым сервером или
+общим compiled supervisor для нескольких исследований.
+
+| Компонент | Исполняемая работа |
+|---|---|
+| Blender scene/paired_truth | Процедурный мир, true camera poses, direct RGB/object/visibility truth |
+| Fixture converter/test oracle | Подготовка наблюдений/reference и независимая численная проверка |
+| sv-server | Replay, синхронизация, проекция на выбранный носитель, seam/blend, итоговый RGBA |
+| sv-client-lib + общий C++ runner | Подключение/lease/reset/configure, provenance, samples/metrics/restore |
+| Plot script рядом с главой | Визуализация сохранённых native reports и парных изменений |
+
+```plantuml
+@startuml
+rectangle "Asset recipes + scene/mount seeds" as A
+rectangle "Blender exporter (fixture)" as B
+rectangle "Наблюдения четырёх камер" as I
+rectangle "Direct RGB / ROI / input guards" as T
+rectangle "sv-server (C++)" as S
+rectangle "sv-client-lib + ExperimentRunner (C++)" as R
+rectangle "Python oracle / plots (проверка)" as P
+A --> B
+B --> I
+B --> T
+I --> S
+R --> S : lease / reset / fusion / carrier
+S --> R : RGBA + provenance
+T --> R : external reference
+R --> P : report / capture
+T --> P : independent arithmetic check
+@enduml
+```
+
+*Рисунок 3.49 — Python сохраняется на границе fixture/oracle, продуктовые алгоритмы и оценка исполняются в C++.*
+
+Обнаружен и исправлен отказ test harness при глубоком output path: explicit Unix directory
+сервер ограничивает80 bytes, поэтому IPC отделён от архива и помещается в короткий /tmp path.
+ID dataset формируется из capture hash, а не из одинакового basename. Server child ограниченно
+останавливается, при timeout применяется kill с последующим wait. Native matrix из20 вариантов
+использует существующий runner; логика сшивки не продублирована в fixture harness.
+Результаты и оставшиеся границы: [[validation/FAMILY_CARRIER_SCREEN]], §4.93.
+
+Проверка живых сцен выявила дефект исходного вида: после paired export камера могла вернуться
+в начало координат под автомобилем. Общий helper задаёт обзорную позу над машиной при создании
+сцены и при overview capture; калиброванные ракурсы задаются отдельно. Проверка 72 проекций
+Blender дала максимальную ошибку 0,00004753 px при допуске 0,001 px и подтвердила восстановление
+обзорной позы/оптики. Второй helper требует `FINISHED` и непустой PNG после render: отменённая
+операция не может быть опубликована как успешный захват. Отказы проверены через подставной
+render callback; реальный preview создан в Blender. Сохранённые данные пилота не перегенерированы.

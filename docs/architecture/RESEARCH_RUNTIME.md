@@ -273,3 +273,17 @@ CLI отдаёт5 при завершённом опыте с непройден
 samples, не только averages. Контракт: [[engineering/RESEARCH_QUALITY#Заданные до запуска критерии качества]].
 Это механизм фиксации/проверки порогов одного прогона; независимая preregistration,
 обоснование норм, scene/mount/noise orchestration и подтверждающая серия остаются работой.
+
+
+## Validation pilot двух окружений и пяти носителей
+
+Для генерации inputs добавлены отдельные street/cargo_yard worlds и независимые scene/mount seeds.
+Native configs/research/family-carrier-screen.json задаёт20 variants при прежнем близком active
+mesh budget.4 cases×2 frames×20 variants×(1 warmup+3 measured)=640 trials;480 measured samples,
+1920 независимых arithmetic checks. Все переключения и metrics выполняются C++ service, Python
+остаётся exporter/fixture/oracle/plotting. Фактическая геометрия новых worlds и сохранность
+исходной Blender Scene проверены через MCP. Results/limits: [[validation/FAMILY_CARRIER_SCREEN]].
+
+Compiled multi-recording supervisor и GUI сценариев ещё отсутствуют. True camera calibration
+передана стенду, поэтому данный pilot не является испытанием автоматической калибровки.
+Наличие новых family inputs не закрывает noise/photometric/dynamic/holdout/target gates.

@@ -4714,3 +4714,81 @@ MAE вычисляется по формуле §4.91 отдельно на inde
 Ограниченный control завершён, n0 gap закрыт для двух instances; новые исследовательские ответвления не предшествуют следующей продуктовой работе. Далее разрабатываются ConfigService, typed API sv-client-lib и управление/сценарии в GUI. Оставшиеся исследования должны выполняться через общий ExperimentRunner и сохраняются открытыми в планах. Реальные камеры и Aurora требуют отдельного стенда; E-STITCH-01 целиком не объявляется завершённым.
 
 Tracked [[validation/baselines/target_overlap_v1.json]] сохраняет preflight/hashes, anchors,32 RGB ROIs и26 paired coordinates с обеими conditions. Полные raw captures остаются локально; прежние failed reports не изменяются. Воспроизведение и ограничения: [[validation/TARGET_OVERLAP]].
+
+## 4.93. Пилот переноса native методов между семействами окружения
+
+### 4.93.1. Постановка и контролируемые условия
+
+После добавления общей C++ оценки по внешнему эталону выполнен validation pilot на двух
+семействах: street и cargo_yard. В каждом две scene seeds, всего4 случая. Это новые захваты,
+а не переименование прежнего городского fixture. Рецепты зафиксированы commit0ba810c до
+генерации. Mount seed9001 одинаков; yaw/pitch ограничены±3°, сдвиг±0,1 м. Истинная perturbed
+калибровка передана renderer и проверена numeric hashes. Опыт не проверяет восстановление
+калибровки из номинального монтажа; nominal config и offsets сохранены для отдельной задачи.
+
+Blender5.2.2 LTS/EEVEE экспортировал по2 poses с перемещением0,4 м, синхронные четыре fisheye
+камеры400² из perspective faces128² и независимый direct virtual RGB320×180. ROI исключает
+фон, кузов, границы объектов и points, не видимые ни одной камерой по независимому center-ray
+тесту. Маска фиксируется до native trials и не определяется ошибкой исследуемого метода.
+
+Матрица configs/research/family-carrier-screen.json зафиксирована commit98b5f67:
+5 carriers×2 fusion modes×2 pyramid boundaries=20 variants. Каждый кадр содержит1 warmup и3
+measured complete blocks, seed20261017. Четыре случая дали640 trials/480 measured samples;
+это80 case/variant conditions,160 frame/variant identities и3 repeats каждого такого кадра.
+Все paused RGB hashes повторов совпали. Статистическая единица scene не подменяется repeat.
+
+Active carrier meshes:3196…3208 triangles и58392…60168 bytes position/index buffers. Все variants
+прошли прежний сопоставимый бюджет. Resident buffers различаются: measured116904…118680 bytes,
+warmup до497832 bytes из-за исходного baseline. Равенство active triangle budget не означает
+равенства полной памяти или стоимости переключения. Performance qualification здесь не проводится.
+
+### 4.93.2. Качество в общей области оценки
+
+В таблице — pixel-weighted MAE RGB8 двух кадров при multi_band/normalized. Все значения
+сравнимы между carriers внутри одной строки; между строками меняются изображение и ROI.
+
+| Случай | Plane | Bowl | Dome-floor | Cylinder-floor | Cube-floor |
+|---|---:|---:|---:|---:|---:|
+| street-a | 8,997583 | 10,555581 | 8,988084 | 8,987419 | 8,982622 |
+| street-b | 8,782504 | 10,373419 | 8,772891 | 8,772447 | 8,767633 |
+| yard-a | 6,423042 | 9,552609 | 6,310798 | 6,310292 | 6,296745 |
+| yard-b | 5,840012 | 8,964446 | 5,708762 | 5,708040 | 5,695144 |
+
+Все80 условий, обе fusion modes и boundaries приведены в [[validation/FAMILY_CARRIER_SCREEN]].
+C++ metrics проверены независимым NumPy:1920 comparisons, maximum numerical difference
+7,105427357601002e−15. Это проверка арифметики/интеграции, а не доверительный интервал качества.
+
+![Парное изменение MAE normalized относительно zero](figures/experiments/family_carrier_deltas.png)
+
+*Рисунок 4.93.1 — normalized уменьшает MAE в40/40 средних пар case/carrier/mode;
+сравнения выполняются при одинаковых входах, проекции и ROI внутри пары.*
+
+Отдельные frames дали80/80 отрицательных contrasts. Изменение средних составляет
+−0,461676…−0,004773 RGB8; повторы не считаются дополнительными независимыми подтверждениями.
+Для multi_band эффект сильнее в cargo случаях этого пилота; переносить это наблюдение на
+произвольные реальные окружения без новой выборки нельзя. Bowl имеет больший MAE,
+а cube/cylinder/dome с полом близки по данной метрике. Ground-dominated ROI ограничивает
+различимость носителей на вертикальных структурах и вне области оценки.
+
+![Direct reference и четыре native результата cargo yard](figures/experiments/native_quality_cargo.png)
+
+*Рисунок 4.93.2 — yard-a, frame0, dome-floor radius14 м, active3200 triangles. Числа на панелях
+относятся к одному кадру, таблица выше — к двум. Вертикальные грузы остаются растянутыми.*
+
+### 4.93.3. Вывод и оставшиеся gates
+
+Normalized support сохраняет направление улучшения глобальной RGB8 ошибки на обоих семействах
+этого пилота. Но снижение MAE не устраняет видимые геометрические искажения высоких объектов.
+Калибровка задана истинной, source conversion ограничена face128, а носитель приближает сцену;
+разделение ошибок геометрической модели, дискретизации и фильтрации требует отдельных controls.
+Заявление о полном устранении ghosting или выборе универсально лучшей поверхности не следует
+из полученных значений. Alpha-expansion, photometric stress, noise и длинная динамика здесь
+не исследованы; physical-camera/Aurora acceptance также отсутствует.
+
+Criteria в этой серии не заданы, quality_acceptance=not_requested. Все workflows/restore успешны,
+но нормативное качество не объявлено принятым. Seeds и протокол сохранены до запуска; это
+validation pilot, не внешне зарегистрированная confirmatory holdout-серия. Для заключения нужны
+обоснованные критерии, независимая от настройки алгоритмов выборка, дополнительные object/
+temporal metrics, исследование калибровки и целевой платформы. Полный Linux regression после
+изменений прошёл67/67 tests; это подтверждает программную целостность стенда, а не переносимость
+на автомобильное устройство. Воспроизведение: [[engineering/BLENDER]], [[validation/FAMILY_CARRIER_SCREEN]].

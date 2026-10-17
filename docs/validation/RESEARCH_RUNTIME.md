@@ -269,3 +269,26 @@ camera MOCK/recovery, protocol/listeners, GUI/QML, telemetry, packaging checks, 
 и native rendering/evaluation. Наличие Linux packaging tests не означает реальную RPM сборку
 в Aurora SDK или запуск на устройстве. Проверен syntax31 PlantUML blocks после §3.48–3.49.
 Blender MCP теперь подключён; текущая сцена на момент проверки — стартовый Cube/Camera/Light.
+
+
+## 17.10.2026: новые environment families, matched carrier screen
+
+Live Blender MCP построил street-a/b и cargo yard-a/b с независимыми scene/mount streams;
+первоначальная Scene/Cube сохранена. Pure strict family-plan preflight и cancel-before-first-case
+проверены; cancel дал0 completed. Actual family/origin/layout/offsets и generator hashes сохранены.
+В4-case workflow smoke64 measured samples/256 metric comparisons совпали. Затем20-variant
+native screen дал640 trials/480 measured samples/1920 metric comparisons; max difference
+7,105427357601002e−15. Active triangles3196…3208, buffers58392…60168 bytes; все RGB repeats
+идентичны.40/40 mean contrasts normalized−zero и80/80 frame contrasts отрицательны.
+Это validation pilot с true supplied calibration, без нормативных thresholds; geometry artifacts
+остаются. Полный протокол/таблицы/изображения: [[validation/FAMILY_CARRIER_SCREEN]], §4.93.
+
+Исправлены deep-output IPC failure и неоднозначные basename dataset IDs в test adapter;
+IPC теперь отдельный короткий temp path, ID derived из capture hash. Добавлен bounded child
+cleanup; custom native scenario/visibility-policy поддерживаются fixture harness. После итоговых
+изменений `cmake --build build -j4` успешен и повторный полный CTest **67/67 за54,78 с**.
+На момент full regression Python Blender fixture содержал18 cases; после добавления проверок
+render cancellation/missing/empty output —19. Итоговый targeted CTest blender_fixture,
+stitch_robustness,research_quality_fixture прошёл3/3. Native GTest research содержит27 cases
+(live endpoint проверяется harness). Реальный Aurora SDK/device и physical cameras
+по-прежнему не квалифицированы.

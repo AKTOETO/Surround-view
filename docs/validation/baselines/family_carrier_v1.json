@@ -1,0 +1,1939 @@
+{
+  "schema_version": 1,
+  "purpose": "matched environment/carrier pilot; not confirmatory holdout",
+  "plan_sha256": "d10880ccebd098d533c14885029883958747716b7941cea12ef9ff536e4720cf",
+  "scenario_sha256": "2f774576aad988459801dd822529e296360636fbbe00b378f40684e11b54288f",
+  "cases": [
+    {
+      "case": "street-a",
+      "total_samples": 160,
+      "measured": 120,
+      "oracle_comparisons": 480,
+      "max_metric_difference": 3.552713678800501e-15,
+      "report_sha256": "27aeeb040d498124081e44f1f55be14cb05ed2206ebc76be4359c18a72595bcd",
+      "dataset_id": "capture-424cb955112c1f34f34afcac4e34e06e076be2e4e3ae9edcffea581ba86ce64b",
+      "reference": {
+        "schema_version": 2,
+        "algorithm": "masked_rgb8_v1",
+        "kind": "independent_ground_truth",
+        "dataset_id": "capture-424cb955112c1f34f34afcac4e34e06e076be2e4e3ae9edcffea581ba86ce64b",
+        "manifest_sha256": "1dd50ef0127f50c4404216b8c8dd156a29dd9eda00f545fa3bf70aceeda159ed",
+        "width": 320,
+        "height": 180,
+        "view": {
+          "azimuth_rad": 0.8,
+          "elevation_rad": 1.0,
+          "distance_m": 8.5,
+          "fov_y_rad": 1.0,
+          "clip_m": [
+            0.1,
+            100.0
+          ],
+          "target_m": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "frames": [
+          {
+            "rgb": "truth-0.ppm",
+            "mask": "mask-0.ppm",
+            "inputs": [
+              {
+                "camera_id": 0,
+                "calibration_id": "blender-rig-front-v1",
+                "source_timestamp_ns": "0",
+                "camera_model_sha256": "c5214cec8b0a975affc773b36c7f66e551dc15afa48491e8f67a0fc57477fadc",
+                "image_identity": {
+                  "algorithm": "packed_rgb8_sha256_v1",
+                  "sha256": "f6ba226e9e02ba916ccf672b2abf2e9093fa0fb8155cec2b44e9828c11733a5e",
+                  "width": 400,
+                  "height": 400,
+                  "pixel_format": "RGB8",
+                  "row_origin": "top_left"
+                }
+              },
+              {
+                "camera_id": 1,
+                "calibration_id": "blender-rig-right-v1",
+                "source_timestamp_ns": "0",
+                "camera_model_sha256": "4aaa0cff97ce507d0967a0d61bf43cb222c1be2db02db8ac71ea61a6534cef9d",
+                "image_identity": {
+                  "algorithm": "packed_rgb8_sha256_v1",
+                  "sha256": "17abe4d241a5c138d267a4896d5c1db7d099f92c7ee1c6baf09cc9d33250f73c",
+                  "width": 400,
+                  "height": 400,
+                  "pixel_format": "RGB8",
+                  "row_origin": "top_left"
+                }
+              },
+              {
+                "camera_id": 2,
+                "calibration_id": "blender-rig-rear-v1",
+                "source_timestamp_ns": "0",
+                "camera_model_sha256": "1bcb036c36d689a3490c2b694b9efeacf3e2ccdb45272d2d6f56c72bf9b8cadc",
+                "image_identity": {
+                  "algorithm": "packed_rgb8_sha256_v1",
+                  "sha256": "fc835c182a32883e6e38134ebdba197bae5aa4b14c05659c6164d33f43e79b6f",
+                  "width": 400,
+                  "height": 400,
+                  "pixel_format": "RGB8",
+                  "row_origin": "top_left"
+                }
+              },
+              {
+                "camera_id": 3,
+                "calibration_id": "blender-rig-left-v1",
+                "source_timestamp_ns": "0",
+                "camera_model_sha256": "434deec8f0f49cd1c3165f529b28569d50d82698a0cc9fc67116820d630f8b86",
+                "image_identity": {
+                  "algorithm": "packed_rgb8_sha256_v1",
+                  "sha256": "5de2d8259ac95bb18c92fc5bf24be170e729e3e06da56b600c0225f9eab1919f",
+                  "width": 400,
+                  "height": 400,
+                  "pixel_format": "RGB8",
+                  "row_origin": "top_left"
+                }
+              }
+            ],
+            "selected_pixels": 44338,
+            "rgb_pixels_sha256": "4f287d65407132a84da4361d442432fd43c68470b43cc85923202f6fe2c1d851",
+            "mask_pixels_sha256": "cdfb5a9a77f21cda70812b41e17ad2b7807f115cc23e8724b7eb43e2b87f58cb"
+          },
+          {
+            "rgb": "truth-1.ppm",
+            "mask": "mask-1.ppm",
+            "inputs": [
+              {
+                "camera_id": 0,
+                "calibration_id": "blender-rig-front-v1",
+                "source_timestamp_ns": "200000000",
+                "camera_model_sha256": "c5214cec8b0a975affc773b36c7f66e551dc15afa48491e8f67a0fc57477fadc",
+                "image_identity": {
+                  "algorithm": "packed_rgb8_sha256_v1",
+                  "sha256": "3407be76b8e1bc8d2698c22b2130cbf5286fcd4df32066b63bd45d63610e73ea",
+                  "width": 400,
+                  "height": 400,
+                  "pixel_format": "RGB8",
+                  "row_origin": "top_left"
+                }
+              },
+              {
+                "camera_id": 1,
+                "calibration_id": "blender-rig-right-v1",
+                "source_timestamp_ns": "200000000",
+                "camera_model_sha256": "4aaa0cff97ce507d0967a0d61bf43cb222c1be2db02db8ac71ea61a6534cef9d",
+                "image_identity": {
+                  "algorithm": "packed_rgb8_sha256_v1",
+                  "sha256": "a1179cfbc7dd796c29359387fec1c6b95d1e9224e4e2f626a124c0a01d8831dc",
+                  "width": 400,
+                  "height": 400,
+                  "pixel_format": "RGB8",
+                  "row_origin": "top_left"
+                }
+              },
+              {
+                "camera_id": 2,
+                "calibration_id": "blender-rig-rear-v1",
+                "source_timestamp_ns": "200000000",
+                "camera_model_sha256": "1bcb036c36d689a3490c2b694b9efeacf3e2ccdb45272d2d6f56c72bf9b8cadc",
+                "image_identity": {
+                  "algorithm": "packed_rgb8_sha256_v1",
+                  "sha256": "e2214d13156d2574196a6514540277a937b957ea251e6759467dd6ad6f8240a2",
+                  "width": 400,
+                  "height": 400,
+                  "pixel_format": "RGB8",
+                  "row_origin": "top_left"
+                }
+              },
+              {
+                "camera_id": 3,
+                "calibration_id": "blender-rig-left-v1",
+                "source_timestamp_ns": "200000000",
+                "camera_model_sha256": "434deec8f0f49cd1c3165f529b28569d50d82698a0cc9fc67116820d630f8b86",
+                "image_identity": {
+                  "algorithm": "packed_rgb8_sha256_v1",
+                  "sha256": "4d0731b27d225cb37688ec95fd7d13679c59ba14811273130ad07acfaa00644d",
+                  "width": 400,
+                  "height": 400,
+                  "pixel_format": "RGB8",
+                  "row_origin": "top_left"
+                }
+              }
+            ],
+            "selected_pixels": 44338,
+            "rgb_pixels_sha256": "f6a117a8d26d0d96e823b38e442ffafdc19ad17a2995428fe4de380e81c8a4b1",
+            "mask_pixels_sha256": "40d47c3a5db8b0340032999ca98cb15783a849a33438b9da6561d64789ab5869"
+          }
+        ],
+        "independence": "declared by reference author; not verified",
+        "input_guard": "decoded RGB8 content and numeric camera model, IDs and timestamps"
+      },
+      "capture_script_sha256": {
+        "scene.py": "248230c28387e5ddb1d52234051f2dc7d45c272857178947316ebb1ed316925d",
+        "rig.py": "a31f63c433a031ca8a0c8e8645b075f0496c465a8511241389a6d9cd92c38d25",
+        "scenario.py": "f02e875f9a5f2ba8d03ced62f9534b5f57674a5a3355eb2c1314dfbf0b550919",
+        "board_targets.py": "8336a7a051d3a3bbaae55c6b01a89d07995fa51b40fed53d9ecaa7ab145ed5c7",
+        "depth.py": "adc038733709a5d52e00ee08839aba768d50ecf0d1992cbba8d03dc04bc07f24",
+        "diagnostic_motion.py": "272fa3b55f860a7e8bf4cc060b80ca3558e0d00ac6a9d10699791eb1daf3d10f",
+        "environments.py": "4bc920f989676995fbfa93000b12e537a7f9ce8c63764c4d9968e00d1a7246a5"
+      }
+    },
+    {
+      "case": "street-b",
+      "total_samples": 160,
+      "measured": 120,
+      "oracle_comparisons": 480,
+      "max_metric_difference": 3.552713678800501e-15,
+      "report_sha256": "97f43f89d6fa17a00357d84e608296e844b928c3dfddba28001b85720c8db8b5",
+      "dataset_id": "capture-051c716eb6f27b25daf03d8e77268de0a35f88539863894c2d729b86107e3ab0",
+      "reference": {
+        "schema_version": 2,
+        "algorithm": "masked_rgb8_v1",
+        "kind": "independent_ground_truth",
+        "dataset_id": "capture-051c716eb6f27b25daf03d8e77268de0a35f88539863894c2d729b86107e3ab0",
+        "manifest_sha256": "9d09de40e18cec42867f3aa2f415b1be7a1e19d08e6a463773bfbdde3dbf483f",
+        "width": 320,
+        "height": 180,
+        "view": {
+          "azimuth_rad": 0.8,
+          "elevation_rad": 1.0,
+          "distance_m": 8.5,
+          "fov_y_rad": 1.0,
+          "clip_m": [
+            0.1,
+            100.0
+          ],
+          "target_m": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "frames": [
+          {
+            "rgb": "truth-0.ppm",
+            "mask": "mask-0.ppm",
+            "inputs": [
+              {
+                "camera_id": 0,
+                "calibration_id": "blender-rig-front-v1",
+                "source_timestamp_ns": "0",
+                "camera_model_sha256": "c5214cec8b0a975affc773b36c7f66e551dc15afa48491e8f67a0fc57477fadc",
+                "image_identity": {
+                  "algorithm": "packed_rgb8_sha256_v1",
+                  "sha256": "acfdc995fbe2a3fa8970582355483f0218da394a9258959f3cc330083b719f4b",
+                  "width": 400,
+                  "height": 400,
+                  "pixel_format": "RGB8",
+                  "row_origin": "top_left"
+                }
+              },
+              {
+                "camera_id": 1,
+                "calibration_id": "blender-rig-right-v1",
+                "source_timestamp_ns": "0",
+                "camera_model_sha256": "4aaa0cff97ce507d0967a0d61bf43cb222c1be2db02db8ac71ea61a6534cef9d",
+                "image_identity": {
+                  "algorithm": "packed_rgb8_sha256_v1",
+                  "sha256": "0bfc57e5a2fb3ae0d3c60ca039b9d3a8df434345c83458e4ea23c88c541ff82d",
+                  "width": 400,
+                  "height": 400,
+                  "pixel_format": "RGB8",
+                  "row_origin": "top_left"
+                }
+              },
+              {
+                "camera_id": 2,
+                "calibration_id": "blender-rig-rear-v1",
+                "source_timestamp_ns": "0",
+                "camera_model_sha256": "1bcb036c36d689a3490c2b694b9efeacf3e2ccdb45272d2d6f56c72bf9b8cadc",
+                "image_identity": {
+                  "algorithm": "packed_rgb8_sha256_v1",
+                  "sha256": "24a48b266fc77aaad3355197c96cc109214b1811c99ff93fb0a2fa98f3b19815",
+                  "width": 400,
+                  "height": 400,
+                  "pixel_format": "RGB8",
+                  "row_origin": "top_left"
+                }
+              },
+              {
+                "camera_id": 3,
+                "calibration_id": "blender-rig-left-v1",
+                "source_timestamp_ns": "0",
+                "camera_model_sha256": "434deec8f0f49cd1c3165f529b28569d50d82698a0cc9fc67116820d630f8b86",
+                "image_identity": {
+                  "algorithm": "packed_rgb8_sha256_v1",
+                  "sha256": "95998c1b2056b8966f5cc0a04f2adbf8a48bb94853a1a080773c3dc3033b83d7",
+                  "width": 400,
+                  "height": 400,
+                  "pixel_format": "RGB8",
+                  "row_origin": "top_left"
+                }
+              }
+            ],
+            "selected_pixels": 44336,
+            "rgb_pixels_sha256": "c0aec669acdad17482b743e2a2e68385cc20949902819b06399105ea31daf934",
+            "mask_pixels_sha256": "4d64d72b81d9e9150e532667b27c4341007a6c978d7244a65d6dd8de21423a72"
+          },
+          {
+            "rgb": "truth-1.ppm",
+            "mask": "mask-1.ppm",
+            "inputs": [
+              {
+                "camera_id": 0,
+                "calibration_id": "blender-rig-front-v1",
+                "source_timestamp_ns": "200000000",
+                "camera_model_sha256": "c5214cec8b0a975affc773b36c7f66e551dc15afa48491e8f67a0fc57477fadc",
+                "image_identity": {
+                  "algorithm": "packed_rgb8_sha256_v1",
+                  "sha256": "86dce3b8f3c40712cc02fcdcb8458bb1b4303b7f8d32bcb25f0a19b6a99594d6",
+                  "width": 400,
+                  "height": 400,
+                  "pixel_format": "RGB8",
+                  "row_origin": "top_left"
+                }
+              },
+              {
+                "camera_id": 1,
+                "calibration_id": "blender-rig-right-v1",
+                "source_timestamp_ns": "200000000",
+                "camera_model_sha256": "4aaa0cff97ce507d0967a0d61bf43cb222c1be2db02db8ac71ea61a6534cef9d",
+                "image_identity": {
+                  "algorithm": "packed_rgb8_sha256_v1",
+                  "sha256": "2d13388f5e962f97cad32190a98e0f73a1d96aa0f25db1dc35fde966c6fe54ef",
+                  "width": 400,
+                  "height": 400,
+                  "pixel_format": "RGB8",
+                  "row_origin": "top_left"
+                }
+              },
+              {
+                "camera_id": 2,
+                "calibration_id": "blender-rig-rear-v1",
+                "source_timestamp_ns": "200000000",
+                "camera_model_sha256": "1bcb036c36d689a3490c2b694b9efeacf3e2ccdb45272d2d6f56c72bf9b8cadc",
+                "image_identity": {
+                  "algorithm": "packed_rgb8_sha256_v1",
+                  "sha256": "7a4ffa47c7976f8a22ff87ec6f6099b24f23d08ee28afca086298eea1cdd4538",
+                  "width": 400,
+                  "height": 400,
+                  "pixel_format": "RGB8",
+                  "row_origin": "top_left"
+                }
+              },
+              {
+                "camera_id": 3,
+                "calibration_id": "blender-rig-left-v1",
+                "source_timestamp_ns": "200000000",
+                "camera_model_sha256": "434deec8f0f49cd1c3165f529b28569d50d82698a0cc9fc67116820d630f8b86",
+                "image_identity": {
+                  "algorithm": "packed_rgb8_sha256_v1",
+                  "sha256": "83f4ae6f8c00a2e5317e02e6c3deb8952a9054aff8f640bf7d12699a9a949d63",
+                  "width": 400,
+                  "height": 400,
+                  "pixel_format": "RGB8",
+                  "row_origin": "top_left"
+                }
+              }
+            ],
+            "selected_pixels": 44357,
+            "rgb_pixels_sha256": "eeef2bc6d65e71de0d9b6ea2355247f540a7d228887db6d46743857ad37599df",
+            "mask_pixels_sha256": "720f3b01b53da162d9c62331a97651c0862850795a9aa83e1e185c68e589f14a"
+          }
+        ],
+        "independence": "declared by reference author; not verified",
+        "input_guard": "decoded RGB8 content and numeric camera model, IDs and timestamps"
+      },
+      "capture_script_sha256": {
+        "scene.py": "248230c28387e5ddb1d52234051f2dc7d45c272857178947316ebb1ed316925d",
+        "rig.py": "a31f63c433a031ca8a0c8e8645b075f0496c465a8511241389a6d9cd92c38d25",
+        "scenario.py": "f02e875f9a5f2ba8d03ced62f9534b5f57674a5a3355eb2c1314dfbf0b550919",
+        "board_targets.py": "8336a7a051d3a3bbaae55c6b01a89d07995fa51b40fed53d9ecaa7ab145ed5c7",
+        "depth.py": "adc038733709a5d52e00ee08839aba768d50ecf0d1992cbba8d03dc04bc07f24",
+        "diagnostic_motion.py": "272fa3b55f860a7e8bf4cc060b80ca3558e0d00ac6a9d10699791eb1daf3d10f",
+        "environments.py": "4bc920f989676995fbfa93000b12e537a7f9ce8c63764c4d9968e00d1a7246a5"
+      }
+    },
+    {
+      "case": "yard-a",
+      "total_samples": 160,
+      "measured": 120,
+      "oracle_comparisons": 480,
+      "max_metric_difference": 7.105427357601002e-15,
+      "report_sha256": "aa2b5bc7484fa6c7e9290e5c7ebe95e368e190c409d796f210930a800ee7abcc",
+      "dataset_id": "capture-80711b181da197e0e1677e2ccc42367618223f16877d56fb3196d9fa0569d263",
+      "reference": {
+        "schema_version": 2,
+        "algorithm": "masked_rgb8_v1",
+        "kind": "independent_ground_truth",
+        "dataset_id": "capture-80711b181da197e0e1677e2ccc42367618223f16877d56fb3196d9fa0569d263",
+        "manifest_sha256": "91e6f92a402ac60308294e89aae9382a66ec9e5d0e190c92de9ab870b4a09d1c",
+        "width": 320,
+        "height": 180,
+        "view": {
+          "azimuth_rad": 0.8,
+          "elevation_rad": 1.0,
+          "distance_m": 8.5,
+          "fov_y_rad": 1.0,
+          "clip_m": [
+            0.1,
+            100.0
+          ],
+          "target_m": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "frames": [
+          {
+            "rgb": "truth-0.ppm",
+            "mask": "mask-0.ppm",
+            "inputs": [
+              {
+                "camera_id": 0,
+                "calibration_id": "blender-rig-front-v1",
+                "source_timestamp_ns": "0",
+                "camera_model_sha256": "c5214cec8b0a975affc773b36c7f66e551dc15afa48491e8f67a0fc57477fadc",
+                "image_identity": {
+                  "algorithm": "packed_rgb8_sha256_v1",
+                  "sha256": "962203b44f57706656ea8bf4dd8112a57b84fb08f8cb6370cf45f9c353a6e2e8",
+                  "width": 400,
+                  "height": 400,
+                  "pixel_format": "RGB8",
+                  "row_origin": "top_left"
+                }
+              },
+              {
+                "camera_id": 1,
+                "calibration_id": "blender-rig-right-v1",
+                "source_timestamp_ns": "0",
+                "camera_model_sha256": "4aaa0cff97ce507d0967a0d61bf43cb222c1be2db02db8ac71ea61a6534cef9d",
+                "image_identity": {
+                  "algorithm": "packed_rgb8_sha256_v1",
+                  "sha256": "d0f07f4b4dbfaa1b485ea050e7fcdf9d2d005761f76b7da7c5116bc47586c0fe",
+                  "width": 400,
+                  "height": 400,
+                  "pixel_format": "RGB8",
+                  "row_origin": "top_left"
+                }
+              },
+              {
+                "camera_id": 2,
+                "calibration_id": "blender-rig-rear-v1",
+                "source_timestamp_ns": "0",
+                "camera_model_sha256": "1bcb036c36d689a3490c2b694b9efeacf3e2ccdb45272d2d6f56c72bf9b8cadc",
+                "image_identity": {
+                  "algorithm": "packed_rgb8_sha256_v1",
+                  "sha256": "85463b0c010824477bbd0c4f08525599dafbf75ae1522f989064779c9ac46b15",
+                  "width": 400,
+                  "height": 400,
+                  "pixel_format": "RGB8",
+                  "row_origin": "top_left"
+                }
+              },
+              {
+                "camera_id": 3,
+                "calibration_id": "blender-rig-left-v1",
+                "source_timestamp_ns": "0",
+                "camera_model_sha256": "434deec8f0f49cd1c3165f529b28569d50d82698a0cc9fc67116820d630f8b86",
+                "image_identity": {
+                  "algorithm": "packed_rgb8_sha256_v1",
+                  "sha256": "e084d661e6d7af5a2baa4248e6cc1e17d61e66d32bc4595893584628d6c90962",
+                  "width": 400,
+                  "height": 400,
+                  "pixel_format": "RGB8",
+                  "row_origin": "top_left"
+                }
+              }
+            ],
+            "selected_pixels": 41802,
+            "rgb_pixels_sha256": "7ccddbb9e44fbede65826000cd8a99df13974075d1a14220ff75c352538ed774",
+            "mask_pixels_sha256": "09e02c79e856aae51a4611bb2a05005522d6237d3a72d0084cc1dd3ab782e445"
+          },
+          {
+            "rgb": "truth-1.ppm",
+            "mask": "mask-1.ppm",
+            "inputs": [
+              {
+                "camera_id": 0,
+                "calibration_id": "blender-rig-front-v1",
+                "source_timestamp_ns": "200000000",
+                "camera_model_sha256": "c5214cec8b0a975affc773b36c7f66e551dc15afa48491e8f67a0fc57477fadc",
+                "image_identity": {
+                  "algorithm": "packed_rgb8_sha256_v1",
+                  "sha256": "2230a15dac0f7d1ada523c67af8c29c573a3b2bd8c5d57d1db8ed6fd9d8277d1",
+                  "width": 400,
+                  "height": 400,
+                  "pixel_format": "RGB8",
+                  "row_origin": "top_left"
+                }
+              },
+              {
+                "camera_id": 1,
+                "calibration_id": "blender-rig-right-v1",
+                "source_timestamp_ns": "200000000",
+                "camera_model_sha256": "4aaa0cff97ce507d0967a0d61bf43cb222c1be2db02db8ac71ea61a6534cef9d",
+                "image_identity": {
+                  "algorithm": "packed_rgb8_sha256_v1",
+                  "sha256": "0a05f94538396787ed4e9c74880bcb5bbab67207aa7603cf5a9f58f2e6e8fc9b",
+                  "width": 400,
+                  "height": 400,
+                  "pixel_format": "RGB8",
+                  "row_origin": "top_left"
+                }
+              },
+              {
+                "camera_id": 2,
+                "calibration_id": "blender-rig-rear-v1",
+                "source_timestamp_ns": "200000000",
+                "camera_model_sha256": "1bcb036c36d689a3490c2b694b9efeacf3e2ccdb45272d2d6f56c72bf9b8cadc",
+                "image_identity": {
+                  "algorithm": "packed_rgb8_sha256_v1",
+                  "sha256": "30ed6bd1e02fcb3e634ec4ecc389ee322e584361ed0405dc8e52454e30947a65",
+                  "width": 400,
+                  "height": 400,
+                  "pixel_format": "RGB8",
+                  "row_origin": "top_left"
+                }
+              },
+              {
+                "camera_id": 3,
+                "calibration_id": "blender-rig-left-v1",
+                "source_timestamp_ns": "200000000",
+                "camera_model_sha256": "434deec8f0f49cd1c3165f529b28569d50d82698a0cc9fc67116820d630f8b86",
+                "image_identity": {
+                  "algorithm": "packed_rgb8_sha256_v1",
+                  "sha256": "3f83166082abf5c402a3c58f8f390285601ba2632fdc9df83a927119807bf8ae",
+                  "width": 400,
+                  "height": 400,
+                  "pixel_format": "RGB8",
+                  "row_origin": "top_left"
+                }
+              }
+            ],
+            "selected_pixels": 41267,
+            "rgb_pixels_sha256": "596971fea03df9fd2fa8cdee1c3d32ef94f82ce07eea51d2cefa84271baf5f7f",
+            "mask_pixels_sha256": "70601bfd19f9e929025ef1df3f000ce562d56b73166c7d77b0518567f2e8171b"
+          }
+        ],
+        "independence": "declared by reference author; not verified",
+        "input_guard": "decoded RGB8 content and numeric camera model, IDs and timestamps"
+      },
+      "capture_script_sha256": {
+        "scene.py": "248230c28387e5ddb1d52234051f2dc7d45c272857178947316ebb1ed316925d",
+        "rig.py": "a31f63c433a031ca8a0c8e8645b075f0496c465a8511241389a6d9cd92c38d25",
+        "scenario.py": "f02e875f9a5f2ba8d03ced62f9534b5f57674a5a3355eb2c1314dfbf0b550919",
+        "board_targets.py": "8336a7a051d3a3bbaae55c6b01a89d07995fa51b40fed53d9ecaa7ab145ed5c7",
+        "depth.py": "adc038733709a5d52e00ee08839aba768d50ecf0d1992cbba8d03dc04bc07f24",
+        "diagnostic_motion.py": "272fa3b55f860a7e8bf4cc060b80ca3558e0d00ac6a9d10699791eb1daf3d10f",
+        "environments.py": "4bc920f989676995fbfa93000b12e537a7f9ce8c63764c4d9968e00d1a7246a5"
+      }
+    },
+    {
+      "case": "yard-b",
+      "total_samples": 160,
+      "measured": 120,
+      "oracle_comparisons": 480,
+      "max_metric_difference": 3.552713678800501e-15,
+      "report_sha256": "6fd2028c83d818fcd3f2560f84562084ec764ab6604b906c77ff7500af2b50e7",
+      "dataset_id": "capture-1b1390192b07cb85619570112ae337388d269e44fb1bc911faf504fd2e3036c8",
+      "reference": {
+        "schema_version": 2,
+        "algorithm": "masked_rgb8_v1",
+        "kind": "independent_ground_truth",
+        "dataset_id": "capture-1b1390192b07cb85619570112ae337388d269e44fb1bc911faf504fd2e3036c8",
+        "manifest_sha256": "fcbf4f46e6088d2a561694823b3dd3c4c2bce0ff8b1da45b21b414b8dd1df60f",
+        "width": 320,
+        "height": 180,
+        "view": {
+          "azimuth_rad": 0.8,
+          "elevation_rad": 1.0,
+          "distance_m": 8.5,
+          "fov_y_rad": 1.0,
+          "clip_m": [
+            0.1,
+            100.0
+          ],
+          "target_m": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "frames": [
+          {
+            "rgb": "truth-0.ppm",
+            "mask": "mask-0.ppm",
+            "inputs": [
+              {
+                "camera_id": 0,
+                "calibration_id": "blender-rig-front-v1",
+                "source_timestamp_ns": "0",
+                "camera_model_sha256": "c5214cec8b0a975affc773b36c7f66e551dc15afa48491e8f67a0fc57477fadc",
+                "image_identity": {
+                  "algorithm": "packed_rgb8_sha256_v1",
+                  "sha256": "5f9767bfbc290947b54a0ac9446625be2992226011d863c6e52ad26d5ed4472e",
+                  "width": 400,
+                  "height": 400,
+                  "pixel_format": "RGB8",
+                  "row_origin": "top_left"
+                }
+              },
+              {
+                "camera_id": 1,
+                "calibration_id": "blender-rig-right-v1",
+                "source_timestamp_ns": "0",
+                "camera_model_sha256": "4aaa0cff97ce507d0967a0d61bf43cb222c1be2db02db8ac71ea61a6534cef9d",
+                "image_identity": {
+                  "algorithm": "packed_rgb8_sha256_v1",
+                  "sha256": "435ce76adcd78e1de183ff25631eb174090cff2eb7357acef690d1714e956a7f",
+                  "width": 400,
+                  "height": 400,
+                  "pixel_format": "RGB8",
+                  "row_origin": "top_left"
+                }
+              },
+              {
+                "camera_id": 2,
+                "calibration_id": "blender-rig-rear-v1",
+                "source_timestamp_ns": "0",
+                "camera_model_sha256": "1bcb036c36d689a3490c2b694b9efeacf3e2ccdb45272d2d6f56c72bf9b8cadc",
+                "image_identity": {
+                  "algorithm": "packed_rgb8_sha256_v1",
+                  "sha256": "4b5bcc526fd641594a404fba2e350c21cbb89b49d66f057e19accd69044f6a4d",
+                  "width": 400,
+                  "height": 400,
+                  "pixel_format": "RGB8",
+                  "row_origin": "top_left"
+                }
+              },
+              {
+                "camera_id": 3,
+                "calibration_id": "blender-rig-left-v1",
+                "source_timestamp_ns": "0",
+                "camera_model_sha256": "434deec8f0f49cd1c3165f529b28569d50d82698a0cc9fc67116820d630f8b86",
+                "image_identity": {
+                  "algorithm": "packed_rgb8_sha256_v1",
+                  "sha256": "dabac99f0dafeef3ab55d4d5111cb99090bf298fd63deb6dec55cabdc3a89101",
+                  "width": 400,
+                  "height": 400,
+                  "pixel_format": "RGB8",
+                  "row_origin": "top_left"
+                }
+              }
+            ],
+            "selected_pixels": 42096,
+            "rgb_pixels_sha256": "231060ade647491365682036789dc5e41125cf105dc5aa8fe8e0566fe508da69",
+            "mask_pixels_sha256": "6f146acf379a682bb8b321ed9d50148dea4815089ade80d098b6c55f09b20982"
+          },
+          {
+            "rgb": "truth-1.ppm",
+            "mask": "mask-1.ppm",
+            "inputs": [
+              {
+                "camera_id": 0,
+                "calibration_id": "blender-rig-front-v1",
+                "source_timestamp_ns": "200000000",
+                "camera_model_sha256": "c5214cec8b0a975affc773b36c7f66e551dc15afa48491e8f67a0fc57477fadc",
+                "image_identity": {
+                  "algorithm": "packed_rgb8_sha256_v1",
+                  "sha256": "39ac193e33889469f67bc2371ea3ddc9a88cc30027a9c37818488fb3fe38d502",
+                  "width": 400,
+                  "height": 400,
+                  "pixel_format": "RGB8",
+                  "row_origin": "top_left"
+                }
+              },
+              {
+                "camera_id": 1,
+                "calibration_id": "blender-rig-right-v1",
+                "source_timestamp_ns": "200000000",
+                "camera_model_sha256": "4aaa0cff97ce507d0967a0d61bf43cb222c1be2db02db8ac71ea61a6534cef9d",
+                "image_identity": {
+                  "algorithm": "packed_rgb8_sha256_v1",
+                  "sha256": "08117e30adbf6df0ad9231ca7702053dcf72ef456bfb369406d55aa74247e8ae",
+                  "width": 400,
+                  "height": 400,
+                  "pixel_format": "RGB8",
+                  "row_origin": "top_left"
+                }
+              },
+              {
+                "camera_id": 2,
+                "calibration_id": "blender-rig-rear-v1",
+                "source_timestamp_ns": "200000000",
+                "camera_model_sha256": "1bcb036c36d689a3490c2b694b9efeacf3e2ccdb45272d2d6f56c72bf9b8cadc",
+                "image_identity": {
+                  "algorithm": "packed_rgb8_sha256_v1",
+                  "sha256": "923c7e487f689222bd24ff6a0750df64833126faf08822dfc437e67f5eec7299",
+                  "width": 400,
+                  "height": 400,
+                  "pixel_format": "RGB8",
+                  "row_origin": "top_left"
+                }
+              },
+              {
+                "camera_id": 3,
+                "calibration_id": "blender-rig-left-v1",
+                "source_timestamp_ns": "200000000",
+                "camera_model_sha256": "434deec8f0f49cd1c3165f529b28569d50d82698a0cc9fc67116820d630f8b86",
+                "image_identity": {
+                  "algorithm": "packed_rgb8_sha256_v1",
+                  "sha256": "30c4bc8bc45c999f6e01fa697e073d70cf53f6da8745b7fad8aa4cdcb9e41776",
+                  "width": 400,
+                  "height": 400,
+                  "pixel_format": "RGB8",
+                  "row_origin": "top_left"
+                }
+              }
+            ],
+            "selected_pixels": 41983,
+            "rgb_pixels_sha256": "a4eea1ff1ded6f1f67967b6785aa11cf97ef44037dd08cca3d2a73aff087c03a",
+            "mask_pixels_sha256": "5f9ec6eb9baad48433c4572850dd22c1286585d4c3d5b39469b1f39ca44f8783"
+          }
+        ],
+        "independence": "declared by reference author; not verified",
+        "input_guard": "decoded RGB8 content and numeric camera model, IDs and timestamps"
+      },
+      "capture_script_sha256": {
+        "scene.py": "248230c28387e5ddb1d52234051f2dc7d45c272857178947316ebb1ed316925d",
+        "rig.py": "a31f63c433a031ca8a0c8e8645b075f0496c465a8511241389a6d9cd92c38d25",
+        "scenario.py": "f02e875f9a5f2ba8d03ced62f9534b5f57674a5a3355eb2c1314dfbf0b550919",
+        "board_targets.py": "8336a7a051d3a3bbaae55c6b01a89d07995fa51b40fed53d9ecaa7ab145ed5c7",
+        "depth.py": "adc038733709a5d52e00ee08839aba768d50ecf0d1992cbba8d03dc04bc07f24",
+        "diagnostic_motion.py": "272fa3b55f860a7e8bf4cc060b80ca3558e0d00ac6a9d10699791eb1daf3d10f",
+        "environments.py": "4bc920f989676995fbfa93000b12e537a7f9ce8c63764c4d9968e00d1a7246a5"
+      }
+    }
+  ],
+  "conditions": [
+    {
+      "case": "street-a",
+      "carrier": "plane",
+      "mode": "multi_band",
+      "boundary": "zero",
+      "variant": 0,
+      "frames": 2,
+      "selected_pixels": 88676,
+      "pixel_weighted_mae_rgb8": 9.033936277384335,
+      "pixel_weighted_rmse_rgb8": 14.657500122191633
+    },
+    {
+      "case": "street-a",
+      "carrier": "bowl",
+      "mode": "multi_band",
+      "boundary": "zero",
+      "variant": 1,
+      "frames": 2,
+      "selected_pixels": 88676,
+      "pixel_weighted_mae_rgb8": 10.588430541146042,
+      "pixel_weighted_rmse_rgb8": 18.010047829354686
+    },
+    {
+      "case": "street-a",
+      "carrier": "dome_floor",
+      "mode": "multi_band",
+      "boundary": "zero",
+      "variant": 2,
+      "frames": 2,
+      "selected_pixels": 88676,
+      "pixel_weighted_mae_rgb8": 9.025328160945465,
+      "pixel_weighted_rmse_rgb8": 14.64951909248527
+    },
+    {
+      "case": "street-a",
+      "carrier": "cylinder_floor",
+      "mode": "multi_band",
+      "boundary": "zero",
+      "variant": 3,
+      "frames": 2,
+      "selected_pixels": 88676,
+      "pixel_weighted_mae_rgb8": 9.024696648473093,
+      "pixel_weighted_rmse_rgb8": 14.648660498293838
+    },
+    {
+      "case": "street-a",
+      "carrier": "cube_floor",
+      "mode": "multi_band",
+      "boundary": "zero",
+      "variant": 4,
+      "frames": 2,
+      "selected_pixels": 88676,
+      "pixel_weighted_mae_rgb8": 9.020411385267716,
+      "pixel_weighted_rmse_rgb8": 14.644333403042372
+    },
+    {
+      "case": "street-a",
+      "carrier": "plane",
+      "mode": "multi_band",
+      "boundary": "normalized",
+      "variant": 5,
+      "frames": 2,
+      "selected_pixels": 88676,
+      "pixel_weighted_mae_rgb8": 8.997582961192055,
+      "pixel_weighted_rmse_rgb8": 14.649424793281947
+    },
+    {
+      "case": "street-a",
+      "carrier": "bowl",
+      "mode": "multi_band",
+      "boundary": "normalized",
+      "variant": 6,
+      "frames": 2,
+      "selected_pixels": 88676,
+      "pixel_weighted_mae_rgb8": 10.5555806155743,
+      "pixel_weighted_rmse_rgb8": 17.998642113432787
+    },
+    {
+      "case": "street-a",
+      "carrier": "dome_floor",
+      "mode": "multi_band",
+      "boundary": "normalized",
+      "variant": 7,
+      "frames": 2,
+      "selected_pixels": 88676,
+      "pixel_weighted_mae_rgb8": 8.988083961086803,
+      "pixel_weighted_rmse_rgb8": 14.640226099602858
+    },
+    {
+      "case": "street-a",
+      "carrier": "cylinder_floor",
+      "mode": "multi_band",
+      "boundary": "normalized",
+      "variant": 8,
+      "frames": 2,
+      "selected_pixels": 88676,
+      "pixel_weighted_mae_rgb8": 8.987418617589126,
+      "pixel_weighted_rmse_rgb8": 14.639308544272073
+    },
+    {
+      "case": "street-a",
+      "carrier": "cube_floor",
+      "mode": "multi_band",
+      "boundary": "normalized",
+      "variant": 9,
+      "frames": 2,
+      "selected_pixels": 88676,
+      "pixel_weighted_mae_rgb8": 8.982622130001353,
+      "pixel_weighted_rmse_rgb8": 14.635101971707778
+    },
+    {
+      "case": "street-a",
+      "carrier": "plane",
+      "mode": "graph_cut_multi_band",
+      "boundary": "zero",
+      "variant": 10,
+      "frames": 2,
+      "selected_pixels": 88676,
+      "pixel_weighted_mae_rgb8": 9.192389522907364,
+      "pixel_weighted_rmse_rgb8": 15.73580895002005
+    },
+    {
+      "case": "street-a",
+      "carrier": "bowl",
+      "mode": "graph_cut_multi_band",
+      "boundary": "zero",
+      "variant": 11,
+      "frames": 2,
+      "selected_pixels": 88676,
+      "pixel_weighted_mae_rgb8": 10.68039454493512,
+      "pixel_weighted_rmse_rgb8": 18.720548312890813
+    },
+    {
+      "case": "street-a",
+      "carrier": "dome_floor",
+      "mode": "graph_cut_multi_band",
+      "boundary": "zero",
+      "variant": 12,
+      "frames": 2,
+      "selected_pixels": 88676,
+      "pixel_weighted_mae_rgb8": 9.183206279038297,
+      "pixel_weighted_rmse_rgb8": 15.730972875213526
+    },
+    {
+      "case": "street-a",
+      "carrier": "cylinder_floor",
+      "mode": "graph_cut_multi_band",
+      "boundary": "zero",
+      "variant": 13,
+      "frames": 2,
+      "selected_pixels": 88676,
+      "pixel_weighted_mae_rgb8": 9.182465755484385,
+      "pixel_weighted_rmse_rgb8": 15.729768373798725
+    },
+    {
+      "case": "street-a",
+      "carrier": "cube_floor",
+      "mode": "graph_cut_multi_band",
+      "boundary": "zero",
+      "variant": 14,
+      "frames": 2,
+      "selected_pixels": 88676,
+      "pixel_weighted_mae_rgb8": 9.1755830213361,
+      "pixel_weighted_rmse_rgb8": 15.722242363203186
+    },
+    {
+      "case": "street-a",
+      "carrier": "plane",
+      "mode": "graph_cut_multi_band",
+      "boundary": "normalized",
+      "variant": 15,
+      "frames": 2,
+      "selected_pixels": 88676,
+      "pixel_weighted_mae_rgb8": 9.18652923752387,
+      "pixel_weighted_rmse_rgb8": 15.730722208875367
+    },
+    {
+      "case": "street-a",
+      "carrier": "bowl",
+      "mode": "graph_cut_multi_band",
+      "boundary": "normalized",
+      "variant": 16,
+      "frames": 2,
+      "selected_pixels": 88676,
+      "pixel_weighted_mae_rgb8": 10.674616957613484,
+      "pixel_weighted_rmse_rgb8": 18.71631395942335
+    },
+    {
+      "case": "street-a",
+      "carrier": "dome_floor",
+      "mode": "graph_cut_multi_band",
+      "boundary": "normalized",
+      "variant": 17,
+      "frames": 2,
+      "selected_pixels": 88676,
+      "pixel_weighted_mae_rgb8": 9.177330957643557,
+      "pixel_weighted_rmse_rgb8": 15.725815967203841
+    },
+    {
+      "case": "street-a",
+      "carrier": "cylinder_floor",
+      "mode": "graph_cut_multi_band",
+      "boundary": "normalized",
+      "variant": 18,
+      "frames": 2,
+      "selected_pixels": 88676,
+      "pixel_weighted_mae_rgb8": 9.176616747109328,
+      "pixel_weighted_rmse_rgb8": 15.724679320025057
+    },
+    {
+      "case": "street-a",
+      "carrier": "cube_floor",
+      "mode": "graph_cut_multi_band",
+      "boundary": "normalized",
+      "variant": 19,
+      "frames": 2,
+      "selected_pixels": 88676,
+      "pixel_weighted_mae_rgb8": 9.169722735952606,
+      "pixel_weighted_rmse_rgb8": 15.717141186371594
+    },
+    {
+      "case": "street-b",
+      "carrier": "plane",
+      "mode": "multi_band",
+      "boundary": "zero",
+      "variant": 0,
+      "frames": 2,
+      "selected_pixels": 88693,
+      "pixel_weighted_mae_rgb8": 8.893005460784204,
+      "pixel_weighted_rmse_rgb8": 14.514907048205112
+    },
+    {
+      "case": "street-b",
+      "carrier": "bowl",
+      "mode": "multi_band",
+      "boundary": "zero",
+      "variant": 1,
+      "frames": 2,
+      "selected_pixels": 88693,
+      "pixel_weighted_mae_rgb8": 10.481496097023815,
+      "pixel_weighted_rmse_rgb8": 17.89536848418624
+    },
+    {
+      "case": "street-b",
+      "carrier": "dome_floor",
+      "mode": "multi_band",
+      "boundary": "zero",
+      "variant": 2,
+      "frames": 2,
+      "selected_pixels": 88693,
+      "pixel_weighted_mae_rgb8": 8.884323828637358,
+      "pixel_weighted_rmse_rgb8": 14.506719580145367
+    },
+    {
+      "case": "street-b",
+      "carrier": "cylinder_floor",
+      "mode": "multi_band",
+      "boundary": "zero",
+      "variant": 3,
+      "frames": 2,
+      "selected_pixels": 88693,
+      "pixel_weighted_mae_rgb8": 8.883854043348029,
+      "pixel_weighted_rmse_rgb8": 14.506038593869965
+    },
+    {
+      "case": "street-b",
+      "carrier": "cube_floor",
+      "mode": "multi_band",
+      "boundary": "zero",
+      "variant": 4,
+      "frames": 2,
+      "selected_pixels": 88693,
+      "pixel_weighted_mae_rgb8": 8.879614700897102,
+      "pixel_weighted_rmse_rgb8": 14.501840566744816
+    },
+    {
+      "case": "street-b",
+      "carrier": "plane",
+      "mode": "multi_band",
+      "boundary": "normalized",
+      "variant": 5,
+      "frames": 2,
+      "selected_pixels": 88693,
+      "pixel_weighted_mae_rgb8": 8.782504444168838,
+      "pixel_weighted_rmse_rgb8": 14.453996179421845
+    },
+    {
+      "case": "street-b",
+      "carrier": "bowl",
+      "mode": "multi_band",
+      "boundary": "normalized",
+      "variant": 6,
+      "frames": 2,
+      "selected_pixels": 88693,
+      "pixel_weighted_mae_rgb8": 10.3734191725014,
+      "pixel_weighted_rmse_rgb8": 17.834773707110188
+    },
+    {
+      "case": "street-b",
+      "carrier": "dome_floor",
+      "mode": "multi_band",
+      "boundary": "normalized",
+      "variant": 7,
+      "frames": 2,
+      "selected_pixels": 88693,
+      "pixel_weighted_mae_rgb8": 8.77289075800796,
+      "pixel_weighted_rmse_rgb8": 14.444500105461945
+    },
+    {
+      "case": "street-b",
+      "carrier": "cylinder_floor",
+      "mode": "multi_band",
+      "boundary": "normalized",
+      "variant": 8,
+      "frames": 2,
+      "selected_pixels": 88693,
+      "pixel_weighted_mae_rgb8": 8.772447280694832,
+      "pixel_weighted_rmse_rgb8": 14.443941211313009
+    },
+    {
+      "case": "street-b",
+      "carrier": "cube_floor",
+      "mode": "multi_band",
+      "boundary": "normalized",
+      "variant": 9,
+      "frames": 2,
+      "selected_pixels": 88693,
+      "pixel_weighted_mae_rgb8": 8.767632921049763,
+      "pixel_weighted_rmse_rgb8": 14.439590178171496
+    },
+    {
+      "case": "street-b",
+      "carrier": "plane",
+      "mode": "graph_cut_multi_band",
+      "boundary": "zero",
+      "variant": 10,
+      "frames": 2,
+      "selected_pixels": 88693,
+      "pixel_weighted_mae_rgb8": 9.181043975661362,
+      "pixel_weighted_rmse_rgb8": 15.78070507140154
+    },
+    {
+      "case": "street-b",
+      "carrier": "bowl",
+      "mode": "graph_cut_multi_band",
+      "boundary": "zero",
+      "variant": 11,
+      "frames": 2,
+      "selected_pixels": 88693,
+      "pixel_weighted_mae_rgb8": 10.683860808256195,
+      "pixel_weighted_rmse_rgb8": 18.759448903670776
+    },
+    {
+      "case": "street-b",
+      "carrier": "dome_floor",
+      "mode": "graph_cut_multi_band",
+      "boundary": "zero",
+      "variant": 12,
+      "frames": 2,
+      "selected_pixels": 88693,
+      "pixel_weighted_mae_rgb8": 9.171798601167323,
+      "pixel_weighted_rmse_rgb8": 15.775572672093103
+    },
+    {
+      "case": "street-b",
+      "carrier": "cylinder_floor",
+      "mode": "graph_cut_multi_band",
+      "boundary": "zero",
+      "variant": 13,
+      "frames": 2,
+      "selected_pixels": 88693,
+      "pixel_weighted_mae_rgb8": 9.171088285809853,
+      "pixel_weighted_rmse_rgb8": 15.774533102527338
+    },
+    {
+      "case": "street-b",
+      "carrier": "cube_floor",
+      "mode": "graph_cut_multi_band",
+      "boundary": "zero",
+      "variant": 14,
+      "frames": 2,
+      "selected_pixels": 88693,
+      "pixel_weighted_mae_rgb8": 9.164278278255706,
+      "pixel_weighted_rmse_rgb8": 15.767197824181576
+    },
+    {
+      "case": "street-b",
+      "carrier": "plane",
+      "mode": "graph_cut_multi_band",
+      "boundary": "normalized",
+      "variant": 15,
+      "frames": 2,
+      "selected_pixels": 88693,
+      "pixel_weighted_mae_rgb8": 9.176169483499262,
+      "pixel_weighted_rmse_rgb8": 15.77618408854346
+    },
+    {
+      "case": "street-b",
+      "carrier": "bowl",
+      "mode": "graph_cut_multi_band",
+      "boundary": "normalized",
+      "variant": 16,
+      "frames": 2,
+      "selected_pixels": 88693,
+      "pixel_weighted_mae_rgb8": 10.679087789716588,
+      "pixel_weighted_rmse_rgb8": 18.7556963461902
+    },
+    {
+      "case": "street-b",
+      "carrier": "dome_floor",
+      "mode": "graph_cut_multi_band",
+      "boundary": "normalized",
+      "variant": 17,
+      "frames": 2,
+      "selected_pixels": 88693,
+      "pixel_weighted_mae_rgb8": 9.166882767899759,
+      "pixel_weighted_rmse_rgb8": 15.770961211690784
+    },
+    {
+      "case": "street-b",
+      "carrier": "cylinder_floor",
+      "mode": "graph_cut_multi_band",
+      "boundary": "normalized",
+      "variant": 18,
+      "frames": 2,
+      "selected_pixels": 88693,
+      "pixel_weighted_mae_rgb8": 9.166210035365436,
+      "pixel_weighted_rmse_rgb8": 15.77000427315688
+    },
+    {
+      "case": "street-b",
+      "carrier": "cube_floor",
+      "mode": "graph_cut_multi_band",
+      "boundary": "normalized",
+      "variant": 19,
+      "frames": 2,
+      "selected_pixels": 88693,
+      "pixel_weighted_mae_rgb8": 9.159381236399716,
+      "pixel_weighted_rmse_rgb8": 15.76265365445155
+    },
+    {
+      "case": "yard-a",
+      "carrier": "plane",
+      "mode": "multi_band",
+      "boundary": "zero",
+      "variant": 0,
+      "frames": 2,
+      "selected_pixels": 83069,
+      "pixel_weighted_mae_rgb8": 6.884441448273926,
+      "pixel_weighted_rmse_rgb8": 13.154598963830416
+    },
+    {
+      "case": "yard-a",
+      "carrier": "bowl",
+      "mode": "multi_band",
+      "boundary": "zero",
+      "variant": 1,
+      "frames": 2,
+      "selected_pixels": 83069,
+      "pixel_weighted_mae_rgb8": 9.966678303578952,
+      "pixel_weighted_rmse_rgb8": 18.025221277027814
+    },
+    {
+      "case": "yard-a",
+      "carrier": "dome_floor",
+      "mode": "multi_band",
+      "boundary": "zero",
+      "variant": 2,
+      "frames": 2,
+      "selected_pixels": 83069,
+      "pixel_weighted_mae_rgb8": 6.77130658448599,
+      "pixel_weighted_rmse_rgb8": 12.704610952182826
+    },
+    {
+      "case": "yard-a",
+      "carrier": "cylinder_floor",
+      "mode": "multi_band",
+      "boundary": "zero",
+      "variant": 3,
+      "frames": 2,
+      "selected_pixels": 83069,
+      "pixel_weighted_mae_rgb8": 6.77093340074717,
+      "pixel_weighted_rmse_rgb8": 12.703675217459923
+    },
+    {
+      "case": "yard-a",
+      "carrier": "cube_floor",
+      "mode": "multi_band",
+      "boundary": "zero",
+      "variant": 4,
+      "frames": 2,
+      "selected_pixels": 83069,
+      "pixel_weighted_mae_rgb8": 6.758421713675778,
+      "pixel_weighted_rmse_rgb8": 12.682657749449618
+    },
+    {
+      "case": "yard-a",
+      "carrier": "plane",
+      "mode": "multi_band",
+      "boundary": "normalized",
+      "variant": 5,
+      "frames": 2,
+      "selected_pixels": 83069,
+      "pixel_weighted_mae_rgb8": 6.423041888871501,
+      "pixel_weighted_rmse_rgb8": 12.901008139946955
+    },
+    {
+      "case": "yard-a",
+      "carrier": "bowl",
+      "mode": "multi_band",
+      "boundary": "normalized",
+      "variant": 6,
+      "frames": 2,
+      "selected_pixels": 83069,
+      "pixel_weighted_mae_rgb8": 9.552608875352618,
+      "pixel_weighted_rmse_rgb8": 17.87679139878042
+    },
+    {
+      "case": "yard-a",
+      "carrier": "dome_floor",
+      "mode": "multi_band",
+      "boundary": "normalized",
+      "variant": 7,
+      "frames": 2,
+      "selected_pixels": 83069,
+      "pixel_weighted_mae_rgb8": 6.3107978507826825,
+      "pixel_weighted_rmse_rgb8": 12.44294510445463
+    },
+    {
+      "case": "yard-a",
+      "carrier": "cylinder_floor",
+      "mode": "multi_band",
+      "boundary": "normalized",
+      "variant": 8,
+      "frames": 2,
+      "selected_pixels": 83069,
+      "pixel_weighted_mae_rgb8": 6.310292247007508,
+      "pixel_weighted_rmse_rgb8": 12.442027908402949
+    },
+    {
+      "case": "yard-a",
+      "carrier": "cube_floor",
+      "mode": "multi_band",
+      "boundary": "normalized",
+      "variant": 9,
+      "frames": 2,
+      "selected_pixels": 83069,
+      "pixel_weighted_mae_rgb8": 6.296745276015522,
+      "pixel_weighted_rmse_rgb8": 12.419641421874791
+    },
+    {
+      "case": "yard-a",
+      "carrier": "plane",
+      "mode": "graph_cut_multi_band",
+      "boundary": "zero",
+      "variant": 10,
+      "frames": 2,
+      "selected_pixels": 83069,
+      "pixel_weighted_mae_rgb8": 6.649568431063333,
+      "pixel_weighted_rmse_rgb8": 15.496297136202863
+    },
+    {
+      "case": "yard-a",
+      "carrier": "bowl",
+      "mode": "graph_cut_multi_band",
+      "boundary": "zero",
+      "variant": 11,
+      "frames": 2,
+      "selected_pixels": 83069,
+      "pixel_weighted_mae_rgb8": 10.214825426252071,
+      "pixel_weighted_rmse_rgb8": 20.817495807944724
+    },
+    {
+      "case": "yard-a",
+      "carrier": "dome_floor",
+      "mode": "graph_cut_multi_band",
+      "boundary": "zero",
+      "variant": 12,
+      "frames": 2,
+      "selected_pixels": 83069,
+      "pixel_weighted_mae_rgb8": 6.555542179794308,
+      "pixel_weighted_rmse_rgb8": 15.165806055324989
+    },
+    {
+      "case": "yard-a",
+      "carrier": "cylinder_floor",
+      "mode": "graph_cut_multi_band",
+      "boundary": "zero",
+      "variant": 13,
+      "frames": 2,
+      "selected_pixels": 83069,
+      "pixel_weighted_mae_rgb8": 6.554382501294105,
+      "pixel_weighted_rmse_rgb8": 15.162637120581524
+    },
+    {
+      "case": "yard-a",
+      "carrier": "cube_floor",
+      "mode": "graph_cut_multi_band",
+      "boundary": "zero",
+      "variant": 14,
+      "frames": 2,
+      "selected_pixels": 83069,
+      "pixel_weighted_mae_rgb8": 6.532047655162176,
+      "pixel_weighted_rmse_rgb8": 15.113613744846033
+    },
+    {
+      "case": "yard-a",
+      "carrier": "plane",
+      "mode": "graph_cut_multi_band",
+      "boundary": "normalized",
+      "variant": 15,
+      "frames": 2,
+      "selected_pixels": 83069,
+      "pixel_weighted_mae_rgb8": 6.624858049733756,
+      "pixel_weighted_rmse_rgb8": 15.487736554704851
+    },
+    {
+      "case": "yard-a",
+      "carrier": "bowl",
+      "mode": "graph_cut_multi_band",
+      "boundary": "normalized",
+      "variant": 16,
+      "frames": 2,
+      "selected_pixels": 83069,
+      "pixel_weighted_mae_rgb8": 10.190223388588604,
+      "pixel_weighted_rmse_rgb8": 20.811121594584517
+    },
+    {
+      "case": "yard-a",
+      "carrier": "dome_floor",
+      "mode": "graph_cut_multi_band",
+      "boundary": "normalized",
+      "variant": 17,
+      "frames": 2,
+      "selected_pixels": 83069,
+      "pixel_weighted_mae_rgb8": 6.530835811193104,
+      "pixel_weighted_rmse_rgb8": 15.157022943599268
+    },
+    {
+      "case": "yard-a",
+      "carrier": "cylinder_floor",
+      "mode": "graph_cut_multi_band",
+      "boundary": "normalized",
+      "variant": 18,
+      "frames": 2,
+      "selected_pixels": 83069,
+      "pixel_weighted_mae_rgb8": 6.52965606905103,
+      "pixel_weighted_rmse_rgb8": 15.153888052407167
+    },
+    {
+      "case": "yard-a",
+      "carrier": "cube_floor",
+      "mode": "graph_cut_multi_band",
+      "boundary": "normalized",
+      "variant": 19,
+      "frames": 2,
+      "selected_pixels": 83069,
+      "pixel_weighted_mae_rgb8": 6.507381413844715,
+      "pixel_weighted_rmse_rgb8": 15.104872277918814
+    },
+    {
+      "case": "yard-b",
+      "carrier": "plane",
+      "mode": "multi_band",
+      "boundary": "zero",
+      "variant": 0,
+      "frames": 2,
+      "selected_pixels": 84079,
+      "pixel_weighted_mae_rgb8": 6.280284018601553,
+      "pixel_weighted_rmse_rgb8": 10.457181671043644
+    },
+    {
+      "case": "yard-b",
+      "carrier": "bowl",
+      "mode": "multi_band",
+      "boundary": "zero",
+      "variant": 1,
+      "frames": 2,
+      "selected_pixels": 84079,
+      "pixel_weighted_mae_rgb8": 9.356763678603853,
+      "pixel_weighted_rmse_rgb8": 16.077834523498158
+    },
+    {
+      "case": "yard-b",
+      "carrier": "dome_floor",
+      "mode": "multi_band",
+      "boundary": "zero",
+      "variant": 2,
+      "frames": 2,
+      "selected_pixels": 84079,
+      "pixel_weighted_mae_rgb8": 6.148852071662762,
+      "pixel_weighted_rmse_rgb8": 9.865029112127337
+    },
+    {
+      "case": "yard-b",
+      "carrier": "cylinder_floor",
+      "mode": "multi_band",
+      "boundary": "zero",
+      "variant": 3,
+      "frames": 2,
+      "selected_pixels": 84079,
+      "pixel_weighted_mae_rgb8": 6.14824549927251,
+      "pixel_weighted_rmse_rgb8": 9.863893142207287
+    },
+    {
+      "case": "yard-b",
+      "carrier": "cube_floor",
+      "mode": "multi_band",
+      "boundary": "zero",
+      "variant": 4,
+      "frames": 2,
+      "selected_pixels": 84079,
+      "pixel_weighted_mae_rgb8": 6.135923754246998,
+      "pixel_weighted_rmse_rgb8": 9.840535464855181
+    },
+    {
+      "case": "yard-b",
+      "carrier": "plane",
+      "mode": "multi_band",
+      "boundary": "normalized",
+      "variant": 5,
+      "frames": 2,
+      "selected_pixels": 84079,
+      "pixel_weighted_mae_rgb8": 5.840011576414246,
+      "pixel_weighted_rmse_rgb8": 10.175205089919857
+    },
+    {
+      "case": "yard-b",
+      "carrier": "bowl",
+      "mode": "multi_band",
+      "boundary": "normalized",
+      "variant": 6,
+      "frames": 2,
+      "selected_pixels": 84079,
+      "pixel_weighted_mae_rgb8": 8.964446135975292,
+      "pixel_weighted_rmse_rgb8": 15.924111842729475
+    },
+    {
+      "case": "yard-b",
+      "carrier": "dome_floor",
+      "mode": "multi_band",
+      "boundary": "normalized",
+      "variant": 7,
+      "frames": 2,
+      "selected_pixels": 84079,
+      "pixel_weighted_mae_rgb8": 5.708761997645072,
+      "pixel_weighted_rmse_rgb8": 9.566907124544143
+    },
+    {
+      "case": "yard-b",
+      "carrier": "cylinder_floor",
+      "mode": "multi_band",
+      "boundary": "normalized",
+      "variant": 8,
+      "frames": 2,
+      "selected_pixels": 84079,
+      "pixel_weighted_mae_rgb8": 5.7080404540174525,
+      "pixel_weighted_rmse_rgb8": 9.565648509234123
+    },
+    {
+      "case": "yard-b",
+      "carrier": "cube_floor",
+      "mode": "multi_band",
+      "boundary": "normalized",
+      "variant": 9,
+      "frames": 2,
+      "selected_pixels": 84079,
+      "pixel_weighted_mae_rgb8": 5.6951438528051,
+      "pixel_weighted_rmse_rgb8": 9.540343056351643
+    },
+    {
+      "case": "yard-b",
+      "carrier": "plane",
+      "mode": "graph_cut_multi_band",
+      "boundary": "zero",
+      "variant": 10,
+      "frames": 2,
+      "selected_pixels": 84079,
+      "pixel_weighted_mae_rgb8": 5.856004471984681,
+      "pixel_weighted_rmse_rgb8": 12.326707260016768
+    },
+    {
+      "case": "yard-b",
+      "carrier": "bowl",
+      "mode": "graph_cut_multi_band",
+      "boundary": "zero",
+      "variant": 11,
+      "frames": 2,
+      "selected_pixels": 84079,
+      "pixel_weighted_mae_rgb8": 9.337908395675496,
+      "pixel_weighted_rmse_rgb8": 18.227547646972255
+    },
+    {
+      "case": "yard-b",
+      "carrier": "dome_floor",
+      "mode": "graph_cut_multi_band",
+      "boundary": "zero",
+      "variant": 12,
+      "frames": 2,
+      "selected_pixels": 84079,
+      "pixel_weighted_mae_rgb8": 5.740482165582369,
+      "pixel_weighted_rmse_rgb8": 11.872474753946827
+    },
+    {
+      "case": "yard-b",
+      "carrier": "cylinder_floor",
+      "mode": "graph_cut_multi_band",
+      "boundary": "zero",
+      "variant": 13,
+      "frames": 2,
+      "selected_pixels": 84079,
+      "pixel_weighted_mae_rgb8": 5.739530679480013,
+      "pixel_weighted_rmse_rgb8": 11.869930634747066
+    },
+    {
+      "case": "yard-b",
+      "carrier": "cube_floor",
+      "mode": "graph_cut_multi_band",
+      "boundary": "zero",
+      "variant": 14,
+      "frames": 2,
+      "selected_pixels": 84079,
+      "pixel_weighted_mae_rgb8": 5.720017285330859,
+      "pixel_weighted_rmse_rgb8": 11.825826510442402
+    },
+    {
+      "case": "yard-b",
+      "carrier": "plane",
+      "mode": "graph_cut_multi_band",
+      "boundary": "normalized",
+      "variant": 15,
+      "frames": 2,
+      "selected_pixels": 84079,
+      "pixel_weighted_mae_rgb8": 5.830405531305875,
+      "pixel_weighted_rmse_rgb8": 12.315591375117073
+    },
+    {
+      "case": "yard-b",
+      "carrier": "bowl",
+      "mode": "graph_cut_multi_band",
+      "boundary": "normalized",
+      "variant": 16,
+      "frames": 2,
+      "selected_pixels": 84079,
+      "pixel_weighted_mae_rgb8": 9.312384780979793,
+      "pixel_weighted_rmse_rgb8": 18.22010103736932
+    },
+    {
+      "case": "yard-b",
+      "carrier": "dome_floor",
+      "mode": "graph_cut_multi_band",
+      "boundary": "normalized",
+      "variant": 17,
+      "frames": 2,
+      "selected_pixels": 84079,
+      "pixel_weighted_mae_rgb8": 5.714887189428989,
+      "pixel_weighted_rmse_rgb8": 11.860881869342887
+    },
+    {
+      "case": "yard-b",
+      "carrier": "cylinder_floor",
+      "mode": "graph_cut_multi_band",
+      "boundary": "normalized",
+      "variant": 18,
+      "frames": 2,
+      "selected_pixels": 84079,
+      "pixel_weighted_mae_rgb8": 5.713911916174075,
+      "pixel_weighted_rmse_rgb8": 11.858378390685168
+    },
+    {
+      "case": "yard-b",
+      "carrier": "cube_floor",
+      "mode": "graph_cut_multi_band",
+      "boundary": "normalized",
+      "variant": 19,
+      "frames": 2,
+      "selected_pixels": 84079,
+      "pixel_weighted_mae_rgb8": 5.694461954431745,
+      "pixel_weighted_rmse_rgb8": 11.81429691230128
+    }
+  ],
+  "pairs": [
+    {
+      "case": "street-a",
+      "carrier": "plane",
+      "mode": "multi_band",
+      "zero": 9.033936277384335,
+      "normalized": 8.997582961192055,
+      "delta": -0.03635331619227955
+    },
+    {
+      "case": "street-a",
+      "carrier": "plane",
+      "mode": "graph_cut_multi_band",
+      "zero": 9.192389522907364,
+      "normalized": 9.18652923752387,
+      "delta": -0.005860285383494812
+    },
+    {
+      "case": "street-a",
+      "carrier": "bowl",
+      "mode": "multi_band",
+      "zero": 10.588430541146042,
+      "normalized": 10.5555806155743,
+      "delta": -0.03284992557174249
+    },
+    {
+      "case": "street-a",
+      "carrier": "bowl",
+      "mode": "graph_cut_multi_band",
+      "zero": 10.68039454493512,
+      "normalized": 10.674616957613484,
+      "delta": -0.005777587321636801
+    },
+    {
+      "case": "street-a",
+      "carrier": "dome_floor",
+      "mode": "multi_band",
+      "zero": 9.025328160945465,
+      "normalized": 8.988083961086803,
+      "delta": -0.03724419985866234
+    },
+    {
+      "case": "street-a",
+      "carrier": "dome_floor",
+      "mode": "graph_cut_multi_band",
+      "zero": 9.183206279038297,
+      "normalized": 9.177330957643557,
+      "delta": -0.005875321394739785
+    },
+    {
+      "case": "street-a",
+      "carrier": "cylinder_floor",
+      "mode": "multi_band",
+      "zero": 9.024696648473093,
+      "normalized": 8.987418617589126,
+      "delta": -0.037278030883966196
+    },
+    {
+      "case": "street-a",
+      "carrier": "cylinder_floor",
+      "mode": "graph_cut_multi_band",
+      "zero": 9.182465755484385,
+      "normalized": 9.176616747109328,
+      "delta": -0.005849008375056641
+    },
+    {
+      "case": "street-a",
+      "carrier": "cube_floor",
+      "mode": "multi_band",
+      "zero": 9.020411385267716,
+      "normalized": 8.982622130001353,
+      "delta": -0.03778925526636279
+    },
+    {
+      "case": "street-a",
+      "carrier": "cube_floor",
+      "mode": "graph_cut_multi_band",
+      "zero": 9.1755830213361,
+      "normalized": 9.169722735952606,
+      "delta": -0.005860285383494812
+    },
+    {
+      "case": "street-b",
+      "carrier": "plane",
+      "mode": "multi_band",
+      "zero": 8.893005460784204,
+      "normalized": 8.782504444168838,
+      "delta": -0.11050101661536615
+    },
+    {
+      "case": "street-b",
+      "carrier": "plane",
+      "mode": "graph_cut_multi_band",
+      "zero": 9.181043975661362,
+      "normalized": 9.176169483499262,
+      "delta": -0.004874492162100452
+    },
+    {
+      "case": "street-b",
+      "carrier": "bowl",
+      "mode": "multi_band",
+      "zero": 10.481496097023815,
+      "normalized": 10.3734191725014,
+      "delta": -0.10807692452241469
+    },
+    {
+      "case": "street-b",
+      "carrier": "bowl",
+      "mode": "graph_cut_multi_band",
+      "zero": 10.683860808256195,
+      "normalized": 10.679087789716588,
+      "delta": -0.004773018539607321
+    },
+    {
+      "case": "street-b",
+      "carrier": "dome_floor",
+      "mode": "multi_band",
+      "zero": 8.884323828637358,
+      "normalized": 8.77289075800796,
+      "delta": -0.11143307062939733
+    },
+    {
+      "case": "street-b",
+      "carrier": "dome_floor",
+      "mode": "graph_cut_multi_band",
+      "zero": 9.171798601167323,
+      "normalized": 9.166882767899759,
+      "delta": -0.0049158332675638405
+    },
+    {
+      "case": "street-b",
+      "carrier": "cylinder_floor",
+      "mode": "multi_band",
+      "zero": 8.883854043348029,
+      "normalized": 8.772447280694832,
+      "delta": -0.11140676265319627
+    },
+    {
+      "case": "street-b",
+      "carrier": "cylinder_floor",
+      "mode": "graph_cut_multi_band",
+      "zero": 9.171088285809853,
+      "normalized": 9.166210035365436,
+      "delta": -0.004878250444416921
+    },
+    {
+      "case": "street-b",
+      "carrier": "cube_floor",
+      "mode": "multi_band",
+      "zero": 8.879614700897102,
+      "normalized": 8.767632921049763,
+      "delta": -0.11198177984733881
+    },
+    {
+      "case": "street-b",
+      "carrier": "cube_floor",
+      "mode": "graph_cut_multi_band",
+      "zero": 9.164278278255706,
+      "normalized": 9.159381236399716,
+      "delta": -0.0048970418559903806
+    },
+    {
+      "case": "yard-a",
+      "carrier": "plane",
+      "mode": "multi_band",
+      "zero": 6.884441448273926,
+      "normalized": 6.423041888871501,
+      "delta": -0.46139955940242494
+    },
+    {
+      "case": "yard-a",
+      "carrier": "plane",
+      "mode": "graph_cut_multi_band",
+      "zero": 6.649568431063333,
+      "normalized": 6.624858049733756,
+      "delta": -0.02471038132957659
+    },
+    {
+      "case": "yard-a",
+      "carrier": "bowl",
+      "mode": "multi_band",
+      "zero": 9.966678303578952,
+      "normalized": 9.552608875352618,
+      "delta": -0.41406942822633397
+    },
+    {
+      "case": "yard-a",
+      "carrier": "bowl",
+      "mode": "graph_cut_multi_band",
+      "zero": 10.214825426252071,
+      "normalized": 10.190223388588604,
+      "delta": -0.024602037663466803
+    },
+    {
+      "case": "yard-a",
+      "carrier": "dome_floor",
+      "mode": "multi_band",
+      "zero": 6.77130658448599,
+      "normalized": 6.3107978507826825,
+      "delta": -0.4605087337033078
+    },
+    {
+      "case": "yard-a",
+      "carrier": "dome_floor",
+      "mode": "graph_cut_multi_band",
+      "zero": 6.555542179794308,
+      "normalized": 6.530835811193104,
+      "delta": -0.0247063686012039
+    },
+    {
+      "case": "yard-a",
+      "carrier": "cylinder_floor",
+      "mode": "multi_band",
+      "zero": 6.77093340074717,
+      "normalized": 6.310292247007508,
+      "delta": -0.46064115373966175
+    },
+    {
+      "case": "yard-a",
+      "carrier": "cylinder_floor",
+      "mode": "graph_cut_multi_band",
+      "zero": 6.554382501294105,
+      "normalized": 6.52965606905103,
+      "delta": -0.024726432243075358
+    },
+    {
+      "case": "yard-a",
+      "carrier": "cube_floor",
+      "mode": "multi_band",
+      "zero": 6.758421713675778,
+      "normalized": 6.296745276015522,
+      "delta": -0.46167643766025623
+    },
+    {
+      "case": "yard-a",
+      "carrier": "cube_floor",
+      "mode": "graph_cut_multi_band",
+      "zero": 6.532047655162176,
+      "normalized": 6.507381413844715,
+      "delta": -0.02466624131746098
+    },
+    {
+      "case": "yard-b",
+      "carrier": "plane",
+      "mode": "multi_band",
+      "zero": 6.280284018601553,
+      "normalized": 5.840011576414246,
+      "delta": -0.44027244218730743
+    },
+    {
+      "case": "yard-b",
+      "carrier": "plane",
+      "mode": "graph_cut_multi_band",
+      "zero": 5.856004471984681,
+      "normalized": 5.830405531305875,
+      "delta": -0.025598940678806414
+    },
+    {
+      "case": "yard-b",
+      "carrier": "bowl",
+      "mode": "multi_band",
+      "zero": 9.356763678603853,
+      "normalized": 8.964446135975292,
+      "delta": -0.392317542628561
+    },
+    {
+      "case": "yard-b",
+      "carrier": "bowl",
+      "mode": "graph_cut_multi_band",
+      "zero": 9.337908395675496,
+      "normalized": 9.312384780979793,
+      "delta": -0.025523614695703856
+    },
+    {
+      "case": "yard-b",
+      "carrier": "dome_floor",
+      "mode": "multi_band",
+      "zero": 6.148852071662762,
+      "normalized": 5.708761997645072,
+      "delta": -0.4400900740176894
+    },
+    {
+      "case": "yard-b",
+      "carrier": "dome_floor",
+      "mode": "graph_cut_multi_band",
+      "zero": 5.740482165582369,
+      "normalized": 5.714887189428989,
+      "delta": -0.025594976153380244
+    },
+    {
+      "case": "yard-b",
+      "carrier": "cylinder_floor",
+      "mode": "multi_band",
+      "zero": 6.14824549927251,
+      "normalized": 5.7080404540174525,
+      "delta": -0.4402050452550572
+    },
+    {
+      "case": "yard-b",
+      "carrier": "cylinder_floor",
+      "mode": "graph_cut_multi_band",
+      "zero": 5.739530679480013,
+      "normalized": 5.713911916174075,
+      "delta": -0.025618763305938153
+    },
+    {
+      "case": "yard-b",
+      "carrier": "cube_floor",
+      "mode": "multi_band",
+      "zero": 6.135923754246998,
+      "normalized": 5.6951438528051,
+      "delta": -0.44077990144189805
+    },
+    {
+      "case": "yard-b",
+      "carrier": "cube_floor",
+      "mode": "graph_cut_multi_band",
+      "zero": 5.720017285330859,
+      "normalized": 5.694461954431745,
+      "delta": -0.025555330899114104
+    }
+  ],
+  "per_frame_boundary_contrasts": {
+    "count": 80,
+    "improved": 80,
+    "delta_min": -0.4709735785656015,
+    "delta_max": -0.004488451822446393
+  },
+  "active_triangle_range": [
+    3196,
+    3208
+  ],
+  "active_buffer_range": [
+    58392,
+    60168
+  ],
+  "measured_resident_buffer_range": [
+    116904,
+    118680
+  ],
+  "warmup_resident_buffer_range": [
+    116904,
+    497832
+  ],
+  "paused_rgb_repeats_identical": true
+}
