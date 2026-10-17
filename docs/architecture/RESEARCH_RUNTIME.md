@@ -4,7 +4,7 @@
 
 ## Первый реализованный срез
 
-`fusion_runtime_v1`: catalog, typed client wrapper, revision-checked temporary configure трёх существующих GPU-режимов и параметров; config revision/settings в ACK и frames. Интеграционная проверка сравнивает одни paused inputs и проверяет восстановление RGB без upload/rebuild. Контракт и ограничения: [[engineering/PROTOCOL_IMPLEMENTED]]. Добавлен общий C++ runner `examples/common/research` и `svctl research`: декларативные fusion-варианты, randomized complete blocks на последовательных paused frame sets с native RGBA capture, hashes/raw timing report и проверяемый restore при штатном завершении/cancel/callback failure. Проверки: [[validation/RESEARCH_RUNTIME]]. Ограниченный replay lease/watchdog `experiment_lease_v1` восстанавливает fusion/surface/pause после expiry/control disconnect; runner продлевает lease и ждёт idle после cleanup. Четыре native fusion-кандидата и runtime surface control добавлены: [[validation/NATIVE_FUSION]]. Многокадровый headless режим с lease-aware step реализован; ConfigService, cursor/history reset и GUI сценариев ещё предстоят. Контракт восстановления и опыт с direct-view truth: [[validation/SERVER_BOUNDARY]].
+`fusion_runtime_v1`: catalog, typed client wrapper, revision-checked temporary configure трёх существующих GPU-режимов и параметров; config revision/settings в ACK и frames. Интеграционная проверка сравнивает одни paused inputs и проверяет восстановление RGB без upload/rebuild. Контракт и ограничения: [[engineering/PROTOCOL_IMPLEMENTED]]. Добавлен общий C++ runner `examples/common/research` и `svctl research`: декларативные fusion-варианты, randomized complete blocks на последовательных paused frame sets с native RGBA capture, hashes/raw timing report и проверяемый restore при штатном завершении/cancel/callback failure. Проверки: [[validation/RESEARCH_RUNTIME]]. Ограниченный replay lease/watchdog `experiment_lease_v1` восстанавливает fusion/surface/pause после expiry/control disconnect; runner продлевает lease и ждёт idle после cleanup. Четыре native fusion-кандидата и runtime surface control добавлены: [[validation/NATIVE_FUSION]]. Многокадровый headless режим с lease-aware step реализован; Другие группы ConfigService, cursor restoration и GUI сценариев ещё предстоят; явный start/history/decode-cache reset описан ниже. Контракт восстановления и опыт с direct-view truth: [[validation/SERVER_BOUNDARY]].
 
 ## Цель и границы
 
@@ -177,6 +177,53 @@ publication, durable checkpoint или automatic resume. Для повтора �
 успешность определяется только завершённым JSON report и его полями. RGBA directory также должна
 быть новой. Продуктовая реализация — C++; Python используется только integration tests.
 
-Остаются replay/history/cache reset, оркестрация независимых scene/mount seeds, GUI сценариев,
+Остаются cursor restoration/GPU cache policy, оркестрация независимых scene/mount seeds, GUI сценариев,
 quality-oracle/критерии финальной серии, durable resume и общий experiment provenance. Изменения
 не являются новым подтверждающим quality исследованием и не закрывают E-STITCH-01.
+
+
+## Явный replay start и сброс истории
+
+Сценарий schema1 принимает optional `reset_replay: true` (default false для прежнего поведения).
+После acquire runner проверяет capability `replay_reset_v1`, выполняет leased `replay_reset`
+вместо обычного pause и ждёт post-ACK READY кадр. `ready_preparation=reset_first_row` фиксирует
+подготовку; нормализованный scenario и его hash включают reset_replay, в том числе false.
+Поэтому hash новых reports может отличаться от исторического даже при прежнем поведении;
+старые reports не переписываются. Готовый
+`configs/research/multiband-matrix.json` включает этот режим. При неполной первой строке runner
+завершает опыт ошибкой и выполняет cleanup; скрытого перехода к следующей строке нет.
+Прежняя однократная READY preparation через step остаётся только при reset_replay=false.
+
+Reset очищает decode cache источника и retained sync history, новый source session отделяет
+прогоны, delivery sequence продолжает расти. Идентичность входов сравнивается внутри trial
+с baseline своего прогона; между прогонами сравниваются dataset, scenario timestamps, settings,
+plan и RGB hashes, а не абсолютные delivery timestamps/session IDs.
+
+```plantuml
+@startuml
+participant "ExperimentRunner" as R
+participant "sv-client-lib" as L
+participant "sv-server / render thread" as S
+participant "Replay worker" as W
+R -> L : replay_reset(lease_id)
+L -> S : command replay_reset
+S -> S : validate source / lease
+S -> W : enqueue ReplayReset
+W -> W : cursor=0 / clear image cache / new epoch
+W -> S : Reset boundary
+S -> S : clear sync history and last_set
+W -> S : first row Frames
+S -> S : select first frame set
+W -> S : Control completion (paused)
+S --> L : ACK with new state_revision
+S --> L : FRAME at/after ACK revision
+L --> R : provenance + READY frame
+@enduml
+```
+
+*Рисунок R.2 — граница сброса отделяет историю предыдущего прогона от нового набора кадров.*
+
+Подробный wire contract и ограничения: [[engineering/PROTOCOL_IMPLEMENTED#Сброс replay к первой строке (`replay_reset_v1`)]].
+Это не restore первоначального cursor: report сохраняет `cursor_restored=false` и
+`restore_scope=fusion_surface_pause_only`. GPU/OS caches, telemetry и общая производительность
+после reset отдельно не нормализуются. Потерянный ACK не допускает автоматического retry.

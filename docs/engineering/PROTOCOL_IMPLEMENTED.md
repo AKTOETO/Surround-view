@@ -65,9 +65,9 @@ Handshake объявляет `experiment_lease_v1`. Lease привязан к co
 | `experiment_release` | `lease_id`: тот же владелец; ACK означает переход в restoring, а не завершение |
 | `state` / ACK | `experiment_lease`: state=`idle/active/restoring/failed`, lease_id, deadline_monotonic_ns, error; deadline не является временем клиента |
 
-Во время active владелец передаёт `lease_id` в `configure_fusion`, `configure_surface`, `pause`, `resume`, `step` и lease commands. Replay hello объявляет `experiment_step_v1`; шаг разрешён только владельцу с действующим token. Lease не возвращает playback cursor. Другие мутации (orbit/zoom/preset, calibration start/apply/cancel) блокируются; read-only state/catalog/calibration_status доступны. Команды без token, с чужим/старым ID или после истечения TTL возвращают `experiment_lease_conflict` без изменений. После завершения старый ID не становится обычной mutation без lease. Существующие команды без lease работают по-прежнему в idle.
+Во время active владелец передаёт `lease_id` в `configure_fusion`, `configure_surface`, `pause`, `resume`, `step`, `replay_reset` и lease commands. Replay hello объявляет `experiment_step_v1`; шаг разрешён только владельцу с действующим token. Lease не возвращает playback cursor. Другие мутации (orbit/zoom/preset, calibration start/apply/cancel) блокируются; read-only state/catalog/calibration_status доступны. Команды без token, с чужим/старым ID или после истечения TTL возвращают `experiment_lease_conflict` без изменений. После завершения старый ID не становится обычной mutation без lease. Существующие команды без lease работают по-прежнему в idle.
 
-`sv-client-lib` предоставляет `acquire_experiment(ttl_ms)`, `renew_experiment(id)`, `release_experiment(id)`, optional lease ID у configure_fusion/surface/pause/resume/step. Runner приобретает lease на 30000 ms и продлевает перед каждым trial и cleanup. Долгий progress callback/ожидание дольше TTL может прервать эксперимент.
+`sv-client-lib` предоставляет `acquire_experiment(ttl_ms)`, `renew_experiment(id)`, `release_experiment(id)`, optional lease ID у configure_fusion/surface/pause/resume/step/reset_replay. Runner приобретает lease на 30000 ms и продлевает перед каждым trial и cleanup. Долгий progress callback/ожидание дольше TTL может прервать эксперимент.
 
 Истечение срока или удаление control session запускает recovery на render thread: проверенные fusion и surface публикуются новым config snapshot, uniform settings обновляются между render calls, затем source получает асинхронный pause/resume при необходимости. Пока restoring, новые мутации отклоняются. На успешном source ACK состояние становится idle; статус idle означает завершённую координацию конфигурации и источника. Recovery не пишет файл. Source request не исполнился за 5 s либо восстановление завершилось ошибкой — failed; мутации остаются заблокированы до перезапуска. Поздний source ACK не снимает failed. Ошибки/переходы записываются в trace как experiment_restore events.
 
@@ -345,3 +345,32 @@ CameraCaptureMode дополнен optional `automatic_properties` (nullable fps
 
 
 На Boost≥1.83 продуктовые JSON-пути используют общую Precise number policy: SV01 decoder, load_config, GUI/CLI intents и archive import. В installed SDK доступен sv/json.hpp. Framing/команды не меняются; Legacy dataset reader и старый Boost имеют отдельные ограничения. Новые config/wire baseline могут отличаться последними binary64 bits. Контракт, regression и миграция: [[engineering/JSON_PRECISION]].
+
+
+## Сброс replay к первой строке (`replay_reset_v1`)
+
+HELLO replay-сервера объявляет `replay_reset_v1`; typed API библиотеки —
+`Client::reset_replay(lease_id = {})`, wire command — `replay_reset` с optional `lease_id`.
+В idle token должен отсутствовать/быть пустым; active lease разрешает команду только владельцу
+с действующим token. Истёкший/чужой token не превращает её в обычную мутацию.
+Для camera/socket source ACK отрицательный: `replay_reset_unsupported_for_source`.
+
+Команда асинхронная: worker последовательно завершает предыдущую операцию, ставит cursor на
+строку0 manifest, освобождает свой четырёхкамерный image cache, публикует reset boundary,
+декодирует/публикует первый набор, затем control completion. На reset boundary render thread
+очищает очереди Synchronizer, guards sequence/time и last_set. Lifetime counters не обнуляются.
+ACK accepted=true отправляется **после** обработки первого набора и completion; paused=true,
+новая state_revision. Клиент должен дождаться FRAME с revision не меньше ACK и проверить READY;
+неполная первая строка manifest может дать DEGRADED/NO_INPUT, reset не достраивает отсутствующие камеры.
+Ошибки загрузки остаются фатальными source failure, успешный ACK в этом случае не отправляется.
+
+Следующий step читает строку1 (для единственной строки — снова строку0). Внутренний sequence и
+frame_set_id продолжают расти; source_session_id меняется на `<startup-session>/reset-N`,
+source_timestamp_ns повторяет scenario timestamp строки manifest. До boundary могут быть доставлены
+старые события; они не относятся к post-ACK кадрам. Счётчики decoded/received/upload остаются
+накопительными. GPU caches, OS page cache, telemetry window и настройки fusion/surface/view не
+сбрасываются; это cold **decode-cache**, а не гарантия cold hardware benchmark. Команда не сохраняет
+конфиг на диск и не возвращает предыдущую позицию при lease release/expiry.
+
+При потере ACK автоматически повторять reset нельзя: каждый вызов создаёт новый epoch и двигает
+sequence. Сначала сверяйте state/frame provenance; durable idempotence пока не реализована.

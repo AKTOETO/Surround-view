@@ -411,3 +411,14 @@ CameraCaptureMode дополнен optional `automatic_properties` (nullable fps
 
 
 На Boost≥1.83 продуктовые JSON-пути используют общую Precise number policy: SV01 decoder, load_config, GUI/CLI intents и archive import. В installed SDK доступен sv/json.hpp. Framing/команды не меняются; Legacy dataset reader и старый Boost имеют отдельные ограничения. Новые config/wire baseline могут отличаться последними binary64 bits. Контракт, regression и миграция: [[engineering/JSON_PRECISION]].
+
+
+## Повторный запуск записи с первой строки
+
+Runner/другой клиент получает replay lease, запрашивает `replay_reset`, ждёт post-ACK frame и
+проверяет READY + timestamps строки0; затем применяет варианты и выполняет step между frame sets.
+На неполной первой строке исследовательский runner прекращает опыт и восстанавливает настройки.
+Release/expiry восстанавливает fusion/surface/pause; позиция записи не возвращается. После loss of
+ACK автоматический reset retry запрещён: это новая мутация, а не idempotent запрос.
+Sequence diagram и граница очистки истории: [[architecture/RESEARCH_RUNTIME#Явный replay start и сброс истории]].
+Точный контракт: [[PROTOCOL_IMPLEMENTED#Сброс replay к первой строке (`replay_reset_v1`)]].

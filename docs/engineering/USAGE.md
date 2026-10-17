@@ -1375,5 +1375,20 @@ build/svctl --unix /tmp/sv-prototype --timeout-ms 10000 research \
 перезаписывает существующий report. Для следующего запуска выбирайте новую папку/имя.
 В report проверяйте success/restored, scenario_sha256, trial_order_algorithm, trial_plan_sha256,
 trial_plan и trial_index samples. Matrix разворачивается в report.scenario.variants; seed задаёт
-порядок, не мир. Продолжение после аварии, возврат cursor и cold-cache reset пока не реализованы.
+порядок, не мир. Продолжение после аварии, возврат cursor и GPU/OS cache reset пока не реализованы.
 Полный контракт: [[architecture/RESEARCH_RUNTIME#Ограниченные матрицы и фиксированный план испытаний]].
+
+
+### Повторить сценарий с начала replay
+
+В scenario JSON добавьте `"reset_replay": true`; пример
+`configs/research/multiband-matrix.json` уже включает этот параметр. Используйте прежнюю команду
+`svctl research` и новый report path для каждого прогона. Обновлённые сервер/библиотека нужны
+совместно: требуется HELLO capability `replay_reset_v1`.
+
+Runner получает lease, сервер очищает свой decode cache и sync history, загружает первую строку
+manifest и остаётся на паузе. Последующие frame sets идут через step. Проверяйте
+`ready_preparation`, `frame_baselines[*].metadata.inputs[*].source_timestamp_ns`, success/restored
+и hashes. При неполной строке0 runner завершает опыт ошибкой; строка не пропускается. Старое поведение — `reset_replay` отсутствует/false, старт с текущего кадра.
+Нельзя считать reset очисткой GPU/OS caches либо возвратом прежней позиции после завершения.
+Семантика команды: [[PROTOCOL_IMPLEMENTED#Сброс replay к первой строке (`replay_reset_v1`)]].

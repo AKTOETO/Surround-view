@@ -135,3 +135,41 @@ restore при cancel/callback/capture failure и сохранность пре�
 Это инженерная проверка runner, не новая E-STITCH quality series. Новый order algorithm может
 изменить порядок по сравнению с историческим std::shuffle; прежние результаты не переписаны.
 Reset cursor/cache/history, scene orchestration, GUI и durable resume не реализованы.
+
+
+## 17.10.2026: управляемый replay reset
+
+Реализованы server capability/command replay_reset_v1/replay_reset, typed
+Client::reset_replay и optional scenario.reset_replay. Source worker публикует явную границу
+после cache clear/cursor0/new session; render thread очищает историю Synchronizer до новых frames.
+Sequence/frame_set_id и lifetime counters сохраняют монотонность; source session отличается.
+Это decode-cache reset; GPU/OS cache не очищается, cursor после lease не возвращается.
+
+| Проверка | Наблюдаемый результат |
+|---|---|
+| sources native | Два reset подряд: boundary → first Frames → Control; +4 loader calls при одинаковых путях; paused после ACK; новый session/растущий sequence |
+| core native | После reset_history нет retained inputs/ordering guards; READY после полного нового набора; диагностические counters не обнулены |
+| client_transports Unix/TCP profiles | Два трёхкадровых matrix прогона дают одинаковые sample RGB hashes и scenario timestamps, разные sessions и растущие frame_set IDs |
+| Неполная строка0 | После reset camera0 used=false, DEGRADED; +3 декодирования; step читает строку1; старая камера не сохраняется |
+| Runner на неполной строке0 | Failed report, samples=[], ready_preparation=reset_first_row, restored=true; hidden step отсутствует |
+| Lease controls | Без token/с чужим token reset отклонён; leased runner cancellation/progress/capture errors восстанавливают fusion/surface/pause |
+| camera_sources | Socket source отклоняет replay_reset; обычный producer/camera workflow сохранён |
+
+Полная Linux сборка `cmake --build build -j4` завершилась успешно. В первом прогоне прошли
+sources/core/camera_sources/source_work_timing/experiment_lease и watchdog/scenario tests, но
+client_transports обнаружил ошибку новой fixture: отсутствующая камера была обозначена пустой
+строкой вместо manifest null. После исправления fixture и расширения lease/cancellation coverage:
+
+```sh
+ctest --test-dir build -R '^(client_transports|experiment_watchdog|research_scenarios)$' --output-on-failure
+```
+
+Повторный прогон3/3 за29,05 с (client_transports26,02 с, watchdog3,02 с).
+Остальные5 затронутых entries прошли ранее: sources0,11 с, core0,00 с, camera_sources16,15 с,
+source_work_timing3,01 с, experiment_lease0,00 с. Полный66-entry suite не запускался.
+Проверен синтаксис27 PlantUML blocks architecture runtime/главы3 через локальный PlantUML jar;
+визуальная приёмка PDF/Аврора/физические камеры в этот этап не входят.
+
+Это проверка воспроизводимости инфраструктуры, не подтверждающее исследование качества сшивки.
+Следующие задачи: independent dataset/scene/mount/noise orchestration и quality-oracle outputs,
+затем GUI сценариев и durable resume; cursor snapshot/restore и GPU cache policy остаются отдельными.
