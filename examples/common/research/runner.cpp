@@ -180,6 +180,11 @@ boost::json::object run(const Scenario &scenario, const client::Options &options
         {
             throw std::runtime_error("server lacks frame_view_v1");
         }
+        if (quality && quality->requires_content_identity() &&
+            !connection->supports("replay_input_identity_v1"))
+        {
+            throw std::runtime_error("server lacks replay_input_identity_v1");
+        }
         const bool lease_step = connection->supports("experiment_step_v1");
         report["lease_step_supported"] = lease_step;
         if (scenario.frames > 1 && !lease_step)

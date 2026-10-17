@@ -9,6 +9,7 @@
 #include "sv/config_store.hpp"
 #include "sv/experiment_lease.hpp"
 #include "sv/fusion_runtime.hpp"
+#include "sv/input_identity.hpp"
 #include "sv/pipeline_spans.hpp"
 #include "sv/protocol.hpp"
 #include "sv/renderer.hpp"
@@ -400,6 +401,7 @@ ServerIO::ServerIO(const sv::Connections &n, const std::string &source_type,
         capabilities.push_back("step");
         capabilities.push_back("experiment_step_v1");
         capabilities.push_back("replay_reset_v1");
+        capabilities.push_back("replay_input_identity_v1");
     }
     try
     {
@@ -1464,6 +1466,13 @@ int main(int argc, char **argv)
                         input["source_clock_domain"] = frame.source_clock_domain;
                         input["source_sequence_id"] = std::to_string(frame.source_sequence);
                         input["source_timestamp_ns"] = std::to_string(frame.source_timestamp_ns);
+                        if (!frame.image_sha256.empty())
+                        {
+                            input["image_identity"] =
+                                sv::image_identity(*frame.image, frame.image_sha256);
+                            input["camera_model_sha256"] =
+                                sv::camera_model_sha256(config_store.active()->cameras[k]);
+                        }
                         if (frame.camera_capture)
                         {
                             input["camera_capture"] =

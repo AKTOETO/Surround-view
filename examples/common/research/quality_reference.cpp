@@ -2,6 +2,7 @@
 #include "digest.hpp"
 #include "quality_metrics.hpp"
 #include "sv/frame.hpp"
+#include "sv/input_identity.hpp"
 #include "sv/json.hpp"
 #include "sv/protocol.hpp"
 #include <cmath>
@@ -49,6 +50,28 @@ std::string string(const boost::json::value &value, size_t maximum = 4096)
     return std::string(text);
 }
 
+void digest_string(const boost::json::value &value)
+{
+    const auto text = string(value, 64);
+    if (text.size() != 64 || text.find_first_not_of("0123456789abcdef") != std::string::npos)
+    {
+        throw std::invalid_argument("quality input digest must be 64 lowercase hex characters");
+    }
+}
+
+void validate_identity(const boost::json::object &object)
+{
+    keys(object, {"algorithm", "sha256", "width", "height", "pixel_format", "row_origin"});
+    if (object.at("algorithm") != sv::image_identity_algorithm ||
+        object.at("pixel_format") != "RGB8" || object.at("row_origin") != "top_left")
+    {
+        throw std::invalid_argument("unsupported quality input image identity");
+    }
+    (void)integer(object.at("width"), 2, 4096);
+    (void)integer(object.at("height"), 2, 2160);
+    digest_string(object.at("sha256"));
+}
+
 std::string read_manifest(const std::filesystem::path &path)
 {
     constexpr size_t limit = 1024 * 1024;
@@ -76,7 +99,7 @@ struct QualityReference::Impl
         boost::json::array inputs;
     };
 
-    unsigned width = 0, height = 0;
+    unsigned version = 1, width = 0, height = 0;
     boost::json::object view, description;
     std::vector<FrameReference> frames;
 };
@@ -88,7 +111,7 @@ QualityReference::QualityReference(const std::filesystem::path &manifest)
     const auto document = sv::parse_json(text);
     const auto &object = document.as_object();
     keys(object, {"schema_version", "kind", "dataset_id", "width", "height", "view", "frames"});
-    (void)integer(object.at("schema_version"), 1, 1);
+    impl_->version = integer(object.at("schema_version"), 1, 2);
     const auto kind = string(object.at("kind"), 64);
     if (kind != "independent_ground_truth" && kind != "regression")
     {
@@ -138,7 +161,7 @@ QualityReference::QualityReference(const std::filesystem::path &manifest)
             "quality references exceed frame count or 128 MiB pixel budget");
     }
     impl_->description = {
-        {"schema_version", 1},
+        {"schema_version", impl_->version},
         {"algorithm", "masked_rgb8_v1"},
         {"kind", kind},
         {"dataset_id", string(object.at("dataset_id"), 128)},
@@ -148,7 +171,9 @@ QualityReference::QualityReference(const std::filesystem::path &manifest)
         {"view", impl_->view},
         {"frames", boost::json::array{}},
         {"independence", "declared by reference author; not verified"},
-        {"input_guard", "calibration IDs and scenario timestamps; not input image hashes"}};
+        {"input_guard", impl_->version == 2
+                            ? "decoded RGB8 content and numeric camera model, IDs and timestamps"
+                            : "legacy metadata only: calibration IDs and scenario timestamps"}};
     for (const auto &value : frames)
     {
         const auto &fields = value.as_object();
@@ -162,7 +187,17 @@ QualityReference::QualityReference(const std::filesystem::path &manifest)
         for (unsigned camera = 0; camera < 4; ++camera)
         {
             const auto &guard = reference.inputs[camera].as_object();
-            keys(guard, {"camera_id", "calibration_id", "source_timestamp_ns"});
+            if (impl_->version == 2)
+            {
+                keys(guard, {"camera_id", "calibration_id", "source_timestamp_ns", "image_identity",
+                             "camera_model_sha256"});
+                validate_identity(guard.at("image_identity").as_object());
+                digest_string(guard.at("camera_model_sha256"));
+            }
+            else
+            {
+                keys(guard, {"camera_id", "calibration_id", "source_timestamp_ns"});
+            }
             (void)integer(guard.at("camera_id"), camera, camera);
             (void)string(guard.at("calibration_id"), 256);
             const auto stamp = string(guard.at("source_timestamp_ns"), 20);
@@ -212,6 +247,11 @@ QualityReference::QualityReference(const std::filesystem::path &manifest)
 }
 
 QualityReference::~QualityReference() = default;
+
+bool QualityReference::requires_content_identity() const
+{
+    return impl_->version == 2;
+}
 
 void QualityReference::validate(const Scenario &scenario) const
 {

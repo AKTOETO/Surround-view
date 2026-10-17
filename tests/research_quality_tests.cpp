@@ -246,3 +246,50 @@ TEST(ResearchQuality, MissingEvaluatorIsRejectedBeforeConnection)
         EXPECT_ANY_THROW(sv::research::parse_scenario(document));
     }
 }
+
+TEST(ResearchQuality, SchemaTwoRequiresImageAndNumericCameraGuards)
+{
+    ReferenceFixture fixture;
+    fixture.manifest["schema_version"] = 2;
+    fixture.save();
+    EXPECT_ANY_THROW(sv::research::QualityReference{fixture.directory / "reference.json"});
+    for (unsigned camera = 0; camera < 4; ++camera)
+    {
+        auto &guard = fixture.manifest.at("frames")
+                          .as_array()[0]
+                          .as_object()
+                          .at("inputs")
+                          .as_array()[camera]
+                          .as_object();
+        guard["image_identity"] = boost::json::object{{"algorithm", "packed_rgb8_sha256_v1"},
+                                                      {"sha256", std::string(64, 'a')},
+                                                      {"width", 2},
+                                                      {"height", 2},
+                                                      {"pixel_format", "RGB8"},
+                                                      {"row_origin", "top_left"}};
+        guard["camera_model_sha256"] = std::string(64, 'b');
+        auto &actual = fixture.frame.header.at("inputs").as_array()[camera].as_object();
+        actual["image_identity"] = guard.at("image_identity");
+        actual["camera_model_sha256"] = guard.at("camera_model_sha256");
+    }
+    fixture.save();
+    sv::research::QualityReference reference(fixture.directory / "reference.json");
+    EXPECT_TRUE(reference.requires_content_identity());
+    auto evaluate = [&]()
+    { return reference.evaluate({0, 0, 0, false, std::make_shared<sv::Message>(fixture.frame)}); };
+    EXPECT_TRUE(evaluate().at("exact_match").as_bool());
+    auto &first = fixture.frame.header.at("inputs").as_array()[0].as_object();
+    first.at("image_identity").as_object()["sha256"] = std::string(64, 'c');
+    EXPECT_THROW(evaluate(), std::runtime_error);
+    first.at("image_identity").as_object()["sha256"] = std::string(64, 'a');
+    first["camera_model_sha256"] = std::string(64, 'c');
+    EXPECT_THROW(evaluate(), std::runtime_error);
+    fixture.manifest.at("frames")
+        .as_array()[0]
+        .as_object()
+        .at("inputs")
+        .as_array()[0]
+        .as_object()["camera_model_sha256"] = "not-a-digest";
+    fixture.save();
+    EXPECT_ANY_THROW(sv::research::QualityReference{fixture.directory / "reference.json"});
+}

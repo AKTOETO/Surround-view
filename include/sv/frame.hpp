@@ -26,6 +26,7 @@ struct Frame
     uint64_t source_sequence = 0, source_timestamp_ns = 0;
     std::shared_ptr<const SourceWorkRecord> source_work = {};
     std::shared_ptr<const CameraFrameProvenance> camera_capture = {};
+    std::string image_sha256 = {}; // Present for immutable replay image buffers.
 };
 
 struct FrameSet

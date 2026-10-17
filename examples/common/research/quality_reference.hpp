@@ -15,6 +15,7 @@ class QualityReference
     QualityReference(const QualityReference &) = delete;
     QualityReference &operator=(const QualityReference &) = delete;
 
+    bool requires_content_identity() const;
     void validate(const Scenario &) const;
     boost::json::object description() const;
     boost::json::object evaluate(const Sample &) const;

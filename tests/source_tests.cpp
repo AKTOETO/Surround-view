@@ -1,3 +1,4 @@
+#include "sv/input_identity.hpp"
 #include "sv/protocol.hpp"
 #include "sv/source.hpp"
 #include <atomic>
@@ -115,6 +116,7 @@ int main(int argc, char **argv)
         std::condition_variable condition;
         bool entered = false, release = false;
         std::atomic<unsigned> calls{0};
+        std::atomic<unsigned char> pixel_value{123};
         auto loader = [&](const std::filesystem::path &p)
         {
             ++calls;
@@ -123,8 +125,9 @@ int main(int argc, char **argv)
             condition.notify_all();
             condition.wait(lock, [&] { return release; });
             auto &camera = config.cameras.at(std::stoi(p.filename().string()));
-            return sv::Image{camera.width, camera.height, 3,
-                             std::vector<unsigned char>(camera.width * camera.height * 3, 123)};
+            return sv::Image{
+                camera.width, camera.height, 3,
+                std::vector<unsigned char>(camera.width * camera.height * 3, pixel_value.load())};
         };
         auto source = sv::make_replay_source(config, manifest, true, loader);
         {
@@ -163,10 +166,17 @@ int main(int argc, char **argv)
             }
         }
         check(frames == 1 && events.back().paused && calls == 4, "step/cache semantics");
+        const auto original_hash = events.front().frames[0]->image_sha256;
+        check(original_hash == sv::rgb8_image_sha256(*events.front().frames[0]->image),
+              "image identity differs from delivered buffer");
         auto previous_sequence = events.front().frames[0]->sequence;
         auto previous_session = events.front().frames[0]->source_session;
         for (uint64_t request = 10; request < 12; ++request)
         {
+            if (request == 11)
+            {
+                pixel_value = 124; // Same path/timestamps/calibration, different decoded content.
+            }
             const auto before = calls.load();
             check(source->request(sv::SourceAction::ReplayReset, request), "reset submission");
             events = wait(*source, request);
@@ -178,6 +188,10 @@ int main(int argc, char **argv)
                       events[1].frames[0]->sequence > previous_sequence &&
                       events[1].frames[0]->source_session != previous_session,
                   "reset first row/provenance");
+            const auto reset_hash = events[1].frames[0]->image_sha256;
+            check((request == 10 ? reset_hash == original_hash : reset_hash != original_hash) &&
+                      reset_hash == sv::rgb8_image_sha256(*events[1].frames[0]->image),
+                  "reset reused stale image identity");
             previous_sequence = events[1].frames[0]->sequence;
             previous_session = events[1].frames[0]->source_session;
             check(events[2].kind == sv::SourceEvent::Kind::Control && events[2].paused &&
@@ -248,21 +262,21 @@ int main(int argc, char **argv)
             auto session = reply.front().header.at("session_id");
             for (int seq = 0; seq < sent_per_camera; ++seq)
             {
-                message =
-                    sv::encode({10,
-                                {{"session_id", session},
-                                 {"camera_id", i},
-                                 {"calibration_id", camera.calibration_id},
-                                 {"width", camera.width},
-                                 {"height", camera.height},
-                                 {"stride_bytes", camera.width * 3},
-                                 {"pixel_format", "RGB8"},
-                                 {"row_origin", "top_left"},
-                                 {"clock_domain", "test"},
-                                 {"sequence_id", std::to_string(seq)},
-                                 {"source_timestamp_ns", std::to_string(seq)},
-                                 {"scenario_timestamp_ns", "0"}},
-                                std::vector<unsigned char>(camera.width * camera.height * 3, 123)});
+                message = sv::encode({10,
+                                      {{"session_id", session},
+                                       {"camera_id", i},
+                                       {"calibration_id", camera.calibration_id},
+                                       {"width", camera.width},
+                                       {"height", camera.height},
+                                       {"stride_bytes", camera.width * 3},
+                                       {"pixel_format", "RGB8"},
+                                       {"row_origin", "top_left"},
+                                       {"clock_domain", "test"},
+                                       {"sequence_id", std::to_string(seq)},
+                                       {"source_timestamp_ns", std::to_string(seq)},
+                                       {"scenario_timestamp_ns", "0"}},
+                                      std::vector<unsigned char>(camera.width * camera.height * 3,
+                                                                 pixel_value.load())});
                 boost::asio::write(socket, boost::asio::buffer(message));
             }
         }

@@ -4,6 +4,8 @@ import hashlib
 import os
 from pathlib import Path
 import socket
+import struct
+from PIL import Image
 import select
 import subprocess
 import sys
@@ -226,10 +228,25 @@ class ClientTransportTests(unittest.TestCase):
                     name = f'reference-{frame_index}.ppm'
                     (reference_dir / name).write_bytes(f'P6\n{width} {height}\n255\n'.encode() + rgb)
                     guards = [{key: source[key] for key in
-                               ('camera_id', 'calibration_id', 'source_timestamp_ns')}
+                               ('camera_id', 'calibration_id', 'source_timestamp_ns', 'image_identity', 'camera_model_sha256')}
                               for source in sample['metadata']['inputs']]
+                    replay_row = json.loads(fixture.read_text())['frames'][frame_index]
+                    for guard, camera, path in zip(guards, cfg['cameras'], replay_row['paths']):
+                        image = Image.open(fixture.parent / path).convert('RGB')
+                        expected = hashlib.sha256(b'sv-packed-rgb8-v1\0' +
+                            struct.pack('>II', *image.size) + image.tobytes()).hexdigest()
+                        self.assertEqual(guard['image_identity']['sha256'], expected)
+                        projection = camera['projection']
+                        values = [projection[key] for key in
+                            ('fx', 'fy', 'cx', 'cy', 'theta_max_rad', 'z_epsilon_m')]
+                        values += projection['k'] + sum(camera['T_camera_from_vehicle'], [])
+                        values = [0.0 if x == 0 else x for x in values]
+                        expected_model = hashlib.sha256(b'sv-camera-model-v1\0' +
+                            struct.pack('>III', camera['id'], camera['resolution']['width'],
+                                        camera['resolution']['height']) + struct.pack('>26d', *values)).hexdigest()
+                        self.assertEqual(guard['camera_model_sha256'], expected_model)
                     references.append(dict(rgb=name, mask='mask.ppm', inputs=guards))
-                reference = dict(schema_version=1, kind='regression', dataset_id='transport-fixture',
+                reference = dict(schema_version=2, kind='regression', dataset_id='transport-fixture',
                                  width=width, height=height, view=sequence_data['baseline']['view'],
                                  frames=references)
                 reference_path = reference_dir / 'reference.json'
@@ -258,6 +275,23 @@ class ClientTransportTests(unittest.TestCase):
                         self.assertTrue(sample['quality']['exact_match'])
                         self.assertIsNone(sample['quality']['psnr_db'])
                         self.assertEqual(sample['quality']['selected_pixels'], width * height // 2)
+                # Change source bytes with identical manifest path, timestamps and calibration IDs.
+                first_path = fixture.parent / json.loads(fixture.read_text())['frames'][0]['paths'][0]
+                original_image = first_path.read_bytes()
+                changed = bytearray(original_image)
+                changed[-1] ^= 1
+                first_path.write_bytes(changed)
+                try:
+                    content_report = directory / 'quality-content-mismatch.json'
+                    content = subprocess.run([str(BUILD / 'svctl'), *endpoint, '--timeout-ms', '3000',
+                        'research', str(quality_scenario), str(content_report)],
+                        text=True, capture_output=True, timeout=20)
+                    self.assertNotEqual(content.returncode, 0)
+                    content_data = json.loads(content_report.read_text())
+                    self.assertTrue(content_data['restored'])
+                    self.assertEqual(content_data['error'], 'quality reference input guard mismatch')
+                finally:
+                    first_path.write_bytes(original_image)
                 # A mismatched virtual view is a failed evaluation with lease cleanup.
                 reference['view'] = dict(reference['view'], distance_m=reference['view']['distance_m'] + .25)
                 reference_path.write_text(json.dumps(reference))

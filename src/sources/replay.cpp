@@ -1,3 +1,4 @@
+#include "sv/input_identity.hpp"
 #include "sv/source.hpp"
 #include "sv/vision.hpp"
 #include <algorithm>
@@ -36,6 +37,7 @@ class ReplaySource final : public FrameSource
     std::thread worker_;
     std::array<std::filesystem::path, 4> cached_paths_;
     std::array<std::shared_ptr<const Image>, 4> cached_images_;
+    std::array<std::string, 4> cached_hashes_;
 
     void publish(SourceEvent event)
     {
@@ -99,6 +101,7 @@ class ReplaySource final : public FrameSource
                     throw std::runtime_error("replay image differs from calibration at camera " +
                                              std::to_string(k));
                 }
+                cached_hashes_[k] = rgb8_image_sha256(image);
                 cached_images_[k] = std::make_shared<Image>(std::move(image));
                 cached_paths_[k] = r.paths[k];
                 ++decoded_;
@@ -123,6 +126,7 @@ class ReplaySource final : public FrameSource
             const auto timestamp =
                 offset < 0 ? delivered - uint64_t(-offset) : delivered + uint64_t(offset);
             event.frames[k] = Frame{k, sequence, timestamp, r.scenario_ns, cached_images_[k]};
+            event.frames[k]->image_sha256 = cached_hashes_[k];
             event.frames[k]->source_session = session_;
             event.frames[k]->source_clock_domain = "scenario";
             event.frames[k]->source_sequence = sequence;
@@ -222,6 +226,7 @@ class ReplaySource final : public FrameSource
                         row = 0;
                         cached_paths_ = {};
                         cached_images_ = {};
+                        cached_hashes_ = {};
                         session_ = initial_session_ + "/reset-" + std::to_string(++reset_epoch_);
                         SourceEvent boundary;
                         boundary.kind = SourceEvent::Kind::Reset;
