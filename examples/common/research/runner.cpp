@@ -1,10 +1,12 @@
 #include "connection.hpp"
+#include "digest.hpp"
+#include "quality_metrics.hpp"
+#include "quality_reference.hpp"
 #include "scenario.hpp"
 #include "trial_plan.hpp"
 #include <algorithm>
 #include <chrono>
 #include <cmath>
-#include <openssl/sha.h>
 #include <stdexcept>
 #include <thread>
 
@@ -12,20 +14,6 @@ namespace sv::research
 {
 namespace
 {
-std::string hash(const void *data, size_t size)
-{
-    unsigned char digest[SHA256_DIGEST_LENGTH];
-    SHA256(static_cast<const unsigned char *>(data), size, digest);
-    std::string result;
-    constexpr char digits[] = "0123456789abcdef";
-    for (auto byte : digest)
-    {
-        result += digits[byte >> 4];
-        result += digits[byte & 15];
-    }
-    return result;
-}
-
 boost::json::object settings(const client::FusionSettings &fusion)
 {
     boost::json::object result{{"mode", fusion.mode},
@@ -110,7 +98,8 @@ boost::json::array summaries(const boost::json::array &samples, size_t variant_c
 boost::json::object run(const Scenario &scenario, const client::Options &options,
                         const std::atomic_bool *cancel,
                         std::function<void(unsigned, unsigned)> progress,
-                        std::function<std::string(const Sample &)> capture)
+                        std::function<std::string(const Sample &)> capture,
+                        std::shared_ptr<const QualityReference> quality)
 {
     boost::json::array variants;
     for (const auto &variant : scenario.variants)
@@ -130,6 +119,10 @@ boost::json::object run(const Scenario &scenario, const client::Options &options
                                     {"frames", scenario.frames},
                                     {"capture_frames", scenario.capture_frames},
                                     {"reset_replay", scenario.reset_replay}};
+    if (scenario.quality_reference)
+    {
+        description["quality_reference"] = *scenario.quality_reference;
+    }
     // Also validate callers that construct Scenario directly (e.g. future GUI).
     (void)parse_scenario(description);
     const auto plan = make_trial_plan(scenario);
@@ -140,9 +133,9 @@ boost::json::object run(const Scenario &scenario, const client::Options &options
         {"schema_version", 1},
         {"trial_order_algorithm", trial_order_algorithm},
         {"trial_plan", plan_json},
-        {"trial_plan_sha256", hash(serialized_plan.data(), serialized_plan.size())},
+        {"trial_plan_sha256", sha256(serialized_plan.data(), serialized_plan.size())},
         {"scenario", description},
-        {"scenario_sha256", hash(serialized.data(), serialized.size())},
+        {"scenario_sha256", sha256(serialized.data(), serialized.size())},
         {"experiment",
          scenario.frames == 1 ? "paused_frame_fusion_screen" : "paused_sequence_fusion_screen"},
         {"success", false},
@@ -153,7 +146,8 @@ boost::json::object run(const Scenario &scenario, const client::Options &options
         {"restore_scope", "fusion_surface_pause_only"},
         {"cursor_restored", false},
         {"limitation",
-         "Sequential paused frame sets; no independent quality truth, "
+         "Sequential paused frame sets; external reference independence is declared, not verified; "
+         "no "
          "cursor restoration, GPU cache reset, sustained FPS, or durable progress checkpoints"}};
     std::unique_ptr<Connection> connection;
     boost::json::object original;
@@ -172,7 +166,20 @@ boost::json::object run(const Scenario &scenario, const client::Options &options
         {
             throw std::runtime_error("capture_frames requires a capture consumer");
         }
+        if (scenario.quality_reference && !quality)
+        {
+            throw std::runtime_error("quality_reference requires a loaded evaluator");
+        }
+        if (quality)
+        {
+            quality->validate(scenario);
+            report["quality_reference"] = quality->description();
+        }
         connection = std::make_unique<Connection>(options);
+        if (quality && !connection->supports("frame_view_v1"))
+        {
+            throw std::runtime_error("server lacks frame_view_v1");
+        }
         const bool lease_step = connection->supports("experiment_step_v1");
         report["lease_step_supported"] = lease_step;
         if (scenario.frames > 1 && !lease_step)
@@ -212,7 +219,7 @@ boost::json::object run(const Scenario &scenario, const client::Options &options
             throw std::runtime_error("research requires a READY replay frame set");
         }
         report["baseline"] = baseline->header;
-        report["baseline_rgba_sha256"] = hash(baseline->payload.data(), baseline->payload.size());
+        report["baseline_rgba_sha256"] = sha256(baseline->payload.data(), baseline->payload.size());
         unsigned completed = 0;
         size_t planned_index = 0;
         const unsigned total =
@@ -249,7 +256,7 @@ boost::json::object run(const Scenario &scenario, const client::Options &options
                 }
                 baseline = std::move(next);
             }
-            restore_reference = hash(baseline->payload.data(), baseline->payload.size());
+            restore_reference = sha256(baseline->payload.data(), baseline->payload.size());
             report["last_baseline_rgba_sha256"] = restore_reference;
             report.at("frame_baselines")
                 .as_array()
@@ -313,7 +320,12 @@ boost::json::object run(const Scenario &scenario, const client::Options &options
                         {"block", block},
                         {"warmup", block < scenario.warmup},
                         {"metadata", frame->header},
-                        {"rgba_sha256", hash(frame->payload.data(), frame->payload.size())}};
+                        {"rgba_sha256", sha256(frame->payload.data(), frame->payload.size())}};
+                    if (quality && !sample.at("warmup").as_bool())
+                    {
+                        sample["quality"] = quality->evaluate(
+                            {frame_index, static_cast<unsigned>(index), block, false, frame});
+                    }
                     if (scenario.capture_frames && !sample.at("warmup").as_bool())
                     {
                         sample["rgba_file"] = capture(
@@ -355,7 +367,7 @@ boost::json::object run(const Scenario &scenario, const client::Options &options
                                             {"lease_id", lease_id}});
             auto frame = connection->frame(text(restored, "state_revision"));
             report["restored_frame"] = frame->header;
-            report["restored_rgba_sha256"] = hash(frame->payload.data(), frame->payload.size());
+            report["restored_rgba_sha256"] = sha256(frame->payload.data(), frame->payload.size());
             if (frame->header.at("fusion") != original.at("fusion") ||
                 (!restore_reference.empty() &&
                  text(report, "restored_rgba_sha256") != restore_reference))
@@ -405,6 +417,19 @@ boost::json::object run(const Scenario &scenario, const client::Options &options
                                                        scenario.variants.size(), index)}});
     }
     report["frame_summaries"] = std::move(frame_summaries);
+    if (quality)
+    {
+        try
+        {
+            report["quality_summaries"] =
+                quality_summaries(report.at("samples").as_array(), scenario.variants.size());
+        }
+        catch (const std::exception &error)
+        {
+            report["quality_error"] = error.what();
+            report["success"] = false;
+        }
+    }
     report["percentile_definition"] = "nearest rank; warmup excluded; per-frame timings, not FPS";
     return report;
 }

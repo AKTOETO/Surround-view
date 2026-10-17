@@ -385,6 +385,7 @@ ServerIO::ServerIO(const sv::Connections &n, const std::string &source_type,
                     "runtime_surface_v1",
                     "experiment_lease_v1",
                     "copied_rgba",
+                    "frame_view_v1",
                     "output_selection_v1",
                     "render_support_v1",
                     "source_visibility_v1",
@@ -1495,6 +1496,15 @@ int main(int argc, char **argv)
                      {"config_revision", std::to_string(config_store.revision())},
                      {"fusion", sv::fusion_settings(config_store.active()->fusion)},
                      {"surface", config_store.active()->effective.as_object().at("surface")},
+                     {"view",
+                      boost::json::object{
+                          {"azimuth_rad", view.azimuth},
+                          {"elevation_rad", view.elevation},
+                          {"distance_m", view.distance},
+                          {"fov_y_rad", view.fov},
+                          {"clip_m", boost::json::array{view.near_z, view.far_z}},
+                          {"target_m",
+                           boost::json::array{view.target.x, view.target.y, view.target.z}}}},
                      {"fusion_backend", sv::research_fusion(config_store.active()->fusion.mode)
                                             ? "gles_projection_cpu_fusion_v1"
                                             : "gles_local_fusion_v1"},

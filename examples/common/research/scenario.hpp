@@ -7,6 +7,8 @@
 
 namespace sv::research
 {
+class QualityReference;
+
 struct Variant
 {
     client::FusionSettings fusion;
@@ -19,6 +21,7 @@ struct Scenario
     unsigned repeats = 3, warmup = 2, seed = 1, frames = 1;
     bool capture_frames = false;
     bool reset_replay = false;
+    std::optional<std::string> quality_reference;
 };
 
 struct Sample
@@ -33,5 +36,6 @@ Scenario parse_scenario(const boost::json::value &);
 boost::json::object run(const Scenario &, const client::Options &,
                         const std::atomic_bool *cancel = nullptr,
                         std::function<void(unsigned, unsigned)> progress = {},
-                        std::function<std::string(const Sample &)> capture = {});
+                        std::function<std::string(const Sample &)> capture = {},
+                        std::shared_ptr<const QualityReference> quality = {});
 } // namespace sv::research

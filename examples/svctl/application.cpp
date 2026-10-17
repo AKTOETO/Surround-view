@@ -1,4 +1,5 @@
 #include "options.hpp"
+#include "quality_reference.hpp"
 #include "report_output.hpp"
 #include "scenario.hpp"
 #include "sv/json.hpp"
@@ -36,6 +37,13 @@ int execute(const Options &options)
         {
             throw std::runtime_error("report must not overwrite scenario");
         }
+        std::shared_ptr<const research::QualityReference> quality;
+        if (scenario.quality_reference)
+        {
+            quality = std::make_shared<research::QualityReference>(scenario_path.parent_path() /
+                                                                   *scenario.quality_reference);
+            quality->validate(scenario);
+        }
         research::ReportOutput output(report_path);
         client::Options connection;
         connection.endpoint = options.endpoint;
@@ -65,7 +73,8 @@ int execute(const Options &options)
                 return (directory.filename() / name).generic_string();
             };
         }
-        const auto report = research::run(scenario, connection, nullptr, {}, std::move(capture));
+        const auto report =
+            research::run(scenario, connection, nullptr, {}, std::move(capture), quality);
         output.write(report);
         std::cout << boost::json::serialize(
                          boost::json::object{{"success", report.at("success")},

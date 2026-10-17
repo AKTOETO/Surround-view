@@ -211,6 +211,75 @@ class ClientTransportTests(unittest.TestCase):
                     for a, b in zip(old['metadata']['inputs'], new['metadata']['inputs']):
                         self.assertEqual(a['source_timestamp_ns'], b['source_timestamp_ns'])
                         self.assertNotEqual(a['source_session_id'], b['source_session_id'])
+                # A server capture is explicitly a regression reference, never independent truth.
+                reference_dir = directory / 'quality'
+                reference_dir.mkdir()
+                width, height = sequence_data['baseline']['width'], sequence_data['baseline']['height']
+                mask = bytes(255 if (pixel // 3) % 2 else 0 for pixel in range(width * height * 3))
+                (reference_dir / 'mask.ppm').write_bytes(f'P6\n{width} {height}\n255\n'.encode() + mask)
+                references = []
+                for frame_index in range(3):
+                    sample = next(s for s in sequence_data['samples']
+                                  if s['frame_index'] == frame_index and s['variant'] == 0)
+                    rgba = (directory / sample['rgba_file']).read_bytes()
+                    rgb = bytes(rgba[i] for i in range(len(rgba)) if i % 4 != 3)
+                    name = f'reference-{frame_index}.ppm'
+                    (reference_dir / name).write_bytes(f'P6\n{width} {height}\n255\n'.encode() + rgb)
+                    guards = [{key: source[key] for key in
+                               ('camera_id', 'calibration_id', 'source_timestamp_ns')}
+                              for source in sample['metadata']['inputs']]
+                    references.append(dict(rgb=name, mask='mask.ppm', inputs=guards))
+                reference = dict(schema_version=1, kind='regression', dataset_id='transport-fixture',
+                                 width=width, height=height, view=sequence_data['baseline']['view'],
+                                 frames=references)
+                reference_path = reference_dir / 'reference.json'
+                reference_path.write_text(json.dumps(reference))
+                quality_scenario = directory / 'quality-scenario.json'
+                quality_scenario.write_text(json.dumps(dict(schema_version=1, frames=3,
+                    reset_replay=True, warmup=1, repeats=2, quality_reference='quality/reference.json',
+                    variants=[sequence_data['scenario']['variants'][0]])))
+                quality_report = directory / 'quality-report.json'
+                quality = subprocess.run([str(BUILD / 'svctl'), *endpoint, '--timeout-ms', '3000',
+                    'research', str(quality_scenario), str(quality_report)],
+                    text=True, capture_output=True, timeout=20)
+                self.assertEqual(quality.returncode, 0, quality.stderr + quality.stdout)
+                quality_data = json.loads(quality_report.read_text())
+                self.assertTrue(quality_data['restored'])
+                self.assertEqual(quality_data['quality_reference']['kind'], 'regression')
+                self.assertEqual(quality_data['quality_reference']['manifest_sha256'],
+                                 hashlib.sha256(reference_path.read_bytes()).hexdigest())
+                self.assertEqual(quality_data['quality_summaries'][0]['frames'], 3)
+                self.assertEqual(quality_data['quality_summaries'][0]['selected_pixels'], width * height // 2 * 3)
+                self.assertEqual(quality_data['quality_summaries'][0]['pixel_weighted_mae_rgb8'], 0)
+                for sample in quality_data['samples']:
+                    if sample['warmup']:
+                        self.assertNotIn('quality', sample)
+                    else:
+                        self.assertTrue(sample['quality']['exact_match'])
+                        self.assertIsNone(sample['quality']['psnr_db'])
+                        self.assertEqual(sample['quality']['selected_pixels'], width * height // 2)
+                # A mismatched virtual view is a failed evaluation with lease cleanup.
+                reference['view'] = dict(reference['view'], distance_m=reference['view']['distance_m'] + .25)
+                reference_path.write_text(json.dumps(reference))
+                mismatch_report = directory / 'quality-mismatch-report.json'
+                mismatch = subprocess.run([str(BUILD / 'svctl'), *endpoint, '--timeout-ms', '3000',
+                    'research', str(quality_scenario), str(mismatch_report)],
+                    text=True, capture_output=True, timeout=20)
+                self.assertNotEqual(mismatch.returncode, 0)
+                mismatch_data = json.loads(mismatch_report.read_text())
+                self.assertFalse(mismatch_data['success'])
+                self.assertTrue(mismatch_data['restored'])
+                self.assertIn('guard mismatch', mismatch_data['error'])
+                self.assertFalse(any(not s['warmup'] for s in mismatch_data['samples']))
+                # Malformed references are refused before report reservation/server mutation.
+                reference['kind'] = 'unverified_truth'
+                reference_path.write_text(json.dumps(reference))
+                invalid_report = directory / 'quality-invalid-report.json'
+                invalid = subprocess.run([str(BUILD / 'svctl'), *endpoint,
+                    'research', str(quality_scenario), str(invalid_report)],
+                    text=True, capture_output=True, timeout=5)
+                self.assertNotEqual(invalid.returncode, 0)
+                self.assertFalse(invalid_report.exists())
                 self.assertFalse(sequence_data['cursor_restored'])
                 self.assertEqual(sequence_data['restore_scope'],'fusion_surface_pause_only')
                 self.assertIn('alpha_expansion',sequence_data['catalog']['seam_solver'])
