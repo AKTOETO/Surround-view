@@ -1,6 +1,6 @@
 # Карта документации
 
-> Сверено 18.10.2026. Linux-прототип с runtime алгоритмами, C++ research runner/batch, GUI исследования с reference/import, составлением и запуском batch-плана, driving preview и Blender fixtures реализован. Подтверждающие опыты, интеграция preview как camera producer и приёмка на Авроре остаются открытыми.
+> Сверено 18.10.2026. Linux-прототип с runtime алгоритмами, C++ research runner/batch, GUI исследования с reference/import, импортом в редактор, составлением и запуском batch-плана, driving preview и Blender fixtures реализован. Подтверждающие опыты, интеграция preview как camera producer и приёмка на Авроре остаются открытыми.
 
 ## Порядок чтения
 

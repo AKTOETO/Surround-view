@@ -516,3 +516,38 @@ Controller --> Editor: Terminal status и результаты
 ```
 
 *Рисунок RR.10 — фиксация визуального состава серии и общий preflight до сетевых мутаций.*
+
+## Импорт batch в редактируемый состав
+
+Импорт заменяет состав только после успешной структурной проверки всего плана. Относительные
+scenario paths разрешаются от каталога выбранного batch file, как в файловом run_batch;
+reference paths по-прежнему разрешает FileExperiment относительно исходного scenario.
+Импорт читает только небольшой обычный файл плана, не загружает datasets и не подключается
+к серверу. Полный preflight сценариев/эталонов остаётся обязательным перед каждым запуском.
+
+```plantuml
+@startuml
+title Импорт batch с сохранением черновика при ошибке
+actor Пользователь as User
+participant "ResearchBatchEditor / QML" as Editor
+participant "C++ import / shared plan parser" as Parser
+database "Batch file (до64 KiB)" as File
+User -> Editor: Импортировать план…
+Editor -> Parser: Локальный URL
+Parser -> File: Открыть обычный файл, bounded read
+File --> Parser: JSON bytes
+Parser -> Parser: schema/ID/duplicate/path/bounds
+alt Ошибка чтения или структуры
+  Parser --> Editor: success=false, причина
+  Editor --> User: Ошибка; прежний состав сохранён
+else План структурно валиден
+  Parser -> Parser: Сохранить ID/порядок; получить absolute scenario URLs
+  Parser --> Editor: Полностью подготовленные строки
+  Editor -> Editor: Атомарно заменить состав
+  Editor --> User: Доступны порядок/удаление/добавление
+end
+note over Editor: Запуск отдельно повторяет полный preflight
+@enduml
+```
+
+*Рисунок RR.11 — импорт структуры не запускает исследование и не подменяет полный preflight.*

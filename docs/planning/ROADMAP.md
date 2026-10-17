@@ -1,5 +1,14 @@
 # Подробный план реализации
 
+18.10.2026: импорт существующего batch-плана в редактируемый список выполнен. Общий C++
+parser сохраняет ID/порядок, проверяет структуру до замены состава; ошибка/отмена сохраняет
+черновик. Исправлена потеря filesystem meaning при lexical нормализации symlink/.. в file URL;
+bounded regular-file reader исключает зависание open на FIFO. Импорт не загружает scenarios/
+references и не выполняет сетевых мутаций; full preflight остаётся перед запуском. Далее
+отдельное сохранение черновика, report comparison, catalog-driven controls и bundles.
+Полный последовательный Linux CTest68/68 за159,29с; client_transports82,54с, QML6,87с.
+[[engineering/RESEARCH_BATCH#Импорт плана в редактор серии]], §3.57.
+
 18.10.2026: визуальный состав новой batch-серии реализован: выбор scenario files, порядок и
 удаление кнопками, лимит8 и стабильные при перестановке ID. C++ overload принимает frozen
 документ из памяти и после общего preflight сохраняет inputs/plan.json до сети; GUI использует

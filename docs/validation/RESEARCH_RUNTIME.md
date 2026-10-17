@@ -474,3 +474,49 @@ endpoint/fixture и пропускается без них. Qt5/Aurora/device ac
 client_transports82,22с, simulator_configuration_qml6,82с. Общий runner проверен через CLI,
 saved-batch GUI и memory-composition GUI. 36 PlantUML blocks архитектурной главы и главы3
 прошли `-checkonly`; Microsoft clang-format и `git diff --check` прошли.
+
+## 18.10.2026: импорт batch в редактор и filesystem semantics
+
+Общий C++ `batch_plan` предоставляет parse_batch_plan/read_batch_plan для импорта и обоих
+run_batch overload. Структура проверяется полностью до выдачи replacement rows; сценарии и
+references на стадии импорта не читаются. Selected batch directory остаётся base относительных
+ссылок, включая symlink самого batch, как в CLI. Входные URL больше не проходят lexical
+сокращение `link/..`: regression создаёт два разных scenario files и сравнивает canonical
+identity после import → draft roundtrip. Это исправляет реально обнаруженный выбор неверного
+файла в прежнем QFileInfo.absoluteFilePath преобразовании.
+
+Проверки:
+
+- shared parser сохраняет bytes и принимает структуру при отсутствующих scenario files;
+  прежние strict schema/ID/unknown/bounds тесты run_batch сохранены;
+- bounded reader отклоняет directory/FIFO/empty/oversize/missing; O_NONBLOCK open предотвращает
+  ожидание writer FIFO; файл ограничен64KiB, время regular-file IO deadline не ограничено;
+- Qt helper: ID/порядок/relative paths, literal `#`/`%`, selected symlink batch base и
+  filesystem meaning symlink/.. после преобразования URL;
+- controller: импорт без endpoint, без worker/выходного report; busy import отклоняется,
+  состояние текущего исследования не сбрасывается;
+- standalone QML: cancel chooser сохраняет draft, успешный import заменяет весь состав,
+  неверный поздний duplicate-ID row сохраняет прежний список и показывает ошибку;
+  добавление после импорта выбирает свободный ID;
+- live QML Unix/TCP/combined: импорт relative-path плана, удаление `retired`, добавление `case-2`,
+  перестановка и запуск кнопкой; итоговые ID проверены как case-2/case-1. Существующие
+  passed/failed/not_requested/incomplete и cancel/restore executions сохранены.
+
+Targeted research_scenarios/simulator_research_unit/simulator_configuration_qml прошли3/3
+за6,90с. Live client_transports прошёл за82,54с. Рисунок3.54 — реальное QML окно после
+структурного импорта regression плана, до preflight/запуска; воспроизводится client_transports,
+исходный screenshot `/tmp/sv-reference-result.png.import.png`. Содержимое временных сценариев
+создаёт и удаляет transport harness. Это Linux/Qt6.11.2 evidence, не scientific truth и не
+квалификация Qt5/Aurora/устройства. 37 PlantUML blocks затронутых архитектурной главы и главы3
+прошли -checkonly; clang-format и git diff --check прошли.
+
+Импорт не пишет исходный план, не создаёт переносимый bundle и не переключает server recording.
+Предыдущий draft сохраняется при ошибке; данные/полный preflight заново требуются при запуске.
+Сохранение неисполненного черновика, comparison разных reports и прежние исследовательские/
+целевые gates остаются открытыми.
+
+
+Итоговый полный последовательный Linux прогон с доступом к локальным сокетам:
+**CTest68/68 за159,29с**, client_transports82,54с, simulator_configuration_qml6,87с.
+После исправления file URL regression все input/restore/quality и QML проверки прошли;
+изменение алгоритмов сшивки либо новое научное подтверждение этим срезом не заявляются.
