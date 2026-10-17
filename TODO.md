@@ -199,6 +199,7 @@ warmup/repeats и exclusive report reservation реализованы в общ�
   текущий scenario.seed управляет только порядком методов. Первый C++ masked RGB evaluator
   (reference hashes, view/input guards, MAE/RMSE/PSNR, frame-level summaries) реализован:
   [[engineering/RESEARCH_QUALITY]]. Остаются подготовка независимой truth/holdout, заранее
-  заданные критерии/thresholds, natural-object/ghost metrics и подтверждающая серия;
+  научно обоснованные критерии/thresholds, natural-object/ghost metrics и подтверждающая серия;
+  технический механизм thresholds/all-measured acceptance и CLI scientific rejection уже реализован;
   regression captures не считать independent truth.
 - Добавить GUI редактора/прогресса/сравнения поверх того же service и durable resume/checkpoints.

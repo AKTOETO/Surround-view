@@ -230,3 +230,25 @@ source pixel при прежнем manifest/IDs/timestamps: получен input
 живой case выполнен Unix/TCP harness. Полный66-entry suite и Аврора не проверялись.
 Hash стоимость не объявляется бесплатной: loader span пока исключает hash/cache preparation;
 полный dataset/config passport и target overhead измерения остаются открытыми.
+
+
+## 17.10.2026: thresholds и отдельная quality acceptance
+
+Manifest criteria max_mae_rgb8/max_rmse_rgb8/min_psnr_db проверяются до подключения и включены
+в manifest hash. All-measured policy сохраняет все trials, warmup исключён; workflow/restore
+и quality outcome разделены. Partial/guard/callback/restore failure не может получить passed.
+Финальные unit/CLI checks research_scenarios/svctl_options2/2 за0,01 с; live client_transports1/1
+за31,80 с после normalization fix. Ранее replay_ipc прошёл6,49 с. Native GTest suite27 tests
+(26 standalone, один live endpoint case выполняется harness). Полная Linux сборка успешна.
+
+Проверены включительные границы, unknown/boolean/string/negative/out-of-range criteria,
+perfect-match PSNR, warmup exclusion, failed-frame counts и partial completeness. Live Unix/TCP:
+нулевые regression errors проходят; изменённый truth pixel нарушает thresholds, сохраняются все9
+samples, success/restored=true, status=failed, CLI5, failed_frame_variants=1. Подмена source pixel
+с прежними IDs/timestamps даёт guard error и status=incomplete. Первый unit прогон выявил ошибку
+проверки теста: сравнивались strict JSON integer/double kinds вместо числовых значений; тест
+исправлен. Заодно исправлен product view guard, который мог отвергать математически одинаковые
+значения8/8.0; native test теперь проверяет такую normalization. Допуск/округление не вводились.
+
+Полный66-entry suite/Аврора не запускались. Эти критерии — механизм инструмента, не обоснованные
+нормы качества; независимая подтверждающая выборка и научная preregistration всё ещё нужны.

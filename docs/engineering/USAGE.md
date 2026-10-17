@@ -1406,3 +1406,15 @@ Report сохраняет reference/pixel hashes, per-sample masked MAE/RMSE/PSN
 исключая warmup и не размножая observations числом paused repeats. Отсутствие guard match
 завершает опыт с cleanup. success означает workflow, не пройденный quality threshold.
 Серверный capture помечайте kind=regression; он не заменяет независимый Blender/direct-view truth.
+
+
+### Проверить заранее заданные пороги качества
+
+В manifest quality_reference добавьте непустой criteria, например
+`{"max_mae_rgb8":5.0,"max_rmse_rgb8":10.0,"min_psnr_db":30.0}`. Это пример синтаксиса,
+научные пороги нужно обосновать отдельно. Они хэшируются до подключения и применяются ко всем
+measured samples; warmup исключён. Runner сохраняет всю серию даже при нарушении порогов.
+Читайте report.quality_acceptance и sample.quality.acceptance: workflow success не означает
+качество passed. CLI0 — выполнено и passed/not_requested;5 — выполнено, качество failed;
+4 — ошибка/incomplete. Полный формат: [[engineering/RESEARCH_QUALITY#Заданные до запуска критерии качества]].
+Для новых серий используйте reference schema2 с decoded-image и numeric camera-model guards.

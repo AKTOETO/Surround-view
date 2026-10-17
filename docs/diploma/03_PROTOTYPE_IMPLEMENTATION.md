@@ -1697,7 +1697,7 @@ reference на frame set.
 публикует в каждом кадре снимок orbit/elevation/distance, FOV, clipping planes и target. Evaluator
 проверяет этот снимок, формат/stride, READY, output_product и calibration IDs/timestamps четырёх
 использованных камер. Ошибка сопоставления прекращает эксперимент с восстановлением настроек.
-Это не content verification исходных camera images: такие hashes ещё предстоит включить.
+В первом срезе не было content verification camera images; schema2 с такими guards описана в §3.48.
 
 Для области M рассчитываются:
 
@@ -1727,7 +1727,7 @@ Kind независимого эталона декларируется авто
 метрики такого capture проверяют оценщик, но не дают нового научного вывода о сшивке.
 Протокол, формат manifest и проверки: [[engineering/RESEARCH_QUALITY]],
 [[validation/RESEARCH_RUNTIME]]. success=true означает завершённый workflow, а не достижение
-заранее заданного порога качества; критерии и независимая подтверждающая серия ещё нужны.
+заранее заданного порога качества; механизм критериев описан в §3.49, независимая подтверждающая серия ещё нужна.
 
 ```plantuml
 @startuml
@@ -1801,3 +1801,59 @@ end
 loader, не весь decode/hash/cache workflow. Результат не является полным паспортом dataset:
 вся запись, все группы конфигурации и scene/mount/noise seeds ещё требуют фиксации.
 Контракт и результаты: [[engineering/RESEARCH_QUALITY]], [[validation/RESEARCH_RUNTIME]].
+
+
+### 3.49. Разделение выполнения и приёмки качества
+
+Численные метрики сами по себе не задают критерий приемлемости. В manifest эталона введены
+optional criteria: максимальные MAE/RMSE и минимальный PSNR. Loader проверяет значения и
+фиксирует manifest/hash до подключения к серверу. Это фиксация правил конкретного прогона,
+а не доказательство независимой научной preregistration; нормы необходимо обосновать отдельно.
+Порог сравнивается включительно с каждым measured sample. Perfect match представлен null PSNR
+с exact_match=true и проходит минимальный PSNR. Плохое качество не останавливает оставшиеся
+trials: это сохраняет сведения об остальных методах и кадрах и предотвращает выборочный экспорт.
+
+| Измерение результата | Возможные состояния | Смысл |
+|---|---|---|
+| Workflow success | true/false | Выполнен ли план без технического отказа |
+| Restore | true/false | Восстановлены ли предусмотренные настройки |
+| Quality acceptance | not_requested/incomplete/passed/failed | Проверены ли все measured samples и пройдены ли заданные thresholds |
+
+Partial/cancel/guard/restore failure не может получить quality passed, даже если успевшие samples
+имеют нулевую ошибку. Сводка сохраняет evaluated/failed_samples и отдельное число уникальных
+пар(frame_index,variant); повторы одного paused кадра не трактуются как независимые сцены.
+CLI возвращает5 для завершённого опыта с quality failed,4 для технической ошибки/incomplete,
+0 для успешного опыта с passed/not_requested. Это позволяет автоматизации не путать научное
+отклонение кандидата с поломкой стенда.
+
+```plantuml
+@startuml
+start
+:До подключения загрузить truth/ROI/criteria;
+:Зафиксировать manifest SHA256;
+:Выполнить все trials и записать raw samples;
+:Выполнить restore;
+if (Workflow завершён и measured samples полны?) then (да)
+  if (Все заданные thresholds пройдены?) then (да)
+    :quality_acceptance = passed;
+  else (нет)
+    :quality_acceptance = failed;
+    :CLI exit 5;
+  endif
+else (нет)
+  :quality_acceptance = incomplete;
+  :CLI exit 4;
+endif
+stop
+@enduml
+```
+
+*Рисунок 3.47 — критерии не превращают неполное измерение в успешное подтверждение качества.*
+
+Диаграмма относится к явно заданным criteria; при их отсутствии status=not_requested.
+Known-answer tests проверяют включительные границы, нулевую ошибку и partial/restore guards.
+Unix/TCP test изменяет reference RGB при неизменных наблюдениях: серия сохраняется полностью,
+workflow/restore успешны, quality failed и CLI5. Подмена source RGB отдельно даёт guard failure
+и quality incomplete. Исправлено также ложное несовпадение integer/double JSON representations
+одного view: значения нормализуются в double без изменения точности и без epsilon comparison.
+Подробный контракт и результаты: [[engineering/RESEARCH_QUALITY]], [[validation/RESEARCH_RUNTIME]].

@@ -125,9 +125,9 @@ Frames одного клипа также не объявляются стати
 одного frame/variant меняются между measured repeats, success=false и quality_error фиксирует
 нестабильность; restore к этому моменту уже выполнен. Samples сохраняются для диагностики.
 
-`success=true` означает завершённый workflow и прошедшие guards, **не** достижение заданного
-порога качества. Пороговые критерии, holdout/scene seeds, доверительные интервалы, полная dataset/config
-identity и полноценная quality-oracle orchestration ещё предстоят. Время evaluator/capture —
+`success=true` означает завершённый workflow и прошедшие guards; результат порогов качества
+находится отдельно в quality_acceptance. Механизм пороговых критериев описан ниже. Holdout/scene seeds, доверительные интервалы,
+полная dataset/config identity и полноценная quality-oracle orchestration ещё предстоят. Время evaluator/capture —
 клиентская нагрузка вне server pipeline_spans_ms; такие прогоны не измеряют sustained FPS.
 
 ```plantuml
@@ -206,3 +206,51 @@ theta_max,z_epsilon,k[0..3],T_camera_from_vehicle[0..15] row-major. Нули к�
 не добавлен. Хэширование добавляет работу при decode; replay_load timing остаётся временем loader,
 а не всего hash/cache preparation. Текущие render spans также не измеряют полную стоимость source
 hashing. Для performance нужно отдельно учесть эту нагрузку; эффект на target пока не измерен.
+
+
+## Заданные до запуска критерии качества
+
+Manifest schema1/schema2 принимает optional непустой `criteria`:
+
+```json
+"criteria": {"max_mae_rgb8": 5.0, "max_rmse_rgb8": 10.0, "min_psnr_db": 30.0}
+```
+
+Можно указать любое непустое подмножество трёх полей. MAE/RMSE thresholds — finite0…255,
+PSNR — finite0…200 dB; unknown/negative/boolean/string values отклоняются до подключения.
+Сравнения включают границу: MAE≤max, RMSE≤max, PSNR≥min. Perfect match с psnr_db=null,
+exact_match=true удовлетворяет любому допустимому min PSNR. Числа criteria и view нормализуются
+в double, поэтому синтаксис8 и8.0 не создаёт ложного несовпадения. Дробные значения не округляются
+до integer, epsilon при сравнении view не применяется.
+
+Criteria загружаются с reference до подключения и входят в manifest_sha256. Файл после загрузки
+не перечитывается. Это фиксация порогов данного прогона, **не** внешняя научная регистрация:
+пороги всё равно нужно обосновать/утвердить до подтверждающей серии. Пример5/10/30 не является
+рекомендованной нормой качества или результатом выбора алгоритма.
+
+Каждый measured sample получает quality.acceptance={passed,failed_criteria}. Пороговый отказ
+не останавливает trials: остальные варианты/кадры и restore должны выполниться, чтобы не скрыть
+плохие условия. Отмена/ошибка guard/capture/restore сохраняют существующий failed workflow.
+
+В report.quality_acceptance:
+
+| Status | Значение |
+|---|---|
+| not_requested | Criteria отсутствуют; нет заявления о прохождении порогов |
+| incomplete | Workflow/restore не завершён либо нет полного measured sample set |
+| passed | Все measured samples полного опыта проходят все заданные thresholds |
+| failed | Полный опыт завершён, хотя бы один measured sample нарушил threshold |
+
+Policy all_measured_samples_v1 проверяет **каждый** sample, а не только среднее качество.
+Expected count=frames×variants×repeats, warmup исключён. Evaluated/failed_samples — число
+повторных рендеров; evaluated/failed_frame_variants — число уникальных пар(frame_index,variant),
+а не число независимых сцен. Raw samples позволяют локализовать конкретный метод/кадр.
+Success и restored остаются статусами выполнения, а не качества: допустим success=true,
+restored=true, quality_acceptance.status=failed. При неполном опыте status всегда incomplete,
+даже если все успевшие samples прошли thresholds.
+
+CLI выводит quality_status и возвращает0 для успешного workflow с passed/not_requested,
+5 для полного опыта с failed,4 для ошибки workflow/incomplete. Ошибки preflight/argument parsing
+остаются прежними исключениями CLI; не трактуйте любой ненулевой код как качество failed.
+В автоматизации сохраняйте report и различайте scientific rejection(5) и технический отказ(4).
+Для threshold study schema2 предпочтительнее legacy metadata-only schema1.

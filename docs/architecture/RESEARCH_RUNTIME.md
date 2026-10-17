@@ -246,7 +246,7 @@ quality summaries считают frame_index один раз при повтор
 Разделены declared independent_ground_truth и regression; код не подтверждает истинность
 объявленного kind. Legacy schema1 проверяет только IDs/timestamps; schema2 дополнительно проверяет hashes
 decoded camera pixels и активной числовой модели. Независимые scene/mount/noise seeds, полная dataset/config identity,
-preregistered thresholds, object/ghost metrics, GUI и durable checkpoints всё ещё нужны.
+научно обоснованные thresholds, object/ghost metrics, GUI и durable checkpoints всё ещё нужны.
 Наличие evaluator не закрывает подтверждение E-STITCH-01.
 
 
@@ -261,3 +261,15 @@ legacy режим, автоматического понижения прове�
 
 Не следует называть это полной immutable dataset registry: ещё не фиксируются вся запись,
 scene/mount/noise seeds, все server groups и physical-camera provenance одним паспортом.
+
+
+## Отдельный результат threshold acceptance
+
+Optional criteria во внешнем manifest загружаются и хэшируются до подключения. C++ evaluator
+аннотирует каждый measured sample; общий runner формирует quality_acceptance со статусами
+not_requested/incomplete/passed/failed. Плохое качество не обрывает сбор данных; partial/cancel/
+restore failure не может получить passed. Workflow success и scientific rejection различаются,
+CLI отдаёт5 при завершённом опыте с непройденными порогами. Policy проверяет все measured
+samples, не только averages. Контракт: [[engineering/RESEARCH_QUALITY#Заданные до запуска критерии качества]].
+Это механизм фиксации/проверки порогов одного прогона; независимая preregistration,
+обоснование норм, scene/mount/noise orchestration и подтверждающая серия остаются работой.
