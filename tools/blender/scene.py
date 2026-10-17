@@ -28,6 +28,7 @@ from diagnostic_motion import position_for_capture
 from scenario import load as load_scenario, validate as validate_scenario, perturb, near_obstacle_positions
 import board_targets
 import environments
+from render_io import render_still
 import depth as depth_tools
 
 # Blender MCP and the interactive console keep Python modules between captures.
@@ -116,6 +117,15 @@ def car(scene, name, xyz, paint, mats):
             box(scene, "lamp", (x,y,.76), (.04,.39,.14),mat,root,.035)
     box(scene, "front grille", (2.303,0,.48), (.025,.7,.18),mats['rubber'],root)
     return root
+
+
+def set_overview_camera(scene):
+    """A useful default/restore pose; calibrated capture explicitly sets its own optics."""
+    scene.camera.location = (10, -12, 10)
+    direction = Vector((1, 0, .4)) - scene.camera.location
+    scene.camera.rotation_euler = direction.to_track_quat('-Z', 'Y').to_euler()
+    scene.camera.data.lens = 32
+    scene.view_layers[0].update()
 
 
 def build_scene(recipe=None):
@@ -222,6 +232,7 @@ def build_scene(recipe=None):
     obj = bpy.data.objects.new("SV capture camera",camera)
     scene.collection.objects.link(obj)
     scene.camera = obj
+    set_overview_camera(scene)
     return scene
 
 
@@ -326,7 +337,7 @@ def capture(scene, output, frames=2, face_size=256, start_frame=0, calibration_b
                     depth_stem = f"frame{index:04d}_cam{cam['id']}_{face}_depth_####"
                     depth_output.file_name = depth_stem
                     depth_filename = depth_stem.replace('####', f'{frame + 1:04d}') + '.exr'
-                bpy.ops.render.render(write_still=True, scene=scene.name)
+                render_still(scene, bpy.ops.render.render)
                 paths[face] = filename
                 if depth_state:
                     depth_paths[face] = str(Path('depth') / depth_filename)
@@ -349,13 +360,10 @@ def capture(scene, output, frames=2, face_size=256, start_frame=0, calibration_b
             diagnostic_target, {'frames':frames, 'frame_step':frame_step}, 0)
     depth_tools.restore_depth_output(scene, depth_state)
     # A true 3D overview, separate from sv-server's reconstructed surround view.
-    scene.camera.location = (10,-12,10)
-    direction = Vector((1,0,0.4)) - scene.camera.location
-    scene.camera.rotation_euler = direction.to_track_quat('-Z','Y').to_euler()
-    scene.camera.data.lens = 32
+    set_overview_camera(scene)
     scene.render.resolution_x, scene.render.resolution_y = 960,640
     scene.render.filepath = str(output / 'overview.png')
-    bpy.ops.render.render(write_still=True, scene=scene.name)
+    render_still(scene, bpy.ops.render.render)
     # Save just this scene and its dependencies, never overwrite the user's open .blend.
     bpy.data.libraries.write(str(output / 'street.blend'), {scene})
     metadata = {'schema_version':1, 'origin':('blender_metric_cargo_yard_v1'
@@ -383,7 +391,7 @@ def capture(scene, output, frames=2, face_size=256, start_frame=0, calibration_b
                               ([] if depth_truth else ['depth/semantic truth not exported']),
                 'script_sha256':{name:hashlib.sha256(Path(__file__).with_name(name).read_bytes()).hexdigest()
                                  for name in ('scene.py','rig.py','scenario.py','board_targets.py','depth.py',
-                                               'diagnostic_motion.py','environments.py')},
+                                               'diagnostic_motion.py','environments.py','render_io.py')},
                 'sha256':{p.relative_to(output).as_posix():hashlib.sha256(p.read_bytes()).hexdigest()
                           for p in sorted([*output.glob('*.png'), *depth_dir.glob('*.exr')])}}
     (output / 'capture.json').write_text(json.dumps(metadata,indent=2)+'\n')

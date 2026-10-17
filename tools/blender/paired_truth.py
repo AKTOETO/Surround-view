@@ -15,6 +15,7 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from rig import configuration, vehicle_pose
 from scene import capture
+from render_io import render_still
 from visibility import visible_camera_bits
 from geometry_truth import opaque_hit, source_object_ids
 
@@ -143,7 +144,7 @@ def capture_paired(scene, output, frames=3, face_size=64, frame_step=6, width=32
                 raise RuntimeError('virtual reference pixel convention mismatch')
             rgb_name, labels_name = f'virtual_{index:04d}.png', f'objects_{index:04d}.npy'
             render.filepath = str(output / rgb_name)
-            bpy.ops.render.render(write_still=True, scene=scene.name)
+            render_still(scene, bpy.ops.render.render)
             labels, visibility = object_truth(scene, view_pose, cfg, ids, pose)
             np.save(output / labels_name, labels, allow_pickle=False)
             visibility_name = f'visibility_{index:04d}.npy'

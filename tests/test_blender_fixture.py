@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 import sys
 import tempfile
+from types import SimpleNamespace
 import unittest
 
 import numpy as np
@@ -14,6 +15,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools'))
 from rig import configuration, cube_coordinates, vehicle_pose
 from scenario import perturb, validate, near_obstacle_positions, validate_family_plan
 from environments import cargo_layout
+from render_io import render_still
 from convert import bilinear, convert, convert_camera, linear_rgb, srgb8
 from depth_truth import _sample_depth, convert_camera_depth
 from validate_depth_plane import evaluate as evaluate_depth_plane
@@ -124,6 +126,27 @@ class BlenderFixtureTests(unittest.TestCase):
             bad = dict(plan, cases=[dict(plan['cases'][0], id=identifier)])
             with self.assertRaises(ValueError):
                 validate_family_plan(bad)
+
+    def test_cancelled_or_missing_render_cannot_be_published_as_complete(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            image = Path(temporary) / 'frame.png'
+            world = SimpleNamespace(name='test-world', render=SimpleNamespace(filepath=str(image)))
+            with self.assertRaises(RuntimeError):
+                render_still(world, lambda **kwargs: {'CANCELLED'})
+            with self.assertRaises(RuntimeError):
+                render_still(world, lambda **kwargs: {'FINISHED'})
+            image.touch()
+            with self.assertRaises(RuntimeError):
+                render_still(world, lambda **kwargs: {'FINISHED'})
+            image.write_bytes(b'nonempty-test-output')
+            with self.assertRaises(RuntimeError):
+                render_still(world, lambda **kwargs: {'CANCELLED'})
+            calls = []
+            def finished(**kwargs):
+                calls.append(kwargs)
+                return {'FINISHED'}
+            self.assertEqual(render_still(world, finished), image)
+            self.assertEqual(calls, [dict(write_still=True, scene='test-world')])
 
     def test_invalid_scenario_rules(self):
         for recipe in (dict(schema_version=True, seed=0), dict(schema_version=1, seed=-1), dict(schema_version=1, seed=True),
