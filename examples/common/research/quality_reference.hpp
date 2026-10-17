@@ -1,4 +1,5 @@
 #pragma once
+#include "quality_criteria.hpp"
 #include "scenario.hpp"
 #include <filesystem>
 #include <memory>
@@ -16,6 +17,7 @@ class QualityReference
     QualityReference &operator=(const QualityReference &) = delete;
 
     bool requires_content_identity() const;
+    const std::optional<QualityCriteria> &criteria() const;
     void validate(const Scenario &) const;
     boost::json::object description() const;
     boost::json::object evaluate(const Sample &) const;

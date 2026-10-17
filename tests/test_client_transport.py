@@ -247,6 +247,7 @@ class ClientTransportTests(unittest.TestCase):
                         self.assertEqual(guard['camera_model_sha256'], expected_model)
                     references.append(dict(rgb=name, mask='mask.ppm', inputs=guards))
                 reference = dict(schema_version=2, kind='regression', dataset_id='transport-fixture',
+                                 criteria=dict(max_mae_rgb8=0, max_rmse_rgb8=0, min_psnr_db=100),
                                  width=width, height=height, view=sequence_data['baseline']['view'],
                                  frames=references)
                 reference_path = reference_dir / 'reference.json'
@@ -262,6 +263,9 @@ class ClientTransportTests(unittest.TestCase):
                 self.assertEqual(quality.returncode, 0, quality.stderr + quality.stdout)
                 quality_data = json.loads(quality_report.read_text())
                 self.assertTrue(quality_data['restored'])
+                self.assertEqual(quality_data['quality_acceptance']['status'], 'passed')
+                self.assertEqual(quality_data['quality_acceptance']['evaluated_frame_variants'], 3)
+                self.assertEqual(quality_data['quality_acceptance']['evaluated_samples'], 6)
                 self.assertEqual(quality_data['quality_reference']['kind'], 'regression')
                 self.assertEqual(quality_data['quality_reference']['manifest_sha256'],
                                  hashlib.sha256(reference_path.read_bytes()).hexdigest())
@@ -275,6 +279,28 @@ class ClientTransportTests(unittest.TestCase):
                         self.assertTrue(sample['quality']['exact_match'])
                         self.assertIsNone(sample['quality']['psnr_db'])
                         self.assertEqual(sample['quality']['selected_pixels'], width * height // 2)
+                # A failed threshold is scientific rejection, while workflow/restore succeeded.
+                truth_path = reference_dir / references[0]['rgb']
+                original_truth = truth_path.read_bytes()
+                altered_truth = bytearray(original_truth)
+                altered_truth[-1] ^= 1  # Last pixel is inside alternating ROI.
+                truth_path.write_bytes(altered_truth)
+                try:
+                    rejected_report = directory / 'quality-rejected.json'
+                    rejected = subprocess.run([str(BUILD / 'svctl'), *endpoint, '--timeout-ms', '3000',
+                        'research', str(quality_scenario), str(rejected_report)],
+                        text=True, capture_output=True, timeout=20)
+                    self.assertEqual(rejected.returncode, 5, rejected.stderr + rejected.stdout)
+                    rejected_data = json.loads(rejected_report.read_text())
+                    self.assertTrue(rejected_data['success'])
+                    self.assertTrue(rejected_data['restored'])
+                    self.assertEqual(rejected_data['quality_acceptance']['status'], 'failed')
+                    self.assertEqual(rejected_data['quality_acceptance']['failed_frame_variants'], 1)
+                    self.assertEqual(len(rejected_data['samples']), 9)
+                    self.assertTrue(any(not s['quality']['acceptance']['passed']
+                                        for s in rejected_data['samples'] if not s['warmup']))
+                finally:
+                    truth_path.write_bytes(original_truth)
                 # Change source bytes with identical manifest path, timestamps and calibration IDs.
                 first_path = fixture.parent / json.loads(fixture.read_text())['frames'][0]['paths'][0]
                 original_image = first_path.read_bytes()
@@ -289,6 +315,7 @@ class ClientTransportTests(unittest.TestCase):
                     self.assertNotEqual(content.returncode, 0)
                     content_data = json.loads(content_report.read_text())
                     self.assertTrue(content_data['restored'])
+                    self.assertEqual(content_data['quality_acceptance']['status'], 'incomplete')
                     self.assertEqual(content_data['error'], 'quality reference input guard mismatch')
                 finally:
                     first_path.write_bytes(original_image)

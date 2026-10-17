@@ -102,6 +102,7 @@ struct QualityReference::Impl
     unsigned version = 1, width = 0, height = 0;
     boost::json::object view, description;
     std::vector<FrameReference> frames;
+    std::optional<QualityCriteria> criteria;
 };
 
 QualityReference::QualityReference(const std::filesystem::path &manifest)
@@ -110,8 +111,13 @@ QualityReference::QualityReference(const std::filesystem::path &manifest)
     const auto text = read_manifest(manifest);
     const auto document = sv::parse_json(text);
     const auto &object = document.as_object();
-    keys(object, {"schema_version", "kind", "dataset_id", "width", "height", "view", "frames"});
+    keys(object,
+         {"schema_version", "kind", "dataset_id", "width", "height", "view", "frames", "criteria"});
     impl_->version = integer(object.at("schema_version"), 1, 2);
+    if (const auto *criteria = object.if_contains("criteria"))
+    {
+        impl_->criteria = parse_quality_criteria(criteria->as_object());
+    }
     const auto kind = string(object.at("kind"), 64);
     if (kind != "independent_ground_truth" && kind != "regression")
     {
@@ -129,20 +135,22 @@ QualityReference::QualityReference(const std::filesystem::path &manifest)
         {
             throw std::invalid_argument("non-finite quality reference view");
         }
+        impl_->view[key] = impl_->view.at(key).to_number<double>();
     }
     for (const char *key : {"clip_m", "target_m"})
     {
-        const auto &coordinates = impl_->view.at(key).as_array();
+        auto &coordinates = impl_->view.at(key).as_array();
         if (coordinates.size() != (std::string_view(key) == "clip_m" ? 2U : 3U))
         {
             throw std::invalid_argument("quality reference view vector length");
         }
-        for (const auto &coordinate : coordinates)
+        for (auto &coordinate : coordinates)
         {
             if (!std::isfinite(coordinate.to_number<double>()))
             {
                 throw std::invalid_argument("non-finite quality reference view coordinate");
             }
+            coordinate = coordinate.to_number<double>();
         }
     }
     const auto &clips = impl_->view.at("clip_m").as_array();
@@ -174,6 +182,10 @@ QualityReference::QualityReference(const std::filesystem::path &manifest)
         {"input_guard", impl_->version == 2
                             ? "decoded RGB8 content and numeric camera model, IDs and timestamps"
                             : "legacy metadata only: calibration IDs and scenario timestamps"}};
+    if (impl_->criteria)
+    {
+        impl_->description["criteria"] = quality_criteria_json(*impl_->criteria);
+    }
     for (const auto &value : frames)
     {
         const auto &fields = value.as_object();
@@ -253,6 +265,11 @@ bool QualityReference::requires_content_identity() const
     return impl_->version == 2;
 }
 
+const std::optional<QualityCriteria> &QualityReference::criteria() const
+{
+    return impl_->criteria;
+}
+
 void QualityReference::validate(const Scenario &scenario) const
 {
     if (!scenario.reset_replay || scenario.frames != impl_->frames.size())
@@ -312,6 +329,12 @@ boost::json::object QualityReference::evaluate(const Sample &sample) const
             }
         }
     }
-    return masked_rgb_metrics(sample.frame->payload, reference.rgb.pixels, reference.mask.pixels);
+    auto result =
+        masked_rgb_metrics(sample.frame->payload, reference.rgb.pixels, reference.mask.pixels);
+    if (impl_->criteria)
+    {
+        result["acceptance"] = check_quality_criteria(result, *impl_->criteria);
+    }
+    return result;
 }
 } // namespace sv::research

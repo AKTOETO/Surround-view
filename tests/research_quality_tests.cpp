@@ -110,6 +110,11 @@ TEST(ResearchQuality, RejectsInvalidMasksAndBuffers)
 TEST(ResearchQuality, ManifestIdentityAndGuardedEvaluation)
 {
     ReferenceFixture fixture;
+    // JSON integer syntax for an exactly equal view must not reject a FRAME double.
+    fixture.manifest.at("view").as_object()["azimuth_rad"] = 0;
+    fixture.manifest.at("view").as_object()["distance_m"] = 8;
+    fixture.manifest.at("view").as_object().at("target_m").as_array()[0] = 0;
+    fixture.save();
     sv::research::QualityReference reference(fixture.directory / "reference.json");
     sv::research::Scenario scenario;
     scenario.reset_replay = true;

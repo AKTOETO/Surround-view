@@ -76,12 +76,20 @@ int execute(const Options &options)
         const auto report =
             research::run(scenario, connection, nullptr, {}, std::move(capture), quality);
         output.write(report);
+        const auto *acceptance = report.if_contains("quality_acceptance");
+        const auto status =
+            acceptance ? acceptance->as_object().at("status") : boost::json::value("not_requested");
         std::cout << boost::json::serialize(
                          boost::json::object{{"success", report.at("success")},
                                              {"report_path", report_path.string()},
-                                             {"restored", report.at("restored")}})
+                                             {"restored", report.at("restored")},
+                                             {"quality_status", status}})
                   << '\n';
-        return report.at("success").as_bool() ? 0 : 4;
+        if (!report.at("success").as_bool() || status == "incomplete")
+        {
+            return 4;
+        }
+        return status == "failed" ? 5 : 0;
     }
     std::mutex mutex;
     std::condition_variable changed;

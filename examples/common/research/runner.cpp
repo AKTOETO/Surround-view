@@ -435,6 +435,13 @@ boost::json::object run(const Scenario &scenario, const client::Options &options
             report["success"] = false;
         }
     }
+    if (quality)
+    {
+        report["quality_acceptance"] = quality_acceptance(
+            report.at("samples").as_array(), quality->criteria(),
+            size_t(scenario.frames) * scenario.variants.size() * scenario.repeats,
+            report.at("success").as_bool() && report.at("restored").as_bool());
+    }
     report["percentile_definition"] = "nearest rank; warmup excluded; per-frame timings, not FPS";
     return report;
 }
