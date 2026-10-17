@@ -1,5 +1,6 @@
 #include "research_batch_draft.hpp"
-#include <QFileInfo>
+#include "batch_plan.hpp"
+#include <QDir>
 #include <QVariantMap>
 #include <stdexcept>
 
@@ -10,7 +11,9 @@ QString researchLocalPath(const QUrl &url)
     {
         throw std::invalid_argument("Выберите локальный файл без query/fragment в URL");
     }
-    return QFileInfo(url.toLocalFile()).absoluteFilePath();
+    // Lexically removing '..' across a symlink changes the selected source file.
+    const auto path = url.toLocalFile();
+    return QDir::isAbsolutePath(path) ? path : QDir::currentPath() + '/' + path;
 }
 
 boost::json::object researchBatchDraft(const QVariantList &members)
@@ -40,4 +43,20 @@ boost::json::object researchBatchDraft(const QVariantList &members)
     }
     // Shared run_batch preflight enforces IDs, duplicates, references and total budgets.
     return {{"schema_version", 1}, {"runs", std::move(runs)}};
+}
+
+QVariantList researchImportBatch(const QUrl &file)
+{
+    const std::filesystem::path path(researchLocalPath(file).toStdString());
+    const auto plan = sv::research::parse_batch_plan(sv::research::read_batch_plan(path));
+    QVariantList members;
+    for (const auto &value : plan.at("runs").as_array())
+    {
+        const auto &row = value.as_object();
+        const auto source = path.parent_path() / std::string(row.at("scenario").as_string());
+        members.push_back(QVariantMap{
+            {"id", QString::fromStdString(std::string(row.at("id").as_string()))},
+            {"scenario", QUrl::fromLocalFile(QString::fromStdString(source.string()))}});
+    }
+    return members;
 }

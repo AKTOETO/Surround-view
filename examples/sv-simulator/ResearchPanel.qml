@@ -17,6 +17,7 @@ Pane {
     property url batchSource: ""
     property bool choosingBatch: false
     property bool choosingMember: false
+    property bool choosingImport: false
     property url referenceSource: ""
     property var selectedModes: ["multi_band", "graph_cut_multi_band"]
     property int variantCount: {
@@ -77,6 +78,8 @@ Pane {
         onLoaded: item.chosen.connect(function(file, reference) {
             if (reference)
                 panel.referenceSource = file;
+            else if (panel.choosingImport)
+                batchEditor.importPlan(file);
             else if (panel.choosingMember)
                 batchEditor.addScenario(file);
             else if (panel.choosingBatch)
@@ -189,6 +192,7 @@ Pane {
                             objectName: "researchChooseScenario"
                             text: "Выбрать…"
                             onClicked: {
+                                panel.choosingImport = false;
                                 panel.choosingMember = false;
                                 panel.choosingBatch = planMode.currentIndex === 2;
                                 researchFiles.item.open(false, panel.choosingBatch);
@@ -212,8 +216,16 @@ Pane {
                 id: batchEditor
 
                 width: parent.width
+                controller: panel.controller
                 visible: planMode.currentIndex === 3
+                onChoosePlan: {
+                    panel.choosingImport = true;
+                    panel.choosingMember = false;
+                    panel.choosingBatch = false;
+                    researchFiles.item.open(false, true);
+                }
                 onChooseScenario: {
+                    panel.choosingImport = false;
                     panel.choosingMember = true;
                     panel.choosingBatch = false;
                     researchFiles.item.open(false, false);

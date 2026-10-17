@@ -190,6 +190,69 @@ TEST(SimulatorResearchQml, BatchEditorAddsReordersRemovesAndBoundsMembersWithout
     EXPECT_TRUE(warnings.messages().isEmpty()) << warnings.messages().join('\n').toStdString();
 }
 
+TEST(SimulatorResearchQml, BatchImportIsTransactionalAndKeepsDraftOnInvalidPlan)
+{
+    QmlWarningCapture warnings;
+    ResearchController controller;
+    QQmlApplicationEngine engine;
+    engine.rootContext()->setContextProperty("researchController", &controller);
+    engine.rootContext()->setContextProperty("simulatorQtMajorVersion", QT_VERSION_MAJOR);
+    QQmlComponent component(&engine, QUrl("qrc:/ResearchPanel.qml"));
+    std::unique_ptr<QObject> object(component.create());
+    ASSERT_TRUE(object) << component.errorString().toStdString();
+    auto *item = qobject_cast<QQuickItem *>(object.get());
+    ASSERT_TRUE(item);
+    QQuickWindow window;
+    window.resize(1040, 960);
+    item->setParentItem(window.contentItem());
+    item->setWidth(1000);
+    window.show();
+    object->findChild<QObject *>("researchPlanMode")->setProperty("currentIndex", 3);
+    auto *editor = object->findChild<QObject *>("researchBatchEditor");
+    ASSERT_TRUE(editor);
+    auto rows = [&]
+    {
+        const auto value = editor->property("members");
+        return value.canConvert<QJSValue>() ? value.value<QJSValue>().toVariant().toList()
+                                            : value.toList();
+    };
+    QTemporaryDir directory;
+    ASSERT_TRUE(directory.isValid());
+    const auto file = directory.path() + "/plan # %.json";
+    std::ofstream(file.toStdString()) << R"({"schema_version":1,"runs":[
+        {"id":"case-1","scenario":"missing # %.json"},{"id":"imported","scenario":"missing # %.json"}]})";
+    ASSERT_TRUE(
+        QMetaObject::invokeMethod(editor->findChild<QObject *>("batchImportPlan"), "clicked"));
+    auto *dialogs =
+        object->findChild<QObject *>("researchFilesLoader")->property("item").value<QObject *>();
+    ASSERT_TRUE(dialogs);
+#if QT_VERSION_MAJOR >= 6
+    ASSERT_TRUE(
+        QMetaObject::invokeMethod(dialogs->findChild<QObject *>("researchFileDialog"), "reject"));
+#endif
+    ASSERT_TRUE(rows().isEmpty()); // cancelling a chooser does not change the draft
+    ASSERT_TRUE(QMetaObject::invokeMethod(dialogs, "chosen", Q_ARG(QUrl, QUrl::fromLocalFile(file)),
+                                          Q_ARG(bool, false)));
+    ASSERT_EQ(rows().size(), 2);
+    EXPECT_EQ(rows()[1].toMap().value("id").toString(), "imported");
+    EXPECT_TRUE(editor->property("importStatus").toString().contains("Импортировано"));
+    const auto before = rows();
+    std::ofstream(file.toStdString()) << R"({"schema_version":1,"runs":[
+        {"id":"a","scenario":"first.json"},{"id":"a","scenario":"second.json"}]})";
+    ASSERT_TRUE(QMetaObject::invokeMethod(dialogs, "chosen", Q_ARG(QUrl, QUrl::fromLocalFile(file)),
+                                          Q_ARG(bool, false)));
+    EXPECT_EQ(rows(), before);
+    EXPECT_TRUE(editor->property("importStatus").toString().contains("Импорт не выполнен"));
+    ASSERT_TRUE(QMetaObject::invokeMethod(
+        editor, "addScenario", Q_ARG(QVariant, QVariant::fromValue(QUrl::fromLocalFile(file)))));
+    EXPECT_EQ(rows().last().toMap().value("id").toString(), "case-2");
+    EXPECT_FALSE(controller.busy());
+    EXPECT_EQ(controller.exitCode(), -1);
+    EXPECT_TRUE(controller.reportPath().isEmpty());
+    EXPECT_TRUE(warnings.messages().isEmpty()) << warnings.messages().join('\n').toStdString();
+    item->setParentItem(nullptr);
+}
+
 TEST(SimulatorResearchQml, ReferenceWorkflowRendersMeasuredResults)
 {
     const auto source = qEnvironmentVariable("SV_RESEARCH_GUI_SCENARIO");
@@ -252,13 +315,39 @@ TEST(SimulatorResearchQml, ReferenceWorkflowRendersMeasuredResults)
         {
             auto *editor = object->findChild<QObject *>("researchBatchEditor");
             ASSERT_TRUE(editor);
-            for (unsigned i = 0; i < 2; ++i)
-            {
-                ASSERT_TRUE(QMetaObject::invokeMethod(
-                    editor, "addScenario",
-                    Q_ARG(QVariant, QVariant::fromValue(QUrl::fromLocalFile(source)))));
-            }
+            const auto plan = directory.path() + "/import.json";
+            const auto relative =
+                std::filesystem::relative(source.toStdString(), directory.path().toStdString())
+                    .string();
+            const boost::json::object first{{"id", "case-1"}, {"scenario", relative}};
+            const boost::json::object second{{"id", "retired"}, {"scenario", relative}};
+            std::ofstream(plan.toStdString()) << boost::json::serialize(boost::json::object{
+                {"schema_version", 1}, {"runs", boost::json::array{first, second}}});
+            QVariant imported;
+            ASSERT_TRUE(QMetaObject::invokeMethod(
+                editor, "importPlan", Q_RETURN_ARG(QVariant, imported),
+                Q_ARG(QVariant, QVariant::fromValue(QUrl::fromLocalFile(plan)))));
+            ASSERT_TRUE(imported.toBool());
             const auto screenshot = qEnvironmentVariable("SV_RESEARCH_QUALITY_SCREENSHOT");
+            if (!screenshot.isEmpty())
+            {
+                window.resize(1040, 960);
+                QEventLoop paint;
+                QTimer::singleShot(100, &paint, &QEventLoop::quit);
+                paint.exec();
+                ASSERT_TRUE(window.grabWindow().save(screenshot + ".import.png"));
+                window.resize(1040, 630);
+            }
+            QCoreApplication::processEvents();
+            auto *remove = researchItem(qobject_cast<QQuickItem *>(editor), "batchRemove_retired");
+            ASSERT_TRUE(remove);
+            ASSERT_TRUE(QMetaObject::invokeMethod(remove, "clicked"));
+            ASSERT_TRUE(QMetaObject::invokeMethod(
+                editor, "addScenario",
+                Q_ARG(QVariant, QVariant::fromValue(QUrl::fromLocalFile(source)))));
+            auto *down = researchItem(qobject_cast<QQuickItem *>(editor), "batchMoveDown_case-1");
+            ASSERT_TRUE(down);
+            ASSERT_TRUE(QMetaObject::invokeMethod(down, "clicked"));
             if (!screenshot.isEmpty())
             {
                 window.resize(1040, 960);
@@ -290,6 +379,11 @@ TEST(SimulatorResearchQml, ReferenceWorkflowRendersMeasuredResults)
         {
             ASSERT_EQ(controller.batchRows().size(), 2);
             EXPECT_TRUE(controller.rows().isEmpty());
+            if (mode == 3)
+            {
+                EXPECT_EQ(controller.batchRows()[0].toMap().value("id").toString(), "case-2");
+                EXPECT_EQ(controller.batchRows()[1].toMap().value("id").toString(), "case-1");
+            }
         }
         else
         {

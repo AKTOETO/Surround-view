@@ -270,6 +270,73 @@ TEST(ResearchGuiDraft, BatchCompositionPreservesOrderAndLiteralLocalPaths)
     EXPECT_ANY_THROW(researchBatchDraft(over));
 }
 
+TEST(ResearchGuiDraft, ImportedBatchRetainsIdsPathsAndDoesNotReadScenarios)
+{
+    QTemporaryDir directory;
+    ASSERT_TRUE(directory.isValid());
+    const std::filesystem::path root(directory.path().toStdString());
+    std::filesystem::create_directory(root / "plans");
+    const auto source = root / "plans/batch # %.json";
+    std::ofstream(source) << R"({"schema_version":1,"runs":[
+        {"id":"case-1","scenario":"../missing # %.json"},
+        {"id":"repeat","scenario":"../missing # %.json"}]})";
+    const auto members =
+        researchImportBatch(QUrl::fromLocalFile(QString::fromStdString(source.string())));
+    ASSERT_EQ(members.size(), 2);
+    EXPECT_EQ(members[0].toMap().value("id").toString(), "case-1");
+    EXPECT_EQ(members[1].toMap().value("id").toString(), "repeat");
+    const auto plan = researchBatchDraft(members);
+    const auto selected = std::filesystem::path(
+        std::string(plan.at("runs").as_array()[0].as_object().at("scenario").as_string()));
+    EXPECT_EQ(selected.lexically_normal(), root / "missing # %.json");
+    EXPECT_FALSE(std::filesystem::exists(root / "missing # %.json"));
+    EXPECT_ANY_THROW(researchImportBatch(QUrl("https://example.invalid/plan.json")));
+    // A symlinked batch is resolved from the selected batch directory, matching file run_batch.
+    std::filesystem::create_symlink(source, root / "link.json");
+    const auto linked = researchImportBatch(QUrl::fromLocalFile(directory.path() + "/link.json"));
+    EXPECT_EQ(linked[0].toMap().value("scenario").toUrl().toLocalFile(),
+              QString::fromStdString((root / "../missing # %.json").string()));
+}
+
+TEST(ResearchGuiDraft, ImportedDotDotAcrossSymlinkKeepsFilesystemMeaning)
+{
+    QTemporaryDir directory;
+    ASSERT_TRUE(directory.isValid());
+    const std::filesystem::path root(directory.path().toStdString());
+    std::filesystem::create_directories(root / "real/deep");
+    std::filesystem::create_directory_symlink(root / "real/deep", root / "link");
+    std::ofstream(root / "real/scenario.json") << "correct";
+    std::ofstream(root / "scenario.json") << "different";
+    std::ofstream(root / "plan.json") << R"({"schema_version":1,"runs":[
+        {"id":"a","scenario":"link/../scenario.json"}]})";
+    const auto rows = researchImportBatch(QUrl::fromLocalFile(directory.path() + "/plan.json"));
+    const auto plan = researchBatchDraft(rows);
+    EXPECT_EQ(std::filesystem::canonical(std::string(
+                  plan.at("runs").as_array()[0].as_object().at("scenario").as_string())),
+              root / "real/scenario.json");
+}
+
+TEST(ResearchGuiUnit, ImportWithoutEndpointDoesNotMutateRunResultsAndBusyRejectsIt)
+{
+    QTemporaryDir directory;
+    ASSERT_TRUE(directory.isValid());
+    const auto source = directory.path() + "/plan.json";
+    std::ofstream(source.toStdString())
+        << R"({"schema_version":1,"runs":[{"id":"a","scenario":"missing.json"}]})";
+    ResearchController controller;
+    const auto imported = controller.importBatch(QUrl::fromLocalFile(source));
+    EXPECT_TRUE(imported.value("success").toBool());
+    EXPECT_FALSE(controller.busy());
+    EXPECT_EQ(controller.exitCode(), -1);
+    EXPECT_TRUE(controller.reportPath().isEmpty());
+    controller.setConnection(sv::client::Options{});
+    ASSERT_TRUE(controller.startDraft(draft(), directory.path()));
+    EXPECT_FALSE(controller.importBatch(QUrl::fromLocalFile(source)).value("success").toBool());
+    EXPECT_TRUE(controller.busy());
+    ASSERT_TRUE(waitFor([&] { return !controller.busy(); }));
+    EXPECT_EQ(controller.exitCode(), 3);
+}
+
 TEST(ResearchGuiUnit, ComposedBatchLateFailureDoesNotCreateOutput)
 {
     QTemporaryDir directory;

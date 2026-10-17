@@ -6,8 +6,26 @@ GroupBox {
     id: editor
 
     property var members: []
+    property var controller
+    property string importStatus: ""
 
     signal chooseScenario()
+    signal choosePlan()
+
+    function importPlan(file) {
+        var result = controller.importBatch(file);
+        importStatus = result.message;
+        if (!result.success)
+            return false;
+
+        var next = [];
+        for (var i = 0; i < result.members.length; ++i) next.push({
+            "id": result.members[i].id.toString(),
+            "scenario": result.members[i].scenario.toString()
+        })
+        members = next;
+        return true;
+    }
 
     function addScenario(file) {
         if (members.length >= 8)
@@ -58,6 +76,26 @@ GroupBox {
             width: parent.width
             wrapMode: Text.Wrap
             text: "Добавьте готовые сценарии в порядке выполнения. Один файл можно повторить. Каждый сценарий должен задавать reset_replay=true и подходить к одной подключённой записи. Его эталон разрешается от исходного каталога."
+        }
+
+        Button {
+            objectName: "batchImportPlan"
+            text: "Импортировать план…"
+            onClicked: editor.choosePlan()
+        }
+
+        Label {
+            width: parent.width
+            wrapMode: Text.Wrap
+            text: "Успешный импорт заменит текущий состав. Проверяются только структура и пути плана; сценарии и эталоны проверяются при запуске."
+        }
+
+        Label {
+            objectName: "batchImportStatus"
+            width: parent.width
+            wrapMode: Text.Wrap
+            visible: editor.importStatus.length > 0
+            text: editor.importStatus
         }
 
         Repeater {

@@ -245,6 +245,30 @@ bool ResearchController::startBatchDraft(const QVariantList &members, const QStr
     }
 }
 
+QVariantMap ResearchController::importBatch(const QUrl &file)
+{
+    if (impl_->busy)
+    {
+        return {{"success", false}, {"message", "Дождитесь завершения текущего исследования"}};
+    }
+    try
+    {
+        const auto members = researchImportBatch(file);
+        return {
+            {"success", true},
+            {"members", members},
+            {"message",
+             QString(
+                 "Импортировано сценариев: %1. Состав заменён; входы будут проверены при запуске.")
+                 .arg(members.size())}};
+    }
+    catch (const std::exception &error)
+    {
+        return {{"success", false},
+                {"message", "Импорт не выполнен: " + QString::fromUtf8(error.what())}};
+    }
+}
+
 bool ResearchController::launch(std::optional<boost::json::object> document,
                                 const QString &scenarioFile, const QString &newDirectory,
                                 bool batch)

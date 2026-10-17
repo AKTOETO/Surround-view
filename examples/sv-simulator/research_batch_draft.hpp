@@ -6,3 +6,6 @@
 QString researchLocalPath(const QUrl &);
 // Freeze typed composition into an ordinary batch document; no disk/network side effects.
 boost::json::object researchBatchDraft(const QVariantList &);
+
+// Transactional import: parse all rows, then return a replacement; no scenario/reference IO.
+QVariantList researchImportBatch(const QUrl &);
