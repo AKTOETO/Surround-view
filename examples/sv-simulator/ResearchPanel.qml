@@ -16,6 +16,7 @@ Pane {
     property url scenarioSource: ""
     property url batchSource: ""
     property bool choosingBatch: false
+    property bool choosingMember: false
     property url referenceSource: ""
     property var selectedModes: ["multi_band", "graph_cut_multi_band"]
     property int variantCount: {
@@ -76,6 +77,8 @@ Pane {
         onLoaded: item.chosen.connect(function(file, reference) {
             if (reference)
                 panel.referenceSource = file;
+            else if (panel.choosingMember)
+                batchEditor.addScenario(file);
             else if (panel.choosingBatch)
                 panel.batchSource = file;
             else
@@ -167,12 +170,12 @@ Pane {
 
                         objectName: "researchPlanMode"
                         width: parent.width
-                        model: ["Настроить через форму", "Запустить сохранённый сценарий", "Запустить batch-план"]
+                        model: ["Настроить через форму", "Запустить сохранённый сценарий", "Запустить batch-план", "Составить серию"]
                     }
 
                     RowLayout {
                         width: parent.width
-                        visible: planMode.currentIndex !== 0
+                        visible: planMode.currentIndex === 1 || planMode.currentIndex === 2
 
                         TextField {
                             Layout.fillWidth: true
@@ -186,6 +189,7 @@ Pane {
                             objectName: "researchChooseScenario"
                             text: "Выбрать…"
                             onClicked: {
+                                panel.choosingMember = false;
                                 panel.choosingBatch = planMode.currentIndex === 2;
                                 researchFiles.item.open(false, panel.choosingBatch);
                             }
@@ -196,12 +200,24 @@ Pane {
                     Label {
                         width: parent.width
                         wrapMode: Text.Wrap
-                        visible: planMode.currentIndex !== 0
+                        visible: planMode.currentIndex === 1 || planMode.currentIndex === 2
                         text: planMode.currentIndex === 2 ? "До 8 сценариев одной записи. Все references проверяются до подключения; каждый сценарий сбрасывает replay. Провал качества не останавливает серию, техническая ошибка — останавливает." : "Файл не редактируется. Его relative reference разрешается от исходного каталога; значения формы ниже не применяются."
                     }
 
                 }
 
+            }
+
+            ResearchBatchEditor {
+                id: batchEditor
+
+                width: parent.width
+                visible: planMode.currentIndex === 3
+                onChooseScenario: {
+                    panel.choosingMember = true;
+                    panel.choosingBatch = false;
+                    researchFiles.item.open(false, false);
+                }
             }
 
             GroupBox {
@@ -437,9 +453,9 @@ Pane {
             Button {
                 objectName: "researchStart"
                 text: "Начать исследование"
-                enabled: panel.controller.available && (planMode.currentIndex === 2 ? panel.batchSource.toString().length > 0 : planMode.currentIndex === 1 ? panel.scenarioSource.toString().length > 0 : panel.variantCount > 0 && panel.variantCount * framesCount.value * (warmupCount.value + repeatCount.value) <= 10000)
+                enabled: panel.controller.available && (planMode.currentIndex === 3 ? batchEditor.members.length > 0 : planMode.currentIndex === 2 ? panel.batchSource.toString().length > 0 : planMode.currentIndex === 1 ? panel.scenarioSource.toString().length > 0 : panel.variantCount > 0 && panel.variantCount * framesCount.value * (warmupCount.value + repeatCount.value) <= 10000)
                 onClicked: {
-                    if (planMode.currentIndex === 2 ? panel.controller.startBatch(panel.batchSource, outputDirectory.text) : planMode.currentIndex === 1 ? panel.controller.startScenario(panel.scenarioSource, outputDirectory.text) : panel.controller.startDraftWithReference(panel.draft(), outputDirectory.text, panel.referenceSource))
+                    if (planMode.currentIndex === 3 ? panel.controller.startBatchDraft(batchEditor.members, outputDirectory.text) : planMode.currentIndex === 2 ? panel.controller.startBatch(panel.batchSource, outputDirectory.text) : planMode.currentIndex === 1 ? panel.controller.startScenario(panel.scenarioSource, outputDirectory.text) : panel.controller.startDraftWithReference(panel.draft(), outputDirectory.text, panel.referenceSource))
                         tabs.currentIndex = 1;
 
                 }

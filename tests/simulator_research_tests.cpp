@@ -1,3 +1,4 @@
+#include "research_batch_draft.hpp"
 #include "research_controller.hpp"
 #include "research_draft.hpp"
 #include "research_results.hpp"
@@ -240,6 +241,53 @@ TEST(ResearchGuiUnit, BatchRowsNeverTreatMissingEvidenceAsSuccess)
     EXPECT_EQ(rows[2].toMap().value("error").toString(), "disk");
 }
 
+TEST(ResearchGuiDraft, BatchCompositionPreservesOrderAndLiteralLocalPaths)
+{
+    const auto url = QUrl::fromLocalFile("/tmp/scenario with # and %.json");
+    const QVariantMap first{{"id", "first"}, {"scenario", url}};
+    const QVariantMap second{{"id", "second"}, {"scenario", url.toString()}};
+    const auto plan = researchBatchDraft({second, first});
+    EXPECT_EQ(plan.at("runs").as_array()[0].as_object().at("id"), "second");
+    EXPECT_EQ(plan.at("runs").as_array()[1].as_object().at("scenario"),
+              "/tmp/scenario with # and %.json");
+    EXPECT_ANY_THROW(researchBatchDraft({}));
+    EXPECT_ANY_THROW(researchBatchDraft({true}));
+    EXPECT_ANY_THROW(researchBatchDraft({QVariantMap{{"id", true}, {"scenario", url}}}));
+    EXPECT_ANY_THROW(researchBatchDraft({QVariantMap{{"id", "a"}, {"scenario", true}}}));
+    EXPECT_ANY_THROW(
+        researchBatchDraft({QVariantMap{{"id", "a"}, {"scenario", url}, {"unknown", 0}}}));
+    for (const auto &bad :
+         {QUrl("https://example.invalid/scenario.json"), QUrl("file:///tmp/scenario.json?query"),
+          QUrl("file:///tmp/scenario.json#fragment")})
+    {
+        EXPECT_ANY_THROW(researchBatchDraft({QVariantMap{{"id", "a"}, {"scenario", bad}}}));
+    }
+    QVariantList over;
+    for (unsigned i = 0; i < 9; ++i)
+    {
+        over.push_back(first);
+    }
+    EXPECT_ANY_THROW(researchBatchDraft(over));
+}
+
+TEST(ResearchGuiUnit, ComposedBatchLateFailureDoesNotCreateOutput)
+{
+    QTemporaryDir directory;
+    ASSERT_TRUE(directory.isValid());
+    const auto source = directory.path() + "/scenario.json";
+    std::ofstream(source.toStdString()) << boost::json::serialize(researchDraft(draft()));
+    const QVariantList members{
+        QVariantMap{{"id", "first"}, {"scenario", QUrl::fromLocalFile(source)}},
+        QVariantMap{{"id", "second"}, {"scenario", QUrl::fromLocalFile(source + "-absent")}}};
+    ResearchController controller;
+    controller.setConnection(sv::client::Options{});
+    ASSERT_TRUE(controller.startBatchDraft(members, directory.path() + "/output"));
+    ASSERT_TRUE(waitFor([&] { return !controller.busy(); }));
+    EXPECT_EQ(controller.exitCode(), 3);
+    EXPECT_TRUE(controller.batchRows().isEmpty());
+    EXPECT_FALSE(std::filesystem::exists((directory.path() + "/output").toStdString()));
+}
+
 TEST(ResearchGuiLive, BatchCompletionAndCancellationShareTheNativeRunner)
 {
     ASSERT_TRUE(live);
@@ -255,8 +303,15 @@ TEST(ResearchGuiLive, BatchCompletionAndCancellationShareTheNativeRunner)
           {"id":"first","scenario":"scenario.json"},{"id":"second","scenario":"scenario.json"}]})";
         ResearchController controller;
         controller.setConnection(live);
-        ASSERT_TRUE(controller.startBatch(QUrl::fromLocalFile(directory.path() + "/plan.json"),
-                                          directory.path() + "/output"));
+        const QVariantList members{
+            QVariantMap{{"id", "first"},
+                        {"scenario", QUrl::fromLocalFile(directory.path() + "/scenario.json")}},
+            QVariantMap{{"id", "second"},
+                        {"scenario", QUrl::fromLocalFile(directory.path() + "/scenario.json")}}};
+        ASSERT_TRUE(
+            cancel ? controller.startBatchDraft(members, directory.path() + "/output")
+                   : controller.startBatch(QUrl::fromLocalFile(directory.path() + "/plan.json"),
+                                           directory.path() + "/output"));
         controller.setConnection(std::nullopt);
         if (cancel)
         {
@@ -445,19 +500,18 @@ TEST(ResearchGuiReferenceLive, ImportsAndDraftsShareGuardedQualityAndAcceptance)
     QTemporaryDir directory;
     ASSERT_TRUE(directory.isValid());
     const std::filesystem::path root(directory.path().toStdString());
-    const boost::json::object member{{"id", "first"}, {"scenario", source.toStdString()}};
-    auto second = member;
-    second["id"] = "second";
-    std::ofstream(root / "plan.json") << boost::json::serialize(
-        boost::json::object{{"schema_version", 1}, {"runs", boost::json::array{member, second}}});
     ResearchController controller;
     controller.setConnection(live);
-    ASSERT_TRUE(controller.startBatch(QUrl::fromLocalFile(directory.path() + "/plan.json"),
-                                      directory.path() + "/batch"));
+    const QVariantList members{
+        QVariantMap{{"id", "first"}, {"scenario", QUrl::fromLocalFile(source)}},
+        QVariantMap{{"id", "second"}, {"scenario", QUrl::fromLocalFile(source)}}};
+    ASSERT_TRUE(controller.startBatchDraft(members, directory.path() + "/batch"));
     ASSERT_TRUE(waitFor([&] { return !controller.busy(); }));
     EXPECT_EQ(controller.qualityStatus(), expected);
     EXPECT_EQ(controller.exitCode(), expected == "failed" ? 5 : expected == "incomplete" ? 4 : 0);
     const auto summary = report(controller.reportPath().toStdString());
+    EXPECT_EQ(summary.at("plan_snapshot"), "inputs/plan.json");
+    EXPECT_EQ(report(root / "batch/inputs/plan.json"), summary.at("plan"));
     EXPECT_TRUE(summary.at("restored").as_bool());
     ASSERT_EQ(controller.batchRows().size(), 2);
     EXPECT_EQ(summary.at("reported").to_number<unsigned>(), expected == "incomplete" ? 1U : 2U);

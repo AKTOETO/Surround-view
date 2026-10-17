@@ -14,6 +14,25 @@
 #include <fstream>
 #include <gtest/gtest.h>
 
+namespace
+{
+QQuickItem *researchItem(QQuickItem *root, const QString &name)
+{
+    if (root->objectName() == name)
+    {
+        return root;
+    }
+    for (auto *child : root->childItems())
+    {
+        if (auto *found = researchItem(child, name))
+        {
+            return found;
+        }
+    }
+    return nullptr;
+}
+} // namespace
+
 TEST(SimulatorResearchQml, FormEditsGenerateTypedDraftAndTabsRenderWithoutWarnings)
 {
     QmlWarningCapture warnings;
@@ -111,6 +130,66 @@ TEST(SimulatorResearchQml, FormEditsGenerateTypedDraftAndTabsRenderWithoutWarnin
     item->setParentItem(nullptr);
 }
 
+TEST(SimulatorResearchQml, BatchEditorAddsReordersRemovesAndBoundsMembersWithoutRunning)
+{
+    QmlWarningCapture warnings;
+    ResearchController controller;
+    controller.setConnection(sv::client::Options{});
+    QQmlApplicationEngine engine;
+    engine.rootContext()->setContextProperty("researchController", &controller);
+    engine.rootContext()->setContextProperty("simulatorQtMajorVersion", QT_VERSION_MAJOR);
+    QQmlComponent component(&engine, QUrl("qrc:/ResearchPanel.qml"));
+    std::unique_ptr<QObject> object(component.create());
+    ASSERT_TRUE(object) << component.errorString().toStdString();
+    auto *editor = object->findChild<QObject *>("researchBatchEditor");
+    auto *mode = object->findChild<QObject *>("researchPlanMode");
+    auto *start = object->findChild<QObject *>("researchStart");
+    ASSERT_TRUE(editor && mode && start);
+    mode->setProperty("currentIndex", 3);
+    EXPECT_FALSE(start->property("enabled").toBool());
+    auto members = [&]
+    {
+        const auto value = editor->property("members");
+        return value.canConvert<QJSValue>() ? value.value<QJSValue>().toVariant().toList()
+                                            : value.toList();
+    };
+    auto *loader = object->findChild<QObject *>("researchFilesLoader");
+    ASSERT_TRUE(loader);
+    auto *dialogs = loader->property("item").value<QObject *>();
+    ASSERT_TRUE(dialogs);
+    object->setProperty("choosingMember", true);
+    const auto source = QUrl::fromLocalFile("/tmp/scenario # and %.json");
+    for (unsigned i = 0; i < 9; ++i)
+    {
+        ASSERT_TRUE(
+            QMetaObject::invokeMethod(dialogs, "chosen", Q_ARG(QUrl, source), Q_ARG(bool, false)));
+    }
+    ASSERT_EQ(members().size(), 8);
+    EXPECT_TRUE(start->property("enabled").toBool());
+    EXPECT_FALSE(editor->findChild<QObject *>("batchAddScenario")->property("enabled").toBool());
+    QVariant changed;
+    QCoreApplication::processEvents();
+    auto *down = researchItem(qobject_cast<QQuickItem *>(editor), "batchMoveDown_case-1");
+    ASSERT_TRUE(down);
+    ASSERT_TRUE(QMetaObject::invokeMethod(down, "clicked"));
+    EXPECT_EQ(members()[0].toMap().value("id").toString(), "case-2");
+    EXPECT_EQ(members()[1].toMap().value("id").toString(), "case-1");
+    ASSERT_TRUE(QMetaObject::invokeMethod(editor, "moveMember", Q_RETURN_ARG(QVariant, changed),
+                                          Q_ARG(QVariant, 0), Q_ARG(QVariant, -1)));
+    EXPECT_FALSE(changed.toBool());
+    auto *remove = researchItem(qobject_cast<QQuickItem *>(editor), "batchRemove_case-1");
+    ASSERT_TRUE(remove);
+    ASSERT_TRUE(QMetaObject::invokeMethod(remove, "clicked"));
+    EXPECT_EQ(members().size(), 7);
+    ASSERT_TRUE(
+        QMetaObject::invokeMethod(dialogs, "chosen", Q_ARG(QUrl, source), Q_ARG(bool, false)));
+    EXPECT_EQ(members().last().toMap().value("id").toString(), "case-1");
+    // Editing alone never prepares inputs, opens a lease, or starts a worker.
+    EXPECT_FALSE(controller.busy());
+    EXPECT_TRUE(controller.reportPath().isEmpty());
+    EXPECT_TRUE(warnings.messages().isEmpty()) << warnings.messages().join('\n').toStdString();
+}
+
 TEST(SimulatorResearchQml, ReferenceWorkflowRendersMeasuredResults)
 {
     const auto source = qEnvironmentVariable("SV_RESEARCH_GUI_SCENARIO");
@@ -118,8 +197,9 @@ TEST(SimulatorResearchQml, ReferenceWorkflowRendersMeasuredResults)
     {
         GTEST_SKIP() << "Executed by transport harness with regression reference";
     }
-    for (const bool batch : {false, true})
+    for (const int mode : {1, 2, 3})
     {
+        const bool batch = mode >= 2;
         const auto endpoint =
             sv::parse_json(qEnvironmentVariable("SV_RESEARCH_GUI_ENDPOINT").toStdString())
                 .as_object();
@@ -157,9 +237,8 @@ TEST(SimulatorResearchQml, ReferenceWorkflowRendersMeasuredResults)
         window.show();
         QTemporaryDir directory;
         ASSERT_TRUE(directory.isValid());
-        object->findChild<QObject *>("researchPlanMode")
-            ->setProperty("currentIndex", batch ? 2 : 1);
-        if (batch)
+        object->findChild<QObject *>("researchPlanMode")->setProperty("currentIndex", mode);
+        if (mode == 2)
         {
             const auto plan = directory.path() + "/batch.json";
             const boost::json::object member{{"id", "first"}, {"scenario", source.toStdString()}};
@@ -168,6 +247,27 @@ TEST(SimulatorResearchQml, ReferenceWorkflowRendersMeasuredResults)
             std::ofstream(plan.toStdString()) << boost::json::serialize(boost::json::object{
                 {"schema_version", 1}, {"runs", boost::json::array{member, second}}});
             object->setProperty("batchSource", QUrl::fromLocalFile(plan));
+        }
+        else if (mode == 3)
+        {
+            auto *editor = object->findChild<QObject *>("researchBatchEditor");
+            ASSERT_TRUE(editor);
+            for (unsigned i = 0; i < 2; ++i)
+            {
+                ASSERT_TRUE(QMetaObject::invokeMethod(
+                    editor, "addScenario",
+                    Q_ARG(QVariant, QVariant::fromValue(QUrl::fromLocalFile(source)))));
+            }
+            const auto screenshot = qEnvironmentVariable("SV_RESEARCH_QUALITY_SCREENSHOT");
+            if (!screenshot.isEmpty())
+            {
+                window.resize(1040, 960);
+                QEventLoop paint;
+                QTimer::singleShot(100, &paint, &QEventLoop::quit);
+                paint.exec();
+                ASSERT_TRUE(window.grabWindow().save(screenshot + ".editor.png"));
+                window.resize(1040, 630);
+            }
         }
         else
         {
@@ -204,7 +304,9 @@ TEST(SimulatorResearchQml, ReferenceWorkflowRendersMeasuredResults)
         const auto screenshot = qEnvironmentVariable("SV_RESEARCH_QUALITY_SCREENSHOT");
         if (!screenshot.isEmpty())
         {
-            ASSERT_TRUE(image.save(batch ? screenshot + ".batch.png" : screenshot));
+            ASSERT_TRUE(image.save(mode == 3 ? screenshot + ".composed.png"
+                                   : batch   ? screenshot + ".batch.png"
+                                             : screenshot));
         }
         EXPECT_TRUE(warnings.messages().isEmpty()) << warnings.messages().join('\n').toStdString();
         item->setParentItem(nullptr);

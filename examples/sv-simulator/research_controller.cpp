@@ -2,6 +2,7 @@
 #include "batch.hpp"
 #include "file_experiment.hpp"
 #include "report_output.hpp"
+#include "research_batch_draft.hpp"
 #include "research_draft.hpp"
 #include "research_results.hpp"
 #include "trial_plan.hpp"
@@ -141,19 +142,6 @@ QString ResearchController::suggestOutput()
         QString::number(++impl_->output_counter));
 }
 
-namespace
-{
-QString localPath(const QUrl &url)
-{
-    if (!url.isLocalFile() || !url.host().isEmpty() || url.hasQuery() || url.hasFragment() ||
-        url.toLocalFile().isEmpty() || url.toLocalFile().contains(QChar(0)))
-    {
-        throw std::invalid_argument("Выберите локальный файл без query/fragment в URL");
-    }
-    return QFileInfo(url.toLocalFile()).absoluteFilePath();
-}
-} // namespace
-
 QString ResearchController::qualityStatus() const
 {
     return impl_->quality_status;
@@ -199,7 +187,7 @@ bool ResearchController::startDraftWithReference(const QVariantMap &values,
         auto document = researchDraft(values);
         if (!reference.isEmpty())
         {
-            document["quality_reference"] = localPath(reference).toStdString();
+            document["quality_reference"] = researchLocalPath(reference).toStdString();
         }
         return launch(std::move(document), {}, directory);
     }
@@ -217,7 +205,7 @@ bool ResearchController::startScenario(const QUrl &file, const QString &director
     }
     try
     {
-        return launch({}, localPath(file), directory);
+        return launch({}, researchLocalPath(file), directory);
     }
     catch (const std::exception &error)
     {
@@ -233,7 +221,23 @@ bool ResearchController::startBatch(const QUrl &file, const QString &directory)
     }
     try
     {
-        return launch({}, localPath(file), directory, true);
+        return launch({}, researchLocalPath(file), directory, true);
+    }
+    catch (const std::exception &error)
+    {
+        return reject(QString::fromUtf8(error.what()));
+    }
+}
+
+bool ResearchController::startBatchDraft(const QVariantList &members, const QString &directory)
+{
+    if (impl_->busy)
+    {
+        return false;
+    }
+    try
+    {
+        return launch(researchBatchDraft(members), {}, directory, true);
     }
     catch (const std::exception &error)
     {
@@ -256,8 +260,9 @@ bool ResearchController::launch(std::optional<boost::json::object> document,
             throw std::runtime_error("Сначала подключитесь к серверу");
         }
         const auto trials =
-            document ? sv::research::make_trial_plan(sv::research::parse_scenario(*document)).size()
-                     : 0;
+            document && !batch
+                ? sv::research::make_trial_plan(sv::research::parse_scenario(*document)).size()
+                : 0;
         if (newDirectory.trimmed().isEmpty() || newDirectory.contains(QChar(0)))
         {
             throw std::invalid_argument("Укажите новый каталог отчёта");
@@ -289,14 +294,19 @@ bool ResearchController::launch(std::optional<boost::json::object> document,
                     const std::filesystem::path output(directory);
                     if (batch)
                     {
-                        const auto summary = sv::research::run_batch(
-                            scenarioFile.toStdString(), output, connection, &impl_->progress.cancel,
-                            [this](unsigned member, unsigned done, unsigned total)
-                            {
-                                impl_->progress.total = total;
-                                impl_->progress.completed = done;
-                                impl_->progress.member = member + 1;
-                            });
+                        auto progress = [this](unsigned member, unsigned done, unsigned total)
+                        {
+                            impl_->progress.total = total;
+                            impl_->progress.completed = done;
+                            impl_->progress.member = member + 1;
+                        };
+                        const auto summary =
+                            document ? sv::research::run_batch(*document, output.parent_path(),
+                                                               output, connection,
+                                                               &impl_->progress.cancel, progress)
+                                     : sv::research::run_batch(scenarioFile.toStdString(), output,
+                                                               connection, &impl_->progress.cancel,
+                                                               progress);
                         path = QString::fromStdString((output / "batch.json").string());
                         batchRows = researchBatchRows(summary);
                         code = sv::research::research_exit_code(summary);
