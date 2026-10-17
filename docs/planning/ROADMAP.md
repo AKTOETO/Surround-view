@@ -1,5 +1,15 @@
 # Подробный план реализации
 
+18.10.2026: запуск сохранённого batch-плана из sv-simulator выполнен через общий C++
+run_batch. Доступны выбор файла, worker с frozen endpoint, номер/прогресс текущего участника,
+отмена и компактная сводка workflow/criteria/restore/not_started. Проверки Unix/TCP/combined
+включают продолжение после quality rejection и остановку после input guard failure;
+настоящая QML кнопка запускает серию и показывает результаты. Это одна запись, не registry
+и не multi-recording supervisor. Далее визуальный редактор состава batch, catalog-driven
+carrier/parameter controls, criteria editor, bundle export и сравнение отчётов.
+Итоговая Linux регрессия: CTest68/68 за152,08с (последовательно), включая client_transports76,07с.
+[[engineering/RESEARCH_BATCH#Запуск batch-плана из GUI]], §3.55.
+
 18.10.2026: выбор external reference и импорт single scenario в GUI выполнены; relative reference
 разрешается от исходного каталога. Immutable preflight, критерии отдельно от workflow, pooled
 PSNR и подавление stale badges проверены live Unix/TCP/combined и QML. Full Linux CTest 68/68

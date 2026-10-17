@@ -433,3 +433,46 @@ FileExperiment записывает raw-byte hash, input_kind/base и source pat
 GUI показывает MAE/RMSE и PSNR из общей взвешенной MSE уникальных frames; per-sample acceptance
 сохраняет прежнюю policy. Ни regression, ни авторское independent_ground_truth не доказывают
 обоснованности threshold/независимости данных. Контракт: [[engineering/RESEARCH_BATCH]].
+
+## GUI: запуск сохранённого batch-плана
+
+Реализованный процесс использует общий C++ `run_batch`, а не отдельный GUI runner.
+Вся серия работает с одним подключённым сервером и одной replay-записью.
+Прогресс относится к текущему сценарию; его завершение ещё не означает завершение серии.
+
+```plantuml
+@startuml
+title GUI: последовательные сценарии одной replay-записи
+actor Исследователь as User
+participant "sv-simulator / Qt" as UI
+participant "C++ worker / run_batch" as Batch
+participant "sv-client-lib" as Lib
+participant "sv-server (Linux / Аврора)" as Server
+database "Новый каталог отчётов" as Reports
+User -> UI: Выбрать batch-план и каталог
+UI -> Batch: Зафиксировать endpoint; запустить worker
+Batch -> Batch: Проверить ВСЕ сценарии и references
+Batch -> Reports: Эксклюзивно зарезервировать outputs
+loop По сценариям до технической ошибки или отмены
+  Batch -> UI: Номер сценария, trials текущего сценария
+  Batch -> Lib: execute + cancel flag
+  Lib -> Server: lease, reset replay, apply, render, restore
+  Server --> Lib: Кадры, timings, подтверждение restore
+  Lib --> Batch: Отчёт участника
+  Batch -> Reports: Сохранить отчёт участника
+  note right of Batch: Провал критериев качества не останавливает серию
+end
+Batch -> Reports: batch.json, включая not_started
+Batch --> UI: Технический итог, качество, restore каждого участника
+UI --> User: Показать сводку; сохранить полный отчёт
+@enduml
+```
+
+*Рисунок RR.9 — запуск сохранённого batch-плана через общий C++ исполнитель;
+каждый участник отдельно восстанавливает настройки, непущенные участники остаются в сводке.*
+
+Callback прогресса сообщает `(member_index, done, total)` с нулевым индексом участника.
+Перед его `execute` приходит событие `done=0`, чтобы новый сценарий не наследовал счётчик
+предыдущего. В GUI номер начинается с единицы, `total` относится только к этому сценарию.
+В конце worker передаёт не полный report, а до восьми компактных строк участников.
+Выбор endpoint замораживается до запуска; смена подключения не перенаправляет работающую серию.

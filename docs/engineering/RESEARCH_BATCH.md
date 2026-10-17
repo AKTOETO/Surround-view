@@ -107,8 +107,10 @@ CLI выводит JSON со ссылкой на `batch.json`; exit 0 — усп
 `FileExperiment` использует PImpl и отделяет загрузку immutable inputs от резервирования output
 и одноразового исполнения. `run_batch(plan, directory, options, cancel, progress)` предоставляет
 общий blocking service; progress передаёт `(member_index, completed_trials, total_trials)`.
-Для GUI его нужно вызвать вне UI thread и перенести callback в GUI executor. Первый GUI
-одного исследования реализован ниже; редактор batch-планов ещё отсутствует. Это application service над `sv-client-lib`, а не новая серверная команда.
+GUI вызывает service вне UI thread: callback обновляет atomic counters, UI читает их таймером,
+terminal result доставляется через queued callback. Запуск сохранённого batch реализован ниже;
+редактор состава batch ещё отсутствует. Это application service над `sv-client-lib`, а не новая
+серверная команда.
 
 Проверки: `research_batch_tests.cpp` — предварительная проверка, bounds, отмена до сети,
 immutable сценарий, single-attempt и защита output aliases; `test_client_transport.py` —
@@ -138,7 +140,7 @@ build/examples/sv-simulator/sv-simulator --tcp HOST CONTROL_PORT DATA_PORT
 4. В режиме сохранённого сценария выберите scenario JSON через файловый диалог. Файл не
    изменяется. Его reference разрешается от каталога исходного файла (после canonical resolution),
    значения формы/её reference не применяются. Все поддерживаемые runner поля сохраняются,
-   включая surface, matrix, reset_replay и capture_frames. Batch plan здесь не поддерживается.
+   включая surface, matrix, reset_replay и capture_frames. Для серии выберите отдельный режим «Запустить batch-план».
 5. Укажите новый output с существующим родителем. **Новое имя** предлагает путь
    `artifacts/gui-research-UTC-COUNTER` относительно cwd приложения. Frames должны помещаться
    в подключённую запись; автоматического определения её длины пока нет. В форме default frames=2.
@@ -211,6 +213,34 @@ Destructor выполняет cancel/join; общая длительность s
 window case использует отказ подготовки без сети, настоящий restore проверяется live cases.
 Трасса взаимодействий: рисунки RR.7–RR.8 в [[architecture/RESEARCH_RUNTIME]].
 
-Остаются GUI batch/carrier/general matrices, capabilities-driven choices, редактирование
+Остаются визуальный редактор состава batch, carrier/general matrices, capabilities-driven choices, редактирование
 criteria с фиксированием до запуска, bundle import/export, сравнение разных reports и durable
 resume. Текущий импорт одиночного scenario не закрывает multi-recording registry/switching.
+
+### Запуск batch-плана из GUI
+
+1. Подключитесь к replay-серверу с нужной записью. Откройте **Исследования → План**.
+2. В «Источник плана» выберите **Запустить batch-план**, затем файл, например
+   `configs/research/batch-repeatability.json`. Этот пример требует не менее трёх frame sets.
+3. Задайте новый каталог с существующим родителем и нажмите **Начать исследование**.
+   Настройки формы и её reference к batch не применяются: каждый участник берёт собственный
+   сценарий и reference. Все участники проверяются до создания outputs и подключения.
+4. На вкладке **Выполнение** наблюдайте номер участника и trials **текущего** сценария.
+   Счётчик сбрасывается перед следующим участником. Он не является общим процентом серии.
+   Отмена ждёт текущую операцию/restore и не запускает следующие сценарии.
+5. На вкладке **Результаты** проверьте общую сводку и каждую карточку: техническое завершение,
+   критерии качества, подтверждение restore, статус `not_started`/`error`/`reported` и имя отчёта.
+   Полный путь указывает на `batch.json`; `ID.json` и captures лежат рядом согласно CLI-контракту.
+   Сводка GUI не загружает member reports повторно и не показывает их timing/quality tables.
+
+Провал критериев (`failed`, код5) продолжает серию; guard/technical failure (`incomplete`, код4)
+или отмена останавливают её. `reported` означает сохранение отчёта, а не успешную научную приёмку.
+У `not_started` нет подтверждённых workflow/restore/quality; пустой зарезервированный файл не
+является измерением. Aggregate `passed` относится только к участникам с заданными criteria;
+участники `not_requested` не становятся научно принятыми из-за общего badge.
+
+Общий C++ `run_batch` вызывается непосредственно из фонового worker, без Python/CLI subprocess.
+Общие close guard, frozen endpoint и запрет параллельного запуска действуют и для серии.
+При ошибке подготовки rows/path/badge очищаются; готовый batch.json при таком отказе не обещается.
+Это запуск **сохранённого** плана одной записи, а не редактор списка сценариев, multi-recording
+supervisor, переносимый bundle, durable resume либо сравнение произвольных отчётов.

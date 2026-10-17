@@ -3,7 +3,8 @@
 The **Исследования** page provides a typed single-scenario editor, background C++ execution,
 progress/cancel and timing rows. It shares FileExperiment with svctl; no Python process or
 manual JSON is needed. Local reference selection and saved-scenario execution are supported; masked MAE/RMSE/PSNR and
-criteria status are distinct from workflow success. Batch editing remains future work.
+criteria status are distinct from workflow success. Saved batch plans also run through the shared C++ run_batch service, with per-member progress,
+cancellation and workflow/quality/restore summaries. Editing batch membership remains future work.
 See docs/engineering/RESEARCH_BATCH.md, section «Исследование из sv-simulator».
 
 `sv-simulator` is a Qt 6 desktop client for connecting to `sv-server` through `sv-client-lib`. The current GUI provides connection settings, local Unix IPC discovery, remote TCP connection, the server commands currently supported by the protocol, and read-only frame/source timing diagnostics. When Qt Quick 3D is installed, the GUI also provides a procedural street preview with a drivable vehicle and four visible camera markers. This first driving scene is a visualization only: it does not yet render synchronized camera images or send them to `sv-server`, and it does not generate calibration observations. The world editor, camera-error controls and remaining ConfigService root groups remain future work. Typed ConfigService forms for fusion/surface, explicit runtime/persistence and process-scoped operation recovery are available through the client library.

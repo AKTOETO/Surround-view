@@ -392,3 +392,46 @@ targeted client_transports/research_quality_fixture также прошли 2/2.
 Qt5 wrapper подготовлен по прежней структуре dialog, но Qt5 runtime в этой проверке отсутствует.
 Остаются GUI batch/general matrices, capability-driven choices, criterion editor/bundles,
 сравнение разных reports, durable resume и прежние исследовательские/целевые gates.
+
+
+## 18.10.2026: GUI запуска сохранённого batch-плана
+
+Реализованы третий режим плана и прямой вызов C++ run_batch из worker. Никаких новых
+wire-команд либо Python dispatcher. До сети проверяются все inputs и резервируются outputs;
+каждый участник сбрасывает replay и восстанавливает fusion/surface/pause по прежнему контракту.
+Начальное progress событие member/0/total не позволяет наследовать завершённый счётчик
+предыдущего участника. GUI передаёт только компактные member rows, не весь report/RGBA.
+
+Проверки `simulator_research_unit` дополнены late-member failure (output не создаётся),
+отклонением remote URL и отсутствующими workflow/restore evidence в not_started/error.
+`client_transports` запускает для Unix-only, TCP-only и combined:
+
+- native GUI controller: завершение двух сценариев и отмену первого длинного сценария;
+  endpoint после старта снимается из availability, работа остаётся на исходном сервере;
+- batch с двумя reference сценариями при passed/failed/not_requested/incomplete;
+  failed не останавливает второго участника, incomplete оставляет его not_started;
+- настоящий QML workflow: выбор режима batch, кнопка запуска, worker, две result cards
+  и screenshot без QML warnings. Standalone QML также проверяет выбор URL без auto-start.
+
+Сводки проверяют terminal exit/quality, число reported/completed и подтверждение restore.
+Старые single-scenario/CLI проверки сохранены. Targeted research_scenarios,
+simulator_research_unit и simulator_configuration_qml прошли 3/3 за6,79с;
+client_transports прошёл за76,12с. QML изображение главы3 — фактический результат Linux
+Qt6.11.2 на regression fixture, не независимая truth и не аппаратный benchmark.
+
+Воспроизведение: обычная Linux сборка с SV_SIMULATOR=ON, затем
+`ctest --test-dir build -R 'client_transports|simulator_research_unit|simulator_configuration_qml|research_scenarios' --output-on-failure`.
+Harness сам создаёт replay/reference и live endpoints; после live QML в
+`/tmp/sv-reference-result.png.batch.png` остаётся диагностический screenshot.
+Standalone reference QML case без endpoint/fixture пропускается; это не считается live evidence.
+Qt5/Aurora и целевое оборудование не проверены. Редактор списка участников, multi-recording,
+report comparison, durable recovery и независимое подтверждающее исследование остаются открытыми.
+
+
+Итоговый полный прогон `ctest --test-dir build --output-on-failure` вне ограничений socket
+sandbox: **68/68, 152,08с**, последовательно; client_transports76,07с,
+simulator_configuration_qml6,79с. Первоначальный ограниченный прогон дал bind/socket
+`Operation not permitted`; его отказы относятся к окружению и не используются как evidence
+продуктового отказа. Повтор с доступом к локальным сокетам прошёл полностью.
+35 PlantUML blocks затронутых архитектурной главы и главы3 прошли `-checkonly`;
+clang-format и `git diff --check` не нашли нарушений.

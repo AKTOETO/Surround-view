@@ -434,3 +434,14 @@ Release/expiry восстанавливает fusion/surface/pause; позици
 ACK автоматический reset retry запрещён: это новая мутация, а не idempotent запрос.
 Sequence diagram и граница очистки истории: [[architecture/RESEARCH_RUNTIME#Явный replay start и сброс истории]].
 Точный контракт: [[PROTOCOL_IMPLEMENTED#Сброс replay к первой строке (`replay_reset_v1`)]].
+
+
+### GUI batch одной записи
+
+Выбор сохранённого плана вызывает клиентский C++ `run_batch` в worker. Новых wire-команд нет:
+каждый сценарий использует прежние lease/reset/apply/render/restore через sv-client-lib.
+Progress и aggregate report — локальный application-service контракт, не server job ID.
+Другой клиент может работать между lease отдельных участников; серия не является общей
+транзакцией и не меняет запись на сервере. Ошибка критериев продолжает серию, техническая
+ошибка/отмена прекращает новые запуски. См. рисунок RR.9 в [[architecture/RESEARCH_RUNTIME]]
+и [[engineering/RESEARCH_BATCH#Запуск batch-плана из GUI]].

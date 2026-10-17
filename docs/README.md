@@ -1,6 +1,6 @@
 # Карта документации
 
-> Сверено 18.10.2026. Linux-прототип с runtime алгоритмами, C++ research runner/batch, GUI одного исследования с reference/import, driving preview и Blender fixtures реализован. Подтверждающие опыты, интеграция preview как camera producer и приёмка на Авроре остаются открытыми.
+> Сверено 18.10.2026. Linux-прототип с runtime алгоритмами, C++ research runner/batch, GUI исследования с reference/import и запуском batch-плана, driving preview и Blender fixtures реализован. Подтверждающие опыты, интеграция preview как camera producer и приёмка на Авроре остаются открытыми.
 
 ## Порядок чтения
 
@@ -17,7 +17,7 @@
 ## Структура и ответственность
 
 Практический каталог общения сервера и библиотеки: [[engineering/PROTOCOL_SCENARIOS|реализованные команды и сценарии SV01 с диаграммами]].
-Последовательные исследования одной записи без Python-оркестратора и GUI одного исследования: [[engineering/RESEARCH_BATCH]].
+Последовательные исследования одной записи без Python-оркестратора и GUI одного исследования/запуска batch: [[engineering/RESEARCH_BATCH]].
 
 | Каталог | Что хранить | Основная заметка |
 |---|---|---|

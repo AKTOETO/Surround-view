@@ -1454,3 +1454,11 @@ frames/warmup/repeats/seed, pyramid boundary/levels и seam solver; задайт
 В группе «Внешний эталон» выберите reference manifest для MAE/RMSE/PSNR;
 либо выберите «Запустить сохранённый сценарий» для импорта с его relative reference. Критерии
 отображаются отдельно от workflow success; отсутствие метрики не означает нулевую ошибку. Пошаговая инструкция: [[engineering/RESEARCH_BATCH#Исследование из sv-simulator]].
+
+
+Для серии в том же окне выберите **Источник плана → Запустить batch-план** и
+`configs/research/batch-repeatability.json`, укажите новый output directory.
+Сервер должен уже воспроизводить нужную запись (пример использует первые три frame sets).
+GUI показывает номер сценария, его прогресс, отмену и итоговые статусы каждого участника;
+полные отчёты сохраняются в `batch.json` и `ID.json`. Провал качества продолжает серию,
+техническая ошибка останавливает её. Подробности: [[engineering/RESEARCH_BATCH#Запуск batch-плана из GUI]].
