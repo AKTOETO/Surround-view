@@ -292,3 +292,30 @@ render cancellation/missing/empty output —19. Итоговый targeted CTest 
 stitch_robustness,research_quality_fixture прошёл3/3. Native GTest research содержит27 cases
 (live endpoint проверяется harness). Реальный Aurora SDK/device и physical cameras
 по-прежнему не квалифицированы.
+
+## 17.10.2026: compiled batch service одной записи
+
+Реализован `run_batch` над общим ExperimentRunner и PImpl FileExperiment; одиночный CLI
+также использует FileExperiment. Полная подготовка всех scenario/reference и output reservations
+предшествует первому подключению. Raw plan/scenario hashes дополняют semantic trial hashes.
+Контракт и пример: [[engineering/RESEARCH_BATCH]], configs/research/batch-repeatability.json.
+
+Добавлено 7 GTest cases: pre-cancel без сети; preflight позднего missing scenario/reference;
+strict ID/version/member bounds; reset/aggregate trial budget; immutable scenario/single-attempt;
+report aliases/dangling symlink; failed capture reservation. Общий research binary теперь
+содержит 34 cases: standalone 33 passed/1 live skipped; live case исполняется transport harness.
+CLI options — 8/8 cases, включая batch arity. Targeted CTest unit/CLI — 2/2 за 0,01 с.
+
+`client_transports` проверил Unix-only, TCP-only и combined profiles: две последовательные
+серии reset/capture дают одинаковые RGB hashes; каждый сценарий возвращает lease в idle.
+Quality rejection первого участника не мешает второму, aggregate exit 5 сохраняет success/restore.
+Подмена source pixels даёт exit 4/incomplete: первый отчёт записан и restore подтверждён,
+второй участник остаётся not_started с пустым reserved report. План/scenario raw hashes
+независимо сверены hashlib. Targeted client_transports + research_quality_fixture — 2/2 за 37,46 с.
+
+После финальных изменений полная Linux сборка успешна; **CTest 67/67 за 56,36 с**.
+Проверены syntax четырёх PlantUML blocks RESEARCH_RUNTIME, включая новую batch sequence,
+clang-format и diff whitespace. Blender MCP отвечает, версия 5.2.2 LTS; активная сцена —
+SV Research Cargo Yard.001. Новый исследовательский захват не выполнялся: задача этого среза —
+нативная оркестрация. Multi-recording switching, GUI editor, whole-batch isolation, durable resume,
+старый cursor и Aurora/physical acceptance не считаются закрытыми.

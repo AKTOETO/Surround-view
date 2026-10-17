@@ -1,5 +1,12 @@
 # Подробный план реализации
 
+17.10.2026: первый compiled batch service выполнен для нескольких сценариев одной replay-записи.
+FileExperiment/PImpl объединяет одиночный и batch CLI, все inputs/outputs готовятся до сети;
+quality rejection продолжает серию, technical/guard failure останавливает её. Проверены Unix/TCP,
+restore и RGBA repeatability; полная Linux регрессия 67/67 за 56,36 с. Следующие работы:
+GUI сценариев/прогресса/сравнения и server recording registry/switching; multi-recording supervisor
+не объявляется готовым. [[engineering/RESEARCH_BATCH]], §3.52.
+
 17.10.2026: live Blender/MCP family pilot выполнен. Street/cargo_yard и независимые scene/mount seeds, strict plan preflight/cancel, сохранённая original Scene/Cube. Native матрица20 fusion/carrier вариантов на4 cases:640 trials/480 measured/1920 oracle comparisons, max delta7,105e−15; active3196…3208 triangles, RGB repeats identical. Normalized MAE ниже во всех40 mean contrasts, но vertical artifacts остаются; true calibration supplied, thresholds/holdout не заявлены. Исправлены deep-output IPC path и dataset ID collision в fixture adapter. Финальная Linux сборка и full CTest67/67 за54,78 с. Compiled multi-recording supervisor, GUI, noise/calibration/target gates ещё открыты. [[validation/FAMILY_CARRIER_SCREEN]], §3.51/§4.93.
 
 17.10.2026: native direct-Blender quality fixture добавлен в CTest.24 samples/96 metric comparisons с независимым NumPy совпали (max difference0); сохранены NVIDIA report/RGBA/oracle-check в artifacts/q-native-v1, figure3.48 и воспроизводимый plotting script. Mesa test также прошёл. Полная Linux регрессия67/67 за55,75 с. Это reused fixture одной сцены, не holdout; scientific acceptance не заявлена. Следующий этап — независимые environment families и раздельные scene/mount seeds; Blender MCP подключён. [[validation/RESEARCH_RUNTIME]], §3.50.

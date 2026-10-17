@@ -1431,3 +1431,16 @@ Python fixture harness остаётся средством подготовки/
 не реализованы. Результаты64-sample smoke и640-trial matched screen:
 [[validation/FAMILY_CARRIER_SCREEN]]. True camera calibration в этом пилоте передана серверу;
 автоматическая calibration jobs проверяется отдельно.
+
+### Несколько исследований одной записи
+
+```sh
+build/svctl --unix /tmp/sv-prototype --timeout-ms 5000 \
+  research-batch configs/research/batch-repeatability.json artifacts/batch-repeatability-01
+```
+
+Нужен запущенный replay server с минимум тремя кадрами; output directory должен быть новым.
+План повторяет multiband matrix и проверяет воспроизводимость, не независимость сцен.
+Сценарии/эталоны и все output paths проверяются до подключения. Отчёты — в `batch.json`
+и отдельных `ID.json`; exit 5 означает завершённую серию с непройденным quality threshold,
+exit 4 — техническую неполноту. Подробный формат, API и границы: [[engineering/RESEARCH_BATCH]].

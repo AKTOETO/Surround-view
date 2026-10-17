@@ -8,6 +8,12 @@
 
 В диаграммах «Приложение» означает sv-simulator, автомобильный sv-client, svctl или внешний потребитель библиотеки. Стрелка callback выполняется на worker библиотеки: UI переносит обработку в свой executor. Библиотека не вызывает Qt и не редактирует конфиг сервера.
 
+`svctl research-batch` — клиентский C++ application workflow, не новая SV01-команда.
+Он последовательно повторяет существующие lease/reset/apply/frame/restore взаимодействия
+через тот же runner и sv-client-lib. Предварительная проверка всех inputs/outputs, остановка при
+техническом отказе и отдельная обработка quality rejection: [[engineering/RESEARCH_BATCH]].
+PlantUML последовательность: [[architecture/RESEARCH_RUNTIME#Последовательный batch service одной записи]].
+
 ## Полный каталог текущих операций
 
 Каталог содержит 29 серверных команд; запросы передаются как type20, результат — type21. Typed API перечислен там, где он есть; остальные доступны через `command(type, parameters)`. Наличие generic API не означает поддержку неизвестной команды сервером.

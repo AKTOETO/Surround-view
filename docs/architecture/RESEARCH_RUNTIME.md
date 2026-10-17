@@ -287,3 +287,54 @@ mesh budget.4 cases×2 frames×20 variants×(1 warmup+3 measured)=640 trials;480
 Compiled multi-recording supervisor и GUI сценариев ещё отсутствуют. True camera calibration
 передана стенду, поэтому данный pilot не является испытанием автоматической калибровки.
 Наличие новых family inputs не закрывает noise/photometric/dynamic/holdout/target gates.
+
+## Последовательный batch service одной записи
+
+`run_batch` и PImpl `FileExperiment` добавляют общий C++ application service над прежним
+ExperimentRunner. CLI `svctl research` также использует FileExperiment: загрузка reference,
+capture и запись report не дублируются в двух launchers. Контракт/границы:
+[[engineering/RESEARCH_BATCH]]. Новых серверных команд этот срез не добавляет.
+
+```plantuml
+@startuml
+actor "svctl / будущий GUI" as UI
+participant "run_batch (C++)" as B
+participant "FileExperiment[] (PImpl)" as F
+database "Новые report/capture paths" as O
+participant "ExperimentRunner / sv-client-lib" as R
+participant "sv-server" as S
+UI -> B : plan path / new output / endpoint
+B -> F : загрузить все scenarios + references
+F --> B : immutable inputs / hashes / budgets
+B -> O : reserve summary + все member outputs
+alt preflight / reservation failed
+  B --> UI : exception; ни одного подключения
+else подготовка завершена
+  loop участники по порядку
+    B -> F : execute(options, cancel, progress)
+    F -> R : общий run(scenario, frozen reference)
+    R -> S : lease / reset replay / apply / frames
+    S --> R : RGBA + metadata
+    R -> S : restore fusion/surface/pause / release
+    S --> R : подтверждение restore
+    R --> F : workflow report + quality status
+    F -> O : записать member report / captures
+    F --> B : результат
+    alt technical failure / incomplete / cancel
+      B -> B : остановить серию
+    else quality rejected
+      B -> B : сохранить rejection; продолжить
+    end
+  end
+  B -> O : terminal batch.json
+  B --> UI : workflow / defined criteria / report paths
+end
+@enduml
+```
+
+*Рисунок RR.6 — все входы/outputs подготавливаются до сети; каждый участник имеет собственный
+lease и restore. Между участниками общий lease не удерживается.*
+
+Лимиты: 8 scenarios, 10000 aggregate trials, 128 MiB retained reference pixels. Scope одной
+подключённой записи зафиксирован как same_server_recording_v1; автоматического переключения
+recording, atomic multi-run isolation, cursor restoration и durable checkpoints здесь нет.
