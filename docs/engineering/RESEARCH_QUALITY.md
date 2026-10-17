@@ -254,3 +254,26 @@ CLI выводит quality_status и возвращает0 для успешно
 остаются прежними исключениями CLI; не трактуйте любой ненулевой код как качество failed.
 В автоматизации сохраняйте report и различайте scientific rejection(5) и технический отказ(4).
 Для threshold study schema2 предпочтительнее legacy metadata-only schema1.
+
+
+## Проверка на сохранённом прямом Blender RGB
+
+`research_quality_fixture` использует committed tests/data/paired_street_v1: verifier проверяет
+capture/file hashes, poses/timestamps и прежнюю object-ID ROI (исключены кузов, фон и полоса
+вокруг границ). Test fixture adapter переводит PNG truth/ROI в PPM и формирует schema2 guards.
+Сшивка и metrics исполняются native sv-server/svctl; Python здесь только fixture/oracle/checks.
+
+```sh
+ctest --test-dir build -R '^research_quality_fixture$' --output-on-failure
+# Для сохранения всех native reports/frames выберите новый каталог:
+LIBGL_ALWAYS_SOFTWARE=1 EGL_PLATFORM=surfaceless \
+  python3 tests/test_research_quality_fixture.py build --output artifacts/q-native-mesa-new
+python3 docs/diploma/plot_native_quality.py --run artifacts/q-native-mesa-new
+```
+
+В persistent output находятся config/scenario/reference manifests, PPM truth/masks, server trace,
+report.json, report.json.frames и oracle-check.json. Это результаты выполнения, не assets;
+они остаются в ignored artifacts. Committed figure — иллюстрация документации.
+Старый output нельзя перезаписывать. Test сравнивает24 samples/96 metric values с NumPy,
+не требует ненулевой ошибки (совершенная реконструкция тоже допустима), не задаёт quality thresholds.
+Fixture reused, три близкие позы одной низкодетализированной сцены — не новый holdout.

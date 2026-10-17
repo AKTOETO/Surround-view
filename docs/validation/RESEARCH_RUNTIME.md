@@ -252,3 +252,20 @@ samples, success/restored=true, status=failed, CLI5, failed_frame_variants=1. П
 
 Полный66-entry suite/Аврора не запускались. Эти критерии — механизм инструмента, не обоснованные
 нормы качества; независимая подтверждающая выборка и научная preregistration всё ещё нужны.
+
+
+## 17.10.2026: direct Blender fixture и полная регрессия
+
+Добавлен CTest research_quality_fixture: существующий frozen paired_street_v1, content-verified
+schema2 references, три direct virtual RGB/ROI,4 variants×3 frames×2 repeats=24 samples.
+Python только проверяет capture/file provenance, подготавливает reference fixture и сравнивает
+C++ metrics с NumPy:96 comparisons, max difference0. ROI counts44733/44804/44788; sums134325.
+NVIDIA RTX5070Ti run сохранён в artifacts/q-native-v1 (report/RGBA/trace/oracle-check); Mesa case
+прошёл в полном CTest. Figure визуально проверена; генератор рядом с главой3, рисунок3.48.
+Это reused low-detail scene, не holdout, и quality thresholds не заданы.
+
+Полный `ctest --test-dir build --output-on-failure -j2` завершился **67/67** за55,75 с, включая
+camera MOCK/recovery, protocol/listeners, GUI/QML, telemetry, packaging checks, numerical oracles
+и native rendering/evaluation. Наличие Linux packaging tests не означает реальную RPM сборку
+в Aurora SDK или запуск на устройстве. Проверен syntax31 PlantUML blocks после §3.48–3.49.
+Blender MCP теперь подключён; текущая сцена на момент проверки — стартовый Cube/Camera/Light.

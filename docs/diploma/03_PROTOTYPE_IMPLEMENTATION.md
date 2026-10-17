@@ -1857,3 +1857,38 @@ workflow/restore успешны, quality failed и CLI5. Подмена source R
 и quality incomplete. Исправлено также ложное несовпадение integer/double JSON representations
 одного view: значения нормализуются в double без изменения точности и без epsilon comparison.
 Подробный контракт и результаты: [[engineering/RESEARCH_QUALITY]], [[validation/RESEARCH_RUNTIME]].
+
+
+### 3.50. Сквозная проверка оценщика на прямом Blender изображении
+
+Для проверки внешнего reference использован прежний frozen paired_street_v1: три позы,
+четыре камеры400×400 после cubemap conversion, прямой виртуальный RGB320×180 и object-ID ROI.
+Источник truth — непосредственный рендер сцены, а не предыдущий output сервера. Проверены hashes
+входов и capture, синхронность poses/timestamps. ROI берётся из прежней методики: исключены фон,
+кузов и расширенная на2 пикселя граница объектов; маска не зависит от исследуемого output.
+
+C++ runner исполнил multi_band/graph_cut_multi_band ×zero/normalized ×3 frames ×2 repeats,
+то есть24 samples. Для каждого native RGBA независимый NumPy расчёт проверил MAE/RMSE/PSNR/max:
+96 сравнений совпали, максимальная числовая разница0 в сохранённом прогоне NVIDIA. Тот же test
+прошёл в software Mesa CTest. Это приёмка инструмента оценки, а не доказательство преимущества
+метода на независимой выборке.
+
+![Прямой Blender RGB, заданная ROI и четыре native варианта](figures/experiments/native_quality_parity.png)
+
+*Рисунок 3.48 — одинаковый виртуальный ракурс кадра0: прямой Blender reference, ROI и native
+результаты. MAE относится к выбранной ROI и кодовым RGB8 значениям; размытие и геометрические
+искажения видны, близкие численные результаты не означают равного физического качества.*
+
+| Native вариант | Pixel-weighted MAE RGB8 трёх кадров | Pixel-weighted RMSE RGB8 |
+|---|---:|---:|
+| multi_band / zero | 10,230029 | 15,786368 |
+| multi_band / normalized | 10,151724 | 15,712383 |
+| graph_cut_multi_band / zero | 10,541895 | 16,917803 |
+| graph_cut_multi_band / normalized | 10,537396 | 16,911487 |
+
+Во всех условиях одна область134325 pixels суммарно по трём frame indices; repeats не увеличивают
+её статистический вес. Качество в этих условиях не принято по нормативному порогу: criteria не
+заданы, status=not_requested. Этот повторно использованный городской fixture не закрывает
+внешнюю валидность; независимые семейства окружения, конфигурации камер и дополнительные метрики
+ещё нужны. Генератор рисунка сохранён рядом с главой: plot_native_quality.py. Native отчёт и
+RGBA — ignored artifacts/q-native-v1; воспроизведение: [[engineering/RESEARCH_QUALITY]].
