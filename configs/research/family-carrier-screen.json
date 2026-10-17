@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "frames": 2,
+  "reset_replay": true,
+  "capture_frames": true,
+  "quality_reference": "reference.json",
+  "warmup": 1,
+  "repeats": 3,
+  "seed": 20261017,
+  "matrix": {
+    "axes": {
+      "mode": [
+        "multi_band",
+        "graph_cut_multi_band"
+      ],
+      "pyramid_boundary": [
+        "zero",
+        "normalized"
+      ],
+      "surface": [
+        {
+          "type": "rectangular_bowl_v1",
+          "flat_half_length_m": 2.6,
+          "flat_half_width_m": 1.2,
+          "outer_half_length_m": 14.0,
+          "outer_half_width_m": 14.0,
+          "corner_height_m": 0,
+          "uniform_cells": [
+            32,
+            45
+          ]
+        },
+        {
+          "type": "rectangular_bowl_v1",
+          "flat_half_length_m": 2.6,
+          "flat_half_width_m": 1.2,
+          "outer_half_length_m": 14.0,
+          "outer_half_width_m": 14.0,
+          "corner_height_m": 1.5,
+          "uniform_cells": [
+            32,
+            45
+          ]
+        },
+        {
+          "type": "dome_floor_v1",
+          "dome_radius_m": 14.0,
+          "dome_latitude_cells": 14,
+          "dome_longitude_cells": 64,
+          "floor_radial_cells": 12
+        },
+        {
+          "type": "cylinder_floor_v1",
+          "radius_m": 14.0,
+          "height_m": 14.0,
+          "vertical_cells": 10,
+          "angular_cells": 64,
+          "floor_radial_cells": 8
+        },
+        {
+          "type": "cube_floor_v1",
+          "half_extent_m": 14.0,
+          "height_m": 14.0,
+          "face_cells": 16
+        }
+      ]
+    }
+  }
+}

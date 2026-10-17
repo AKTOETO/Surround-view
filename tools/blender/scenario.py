@@ -75,7 +75,8 @@ def scenario_preset(preset_key, seed=0):
 def validate(recipe):
     result = copy.deepcopy(recipe)
     allowed_keys = {'schema_version', 'seed', 'world', 'mounts', 'preset_id', 'split', 'scene_seed', 'mount_seed'}
-    if set(result) - allowed_keys or result.get('schema_version') != 1:
+    if (set(result) - allowed_keys or type(result.get('schema_version')) is not int
+            or result.get('schema_version') != 1):
         raise ValueError('scenario schema_version 1 and known keys required')
     seed = result.get('seed', 0)
     if isinstance(seed, bool) or not isinstance(seed, int) or not 0 <= seed < 2**32:
@@ -156,3 +157,34 @@ def perturb(nominal, recipe):
         camera['T_camera_from_vehicle'] = T.tolist()
         sampled.append(dict(camera_id=camera['id'], **values, center_vehicle_m=center.tolist()))
     return result, sampled
+
+
+def validate_family_plan(plan):
+    """Pure preflight for the bounded Blender fixture export queue (not native trials)."""
+    import re
+    result = copy.deepcopy(plan)
+    if (not isinstance(result, dict) or set(result) - {'schema_version', 'purpose', 'capture', 'cases'}
+            or type(result.get('schema_version')) is not int or result['schema_version'] != 1
+            or not isinstance(result.get('cases'), list) or not 1 <= len(result['cases']) <= 16):
+        raise ValueError('family plan schema1 with 1..16 cases required')
+    if 'purpose' in result and (not isinstance(result['purpose'], str) or not 1 <= len(result['purpose']) <= 1024):
+        raise ValueError('bounded purpose string required')
+    bounds = {'frames': (2, 8), 'face_size': (32, 512), 'frame_step': (1, 30),
+              'width': (16, 640), 'height': (16, 360)}
+    options = result.get('capture')
+    if not isinstance(options, dict) or set(options) != set(bounds):
+        raise ValueError('known complete capture settings required')
+    for key, (low, high) in bounds.items():
+        value = options[key]
+        if isinstance(value, bool) or not isinstance(value, int) or not low <= value <= high:
+            raise ValueError('bounded integer capture setting required: ' + key)
+    identifiers = set()
+    for item in result['cases']:
+        if (not isinstance(item, dict) or set(item) != {'id', 'recipe'}
+                or not isinstance(item['id'], str) or not re.fullmatch(r'[a-zA-Z0-9_-]{1,64}', item['id'])):
+            raise ValueError('safe unique case ID and recipe required')
+        if item['id'] in identifiers:
+            raise ValueError('duplicate family case ID')
+        identifiers.add(item['id'])
+        item['recipe'] = validate(item['recipe'])
+    return result

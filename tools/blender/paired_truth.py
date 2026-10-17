@@ -235,34 +235,14 @@ def schedule_family_plan(plan_path, output):
     Job progress is written between cases. This exporter/oracle is not a product
     ExperimentRunner: native server trials are launched separately via svctl.
     """
-    import re
     import traceback
     from scene import build_scene
-    from scenario import validate as validate_recipe
+    from scenario import validate_family_plan
 
     plan_path, output = Path(plan_path).resolve(), Path(output).resolve()
     raw_plan = plan_path.read_bytes()
-    plan = json.loads(raw_plan)
-    if (set(plan) - {'schema_version', 'purpose', 'capture', 'cases'} or plan.get('schema_version') != 1
-            or not 1 <= len(plan.get('cases', [])) <= 16):
-        raise ValueError('family plan schema1 with 1..16 cases required')
-    options = plan['capture']
-    bounds = {'frames': (2, 8), 'face_size': (32, 512), 'frame_step': (1, 30),
-              'width': (16, 640), 'height': (16, 360)}
-    if set(options) != set(bounds):
-        raise ValueError('known complete capture settings required')
-    for key, (low, high) in bounds.items():
-        value = options[key]
-        if isinstance(value, bool) or not isinstance(value, int) or not low <= value <= high:
-            raise ValueError('bounded integer capture setting required: ' + key)
-    cases, identifiers = [], set()
-    for item in plan['cases']:
-        if set(item) != {'id', 'recipe'} or not re.fullmatch(r'[a-zA-Z0-9_-]{1,64}', item['id']):
-            raise ValueError('safe unique case ID and recipe required')
-        if item['id'] in identifiers:
-            raise ValueError('duplicate family case ID')
-        identifiers.add(item['id'])
-        cases.append(dict(id=item['id'], recipe=validate_recipe(item['recipe'])))
+    plan = validate_family_plan(json.loads(raw_plan))
+    options, cases = plan['capture'], plan['cases']
     output.mkdir(parents=True, exist_ok=False)
     state = dict(schema_version=1, state='queued', plan_sha256=hashlib.sha256(raw_plan).hexdigest(),
                  purpose=plan.get('purpose'), completed=[], remaining=[item['id'] for item in cases])

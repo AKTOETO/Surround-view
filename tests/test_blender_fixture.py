@@ -12,7 +12,7 @@ from PIL import Image
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools' / 'blender'))
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools'))
 from rig import configuration, cube_coordinates, vehicle_pose
-from scenario import perturb, validate, near_obstacle_positions
+from scenario import perturb, validate, near_obstacle_positions, validate_family_plan
 from environments import cargo_layout
 from convert import bilinear, convert, convert_camera, linear_rgb, srgb8
 from depth_truth import _sample_depth, convert_camera_depth
@@ -98,6 +98,8 @@ class BlenderFixtureTests(unittest.TestCase):
         for cargo in cargo_layout(1001):
             self.assertGreater(abs(cargo['center'][1]) - cargo['size'][1] / 2, 3)
             self.assertTrue(1.8 <= cargo['size'][2] <= 3.6)
+        self.assertEqual(perturb(configuration(), dict(schema_version=1)),
+                         perturb(configuration(), dict(schema_version=1, seed=0)))
         legacy = validate(dict(schema_version=1, seed=4))
         self.assertNotIn('scene_seed', legacy)
         self.assertNotIn('mount_seed', legacy)
@@ -107,8 +109,24 @@ class BlenderFixtureTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 validate(dict(recipe, **patch))
 
+    def test_family_export_plan_strict_preflight(self):
+        path = Path(__file__).resolve().parents[1] / 'assets/scenarios/quality-families-v1.json'
+        plan = json.loads(path.read_text())
+        original = json.loads(json.dumps(plan))
+        self.assertEqual(len(validate_family_plan(plan)['cases']), 4)
+        self.assertEqual(plan, original)
+        for patch in ({'schema_version': True}, {'cases': []}, {'cases': plan['cases'] * 5},
+                      {'cases': [plan['cases'][0], plan['cases'][0]]}, {'purpose': False},
+                      {'capture': dict(plan['capture'], width=True)}, {'unknown': 1}):
+            with self.assertRaises(ValueError):
+                validate_family_plan(dict(plan, **patch))
+        for identifier in ('../escape', '', 'case/child', 'x' * 65):
+            bad = dict(plan, cases=[dict(plan['cases'][0], id=identifier)])
+            with self.assertRaises(ValueError):
+                validate_family_plan(bad)
+
     def test_invalid_scenario_rules(self):
-        for recipe in (dict(schema_version=1, seed=-1), dict(schema_version=1, seed=True),
+        for recipe in (dict(schema_version=True, seed=0), dict(schema_version=1, seed=-1), dict(schema_version=1, seed=True),
                        dict(schema_version=1, mounts=dict(yaw_deg=21)),
                        dict(schema_version=1, mounts=dict(overrides={'4': {}})),
                        dict(schema_version=1, world=dict(building_height_m=[10,4])),
