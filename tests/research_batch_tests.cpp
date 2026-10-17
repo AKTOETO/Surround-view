@@ -1,10 +1,12 @@
 #include "batch.hpp"
+#include "batch_plan.hpp"
 #include "digest.hpp"
 #include "file_experiment.hpp"
 #include "sv/json.hpp"
 #include <chrono>
 #include <fstream>
 #include <gtest/gtest.h>
+#include <sys/stat.h>
 
 namespace
 {
@@ -225,4 +227,31 @@ TEST_F(ResearchBatch, CompiledPlanUsesTheSameStrictPreflightBeforeOutput)
     document["oversize"] = std::string(65536, 'x');
     EXPECT_ANY_THROW(sv::research::run_batch(document, root, root / "oversize", {}, &cancel));
     EXPECT_FALSE(std::filesystem::exists(root / "oversize"));
+}
+
+TEST_F(ResearchBatch, PlanStructureCanBeImportedWithoutOpeningScenarioOrReference)
+{
+    const auto text = boost::json::serialize(plan()) + "\n  ";
+    EXPECT_EQ(sv::research::parse_batch_plan(text), plan());
+    std::filesystem::remove(root / "scenario.json");
+    EXPECT_EQ(sv::research::parse_batch_plan(text), plan());
+    write("import.json", text);
+    EXPECT_EQ(sv::research::read_batch_plan(root / "import.json"), text);
+    EXPECT_ANY_THROW(sv::research::parse_batch_plan(""));
+    EXPECT_ANY_THROW(sv::research::parse_batch_plan(std::string(65537, ' ')));
+    auto duplicate = plan();
+    duplicate.at("runs").as_array()[1].as_object()["id"] = "first";
+    EXPECT_ANY_THROW(sv::research::parse_batch_plan(boost::json::serialize(duplicate)));
+}
+
+TEST_F(ResearchBatch, BoundedPlanReadRejectsNonRegularAndOversizeInputs)
+{
+    EXPECT_ANY_THROW(sv::research::read_batch_plan(root));
+    ASSERT_EQ(::mkfifo((root / "pipe.json").c_str(), 0600), 0);
+    EXPECT_ANY_THROW(sv::research::read_batch_plan(root / "pipe.json"));
+    write("huge.json", std::string(65537, ' '));
+    EXPECT_ANY_THROW(sv::research::read_batch_plan(root / "huge.json"));
+    write("empty.json", "");
+    EXPECT_ANY_THROW(sv::research::read_batch_plan(root / "empty.json"));
+    EXPECT_ANY_THROW(sv::research::read_batch_plan(root / "missing.json"));
 }

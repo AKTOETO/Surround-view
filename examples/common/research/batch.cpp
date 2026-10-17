@@ -1,78 +1,30 @@
 #include "batch.hpp"
+#include "batch_plan.hpp"
 #include "digest.hpp"
 #include "file_experiment.hpp"
 #include "report_output.hpp"
-#include "sv/json.hpp"
-#include <algorithm>
-#include <fstream>
-#include <set>
 #include <stdexcept>
 
 namespace sv::research
 {
 namespace
 {
-void keys(const boost::json::object &object, std::initializer_list<std::string_view> allowed)
-{
-    for (const auto &entry : object)
-    {
-        if (std::find(allowed.begin(), allowed.end(), entry.key()) == allowed.end())
-        {
-            throw std::invalid_argument("unknown batch field: " + std::string(entry.key()));
-        }
-    }
-}
-
-bool safe_id(std::string_view text)
-{
-    return !text.empty() && text.size() <= 64 && text.front() != '.' &&
-           std::all_of(text.begin(), text.end(),
-                       [](char c)
-                       {
-                           return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
-                                  (c >= '0' && c <= '9') || c == '-' || c == '_';
-                       });
-}
-
 boost::json::object execute_batch(std::string_view text, const std::filesystem::path &base,
                                   const std::filesystem::path &output_directory,
                                   const client::Options &options, const std::atomic_bool *cancel,
                                   std::function<void(unsigned, unsigned, unsigned)> progress,
                                   bool snapshot)
 {
-    if (text.empty() || text.size() > 64 * 1024)
-    {
-        throw std::invalid_argument("batch plan must contain 1..65536 bytes");
-    }
-    const auto document = sv::parse_json(text);
-    const auto &plan = document.as_object();
-    keys(plan, {"schema_version", "runs"});
-    const auto &version = plan.at("schema_version");
-    if ((!version.is_int64() && !version.is_uint64()) || version.to_number<uint64_t>() != 1)
-    {
-        throw std::invalid_argument("batch schema_version must be integer 1");
-    }
+    const auto plan = parse_batch_plan(text);
     const auto &runs = plan.at("runs").as_array();
-    if (runs.empty() || runs.size() > 8)
-    {
-        throw std::invalid_argument("batch must have 1..8 runs");
-    }
-    std::set<std::string> ids;
     std::vector<std::unique_ptr<FileExperiment>> experiments;
     boost::json::array members;
     size_t bytes = 0, trials = 0;
     for (const auto &value : runs)
     {
         const auto &row = value.as_object();
-        keys(row, {"id", "scenario"});
         const std::string id(row.at("id").as_string());
         const std::string path(row.at("scenario").as_string());
-        if (!safe_id(id) || id == "batch" || !ids.insert(id).second || path.empty() ||
-            path.size() > 4096 || path.find('\0') != std::string::npos)
-        {
-            throw std::invalid_argument(
-                "batch requires unique safe IDs and nonempty scenario paths");
-        }
         auto experiment = std::make_unique<FileExperiment>(base / path);
         bytes += experiment->reference_bytes();
         trials += experiment->trial_count();
@@ -194,14 +146,7 @@ boost::json::object run_batch(const std::filesystem::path &plan_path,
                               const client::Options &options, const std::atomic_bool *cancel,
                               std::function<void(unsigned, unsigned, unsigned)> progress)
 {
-    std::ifstream input(plan_path, std::ios::binary);
-    std::string text(64 * 1024 + 1, '\0');
-    input.read(text.data(), text.size());
-    text.resize(static_cast<size_t>(input.gcount()));
-    if (input.bad())
-    {
-        throw std::invalid_argument("cannot read batch plan");
-    }
+    const auto text = read_batch_plan(plan_path);
     return execute_batch(text, plan_path.parent_path(), output_directory, options, cancel,
                          std::move(progress), false);
 }
