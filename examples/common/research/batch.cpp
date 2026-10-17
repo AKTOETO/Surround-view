@@ -126,6 +126,11 @@ boost::json::object run_batch(const std::filesystem::path &plan_path,
         }
         try
         {
+            if (progress)
+            {
+                progress(static_cast<unsigned>(index), 0,
+                         static_cast<unsigned>(experiments[index]->trial_count()));
+            }
             auto report = experiments[index]->execute(options, cancel,
                                                       [&, index](unsigned done, unsigned total)
                                                       {
