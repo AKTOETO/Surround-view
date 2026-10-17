@@ -1,4 +1,5 @@
 #include "options.hpp"
+#include "report_output.hpp"
 #include "scenario.hpp"
 #include "sv/json.hpp"
 #include <chrono>
@@ -35,6 +36,7 @@ int execute(const Options &options)
         {
             throw std::runtime_error("report must not overwrite scenario");
         }
+        research::ReportOutput output(report_path);
         client::Options connection;
         connection.endpoint = options.endpoint;
         connection.timeout_ms = options.timeout_ms;
@@ -63,18 +65,8 @@ int execute(const Options &options)
                 return (directory.filename() / name).generic_string();
             };
         }
-        std::ofstream output(report_path);
-        if (!output)
-        {
-            throw std::runtime_error("cannot open research report");
-        }
         const auto report = research::run(scenario, connection, nullptr, {}, std::move(capture));
-        output << boost::json::serialize(report) << '\n';
-        output.flush();
-        if (!output)
-        {
-            throw std::runtime_error("research report write failed");
-        }
+        output.write(report);
         std::cout << boost::json::serialize(
                          boost::json::object{{"success", report.at("success")},
                                              {"report_path", report_path.string()},

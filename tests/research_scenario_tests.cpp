@@ -132,6 +132,13 @@ TEST(ResearchScenarioIntegration, CancellationAndCallbackFailureRestoreBaseline)
         EXPECT_FALSE(report.at("success").as_bool());
         EXPECT_TRUE(report.at("restored").as_bool()) << boost::json::serialize(report);
         EXPECT_EQ(report.at("samples").as_array().size(), 1U);
+        const auto &sample = report.at("samples").as_array()[0].as_object();
+        const auto &planned = report.at("trial_plan").as_array()[0].as_object();
+        for (const char *key : {"trial_index", "frame_index", "variant", "block", "warmup"})
+        {
+            EXPECT_EQ(sample.at(key), planned.at(key));
+        }
+        EXPECT_EQ(report.at("trial_plan").as_array().size(), 6U);
         EXPECT_EQ(report.at("baseline_rgba_sha256"), report.at("restored_rgba_sha256"));
         EXPECT_EQ(report.at("error").as_string(),
                   fail_callback ? "test callback failure" : "cancelled");

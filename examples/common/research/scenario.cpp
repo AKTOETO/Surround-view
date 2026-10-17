@@ -1,4 +1,5 @@
 #include "scenario.hpp"
+#include "trial_plan.hpp"
 #include <cmath>
 #include <stdexcept>
 
@@ -46,8 +47,8 @@ double positive(const boost::json::value &value, double high)
 Scenario parse_scenario(const boost::json::value &value)
 {
     const auto &object = value.as_object();
-    keys(object,
-         {"schema_version", "variants", "repeats", "warmup", "seed", "frames", "capture_frames"});
+    keys(object, {"schema_version", "variants", "matrix", "repeats", "warmup", "seed", "frames",
+                  "capture_frames"});
     if (integer(object.at("schema_version"), 1, 1) != 1)
     {
         throw std::invalid_argument("scenario schema version");
@@ -73,7 +74,13 @@ Scenario parse_scenario(const boost::json::value &value)
     {
         result.seed = integer(*v, 0, 2147483647);
     }
-    const auto &variants = object.at("variants").as_array();
+    if (object.contains("variants") == object.contains("matrix"))
+    {
+        throw std::invalid_argument("scenario requires exactly one of variants or matrix");
+    }
+    const auto variants = object.contains("matrix")
+                              ? expand_variant_matrix(object.at("matrix").as_object())
+                              : object.at("variants").as_array();
     if (variants.empty() || variants.size() > 32 ||
         variants.size() * (result.repeats + result.warmup) * result.frames > 10000)
     {

@@ -1,11 +1,10 @@
 #include "connection.hpp"
 #include "scenario.hpp"
+#include "trial_plan.hpp"
 #include <algorithm>
 #include <chrono>
 #include <cmath>
-#include <numeric>
 #include <openssl/sha.h>
-#include <random>
 #include <stdexcept>
 #include <thread>
 
@@ -132,9 +131,15 @@ boost::json::object run(const Scenario &scenario, const client::Options &options
                                     {"capture_frames", scenario.capture_frames}};
     // Also validate callers that construct Scenario directly (e.g. future GUI).
     (void)parse_scenario(description);
+    const auto plan = make_trial_plan(scenario);
+    const auto plan_json = trial_plan_json(plan);
+    const auto serialized_plan = boost::json::serialize(plan_json);
     const auto serialized = boost::json::serialize(description);
     boost::json::object report{
         {"schema_version", 1},
+        {"trial_order_algorithm", trial_order_algorithm},
+        {"trial_plan", plan_json},
+        {"trial_plan_sha256", hash(serialized_plan.data(), serialized_plan.size())},
         {"scenario", description},
         {"scenario_sha256", hash(serialized.data(), serialized.size())},
         {"experiment",
@@ -201,8 +206,8 @@ boost::json::object run(const Scenario &scenario, const client::Options &options
         }
         report["baseline"] = baseline->header;
         report["baseline_rgba_sha256"] = hash(baseline->payload.data(), baseline->payload.size());
-        std::mt19937 random(scenario.seed);
         unsigned completed = 0;
+        size_t planned_index = 0;
         const unsigned total =
             scenario.variants.size() * (scenario.warmup + scenario.repeats) * scenario.frames;
         for (unsigned frame_index = 0; frame_index < scenario.frames; ++frame_index)
@@ -247,11 +252,10 @@ boost::json::object run(const Scenario &scenario, const client::Options &options
             // Warmup blocks are also complete blocks; every measurement re-applies its profile.
             for (unsigned block = 0; block < scenario.warmup + scenario.repeats; ++block)
             {
-                std::vector<size_t> order(scenario.variants.size());
-                std::iota(order.begin(), order.end(), 0);
-                std::shuffle(order.begin(), order.end(), random);
-                for (const auto index : order)
+                for (size_t slot = 0; slot < scenario.variants.size(); ++slot)
                 {
+                    const auto trial_index = planned_index++;
+                    const auto index = plan.at(trial_index).variant;
                     check_cancel();
                     accepted(*connection, "experiment_renew", {{"lease_id", lease_id}});
                     const auto &variant = scenario.variants[index];
@@ -296,6 +300,7 @@ boost::json::object run(const Scenario &scenario, const client::Options &options
                         throw std::runtime_error("trial provenance mismatch");
                     }
                     boost::json::object sample{
+                        {"trial_index", trial_index},
                         {"frame_index", frame_index},
                         {"variant", index},
                         {"block", block},

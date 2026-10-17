@@ -136,8 +136,25 @@ class ClientTransportTests(unittest.TestCase):
                 self.assertEqual(report['final_state']['experiment_lease']['state'], 'idle')
                 self.assertEqual(report['final_state']['paused'], report['initial_state']['paused'])
                 self.assertEqual(len(report['scenario_sha256']), 64)
+                self.assertEqual(report['trial_order_algorithm'], 'mt19937_fisher_yates_reject_v1')
+                plan = report['trial_plan']
+                self.assertEqual(len(plan), len(report['samples']))
+                digest = hashlib.sha256(json.dumps(plan, separators=(',', ':')).encode()).hexdigest()
+                self.assertEqual(report['trial_plan_sha256'], digest)
+                for index, sample in enumerate(report['samples']):
+                    self.assertEqual(sample['trial_index'], index)
+                    for key in ('trial_index', 'frame_index', 'variant', 'block', 'warmup'):
+                        self.assertEqual(sample[key], plan[index][key])
                 self.assertEqual(len(report['catalog']['source_fingerprint']), 64)
                 self.assertEqual(len(report['samples']), 21)
+                # Metadata-only runs also reserve the destination before touching the server.
+                before_report = report_path.read_bytes()
+                refused = subprocess.run([str(BUILD / 'svctl'), *endpoint,
+                    'research', str(scenario), str(report_path)],
+                    text=True, capture_output=True, timeout=5)
+                self.assertNotEqual(refused.returncode, 0)
+                self.assertIn('cannot reserve new research report', refused.stderr)
+                self.assertEqual(report_path.read_bytes(), before_report)
                 self.assertEqual(len(report['summaries']), 7)
                 for summary in report['summaries']:
                     timing = summary['timings']['render_wall']
@@ -162,10 +179,10 @@ class ClientTransportTests(unittest.TestCase):
                 sequence_path = directory / 'sequence.json'
                 sequence_report = directory / 'sequence-report.json'
                 sequence_path.write_text(json.dumps(dict(schema_version=1, frames=3,
-                    capture_frames=True, warmup=0, repeats=2, seed=31,
-                    variants=[dict(mode='graph_cut_multi_band',pyramid_boundary=p,
-                        seam_solver='alpha_expansion' if p == 'normalized' else 'binary_pairs')
-                        for p in ('zero','normalized')])))
+                    warmup=0, repeats=2, capture_frames=True,
+                    matrix=dict(base=dict(mode='graph_cut_multi_band', pyramid_levels=3,
+                                          seam_solver='alpha_expansion'),
+                                axes=dict(pyramid_boundary=['zero','normalized'])))))
                 time.sleep(.08)
                 sequence = subprocess.run([str(BUILD / 'svctl'), *endpoint, '--timeout-ms', '3000',
                     'research', str(sequence_path), str(sequence_report)],
@@ -184,6 +201,9 @@ class ClientTransportTests(unittest.TestCase):
                 self.assertEqual(len({b['metadata']['frame_set_id'] for b in sequence_data['frame_baselines']}),3)
                 self.assertEqual(sequence_data['last_baseline_rgba_sha256'],sequence_data['restored_rgba_sha256'])
                 for sample in sequence_data['samples']:
+                    planned = sequence_data['trial_plan'][sample['trial_index']]
+                    for key in ('trial_index', 'frame_index', 'variant', 'block', 'warmup'):
+                        self.assertEqual(sample[key], planned[key])
                     baseline = sequence_data['frame_baselines'][sample['frame_index']]['metadata']
                     self.assertEqual(sample['metadata']['inputs'],baseline['inputs'])
                     if sample['metadata']['fusion'].get('seam_solver') == 'alpha_expansion':

@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "frames": 3,
+  "warmup": 2,
+  "repeats": 5,
+  "seed": 17,
+  "capture_frames": true,
+  "matrix": {
+    "base": {"mode": "multi_band"},
+    "axes": {
+      "pyramid_levels": [2, 4],
+      "pyramid_boundary": ["zero", "normalized"]
+    }
+  }
+}
