@@ -152,6 +152,56 @@ TEST(ResearchGuiUnit, RowsPreserveMeasuredZeroAndUnavailableMetrics)
     EXPECT_EQ(rows[1].toMap().value("mae").toString(), QString::fromUtf8("—"));
 }
 
+TEST(ResearchGuiUnit, UrlAndReferencePreflightFailuresLeaveNoOutput)
+{
+    QTemporaryDir directory;
+    ASSERT_TRUE(directory.isValid());
+    ResearchController controller;
+    controller.setConnection(sv::client::Options{});
+    const auto output = directory.path() + "/preflight";
+    for (const auto &url :
+         {QUrl("https://example.invalid/scenario.json"), QUrl("file:///tmp/scene.json?query"),
+          QUrl("file:///tmp/scene.json#fragment")})
+    {
+        EXPECT_FALSE(controller.startScenario(url, output));
+        EXPECT_EQ(controller.qualityStatus(), "not_available");
+        EXPECT_FALSE(std::filesystem::exists(output.toStdString()));
+    }
+    ASSERT_TRUE(controller.startDraftWithReference(
+        draft(), output, QUrl::fromLocalFile(directory.path() + "/missing-reference.json")));
+    ASSERT_TRUE(waitFor([&] { return !controller.busy(); }));
+    EXPECT_EQ(controller.exitCode(), 3);
+    EXPECT_EQ(controller.qualityStatus(), "not_available");
+    EXPECT_FALSE(std::filesystem::exists(output.toStdString()));
+    EXPECT_TRUE(controller.reportPath().isEmpty());
+    const auto input = directory.path() + "/scenario with # and %.json";
+    std::ofstream(input.toStdString()) << "invalid-json";
+    ASSERT_TRUE(controller.startScenario(QUrl::fromLocalFile(input), output));
+    ASSERT_TRUE(waitFor([&] { return !controller.busy(); }));
+    EXPECT_EQ(controller.exitCode(), 3);
+    EXPECT_FALSE(std::filesystem::exists(output.toStdString()));
+}
+
+TEST(ResearchGuiUnit, SmallQualityErrorsNeverDisplayAsExactZero)
+{
+    auto data = boost::json::parse(R"({
+      "scenario":{"variants":[{"mode":"multi_band"}]},"summaries":[],
+      "quality_summaries":[{"frames":1,"pixel_weighted_mae_rgb8":0.000001,
+        "pixel_weighted_rmse_rgb8":0.000002,"pixel_weighted_psnr_db":162.1,"exact_match":false}]
+    })")
+                    .as_object();
+    const auto row = researchResultRows(data)[0].toMap();
+    EXPECT_NE(row.value("mae").toString(), "0.000");
+    EXPECT_NEAR(row.value("mae").toString().toDouble(), .000001, 1e-15);
+    EXPECT_EQ(row.value("psnr").toString(), "162.100");
+    data.at("quality_summaries").as_array()[0].as_object()["exact_match"] = true;
+    data.at("quality_summaries").as_array()[0].as_object()["pixel_weighted_mae_rgb8"] = 0;
+    data.at("quality_summaries").as_array()[0].as_object()["pixel_weighted_rmse_rgb8"] = 0;
+    data.at("quality_summaries").as_array()[0].as_object()["pixel_weighted_psnr_db"] = nullptr;
+    EXPECT_TRUE(researchResultRows(data)[0].toMap().value("psnr").toString().startsWith(
+        QString::fromUtf8("∞")));
+}
+
 TEST(ResearchGuiLive, CompletesWithResponsiveUiAndFrozenEndpoint)
 {
     if (!live)
@@ -236,6 +286,86 @@ TEST(ResearchGuiLive, DestructorCancelsJoinsAndLeavesNoQueuedUseAfterFree)
     EXPECT_EQ(data.at("error"), "cancelled");
 }
 
+TEST(ResearchGuiReferenceLive, ImportsAndDraftsShareGuardedQualityAndAcceptance)
+{
+    ASSERT_TRUE(live);
+    const auto source = qEnvironmentVariable("SV_RESEARCH_GUI_SCENARIO");
+    ASSERT_FALSE(source.isEmpty());
+    const auto expected = qEnvironmentVariable("SV_RESEARCH_GUI_QUALITY");
+    const auto scenario = report(source.toStdString());
+    const auto &variant = scenario.at("variants").as_array()[0].as_object();
+    auto values = draft();
+    values["modes"] =
+        QStringList{QString::fromStdString(std::string(variant.at("mode").as_string()))};
+    values["boundary"] =
+        QString::fromStdString(std::string(variant.at("pyramid_boundary").as_string()));
+    values["pyramid_levels"] = variant.at("pyramid_levels").to_number<int>();
+    values["seam_solver"] = "alpha_expansion";
+    values["frames"] = 3;
+    values["warmup"] = 1;
+    values["repeats"] = 2;
+    const auto reference = std::filesystem::path(source.toStdString()).parent_path() /
+                           std::string(scenario.at("quality_reference").as_string());
+    for (const bool imported : {true, false})
+    {
+        QTemporaryDir directory;
+        ASSERT_TRUE(directory.isValid());
+        const auto output = directory.path() + "/quality";
+        ResearchController controller;
+        controller.setConnection(live);
+        ASSERT_TRUE(imported
+                        ? controller.startScenario(QUrl::fromLocalFile(source), output)
+                        : controller.startDraftWithReference(
+                              values, output,
+                              QUrl::fromLocalFile(QString::fromStdString(reference.string()))));
+        ASSERT_TRUE(waitFor([&] { return !controller.busy(); }));
+        EXPECT_EQ(controller.qualityStatus(), expected) << controller.status().toStdString();
+        EXPECT_TRUE(controller.referenceInfo().contains("regression"));
+        EXPECT_TRUE(controller.referenceInfo().contains("transport-fixture"));
+        const int code = expected == "passed" || expected == "not_requested" ? 0
+                         : expected == "failed"                              ? 5
+                                                                             : 4;
+        EXPECT_EQ(controller.exitCode(), code);
+        const auto data = report(controller.reportPath().toStdString());
+        EXPECT_TRUE(data.at("restored").as_bool());
+        EXPECT_EQ(data.at("success").as_bool(), expected != "incomplete");
+        EXPECT_EQ(std::string(data.at("scenario_input_kind").as_string()),
+                  imported ? "file_bytes_v1" : "memory_json_bytes_v1");
+        if (expected == "passed" || expected == "not_requested")
+        {
+            ASSERT_FALSE(controller.rows().isEmpty());
+            EXPECT_EQ(controller.rows()[0].toMap().value("mae").toString(), "0.000");
+            EXPECT_TRUE(controller.rows()[0].toMap().value("psnr").toString().startsWith(
+                QString::fromUtf8("∞")));
+        }
+        if (expected == "not_requested")
+        {
+            EXPECT_TRUE(controller.status().contains("метрики рассчитаны"));
+        }
+        if (expected == "failed")
+        {
+            ASSERT_FALSE(controller.rows().isEmpty());
+            EXPECT_GT(controller.rows()[0].toMap().value("mae").toString().toDouble(), 0);
+            EXPECT_FALSE(controller.rows()[0].toMap().value("psnr").toString().contains(
+                QString::fromUtf8("∞")));
+        }
+        if (!imported)
+        {
+            const auto snapshot =
+                report(std::filesystem::path(output.toStdString()) / "scenario.json");
+            EXPECT_TRUE(
+                std::filesystem::path(std::string(snapshot.at("quality_reference").as_string()))
+                    .is_absolute());
+        }
+        // A rejected new request must not retain an earlier passed/failed badge or report rows.
+        EXPECT_FALSE(controller.startScenario(QUrl("https://example.invalid/scenario.json"),
+                                              output + "-invalid"));
+        EXPECT_EQ(controller.qualityStatus(), "not_available");
+        EXPECT_TRUE(controller.rows().isEmpty());
+        EXPECT_TRUE(controller.reportPath().isEmpty());
+    }
+}
+
 int main(int argc, char **argv)
 {
     QCoreApplication app(argc, argv);
@@ -259,6 +389,8 @@ int main(int argc, char **argv)
     argc = 1;
     ::testing::InitGoogleTest(&argc, argv);
     ::testing::GTEST_FLAG(filter) =
-        live ? "ResearchGuiLive.*" : "ResearchGuiDraft.*:ResearchGuiUnit.*";
+        live ? (qEnvironmentVariableIsSet("SV_RESEARCH_GUI_SCENARIO") ? "ResearchGuiReferenceLive.*"
+                                                                      : "ResearchGuiLive.*")
+             : "ResearchGuiDraft.*:ResearchGuiUnit.*";
     return RUN_ALL_TESTS();
 }

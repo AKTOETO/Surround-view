@@ -1,6 +1,7 @@
 #include "research_results.hpp"
 #include <QString>
 #include <QVariantMap>
+#include <cmath>
 
 namespace
 {
@@ -15,8 +16,13 @@ QString label(const boost::json::object &object, const char *key, const char *fa
 QString metric(const boost::json::object &object, const char *key)
 {
     const auto *value = object.if_contains(key);
-    return value && value->is_number() ? QString::number(value->to_number<double>(), 'f', 3)
-                                       : QString::fromUtf8("—");
+    if (!value || !value->is_number())
+    {
+        return QString::fromUtf8("—");
+    }
+    const auto number = value->to_number<double>();
+    return QString::number(number, number != 0 && std::abs(number) < .001 ? 'g' : 'f',
+                           number != 0 && std::abs(number) < .001 ? 6 : 3);
 }
 } // namespace
 
@@ -34,6 +40,9 @@ QVariantList researchResultRows(const boost::json::object &report)
                         {"p50", QString::fromUtf8("—")},
                         {"p95", QString::fromUtf8("—")},
                         {"mae", QString::fromUtf8("—")},
+                        {"rmse", QString::fromUtf8("—")},
+                        {"psnr", QString::fromUtf8("—")},
+                        {"qualityFrames", 0},
                         {"measured", 0}};
         if (index < summaries.size())
         {
@@ -48,7 +57,18 @@ QVariantList researchResultRows(const boost::json::object &report)
         }
         if (quality && index < quality->as_array().size())
         {
-            row["mae"] = metric(quality->as_array()[index].as_object(), "pixel_weighted_mae_rgb8");
+            const auto &entry = quality->as_array()[index].as_object();
+            row["mae"] = metric(entry, "pixel_weighted_mae_rgb8");
+            row["rmse"] = metric(entry, "pixel_weighted_rmse_rgb8");
+            row["psnr"] = metric(entry, "pixel_weighted_psnr_db");
+            if (const auto *exact = entry.if_contains("exact_match"); exact && exact->as_bool())
+            {
+                row["psnr"] = QString::fromUtf8("∞ (точное совпадение)");
+            }
+            if (const auto *frames = entry.if_contains("frames"))
+            {
+                row["qualityFrames"] = frames->to_number<int>();
+            }
         }
         rows.push_back(std::move(row));
     }

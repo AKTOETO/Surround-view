@@ -293,6 +293,28 @@ class ClientTransportTests(unittest.TestCase):
                 quality_scenario.write_text(json.dumps(dict(schema_version=1, frames=3,
                     reset_replay=True, warmup=1, repeats=2, quality_reference='quality/reference.json',
                     variants=[sequence_data['scenario']['variants'][0]])))
+                def gui_quality(expected):
+                    test = BUILD / 'sv-simulator-research-tests'
+                    if not test.exists():
+                        return
+                    env = os.environ.copy()
+                    env['SV_RESEARCH_GUI_SCENARIO'] = str(quality_scenario)
+                    env['SV_RESEARCH_GUI_QUALITY'] = expected
+                    result = subprocess.run([str(test), *endpoint], env=env,
+                        text=True, capture_output=True, timeout=40)
+                    self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                    qml_test = BUILD / 'sv-simulator-configuration-qml-tests'
+                    if expected == 'passed' and qml_test.exists():
+                        env.update(QT_QPA_PLATFORM='offscreen', QT_QUICK_BACKEND='software')
+                        env['SV_RESEARCH_GUI_ENDPOINT'] = json.dumps(
+                            dict(directory=str(ipc)) if profile == 'unix' else
+                            dict(host='127.0.0.1', control_port=ctl, data_port=data))
+                        env['SV_RESEARCH_QUALITY_SCREENSHOT'] = '/tmp/sv-reference-result.png'
+                        result = subprocess.run([str(qml_test),
+                            '--gtest_filter=SimulatorResearchQml.ReferenceWorkflowRendersMeasuredResults'],
+                            env=env, text=True, capture_output=True, timeout=25)
+                        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
                 quality_report = directory / 'quality-report.json'
                 quality = subprocess.run([str(BUILD / 'svctl'), *endpoint, '--timeout-ms', '3000',
                     'research', str(quality_scenario), str(quality_report)],
@@ -316,6 +338,15 @@ class ClientTransportTests(unittest.TestCase):
                         self.assertTrue(sample['quality']['exact_match'])
                         self.assertIsNone(sample['quality']['psnr_db'])
                         self.assertEqual(sample['quality']['selected_pixels'], width * height // 2)
+                gui_quality("passed")
+                original_reference = reference_path.read_bytes()
+                no_criteria = dict(reference)
+                del no_criteria['criteria']
+                reference_path.write_text(json.dumps(no_criteria))
+                try:
+                    gui_quality('not_requested')
+                finally:
+                    reference_path.write_bytes(original_reference)
                 # A failed threshold is scientific rejection, while workflow/restore succeeded.
                 truth_path = reference_dir / references[0]['rgb']
                 original_truth = truth_path.read_bytes()
@@ -336,6 +367,7 @@ class ClientTransportTests(unittest.TestCase):
                     self.assertEqual(len(rejected_data['samples']), 9)
                     self.assertTrue(any(not s['quality']['acceptance']['passed']
                                         for s in rejected_data['samples'] if not s['warmup']))
+                    gui_quality('failed')
                     _, rejected_batch = batch_run('batch-quality-rejected',
                         [quality_scenario, batch_scenario], 5)
                     self.assertTrue(rejected_batch['success'])
@@ -362,6 +394,7 @@ class ClientTransportTests(unittest.TestCase):
                     self.assertTrue(content_data['restored'])
                     self.assertEqual(content_data['quality_acceptance']['status'], 'incomplete')
                     self.assertEqual(content_data['error'], 'quality reference input guard mismatch')
+                    gui_quality('incomplete')
                     failed_output, failed_batch = batch_run('batch-guard-failed',
                         [quality_scenario, batch_scenario], 4)
                     self.assertFalse(failed_batch['success'])

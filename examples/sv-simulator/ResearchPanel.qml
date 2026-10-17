@@ -6,6 +6,15 @@ Pane {
     id: panel
 
     property var controller: researchController
+    property var qualityLabels: ({
+        "not_available": "не проверено",
+        "not_requested": "критерии не заданы",
+        "passed": "пройдены",
+        "failed": "НЕ пройдены",
+        "incomplete": "оценка не завершена"
+    })
+    property url scenarioSource: ""
+    property url referenceSource: ""
     property var selectedModes: ["multi_band", "graph_cut_multi_band"]
     property int variantCount: {
         var count = selectedModes.length;
@@ -56,6 +65,20 @@ Pane {
     palette.highlight: "#00d1b2"
     palette.highlightedText: "#071b1b"
 
+    Loader {
+        id: researchFiles
+
+        objectName: "researchFilesLoader"
+        visible: false
+        source: simulatorQtMajorVersion >= 6 ? "ResearchFilesQt6.qml" : "ResearchFilesQt5.qml"
+        onLoaded: item.chosen.connect(function(file, reference) {
+            if (reference)
+                panel.referenceSource = file;
+            else
+                panel.scenarioSource = file;
+        })
+    }
+
     background: Rectangle {
         color: "transparent"
     }
@@ -74,7 +97,7 @@ Pane {
             width: parent.width
             wrapMode: Text.Wrap
             color: "#aab8cc"
-            text: "Сравнение серверных методов на replay-записи. Каждый запуск начинает запись заново; текущие поверхность и виртуальный ракурс сохраняются."
+            text: "Сравнение серверных методов на replay-записи. Форма начинает запись заново; импорт следует параметрам выбранного сценария."
         }
 
         TabBar {
@@ -97,6 +120,30 @@ Pane {
 
         }
 
+        Label {
+            width: parent.width
+            wrapMode: Text.Wrap
+            color: "#64d2ff"
+            text: panel.controller.status
+            visible: tabs.currentIndex === 0
+        }
+
+        Label {
+            width: parent.width
+            wrapMode: Text.Wrap
+            color: "#cbd5e0"
+            text: panel.controller.referenceInfo + " · критерии: " + (panel.qualityLabels[panel.controller.qualityStatus] || panel.controller.qualityStatus)
+            visible: tabs.currentIndex !== 0
+        }
+
+        Label {
+            width: parent.width
+            wrapMode: Text.Wrap
+            color: "#aab8cc"
+            text: "regression — проверка воспроизводимости, не независимая truth. passed относится к заданным критериям; независимость reference задаёт автор и программа её не доказывает."
+            visible: tabs.currentIndex === 2
+        }
+
         Column {
             width: parent.width
             spacing: 12
@@ -104,6 +151,54 @@ Pane {
             enabled: !panel.controller.busy
 
             GroupBox {
+                title: "Источник плана"
+                width: parent.width
+
+                Column {
+                    width: parent.width
+                    spacing: 8
+
+                    ComboBox {
+                        id: planMode
+
+                        objectName: "researchPlanMode"
+                        width: parent.width
+                        model: ["Настроить через форму", "Запустить сохранённый сценарий"]
+                    }
+
+                    RowLayout {
+                        width: parent.width
+                        visible: planMode.currentIndex === 1
+
+                        TextField {
+                            Layout.fillWidth: true
+                            readOnly: true
+                            text: panel.scenarioSource.toString()
+                            placeholderText: "Сценарий не выбран"
+                            selectByMouse: true
+                        }
+
+                        Button {
+                            objectName: "researchChooseScenario"
+                            text: "Выбрать…"
+                            onClicked: researchFiles.item.open(false)
+                        }
+
+                    }
+
+                    Label {
+                        width: parent.width
+                        wrapMode: Text.Wrap
+                        visible: planMode.currentIndex === 1
+                        text: "Файл не редактируется. Его relative reference разрешается от исходного каталога; значения формы ниже не применяются. Batch-план здесь не поддерживается."
+                    }
+
+                }
+
+            }
+
+            GroupBox {
+                visible: planMode.currentIndex === 0
                 title: "Алгоритмы"
                 width: parent.width
 
@@ -128,6 +223,7 @@ Pane {
             }
 
             GroupBox {
+                visible: planMode.currentIndex === 0
                 title: "Кадры и повторения"
                 width: parent.width
 
@@ -198,6 +294,7 @@ Pane {
             }
 
             GroupBox {
+                visible: planMode.currentIndex === 0
                 title: "Пирамида и швы"
                 width: parent.width
 
@@ -247,10 +344,55 @@ Pane {
 
             }
 
+            GroupBox {
+                title: "Внешний эталон (необязательно)"
+                width: parent.width
+                visible: planMode.currentIndex === 0
+
+                Column {
+                    width: parent.width
+                    spacing: 8
+
+                    RowLayout {
+                        width: parent.width
+
+                        TextField {
+                            Layout.fillWidth: true
+                            readOnly: true
+                            text: panel.referenceSource.toString()
+                            placeholderText: "Без оценки качества"
+                            selectByMouse: true
+                        }
+
+                        Button {
+                            objectName: "researchChooseReference"
+                            text: "Выбрать…"
+                            onClicked: researchFiles.item.open(true)
+                        }
+
+                        Button {
+                            text: "Убрать"
+                            enabled: panel.referenceSource.toString().length > 0
+                            onClicked: panel.referenceSource = ""
+                        }
+
+                    }
+
+                    Label {
+                        width: parent.width
+                        wrapMode: Text.Wrap
+                        text: "RGB/mask, guards и заранее заданные критерии читаются из manifest. Выбирайте совместимый reference: тот же кадр, ракурс, калибровка и размер. Предпочтителен schema2."
+                    }
+
+                }
+
+            }
+
             Label {
                 width: parent.width
                 wrapMode: Text.Wrap
                 color: "#64d2ff"
+                visible: planMode.currentIndex === 0
                 text: panel.variantCount + " вариантов × " + framesCount.value + " кадров × " + (warmupCount.value + repeatCount.value) + " блоков = " + (panel.variantCount * framesCount.value * (warmupCount.value + repeatCount.value)) + " trials (предел 10000). Seed меняет порядок методов, а не сцену."
             }
 
@@ -282,15 +424,15 @@ Pane {
                 width: parent.width
                 wrapMode: Text.Wrap
                 color: "#aab8cc"
-                text: "Родительская папка должна существовать. Сценарий, RGBA и отчёт сохраняются без перезаписи. Внешний эталон в этой форме пока не задаётся: MAE/PSNR и приёмка качества не оцениваются."
+                text: "Родительская папка должна существовать. Отчёт сохраняется без перезаписи. Эталон проверяется до подключения к серверу; без критериев вычисленные метрики не означают приёмку качества."
             }
 
             Button {
                 objectName: "researchStart"
                 text: "Начать исследование"
-                enabled: panel.controller.available && panel.variantCount > 0 && panel.variantCount * framesCount.value * (warmupCount.value + repeatCount.value) <= 10000
+                enabled: panel.controller.available && (planMode.currentIndex === 1 ? panel.scenarioSource.toString().length > 0 : panel.variantCount > 0 && panel.variantCount * framesCount.value * (warmupCount.value + repeatCount.value) <= 10000)
                 onClicked: {
-                    if (panel.controller.startDraft(panel.draft(), outputDirectory.text))
+                    if (planMode.currentIndex === 1 ? panel.controller.startScenario(panel.scenarioSource, outputDirectory.text) : panel.controller.startDraftWithReference(panel.draft(), outputDirectory.text, panel.referenceSource))
                         tabs.currentIndex = 1;
 
                 }
@@ -319,6 +461,7 @@ Pane {
             }
 
             ProgressBar {
+                indeterminate: panel.controller.busy && panel.controller.total === 0
                 width: parent.width
                 from: 0
                 to: Math.max(1, panel.controller.total)
@@ -376,7 +519,7 @@ Pane {
 
                 delegate: Rectangle {
                     width: panel.width
-                    height: 66
+                    height: 90
                     radius: 6
                     color: "#263244"
 
@@ -392,7 +535,12 @@ Pane {
                         }
 
                         Label {
-                            text: "Render p50: " + modelData.p50 + " мс  ·  p95: " + modelData.p95 + " мс  ·  n=" + modelData.measured + "  ·  MAE RGB8: " + modelData.mae
+                            text: "Render p50: " + modelData.p50 + " мс  ·  p95: " + modelData.p95 + " мс  ·  n=" + modelData.measured
+                            color: "#cbd5e0"
+                        }
+
+                        Label {
+                            text: "MAE RGB8: " + modelData.mae + " · RMSE RGB8: " + modelData.rmse + " · PSNR: " + modelData.psnr + " dB · frames=" + modelData.qualityFrames
                             color: "#cbd5e0"
                         }
 

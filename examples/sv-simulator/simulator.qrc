@@ -5,6 +5,8 @@
         <file>RuntimePanel.qml</file>
         <file>ResearchPanel.qml</file>
         <file>ResearchCloseGuard.qml</file>
+        <file>ResearchFilesQt6.qml</file>
+        <file>ResearchFilesQt5.qml</file>
         <file>TelemetryPanel.qml</file>
         <file>TelemetryChart.qml</file>
         <file>TelemetryMetricPanel.qml</file>
