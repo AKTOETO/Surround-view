@@ -182,3 +182,47 @@ TEST_F(ResearchBatch, MemoryInputRetainsExactBytesAndBaseWithoutCreatingSourceFi
         R"({"schema_version":1,"reset_replay":true,"quality_reference":"absent.json","variants":[{"mode":"multi_band"}]})",
         root)));
 }
+
+TEST_F(ResearchBatch, CompiledPlanPreservesOrderHashAndReusableSnapshot)
+{
+    auto document = plan();
+    std::swap(document.at("runs").as_array()[0], document.at("runs").as_array()[1]);
+    const auto summary = sv::research::run_batch(document, root, root / "memory", {}, &cancel);
+    EXPECT_EQ(summary.at("plan"), document);
+    EXPECT_EQ(summary.at("runs").as_array()[0].as_object().at("id"), "second");
+    EXPECT_EQ(summary.at("plan_snapshot"), "inputs/plan.json");
+    std::ifstream input(root / "memory/inputs/plan.json", std::ios::binary);
+    const std::string text((std::istreambuf_iterator<char>(input)), {});
+    EXPECT_EQ(text, boost::json::serialize(document) + '\n');
+    EXPECT_EQ(std::string(summary.at("plan_sha256").as_string()),
+              sv::research::sha256(text.data(), text.size()));
+    // Relative entries are relative to the supplied base, not the snapshot directory.
+    // GUI plans contain absolute paths and can be rerun directly from their snapshot.
+    for (auto &member : document.at("runs").as_array())
+    {
+        member.as_object()["scenario"] = (root / "scenario.json").string();
+    }
+    const auto absolute = sv::research::run_batch(document, root, root / "absolute", {}, &cancel);
+    const auto replay =
+        sv::research::run_batch(root / "absolute/inputs/plan.json", root / "rerun", {}, &cancel);
+    EXPECT_EQ(absolute.at("plan_sha256"), replay.at("plan_sha256"));
+    EXPECT_EQ(absolute.at("runs"), replay.at("runs"));
+    EXPECT_FALSE(replay.contains("plan_snapshot"));
+    EXPECT_THROW(sv::research::run_batch(document, root, root / "absolute", {}, &cancel),
+                 std::runtime_error);
+}
+
+TEST_F(ResearchBatch, CompiledPlanUsesTheSameStrictPreflightBeforeOutput)
+{
+    auto document = plan();
+    document.at("runs").as_array()[1].as_object()["scenario"] = "missing.json";
+    EXPECT_ANY_THROW(sv::research::run_batch(document, root, root / "bad", {}, &cancel));
+    EXPECT_FALSE(std::filesystem::exists(root / "bad"));
+    document = plan();
+    document.at("runs").as_array()[1].as_object()["id"] = "first";
+    EXPECT_ANY_THROW(sv::research::run_batch(document, root, root / "duplicate", {}, &cancel));
+    EXPECT_FALSE(std::filesystem::exists(root / "duplicate"));
+    document["oversize"] = std::string(65536, 'x');
+    EXPECT_ANY_THROW(sv::research::run_batch(document, root, root / "oversize", {}, &cancel));
+    EXPECT_FALSE(std::filesystem::exists(root / "oversize"));
+}

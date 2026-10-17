@@ -33,18 +33,14 @@ bool safe_id(std::string_view text)
                                   (c >= '0' && c <= '9') || c == '-' || c == '_';
                        });
 }
-} // namespace
 
-boost::json::object run_batch(const std::filesystem::path &plan_path,
-                              const std::filesystem::path &output_directory,
-                              const client::Options &options, const std::atomic_bool *cancel,
-                              std::function<void(unsigned, unsigned, unsigned)> progress)
+boost::json::object execute_batch(std::string_view text, const std::filesystem::path &base,
+                                  const std::filesystem::path &output_directory,
+                                  const client::Options &options, const std::atomic_bool *cancel,
+                                  std::function<void(unsigned, unsigned, unsigned)> progress,
+                                  bool snapshot)
 {
-    std::ifstream input(plan_path, std::ios::binary);
-    std::string text(64 * 1024 + 1, '\0');
-    input.read(text.data(), text.size());
-    text.resize(static_cast<size_t>(input.gcount()));
-    if (input.bad() || text.empty() || text.size() > 64 * 1024)
+    if (text.empty() || text.size() > 64 * 1024)
     {
         throw std::invalid_argument("batch plan must contain 1..65536 bytes");
     }
@@ -77,7 +73,7 @@ boost::json::object run_batch(const std::filesystem::path &plan_path,
             throw std::invalid_argument(
                 "batch requires unique safe IDs and nonempty scenario paths");
         }
-        auto experiment = std::make_unique<FileExperiment>(plan_path.parent_path() / path);
+        auto experiment = std::make_unique<FileExperiment>(base / path);
         bytes += experiment->reference_bytes();
         trials += experiment->trial_count();
         if (!experiment->resets_replay() || bytes > 128 * 1024 * 1024 || trials > 10000)
@@ -114,6 +110,17 @@ boost::json::object run_batch(const std::filesystem::path &plan_path,
         {"completed", 0},
         {"reported", 0},
         {"status", "complete"}};
+    if (snapshot)
+    {
+        const auto inputs = output_directory / "inputs";
+        if (!std::filesystem::create_directory(inputs))
+        {
+            throw std::runtime_error("batch inputs directory must be new");
+        }
+        ReportOutput plan_output(inputs / "plan.json");
+        plan_output.write(plan);
+        summary["plan_snapshot"] = "inputs/plan.json";
+    }
     unsigned criteria_requested = 0, quality_failed = 0;
     for (size_t index = 0; index < experiments.size(); ++index)
     {
@@ -179,5 +186,32 @@ boost::json::object run_batch(const std::filesystem::path &plan_path,
     summary["runs"] = std::move(members);
     summary_output.write(summary);
     return summary;
+}
+} // namespace
+
+boost::json::object run_batch(const std::filesystem::path &plan_path,
+                              const std::filesystem::path &output_directory,
+                              const client::Options &options, const std::atomic_bool *cancel,
+                              std::function<void(unsigned, unsigned, unsigned)> progress)
+{
+    std::ifstream input(plan_path, std::ios::binary);
+    std::string text(64 * 1024 + 1, '\0');
+    input.read(text.data(), text.size());
+    text.resize(static_cast<size_t>(input.gcount()));
+    if (input.bad())
+    {
+        throw std::invalid_argument("cannot read batch plan");
+    }
+    return execute_batch(text, plan_path.parent_path(), output_directory, options, cancel,
+                         std::move(progress), false);
+}
+
+boost::json::object run_batch(const boost::json::object &plan, const std::filesystem::path &base,
+                              const std::filesystem::path &output_directory,
+                              const client::Options &options, const std::atomic_bool *cancel,
+                              std::function<void(unsigned, unsigned, unsigned)> progress)
+{
+    return execute_batch(boost::json::serialize(plan) + '\n', base, output_directory, options,
+                         cancel, std::move(progress), true);
 }
 } // namespace sv::research

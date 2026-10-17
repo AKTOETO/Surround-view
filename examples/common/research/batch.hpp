@@ -10,4 +10,10 @@ boost::json::object run_batch(const std::filesystem::path &plan,
                               const std::filesystem::path &new_output_directory,
                               const client::Options &, const std::atomic_bool *cancel = nullptr,
                               std::function<void(unsigned, unsigned, unsigned)> progress = {});
+// A compiled/UI plan: absolute or base-relative scenario paths; saves inputs/plan.json.
+boost::json::object run_batch(const boost::json::object &plan,
+                              const std::filesystem::path &scenario_base_directory,
+                              const std::filesystem::path &new_output_directory,
+                              const client::Options &, const std::atomic_bool *cancel = nullptr,
+                              std::function<void(unsigned, unsigned, unsigned)> progress = {});
 } // namespace sv::research
