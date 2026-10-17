@@ -27,10 +27,12 @@ from rig import FACES, configuration, face_basis, vehicle_pose
 from diagnostic_motion import position_for_capture
 from scenario import load as load_scenario, validate as validate_scenario, perturb, near_obstacle_positions
 import board_targets
+import environments
 import depth as depth_tools
 
 # Blender MCP and the interactive console keep Python modules between captures.
 importlib.reload(board_targets)
+importlib.reload(environments)
 
 
 def enum_value(owner, field, value):
@@ -120,8 +122,9 @@ def build_scene(recipe=None):
     recipe = validate_scenario(recipe) if recipe is not None else None
     nominal = configuration()
     cfg, offsets = perturb(nominal, recipe) if recipe else (nominal, [])
-    rng = np.random.default_rng(recipe.get('seed', 0)) if recipe else None
-    scene = bpy.data.scenes.new("SV Research Street")
+    rng = np.random.default_rng(recipe.get('scene_seed', recipe.get('seed', 0))) if recipe else None
+    family = recipe['world'].get('family', 'street') if recipe else 'street'
+    scene = bpy.data.scenes.new("SV Research Street" if family == "street" else "SV Research Cargo Yard")
     # Render engine is a dynamic enum. Its current value is valid on this host.
     scene.render.engine = bpy.context.scene.render.engine
     scene.render.resolution_percentage = 100
@@ -154,36 +157,44 @@ def build_scene(recipe=None):
         'blue':(.025,.22,.5), 'green':(.075,.22,.055), 'bark':(.2,.1,.04),
         'brick':(.43,.19,.11), 'cream':(.69,.59,.4), 'gray':(.32,.4,.45),
     }.items()}
-    box(scene, "ground", (0,0,-.15), (100,65,.25),mats['green'])
-    box(scene, "road", (0,0,-.025), (100,12,.05),mats['asphalt'])
-    for y in (-7.5,7.5):
-        box(scene, "sidewalk", (0,y,.09), (100,3,.18),mats['pavement'])
-        box(scene, "curb", (0,math.copysign(6.08,y),.11), (100,.16,.22),mats['white'])
-    for x in range(-45,46,6):
-        box(scene, "center dash", (x,-2.5,.006), (3,.12,.012),mats['white'])
-    for x in range(-4,7,3):
-        for y in (-4.8,4.8):
-            box(scene, "parking bay", (x,y,.007), (.1,1.9,.014),mats['white'])
-    for x in range(11,16):
-        box(scene, "crosswalk", (x,0,.008), (.55,11.5,.016),mats['white'])
-    spacing = recipe['world']['building_spacing_m'] if recipe else 9
-    for side in (-1,1):
-        for i, x in enumerate(np.arange(-32,37,spacing)):
-            height = float(rng.uniform(*recipe['world']['building_height_m'])) if recipe else 5 + (i % 3) * 1.4
-            mat = mats[['brick','cream','gray'][i%3]]
-            box(scene, "building", (x,side*12,height/2), (7.5,6,height),mat,bevel=.08)
-            for floor in range(int(height/2)):
-                for dx in (-2.3,0,2.3):
-                    box(scene, "window", (x+dx,side*8.98,1.3+floor*2),
-                        (1.25,.045,1.1),mats['glass'])
-            box(scene, "shop awning", (x,side*8.5,2.6), (5.8,1.2,.12),mats['blue'])
-        for x in (-18,-7,8,24):
-            cylinder(scene, "tree trunk", (x,side*7.7,1.2), .17,2.4,mats['bark'])
-            box(scene, "tree crown", (x,side*7.7,3.1), (2.8,2.5,3),mats['green'],bevel=1.)
-            cylinder(scene, "streetlight", (x+2,side*6.7,2.5), .06,5,mats['metal'])
-            box(scene, "streetlight head", (x+2,side*6.5,5), (.7,.6,.14),mats['white'])
-    car(scene,"parked red",(6,4.4,0),mats['red'],mats)
-    car(scene,"parked gray",(-9,-4.4,0),mats['gray'],mats)
+    if family == 'cargo_yard':
+        layout = environments.build_cargo_yard(scene, mats, recipe.get('scene_seed', recipe.get('seed', 0)), box)
+        scene['sv_environment_layout'] = json.dumps(layout)
+    else:
+        box(scene, "ground", (0,0,-.15), (100,65,.25),mats['green'])
+        box(scene, "road", (0,0,-.025), (100,12,.05),mats['asphalt'])
+        for y in (-7.5,7.5):
+            box(scene, "sidewalk", (0,y,.09), (100,3,.18),mats['pavement'])
+            box(scene, "curb", (0,math.copysign(6.08,y),.11), (100,.16,.22),mats['white'])
+        for x in range(-45,46,6):
+            box(scene, "center dash", (x,-2.5,.006), (3,.12,.012),mats['white'])
+        for x in range(-4,7,3):
+            for y in (-4.8,4.8):
+                box(scene, "parking bay", (x,y,.007), (.1,1.9,.014),mats['white'])
+        for x in range(11,16):
+            box(scene, "crosswalk", (x,0,.008), (.55,11.5,.016),mats['white'])
+        spacing = recipe['world']['building_spacing_m'] if recipe else 9
+        for side in (-1,1):
+            for i, x in enumerate(np.arange(-32,37,spacing)):
+                height = float(rng.uniform(*recipe['world']['building_height_m'])) if recipe else 5 + (i % 3) * 1.4
+                mat = mats[['brick','cream','gray'][i%3]]
+                box(scene, "building", (x,side*12,height/2), (7.5,6,height),mat,bevel=.08)
+                for floor in range(int(height/2)):
+                    for dx in (-2.3,0,2.3):
+                        box(scene, "window", (x+dx,side*8.98,1.3+floor*2),
+                            (1.25,.045,1.1),mats['glass'])
+                box(scene, "shop awning", (x,side*8.5,2.6), (5.8,1.2,.12),mats['blue'])
+            for x in (-18,-7,8,24):
+                cylinder(scene, "tree trunk", (x,side*7.7,1.2), .17,2.4,mats['bark'])
+                box(scene, "tree crown", (x,side*7.7,3.1), (2.8,2.5,3),mats['green'],bevel=1.)
+                cylinder(scene, "streetlight", (x+2,side*6.7,2.5), .06,5,mats['metal'])
+                box(scene, "streetlight head", (x+2,side*6.5,5), (.7,.6,.14),mats['white'])
+    if family == 'cargo_yard':
+        car(scene, "parked red", (12, 0, 0), mats['red'], mats)
+        car(scene, "parked gray", (-12, 0, 0), mats['gray'], mats)
+    else:
+        car(scene,"parked red",(6,4.4,0),mats['red'],mats)
+        car(scene,"parked gray",(-9,-4.4,0),mats['gray'],mats)
     positions = near_obstacle_positions(recipe)
     for x,y in positions:
         box(scene,"bollard base",(x,y,.04),(.4,.4,.08),mats['rubber'])
@@ -194,6 +205,7 @@ def build_scene(recipe=None):
         center = -transform[:3,:3].T @ transform[:3,3]
         marker = box(scene, "camera " + cam['name'], center, (.065,.065,.065),mats['rubber'],ego)
         marker.hide_render = True  # A locator must not occlude its own optical center.
+    scene['sv_environment_family'] = family
     scene['sv_ego'] = ego.name
     scene['sv_config'] = json.dumps(cfg)
     scene['sv_nominal_config'] = json.dumps(nominal)
@@ -346,7 +358,8 @@ def capture(scene, output, frames=2, face_size=256, start_frame=0, calibration_b
     bpy.ops.render.render(write_still=True, scene=scene.name)
     # Save just this scene and its dependencies, never overwrite the user's open .blend.
     bpy.data.libraries.write(str(output / 'street.blend'), {scene})
-    metadata = {'schema_version':1, 'origin':'blender_metric_street_v1',
+    metadata = {'schema_version':1, 'origin':('blender_metric_cargo_yard_v1'
+                    if scene.get('sv_environment_family') == 'cargo_yard' else 'blender_metric_street_v1'),
                 'blender_version':bpy.app.version_string, 'engine':scene.render.engine,
                 'view_transform':scene.view_settings.view_transform,
                 'face_size':face_size, 'fps':30, 'config':cfg, 'frames':rows,
@@ -358,6 +371,8 @@ def capture(scene, output, frames=2, face_size=256, start_frame=0, calibration_b
                 'mount_offsets':json.loads(scene.get('sv_mount_offsets', '[]')),
                 'near_obstacles':json.loads(scene.get('sv_near_obstacles', 'null')),
                 'nominal_config':nominal_cfg,
+                'environment_family':scene.get('sv_environment_family', 'street'),
+                'environment_layout':json.loads(scene.get('sv_environment_layout', 'null')),
                 'depth_truth':({'schema_version':1,
                                 'encoding':'OpenEXR float32 camera-Z in metres; 1e10 means no hit',
                                 'independent_of_surround_view_renderer':True}
@@ -368,7 +383,7 @@ def capture(scene, output, frames=2, face_size=256, start_frame=0, calibration_b
                               ([] if depth_truth else ['depth/semantic truth not exported']),
                 'script_sha256':{name:hashlib.sha256(Path(__file__).with_name(name).read_bytes()).hexdigest()
                                  for name in ('scene.py','rig.py','scenario.py','board_targets.py','depth.py',
-                                               'diagnostic_motion.py')},
+                                               'diagnostic_motion.py','environments.py')},
                 'sha256':{p.relative_to(output).as_posix():hashlib.sha256(p.read_bytes()).hexdigest()
                           for p in sorted([*output.glob('*.png'), *depth_dir.glob('*.exr')])}}
     (output / 'capture.json').write_text(json.dumps(metadata,indent=2)+'\n')

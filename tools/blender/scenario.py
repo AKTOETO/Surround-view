@@ -74,18 +74,24 @@ def scenario_preset(preset_key, seed=0):
 
 def validate(recipe):
     result = copy.deepcopy(recipe)
-    allowed_keys = {'schema_version', 'seed', 'world', 'mounts', 'preset_id', 'split'}
+    allowed_keys = {'schema_version', 'seed', 'world', 'mounts', 'preset_id', 'split', 'scene_seed', 'mount_seed'}
     if set(result) - allowed_keys or result.get('schema_version') != 1:
         raise ValueError('scenario schema_version 1 and known keys required')
     seed = result.get('seed', 0)
     if isinstance(seed, bool) or not isinstance(seed, int) or not 0 <= seed < 2**32:
         raise ValueError('seed must be uint32')
+    for key in ('scene_seed', 'mount_seed'):
+        value = result.get(key, seed)
+        if isinstance(value, bool) or not isinstance(value, int) or not 0 <= value < 2**32:
+            raise ValueError(key + ' must be uint32')
     split = result.get('split')
     if split is not None and split not in ('train', 'holdout', 'validation'):
         raise ValueError('split must be train, holdout or validation')
     world = result.setdefault('world', {})
-    if set(world) - {'building_height_m', 'building_spacing_m', 'near_obstacle_jitter_m'}:
+    if set(world) - {'building_height_m', 'building_spacing_m', 'near_obstacle_jitter_m', 'family'}:
         raise ValueError('unknown world rule')
+    if world.get('family', 'street') not in ('street', 'cargo_yard'):
+        raise ValueError('world.family must be street or cargo_yard')
     heights = world.setdefault('building_height_m', [5., 9.])
     if len(heights) != 2 or not np.isfinite(heights).all() or not 3 <= heights[0] <= heights[1] <= 20:
         raise ValueError('building heights must satisfy 3 <= low <= high <= 20 m')
@@ -122,7 +128,7 @@ def near_obstacle_positions(recipe=None):
         return positions.tolist()
     recipe = validate(recipe)
     jitter = recipe['world']['near_obstacle_jitter_m']
-    rng = np.random.default_rng(np.random.SeedSequence([recipe['seed'], 1701]))
+    rng = np.random.default_rng(np.random.SeedSequence([recipe.get('scene_seed', recipe.get('seed', 0)), 1701]))
     return (positions+rng.uniform(-jitter, jitter, positions.shape)).tolist()
 
 
@@ -133,7 +139,7 @@ def load(path):
 def perturb(nominal, recipe):
     """Yaw in vehicle Z, pitch in optical X; front/rear slide Y, sides slide X."""
     recipe = validate(recipe)
-    rng = np.random.default_rng(recipe.get('seed', 0))
+    rng = np.random.default_rng(recipe.get('mount_seed', recipe.get('seed', 0)))
     result, sampled = copy.deepcopy(nominal), []
     for camera in result['cameras']:
         values = {key: float(rng.uniform(-recipe['mounts'][key], recipe['mounts'][key]))

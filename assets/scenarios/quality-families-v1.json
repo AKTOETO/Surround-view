@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "purpose": "Validation pilot of native external-reference workflow across procedural environment families; not a confirmatory holdout",
+  "capture": {"frames": 2, "face_size": 128, "frame_step": 6, "width": 320, "height": 180},
+  "cases": [
+    {"id": "street-a", "recipe": {"schema_version": 1, "seed": 0, "scene_seed": 424201, "mount_seed": 9001, "split": "validation", "world": {"family": "street", "near_obstacle_jitter_m": 0.3}, "mounts": {"yaw_deg": 3, "pitch_deg": 3, "along_body_m": 0.1}}},
+    {"id": "street-b", "recipe": {"schema_version": 1, "seed": 0, "scene_seed": 424202, "mount_seed": 9001, "split": "validation", "world": {"family": "street", "near_obstacle_jitter_m": 0.3}, "mounts": {"yaw_deg": 3, "pitch_deg": 3, "along_body_m": 0.1}}},
+    {"id": "yard-a", "recipe": {"schema_version": 1, "seed": 0, "scene_seed": 525201, "mount_seed": 9001, "split": "validation", "world": {"family": "cargo_yard", "near_obstacle_jitter_m": 0.3}, "mounts": {"yaw_deg": 3, "pitch_deg": 3, "along_body_m": 0.1}}},
+    {"id": "yard-b", "recipe": {"schema_version": 1, "seed": 0, "scene_seed": 525202, "mount_seed": 9001, "split": "validation", "world": {"family": "cargo_yard", "near_obstacle_jitter_m": 0.3}, "mounts": {"yaw_deg": 3, "pitch_deg": 3, "along_body_m": 0.1}}}
+  ]
+}

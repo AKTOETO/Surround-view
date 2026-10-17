@@ -227,3 +227,80 @@ def capture_study(plan_path, output):
         'plan_sha256': hashlib.sha256(plan_path.read_bytes()).hexdigest(),
         'captures': captures}, indent=2)+'\n')
     return str(output)
+
+
+def schedule_family_plan(plan_path, output):
+    """Schedule bounded fixture capture through Blender timers; current scenes are retained.
+
+    Job progress is written between cases. This exporter/oracle is not a product
+    ExperimentRunner: native server trials are launched separately via svctl.
+    """
+    import re
+    import traceback
+    from scene import build_scene
+    from scenario import validate as validate_recipe
+
+    plan_path, output = Path(plan_path).resolve(), Path(output).resolve()
+    raw_plan = plan_path.read_bytes()
+    plan = json.loads(raw_plan)
+    if (set(plan) - {'schema_version', 'purpose', 'capture', 'cases'} or plan.get('schema_version') != 1
+            or not 1 <= len(plan.get('cases', [])) <= 16):
+        raise ValueError('family plan schema1 with 1..16 cases required')
+    options = plan['capture']
+    bounds = {'frames': (2, 8), 'face_size': (32, 512), 'frame_step': (1, 30),
+              'width': (16, 640), 'height': (16, 360)}
+    if set(options) != set(bounds):
+        raise ValueError('known complete capture settings required')
+    for key, (low, high) in bounds.items():
+        value = options[key]
+        if isinstance(value, bool) or not isinstance(value, int) or not low <= value <= high:
+            raise ValueError('bounded integer capture setting required: ' + key)
+    cases, identifiers = [], set()
+    for item in plan['cases']:
+        if set(item) != {'id', 'recipe'} or not re.fullmatch(r'[a-zA-Z0-9_-]{1,64}', item['id']):
+            raise ValueError('safe unique case ID and recipe required')
+        if item['id'] in identifiers:
+            raise ValueError('duplicate family case ID')
+        identifiers.add(item['id'])
+        cases.append(dict(id=item['id'], recipe=validate_recipe(item['recipe'])))
+    output.mkdir(parents=True, exist_ok=False)
+    state = dict(schema_version=1, state='queued', plan_sha256=hashlib.sha256(raw_plan).hexdigest(),
+                 purpose=plan.get('purpose'), completed=[], remaining=[item['id'] for item in cases])
+    status_path = output / 'job.json'
+
+    def save():
+        temporary = output / 'job.json.tmp'
+        temporary.write_text(json.dumps(state, indent=2) + '\n')
+        temporary.replace(status_path)
+
+    save()
+
+    def step():
+        if (output / 'cancel').exists():
+            state['state'] = 'cancelled'
+            save()
+            return None
+        item = cases[len(state['completed'])]
+        state.update(state='running', active=item['id'])
+        save()
+        try:
+            world = build_scene(item['recipe'])
+            bpy.context.window.scene = world
+            raw = output / item['id'] / 'raw'
+            raw.parent.mkdir()
+            capture_paired(world, raw, **options)
+            state['completed'].append(dict(id=item['id'], scene=world.name,
+                recipe=item['recipe'], raw=str(raw),
+                capture_sha256=hashlib.sha256((raw / 'capture.json').read_bytes()).hexdigest()))
+            state['remaining'] = [case['id'] for case in cases[len(state['completed']):]]
+            state.pop('active', None)
+            state['state'] = 'complete' if not state['remaining'] else 'queued'
+            save()
+            return 0.5 if state['remaining'] else None
+        except Exception:
+            state.update(state='failed', error=traceback.format_exc())
+            save()
+            return None
+
+    bpy.app.timers.register(step, first_interval=0.5)
+    return dict(status_path=str(status_path), cases=len(cases), plan_sha256=state['plan_sha256'])

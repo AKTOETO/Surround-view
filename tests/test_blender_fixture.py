@@ -12,7 +12,8 @@ from PIL import Image
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools' / 'blender'))
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools'))
 from rig import configuration, cube_coordinates, vehicle_pose
-from scenario import perturb, validate
+from scenario import perturb, validate, near_obstacle_positions
+from environments import cargo_layout
 from convert import bilinear, convert, convert_camera, linear_rgb, srgb8
 from depth_truth import _sample_depth, convert_camera_depth
 from validate_depth_plane import evaluate as evaluate_depth_plane
@@ -80,6 +81,31 @@ class BlenderFixtureTests(unittest.TestCase):
         self.assertEqual(offsets[0]['yaw_deg'], 1)
         self.assertEqual(offsets[0]['pitch_deg'], -2)
         self.assertEqual(offsets[0]['along_body_m'], .1)
+
+    def test_independent_scene_and_mount_seeds_and_environment_family(self):
+        recipe = dict(schema_version=1, seed=4, scene_seed=1001, mount_seed=2001,
+                      world=dict(family='cargo_yard', near_obstacle_jitter_m=.3),
+                      mounts=dict(yaw_deg=3, pitch_deg=3, along_body_m=.1))
+        a = validate(recipe)
+        b = validate(dict(recipe, scene_seed=1002))
+        c = validate(dict(recipe, mount_seed=2002))
+        self.assertEqual(perturb(configuration(), a), perturb(configuration(), b))
+        self.assertNotEqual(perturb(configuration(), a), perturb(configuration(), c))
+        self.assertEqual(near_obstacle_positions(a), near_obstacle_positions(c))
+        self.assertNotEqual(near_obstacle_positions(a), near_obstacle_positions(b))
+        self.assertEqual(cargo_layout(1001), cargo_layout(1001))
+        self.assertNotEqual(cargo_layout(1001), cargo_layout(1002))
+        for cargo in cargo_layout(1001):
+            self.assertGreater(abs(cargo['center'][1]) - cargo['size'][1] / 2, 3)
+            self.assertTrue(1.8 <= cargo['size'][2] <= 3.6)
+        legacy = validate(dict(schema_version=1, seed=4))
+        self.assertNotIn('scene_seed', legacy)
+        self.assertNotIn('mount_seed', legacy)
+        self.assertNotIn('family', legacy['world'])
+        for patch in (dict(scene_seed=True), dict(mount_seed=-1), dict(scene_seed=2**32),
+                      dict(world=dict(family='unknown'))):
+            with self.assertRaises(ValueError):
+                validate(dict(recipe, **patch))
 
     def test_invalid_scenario_rules(self):
         for recipe in (dict(schema_version=1, seed=-1), dict(schema_version=1, seed=True),

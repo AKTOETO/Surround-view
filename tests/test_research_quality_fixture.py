@@ -21,9 +21,12 @@ from temporal_seam_stability import load_sequence
 parser = argparse.ArgumentParser()
 parser.add_argument('build', type=Path)
 parser.add_argument('--output', type=Path)
+parser.add_argument('--dataset', type=Path)
+parser.add_argument('--capture', type=Path)
 OPTIONS = parser.parse_args()
 BUILD = OPTIONS.build.resolve()
-FIXTURE = ROOT / 'tests/data/paired_street_v1'
+FIXTURE = OPTIONS.dataset.resolve() if OPTIONS.dataset else ROOT / 'tests/data/paired_street_v1'
+CAPTURE = OPTIONS.capture.resolve() if OPTIONS.capture else FIXTURE
 
 
 def image_guard(camera, image, timestamp):
@@ -46,7 +49,7 @@ class NativeQualityFixtureTests(unittest.TestCase):
     def test_direct_blender_rgb_and_numpy_metrics_match(self):
         # Existing verifier checks capture provenance, input/truth file hashes,
         # poses, ordering and the pre-existing object-ID ROI (not based on output).
-        config, images, truth, rois, stamps, _ = load_sequence(FIXTURE, FIXTURE, 'ignore')
+        config, images, truth, rois, stamps, _ = load_sequence(FIXTURE, CAPTURE, 'ignore')
         if OPTIONS.output:
             directory = OPTIONS.output.resolve()
             directory.mkdir(parents=True, exist_ok=False)
@@ -68,7 +71,7 @@ class NativeQualityFixtureTests(unittest.TestCase):
                             for camera, image in zip(config['cameras'], frame)]))
             view = dict(config['virtual_camera'], target_m=[0.0, 0.0, 0.0])
             reference = dict(schema_version=2, kind='independent_ground_truth',
-                dataset_id='paired-street-v1-reused-validation', view=view,
+                dataset_id=FIXTURE.name + '-validation', view=view,
                 **config['output'], frames=references)
             (directory / 'reference.json').write_text(json.dumps(reference))
             scenario = dict(schema_version=1, frames=len(stamps), reset_replay=True,
@@ -107,7 +110,7 @@ class NativeQualityFixtureTests(unittest.TestCase):
             self.assertEqual(report['quality_reference']['kind'], 'independent_ground_truth')
             self.assertEqual(report['quality_reference']['schema_version'], 2)
             self.assertEqual(report['quality_acceptance']['status'], 'not_requested')
-            self.assertEqual(len(report['samples']), 24)
+            self.assertEqual(len(report['samples']), len(stamps) * 4 * 2)
             maximum_difference = 0.0
             values = []
             for sample in report['samples']:
@@ -132,9 +135,9 @@ class NativeQualityFixtureTests(unittest.TestCase):
                 values.append(dict(frame_index=index, variant=sample['variant'],
                     block=sample['block'], **expected))
             for summary in report['quality_summaries']:
-                self.assertEqual(summary['frames'], 3)
+                self.assertEqual(summary['frames'], len(stamps))
                 self.assertEqual(summary['selected_pixels'], sum(int(roi.sum()) for roi in rois))
-            result = dict(schema_version=1, purpose='native metric integration parity; not holdout',
+            result = dict(schema_version=1, purpose='native metric integration parity; not confirmatory holdout',
                 comparisons=len(values) * 4, samples=len(values), max_absolute_metric_difference=maximum_difference,
                 selected_pixels=[int(roi.sum()) for roi in rois], values=values)
             (directory / 'oracle-check.json').write_text(json.dumps(result, indent=2) + '\n')
