@@ -92,3 +92,13 @@ TEST(SvctlOptions, GenericCommandPreservesFractionalParametersExactly)
         sv::ctl::parse({"command", "extension", "--params", "{\"value\":-1.1959916878056157e-7}"});
     EXPECT_EQ(options.request.parameters.at("value").as_double(), -1.1959916878056157e-7);
 }
+
+TEST(SvctlOptions, ResearchBatchPathsAndArity)
+{
+    const auto options = sv::ctl::parse({"research-batch", "plan.json", "new-output"});
+    EXPECT_EQ(options.request.operation, "research-batch");
+    EXPECT_EQ(options.request.parameters.at("scenario_path"), "plan.json");
+    EXPECT_EQ(options.request.parameters.at("report_path"), "new-output");
+    EXPECT_ANY_THROW(sv::ctl::parse({"research-batch", "plan.json"}));
+    EXPECT_ANY_THROW(sv::ctl::parse({"research-batch", "plan.json", "out", "extra"}));
+}

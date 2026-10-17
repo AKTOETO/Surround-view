@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "runs": [
+    {"id": "sequence-a", "scenario": "multiband-matrix.json"},
+    {"id": "sequence-b", "scenario": "multiband-matrix.json"}
+  ]
+}

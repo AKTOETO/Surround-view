@@ -98,7 +98,7 @@ Options parse(const std::vector<std::string> &args)
     options.request.operation = next();
     auto &operation = options.request.operation;
     auto &parameters = options.request.parameters;
-    if (operation == "research")
+    if (operation == "research" || operation == "research-batch")
     {
         parameters["scenario_path"] = next();
         parameters["report_path"] = next();
@@ -194,7 +194,9 @@ std::string usage()
            "JOB_ID\n"
            "      command TYPE [--params JSON_OBJECT]\n"
            "      research SCENARIO_JSON REPORT_JSON\n"
+           "      research-batch PLAN_JSON NEW_OUTPUT_DIRECTORY\n"
            "Default: Unix /tmp/sv-prototype, state. Output: one JSON ACK.\n"
-           "Exit codes: 0 accepted, 2 arguments, 3 connection/timeout, 4 rejected.\n";
+           "Exit codes: 0 accepted, 2 arguments, 3 setup/connection, 4 rejected/incomplete, "
+           "5 completed research quality rejection.\n";
 }
 } // namespace sv::ctl

@@ -213,6 +213,43 @@ class ClientTransportTests(unittest.TestCase):
                     for a, b in zip(old['metadata']['inputs'], new['metadata']['inputs']):
                         self.assertEqual(a['source_timestamp_ns'], b['source_timestamp_ns'])
                         self.assertNotEqual(a['source_session_id'], b['source_session_id'])
+                # The compiled batch service reuses the same runner; every member resets replay.
+                batch_scenario = directory / 'batch-scenario.json'
+                batch_scenario.write_text(json.dumps(dict(schema_version=1, frames=2,
+                    reset_replay=True, capture_frames=True, warmup=0, repeats=1,
+                    variants=[dict(mode='multi_band', pyramid_boundary='normalized')])))
+
+                def batch_run(label, scenarios, expected_code):
+                    batch_plan = directory / (label + '-plan.json')
+                    batch_plan.write_text(json.dumps(dict(schema_version=1, runs=[
+                        dict(id=f'case-{index}', scenario=path.name)
+                        for index, path in enumerate(scenarios)])))
+                    output = directory / label
+                    result = subprocess.run([str(BUILD / 'svctl'), *endpoint,
+                        '--timeout-ms', '3000', 'research-batch', str(batch_plan), str(output)],
+                        text=True, capture_output=True, timeout=30)
+                    self.assertEqual(result.returncode, expected_code, result.stderr + result.stdout)
+                    return output, json.loads((output / 'batch.json').read_text())
+
+                batch_output, batch = batch_run('batch-complete', [batch_scenario] * 2, 0)
+                self.assertTrue(batch['success'])
+                self.assertTrue(batch['restored'])
+                self.assertEqual(batch['completed'], 2)
+                self.assertEqual(batch['reported'], 2)
+                self.assertEqual(batch['quality_acceptance']['status'], 'not_requested')
+                self.assertEqual(batch['plan_sha256'], hashlib.sha256(
+                    (directory / 'batch-complete-plan.json').read_bytes()).hexdigest())
+                batch_reports = [json.loads((batch_output / row['report']).read_text())
+                                 for row in batch['runs']]
+                self.assertEqual([s['rgba_sha256'] for s in batch_reports[0]['samples']],
+                                 [s['rgba_sha256'] for s in batch_reports[1]['samples']])
+                for row, member_report in zip(batch['runs'], batch_reports):
+                    self.assertTrue(member_report['restored'])
+                    self.assertEqual(member_report['scenario_input_sha256'], row['scenario_input_sha256'])
+                    self.assertEqual(row['scenario_input_sha256'], hashlib.sha256(batch_scenario.read_bytes()).hexdigest())
+                    self.assertEqual(member_report['ready_preparation'], 'reset_first_row')
+                    for sample in member_report['samples']:
+                        self.assertTrue((batch_output / sample['rgba_file']).is_file())
                 # A server capture is explicitly a regression reference, never independent truth.
                 reference_dir = directory / 'quality'
                 reference_dir.mkdir()
@@ -299,6 +336,14 @@ class ClientTransportTests(unittest.TestCase):
                     self.assertEqual(len(rejected_data['samples']), 9)
                     self.assertTrue(any(not s['quality']['acceptance']['passed']
                                         for s in rejected_data['samples'] if not s['warmup']))
+                    _, rejected_batch = batch_run('batch-quality-rejected',
+                        [quality_scenario, batch_scenario], 5)
+                    self.assertTrue(rejected_batch['success'])
+                    self.assertTrue(rejected_batch['restored'])
+                    self.assertEqual(rejected_batch['completed'], 2)
+                    self.assertEqual(rejected_batch['quality_acceptance']['status'], 'failed')
+                    self.assertEqual([row['quality_status'] for row in rejected_batch['runs']],
+                                     ['failed', 'not_requested'])
                 finally:
                     truth_path.write_bytes(original_truth)
                 # Change source bytes with identical manifest path, timestamps and calibration IDs.
@@ -317,6 +362,15 @@ class ClientTransportTests(unittest.TestCase):
                     self.assertTrue(content_data['restored'])
                     self.assertEqual(content_data['quality_acceptance']['status'], 'incomplete')
                     self.assertEqual(content_data['error'], 'quality reference input guard mismatch')
+                    failed_output, failed_batch = batch_run('batch-guard-failed',
+                        [quality_scenario, batch_scenario], 4)
+                    self.assertFalse(failed_batch['success'])
+                    self.assertTrue(failed_batch['restored'])
+                    self.assertEqual(failed_batch['completed'], 0)
+                    self.assertEqual(failed_batch['reported'], 1)
+                    self.assertEqual(failed_batch['quality_acceptance']['status'], 'incomplete')
+                    self.assertEqual(failed_batch['runs'][1]['status'], 'not_started')
+                    self.assertEqual((failed_output / 'case-1.json').stat().st_size, 0)
                 finally:
                     first_path.write_bytes(original_image)
                 # A mismatched virtual view is a failed evaluation with lease cleanup.

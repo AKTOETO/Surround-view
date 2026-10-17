@@ -1,13 +1,10 @@
+#include "batch.hpp"
+#include "file_experiment.hpp"
 #include "options.hpp"
-#include "quality_reference.hpp"
-#include "report_output.hpp"
-#include "scenario.hpp"
-#include "sv/json.hpp"
 #include <chrono>
 #include <condition_variable>
 #include <deque>
 #include <filesystem>
-#include <fstream>
 #include <iostream>
 #include <mutex>
 #include <stdexcept>
@@ -16,80 +13,35 @@ namespace sv::ctl
 {
 int execute(const Options &options)
 {
-    if (options.request.operation == "research")
+    if (options.request.operation == "research" || options.request.operation == "research-batch")
     {
         const auto &parameters = options.request.parameters;
-        std::ifstream input(std::string(parameters.at("scenario_path").as_string()));
-        if (!input)
-        {
-            throw std::runtime_error("cannot open scenario");
-        }
-        const auto scenario =
-            research::parse_scenario(boost::json::parse(input, {}, sv::json_parse_options()));
-        // Validate output access before changing the server; do not overwrite scenario input.
-        const auto scenario_path = std::filesystem::weakly_canonical(
-            std::string(parameters.at("scenario_path").as_string()));
-        const auto report_path = std::filesystem::weakly_canonical(
-            std::string(parameters.at("report_path").as_string()));
-        if (scenario_path == report_path ||
-            (std::filesystem::exists(report_path) &&
-             std::filesystem::equivalent(scenario_path, report_path)))
-        {
-            throw std::runtime_error("report must not overwrite scenario");
-        }
-        std::shared_ptr<const research::QualityReference> quality;
-        if (scenario.quality_reference)
-        {
-            quality = std::make_shared<research::QualityReference>(scenario_path.parent_path() /
-                                                                   *scenario.quality_reference);
-            quality->validate(scenario);
-        }
-        research::ReportOutput output(report_path);
         client::Options connection;
         connection.endpoint = options.endpoint;
         connection.timeout_ms = options.timeout_ms;
-        std::function<std::string(const research::Sample &)> capture;
-        if (scenario.capture_frames)
+        boost::json::object report;
+        const std::string input_path(parameters.at("scenario_path").as_string());
+        const std::filesystem::path output_path(
+            std::string(parameters.at("report_path").as_string()));
+        auto report_path = output_path;
+        if (options.request.operation == "research-batch")
         {
-            const auto directory =
-                report_path.parent_path() / (report_path.filename().string() + ".frames");
-            if (!std::filesystem::create_directory(directory))
-            {
-                throw std::runtime_error("research capture directory already exists");
-            }
-            capture = [directory](const research::Sample &sample)
-            {
-                const auto name = "frame-" + std::to_string(sample.frame_index) + "-variant-" +
-                                  std::to_string(sample.variant) + "-block-" +
-                                  std::to_string(sample.block) + ".rgba";
-                std::ofstream frame(directory / name, std::ios::binary);
-                frame.write(reinterpret_cast<const char *>(sample.frame->payload.data()),
-                            sample.frame->payload.size());
-                frame.close();
-                if (!frame)
-                {
-                    throw std::runtime_error("research frame capture failed");
-                }
-                return (directory.filename() / name).generic_string();
-            };
+            report = research::run_batch(input_path, output_path, connection);
+            report_path /= "batch.json";
         }
-        const auto report =
-            research::run(scenario, connection, nullptr, {}, std::move(capture), quality);
-        output.write(report);
-        const auto *acceptance = report.if_contains("quality_acceptance");
-        const auto status =
-            acceptance ? acceptance->as_object().at("status") : boost::json::value("not_requested");
+        else
+        {
+            research::FileExperiment experiment(input_path);
+            experiment.reserve(output_path);
+            report = experiment.execute(connection);
+        }
         std::cout << boost::json::serialize(
                          boost::json::object{{"success", report.at("success")},
                                              {"report_path", report_path.string()},
                                              {"restored", report.at("restored")},
-                                             {"quality_status", status}})
+                                             {"quality_status", research::quality_status(report)}})
                   << '\n';
-        if (!report.at("success").as_bool() || status == "incomplete")
-        {
-            return 4;
-        }
-        return status == "failed" ? 5 : 0;
+        return research::research_exit_code(report);
     }
     std::mutex mutex;
     std::condition_variable changed;
