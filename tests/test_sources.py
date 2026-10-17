@@ -54,6 +54,9 @@ class SocketSources(unittest.TestCase):
                     time.sleep(.01)
                 client = Client(ipc)
                 self.assertFalse(client.command('step')['accepted'])
+                reset = client.command('replay_reset')
+                self.assertFalse(reset['accepted'])
+                self.assertEqual(reset['reason'], 'replay_reset_unsupported_for_source')
                 self.assertEqual(client.frame()[0]['health'], 'NO_INPUT')
 
                 def connect(camera_id, calibration=None):

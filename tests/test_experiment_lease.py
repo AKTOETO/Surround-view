@@ -109,6 +109,8 @@ class ExperimentWatchdogTests(unittest.TestCase):
         for command, fields in [
             ('configure_fusion', dict(base_config_revision=revision, fusion=original['fusion'])),
             ('experiment_renew', dict(lease_id='wrong')),
+            ('replay_reset', dict()),
+            ('replay_reset', dict(lease_id='wrong')),
             ('experiment_acquire', dict(ttl_ms=500)),
             ('orbit', dict(lease_id=lease, azimuth_delta_rad=.1, elevation_delta_rad=0)),
             ('apply_calibration', dict(lease_id=lease, job_id='unrelated'))]:

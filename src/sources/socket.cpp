@@ -367,9 +367,11 @@ class SocketSource final : public FrameSource
                        SourceEvent completed;
                        completed.kind = SourceEvent::Kind::Control;
                        completed.request_id = id;
-                       if (action == SourceAction::Step)
+                       if (action == SourceAction::Step || action == SourceAction::ReplayReset)
                        {
-                           completed.reason = "step_requires_replay";
+                           completed.reason = action == SourceAction::Step
+                                                  ? "step_requires_replay"
+                                                  : "replay_reset_requires_replay";
                        }
                        else
                        {

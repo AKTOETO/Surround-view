@@ -14,6 +14,7 @@ TEST(ResearchScenario, DefaultsAndExplicitProfiles)
     EXPECT_EQ(scenario.warmup, 2U);
     EXPECT_EQ(scenario.frames, 1U);
     EXPECT_FALSE(scenario.capture_frames);
+    EXPECT_FALSE(scenario.reset_replay);
     EXPECT_EQ(scenario.variants[0].fusion.diagnostic, "color");
     EXPECT_DOUBLE_EQ(scenario.variants[0].fusion.angle_power, 4);
 }
@@ -29,6 +30,7 @@ TEST(ResearchScenario, RejectsUnsupportedAndUnboundedScenariosBeforeConnection)
           R"({"schema_version":1,"frames":0,"variants":[{"mode":"edge_feather"}]})",
           R"({"schema_version":1,"frames":257,"variants":[{"mode":"edge_feather"}]})",
           R"({"schema_version":1,"frames":1.5,"variants":[{"mode":"edge_feather"}]})",
+          R"({"schema_version":1,"reset_replay":1,"variants":[{"mode":"edge_feather"}]})",
           R"({"schema_version":1,"capture_frames":1,"variants":[{"mode":"edge_feather"}]})",
           R"({"schema_version":1,"command":"shell","variants":[{"mode":"edge_feather"}]})",
           R"({"schema_version":1,"variants":[{"mode":"unknown"}]})",
@@ -115,7 +117,7 @@ TEST(ResearchScenarioIntegration, CancellationAndCallbackFailureRestoreBaseline)
         options.endpoint.data_port = endpoint.at("data_port").to_number<uint16_t>();
     }
     const auto scenario = sv::research::parse_scenario(boost::json::parse(
-        R"({"schema_version":1,"warmup":0,"repeats":3,"variants":[{"mode":"edge_feather"},{"mode":"angular_feather"}]})"));
+        R"({"schema_version":1,"reset_replay":true,"warmup":0,"repeats":3,"variants":[{"mode":"edge_feather"},{"mode":"angular_feather"}]})"));
     for (bool fail_callback : {false, true})
     {
         std::atomic_bool cancel{false};

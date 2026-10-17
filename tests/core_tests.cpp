@@ -416,6 +416,17 @@ int main(int argc, char **argv)
             sync.push({0, uint64_t(n), start + uint64_t(n), 0, image});
         }
         check(sync.size(0) == size_t(config.queue_size) && sync.dropped > 0, "bounded input queue");
+        const auto dropped_before_reset = sync.dropped;
+        sync.reset_history();
+        check(sync.select(start).health == "NO_INPUT", "reset retained stale inputs");
+        check(sync.duplicate == 1 && sync.out_of_order == 1 && sync.dropped == dropped_before_reset,
+              "reset erased lifetime counters");
+        for (int i = 0; i < 4; ++i)
+        {
+            check(sync.size(i) == 0 && sync.push({i, 0, start - 1, 0, image}),
+                  "reset retained ordering history");
+        }
+        check(sync.select(start).health == "READY", "reset first complete set");
         sv::Synchronizer skew(config);
         for (int i = 0; i < 4; i++)
         {

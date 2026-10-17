@@ -18,6 +18,7 @@ struct Scenario
     std::vector<Variant> variants;
     unsigned repeats = 3, warmup = 2, seed = 1, frames = 1;
     bool capture_frames = false;
+    bool reset_replay = false;
 };
 
 struct Sample

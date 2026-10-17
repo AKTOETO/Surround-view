@@ -23,7 +23,9 @@ class ReplaySource final : public FrameSource
     std::vector<ReplayRow> rows_;
     ImageLoader loader_;
     bool loop_;
-    const std::string session_ = "replay-" + std::to_string(now_ns());
+    const std::string initial_session_ = "replay-" + std::to_string(now_ns());
+    std::string session_ = initial_session_;
+    uint64_t reset_epoch_ = 0;
     mutable std::mutex mutex_;
     std::condition_variable wake_;
     std::deque<Request> requests_;
@@ -213,6 +215,22 @@ class ReplaySource final : public FrameSource
                     else
                     {
                         paused = true;
+                    }
+                    if (request->action == SourceAction::ReplayReset)
+                    {
+                        // Worker-owned state: commands cannot race with decode/cache writes.
+                        row = 0;
+                        cached_paths_ = {};
+                        cached_images_ = {};
+                        session_ = initial_session_ + "/reset-" + std::to_string(++reset_epoch_);
+                        SourceEvent boundary;
+                        boundary.kind = SourceEvent::Kind::Reset;
+                        boundary.request_id = request->id;
+                        boundary.paused = true;
+                        publish(std::move(boundary));
+                        // Sequence stays monotonic: renderer upload keys and old frame IDs
+                        // cannot alias the new first row.
+                        advance();
                     }
                     if (request->action == SourceAction::Step)
                     {

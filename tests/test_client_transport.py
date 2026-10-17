@@ -179,7 +179,7 @@ class ClientTransportTests(unittest.TestCase):
                 sequence_path = directory / 'sequence.json'
                 sequence_report = directory / 'sequence-report.json'
                 sequence_path.write_text(json.dumps(dict(schema_version=1, frames=3,
-                    warmup=0, repeats=2, capture_frames=True,
+                    warmup=0, repeats=2, capture_frames=True, reset_replay=True,
                     matrix=dict(base=dict(mode='graph_cut_multi_band', pyramid_levels=3,
                                           seam_solver='alpha_expansion'),
                                 axes=dict(pyramid_boundary=['zero','normalized'])))))
@@ -190,6 +190,27 @@ class ClientTransportTests(unittest.TestCase):
                 self.assertEqual(sequence.returncode,0,sequence.stderr+sequence.stdout)
                 sequence_data = json.loads(sequence_report.read_text())
                 self.assertTrue(sequence_data['restored'])
+                self.assertEqual(sequence_data['ready_preparation'], 'reset_first_row')
+                self.assertTrue(sequence_data['scenario']['reset_replay'])
+                first_inputs = sequence_data['baseline']['inputs']
+                self.assertTrue(all(i['source_timestamp_ns'] == '0' for i in first_inputs))
+                # Repeating the scenario starts from the same rows/RGB, with distinct
+                # source sessions and monotonically increasing delivery identifiers.
+                repeated_report = directory / 'sequence-repeat-report.json'
+                repeated = subprocess.run([str(BUILD / 'svctl'), *endpoint, '--timeout-ms', '3000',
+                    'research', str(sequence_path), str(repeated_report)],
+                    text=True, capture_output=True, timeout=20)
+                self.assertEqual(repeated.returncode, 0, repeated.stderr + repeated.stdout)
+                repeated_data = json.loads(repeated_report.read_text())
+                self.assertTrue(repeated_data['success'])
+                self.assertEqual([s['rgba_sha256'] for s in sequence_data['samples']],
+                                 [s['rgba_sha256'] for s in repeated_data['samples']])
+                for old, new in zip(sequence_data['frame_baselines'], repeated_data['frame_baselines']):
+                    self.assertGreater(int(new['metadata']['frame_set_id']),
+                                       int(old['metadata']['frame_set_id']))
+                    for a, b in zip(old['metadata']['inputs'], new['metadata']['inputs']):
+                        self.assertEqual(a['source_timestamp_ns'], b['source_timestamp_ns'])
+                        self.assertNotEqual(a['source_session_id'], b['source_session_id'])
                 self.assertFalse(sequence_data['cursor_restored'])
                 self.assertEqual(sequence_data['restore_scope'],'fusion_surface_pause_only')
                 self.assertIn('alpha_expansion',sequence_data['catalog']['seam_solver'])
@@ -367,6 +388,7 @@ class ClientTransportTests(unittest.TestCase):
             times = [0, 200000000, 550000000, 1000000000]
             for row, timestamp in zip(recording['frames'], times):
                 row['scenario_timestamp_ns'] = str(timestamp)
+            recording['frames'][0]['paths'][0] = None  # Reset must not reuse old camera 0.
             manifest.write_text(json.dumps(recording))
             ipc = directory / 'ipc'
             trace = directory / 'trace.jsonl'
@@ -396,6 +418,22 @@ class ClientTransportTests(unittest.TestCase):
                 self.assertEqual(int(stepped['frame_set_id']), int(moved['frame_set_id']) + 1)
                 self.assertTrue(stepped['paused'])
                 self.assertEqual(int(stepped['decode_count']), int(moved['decode_count']) + 4)
+                previous = stepped
+                for _ in range(2):
+                    reset = revision_frame(client.command('replay_reset'))
+                    self.assertTrue(reset['paused'])
+                    self.assertEqual(reset['health'], 'DEGRADED')
+                    self.assertFalse(reset['inputs'][0]['used'])
+                    self.assertGreater(int(reset['frame_set_id']), int(previous['frame_set_id']))
+                    self.assertEqual(int(reset['decode_count']), int(previous['decode_count']) + 3)
+                    for old, new in zip(previous['inputs'], reset['inputs']):
+                        if new['used']:
+                            self.assertEqual(new['source_timestamp_ns'], '0')
+                            self.assertNotEqual(new['source_session_id'], old['source_session_id'])
+                    previous = reset
+                # Continue from row 1, not from the pre-reset cursor.
+                stepped = revision_frame(client.command('step'))
+                self.assertTrue(all(i['source_timestamp_ns'] == str(times[1]) for i in stepped['inputs']))
                 # 500 commands in bounded bursts; control/video progress independently on pause.
                 baseline_revision = int(stepped['state_revision'])
                 final = stepped
@@ -419,6 +457,24 @@ class ClientTransportTests(unittest.TestCase):
                 self.assertEqual(final['mesh_build_count'], stepped['mesh_build_count'])
                 client.command('resume')
                 time.sleep(1.3)
+                client.close()
+                client = None
+                time.sleep(.08)  # Allow the single-session server to observe disconnect.
+                scenario = directory / 'incomplete.json'
+                report_path = directory / 'incomplete-report.json'
+                scenario.write_text(json.dumps(dict(schema_version=1, reset_replay=True,
+                    warmup=0, repeats=1, variants=[dict(mode='edge_feather')])))
+                failed = subprocess.run([str(BUILD / 'svctl'), '--unix', str(ipc),
+                    'research', str(scenario), str(report_path)],
+                    text=True, capture_output=True, timeout=15)
+                self.assertNotEqual(failed.returncode, 0, failed.stdout)
+                report = json.loads(report_path.read_text())
+                self.assertFalse(report['success'])
+                self.assertTrue(report['restored'])
+                self.assertEqual(report['ready_preparation'], 'reset_first_row')
+                self.assertEqual(report['error'], 'research requires a READY replay frame set')
+                self.assertEqual(report['samples'], [])
+
             finally:
                 if client: client.close()
                 server.terminate()

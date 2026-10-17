@@ -5,6 +5,7 @@
   "repeats": 5,
   "seed": 17,
   "capture_frames": true,
+  "reset_replay": true,
   "matrix": {
     "base": {"mode": "multi_band"},
     "axes": {

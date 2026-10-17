@@ -398,6 +398,7 @@ ServerIO::ServerIO(const sv::Connections &n, const std::string &source_type,
     {
         capabilities.push_back("step");
         capabilities.push_back("experiment_step_v1");
+        capabilities.push_back("replay_reset_v1");
     }
     try
     {
@@ -787,7 +788,16 @@ int main(int argc, char **argv)
                 {
                     throw std::runtime_error("FrameSource: " + event.reason);
                 }
-                if (event.kind == sv::SourceEvent::Kind::Frames)
+                if (event.kind == sv::SourceEvent::Kind::Reset)
+                {
+                    sync.reset_history();
+                    last_set = {};
+                    paused = true;
+                    dirty = true;
+                    record({{"event", "replay_reset_boundary"},
+                            {"request_id", std::to_string(event.request_id)}});
+                }
+                else if (event.kind == sv::SourceEvent::Kind::Frames)
                 {
                     for (auto &frame : event.frames)
                     {
@@ -1173,6 +1183,10 @@ int main(int argc, char **argv)
                     {
                         source_action = sv::SourceAction::Step;
                     }
+                    else if (type == "replay_reset")
+                    {
+                        source_action = sv::SourceAction::ReplayReset;
+                    }
                     else if (type == "calibrate")
                     {
                         const int cam_id =
@@ -1358,11 +1372,13 @@ int main(int argc, char **argv)
                 }
                 if (accepted && source_action)
                 {
-                    if (*source_action == sv::SourceAction::Step &&
+                    if ((*source_action == sv::SourceAction::Step ||
+                         *source_action == sv::SourceAction::ReplayReset) &&
                         config_store.active()->source.type != "replay")
                     {
                         accepted = false;
-                        reason = "step_unsupported_for_source";
+                        reason = type == "step" ? "step_unsupported_for_source"
+                                                : "replay_reset_unsupported_for_source";
                     }
                     else if (source->request(*source_action, ++source_request))
                     {

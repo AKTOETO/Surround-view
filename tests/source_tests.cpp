@@ -163,6 +163,29 @@ int main(int argc, char **argv)
             }
         }
         check(frames == 1 && events.back().paused && calls == 4, "step/cache semantics");
+        auto previous_sequence = events.front().frames[0]->sequence;
+        auto previous_session = events.front().frames[0]->source_session;
+        for (uint64_t request = 10; request < 12; ++request)
+        {
+            const auto before = calls.load();
+            check(source->request(sv::SourceAction::ReplayReset, request), "reset submission");
+            events = wait(*source, request);
+            check(events.size() == 3, "reset boundary/frame/ACK count");
+            check(events[0].kind == sv::SourceEvent::Kind::Reset && events[0].request_id == request,
+                  "reset boundary missing");
+            check(events[1].kind == sv::SourceEvent::Kind::Frames &&
+                      events[1].frames[0]->scenario_ns == 0 && events[1].paused &&
+                      events[1].frames[0]->sequence > previous_sequence &&
+                      events[1].frames[0]->source_session != previous_session,
+                  "reset first row/provenance");
+            previous_sequence = events[1].frames[0]->sequence;
+            previous_session = events[1].frames[0]->source_session;
+            check(events[2].kind == sv::SourceEvent::Kind::Control && events[2].paused &&
+                      calls.load() == before + 4,
+                  "reset did not invalidate decode cache");
+            std::this_thread::sleep_for(std::chrono::milliseconds(5));
+            check(source->poll().empty(), "reset did not remain paused");
+        }
         check(source->request(sv::SourceAction::Resume, 3), "resume submission");
         wait(*source, 3);
         std::this_thread::sleep_for(std::chrono::milliseconds(40));

@@ -128,7 +128,8 @@ boost::json::object run(const Scenario &scenario, const client::Options &options
                                     {"warmup", scenario.warmup},
                                     {"seed", scenario.seed},
                                     {"frames", scenario.frames},
-                                    {"capture_frames", scenario.capture_frames}};
+                                    {"capture_frames", scenario.capture_frames},
+                                    {"reset_replay", scenario.reset_replay}};
     // Also validate callers that construct Scenario directly (e.g. future GUI).
     (void)parse_scenario(description);
     const auto plan = make_trial_plan(scenario);
@@ -151,8 +152,9 @@ boost::json::object run(const Scenario &scenario, const client::Options &options
         {"frame_baselines", boost::json::array{}},
         {"restore_scope", "fusion_surface_pause_only"},
         {"cursor_restored", false},
-        {"limitation", "Sequential paused frame sets; no independent quality truth, "
-                       "cursor/history reset, sustained FPS, or durable progress checkpoints"}};
+        {"limitation",
+         "Sequential paused frame sets; no independent quality truth, "
+         "cursor restoration, GPU cache reset, sustained FPS, or durable progress checkpoints"}};
     std::unique_ptr<Connection> connection;
     boost::json::object original;
     std::string revision, lease_id, restore_reference;
@@ -177,6 +179,10 @@ boost::json::object run(const Scenario &scenario, const client::Options &options
         {
             throw std::runtime_error("server lacks experiment_step_v1");
         }
+        if (scenario.reset_replay && !connection->supports("replay_reset_v1"))
+        {
+            throw std::runtime_error("server lacks replay_reset_v1");
+        }
         const auto catalog = accepted(*connection, "fusion_catalog");
         report["catalog"] = catalog.at("fusion_catalog");
         original = accepted(*connection, "state");
@@ -190,10 +196,11 @@ boost::json::object run(const Scenario &scenario, const client::Options &options
         report["lease_id"] = lease_id;
         revision = text(acquired, "config_revision");
         report["restore_required"] = true;
-        const auto paused = accepted(*connection, "pause", {{"lease_id", lease_id}});
+        const auto paused = accepted(*connection, scenario.reset_replay ? "replay_reset" : "pause",
+                                     {{"lease_id", lease_id}});
         auto baseline = connection->frame(text(paused, "state_revision"));
-        report["ready_preparation"] = "paused_current";
-        if (baseline->header.at("health") != "READY" && lease_step)
+        report["ready_preparation"] = scenario.reset_replay ? "reset_first_row" : "paused_current";
+        if (baseline->header.at("health") != "READY" && lease_step && !scenario.reset_replay)
         {
             const auto stepped = accepted(*connection, "step", {{"lease_id", lease_id}});
             baseline = connection->frame(text(stepped, "state_revision"));

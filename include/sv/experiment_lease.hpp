@@ -140,7 +140,8 @@ class ExperimentLease
         }
         return operation == "configure_fusion" || operation == "configure_surface" ||
                operation == "pause" || operation == "resume" || operation == "step" ||
-               operation == "experiment_renew" || operation == "experiment_release";
+               operation == "replay_reset" || operation == "experiment_renew" ||
+               operation == "experiment_release";
     }
 
     boost::json::object status() const

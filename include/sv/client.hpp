@@ -102,6 +102,13 @@ class Client
                                    : boost::json::object{{"lease_id", std::move(lease_id)}});
     }
 
+    // replay_reset_v1: first manifest row, cold decode cache, empty sync history,
+    // paused on completion. Does not restore a previous cursor or reset GPU caches.
+    uint64_t reset_replay(std::string lease_id = {})
+    {
+        return command("replay_reset", {{"lease_id", std::move(lease_id)}});
+    }
+
     uint64_t state()
     {
         return command("state");

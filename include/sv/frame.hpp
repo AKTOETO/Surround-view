@@ -51,6 +51,17 @@ class Synchronizer
     {
     }
 
+    // Drop retained frames and ordering guards; lifetime diagnostic counters survive.
+    void reset_history()
+    {
+        for (auto &queue : queues_)
+        {
+            queue.clear();
+        }
+        last_sequence_ = {};
+        last_time_ = {};
+    }
+
     bool push(Frame);
     FrameSet select(uint64_t now) const;
 

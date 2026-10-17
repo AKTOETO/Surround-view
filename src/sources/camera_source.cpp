@@ -67,7 +67,8 @@ class CameraFrameSource : public FrameSource
         event.kind = SourceEvent::Kind::Control;
         event.request_id = request_id;
 
-        if (action == SourceAction::Step || pending_events_.size() >= queue_capacity)
+        if (action == SourceAction::Step || action == SourceAction::ReplayReset ||
+            pending_events_.size() >= queue_capacity)
         {
             return false;
         }

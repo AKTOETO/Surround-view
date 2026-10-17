@@ -11,7 +11,8 @@ enum class SourceAction
 {
     Pause,
     Resume,
-    Step
+    Step,
+    ReplayReset
 };
 
 struct SourceEvent
@@ -19,6 +20,7 @@ struct SourceEvent
     enum class Kind
     {
         Frames,
+        Reset, // Replay boundary: discard synchronizer history before the next batch.
         Control,
         Failure,
         Status
