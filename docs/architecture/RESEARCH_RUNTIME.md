@@ -284,7 +284,7 @@ mesh budget.4 cases×2 frames×20 variants×(1 warmup+3 measured)=640 trials;480
 остаётся exporter/fixture/oracle/plotting. Фактическая геометрия новых worlds и сохранность
 исходной Blender Scene проверены через MCP. Results/limits: [[validation/FAMILY_CARRIER_SCREEN]].
 
-Compiled multi-recording supervisor и GUI сценариев ещё отсутствуют. True camera calibration
+Compiled multi-recording supervisor и GUI batch-планов ещё отсутствуют; первый GUI одного исследования описан ниже. True camera calibration
 передана стенду, поэтому данный pilot не является испытанием автоматической калибровки.
 Наличие новых family inputs не закрывает noise/photometric/dynamic/holdout/target gates.
 
@@ -338,3 +338,43 @@ lease и restore. Между участниками общий lease не уде
 Лимиты: 8 scenarios, 10000 aggregate trials, 128 MiB retained reference pixels. Scope одной
 подключённой записи зафиксирован как same_server_recording_v1; автоматического переключения
 recording, atomic multi-run isolation, cursor restoration и durable checkpoints здесь нет.
+
+## GUI одного исследования: граница worker и UI
+
+Реализованный первый срез ResearchController: GUI формирует typed draft, worker сохраняет его в новый
+output и вызывает FileExperiment. Product rendering/evaluation остаётся в прежних C++ services.
+UI не вызывает блокирующий runner; progress передаётся через atomic counters с периодическим
+чтением, завершение — queued callback. При закрытии окна запрашивается отмена и ожидается
+завершение restore. Draft без внешнего reference не может объявить scientific quality passed.
+
+```plantuml
+@startuml
+actor Пользователь as U
+participant "ResearchPanel / UI thread" as UI
+participant "ResearchController worker" as W
+database "Новый каталог результата" as O
+participant "FileExperiment / sv-client-lib" as R
+participant "sv-server" as S
+U -> UI : выбрать методы / frames / repeats / параметры
+UI -> UI : validate draft / freeze endpoint
+UI -> W : start immutable request
+W -> O : reserve scenario.json / report paths
+W -> R : FileExperiment / execute(cancel, progress)
+R -> S : lease / reset / trials
+S --> R : frames / provenance
+R -> W : progress counters
+UI -> W : poll progress (без очереди на каждый trial)
+opt отмена или закрытие окна
+  U -> UI : отменить
+  UI -> W : atomic cancel = true
+end
+R -> S : restore / release
+S --> R : restore result
+R --> W : report
+W --> UI : queued bounded result rows / status
+UI --> U : timings / quality status / report path
+@enduml
+```
+
+*Рисунок RR.7 — worker исполняет workflow, UI остаётся отзывчивым и не получает полный report
+с тысячами frame metadata. Batch editor и import/reference chooser не входят в этот первый срез.*

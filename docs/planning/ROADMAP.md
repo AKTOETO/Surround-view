@@ -1,5 +1,13 @@
 # Подробный план реализации
 
+18.10.2026: первый GUI одного исследования реализован: вкладки plan/run/results, методы и
+основные параметры через формы, фоновый FileExperiment, progress/cancel, timing rows и безопасное
+ожидание worker при закрытии окна. Headless batch service сохранён без дублирования алгоритмов.
+Остаются GUI batch/carrier matrices, reference/import chooser, capabilities-driven options,
+сравнение разных reports и multi-recording registry/switching. [[engineering/RESEARCH_BATCH]], §3.53.
+Итоговая Linux регрессия с window-close guard: 68/68 за 58,13 с, live Unix/TCP/combined и
+два новых QML cases прошли; это не Aurora qualification.
+
 17.10.2026: первый compiled batch service выполнен для нескольких сценариев одной replay-записи.
 FileExperiment/PImpl объединяет одиночный и batch CLI, все inputs/outputs готовятся до сети;
 quality rejection продолжает серию, technical/guard failure останавливает её. Проверены Unix/TCP,

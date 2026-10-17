@@ -319,3 +319,34 @@ clang-format и diff whitespace. Blender MCP отвечает, версия 5.2.
 SV Research Cargo Yard.001. Новый исследовательский захват не выполнялся: задача этого среза —
 нативная оркестрация. Multi-recording switching, GUI editor, whole-batch isolation, durable resume,
 старый cursor и Aurora/physical acceptance не считаются закрытыми.
+
+## 18.10.2026: GUI одиночного исследования
+
+Добавлены ResearchPanel, ResearchController/PImpl и helpers typed draft/result rows. Исполнение
+через общий C++ FileExperiment идёт вне UI thread. Atomic progress poll 100 мс не создаёт event
+на каждый trial. Входные формы/endpoint фиксируются, вывод — scenario.json, report.json и measured
+RGBA. Без внешнего reference GUI не объявляет scientific acceptance и не подставляет нули в MAE.
+Контракт и воспроизведение: [[engineering/RESEARCH_BATCH#Исследование из sv-simulator]], §3.53.
+
+Пять unit GTest cases проверяют expansion значимых axes, strict types/methods/budget, отказ без
+соединения, исключение worker при существующем output без перезаписи, отсутствие/нулевые metrics.
+Три live cases запускаются для Unix/TCP/combined profiles: 16-trial workflow сохраняет report и
+restore, UI heartbeat продолжает работать; изменение viewer availability не меняет frozen endpoint;
+cancel после первого trial даёт partial report и подтверждённый restore; destructor выполняет
+cancel/join, после удаления controller обработаны оставшиеся UI events. Config-файл сервера
+побайтно сохраняется. Итого девять live case executions внутри client_transports.
+
+Два QML cases: изменение frames/repeats, сбор typed draft и переключение трёх вкладок без warnings;
+ResearchCloseGuard отклоняет close при busy, запрашивает cancel, закрывает окно после terminal
+callback и очищает closeWhenDone. Window case использует отказ подготовки без сети, настоящий
+restore отдельно проверен live cases. Screenshot research_editor.png получен из настоящей формы
+с UI fixture планом 48 trials; это не measured result. Контраст палитры проверен визуально.
+`sv-simulator --smoke` загружает main.qml с настоящим viewer-подключением в transport harness.
+
+Linux/Qt 6.11.2: полная сборка успешна. После финального window guard полный CTest **68/68 за
+58,13 с**; client_transports 39,28 с, simulator_configuration_qml 6,77 с. Отдельный запуск новых
+QML cases — 2/2. Проверен syntax 33 PlantUML blocks в runtime/chapter3, clang-format и whitespace.
+Qt5/Aurora/device acceptance этим запуском не подтверждается. GUI batch editor, general matrices,
+capability-driven choices, внешний reference/import, сравнение нескольких reports и durable resume
+остаются открытыми. Новые Blender captures и научный reranking в этом продуктовом срезе не нужны
+и не выполнялись.

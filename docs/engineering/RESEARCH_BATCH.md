@@ -107,10 +107,70 @@ CLI выводит JSON со ссылкой на `batch.json`; exit 0 — усп
 `FileExperiment` использует PImpl и отделяет загрузку immutable inputs от резервирования output
 и одноразового исполнения. `run_batch(plan, directory, options, cancel, progress)` предоставляет
 общий blocking service; progress передаёт `(member_index, completed_trials, total_trials)`.
-Для GUI его нужно вызвать вне UI thread и перенести callback в GUI executor. Готовой GUI формы
-сценариев пока нет. Это application service над `sv-client-lib`, а не новая серверная команда.
+Для GUI его нужно вызвать вне UI thread и перенести callback в GUI executor. Первый GUI
+одного исследования реализован ниже; редактор batch-планов ещё отсутствует. Это application service над `sv-client-lib`, а не новая серверная команда.
 
 Проверки: `research_batch_tests.cpp` — предварительная проверка, bounds, отмена до сети,
 immutable сценарий, single-attempt и защита output aliases; `test_client_transport.py` —
 настоящие Unix/TCP сессии, воспроизводимость RGBA между участниками, quality rejection с
 продолжением и source-content mismatch с остановкой/restore. Сводка — [[validation/RESEARCH_RUNTIME]].
+
+## Исследование из sv-simulator
+
+Запустите replay server обычной командой из [[engineering/USAGE]], затем клиент:
+
+```sh
+build/examples/sv-simulator/sv-simulator --unix /tmp/sv-prototype
+# Для удалённого сервера:
+build/examples/sv-simulator/sv-simulator --tcp HOST CONTROL_PORT DATA_PORT
+```
+
+1. Дождитесь подключения и завершения текущих configuration requests. Откройте **Исследования**
+   в шапке окна. Настройте нужную поверхность и виртуальный ракурс заранее на основной странице.
+2. На вкладке **План** отметьте методы, задайте frames/warmup/repeats/seed, pyramid levels,
+   boundary и seam solver. `Сравнить обе` добавляет zero/normalized варианты только для двух
+   multiband методов; не создаёт бессмысленные дубликаты остальных. Solver применяется только
+   к graph-cut методам. Список методов пока фиксирован: несовместимый сервер отклонит запрос.
+3. Укажите **новый** каталог результата с существующим родителем. Кнопка **Новое имя** предлагает
+   путь `artifacts/gui-research-UTC-COUNTER` относительно рабочего каталога приложения. Число кадров
+   не определяется автоматически: оно должно помещаться в подключённую запись. По умолчанию — 2.
+4. Нажмите **Начать исследование**. Worker сохранит `scenario.json`, зарезервирует `report.json`
+   и `report.json.frames`, затем вызовет тот же FileExperiment, что CLI. Вкладка **Выполнение**
+   показывает trials, включая warmup; 100% ещё не означает успешный restore.
+5. Кнопка **Отменить и восстановить настройки** запрашивает штатную отмену. Она не прерывает
+   синхронную операцию посередине. Закрытие окна во время прогона также запрашивает отмену:
+   окно закроется после возврата worker, в том числе при сообщении о неудачном restore.
+6. На вкладке **Результаты** доступны render-wall p50/p95 и measured count каждого варианта,
+   terminal status и копируемый путь полного отчёта. Прочерки означают отсутствие метрики,
+   а не нулевую задержку или идеальное качество. Форма пока не задаёт внешний reference:
+   MAE/PSNR и scientific quality acceptance здесь не оцениваются. Для них используйте CLI и
+   reference schema2 из [[engineering/RESEARCH_QUALITY]].
+
+UI не редактирует конфиг сервера: временные переключения и restore выполняет сервер через
+sv-client-lib. Ракурс/поверхность сохраняют текущую постановку; прежний replay cursor и caches
+не возвращаются. Во время прогона основные controls заблокированы, после завершения запрашивается
+обновление active configuration/revision; редактируемый draft не применяется автоматически.
+Это не защита от команд других клиентов и не whole-process isolation.
+
+ResearchController с PImpl удерживает worker и cancellation flag. Значения формы и endpoint
+фиксируются перед запуском. Потеря viewer-подключения меняет возможность нового запуска,
+но не перенаправляет текущий worker: он завершает свою отдельную сессию или сообщает ошибку.
+UI poll atomic counters раз в 100 мс; не создаётся queued event на каждый trial. Terminal callback
+переносит только строки по вариантам, не полный report. Destructor запрашивает отмену и join;
+при зависшем OS/driver IO общая длительность shutdown всё ещё зависит от текущей операции.
+
+Viewer остаётся дополнительным потребителем кадров; GUI timing samples нельзя автоматически
+приравнивать к headless qualification/FPS. Warmup исключён из timing summaries, повторы одного
+кадра не становятся независимыми scene samples. GUI batch editor, импорт/export произвольных
+матриц, reference chooser, сравнение разных reports и durable resume остаются открытыми.
+
+Тесты: `simulator_research_tests.cpp` проверяет typed draft, асинхронный отказ подготовки,
+недоступные метрики, отзывчивость UI event loop, frozen endpoint, cancel/restore и destructor/join.
+Последние три cases запускаются transport harness на настоящем сервере для Unix/TCP/combined.
+`simulator_research_qml_tests.cpp` меняет формы/вкладки и проверяет отсутствие QML warnings;
+его screenshot — UI fixture плана, не научный результат. Схема: рисунок RR.7
+[[architecture/RESEARCH_RUNTIME#GUI одного исследования: граница worker и UI]].
+Отдельный ResearchCloseGuard используется самим main.qml; QML test проверяет отклонение первого
+close при busy, cancel, последующий close после terminal callback и сброс closeWhenDone.
+Этот window-тест использует отказ подготовки без сети; настоящий restore проверяется отдельно
+live controller cases. Это разные проверяемые границы одного workflow.

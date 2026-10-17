@@ -1444,3 +1444,12 @@ build/svctl --unix /tmp/sv-prototype --timeout-ms 5000 \
 Сценарии/эталоны и все output paths проверяются до подключения. Отчёты — в `batch.json`
 и отдельных `ID.json`; exit 5 означает завершённую серию с непройденным quality threshold,
 exit 4 — техническую неполноту. Подробный формат, API и границы: [[engineering/RESEARCH_BATCH]].
+
+### Визуальный план исследования
+
+В sv-simulator откройте **Исследования** в шапке окна. На вкладке **План** выберите методы,
+frames/warmup/repeats/seed, pyramid boundary/levels и seam solver; задайте новый output directory.
+**Начать исследование** запускает общий C++ FileExperiment вне UI thread. Доступны progress,
+отмена с restore и таблица timings. Ручной JSON не требуется, сформированный сценарий сохраняется.
+Этот GUI пока работает без external quality reference: отсутствие MAE/PSNR не означает нулевую
+ошибку. Пошаговая инструкция: [[engineering/RESEARCH_BATCH#Исследование из sv-simulator]].

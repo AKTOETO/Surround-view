@@ -1985,3 +1985,59 @@ registry, GUI формы и durable recovery остаются открытыми
 формат файлов/команды — [[engineering/RESEARCH_BATCH]]. Тесты проверяют отмену до подключения,
 immutable input, output aliases, общую preflight, воспроизводимость RGBA через Unix/TCP,
 продолжение после quality rejection и остановку при input-content mismatch.
+
+## 3.53. Визуальный редактор одиночного исследования
+
+В sv-simulator добавлена отдельная страница «Исследования» с вкладками «План», «Выполнение»
+и «Результаты». Пользователь отмечает методы, задаёт frames/warmup/repeats/seed, pyramid levels,
+boundary и seam solver через элементы формы. Формирование JSON вручную не требуется:
+typed draft проверяется общим parser и сохраняется как scenario.json для воспроизведения.
+Это ограниченный редактор одного исследования, а не готовый редактор произвольных batch-планов.
+
+![Редактор плана исследования](figures/implementation/research_editor.png)
+
+*Рисунок 3.50 — реальный offscreen screenshot Qt-формы из UI acceptance fixture: выбраны два
+multiband метода и две границы, frames=2, warmup=2, repeats=4. Число 48 относится к плану;
+изображение не является отчётом о выполненных trials или измеренном качестве.*
+
+Генератор draft не размножает параметры, которые не влияют на выбранный метод: обе boundaries
+порождают две variants только для multi_band и graph_cut_multi_band, solver назначается
+только graph-cut методам. Все семь методов дают максимум девять вариантов. Duplicate/unknown
+методы, неверные типы, seed и превышение общего бюджета отвергаются до создания output.
+По умолчанию выполняется replay reset и сохраняются measured RGBA; warmup frames не экспортируются.
+
+| Часть | Ответственность |
+|---|---|
+| ResearchPanel.qml | Формы, бюджет trials, вкладки, отмена и таблица |
+| research_draft.cpp | Строгое преобразование полей формы в сценарий |
+| ResearchController/PImpl | Snapshot endpoint, worker lifecycle, cancel/progress, terminal status |
+| research_results.cpp | Ограниченные строки вариантов, недоступные метрики как прочерки |
+| FileExperiment / общий runner | Capture/report, SV01 lease/reset/trials/restore через sv-client-lib |
+| sv-server | Переключение и исполнение алгоритмов, frame/provenance, восстановление конфигурации |
+
+Исполнение вынесено из UI thread. Worker обновляет atomic counters, UI читает их раз в 100 мс;
+очередь событий не растёт пропорционально числу trials. Terminal callback передаёт строки
+по вариантам, а полный report остаётся на диске. При отмене сначала завершается текущая
+синхронная операция, затем выполняется обычный restore. При закрытии окна приложение ожидает
+этот путь; destructor дополнительно запрашивает cancel и join, не оставляя detached worker.
+Последовательность приведена на рисунке RR.7 в [[architecture/RESEARCH_RUNTIME]].
+
+Начать прогон можно после подключения и завершения локальных configuration requests.
+Параметры endpoint фиксируются перед запуском: изменение доступности viewer не перенаправляет
+идущий прогон на другую машину. Основные настройки и orbit input блокируются на время работы;
+после возврата worker запрашивается обновление active configuration/revision. Эти меры не
+обеспечивают изоляцию от других клиентов или посторонней нагрузки на сервер.
+
+Форма этого среза не принимает внешний reference: MAE/PSNR показываются как недоступные,
+а завершение workflow не называется научной приёмкой качества. Таблица render wall p50/p95
+описывает paused samples с исключённым warmup, не sustained FPS. Viewer остаётся отдельным
+потребителем frames, поэтому режим запуска должен учитываться при дальнейшей qualification.
+Для masked RGB/criteria применяется headless runner, описанный в §3.49–3.52.
+
+GTest проверяет типы/границы draft, нулевые и отсутствующие метрики, отказ подготовки без
+перезаписи, frozen endpoint и отзывчивость event loop. На живом сервере проверены штатное
+завершение, cancel с partial report/restore и destructor/join для Unix/TCP/combined profiles.
+QML acceptance меняет поля/вкладки и фиксирует warnings, screenshot проверен визуально.
+GUI batch editor, carrier/parameter matrices, выбор reference, capabilities-driven options,
+импорт и сравнение нескольких отчётов остаются открытыми. Команды и ограничения:
+[[engineering/RESEARCH_BATCH#Исследование из sv-simulator]].

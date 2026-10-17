@@ -1,5 +1,13 @@
 # Состояние прототипа и границы подтверждения
 
+18.10.2026: sv-simulator получил GUI одного исследования поверх общего C++ FileExperiment.
+Typed forms выбирают методы/параметры и frames/warmup/repeats/seed; worker исполняется вне UI,
+progress/cancel и timing table доступны в отдельных вкладках. Отдельный window guard ждёт
+terminal callback после отмены. Форма не задаёт внешний reference: quality acceptance не
+объявляется, MAE/PSNR недоступны. GUI batch/registry/import/сравнение разных reports ещё впереди.
+[[engineering/RESEARCH_BATCH#Исследование из sv-simulator]], §3.53.
+Проверки Linux/Qt 6.11.2: CTest 68/68 за 58,13 с, включая live controller и window-close guard.
+
 17.10.2026: `svctl research-batch` исполняет несколько сценариев одной подключённой записи через
 общий C++ application service и sv-client-lib. Входы/выходы готовятся до сети; каждый сценарий
 выполняет reset и restore. Ошибка качества отделена от технического отказа; Unix/TCP интеграция
