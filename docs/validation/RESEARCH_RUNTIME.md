@@ -213,3 +213,20 @@ Kind=independent_ground_truth остаётся декларацией автор
 обеспечивают content identity camera images. Independent holdout, source/config hashes, заранее
 заданные критерии, другие метрики и подтверждающая серия ещё открыты. Success — статус workflow,
 не прохождение порога scientific quality. Новое ранжирование fusion методов не выполнялось.
+
+
+## 17.10.2026: content/model guards replay
+
+Server/replay worker добавляют packed_rgb8_sha256_v1 и camera_model_sha256_v1; manifest schema2
+требует оба guards каждого input. Schema1 сохранена с явной legacy metadata-only маркировкой.
+Known-answer RGB/camera digests независимо вычислены Python struct/hashlib; C++ unit tests
+проверяют изменение bytes/dimensions/intrinsics/extrinsics/k/theta/epsilon, нормализацию -0 и
+отказ не-finite. Source test меняет результат loader при прежнем path, проверяет новые pixels/hash
+после reset. Unix/TCP integration независимо сверяет все hashes с fixture и меняет один реальный
+source pixel при прежнем manifest/IDs/timestamps: получен input guard mismatch, restored=true.
+
+Полная Linux сборка успешна. sources/replay_ipc/client_transports/source_work_timing/research_scenarios
+5/5 за38,87 с (0,12 /6,15 /29,59 /3,01 /0,00 с). Scenario GTest24: standalone23 passed/1 skipped,
+живой case выполнен Unix/TCP harness. Полный66-entry suite и Аврора не проверялись.
+Hash стоимость не объявляется бесплатной: loader span пока исключает hash/cache preparation;
+полный dataset/config passport и target overhead измерения остаются открытыми.

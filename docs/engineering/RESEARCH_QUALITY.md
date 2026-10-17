@@ -66,12 +66,12 @@ flip, SSIM, object/ghost segmentation или подгонки exposure.
 `kind=regression` обязателен для сохранённого вывода исследуемого сервера: он проверяет
 совпадение/изменение, но не физическую правильность реконструкции. Не переименовывайте
 серверный capture в независимую truth. `dataset_id` — декларация автора, не проверенная
-сервером content identity. Текущие input guards проверяют calibration IDs/timestamps,
-**не хэши исходных camera images**; подмена содержимого с теми же IDs ещё не обнаруживается.
+сервером content identity. В legacy schema1 input guards проверяют только calibration IDs/timestamps. Для новых
+подтверждающих опытов используйте schema2 с content/model guards, описанную ниже.
 
 ## Проверки и ограничения загрузки
 
-Manifest — не более1 MiB, schema1 с проверкой неизвестных полей. Frames1…256,
+Manifest — не более1 MiB, schema1/schema2 с проверкой неизвестных полей. Frames1…256,
 resolution2…4096 ×2…2160; суммарный размер RGB+mask pixels не более128 MiB. Изображения
 загружаются и mask проверяется **до подключения к серверу**. CLI также проверяет совместимость
 scenario до reservation report: malformed reference не создаёт report и не меняет сервер.
@@ -126,7 +126,7 @@ Frames одного клипа также не объявляются стати
 нестабильность; restore к этому моменту уже выполнен. Samples сохраняются для диагностики.
 
 `success=true` означает завершённый workflow и прошедшие guards, **не** достижение заданного
-порога качества. Пороговые критерии, holdout/scene seeds, доверительные интервалы, input-content
+порога качества. Пороговые критерии, holdout/scene seeds, доверительные интервалы, полная dataset/config
 identity и полноценная quality-oracle orchestration ещё предстоят. Время evaluator/capture —
 клиентская нагрузка вне server pipeline_spans_ms; такие прогоны не измеряют sustained FPS.
 
@@ -157,3 +157,52 @@ R --> C : report + reference identity + samples
 самого эталона остаётся ответственностью протокола исследования.*
 
 Проверки: [[validation/RESEARCH_RUNTIME]]. Общий workflow: [[architecture/RESEARCH_RUNTIME]].
+
+
+## Schema2: проверка содержимого входов и числовой модели
+
+Показанный выше schema1 сохранён для чтения прежних reference manifests; report явно помечает
+его `input_guard=legacy metadata only...`. Для новой серии замените schema_version на2 и добавьте
+**к каждому из четырёх** inputs обязательные поля:
+
+```json
+{
+  "camera_id": 0,
+  "calibration_id": "front-v1",
+  "source_timestamp_ns": "0",
+  "image_identity": {
+    "algorithm": "packed_rgb8_sha256_v1",
+    "sha256": "<64 lowercase hex characters of the expected decoded image>",
+    "width": 320, "height": 180,
+    "pixel_format": "RGB8", "row_origin": "top_left"
+  },
+  "camera_model_sha256": "<64 lowercase hex characters of the expected numeric camera model>"
+}
+```
+
+Значения в угловых скобках нужно заменить реальными digest: loader отклоняет placeholders,
+неполные guards, неправильные algorithms/dimensions и неканонические hashes. Copy из прежнего
+report допустим для regression/reference provenance, но независимость RGB truth этим не доказывается.
+Schema2 требует server capability replay_input_identity_v1 **до acquire/reset**; fallback на schema1
+или сравнение только timestamps автоматически не выполняется.
+
+Replay worker считает image hash при cache miss по реально загруженному packed RGB8 buffer;
+доставленные Frames владеют immutable image и его hash. После reset cache/hash очищаются и
+вычисляются заново. Изменённый файл по прежнему пути до cache miss не меняет уже загруженный
+buffer: hash описывает использованные pixels, а не текущее состояние файла на диске. PNG/JPEG
+headers/compression не входят в identity. Смысл — равенство декодированных наблюдений.
+
+Точное представление packed_rgb8_sha256_v1: ASCII `sv-packed-rgb8-v1`, NUL, width и height как
+uint32 big-endian, затем width×height×3 RGB bytes в порядке строк top-left. Размер входит в digest,
+поэтому reshape одних bytes не совпадает. camera_model_sha256_v1: ASCII `sv-camera-model-v1`, NUL,
+uint32 big-endian id/width/height, затем IEEE754 binary64 big-endian в порядке fx,fy,cx,cy,
+theta_max,z_epsilon,k[0..3],T_camera_from_vehicle[0..15] row-major. Нули канонизированы в+0,
+не-finite значения запрещены. Name/calibration_id не входят в numeric model hash; calibration_id
+проверяется отдельно. Это модель текущего renderer, не hash всего server config или файла calibration.
+
+Сервер помещает model hash **активной** модели renderer и image identity каждого used replay input
+в FRAME. Смена числовых параметров с прежним calibration ID либо подмена RGB при прежнем timestamp
+вызывают input guard mismatch. Capability не обещается camera/socket sources: real-camera hashing
+не добавлен. Хэширование добавляет работу при decode; replay_load timing остаётся временем loader,
+а не всего hash/cache preparation. Текущие render spans также не измеряют полную стоимость source
+hashing. Для performance нужно отдельно учесть эту нагрузку; эффект на target пока не измерен.

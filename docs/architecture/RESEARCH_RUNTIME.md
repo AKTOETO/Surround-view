@@ -244,7 +244,20 @@ quality summaries считают frame_index один раз при повтор
 Нестабильные повторные metrics приводят к failed report после restore.
 
 Разделены declared independent_ground_truth и regression; код не подтверждает истинность
-объявленного kind. Input guards пока проверяют calibration IDs/timestamps, а не содержимое
-исходных camera images. Независимые scene/mount/noise seeds, content-verified dataset identity,
+объявленного kind. Legacy schema1 проверяет только IDs/timestamps; schema2 дополнительно проверяет hashes
+decoded camera pixels и активной числовой модели. Независимые scene/mount/noise seeds, полная dataset/config identity,
 preregistered thresholds, object/ghost metrics, GUI и durable checkpoints всё ещё нужны.
 Наличие evaluator не закрывает подтверждение E-STITCH-01.
+
+
+## Проверяемая идентичность replay observations
+
+Quality manifest schema2 требует decoded-image и numeric camera-model hashes каждого input.
+Сервер объявляет replay_input_identity_v1, worker привязывает digest к immutable image, render
+thread сообщает модель, которой обработан кадр. Это обнаруживает замену pixels или intrinsics/
+extrinsics с прежними paths/IDs/timestamps. Schema1 оставлена как явно обозначенный metadata-only
+legacy режим, автоматического понижения проверки нет. Подробности и стоимость:
+[[engineering/RESEARCH_QUALITY#Schema2: проверка содержимого входов и числовой модели]].
+
+Не следует называть это полной immutable dataset registry: ещё не фиксируются вся запись,
+scene/mount/noise seeds, все server groups и physical-camera provenance одним паспортом.

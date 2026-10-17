@@ -194,7 +194,8 @@ warmup/repeats и exclusive report reservation реализованы в общ�
 [[architecture/RESEARCH_RUNTIME#Ограниченные матрицы и фиксированный план испытаний]].
 
 - Явный replay start + decode-cache/sync-history reset реализован через replay_reset_v1 и scenario.reset_replay. Остаются checkpoint/restore предыдущего cursor и отдельная GPU/OS cache policy; не считать cold hardware benchmark.
-- Оркестрировать независимые scene/mount/noise seeds и immutable input-content identity;
+- Оркестрировать независимые scene/mount/noise seeds и полный immutable dataset/config passport;
+  decoded replay-image/numeric camera-model identity и strict reference schema2 реализованы;
   текущий scenario.seed управляет только порядком методов. Первый C++ masked RGB evaluator
   (reference hashes, view/input guards, MAE/RMSE/PSNR, frame-level summaries) реализован:
   [[engineering/RESEARCH_QUALITY]]. Остаются подготовка независимой truth/holdout, заранее

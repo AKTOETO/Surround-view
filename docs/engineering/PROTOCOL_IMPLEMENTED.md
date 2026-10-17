@@ -389,3 +389,14 @@ HELLO объявляет frame_view_v1. Каждый FRAME type11, включа�
 C++ research evaluator использует этот снимок для запрета сравнения с эталоном другого view.
 Качество/истинность внешнего эталона не являются server-side свойствами протокола:
 [[engineering/RESEARCH_QUALITY]]. Truth и evaluation mask серверу не передаются.
+
+
+## Replay input identity (`replay_input_identity_v1`)
+
+Replay HELLO объявляет replay_input_identity_v1. Каждый used replay input в FRAME содержит
+image_identity={algorithm:packed_rgb8_sha256_v1,sha256,width,height,pixel_format:RGB8,row_origin:top_left}
+и camera_model_sha256 активной числовой модели renderer (algorithm camera_model_sha256_v1).
+Image digest рассчитан worker по immutable decoded buffer при cache miss, не по пути/дисковому
+файлу после загрузки. Cache reset перечитывает и заново хэширует pixels. Нет новой wire команды,
+нет передачи truth на сервер, нет автоматического hashing реальных камер/socket inputs.
+Формат digest и strict schema2 reference guards: [[engineering/RESEARCH_QUALITY#Schema2: проверка содержимого входов и числовой модели]].

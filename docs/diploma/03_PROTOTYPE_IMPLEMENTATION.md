@@ -1751,3 +1751,53 @@ end note
 ```
 
 *Рисунок 3.45 — разделение исследуемой реализации и канала внешнего эталона.*
+
+
+### 3.48. Идентичность использованных наблюдений
+
+Проверка timestamps и calibration IDs не обнаруживает замену изображения либо изменение
+числовой калибровки с прежним именем. Добавлены два domain-separated SHA-256 fingerprint:
+packed_rgb8_sha256_v1 связывает размеры и декодированные top-left RGB pixels, а
+camera_model_sha256_v1 — числовые поля модели renderer. Второй использует явно заданный порядок
+полей и big-endian IEEE754, поэтому не зависит от порядка JSON keys; -0 канонизируется в+0.
+Имена камер не влияют на fingerprint, calibration ID остаётся отдельным guard.
+
+Replay worker вычисляет digest при загрузке в image cache и помещает его рядом с immutable
+buffer каждого Frame. Render thread сообщает fingerprint активной модели. После replay reset
+перечитываются pixels и повторно вычисляется digest; передача только строки пути не считается
+доказательством идентичности изображения. Хэш относится к реально использованному buffer,
+поэтому изменения дискового файла до следующего cache miss не меняют уже загруженное наблюдение.
+
+Quality manifest schema2 требует обе проверки для всех четырёх камер. Schema1 сохранена для
+совместимости, но явно маркируется metadata-only. На старом сервере без replay_input_identity_v1
+опыт schema2 отклоняется до acquire/reset; автоматического ослабления guards нет.
+
+```plantuml
+@startuml
+participant "Replay worker" as W
+participant "Frame / immutable RGB" as F
+participant "Renderer / active camera" as S
+participant "QualityReference schema2" as Q
+W -> W : decode + dimension-bound SHA256
+W -> F : image + image hash
+F -> S : selected input
+S -> S : numeric camera-model fingerprint
+S --> Q : output + image/model identities
+Q -> Q : compare expected hashes / IDs / timestamps
+alt content/model mismatch
+  Q --> Q : fail evaluation; runner restores settings
+else match
+  Q -> Q : compute masked RGB metrics
+end
+@enduml
+```
+
+*Рисунок 3.46 — идентичность наблюдения связывается с использованными pixels и моделью, а не только с именем файла.*
+
+Приёмка включает независимые Python struct/hashlib known-answer fingerprints, native tests
+числовых изменений и reset/cache, а также подмену одного пикселя в реальном replay-файле при
+прежних paths/IDs/timestamps через Unix/TCP. Подмена выявлена, restore успешен.
+Хэширование имеет стоимость и пока не включено в отдельный stage span: replay_load измеряет
+loader, не весь decode/hash/cache workflow. Результат не является полным паспортом dataset:
+вся запись, все группы конфигурации и scene/mount/noise seeds ещё требуют фиксации.
+Контракт и результаты: [[engineering/RESEARCH_QUALITY]], [[validation/RESEARCH_RUNTIME]].
