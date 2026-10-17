@@ -1451,5 +1451,6 @@ exit 4 — техническую неполноту. Подробный фор�
 frames/warmup/repeats/seed, pyramid boundary/levels и seam solver; задайте новый output directory.
 **Начать исследование** запускает общий C++ FileExperiment вне UI thread. Доступны progress,
 отмена с restore и таблица timings. Ручной JSON не требуется, сформированный сценарий сохраняется.
-Этот GUI пока работает без external quality reference: отсутствие MAE/PSNR не означает нулевую
-ошибку. Пошаговая инструкция: [[engineering/RESEARCH_BATCH#Исследование из sv-simulator]].
+В группе «Внешний эталон» выберите reference manifest для MAE/RMSE/PSNR;
+либо выберите «Запустить сохранённый сценарий» для импорта с его relative reference. Критерии
+отображаются отдельно от workflow success; отсутствие метрики не означает нулевую ошибку. Пошаговая инструкция: [[engineering/RESEARCH_BATCH#Исследование из sv-simulator]].

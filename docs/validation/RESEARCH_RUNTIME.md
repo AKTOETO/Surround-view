@@ -350,3 +350,45 @@ Qt5/Aurora/device acceptance этим запуском не подтвержда
 capability-driven choices, внешний reference/import, сравнение нескольких reports и durable resume
 остаются открытыми. Новые Blender captures и научный reranking в этом продуктовом срезе не нужны
 и не выполнялись.
+
+## 18.10.2026: внешний reference и single-scenario import в GUI
+
+Форма выбирает local reference через file dialog, либо запускает существующий scenario.
+Оба пути используют тот же C++ FileExperiment, включая preflight до создания output/сети.
+Raw byte input provenance включает memory/file kind, base и original path для файла.
+Отчёт сохраняет загруженный reference passport и при ранней отмене без evaluated frames.
+Original scenario не изменяется и не копируется в bundle. Контракт: [[engineering/RESEARCH_BATCH]].
+
+Общий evaluator добавил pooled PSNR/exact flag. Контроль RMSE 1/3 при ROI weights 1/3 даёт
+PSNR 39,67982320853653 dB; пять repeats первого frame не меняют weights. Отдельно проверены
+exact match/null PSNR и отсутствие PSNR у варианта без measured frames. Memory input тест
+проверяет raw-byte identity, base, bounds и отсутствие создаваемого source file.
+Research GTest binary: 36 cases, standalone 35 passed/1 live skipped, live — в transport harness.
+
+GUI unit binary теперь имеет 7 standalone cases и отдельные live profiles. Проверены local URL
+validation (включая query/fragment), filenames с пробелами/#/%, missing reference до output,
+malformed imported input, отображение малых ненулевых ошибок и недоступных метрик.
+Отказ нового запроса очищает прежние badge/rows/report path, не удаляя прежние файлы.
+
+Transport harness запускает форму и импорт при четырёх состояниях: passed, failed,
+not_requested с metrics и incomplete после source-pixel tampering. Это 4×2×3=24 reference
+workflow executions для Unix/TCP/combined profiles, не 24 независимых scenes. Каждый возвращённый
+отчёт проверяется на restore и scientific/workflow status. Criteria берутся из заранее загруженного
+manifest; отсутствие criteria не переименовывается в passed. Для incomplete без criteria
+acceptance мог бы оставаться not_requested: workflow оценивается отдельно.
+
+Три дополнительных QML live executions действительно запускают импорт кнопкой и рендерят
+полученные rows в окне. Screenshot research_reference_results.png — реальный regression
+transport fixture с тремя frames/шестью measured samples, не независимая quality truth.
+Timing numbers на изображении не используются для qualification. Source fixtures воспроизводятся
+из tests/test_client_transport.py; временные datasets/reports очищаются по завершении теста.
+QML standalone проверяет open/reject dialog, выбор URL без auto-start, tabs и close guard;
+reference workflow case отдельно запускается harness и skip без endpoint/fixture.
+
+После финальной сборки Linux/Qt 6.11.2 полный **CTest 68/68 за 73,91 с**; client_transports
+55,57 с, simulator_configuration_qml 6,81 с. До добавления последнего not_requested control
+targeted client_transports/research_quality_fixture также прошли 2/2. Bounds/schema/API не
+подменяют научное обоснование критериев, независимые сцены или Aurora/device acceptance.
+Qt5 wrapper подготовлен по прежней структуре dialog, но Qt5 runtime в этой проверке отсутствует.
+Остаются GUI batch/general matrices, capability-driven choices, criterion editor/bundles,
+сравнение разных reports, durable resume и прежние исследовательские/целевые gates.

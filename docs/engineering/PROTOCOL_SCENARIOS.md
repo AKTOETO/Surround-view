@@ -14,6 +14,11 @@
 техническом отказе и отдельная обработка quality rejection: [[engineering/RESEARCH_BATCH]].
 PlantUML последовательность: [[architecture/RESEARCH_RUNTIME#Последовательный batch service одной записи]].
 
+GUI reference/import также использует прежние SV01 команды через общий runner. Truth RGB/mask
+и criteria остаются у клиента и не передаются алгоритму сервера; input provenance и quality
+summaries — поля исследовательского отчёта, не новые wire messages. Последовательность:
+[[architecture/RESEARCH_RUNTIME#Выбор reference и импорт одиночного сценария]].
+
 ## Полный каталог текущих операций
 
 Каталог содержит 29 серверных команд; запросы передаются как type20, результат — type21. Typed API перечислен там, где он есть; остальные доступны через `command(type, parameters)`. Наличие generic API не означает поддержку неизвестной команды сервером.

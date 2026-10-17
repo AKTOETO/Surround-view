@@ -2041,3 +2041,73 @@ QML acceptance меняет поля/вкладки и фиксирует warnin
 GUI batch editor, carrier/parameter matrices, выбор reference, capabilities-driven options,
 импорт и сравнение нескольких отчётов остаются открытыми. Команды и ограничения:
 [[engineering/RESEARCH_BATCH#Исследование из sv-simulator]].
+
+## 3.54. Внешний эталон и импорт сценария в GUI
+
+Следующий срез расширяет редактор §3.53 двумя способами задания исследования. В форме выбирается
+reference manifest через файловый диалог. Альтернативно загружается существующий scenario JSON;
+он исполняется без подмены настроек значениями формы и без редактирования исходного файла.
+Это импорт одного сценария, не готовый GUI batch-планов или архив всего dataset.
+
+FileExperiment принимает исходный файл либо точные JSON bytes с явным reference base directory.
+В обоих случаях он заранее проверяет bounds, фиксирует RGB/mask pixels и criteria в памяти.
+GUI выполняет эту подготовку в worker **до создания output и любого подключения**. Неверный
+reference или несовместимое число кадров не должны менять сервер и создавать ложный отчёт.
+При импорте относительные пути разрешаются от canonical source directory; форма сохраняет
+абсолютный locator выбранного reference в scenario.json. Данные эталона серверу не передаются.
+Порядок взаимодействия приведён на рисунке RR.8 в [[architecture/RESEARCH_RUNTIME]].
+
+Для аудита отчёт содержит `scenario_input_sha256` точных входных bytes, input_kind, base directory
+и исходный path для файла. Semantic scenario hash сохраняет прежний смысл. Snapshot формы
+имеет те же bytes/hash, что переданы memory constructor; при импорте source остаётся на своём
+месте. Эти hashes не заменяют dataset registry или portable bundle: исходные manifest и
+RGB/mask нужно сохранять отдельно. Сценарий и его external reference фиксируются до выполнения,
+но это само по себе не является независимой научной preregistration.
+
+### 3.54.1. Раздельная интерпретация результатов
+
+GUI показывает kind/dataset/schema reference, workflow/restore и criteria status раздельно.
+При successful workflow с непройденным threshold сохраняется code 5/failed; это исследовательский
+результат, а не потеря соединения. При guard mismatch заданные критерии получают incomplete.
+Без criteria acceptance остаётся not_requested, в том числе при техническом отказе, поэтому
+проверять только этот badge нельзя. Успешный workflow с reference без criteria всё равно
+имеет рассчитанные метрики. Новая неудачная подготовка очищает прежние rows/report path/badge,
+чтобы результат предыдущего успешного прогона не выдавался за новый.
+
+`regression` явно обозначает проверку воспроизводимости. Даже значение passed не доказывает
+качество реконструкции произвольной сцены. `independent_ground_truth` является заявлением
+автора о происхождении данных; программа не проверяет независимость и научное обоснование норм.
+
+![GUI результатов с внешним regression reference](figures/implementation/research_reference_results.png)
+
+*Рисунок 3.51 — реальный QML запуск сохранённого сценария через sv-server и schema2 regression
+reference из transport fixture. Три кадра и шесть measured samples дают точное совпадение
+с ранее записанным output того же метода. Это проверка GUI/протокола/оценщика, не независимый
+benchmark качества; показанные timing values не квалифицируют производительность платформы.*
+
+### 3.54.2. Агрегирование и отображение метрик
+
+Новые поля общего C++ summary дают PSNR по общей MSE уникальных кадров:
+
+$$
+\mathrm{MSE}_{pool}=\frac{\sum_{f\in F}N_f\mathrm{RMSE}_f^2}{\sum_{f\in F}N_f},
+\qquad \mathrm{PSNR}_{pool}=10\log_{10}\frac{255^2}{\mathrm{MSE}_{pool}}.
+$$
+
+Здесь $N_f$ — число выбранных ROI pixels, значения ошибок заданы в кодовых RGB8. Warmup не
+оценивается; paused repeats не увеличивают число quality frames. Усреднение PSNR отдельных
+кадров в dB давало бы другую величину. При точном совпадении JSON хранит null вместе с
+exact_match=true, GUI показывает «∞ (точное совпадение)». Без оценённых кадров PSNR недоступен.
+Политика threshold остаётся per-measured-sample и не определяется округлёнными summaries.
+
+Форматирование малых ненулевых ошибок переведено на значащие цифры: иначе изменение одного
+pixel при строгом max_mae=0 могло давать failed и визуальное `0.000` одновременно. Контроль
+неравных ROI weights при RMSE 1 и 3, $N_1=1$, $N_2=3$ даёт MSE=7 и PSNR≈39,6798232085 dB;
+повтор первого кадра пять раз не меняет результат. Эта проверка выполняется в GTest.
+
+Live acceptance проверяет форму и импорт при passed, failed, not_requested и incomplete для
+Unix/TCP/combined. Источник изменяется при неизменных paths/IDs/timestamps, что обнаруживается
+schema2 content guard; штатный restore проверяется независимо. Дополнительно настоящий QML
+сценарий запускается кнопкой, результаты выводятся на экран без warnings. Сводка проверок:
+[[validation/RESEARCH_RUNTIME]]. Для окончательного исследования остаются независимые данные,
+обоснованные нормы и прежние gates; GUI возможностей не достаточно для их автоматического закрытия.

@@ -121,6 +121,9 @@ manifest, hashes **декодированных RGB/mask pixels**, dimensions/vi
 
 `quality_summaries` агрегирует по variant: один результат на frame_index, а не на каждый
 paused repeat. MAE взвешивается числом выбранных пикселей; RMSE — корень взвешенного MSE.
+`pixel_weighted_psnr_db` вычисляется из той же общей MSE: PSNR кадров не усредняется.
+При нулевой MSE `exact_match=true`, PSNR равен JSON null; без оценённых кадров поле PSNR
+отсутствует. GUI отображает точное совпадение отдельным символом, не числом 0 dB.
 Frames одного клипа также не объявляются статистически независимыми сценами. Если результаты
 одного frame/variant меняются между measured repeats, success=false и quality_error фиксирует
 нестабильность; restore к этому моменту уже выполнен. Samples сохраняются для диагностики.
@@ -130,9 +133,14 @@ Frames одного клипа также не объявляются стати
 полная dataset/config identity и полноценная quality-oracle orchestration ещё предстоят. Время evaluator/capture —
 клиентская нагрузка вне server pipeline_spans_ms; такие прогоны не измеряют sustained FPS.
 
+Reference можно выбрать в форме sv-simulator либо загрузить сохранённый сценарий с его
+относительными ссылками. Общий FileExperiment выполняет preflight до output reservation и
+сети; качество, kind reference и workflow status показаны раздельно. Инструкция и происхождение
+input bytes: [[engineering/RESEARCH_BATCH#Исследование из sv-simulator]].
+
 ```plantuml
 @startuml
-participant "CLI / будущий GUI" as C
+participant "CLI / GUI" as C
 participant "QualityReference (C++)" as Q
 participant "ExperimentRunner" as R
 participant "sv-client-lib" as L

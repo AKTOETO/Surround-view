@@ -125,52 +125,92 @@ build/examples/sv-simulator/sv-simulator --unix /tmp/sv-prototype
 build/examples/sv-simulator/sv-simulator --tcp HOST CONTROL_PORT DATA_PORT
 ```
 
-1. Дождитесь подключения и завершения текущих configuration requests. Откройте **Исследования**
-   в шапке окна. Настройте нужную поверхность и виртуальный ракурс заранее на основной странице.
-2. На вкладке **План** отметьте методы, задайте frames/warmup/repeats/seed, pyramid levels,
-   boundary и seam solver. `Сравнить обе` добавляет zero/normalized варианты только для двух
-   multiband методов; не создаёт бессмысленные дубликаты остальных. Solver применяется только
-   к graph-cut методам. Список методов пока фиксирован: несовместимый сервер отклонит запрос.
-3. Укажите **новый** каталог результата с существующим родителем. Кнопка **Новое имя** предлагает
-   путь `artifacts/gui-research-UTC-COUNTER` относительно рабочего каталога приложения. Число кадров
-   не определяется автоматически: оно должно помещаться в подключённую запись. По умолчанию — 2.
-4. Нажмите **Начать исследование**. Worker сохранит `scenario.json`, зарезервирует `report.json`
-   и `report.json.frames`, затем вызовет тот же FileExperiment, что CLI. Вкладка **Выполнение**
-   показывает trials, включая warmup; 100% ещё не означает успешный restore.
-5. Кнопка **Отменить и восстановить настройки** запрашивает штатную отмену. Она не прерывает
-   синхронную операцию посередине. Закрытие окна во время прогона также запрашивает отмену:
-   окно закроется после возврата worker, в том числе при сообщении о неудачном restore.
-6. На вкладке **Результаты** доступны render-wall p50/p95 и measured count каждого варианта,
-   terminal status и копируемый путь полного отчёта. Прочерки означают отсутствие метрики,
-   а не нулевую задержку или идеальное качество. Форма пока не задаёт внешний reference:
-   MAE/PSNR и scientific quality acceptance здесь не оцениваются. Для них используйте CLI и
-   reference schema2 из [[engineering/RESEARCH_QUALITY]].
+1. Дождитесь подключения и завершения локальных configuration requests. Откройте **Исследования**
+   в шапке окна. Для формы настройте поверхность и виртуальный ракурс заранее на основной странице.
+2. В **Источник плана** выберите форму либо сохранённый сценарий. Форма позволяет выбрать методы,
+   frames/warmup/repeats/seed, boundary/levels и seam solver. Обе boundaries размножаются только
+   для multiband методов, solver применяется только к graph-cut. Список методов пока фиксирован;
+   несовместимые с сервером настройки приводят к отказу, а не к автоматической подмене метода.
+3. Для формы можно нажать **Выбрать…** в группе **Внешний эталон**. Выбирается существующий
+   reference manifest, совместимый с frames, source/model/view guards и размером output.
+   **Убрать** отключает оценивание. Предпочтителен schema2 с pixel/model identities.
+   Пороговые criteria читаются из manifest до запуска; эта форма их не редактирует.
+4. В режиме сохранённого сценария выберите scenario JSON через файловый диалог. Файл не
+   изменяется. Его reference разрешается от каталога исходного файла (после canonical resolution),
+   значения формы/её reference не применяются. Все поддерживаемые runner поля сохраняются,
+   включая surface, matrix, reset_replay и capture_frames. Batch plan здесь не поддерживается.
+5. Укажите новый output с существующим родителем. **Новое имя** предлагает путь
+   `artifacts/gui-research-UTC-COUNTER` относительно cwd приложения. Frames должны помещаться
+   в подключённую запись; автоматического определения её длины пока нет. В форме default frames=2.
+6. Нажмите **Начать исследование**. Worker проверит и зафиксирует сценарий и reference **до
+   создания output и подключения**. Затем резервирует отчёт/captures и вызывает тот же C++
+   FileExperiment, что CLI. При импорте бюджет trials появляется после preflight. 100% trials
+   ещё не означает завершённый restore.
+7. **Отменить и восстановить настройки** запрашивает штатную отмену. Текущая синхронная операция
+   завершается, затем runner исполняет restore. Закрытие окна также запрашивает cancel и ждёт
+   terminal callback; окно может закрыться и при сообщении о неудачном восстановлении.
 
-UI не редактирует конфиг сервера: временные переключения и restore выполняет сервер через
-sv-client-lib. Ракурс/поверхность сохраняют текущую постановку; прежний replay cursor и caches
-не возвращаются. Во время прогона основные controls заблокированы, после завершения запрашивается
-обновление active configuration/revision; редактируемый draft не применяется автоматически.
-Это не защита от команд других клиентов и не whole-process isolation.
+### Результаты и смысл статусов
 
-ResearchController с PImpl удерживает worker и cancellation flag. Значения формы и endpoint
-фиксируются перед запуском. Потеря viewer-подключения меняет возможность нового запуска,
-но не перенаправляет текущий worker: он завершает свою отдельную сессию или сообщает ошибку.
-UI poll atomic counters раз в 100 мс; не создаётся queued event на каждый trial. Terminal callback
-переносит только строки по вариантам, не полный report. Destructor запрашивает отмену и join;
-при зависшем OS/driver IO общая длительность shutdown всё ещё зависит от текущей операции.
+**Результаты** показывают terminal status, reference kind/dataset/schema, критерии отдельно от
+workflow, timing rows и masked RGB8 MAE/RMSE/PSNR. Прочерк означает отсутствие данных.
+Малая ненулевая ошибка выводится значащими цифрами, а не округляется в `0.000`.
+Точный RGB match имеет PSNR `null` + `exact_match=true` в JSON и `∞ (точное совпадение)` в UI.
 
-Viewer остаётся дополнительным потребителем кадров; GUI timing samples нельзя автоматически
-приравнивать к headless qualification/FPS. Warmup исключён из timing summaries, повторы одного
-кадра не становятся независимыми scene samples. GUI batch editor, импорт/export произвольных
-матриц, reference chooser, сравнение разных reports и durable resume остаются открытыми.
+| Состояние | Что означает |
+|---|---|
+| passed | Все заданные критерии пройдены при завершённом workflow/restore |
+| failed | Workflow/restore завершены, минимум один threshold не пройден; код 5 |
+| not_requested с reference | Критерии не заданы; при успешном workflow метрики рассчитаны |
+| not_requested без reference | Качество не оценивалось |
+| incomplete | Заданные критерии не могут быть оценены полностью, например guard mismatch или cancel |
+| not_available | Подготовка не выполнена, отчёт текущего запуска отсутствует |
 
-Тесты: `simulator_research_tests.cpp` проверяет typed draft, асинхронный отказ подготовки,
-недоступные метрики, отзывчивость UI event loop, frozen endpoint, cancel/restore и destructor/join.
-Последние три cases запускаются transport harness на настоящем сервере для Unix/TCP/combined.
-`simulator_research_qml_tests.cpp` меняет формы/вкладки и проверяет отсутствие QML warnings;
-его screenshot — UI fixture плана, не научный результат. Схема: рисунок RR.7
-[[architecture/RESEARCH_RUNTIME#GUI одного исследования: граница worker и UI]].
-Отдельный ResearchCloseGuard используется самим main.qml; QML test проверяет отклонение первого
-close при busy, cancel, последующий close после terminal callback и сброс closeWhenDone.
-Этот window-тест использует отказ подготовки без сети; настоящий restore проверяется отдельно
-live controller cases. Это разные проверяемые границы одного workflow.
+Если criteria отсутствуют, acceptance остаётся not_requested даже при техническом отказе;
+проверяйте workflow/restore и terminal code отдельно. Критерии проверяются на всех measured
+samples, не на округлённой таблице. `regression` явно
+показывается как проверка воспроизводимости; `independent_ground_truth` — заявление автора,
+программа не доказывает независимость/истинность reference и обоснованность порогов.
+Новая неуспешная подготовка очищает прежний badge/rows/report path, чтобы старое passed не
+выглядело результатом нового запроса. Сохранённые файлы прежнего запуска при этом не удаляются.
+
+Quality summaries используют один результат на frame_index без warmup/repeated counting.
+MAE взвешена выбранными pixels, RMSE вычислена из общей MSE, PSNR — из этой MSE, не из среднего
+PSNR отдельных кадров. `frames` в quality row — число уникальных оценённых кадров; `n` timings
+включает measured repeats. Render-wall p50/p95 описывают paused samples, не sustained FPS.
+Viewer остаётся дополнительным потребителем; GUI timing не равен headless qualification.
+
+### Файлы и происхождение входов
+
+Из формы сохраняется `scenario.json` с абсолютным reference locator, `report.json` и measured
+`report.json.frames`. Snapshot воспроизводится через обычный `svctl research` при сохранении
+исходных reference/RGB/mask файлов. Dataset не копируется и не становится переносимым bundle.
+При импорте source scenario не копируется и не перезаписывается: сохраняются report и captures,
+если их запросил исходный сценарий. Сохраняйте исходный scenario и его reference hierarchy.
+
+`scenario_input_sha256` всегда хэширует точные переданные JSON bytes. Дополнительные поля:
+`scenario_input_kind=file_bytes_v1` либо `memory_json_bytes_v1`, `scenario_input_base_directory`
+и `scenario_input_path` для исходного файла. Для формы hash совпадает с bytes сохранённого
+snapshot, включая newline; для импорта — с исходным файлом. Semantic `scenario_sha256` имеет
+прежний смысл. FileExperiment принимает либо path, либо bytes + явную reference base; в обоих
+случаях данные загружаются неизменяемыми до сети. Уже загруженный reference passport сохраняется
+и при отмене до начала оценки, без утверждения о наличии измерений.
+
+### Worker и проверки
+
+Endpoint/form замораживаются перед запуском. Потеря viewer availability не перенаправляет
+текущий worker на другую машину. UI poll atomic counters раз в 100 мс; terminal callback
+передаёт строки вариантов, не полный report. Основные настройки/orbit блокируются на время
+работы, после возврата запрашиваются active/revision. Это не изоляция от других клиентов.
+Destructor выполняет cancel/join; общая длительность shutdown зависит от текущего OS/driver IO.
+
+Проверки: native unit types/bounds/preflight/малые ошибки; live Unix/TCP/combined для импорта и
+формы при passed/failed/not_requested/incomplete; настоящий QML запуск сохранённого сценария
+с reference и отображением его результатов. Файловый диалог открывается/отклоняется в QML tests,
+выбор не запускает исследование сам. ResearchCloseGuard откладывает close до terminal callback;
+window case использует отказ подготовки без сети, настоящий restore проверяется live cases.
+Трасса взаимодействий: рисунки RR.7–RR.8 в [[architecture/RESEARCH_RUNTIME]].
+
+Остаются GUI batch/carrier/general matrices, capabilities-driven choices, редактирование
+criteria с фиксированием до запуска, bundle import/export, сравнение разных reports и durable
+resume. Текущий импорт одиночного scenario не закрывает multi-recording registry/switching.

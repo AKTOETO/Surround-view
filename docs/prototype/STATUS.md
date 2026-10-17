@@ -1,10 +1,18 @@
 # Состояние прототипа и границы подтверждения
 
+18.10.2026: GUI получил file chooser reference и импорт одиночного scenario с его relative paths.
+C++ preflight выполняется до output/сети, статусы workflow и criteria разделены; MAE/RMSE/PSNR
+показаны с kind/dataset/schema и без округления малых ошибок в ложный ноль. PSNR summary
+считается из общей MSE, exact match имеет null/flag. Live passed/failed/not_requested/incomplete
+проверены для формы/импорта, настоящий QML сценарий показал regression results. Linux CTest
+68/68 за 73,91 с; Qt5/Aurora/hardware не квалифицированы. [[engineering/RESEARCH_BATCH]], §3.54.
+
 18.10.2026: sv-simulator получил GUI одного исследования поверх общего C++ FileExperiment.
 Typed forms выбирают методы/параметры и frames/warmup/repeats/seed; worker исполняется вне UI,
 progress/cancel и timing table доступны в отдельных вкладках. Отдельный window guard ждёт
-terminal callback после отмены. Форма не задаёт внешний reference: quality acceptance не
-объявляется, MAE/PSNR недоступны. GUI batch/registry/import/сравнение разных reports ещё впереди.
+terminal callback после отмены. Это первый срез §3.53; внешний reference и импорт одиночного
+scenario добавлены следующим срезом ниже по документации. GUI batch/registry и сравнение разных
+reports ещё впереди.
 [[engineering/RESEARCH_BATCH#Исследование из sv-simulator]], §3.53.
 Проверки Linux/Qt 6.11.2: CTest 68/68 за 58,13 с, включая live controller и window-close guard.
 

@@ -1,10 +1,17 @@
 # Подробный план реализации
 
+18.10.2026: выбор external reference и импорт single scenario в GUI выполнены; relative reference
+разрешается от исходного каталога. Immutable preflight, критерии отдельно от workflow, pooled
+PSNR и подавление stale badges проверены live Unix/TCP/combined и QML. Full Linux CTest 68/68
+за 73,91 с. Дальше — GUI batch/general matrices, catalog-driven options, criterion editor с
+фиксацией до запуска, переносимые bundles и сравнение отчётов. [[engineering/RESEARCH_BATCH]], §3.54.
+
 18.10.2026: первый GUI одного исследования реализован: вкладки plan/run/results, методы и
 основные параметры через формы, фоновый FileExperiment, progress/cancel, timing rows и безопасное
 ожидание worker при закрытии окна. Headless batch service сохранён без дублирования алгоритмов.
-Остаются GUI batch/carrier matrices, reference/import chooser, capabilities-driven options,
-сравнение разных reports и multi-recording registry/switching. [[engineering/RESEARCH_BATCH]], §3.53.
+Остаются GUI batch/carrier matrices, capabilities-driven options, сравнение разных reports и
+multi-recording registry/switching. Reference/import chooser реализован следующим срезом §3.54.
+[[engineering/RESEARCH_BATCH]], §3.53.
 Итоговая Linux регрессия с window-close guard: 68/68 за 58,13 с, live Unix/TCP/combined и
 два новых QML cases прошли; это не Aurora qualification.
 

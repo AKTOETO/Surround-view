@@ -378,3 +378,58 @@ UI --> U : timings / quality status / report path
 
 *Рисунок RR.7 — worker исполняет workflow, UI остаётся отзывчивым и не получает полный report
 с тысячами frame metadata. Batch editor и import/reference chooser не входят в этот первый срез.*
+
+## Выбор reference и импорт одиночного сценария
+
+GUI использует два входа одного FileExperiment: исходный файл либо exact JSON bytes формы с
+явной reference base. В форме locator reference абсолютный; при импорте относительные пути
+разрешаются от canonical source directory. Исходный файл не переписывается. Все reference
+pixels/guards/criteria фиксируются до output creation и подключения; сервер не получает truth.
+
+```plantuml
+@startuml
+actor Пользователь as U
+participant "ResearchPanel / файловый диалог" as G
+participant "Controller worker" as W
+participant "FileExperiment / QualityReference" as P
+database "Новый output" as O
+participant "Runner / sv-client-lib" as R
+participant "sv-server" as S
+U -> G : форма + optional reference / saved scenario
+G -> W : immutable request / endpoint
+alt форма
+  W -> P : exact JSON bytes / explicit base
+else сохранённый scenario
+  W -> P : source path / canonical base
+end
+P -> P : parse / bounds / freeze reference pixels + criteria
+alt preflight failed
+  P --> W : exception
+  W --> G : not_available; ни output, ни сети
+else входы готовы
+  W -> O : reserve report / optional draft snapshot / captures
+  W -> R : execute(prepared inputs)
+  R -> S : lease / reset if requested / variants
+  S --> R : RGBA + used input/model/view identities
+  R -> P : guarded masked RGB metrics
+  R -> S : restore / release
+  R --> W : workflow + quality acceptance + summaries
+  W -> G : rows / reference kind / criteria status
+end
+note over R,G
+failed thresholds при полном workflow: code 5
+guard/cancel/partial с criteria: incomplete
+нет критериев: not_requested независимо от workflow
+end note
+@enduml
+```
+
+*Рисунок RR.8 — внешний эталон остаётся на стороне клиента; failed качества не подменяется
+технической ошибкой, а прежний badge очищается при отказе нового запроса.*
+
+FileExperiment записывает raw-byte hash, input_kind/base и source path для файла. Форму можно
+повторить через сохранённый scenario.json; импорт не создаёт копию входного dataset. При ранней
+отмене passport уже загруженного reference может присутствовать без оценённых frames.
+GUI показывает MAE/RMSE и PSNR из общей взвешенной MSE уникальных frames; per-sample acceptance
+сохраняет прежнюю policy. Ни regression, ни авторское independent_ground_truth не доказывают
+обоснованности threshold/независимости данных. Контракт: [[engineering/RESEARCH_BATCH]].
