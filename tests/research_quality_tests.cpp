@@ -207,6 +207,32 @@ TEST(ResearchQuality, SummariesCountFramesRatherThanPausedRepeats)
     EXPECT_THROW(sv::research::quality_summaries(samples, 1), std::runtime_error);
 }
 
+TEST(ResearchQuality, WeightedPsnrUsesUniqueFrameMseAndRepresentsExactMatch)
+{
+    const auto a = sv::research::masked_rgb_metrics({1, 1, 1, 0}, {0, 0, 0}, {255, 255, 255});
+    const auto b = sv::research::masked_rgb_metrics({3, 3, 3, 0, 3, 3, 3, 0, 3, 3, 3, 0},
+                                                    std::vector<unsigned char>(9, 0),
+                                                    std::vector<unsigned char>(9, 255));
+    const auto zero = sv::research::masked_rgb_metrics({0, 0, 0, 0}, {0, 0, 0}, {255, 255, 255});
+    boost::json::array samples;
+    for (unsigned repeat = 0; repeat < 5; ++repeat)
+    {
+        samples.push_back(boost::json::object{
+            {"frame_index", 0}, {"variant", 0}, {"warmup", false}, {"quality", a}});
+    }
+    samples.push_back(
+        boost::json::object{{"frame_index", 1}, {"variant", 0}, {"warmup", false}, {"quality", b}});
+    samples.push_back(boost::json::object{
+        {"frame_index", 0}, {"variant", 1}, {"warmup", false}, {"quality", zero}});
+    const auto summaries = sv::research::quality_summaries(samples, 3);
+    EXPECT_NEAR(summaries[0].as_object().at("pixel_weighted_psnr_db").as_double(),
+                39.67982320853653, 1e-12);
+    EXPECT_FALSE(summaries[0].as_object().at("exact_match").as_bool());
+    EXPECT_TRUE(summaries[1].as_object().at("exact_match").as_bool());
+    EXPECT_TRUE(summaries[1].as_object().at("pixel_weighted_psnr_db").is_null());
+    EXPECT_FALSE(summaries[2].as_object().contains("pixel_weighted_psnr_db"));
+}
+
 TEST(ResearchQuality, ProjectionAndMemoryBoundsAreValidatedBeforeLoadingImages)
 {
     ReferenceFixture fixture;

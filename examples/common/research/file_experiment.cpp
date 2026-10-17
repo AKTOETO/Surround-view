@@ -11,12 +11,28 @@ namespace sv::research
 {
 struct FileExperiment::Impl
 {
-    std::filesystem::path source, report, captures;
+    std::filesystem::path source, base, report, captures;
     Scenario scenario;
     std::shared_ptr<const QualityReference> quality;
     std::unique_ptr<ReportOutput> output;
     std::string hash;
     bool attempted = false;
+
+    void load(std::string_view text, const std::filesystem::path &directory)
+    {
+        if (text.empty() || text.size() > 1024 * 1024)
+        {
+            throw std::invalid_argument("scenario must contain 1..1048576 bytes");
+        }
+        base = std::filesystem::absolute(directory).lexically_normal();
+        hash = sha256(text.data(), text.size());
+        scenario = parse_scenario(sv::parse_json(text));
+        if (scenario.quality_reference)
+        {
+            quality = std::make_shared<QualityReference>(base / *scenario.quality_reference);
+            quality->validate(scenario);
+        }
+    }
 };
 
 FileExperiment::FileExperiment(const std::filesystem::path &source)
@@ -31,14 +47,13 @@ FileExperiment::FileExperiment(const std::filesystem::path &source)
     {
         throw std::invalid_argument("scenario must contain 1..1048576 bytes");
     }
-    impl_->hash = sha256(text.data(), text.size());
-    impl_->scenario = parse_scenario(sv::parse_json(text));
-    if (impl_->scenario.quality_reference)
-    {
-        impl_->quality = std::make_shared<QualityReference>(impl_->source.parent_path() /
-                                                            *impl_->scenario.quality_reference);
-        impl_->quality->validate(impl_->scenario);
-    }
+    impl_->load(text, impl_->source.parent_path());
+}
+
+FileExperiment::FileExperiment(std::string_view text, const std::filesystem::path &base)
+    : impl_(std::make_unique<Impl>())
+{
+    impl_->load(text, base);
 }
 
 FileExperiment::~FileExperiment() = default;
@@ -78,9 +93,9 @@ void FileExperiment::reserve(const std::filesystem::path &path)
     }
     // Preserve the last path component: O_EXCL must reject even a dangling report symlink.
     impl_->report = std::filesystem::absolute(path).lexically_normal();
-    if (impl_->report == impl_->source ||
-        (std::filesystem::exists(impl_->report) &&
-         std::filesystem::equivalent(impl_->source, impl_->report)))
+    if (!impl_->source.empty() && (impl_->report == impl_->source ||
+                                   (std::filesystem::exists(impl_->report) &&
+                                    std::filesystem::equivalent(impl_->source, impl_->report))))
     {
         throw std::invalid_argument("report must not overwrite scenario");
     }
@@ -127,7 +142,18 @@ boost::json::object FileExperiment::execute(const client::Options &options,
     }
     auto report = run(impl_->scenario, options, cancel, std::move(progress), std::move(capture),
                       impl_->quality);
+    if (impl_->quality && !report.contains("quality_reference"))
+    {
+        report["quality_reference"] = impl_->quality->description();
+    }
     report["scenario_input_sha256"] = impl_->hash;
+    report["scenario_input_kind"] =
+        impl_->source.empty() ? "memory_json_bytes_v1" : "file_bytes_v1";
+    report["scenario_input_base_directory"] = impl_->base.string();
+    if (!impl_->source.empty())
+    {
+        report["scenario_input_path"] = impl_->source.string();
+    }
     impl_->output->write(report);
     return report;
 }

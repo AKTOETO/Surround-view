@@ -164,3 +164,21 @@ TEST_F(ResearchBatch, FailedCaptureReservationCannotBeExecuted)
     EXPECT_ANY_THROW(experiment.reserve(root / "report.json"));
     EXPECT_ANY_THROW(experiment.execute({}, &cancel));
 }
+
+TEST_F(ResearchBatch, MemoryInputRetainsExactBytesAndBaseWithoutCreatingSourceFile)
+{
+    const std::string text = R"({"schema_version":1,"variants":[{"mode":"multi_band"}]})";
+    sv::research::FileExperiment first(text, root);
+    sv::research::FileExperiment equivalent(text + "\n", root);
+    EXPECT_NE(first.input_sha256(), equivalent.input_sha256());
+    first.reserve(root / "memory-report.json");
+    const auto result = first.execute({}, &cancel);
+    EXPECT_EQ(result.at("scenario_input_kind"), "memory_json_bytes_v1");
+    EXPECT_FALSE(result.contains("scenario_input_path"));
+    EXPECT_EQ(std::string(result.at("scenario_input_base_directory").as_string()), root.string());
+    EXPECT_ANY_THROW((sv::research::FileExperiment("", root)));
+    EXPECT_ANY_THROW((sv::research::FileExperiment(std::string(1048577, ' '), root)));
+    EXPECT_ANY_THROW((sv::research::FileExperiment(
+        R"({"schema_version":1,"reset_replay":true,"quality_reference":"absent.json","variants":[{"mode":"multi_band"}]})",
+        root)));
+}

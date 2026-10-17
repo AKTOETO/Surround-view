@@ -102,12 +102,17 @@ boost::json::array quality_summaries(const boost::json::array &samples, size_t v
             mae += quality.at("mae_rgb8").to_number<double>() * count;
             squared += rmse * rmse * count;
         }
-        result.push_back(
-            boost::json::object{{"variant", variant},
-                                {"frames", frames.size()},
-                                {"selected_pixels", pixels},
-                                {"pixel_weighted_mae_rgb8", mae / pixels},
-                                {"pixel_weighted_rmse_rgb8", std::sqrt(squared / pixels)}});
+        const auto rmse = std::sqrt(squared / pixels);
+        result.push_back(boost::json::object{
+            {"variant", variant},
+            {"frames", frames.size()},
+            {"selected_pixels", pixels},
+            {"pixel_weighted_mae_rgb8", mae / pixels},
+            {"pixel_weighted_rmse_rgb8", rmse},
+            {"exact_match", squared == 0},
+            {"pixel_weighted_psnr_db", squared == 0
+                                           ? boost::json::value(nullptr)
+                                           : boost::json::value(20 * std::log10(255.0 / rmse))}});
     }
     return result;
 }

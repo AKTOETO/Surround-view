@@ -2,6 +2,7 @@
 #include "scenario.hpp"
 #include <filesystem>
 #include <memory>
+#include <string_view>
 
 namespace sv::research
 {
@@ -11,6 +12,8 @@ class FileExperiment
   public:
 
     explicit FileExperiment(const std::filesystem::path &scenario);
+    // Exact UTF-8 JSON bytes; relative reference paths resolve against the explicit base.
+    FileExperiment(std::string_view scenario_text, const std::filesystem::path &reference_base);
     ~FileExperiment();
     FileExperiment(const FileExperiment &) = delete;
     FileExperiment &operator=(const FileExperiment &) = delete;
