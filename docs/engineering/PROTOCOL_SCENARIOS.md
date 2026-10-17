@@ -445,3 +445,11 @@ Progress и aggregate report — локальный application-service конт
 транзакцией и не меняет запись на сервере. Ошибка критериев продолжает серию, техническая
 ошибка/отмена прекращает новые запуски. См. рисунок RR.9 в [[architecture/RESEARCH_RUNTIME]]
 и [[engineering/RESEARCH_BATCH#Запуск batch-плана из GUI]].
+
+
+Визуальный состав batch преобразуется C++ builder из URL в абсолютные scenario paths;
+контроллер фиксирует документ/endpoint до worker. `run_batch(document, base, ...)` использует
+тот же preflight и тот же lease/reset/apply/render/restore, что файловый запуск; новых wire
+operations нет. До сети сохраняется `inputs/plan.json`; источники/эталоны не копируются и
+должны оставаться доступными для повторения. Это client-side plan snapshot, не серверный
+job/checkpoint. [[engineering/RESEARCH_BATCH#Визуальное составление серии]], рисунок RR.10.

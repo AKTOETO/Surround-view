@@ -435,3 +435,42 @@ simulator_configuration_qml6,79с. Первоначальный ограниче
 продуктового отказа. Повтор с доступом к локальным сокетам прошёл полностью.
 35 PlantUML blocks затронутых архитектурной главы и главы3 прошли `-checkonly`;
 clang-format и `git diff --check` не нашли нарушений.
+
+## 18.10.2026: визуальный состав batch и memory overload
+
+`ResearchBatchEditor` добавляет до восьми локальных scenario files, сохраняет ID при
+перестановке, удаляет участников и не запускает worker при редактировании. Типы/URL проверяет
+C++ builder; документ и endpoint фиксируются до worker. Memory и file overload используют
+один execute_batch: прежние strict IDs/limits/reset/reference preflight и общий runner.
+После preflight до сети memory вариант сохраняет `inputs/plan.json`, его точные compact JSON
++ newline bytes дают plan_sha256. GUI использует абсолютные paths; относительные ссылки
+прямого C++ overload требуют исходной base и не обещают переносимый CLI snapshot.
+
+Добавленные проверки:
+
+- C++ batch: порядок, hash сохранённых bytes, повторное чтение GUI-совместимого snapshot,
+  отказ перезаписи, поздний невалидный участник, duplicate IDs и oversize без output;
+- C++ Qt builder/controller: типы/URL, literal `#`/`%`, предел8, неправильный поздний scenario
+  без output; сохранённые single/reference сценарии также используют общий URL validator;
+- QML: пустую серию нельзя запустить, девятый участник не добавляется, настоящие кнопки
+  меняют порядок/удаляют строку, повторное добавление получает свободный ID; редактирование
+  не запускает исследование;
+- live Unix/TCP/combined harness: memory серии с external reference при passed, failed,
+  not_requested и incomplete, snapshot в summary; отмена memory серии с restore;
+  настоящий QML workflow теперь исполняет single file, saved batch и визуальный состав.
+
+Targeted `research_scenarios`, `simulator_research_unit`, `simulator_configuration_qml` после
+финальной сборки прошли3/3 за6,84с. Рисунок3.53 — реальный Linux/Qt6.11.2 интерфейс перед
+запуском regression серии, воспроизводимый через client_transports; screenshot сохраняется в
+`/tmp/sv-reference-result.png.editor.png`, результат составленной серии — в
+`/tmp/sv-reference-result.png.composed.png`. Эти изображения не являются scientific truth
+или доказательством целевой производительности. Standalone live QML case по-прежнему требует
+endpoint/fixture и пропускается без них. Qt5/Aurora/device acceptance ещё не выполнены.
+Редактор не импортирует существующий batch в список и не сохраняет отдельный неисполненный
+черновик; dataset bundling/multi-recording/durable recovery и научные gates остаются открытыми.
+
+
+Итоговый последовательный Linux прогон вне socket sandbox: **CTest68/68 за158,29с**;
+client_transports82,22с, simulator_configuration_qml6,82с. Общий runner проверен через CLI,
+saved-batch GUI и memory-composition GUI. 36 PlantUML blocks архитектурной главы и главы3
+прошли `-checkonly`; Microsoft clang-format и `git diff --check` прошли.

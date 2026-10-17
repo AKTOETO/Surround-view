@@ -1,5 +1,15 @@
 # Подробный план реализации
 
+18.10.2026: визуальный состав новой batch-серии реализован: выбор scenario files, порядок и
+удаление кнопками, лимит8 и стабильные при перестановке ID. C++ overload принимает frozen
+документ из памяти и после общего preflight сохраняет inputs/plan.json до сети; GUI использует
+абсолютные пути для повторения через CLI/GUI. Не копирует dataset и не переключает recording.
+Следующие GUI задачи: импорт batch в редактор, отдельное сохранение черновика, catalog-driven
+carrier/parameter controls, criterion editor, report comparison и bundles.
+Полный Linux CTest68/68 за158,29с (последовательно), client_transports82,22с;
+Qt5/Aurora/device acceptance остаются открытыми.
+[[engineering/RESEARCH_BATCH#Визуальное составление серии]], §3.56.
+
 18.10.2026: запуск сохранённого batch-плана из sv-simulator выполнен через общий C++
 run_batch. Доступны выбор файла, worker с frozen endpoint, номер/прогресс текущего участника,
 отмена и компактная сводка workflow/criteria/restore/not_started. Проверки Unix/TCP/combined

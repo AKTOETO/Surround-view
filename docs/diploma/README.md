@@ -1,5 +1,9 @@
 # Текст диссертации
 
+§3.56 описывает визуальное составление batch-серии из готовых сценариев, memory overload
+общего C++ runner и snapshot inputs/plan.json. Рисунок3.53 — реальный редактор перед запуском.
+[[engineering/RESEARCH_BATCH#Визуальное составление серии]].
+
 §3.55 описывает запуск сохранённого batch-плана из sv-simulator; рисунок3.52 — реальный
 QML экран результатов двух regression сценариев одной записи. Workflow, criteria и restore
 показаны отдельно. [[engineering/RESEARCH_BATCH#Запуск batch-плана из GUI]].

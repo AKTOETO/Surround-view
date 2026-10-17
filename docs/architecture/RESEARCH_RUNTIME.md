@@ -476,3 +476,43 @@ Callback прогресса сообщает `(member_index, done, total)` с н
 предыдущего. В GUI номер начинается с единицы, `total` относится только к этому сценарию.
 В конце worker передаёт не полный report, а до восьми компактных строк участников.
 Выбор endpoint замораживается до запуска; смена подключения не перенаправляет работающую серию.
+
+## Визуальное составление серии
+
+Редактор формирует до восьми участников из локальных scenario files. ID участника сохраняется
+при перестановке; повторное использование одного scenario допускается с разными ID.
+Перед worker GUI преобразует URL в абсолютные пути и копирует состав. C++ service принимает
+документ и явный base directory, затем выполняет прежний preflight всех FileExperiment.
+Для составленного в памяти плана после preflight сохраняется `inputs/plan.json` до сети.
+Это повторяемый локальный план со ссылками на исходные данные, не переносимый dataset bundle.
+
+```plantuml
+@startuml
+title Визуальный состав batch и фиксация входа
+actor Исследователь as User
+participant "Редактор серии / QML" as Editor
+participant "ResearchController" as Controller
+participant "C++ run_batch / worker" as Runner
+database "Новый output" as Output
+participant "sv-server через sv-client-lib" as Server
+User -> Editor: Выбрать сценарии, переставить, удалить
+Editor -> Controller: startBatchDraft(копия состава, output)
+Controller -> Controller: Проверить типы/URL, получить абсолютные пути
+Controller -> Runner: Зафиксированный документ + base + endpoint
+Runner -> Runner: Проверить все inputs, references и общий бюджет
+alt Невалидный участник
+  Runner --> Controller: Ошибка без output и сети
+else Все входы валидны
+  Runner -> Output: Reserve reports; inputs/plan.json
+  loop Участники в выбранном порядке
+    Runner -> Server: reset/apply/render/restore
+    Server --> Runner: Отчёт участника
+  end
+  Runner -> Output: batch.json + отчёты участников
+  Runner --> Controller: Итоговая сводка
+end
+Controller --> Editor: Terminal status и результаты
+@enduml
+```
+
+*Рисунок RR.10 — фиксация визуального состава серии и общий preflight до сетевых мутаций.*
