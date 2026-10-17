@@ -15,6 +15,7 @@
 #include <cstdint>
 #include <map>
 #include <memory>
+#include <optional>
 
 class SimulatorFrameProvider : public QQuickImageProvider
 {
@@ -134,6 +135,16 @@ class SimulatorBridge : public QObject
         return &telemetry_model_;
     }
 
+    std::optional<sv::client::Options> researchConnectionOptions() const
+    {
+        if (!research_ready_ || !client_ || runtime_settings_.pending() ||
+            configuration_editor_.busy() || configuration_editor_.unresolved())
+        {
+            return std::nullopt;
+        }
+        return research_options_;
+    }
+
     Q_INVOKABLE void preset(const QString &name);
     Q_INVOKABLE void orbit(double az, double elevation);
     Q_INVOKABLE void zoom(double distance);
@@ -164,6 +175,8 @@ class SimulatorBridge : public QObject
     void resetSessionState();
 
     std::shared_ptr<sv::client::Client> client_;
+    std::optional<sv::client::Options> research_options_;
+    bool research_ready_ = false;
     RuntimeSettings runtime_settings_;
     ConfigurationEditor configuration_editor_;
     TelemetryModel telemetry_model_;

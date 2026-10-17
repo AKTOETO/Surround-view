@@ -450,6 +450,14 @@ class ClientTransportTests(unittest.TestCase):
                     self.assertEqual(result.returncode, 0, result.stderr)
                     self.assertIn('ui_receive', result.stdout, result.stderr)
                     self.assertIn('ui_present_submit', result.stdout, result.stderr)
+                research_gui = BUILD / 'sv-simulator-research-tests'
+                if research_gui.exists():
+                    before_gui_research = config.read_bytes()
+                    result = subprocess.run([str(research_gui), *endpoint],
+                        text=True, capture_output=True, timeout=40)
+                    self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                    self.assertEqual(config.read_bytes(), before_gui_research,
+                                     'GUI research persisted server configuration')
                 if simulator and (BUILD / 'examples/sv-simulator/sv-simulator').exists():
                     env = os.environ.copy()
                     env.update(QT_QPA_PLATFORM='offscreen', QT_QUICK_BACKEND='software')

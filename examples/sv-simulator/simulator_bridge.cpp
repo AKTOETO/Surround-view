@@ -114,6 +114,7 @@ void SimulatorBridge::consumeChecked(sv::client::Event event)
         status_ = QString::fromStdString(event.detail);
         if (event.detail == "ready")
         {
+            research_ready_ = true;
             runtime_settings_.refresh();
             configuration_editor_.connected();
             telemetry_model_.connected();
@@ -282,6 +283,7 @@ void SimulatorBridge::consumeChecked(sv::client::Event event)
 
 void SimulatorBridge::resetSessionState()
 {
+    research_ready_ = false;
     lastCalibJobId_.clear();
     calibration_commands_.clear();
     calibrationStatus_ = "Нет калибровочной задачи в текущей сессии";
@@ -353,6 +355,7 @@ void SimulatorBridge::beginConnection(sv::client::Endpoint endpoint, int timeout
     options.timeout_ms = static_cast<unsigned>(timeoutMs_);
     options.reconnect_ms = static_cast<unsigned>(reconnectMs_);
     options.max_retries = static_cast<unsigned>(maxRetries_);
+    research_options_ = options;
     const auto generation = connection_generation_.load();
     auto client_ref = std::make_shared<std::weak_ptr<sv::client::Client>>();
     auto reference_mutex = std::make_shared<std::mutex>();

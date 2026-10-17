@@ -1,3 +1,4 @@
+#include "research_controller.hpp"
 #include "simulator_bridge.hpp"
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
@@ -90,6 +91,21 @@ int main(int argc, char **argv)
 
     auto *provider = new SimulatorFrameProvider();
     SimulatorBridge bridge(endpoint, provider);
+    ResearchController research;
+    auto update_research_connection = [&]
+    { research.setConnection(bridge.researchConnectionOptions()); };
+    QObject::connect(&bridge, &SimulatorBridge::changed, &research, update_research_connection);
+    QObject::connect(bridge.runtimeSettings(), &RuntimeSettings::changed, &research,
+                     update_research_connection);
+    QObject::connect(bridge.configurationEditor(), &ConfigurationEditor::changed, &research,
+                     update_research_connection);
+    research.setConnection(bridge.researchConnectionOptions());
+    QObject::connect(&research, &ResearchController::finished, &bridge,
+                     [&]
+                     {
+                         bridge.runtimeSettings()->refresh();
+                         bridge.configurationEditor()->refresh();
+                     });
     int smoke_result = 0;
     if (smoke)
     {
@@ -113,6 +129,7 @@ int main(int argc, char **argv)
                                              bridge.configurationEditor());
     engine.rootContext()->setContextProperty(QStringLiteral("telemetryModel"),
                                              bridge.telemetryModel());
+    engine.rootContext()->setContextProperty(QStringLiteral("researchController"), &research);
     engine.rootContext()->setContextProperty(QStringLiteral("driveWorldAvailable"),
                                              SV_SIMULATOR_QUICK3D_AVAILABLE != 0);
     engine.rootContext()->setContextProperty(QStringLiteral("startDrivingWorld"), world_smoke);

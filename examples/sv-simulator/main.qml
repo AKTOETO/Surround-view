@@ -1,5 +1,6 @@
 import QtQuick 2.6
 import QtQuick.Window 2.2
+import QtQuick.Controls 2.2
 
 Window {
     id: window
@@ -12,6 +13,8 @@ Window {
     color: "#141820"
     property bool showDriveWorld: startDrivingWorld
     property bool drivingWorldLoaded: driveLoader.status === Loader.Ready
+    property bool showResearch: false
+    ResearchCloseGuard { targetWindow: window }
 
     // Top Header Bar
     Rectangle {
@@ -20,6 +23,7 @@ Window {
         width: parent.width
         height: 52
         color: "#1e2430"
+        enabled: !researchController.busy
 
         Text {
             x: 20
@@ -34,6 +38,8 @@ Window {
             x: 160
             anchors.verticalCenter: parent.verticalCenter
             text: bridge.status
+            width: 270
+            elide: Text.ElideRight
             color: "#64d2ff"
             font.pixelSize: 13
         }
@@ -42,7 +48,13 @@ Window {
             x: 440; anchors.verticalCenter: parent.verticalCenter
             width: 135; height: 32; radius: 5; color: "#155451"
             Text { anchors.centerIn: parent; text: "Конфигурация"; color: "white" }
-            MouseArea { anchors.fill: parent; onClicked: controlsScroll.contentY = configurationPanel.y + 16 }
+            MouseArea { anchors.fill: parent; onClicked: { window.showResearch = false; controlsScroll.contentY = configurationPanel.y + 16 } }
+        }
+
+        Button {
+            x: 590; anchors.verticalCenter: parent.verticalCenter
+            text: window.showResearch ? "К просмотру" : "Исследования"
+            onClicked: window.showResearch = !window.showResearch
         }
 
         Text {
@@ -50,6 +62,8 @@ Window {
             anchors.rightMargin: 20
             anchors.verticalCenter: parent.verticalCenter
             text: bridge.serverInfo
+            width: Math.max(0, parent.width - 740)
+            elide: Text.ElideRight
             color: "#8e9bb0"
             font.pixelSize: 11
             horizontalAlignment: Text.AlignRight
@@ -60,7 +74,7 @@ Window {
     Rectangle {
         x: 0
         y: 52
-        width: parent.width - 340
+        width: parent.width - (window.showResearch ? 0 : 340)
         height: parent.height - 52
         color: "#0a0c10"
 
@@ -71,12 +85,12 @@ Window {
             fillMode: Image.PreserveAspectFit
             cache: false
             source: bridge.frameUrl
-            visible: !window.showDriveWorld
+            visible: !window.showDriveWorld && !window.showResearch
         }
 
         Text {
             anchors.centerIn: parent
-            visible: !window.showDriveWorld && frameImage.source.toString() === ""
+            visible: !window.showDriveWorld && !window.showResearch && frameImage.source.toString() === ""
             text: "Ожидание видеоданных с сервера..."
             color: "#4a5568"
             font.pixelSize: 18
@@ -91,7 +105,8 @@ Window {
             property real deltaY: 0
 
             anchors.fill: parent
-            visible: !window.showDriveWorld
+            visible: !window.showDriveWorld && !window.showResearch
+            enabled: !researchController.busy
             onPressed: function(mouse) {
                 lastX = mouse.x;
                 lastY = mouse.y;
@@ -111,11 +126,11 @@ Window {
                 running: true
                 repeat: true
                 onTriggered: {
-                    if (orbitArea.deltaX !== 0 || orbitArea.deltaY !== 0) {
+                    if (!researchController.busy && !window.showResearch && (orbitArea.deltaX !== 0 || orbitArea.deltaY !== 0)) {
                         bridge.orbit(orbitArea.deltaX * 0.005, -orbitArea.deltaY * 0.005);
-                        orbitArea.deltaX = 0;
-                        orbitArea.deltaY = 0;
                     }
+                    orbitArea.deltaX = 0;
+                    orbitArea.deltaY = 0;
                 }
             }
         }
@@ -124,12 +139,18 @@ Window {
             id: driveLoader
             anchors.fill: parent
             active: window.showDriveWorld
-            visible: active
+            visible: active && !window.showResearch
             source: driveWorldAvailable ? "qrc:/DriveWorld.qml" : ""
             onLoaded: {
                 item.exitRequested.connect(function() { window.showDriveWorld = false })
                 item.forceActiveFocus()
             }
+        }
+        ScrollView {
+            id: researchScroll; anchors.fill: parent; anchors.margins: 20
+            visible: window.showResearch
+            clip: true
+            ResearchPanel { width: researchScroll.availableWidth }
         }
     }
 
@@ -140,6 +161,8 @@ Window {
         width: 340
         height: parent.height - 52
         color: "#1a1f2c"
+        visible: !window.showResearch
+        enabled: !researchController.busy
 
         Flickable {
             id: controlsScroll

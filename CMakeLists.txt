@@ -392,15 +392,18 @@ if(BUILD_TESTING AND SV_GTEST_TESTS)
       Qt${QT_VERSION_MAJOR}::Core Qt${QT_VERSION_MAJOR}::Gui Qt${QT_VERSION_MAJOR}::Quick GTest::gtest)
     add_test(NAME simulator_session_state COMMAND sv-simulator-session-tests)
     if(SV_SIMULATOR)
+      add_executable(sv-simulator-research-tests tests/simulator_research_tests.cpp)
+      target_link_libraries(sv-simulator-research-tests PRIVATE sv-simulator-research GTest::gtest)
+      add_test(NAME simulator_research_unit COMMAND sv-simulator-research-tests)
       add_executable(sv-simulator-configuration-qml-tests tests/simulator_configuration_qml_tests.cpp
-        tests/simulator_drive_world_qml_tests.cpp tests/simulator_telemetry_qml_tests.cpp
+        tests/simulator_drive_world_qml_tests.cpp tests/simulator_telemetry_qml_tests.cpp tests/simulator_research_qml_tests.cpp
         examples/sv-simulator/telemetry_model.cpp examples/sv-simulator/telemetry_metrics.cpp examples/sv-simulator/telemetry_files.cpp examples/sv-simulator/telemetry_model.hpp
         examples/sv-simulator/configuration_editor.hpp examples/sv-simulator/configuration_editor.cpp
         examples/sv-simulator/configuration_draft.cpp examples/sv-simulator/configuration_surface.cpp examples/sv-simulator/configuration_operation.cpp
         examples/sv-simulator/simulator.qrc)
       set_target_properties(sv-simulator-configuration-qml-tests PROPERTIES AUTOMOC ON AUTORCC ON)
       target_include_directories(sv-simulator-configuration-qml-tests PRIVATE examples/sv-simulator)
-      target_link_libraries(sv-simulator-configuration-qml-tests PRIVATE sv-client-lib
+      target_link_libraries(sv-simulator-configuration-qml-tests PRIVATE sv-client-lib sv-simulator-research
         Qt${QT_VERSION_MAJOR}::Core Qt${QT_VERSION_MAJOR}::Gui Qt${QT_VERSION_MAJOR}::Quick GTest::gtest)
       if(QT_VERSION_MAJOR EQUAL 6)
         find_package(Qt6 6.3 QUIET COMPONENTS Quick3D)

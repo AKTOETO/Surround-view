@@ -17,6 +17,12 @@ else()
     set(SV_SIMULATOR_QUICK3D_AVAILABLE 0)
 endif()
 
+add_library(sv-simulator-research STATIC
+    research_controller.cpp research_controller.hpp
+    research_draft.cpp research_draft.hpp research_results.cpp research_results.hpp)
+target_include_directories(sv-simulator-research PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(sv-simulator-research PUBLIC sv-research Qt${QT_VERSION_MAJOR}::Core)
+
 add_executable(sv-simulator
     main.cpp
     ipc_discovery.cpp
@@ -40,6 +46,7 @@ add_executable(sv-simulator
 target_include_directories(sv-simulator PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 target_link_libraries(sv-simulator PRIVATE
+    sv-simulator-research
     sv-client-lib
     Qt${QT_VERSION_MAJOR}::Core
     Qt${QT_VERSION_MAJOR}::Gui
