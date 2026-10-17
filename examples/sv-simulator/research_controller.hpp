@@ -11,6 +11,8 @@ class ResearchController : public QObject
 {
     Q_OBJECT
     Q_PROPERTY(bool busy READ busy NOTIFY changed)
+    Q_PROPERTY(bool batchMode READ batchMode NOTIFY changed)
+    Q_PROPERTY(QVariantList batchRows READ batchRows NOTIFY changed)
     Q_PROPERTY(bool available READ available NOTIFY changed)
     Q_PROPERTY(QString status READ status NOTIFY changed)
     Q_PROPERTY(unsigned completed READ completed NOTIFY changed)
@@ -28,6 +30,8 @@ class ResearchController : public QObject
     void setConnection(std::optional<sv::client::Options>);
     bool busy() const;
     bool available() const;
+    bool batchMode() const;
+    QVariantList batchRows() const;
     QString status() const;
     unsigned completed() const;
     unsigned total() const;
@@ -42,6 +46,7 @@ class ResearchController : public QObject
     Q_INVOKABLE bool startDraftWithReference(const QVariantMap &values, const QString &newDirectory,
                                              const QUrl &reference);
     Q_INVOKABLE bool startScenario(const QUrl &file, const QString &newDirectory);
+    Q_INVOKABLE bool startBatch(const QUrl &file, const QString &newDirectory);
     Q_INVOKABLE void cancel();
 
   signals:
@@ -53,6 +58,6 @@ class ResearchController : public QObject
     struct Impl;
     std::unique_ptr<Impl> impl_;
     bool launch(std::optional<boost::json::object>, const QString &scenarioFile,
-                const QString &directory);
+                const QString &directory, bool batch = false);
     bool reject(const QString &message);
 };

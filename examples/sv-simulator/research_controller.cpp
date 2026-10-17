@@ -1,4 +1,5 @@
 #include "research_controller.hpp"
+#include "batch.hpp"
 #include "file_experiment.hpp"
 #include "report_output.hpp"
 #include "research_draft.hpp"
@@ -17,16 +18,16 @@ struct ResearchController::Impl
     struct Progress
     {
         std::atomic_bool cancel{false};
-        std::atomic_uint completed{0}, total{0};
+        std::atomic_uint completed{0}, total{0}, member{0};
     } progress;
 
     std::optional<sv::client::Options> connection;
     std::thread worker;
     QTimer timer;
-    bool busy = false;
+    bool busy = false, batch = false;
     QString status = "Исследования ещё не запускались", report;
     QString quality_status = "not_available", reference_info = "Эталон не задан";
-    QVariantList rows;
+    QVariantList rows, batch_rows;
     int exit_code = -1;
     unsigned output_counter = 0;
 };
@@ -79,8 +80,25 @@ bool ResearchController::available() const
     return impl_->connection.has_value();
 }
 
+bool ResearchController::batchMode() const
+{
+    return impl_->batch;
+}
+
+QVariantList ResearchController::batchRows() const
+{
+    return impl_->batch_rows;
+}
+
 QString ResearchController::status() const
 {
+    if (impl_->busy && impl_->batch && !impl_->progress.cancel && impl_->progress.member > 0)
+    {
+        return QString("Сценарий №%1: trials текущего сценария %2 / %3; ожидается также restore.")
+            .arg(impl_->progress.member.load())
+            .arg(completed())
+            .arg(total());
+    }
     if (impl_->busy && !impl_->progress.cancel && impl_->progress.completed > 0)
     {
         return impl_->progress.completed == impl_->progress.total
@@ -154,6 +172,7 @@ bool ResearchController::reject(const QString &message)
         impl_->quality_status = "not_available";
         impl_->reference_info = "Подготовка не выполнена";
         impl_->rows.clear();
+        impl_->batch_rows.clear();
         impl_->report.clear();
         impl_->exit_code = 3;
         impl_->progress.completed = 0;
@@ -206,8 +225,25 @@ bool ResearchController::startScenario(const QUrl &file, const QString &director
     }
 }
 
+bool ResearchController::startBatch(const QUrl &file, const QString &directory)
+{
+    if (impl_->busy)
+    {
+        return false;
+    }
+    try
+    {
+        return launch({}, localPath(file), directory, true);
+    }
+    catch (const std::exception &error)
+    {
+        return reject(QString::fromUtf8(error.what()));
+    }
+}
+
 bool ResearchController::launch(std::optional<boost::json::object> document,
-                                const QString &scenarioFile, const QString &newDirectory)
+                                const QString &scenarioFile, const QString &newDirectory,
+                                bool batch)
 {
     if (impl_->busy)
     {
@@ -229,101 +265,137 @@ bool ResearchController::launch(std::optional<boost::json::object> document,
         const auto directory = QFileInfo(newDirectory.trimmed()).absoluteFilePath().toStdString();
         const auto connection = *impl_->connection;
         impl_->progress.cancel = false;
+        impl_->progress.member = 0;
+        impl_->batch = batch;
         impl_->progress.completed = 0;
         impl_->progress.total = static_cast<unsigned>(trials);
         impl_->status = "Подготовка сценария и нового каталога…";
         impl_->rows.clear();
+        impl_->batch_rows.clear();
         impl_->report.clear();
         impl_->exit_code = -1;
         impl_->quality_status = "not_available";
         impl_->reference_info = "Подготовка входов…";
         impl_->busy = true;
         impl_->worker = std::thread(
-            [this, document = std::move(document), scenarioFile, directory, connection]
+            [this, document = std::move(document), scenarioFile, directory, connection, batch]
             {
                 QString status, path, qualityStatus = "not_available",
                                       referenceInfo = "Не загружен";
-                QVariantList rows;
+                QVariantList rows, batchRows;
                 int code = 3;
                 try
                 {
                     const std::filesystem::path output(directory);
-                    // Freeze all scenario/reference bytes before output creation or networking.
-                    std::unique_ptr<sv::research::FileExperiment> experiment;
-                    if (document)
+                    if (batch)
                     {
-                        const auto text = boost::json::serialize(*document) + '\n';
-                        experiment = std::make_unique<sv::research::FileExperiment>(
-                            text, output.parent_path());
-                    }
-                    else
-                    {
-                        experiment = std::make_unique<sv::research::FileExperiment>(
-                            scenarioFile.toStdString());
-                    }
-                    impl_->progress.total = static_cast<unsigned>(experiment->trial_count());
-                    if (!std::filesystem::create_directory(output))
-                    {
-                        throw std::runtime_error(
-                            "Каталог результата уже существует; выберите новое имя");
-                    }
-                    if (document)
-                    {
-                        sv::research::ReportOutput snapshot(output / "scenario.json");
-                        snapshot.write(*document);
-                    }
-                    experiment->reserve(output / "report.json");
-                    const auto report = experiment->execute(connection, &impl_->progress.cancel,
-                                                            [this](unsigned done, unsigned total)
-                                                            {
-                                                                impl_->progress.total = total;
-                                                                impl_->progress.completed = done;
-                                                            });
-                    path = QString::fromStdString((output / "report.json").string());
-                    rows = researchResultRows(report);
-                    code = sv::research::research_exit_code(report);
-                    const auto restore =
-                        report.at("restored").as_bool() ? "подтверждено" : "не подтверждено";
-                    const auto *error = report.if_contains("error");
-                    const QString reason =
-                        error && error->is_string()
-                            ? QString::fromStdString(std::string(error->as_string()))
-                            : "Прогон не завершён";
-                    qualityStatus = QString::fromStdString(sv::research::quality_status(report));
-                    if (const auto *reference = report.if_contains("quality_reference"))
-                    {
-                        const auto &identity = reference->as_object();
-                        referenceInfo =
-                            QString("%1 · dataset: %2 · schema %3")
-                                .arg(QString::fromStdString(
-                                         std::string(identity.at("kind").as_string())),
-                                     QString::fromStdString(
-                                         std::string(identity.at("dataset_id").as_string())))
-                                .arg(identity.at("schema_version").to_number<unsigned>());
-                    }
-                    else
-                    {
-                        referenceInfo = "Эталон не задан";
-                    }
-                    if (code == 0)
-                    {
-                        status = qualityStatus == "passed"
-                                     ? "Прогон завершён; заданные критерии пройдены."
-                                 : report.contains("quality_reference")
-                                     ? "Прогон завершён; метрики рассчитаны, критерии не заданы."
-                                     : "Готово. Качество не оценивалось: внешний эталон не задан.";
-                    }
-                    else if (code == 5)
-                    {
-                        status = "Прогон и восстановление завершены; заданные критерии качества НЕ "
-                                 "пройдены.";
-                    }
-                    else
-                    {
+                        const auto summary = sv::research::run_batch(
+                            scenarioFile.toStdString(), output, connection, &impl_->progress.cancel,
+                            [this](unsigned member, unsigned done, unsigned total)
+                            {
+                                impl_->progress.total = total;
+                                impl_->progress.completed = done;
+                                impl_->progress.member = member + 1;
+                            });
+                        path = QString::fromStdString((output / "batch.json").string());
+                        batchRows = researchBatchRows(summary);
+                        code = sv::research::research_exit_code(summary);
+                        qualityStatus =
+                            QString::fromStdString(sv::research::quality_status(summary));
+                        referenceInfo = "Эталоны и критерии заданы отдельно в каждом сценарии";
                         status =
-                            QString("%1: %2. Восстановление: %3. Подробности в отчёте.")
-                                .arg(reason == "cancelled" ? "Отменено" : "Ошибка исследования",
-                                     reason, restore);
+                            QString("Batch: %1; завершено %2 из %3; restore: %4. Критерии: %5.")
+                                .arg(QString::fromStdString(
+                                    std::string(summary.at("status").as_string())))
+                                .arg(summary.at("completed").to_number<unsigned>())
+                                .arg(summary.at("runs").as_array().size())
+                                .arg(summary.at("restored").as_bool() ? "подтверждено"
+                                                                      : "НЕ подтверждено")
+                                .arg(qualityStatus);
+                    }
+                    else
+                    {
+                        // Freeze all scenario/reference bytes before output creation or networking.
+                        std::unique_ptr<sv::research::FileExperiment> experiment;
+                        if (document)
+                        {
+                            const auto text = boost::json::serialize(*document) + '\n';
+                            experiment = std::make_unique<sv::research::FileExperiment>(
+                                text, output.parent_path());
+                        }
+                        else
+                        {
+                            experiment = std::make_unique<sv::research::FileExperiment>(
+                                scenarioFile.toStdString());
+                        }
+                        impl_->progress.total = static_cast<unsigned>(experiment->trial_count());
+                        if (!std::filesystem::create_directory(output))
+                        {
+                            throw std::runtime_error(
+                                "Каталог результата уже существует; выберите новое имя");
+                        }
+                        if (document)
+                        {
+                            sv::research::ReportOutput snapshot(output / "scenario.json");
+                            snapshot.write(*document);
+                        }
+                        experiment->reserve(output / "report.json");
+                        const auto report =
+                            experiment->execute(connection, &impl_->progress.cancel,
+                                                [this](unsigned done, unsigned total)
+                                                {
+                                                    impl_->progress.total = total;
+                                                    impl_->progress.completed = done;
+                                                });
+                        path = QString::fromStdString((output / "report.json").string());
+                        rows = researchResultRows(report);
+                        code = sv::research::research_exit_code(report);
+                        const auto restore =
+                            report.at("restored").as_bool() ? "подтверждено" : "не подтверждено";
+                        const auto *error = report.if_contains("error");
+                        const QString reason =
+                            error && error->is_string()
+                                ? QString::fromStdString(std::string(error->as_string()))
+                                : "Прогон не завершён";
+                        qualityStatus =
+                            QString::fromStdString(sv::research::quality_status(report));
+                        if (const auto *reference = report.if_contains("quality_reference"))
+                        {
+                            const auto &identity = reference->as_object();
+                            referenceInfo =
+                                QString("%1 · dataset: %2 · schema %3")
+                                    .arg(QString::fromStdString(
+                                             std::string(identity.at("kind").as_string())),
+                                         QString::fromStdString(
+                                             std::string(identity.at("dataset_id").as_string())))
+                                    .arg(identity.at("schema_version").to_number<unsigned>());
+                        }
+                        else
+                        {
+                            referenceInfo = "Эталон не задан";
+                        }
+                        if (code == 0)
+                        {
+                            status =
+                                qualityStatus == "passed"
+                                    ? "Прогон завершён; заданные критерии пройдены."
+                                : report.contains("quality_reference")
+                                    ? "Прогон завершён; метрики рассчитаны, критерии не заданы."
+                                    : "Готово. Качество не оценивалось: внешний эталон не задан.";
+                        }
+                        else if (code == 5)
+                        {
+                            status =
+                                "Прогон и восстановление завершены; заданные критерии качества НЕ "
+                                "пройдены.";
+                        }
+                        else
+                        {
+                            status =
+                                QString("%1: %2. Восстановление: %3. Подробности в отчёте.")
+                                    .arg(reason == "cancelled" ? "Отменено" : "Ошибка исследования",
+                                         reason, restore);
+                        }
                     }
                 }
                 catch (const std::exception &error)
@@ -332,7 +404,7 @@ bool ResearchController::launch(std::optional<boost::json::object> document,
                 }
                 QMetaObject::invokeMethod(
                     this,
-                    [this, status, path, rows, code, qualityStatus, referenceInfo]
+                    [this, status, path, rows, batchRows, code, qualityStatus, referenceInfo]
                     {
                         impl_->worker.join();
                         impl_->timer.stop();
@@ -340,6 +412,7 @@ bool ResearchController::launch(std::optional<boost::json::object> document,
                         impl_->status = status;
                         impl_->report = path;
                         impl_->rows = rows;
+                        impl_->batch_rows = batchRows;
                         impl_->exit_code = code;
                         impl_->quality_status = qualityStatus;
                         impl_->reference_info = referenceInfo;

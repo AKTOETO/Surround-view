@@ -5,10 +5,12 @@ Item {
     id: dialogs
 
     property bool reference: false
+    property bool batch: false
 
     signal chosen(url file, bool reference)
 
-    function open(forReference) {
+    function open(forReference, forBatch) {
+        batch = !!forBatch;
         reference = forReference;
         chooser.open();
     }
@@ -17,7 +19,7 @@ Item {
         id: chooser
 
         objectName: "researchFileDialog"
-        title: dialogs.reference ? "Выбрать внешний reference manifest" : "Выбрать сохранённый сценарий"
+        title: dialogs.reference ? "Выбрать внешний reference manifest" : dialogs.batch ? "Выбрать batch-план" : "Выбрать сохранённый сценарий"
         fileMode: FileDialog.OpenFile
         nameFilters: ["JSON (*.json)"]
         options: FileDialog.DontUseNativeDialog

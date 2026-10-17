@@ -14,6 +14,8 @@ Pane {
         "incomplete": "оценка не завершена"
     })
     property url scenarioSource: ""
+    property url batchSource: ""
+    property bool choosingBatch: false
     property url referenceSource: ""
     property var selectedModes: ["multi_band", "graph_cut_multi_band"]
     property int variantCount: {
@@ -74,6 +76,8 @@ Pane {
         onLoaded: item.chosen.connect(function(file, reference) {
             if (reference)
                 panel.referenceSource = file;
+            else if (panel.choosingBatch)
+                panel.batchSource = file;
             else
                 panel.scenarioSource = file;
         })
@@ -163,25 +167,28 @@ Pane {
 
                         objectName: "researchPlanMode"
                         width: parent.width
-                        model: ["Настроить через форму", "Запустить сохранённый сценарий"]
+                        model: ["Настроить через форму", "Запустить сохранённый сценарий", "Запустить batch-план"]
                     }
 
                     RowLayout {
                         width: parent.width
-                        visible: planMode.currentIndex === 1
+                        visible: planMode.currentIndex !== 0
 
                         TextField {
                             Layout.fillWidth: true
                             readOnly: true
-                            text: panel.scenarioSource.toString()
-                            placeholderText: "Сценарий не выбран"
+                            text: planMode.currentIndex === 2 ? panel.batchSource.toString() : panel.scenarioSource.toString()
+                            placeholderText: "Файл плана не выбран"
                             selectByMouse: true
                         }
 
                         Button {
                             objectName: "researchChooseScenario"
                             text: "Выбрать…"
-                            onClicked: researchFiles.item.open(false)
+                            onClicked: {
+                                panel.choosingBatch = planMode.currentIndex === 2;
+                                researchFiles.item.open(false, panel.choosingBatch);
+                            }
                         }
 
                     }
@@ -189,8 +196,8 @@ Pane {
                     Label {
                         width: parent.width
                         wrapMode: Text.Wrap
-                        visible: planMode.currentIndex === 1
-                        text: "Файл не редактируется. Его relative reference разрешается от исходного каталога; значения формы ниже не применяются. Batch-план здесь не поддерживается."
+                        visible: planMode.currentIndex !== 0
+                        text: planMode.currentIndex === 2 ? "До 8 сценариев одной записи. Все references проверяются до подключения; каждый сценарий сбрасывает replay. Провал качества не останавливает серию, техническая ошибка — останавливает." : "Файл не редактируется. Его relative reference разрешается от исходного каталога; значения формы ниже не применяются."
                     }
 
                 }
@@ -430,9 +437,9 @@ Pane {
             Button {
                 objectName: "researchStart"
                 text: "Начать исследование"
-                enabled: panel.controller.available && (planMode.currentIndex === 1 ? panel.scenarioSource.toString().length > 0 : panel.variantCount > 0 && panel.variantCount * framesCount.value * (warmupCount.value + repeatCount.value) <= 10000)
+                enabled: panel.controller.available && (planMode.currentIndex === 2 ? panel.batchSource.toString().length > 0 : planMode.currentIndex === 1 ? panel.scenarioSource.toString().length > 0 : panel.variantCount > 0 && panel.variantCount * framesCount.value * (warmupCount.value + repeatCount.value) <= 10000)
                 onClicked: {
-                    if (planMode.currentIndex === 1 ? panel.controller.startScenario(panel.scenarioSource, outputDirectory.text) : panel.controller.startDraftWithReference(panel.draft(), outputDirectory.text, panel.referenceSource))
+                    if (planMode.currentIndex === 2 ? panel.controller.startBatch(panel.batchSource, outputDirectory.text) : planMode.currentIndex === 1 ? panel.controller.startScenario(panel.scenarioSource, outputDirectory.text) : panel.controller.startDraftWithReference(panel.draft(), outputDirectory.text, panel.referenceSource))
                         tabs.currentIndex = 1;
 
                 }
@@ -469,7 +476,7 @@ Pane {
             }
 
             Label {
-                text: panel.controller.completed + " / " + panel.controller.total + " trials"
+                text: panel.controller.completed + " / " + panel.controller.total + (panel.controller.batchMode ? " trials текущего сценария" : " trials")
                 color: "#64d2ff"
             }
 
@@ -550,6 +557,48 @@ Pane {
 
             }
 
+            Repeater {
+                model: panel.controller.batchRows
+
+                delegate: Rectangle {
+                    width: panel.width
+                    height: batchContent.implicitHeight + 18
+                    radius: 6
+                    color: "#263244"
+
+                    Column {
+                        id: batchContent
+
+                        width: parent.width - 18
+                        x: 9
+                        y: 9
+                        spacing: 4
+
+                        Label {
+                            width: parent.width
+                            wrapMode: Text.Wrap
+                            text: modelData.id + " · " + modelData.status + " · прогон: " + modelData.workflow
+                            font.bold: true
+                        }
+
+                        Label {
+                            width: parent.width
+                            wrapMode: Text.Wrap
+                            text: "Restore: " + modelData.restore + " · критерии: " + (panel.qualityLabels[modelData.quality] || modelData.quality)
+                        }
+
+                        Label {
+                            width: parent.width
+                            wrapMode: Text.Wrap
+                            text: modelData.report + (modelData.error.length ? " · " + modelData.error : "")
+                        }
+
+                    }
+
+                }
+
+            }
+
             Label {
                 text: "Полный отчёт"
                 color: "#cbd5e0"
@@ -563,7 +612,7 @@ Pane {
             }
 
             Label {
-                visible: panel.controller.rows.length === 0
+                visible: panel.controller.rows.length === 0 && panel.controller.batchRows.length === 0
                 text: "Нет измерений для отображения."
                 color: "#aab8cc"
             }

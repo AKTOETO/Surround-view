@@ -202,6 +202,84 @@ TEST(ResearchGuiUnit, SmallQualityErrorsNeverDisplayAsExactZero)
         QString::fromUtf8("∞")));
 }
 
+TEST(ResearchGuiUnit, BatchPreflightsLateMembersAndRejectsRemoteUrls)
+{
+    QTemporaryDir directory;
+    ASSERT_TRUE(directory.isValid());
+    const std::filesystem::path root(directory.path().toStdString());
+    std::ofstream(root / "scenario.json") << boost::json::serialize(researchDraft(draft()));
+    std::ofstream(root / "plan.json") << R"({"schema_version":1,"runs":[
+      {"id":"first","scenario":"scenario.json"},{"id":"second","scenario":"missing.json"}]})";
+    ResearchController controller;
+    controller.setConnection(sv::client::Options{});
+    const auto output = directory.path() + "/output";
+    EXPECT_FALSE(controller.startBatch(QUrl("https://example.invalid/plan.json"), output));
+    ASSERT_TRUE(
+        controller.startBatch(QUrl::fromLocalFile(directory.path() + "/plan.json"), output));
+    ASSERT_TRUE(waitFor([&] { return !controller.busy(); }));
+    EXPECT_TRUE(controller.batchMode());
+    EXPECT_EQ(controller.exitCode(), 3);
+    EXPECT_TRUE(controller.batchRows().isEmpty());
+    EXPECT_TRUE(controller.reportPath().isEmpty());
+    EXPECT_FALSE(std::filesystem::exists(root / "output"));
+}
+
+TEST(ResearchGuiUnit, BatchRowsNeverTreatMissingEvidenceAsSuccess)
+{
+    const auto rows = researchBatchRows(boost::json::parse(R"({"runs":[
+      {"id":"a","status":"reported","success":true,"restored":true,"quality_status":"failed","report":"a.json"},
+      {"id":"b","status":"not_started","report":"b.json"},
+      {"id":"c","status":"error","error":"disk","report":"c.json"}]})")
+                                            .as_object());
+    ASSERT_EQ(rows.size(), 3);
+    EXPECT_EQ(rows[0].toMap().value("quality").toString(), "failed");
+    EXPECT_EQ(rows[0].toMap().value("workflow").toString(), "завершён");
+    EXPECT_EQ(rows[1].toMap().value("status").toString(), "not_started");
+    EXPECT_EQ(rows[1].toMap().value("quality").toString(), "not_available");
+    EXPECT_EQ(rows[1].toMap().value("restore").toString(), "не подтверждено");
+    EXPECT_EQ(rows[2].toMap().value("error").toString(), "disk");
+}
+
+TEST(ResearchGuiLive, BatchCompletionAndCancellationShareTheNativeRunner)
+{
+    ASSERT_TRUE(live);
+    for (const bool cancel : {false, true})
+    {
+        QTemporaryDir directory;
+        ASSERT_TRUE(directory.isValid());
+        const std::filesystem::path root(directory.path().toStdString());
+        auto values = draft();
+        values["repeats"] = cancel ? 100 : 1;
+        std::ofstream(root / "scenario.json") << boost::json::serialize(researchDraft(values));
+        std::ofstream(root / "plan.json") << R"({"schema_version":1,"runs":[
+          {"id":"first","scenario":"scenario.json"},{"id":"second","scenario":"scenario.json"}]})";
+        ResearchController controller;
+        controller.setConnection(live);
+        ASSERT_TRUE(controller.startBatch(QUrl::fromLocalFile(directory.path() + "/plan.json"),
+                                          directory.path() + "/output"));
+        controller.setConnection(std::nullopt);
+        if (cancel)
+        {
+            ASSERT_TRUE(waitFor([&] { return controller.completed() > 0 || !controller.busy(); }));
+            ASSERT_TRUE(controller.busy());
+            EXPECT_TRUE(controller.status().contains("Сценарий №1"));
+            EXPECT_FALSE(controller.status().contains("Все trials"));
+            controller.cancel();
+        }
+        ASSERT_TRUE(waitFor([&] { return !controller.busy(); }));
+        EXPECT_TRUE(controller.batchMode());
+        EXPECT_TRUE(controller.rows().isEmpty());
+        ASSERT_EQ(controller.batchRows().size(), 2);
+        const auto summary = report(controller.reportPath().toStdString());
+        EXPECT_TRUE(summary.at("restored").as_bool());
+        EXPECT_EQ(controller.exitCode(), cancel ? 4 : 0);
+        EXPECT_EQ(controller.qualityStatus(), cancel ? "incomplete" : "not_requested");
+        EXPECT_EQ(summary.at("completed").to_number<unsigned>(), cancel ? 0U : 2U);
+        EXPECT_EQ(controller.batchRows()[1].toMap().value("status").toString(),
+                  cancel ? "not_started" : "reported");
+    }
+}
+
 TEST(ResearchGuiLive, CompletesWithResponsiveUiAndFrozenEndpoint)
 {
     if (!live)
@@ -364,6 +442,28 @@ TEST(ResearchGuiReferenceLive, ImportsAndDraftsShareGuardedQualityAndAcceptance)
         EXPECT_TRUE(controller.rows().isEmpty());
         EXPECT_TRUE(controller.reportPath().isEmpty());
     }
+    QTemporaryDir directory;
+    ASSERT_TRUE(directory.isValid());
+    const std::filesystem::path root(directory.path().toStdString());
+    const boost::json::object member{{"id", "first"}, {"scenario", source.toStdString()}};
+    auto second = member;
+    second["id"] = "second";
+    std::ofstream(root / "plan.json") << boost::json::serialize(
+        boost::json::object{{"schema_version", 1}, {"runs", boost::json::array{member, second}}});
+    ResearchController controller;
+    controller.setConnection(live);
+    ASSERT_TRUE(controller.startBatch(QUrl::fromLocalFile(directory.path() + "/plan.json"),
+                                      directory.path() + "/batch"));
+    ASSERT_TRUE(waitFor([&] { return !controller.busy(); }));
+    EXPECT_EQ(controller.qualityStatus(), expected);
+    EXPECT_EQ(controller.exitCode(), expected == "failed" ? 5 : expected == "incomplete" ? 4 : 0);
+    const auto summary = report(controller.reportPath().toStdString());
+    EXPECT_TRUE(summary.at("restored").as_bool());
+    ASSERT_EQ(controller.batchRows().size(), 2);
+    EXPECT_EQ(summary.at("reported").to_number<unsigned>(), expected == "incomplete" ? 1U : 2U);
+    EXPECT_EQ(controller.batchRows()[1].toMap().value("status").toString(),
+              expected == "incomplete" ? "not_started" : "reported");
+    EXPECT_EQ(controller.batchRows()[0].toMap().value("quality").toString(), expected);
 }
 
 int main(int argc, char **argv)

@@ -74,3 +74,25 @@ QVariantList researchResultRows(const boost::json::object &report)
     }
     return rows;
 }
+
+QVariantList researchBatchRows(const boost::json::object &summary)
+{
+    QVariantList rows;
+    for (const auto &value : summary.at("runs").as_array())
+    {
+        const auto &member = value.as_object();
+        const auto *restored = member.if_contains("restored");
+        const auto *success = member.if_contains("success");
+        rows.push_back(QVariantMap{
+            {"id", label(member, "id")},
+            {"status", label(member, "status")},
+            {"quality", label(member, "quality_status", "not_available")},
+            {"workflow",
+             success ? (success->as_bool() ? "завершён" : "НЕ завершён") : "не подтверждён"},
+            {"restore", restored ? (restored->as_bool() ? "подтверждено" : "НЕ подтверждено")
+                                 : "не подтверждено"},
+            {"report", label(member, "report")},
+            {"error", label(member, "error", "")}});
+    }
+    return rows;
+}
