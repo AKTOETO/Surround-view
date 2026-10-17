@@ -4,7 +4,7 @@
 
 ## Первый реализованный срез
 
-`fusion_runtime_v1`: catalog, typed client wrapper, revision-checked temporary configure трёх существующих GPU-режимов и параметров; config revision/settings в ACK и frames. Интеграционная проверка сравнивает одни paused inputs и проверяет восстановление RGB без upload/rebuild. Контракт и ограничения: [[engineering/PROTOCOL_IMPLEMENTED]]. Добавлен общий C++ runner `examples/common/research` и `svctl research`: декларативные fusion-варианты, randomized complete blocks на последовательных paused frame sets с native RGBA capture, hashes/raw timing report и проверяемый restore при штатном завершении/cancel/callback failure. Проверки: [[validation/RESEARCH_RUNTIME]]. Ограниченный replay lease/watchdog `experiment_lease_v1` восстанавливает fusion/surface/pause после expiry/control disconnect; runner продлевает lease и ждёт idle после cleanup. Четыре native fusion-кандидата и runtime surface control добавлены: [[validation/NATIVE_FUSION]]. Многокадровый headless режим с lease-aware step реализован; Другие группы ConfigService, cursor restoration и GUI сценариев ещё предстоят; явный start/history/decode-cache reset описан ниже. Контракт восстановления и опыт с direct-view truth: [[validation/SERVER_BOUNDARY]].
+`fusion_runtime_v1`: catalog, typed client wrapper, revision-checked temporary configure трёх существующих GPU-режимов и параметров; config revision/settings в ACK и frames. Интеграционная проверка сравнивает одни paused inputs и проверяет восстановление RGB без upload/rebuild. Контракт и ограничения: [[engineering/PROTOCOL_IMPLEMENTED]]. Добавлен общий C++ runner `examples/common/research` и `svctl research`: декларативные fusion-варианты, randomized complete blocks на последовательных paused frame sets с native RGBA capture, hashes/raw timing report и проверяемый restore при штатном завершении/cancel/callback failure. Проверки: [[validation/RESEARCH_RUNTIME]]. Ограниченный replay lease/watchdog `experiment_lease_v1` восстанавливает fusion/surface/pause после expiry/control disconnect; runner продлевает lease и ждёт idle после cleanup. Четыре native fusion-кандидата и runtime surface control добавлены: [[validation/NATIVE_FUSION]]. Многокадровый headless режим с lease-aware step реализован; другие группы ConfigService, cursor restoration и GUI сценариев ещё предстоят; явный start/history/decode-cache reset описан ниже. Контракт восстановления и опыт с direct-view truth: [[validation/SERVER_BOUNDARY]].
 
 ## Цель и границы
 
@@ -227,3 +227,24 @@ L --> R : provenance + READY frame
 Это не restore первоначального cursor: report сохраняет `cursor_restored=false` и
 `restore_scope=fusion_surface_pause_only`. GPU/OS caches, telemetry и общая производительность
 после reset отдельно не нормализуются. Потерянный ACK не допускает автоматического retry.
+
+
+## Первый compiled quality evaluator
+
+Общий C++ service принимает внешний QualityReference: до подключения загружает ограниченный
+manifest/RGB/mask, затем на measured samples сверяет фактическую проекцию и input guards,
+вычисляет masked RGB8 MAE/RMSE/PSNR/max error. Эталон остаётся на клиентской стороне и не
+поступает исследуемому renderer. CLI использует optional scenario.quality_reference; будущий GUI
+может передать тот же PImpl evaluator напрямую. Полный формат/ограничения:
+[[engineering/RESEARCH_QUALITY]].
+
+FRAME view фиксирует все параметры проекции: orbit/distance/FOV/clip/target плюс dimensions.
+Это предотвращает сравнение одинаковых размеров с различной перспективой. Warmup исключён;
+quality summaries считают frame_index один раз при повторных измерениях paused кадра.
+Нестабильные повторные metrics приводят к failed report после restore.
+
+Разделены declared independent_ground_truth и regression; код не подтверждает истинность
+объявленного kind. Input guards пока проверяют calibration IDs/timestamps, а не содержимое
+исходных camera images. Независимые scene/mount/noise seeds, content-verified dataset identity,
+preregistered thresholds, object/ghost metrics, GUI и durable checkpoints всё ещё нужны.
+Наличие evaluator не закрывает подтверждение E-STITCH-01.

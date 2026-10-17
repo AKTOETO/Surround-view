@@ -1392,3 +1392,17 @@ manifest и остаётся на паузе. Последующие frame sets 
 и hashes. При неполной строке0 runner завершает опыт ошибкой; строка не пропускается. Старое поведение — `reset_replay` отсутствует/false, старт с текущего кадра.
 Нельзя считать reset очисткой GPU/OS caches либо возвратом прежней позиции после завершения.
 Семантика команды: [[PROTOCOL_IMPLEMENTED#Сброс replay к первой строке (`replay_reset_v1`)]].
+
+
+### Оценить RGB результата по внешнему эталону без Python
+
+В scenario укажите `reset_replay: true` и `quality_reference: "quality/reference.json"`.
+Подготовьте P6 RGB8 truth и binary RGB mask для каждого frame set; manifest включает dimensions,
+полный view (включая FOV/clip/target), четыре input guards, kind и dataset_id.
+Запуск остаётся `svctl research scenario.json new-report.json`; loader/metrics — общий C++ service.
+Полный пример, команды, формулы и ограничения: [[engineering/RESEARCH_QUALITY]].
+
+Report сохраняет reference/pixel hashes, per-sample masked MAE/RMSE/PSNR и summaries по frame,
+исключая warmup и не размножая observations числом paused repeats. Отсутствие guard match
+завершает опыт с cleanup. success означает workflow, не пройденный quality threshold.
+Серверный capture помечайте kind=regression; он не заменяет независимый Blender/direct-view truth.

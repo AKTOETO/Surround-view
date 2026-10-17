@@ -173,3 +173,43 @@ source_work_timing3,01 с, experiment_lease0,00 с. Полный66-entry suite �
 Это проверка воспроизводимости инфраструктуры, не подтверждающее исследование качества сшивки.
 Следующие задачи: independent dataset/scene/mount/noise orchestration и quality-oracle outputs,
 затем GUI сценариев и durable resume; cursor snapshot/restore и GPU cache policy остаются отдельными.
+
+
+## 17.10.2026: C++ masked RGB reference evaluator
+
+QualityReference/quality_metrics добавлены в общий sv-research service; CLI загружает manifest
+до report reservation/подключения. Truth/mask серверу не передаются. Server capability
+frame_view_v1 добавляет в FRAME полный snapshot azimuth/elevation/distance/FOV/clip/target.
+Контракт и рабочий пример: [[engineering/RESEARCH_QUALITY]].
+
+| Проверка | Результат |
+|---|---|
+| Известные RGB errors3/4/0, один выбранный пиксель | MAE=7/3, RMSE=sqrt(25/3), max=4, PSNR=38.92261606915535 dB |
+| Perfect match | exact_match=true, psnr_db=null; alpha/исключённые пиксели не влияют |
+| Invalid/empty masks и buffers | Отказ, включая nonbinary и неодинаковые RGB каналы mask |
+| Manifest/guards | Strict fields/schema, four ordered guards, canonical timestamps; view/format/input mismatch отклоняется |
+| Projection/memory bounds | Неверный FOV/clip/target и pixel budget >128 MiB отклоняются до загрузки изображений |
+| Сценарий без переданного evaluator | Failed report до подключения/restore_required=false |
+| Summary repeated frames | Пять repeats кадра0 + кадр1 дают2 frames, warmup исключён; изменённые повторные metrics обнаруживаются |
+| Настоящий сервер, Unix/TCP | Три frames regression references, alternating binary ROI: measured MAE/RMSE0, warmup без quality, summary counts каждый frame один раз |
+| Изменённый reference view | Guard mismatch, failed report с restored=true, измеренных samples нет |
+| Malformed reference kind через CLI | Отказ до report reservation; output file не создаётся |
+
+Полная Linux сборка `cmake --build build -j4` успешна. Финальный прогон:
+
+```sh
+ctest --test-dir build -R '^(client_transports|research_scenarios|svctl_options|replay_ipc|output_products)$' --output-on-failure
+```
+
+5/5 за45,01 с: replay_ipc6,30 с, client_transports28,84 с, output_products9,86 с,
+research_scenarios/svctl_options0,00 с. Scenario executable содержит21 GTest: standalone20 passed,
+1 live case skipped без endpoint; этот case выполняется через client_transports на Unix/TCP.
+Проверен синтаксис29 PlantUML blocks runtime/quality/главы3 локальным jar. Полный66-entry suite,
+SDK/Аврора и physical cameras не проверялись.
+
+Regression reference намеренно получен из предыдущего native capture и явно помечен regression.
+Нулевые ошибки здесь подтверждают корректность интеграции и повторяемость, **не качество сшивки**.
+Kind=independent_ground_truth остаётся декларацией автора; dataset_id и IDs/timestamps не
+обеспечивают content identity camera images. Independent holdout, source/config hashes, заранее
+заданные критерии, другие метрики и подтверждающая серия ещё открыты. Success — статус workflow,
+не прохождение порога scientific quality. Новое ранжирование fusion методов не выполнялось.

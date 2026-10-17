@@ -10,7 +10,7 @@
 
 ## Полный каталог текущих операций
 
-Каталог содержит 28 серверных команд; запросы передаются как type20, результат — type21. Typed API перечислен там, где он есть; остальные доступны через `command(type, parameters)`. Наличие generic API не означает поддержку неизвестной команды сервером.
+Каталог содержит 29 серверных команд; запросы передаются как type20, результат — type21. Typed API перечислен там, где он есть; остальные доступны через `command(type, parameters)`. Наличие generic API не означает поддержку неизвестной команды сервером.
 
 | Команда | Запрос помимо command_id/type | Успешный результат / сценарий |
 |---|---|---|
@@ -32,7 +32,8 @@
 | `preset` | `name=top/front/rear` | Выбранный view; С03 |
 | `pause` | Optional `lease_id` | Источник подтвердил паузу; С04 |
 | `resume` | Optional `lease_id` | Источник подтвердил продолжение; С04 |
-| `step` | Нет | Один следующий replay frame set и пауза; С04 |
+| `step` | Optional `lease_id` | Один следующий replay frame set и пауза; С04 |
+| `replay_reset` | Optional `lease_id`; replay_reset_v1 | Cursor0, decode-cache/sync-history reset, первый набор и пауза; [[architecture/RESEARCH_RUNTIME#Явный replay start и сброс истории]] |
 | `configure_fusion` | `base_config_revision`, полный `fusion`, optional `lease_id` | Temporary replacement; С05 |
 | `configure_surface` | `base_config_revision`, полный `surface`, optional `lease_id` | Подготовленная и применённая mesh; С05 |
 | `experiment_acquire` | Целый `ttl_ms` 250..30000 | Lease для replay; С06 |
