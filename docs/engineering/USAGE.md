@@ -1418,3 +1418,16 @@ measured samples; warmup исключён. Runner сохраняет всю се
 качество passed. CLI0 — выполнено и passed/not_requested;5 — выполнено, качество failed;
 4 — ошибка/incomplete. Полный формат: [[engineering/RESEARCH_QUALITY#Заданные до запуска критерии качества]].
 Для новых серий используйте reference schema2 с decoded-image и numeric camera-model guards.
+
+### Новая сцена cargo yard и матрица пяти носителей
+
+Генерация/экспорт/просмотр через sv-server и sv-simulator:
+[[engineering/BLENDER#Независимые семейства окружения и раздельные seeds]].
+Recipes — assets/scenarios/quality-families-v1.json; native20-variant matrix —
+configs/research/family-carrier-screen.json. Все fusion/carrier переключения, provenance checks,
+RGBA capture, metrics и restore выполняет общий C++ runner через sv-client-lib.
+Python fixture harness остаётся средством подготовки/независимой проверки truth, не алгоритмом
+рендеринга. GUI управления несколькими исследованиями и compiled multi-dataset supervisor ещё
+не реализованы. Результаты64-sample smoke и640-trial matched screen:
+[[validation/FAMILY_CARRIER_SCREEN]]. True camera calibration в этом пилоте передана серверу;
+автоматическая calibration jobs проверяется отдельно.

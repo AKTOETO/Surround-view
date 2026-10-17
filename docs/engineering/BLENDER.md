@@ -302,3 +302,98 @@ capture_sensor_study(root/'assets/scenarios/parallax-sensor-v1.json', root/'arti
 ```
 
 Нужен новый выходной каталог. Дождитесь `progress.json: state=complete`, затем остановите Blender capture перед серверными измерениями. `camera_sampling.py` удваивает focal lengths в pixels и переводит principal point по правилу центров пикселей; actual/nominal extrinsics и angular bound сохраняются. Прямые RGB/ID/visibility снимаются заново. Это синтетическая передискретизация прежних cubemap512, а не более детальный физический сенсор. Проверки равенства эталонов и source cubes: [[research/PARALLAX_SENSOR_PROTOCOL]]. Native команды: [[engineering/USAGE#Чувствительность к разрешению fisheye]].
+
+## Независимые семейства окружения и раздельные seeds
+
+`assets/scenarios/quality-families-v1.json` задаёт validation pilot: street-a/b и cargo yard-a/b.
+`world.family` выбирает street/cargo_yard. `scene_seed` управляет окружением и near-obstacle
+stream, `mount_seed` — yaw/pitch/along-body randomization. Если они отсутствуют, используется
+прежний seed; старые recipes не переписываются. Noise seed/модель сенсорного шума ещё не добавлены.
+Параметры building_height/building_spacing действуют на street; cargo geometry описана
+`tools/blender/environments.py`. В обоих семействах сохранены автомобиль и четыре camera locators.
+
+В Blender Python console либо через MCP:
+
+```python
+from pathlib import Path
+import sys
+root = Path('/home/bogdan/prog/MAI/surround-view')
+sys.path.insert(0, str(root / 'tools/blender'))
+import paired_truth
+paired_truth.schedule_family_plan(
+    root / 'assets/scenarios/quality-families-v1.json',
+    root / 'artifacts/quality-families-new')
+```
+
+Output обязан быть новым. Экспорт выполняется case за case через Blender timers; состояние
+публикуется в job.json (queued/running/complete/failed/cancelled). До создания output проверяются
+schema,1…16 безопасных уникальных IDs, recipes и bounded capture settings. Для отмены создайте
+файл cancel в корне job: отмена действует между cases, не прерывает bpy render посередине.
+Существующие scenes и открытый .blend не удаляются/не перезаписываются. После job активна
+последняя созданная scene; исходная Scene остаётся доступной. Не закрывайте Blender до complete.
+
+В каждом case/raw: perspective faces, overview, legacy-named street.blend (снимок именно данного
+случая), capture.json, direct virtual RGB, object IDs и visibility. Metadata содержит recipe,
+actual camera config, nominal config, sampled mount offsets, environment family/layout и hashes
+генераторов. Для cargo origin=blender_metric_cargo_yard_v1. Нужен Blender с доступным EEVEE;
+испытан5.2.2 LTS. Получение тех же seeds не гарантирует битовое совпадение RGB на иной версии
+Blender/NumPy/GPU; сравнивайте записанные параметры/versions/hashes и сохраняйте исходные данные.
+
+После complete конвертируйте каждый case, выбрав новые dataset directories:
+
+```sh
+python3 tools/blender/convert.py \
+  --capture artifacts/quality-families-new/yard-a/raw \
+  --output artifacts/quality-families-new/yard-a/dataset --image-format png
+```
+
+Обычный просмотр native результата:
+
+```sh
+build/sv-server --config artifacts/quality-families-new/yard-a/dataset/config.json \
+  --manifest artifacts/quality-families-new/yard-a/dataset/manifest.json --ipc-dir /tmp/sv-yard-a
+# В другом терминале:
+build/examples/sv-simulator/sv-simulator --unix /tmp/sv-yard-a
+```
+
+Сервер/симулятор для просмотра остановите до изолированного исследования. Сквозной fixture/oracle
+harness подготавливает внешний schema2 reference, а алгоритмы/metrics исполняет общий C++ runner:
+
+```sh
+python3 tests/test_research_quality_fixture.py build \
+  --dataset artifacts/quality-families-new/yard-a/dataset \
+  --capture artifacts/quality-families-new/yard-a/raw --visibility-policy any \
+  --scenario configs/research/family-carrier-screen.json \
+  --output artifacts/quality-families-new/yard-a/carrier-screen
+```
+
+Он запускает отдельный local sv-server с коротким временным IPC path независимо от глубины
+каталога отчёта. Сценарий фиксирует20 variants,2 frames,1 warmup/3 measured blocks; output и
+capture paths новые. Python здесь exporter/independent oracle, продуктовая обработка не перенесена
+в него. Полноценный compiled multi-dataset supervisor и GUI сценариев ещё предстоят.
+
+Для четырёх завершённых cases:
+
+```sh
+MPLCONFIGDIR=/tmp/sv-mpl-native-quality python3 docs/diploma/plot_native_quality.py \
+  --suite artifacts/quality-families-new \
+  --output docs/diploma/figures/experiments/family_carrier_deltas.png
+```
+
+Plotter повторно проверяет plan/capture identities, одинаковые модели/проекции/scenario,
+active mesh budget и RGB repeats, собирает carrier-summary.json из native reports и рисует
+парные изменения. Для отдельного carrier используйте --run CASE/carrier-screen --carrier dome_floor_v1.
+Результаты пилота и ограничения: [[validation/FAMILY_CARRIER_SCREEN]].
+
+При создании мира камера обзора теперь сразу расположена над автомобилем: `(10, -12, 10)` м,
+с направлением на `(1, 0, 0.4)` и lens 32 мм. Это исходный вид для просмотра, который
+восстанавливается после paired capture; калиброванные камеры используют свои явные позы и оптику.
+Исправление не меняет сохранённые изображения пилота. В живом Blender проверены 72 проекции:
+максимальная ошибка 0,00004753 px при допуске 0,001 px; возврат матрицы камеры отличается
+не более чем на 5,96·10⁻⁸ из-за float round-trip. Калибровка и lens сохранены.
+
+Все основные PNG renders проходят `render_io.render_still`: оператор должен вернуть `FINISHED`,
+а ожидаемый файл — существовать и быть непустым. `CANCELLED`, отсутствующий или пустой файл
+прерывают экспорт до публикации completion metadata. Это проверка завершения/наличия, не
+доказательство корректности содержимого: декодирование и hashes проверяются следующим этапом.
+Fault injection покрывает эти отказы без Blender; реальный preview render также прошёл проверку.

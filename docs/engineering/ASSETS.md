@@ -183,3 +183,25 @@ independent RGB/IDs и triangles в `artifacts/textured-source-captures-v2` — 
 Они не являются сторонними исходными ассетами и не требуют Git LFS. Hashes, Blender version и
 ограничения воспроизводимости: [[validation/TEXTURED_SOURCE]]. Удаление artifacts удалит локальные
 captures; для нового Blender/backend требуется новый versioned plan, а не обещание byte identity.
+
+## A09 — Семейства окружения и раздельные seeds
+
+`assets/scenarios/quality-families-v1.json` — авторский текстовый recipe/plan четырёх новых
+procedural scenes: две улицы и два грузовых двора. External assets отсутствуют; Blender world
+восстанавливается генераторами scene.py/environments.py/scenario.py. Для одного мира достаточно
+`scene.build_scene(recipe)` в Blender, затем выбрать созданную scene через window.scene.
+Для воспроизведения capture — [[engineering/BLENDER#Независимые семейства окружения и раздельные seeds]].
+
+Cargo yard содержит8 seeded cargo blocks с рёбрами, бетонную площадку, разметку, стены и балки,
+общий процедурный автомобиль/камеры. Scene и mount seeds независимы, legacy seed остаётся fallback.
+Геометрия не является реальным CAD автомобиля. Старый assets/scenes/metric-street/street.blend
+не изменён. Generated snapshots/raw/direct RGB/replay/отчёты относятся к результатам запуска и
+сохраняются в artifacts/quality-families-v1; их не нужно добавлять в Git/LFS. Исходные recipes и
+код генератора остаются в обычном Git. Иллюстрации сохранены в docs/diploma/figures/experiments,
+их генератор — docs/diploma/plot_native_quality.py.
+
+Генератор первых четырёх captures зафиксирован commit0ba810c до захвата; последующие изменения
+strict preflight не меняют cargo layout. Metadata хранит actual layout/offsets, script hashes,
+Blender version/engine; для точного воспроизведения сверяйте их, а не только seed. Проверка через
+живой MCP подтвердила4 сцены и сохранённую первоначальную Scene/Cube. План — validation pilot,
+не обещание готовности всех S0–S5 или независимого confirmatory holdout.
