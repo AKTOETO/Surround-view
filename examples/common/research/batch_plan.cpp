@@ -1,14 +1,11 @@
 #include "batch_plan.hpp"
 #include "digest.hpp"
+#include "regular_input.hpp"
 #include "report_output.hpp"
 #include "sv/json.hpp"
 #include <algorithm>
-#include <cerrno>
-#include <fcntl.h>
 #include <set>
 #include <stdexcept>
-#include <sys/stat.h>
-#include <unistd.h>
 
 namespace sv::research
 {
@@ -36,28 +33,6 @@ bool safe_id(std::string_view text)
                        });
 }
 
-class Input
-{
-  public:
-
-    explicit Input(const std::filesystem::path &path)
-        : fd(::open(path.c_str(), O_RDONLY | O_CLOEXEC | O_NONBLOCK))
-    {
-        if (fd < 0)
-        {
-            throw std::invalid_argument("cannot open batch plan");
-        }
-    }
-
-    ~Input()
-    {
-        ::close(fd);
-    }
-
-    Input(const Input &) = delete;
-    Input &operator=(const Input &) = delete;
-    const int fd;
-};
 } // namespace
 
 boost::json::object parse_batch_plan(std::string_view text)
@@ -97,37 +72,7 @@ boost::json::object parse_batch_plan(std::string_view text)
 
 std::string read_batch_plan(const std::filesystem::path &path)
 {
-    Input input(path);
-    struct stat info{};
-    if (::fstat(input.fd, &info) != 0 || !S_ISREG(info.st_mode))
-    {
-        throw std::invalid_argument("batch plan must be a regular file");
-    }
-    std::string text(64 * 1024 + 1, '\0');
-    size_t offset = 0;
-    while (offset < text.size())
-    {
-        const auto count = ::read(input.fd, text.data() + offset, text.size() - offset);
-        if (count < 0 && errno == EINTR)
-        {
-            continue;
-        }
-        if (count < 0)
-        {
-            throw std::invalid_argument("cannot read batch plan");
-        }
-        if (count == 0)
-        {
-            break;
-        }
-        offset += static_cast<size_t>(count);
-    }
-    text.resize(offset);
-    if (text.empty() || text.size() > 64 * 1024)
-    {
-        throw std::invalid_argument("batch plan must contain 1..65536 bytes");
-    }
-    return text;
+    return read_regular_file(path, 64 * 1024);
 }
 
 std::string write_batch_plan(const boost::json::object &plan, const std::filesystem::path &file)
