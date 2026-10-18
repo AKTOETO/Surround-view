@@ -888,3 +888,42 @@ end
 для restore больше не используется. ACK содержит то же текущее состояние, которое
 захватывает lease baseline. Это убирает зависимость от интервала read→acquire для будущего
 расширения concurrency; текущий односессионный server не проверен как multi-client.
+
+## Переносимый набор сценария и эталона
+
+Первый bundle переносит client-side сценарий и quality reference, включая RGB/mask.
+Replay/config/build серверного стенда не входят в этот формат. Пути reference переписываются
+в фиксированную структуру; raw bytes каждого файла получают SHA256 и размер.
+При загрузке проверяются замкнутость ссылок, относительные имена, размеры и hashes;
+проверенные bytes копируются в закрытый временный каталог, где FileExperiment фиксирует
+decoded reference. После этого изменение исходного bundle не меняет запущенный опыт.
+
+```plantuml
+@startuml
+title Экспорт и проверенная загрузка client-side bundle
+actor Исследователь as User
+participant "svctl / common bundle service" as Bundle
+participant "Исходные файлы" as Inputs
+participant "Новый bundle directory" as Files
+participant "Private staging / FileExperiment" as Freeze
+participant "sv-server" as Server
+User -> Bundle: Export scenario -> new directory
+Bundle -> Inputs: Bounded regular-file reads
+Bundle -> Bundle: Rewrite reference paths; hashes; closure
+Bundle -> Freeze: Validate copied scenario + reference
+Bundle -> Files: Exclusive files; bundle.json last
+User -> Bundle: Verify / run bundle
+Bundle -> Files: Open fixed relative files, reject symlinks
+Bundle -> Bundle: Validate sizes, hashes and closure
+Bundle -> Freeze: Snapshot verified bytes; decode and freeze
+Bundle -> Freeze: Compare frozen reference description
+alt Verify only
+  Bundle --> User: Receipt; no connection
+else Run
+  Freeze -> Server: Existing lease / research protocol
+  Freeze --> User: Report with bundle identity
+end
+@enduml
+```
+
+*Рисунок RR.20 — переносимость client-side inputs не заменяет регистрацию server recording.*

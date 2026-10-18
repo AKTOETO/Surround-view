@@ -421,3 +421,10 @@ experiment lease для telemetry before/after; wire-команды не мен�
 чтении эксперимент не выдумывает defaults и не разрешает timing comparison. Новые поля —
 добавление в отчёт native schema1; offline comparison audit использует policy v2.
 [[engineering/RESEARCH_REPORTS#Нагрузка наблюдения и policy v2]].
+
+
+Scenario bundle — локальный формат client inputs, не wire extension. Экспорт и verify
+не создают Client; verified-run фиксирует inputs и использует прежний ExperimentRunner
+через sv-client-lib. Сервер не получает reference и не меняет source/config из bundle.
+В native report добавлены input_bundle и scenario_input_kind=verified_bundle_snapshot_v1.
+[[engineering/RESEARCH_BATCH#Переносимый набор сценария]].

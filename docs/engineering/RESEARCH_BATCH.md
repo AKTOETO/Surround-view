@@ -553,3 +553,103 @@ angle_power2, smoothness0.1; значения active сервера не нас�
 Карточка результата показывает числовые поля сохранённого scenario, включая нормализованные
 defaults отчёта; actual значения находятся в metadata.
 Сценарий и отчёт повторно используются через compiled runner без Python.
+
+## Переносимый набор сценария
+
+Реализован compiled C++ формат **scenario_bundle_v1** для одного сценария и его
+client-side quality reference. Он переносит необходимые RGB/mask PPM и переписывает
+ссылки в относительные. **Replay, конфигурация/калибровка сервера и build не включены**:
+на целевой машине нужно отдельно подготовить тот же recording и совместимый sv-server.
+Это первый срез bundle workflow, а не архив всего стенда.
+
+```text
+experiment-bundle/
+  bundle.json
+  scenario.json
+  reference.json                  # только при quality_reference
+  assets/
+    frame-0-rgb.ppm
+    frame-0-mask.ppm
+    ...
+```
+
+`bundle.json` содержит schema_version1, kind=scenario_bundle_v1,
+scope=client_scenario_and_reference_only, source_scenario_sha256, список
+files[{path,bytes,sha256}] и reference_description либо null. Source digest относится к
+исходным bytes сценария до переписывания пути; descriptor scenario.json — к уже
+упакованным bytes. Reference description фиксирует нормализованные guards/view/criteria,
+decoded RGB/mask hashes и hash переписанного manifest. Оригинальное форматирование
+reference manifest не сохраняется; исходные PPM bytes сохраняются без перекодирования.
+
+### Команды
+
+Экспорт и verify не создают подключения; endpoint flags для них не используются:
+
+```bash
+./build/svctl research-bundle-export configs/research/my-scenario.json artifacts/my-bundle
+./build/svctl research-bundle-verify artifacts/my-bundle
+```
+
+Родитель выходной папки должен существовать, сама папка должна быть новой. Папку можно
+скопировать целиком на другую машину или переместить. После проверки запустите:
+
+```bash
+./build/svctl --unix /tmp/sv-prototype research-bundle-run artifacts/my-bundle artifacts/bundle-report.json
+./build/svctl --tcp 192.168.1.20 53101 53102 research-bundle-run artifacts/my-bundle artifacts/remote-bundle-report.json
+```
+
+Порты — пример, используйте настроенные серверные control/data endpoints. Сервер уже
+должен работать с нужной replay-записью. К нему применяются прежние lease/catalog/source/
+quality guards. Программа возвращает обычные research exit codes:0 — завершено,
+4 — техническая/неполная попытка,5 — завершённое отклонение качества; ошибки bundle
+preflight дают3 до резервирования report и соединения. Неверные аргументы дают2.
+
+`research-bundle-run` самостоятельно заново проверяет bundle; отдельный verify — удобная
+offline-проверка, а не разрешение обходить проверку при последующем запуске.
+Использование обычного `research bundle/scenario.json ...` технически возможно,
+но не проверяет bundle inventory и не записывает input_bundle provenance; для bundle
+workflow используйте специальную команду.
+
+### Проверка и фиксация входов
+
+`ScenarioBundle` сначала читает ограниченный manifest, затем только перечисленные
+файлы фиксированной структуры. Absolute paths, `..`, неизвестные имена и дубликаты
+в inventory отвергаются; root/asset directory и file leaves открываются без следования
+финальным symlink. FIFO/устройства не принимаются. Посторонние **физические** файлы,
+не перечисленные в manifest, не читаются; лишние **inventory entries** отвергаются.
+Reference может ссылаться только на перечисленные assets. Проверяются actual sizes и
+SHA256; после этого verified bytes копируются в private staging directory (mode0700).
+FileExperiment фиксирует decoded reference и сверяет его description с manifest.
+
+После конструктора все входы уже зафиксированы: удаление/изменение исходного bundle
+не меняет execute. Открытие report и подключение происходят позже. `execute` допускает
+одну попытку; второй вызов не создаёт другой output. Staging удаляется при уничтожении
+объекта; путь scenario_input_base_directory в report является временным и не служит
+путём для последующего ручного воспроизведения. Сохраняйте исходный bundle.
+
+Report получает scenario_input_kind=verified_bundle_snapshot_v1 и объект input_bundle
+с policy, manifest_sha256, source_scenario_sha256 и scope. Это идентичность проверенного
+снимка, не доказательство авторства, неизменности server recording или независимости
+reference. Изменение данных и согласованное редактирование unsigned manifest создают
+другой допустимый набор; доверенная подпись этим форматом не реализована.
+
+### Пределы и неготовые части
+
+- Bundle manifest/scenario/reference JSON — до1MiB каждый; reference до256 frames.
+- До514 перечисленных файлов, не более16MiB на PPM и64MiB суммарных member bytes.
+  Manifest имеет отдельный предел1MiB. Это не ограничение RSS; decoded reference
+  дополнительно проходит прежний128MiB pixel budget.
+- Экспорт сначала валидирует copied inputs в private staging и только потом создаёт
+  новую целевую папку. Файлы создаются исключительно; manifest записывается последним.
+  При I/O error/cancel может остаться частичная новая папка. Existing output не очищается
+  и не заменяется. Atomic publication/fsync/durable resume не реализованы.
+- Cancel проверяется между chunks/файлами и до execute; он не прерывает уже выполняющийся
+  syscall или parser/decoder. Входы должны быть обычными локальными файлами.
+- GUI export/import, batch/multi-recording bundles, server config/dataset/build registry,
+  архивный контейнер и deduplication остаются следующими задачами. Пока frontend — svctl;
+  общий C++ service не зависит от Qt и готов для последующей GUI обёртки.
+
+API: export_scenario_bundle(path,new_directory,cancel), ScenarioBundle(path,cancel),
+summary(), execute(new_report,client_options,cancel,progress). Они используют тот же
+FileExperiment/ExperimentRunner, не запускают Python и не добавляют wire commands.
+Диаграмма: [[architecture/RESEARCH_RUNTIME#Переносимый набор сценария и эталона]].

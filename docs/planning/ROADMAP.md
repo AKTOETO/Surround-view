@@ -1,5 +1,12 @@
 # Подробный план реализации
 
+18.10.2026: single-scenario client bundle реализован в общем C++ service и svctl:
+export/verify/verified-run, относительные PPM references, hashes/closure/budgets,
+private frozen inputs и report provenance. Server replay/config/build не входят;
+GUI и batch/multi-recording integration остаются открытыми.
+[[engineering/RESEARCH_BATCH#Переносимый набор сценария]].
+
+
 18.10.2026: исправлен timing gate сравнения отчётов: observation policy фиксирует
 capture/evaluator/progress-presence и telemetry до/после внутри lease. Policy v2
 не вычисляет timing delta для старых/неподтверждённых либо разных observation profiles;

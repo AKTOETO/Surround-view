@@ -1542,3 +1542,17 @@ progress/telemetry в паспортах A/B. Старый отчёт без obs
 времени недоступна; p50/p95 и подтверждённые quality deltas сохраняются. Для нового профиля
 повторите эксперимент текущим compiled runner, не дописывайте отсутствующие данные вручную.
 [[engineering/RESEARCH_REPORTS#Нагрузка наблюдения и policy v2]].
+
+
+### Перенос сценария и его эталона
+
+```bash
+./build/svctl research-bundle-export configs/research/my-scenario.json artifacts/my-bundle
+./build/svctl research-bundle-verify artifacts/my-bundle
+./build/svctl --unix /tmp/sv-prototype research-bundle-run artifacts/my-bundle artifacts/bundle-report.json
+```
+
+Пути my-scenario/my-bundle — пример: подставьте существующий сценарий и новую папку.
+Переносится сценарий и client-side PPM reference; replay/config сервера подготовьте отдельно.
+Export/verify не подключаются к серверу. Bundle-run проверяет и фиксирует входы до output/
+connection; GUI обёртка пока не реализована. [[engineering/RESEARCH_BATCH#Переносимый набор сценария]].

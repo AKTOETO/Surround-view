@@ -833,3 +833,40 @@ restore проверки. Native GUI comparison сохраняется и пов
 Привязка initial_state к acquire ACK проверяет границу lease snapshot и устраняет
 зависимость будущего кода от pre-acquire read. Полный build/runtime passport,
 independent truth/holdout и Аврора остаются открытыми.
+
+## Single-scenario bundle — 18.10.2026
+
+Добавлены общий C++ service export_scenario_bundle/ScenarioBundle и compiled svctl
+export/verify/verified-run. Поддержаны scenario и optional quality reference с P6 RGB8/mask;
+server config/replay/build остаются внешними. Inventory sizes/hashes и замкнутость ссылок
+проверяются до output/connection; loaded inputs фиксируются в private staging и decoded
+reference. Report содержит verified_bundle_snapshot_v1 и input_bundle identity.
+
+Новые проверки:
+
+- BundleFixture6/6: relocation, `#`/`%`, source hash и criteria overrides, no-reference,
+  overwrite refusal, pre-cancel/invalid mask без destination, raw hash mismatch,
+  missing/symlink/FIFO/root symlink/asset-directory symlink, traversal и incomplete
+  closure после согласованного обновления descriptor hash, unknown schema/limits/
+  invalid hash/mismatched frozen description;
+- unit snapshot удаляет source и original bundle после constructor; execute с намеренно
+  отсутствующим endpoint сохраняет frozen reference и provenance в failed report.
+  Повторная execute не резервирует новый report;
+- SvctlOptions1/1: строгая арность всех трёх новых команд;
+- native Unix/TCP/combined harness экспортирует и проверяет с заведомо отсутствующим
+  endpoint (offline), перемещает bundle, затем исполняет через реальный server.
+  Проверяются restored, input_bundle digest, snapshot kind и regression quality MAE0;
+  после повреждения PPM verified-run обязан отказать до создания report.
+
+Полная регрессия и ограничения фиксируются ниже. GUI bundle frontend этим срезом
+не добавлен; BATCH/dataset/config/build переносимость не квалифицирована.
+
+Финальная сборка и последовательный Linux CTest **68/68 за162,34с**:
+client_transports91,43с, simulator_configuration_qml7,16с. Bundle GTest6/6 и новый
+option-parser case1/1 успешны. Проверены55 PlantUML вставок architecture/главы3,
+py_compile транспортного harness и git diff --check. Дополнительные native commands
+выполнены в пределах прежних timeout, без их увеличения.
+
+Это проверка переноса client inputs и управляющего пути. Regression exact match не
+квалифицирует независимую truth, аппаратную производительность или Аврору. GUI/batch/
+server registry/resume/подпись не реализованы этим срезом.

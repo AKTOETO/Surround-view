@@ -3025,3 +3025,143 @@ trace I/O, частоты/thermal, внешняя нагрузка и аппар
 Unix/TCP/combined87,50с и QML7,12с; comparison GTest16/16 и Qt research units36/36.
 Проверены52 PlantUML вставки architecture/главы3. Подробности и первоначальная ошибка
 нового assert описаны в [[validation/RESEARCH_RUNTIME]].
+
+## 3.66. Переносимый набор client-side входов исследования
+
+До этого этапа сохранённый scenario мог ссылаться на reference manifest и PPM по путям
+ноутбука. Копирование одного JSON не переносило эти зависимости. Для повторного запуска
+на другом Linux-стенде реализован compiled формат scenario_bundle_v1: один сценарий,
+его reference manifest и все используемые RGB/mask PPM помещаются в новую папку.
+Экспорт переписывает зависимости в относительные имена, сохраняет размеры и SHA256,
+а загрузка проверяет полный набор и фиксирует данные до подключения к серверу.
+
+Граница формата принципиальна: это **client_scenario_and_reference_only**. Server replay,
+геометрия/калибровка камер из server config и бинарная сборка не переносятся этим набором.
+Для полноценного повторения нужен отдельно подготовленный совместимый server recording;
+quality guards на фактических кадрах остаются обязательными. Формат не объявляет
+воспроизводимым весь автомобильный стенд и не доказывает независимость ground truth.
+
+```plantuml
+@startuml
+title Границы переносимого сценария
+package "Scenario bundle directory" {
+  artifact "bundle.json\nsize/hash inventory + scope" as Manifest
+  artifact "scenario.json\nrelative reference path" as Scenario
+  artifact "reference.json\nguards, view, criteria" as Reference
+  artifact "assets/frame-N-rgb.ppm" as RGB
+  artifact "assets/frame-N-mask.ppm" as Mask
+  Manifest --> Scenario
+  Manifest --> Reference
+  Manifest --> RGB
+  Manifest --> Mask
+  Scenario --> Reference
+  Reference --> RGB
+  Reference --> Mask
+}
+node "Отдельно подготовленный sv-server" {
+  artifact "Replay recording" as Replay
+  artifact "Server config / calibration" as Config
+}
+Scenario ..> Replay : inputs должны совпасть
+Reference ..> Config : guards проверяются на кадрах
+@enduml
+```
+
+*Рисунок3.74 — переносимые client inputs отделены от ещё не зарегистрированных server inputs.*
+
+Manifest содержит schema_version1, kind и scope, source_scenario_sha256,
+files[{path,bytes,sha256}] и reference_description. Digest исходного сценария считается
+до переписывания reference path; descriptor scenario.json описывает уже packed bytes.
+PPM копируются без перекодирования. Reference manifest сериализуется заново с безопасными
+относительными путями; его hash и decoded RGB/mask identities фиксируются в description.
+Сохраняются declared kind, guards, view, manifest criteria и scenario overrides.
+
+Пусть \(F\) — список members, \(D(f)\) — проверенные bytes файла, \(n_f,h_f\) —
+его заявленные размер и hash. Загрузка требует
+
+\[
+\forall f\in F:\quad |D(f)|=n_f\ \land\ SHA256(D(f))=h_f,
+\qquad F=\operatorname{closure}(scenario,reference).
+\]
+
+Во втором равенстве учитываются только внешние зависимости поддерживаемого scenario:
+quality manifest и frame RGB/mask. Ссылки source camera IDs и content/model hashes
+не являются файловыми путями. Абсолютные paths, `..`, неизвестные имена, duplicate entries,
+пропущенные ссылки и неиспользуемые inventory entries отвергаются. Посторонние физические
+файлы, не перечисленные в manifest, не читаются. Корневой каталог, assets directory и
+file leaves открываются без следования финальным symlink; FIFO и devices не принимаются.
+
+Для исключения повторного чтения изменяемых исходных файлов verified bytes копируются
+в private staging directory с mode0700. FileExperiment загружает scenario из памяти и
+фиксирует decoded reference из этой копии; description сравнивается с manifest. После
+конструктора ScenarioBundle изменение/удаление original bundle уже не меняет execute.
+Проверяется снимок конкретных прочитанных bytes, а не непрерывная неизменность папки.
+
+```plantuml
+@startuml
+title Verified snapshot до output reservation и подключения
+actor Исследователь as User
+participant "svctl" as CLI
+participant "ScenarioBundle" as Bundle
+participant "Bundle files" as Files
+participant "Private staging" as Stage
+participant "FileExperiment" as Experiment
+participant "sv-server" as Server
+User -> CLI: research-bundle-run DIR NEW_REPORT
+CLI -> Bundle: Constructor
+Bundle -> Files: Read manifest + listed regular members
+Bundle -> Bundle: Names / budget / size / SHA256 / closure
+Bundle -> Stage: Copy verified bytes
+Bundle -> Experiment: Freeze scenario + decoded reference
+Bundle -> Bundle: Match frozen description
+Bundle --> CLI: Ready immutable inputs
+CLI -> Bundle: execute
+Bundle -> Experiment: Reserve new report
+Experiment -> Server: Existing research protocol
+Server --> Experiment: Frames + metadata
+Experiment --> CLI: Report + input_bundle identity
+@enduml
+```
+
+*Рисунок3.75 — preflight и фиксация выполняются до output и connection, а не между trial.*
+
+| Команда svctl | Результат | Подключение |
+|---|---|---|
+| research-bundle-export SCENARIO NEW_DIR | Новая папка с проверенными входами и manifest | Нет |
+| research-bundle-verify DIR | Receipt с manifest hash, file/trial counts и decoded reference bytes | Нет |
+| research-bundle-run DIR NEW_REPORT | Повторная проверка, frozen inputs и обычный research report | После preflight |
+
+Сервис не зависит от Qt и не запускает Python. Он использует прежний ExperimentRunner
+и sv-client-lib; новых wire-команд нет. Report получает input_bundle identity и
+scenario_input_kind=verified_bundle_snapshot_v1. Staging path в report временный;
+для воспроизведения сохраняется сам bundle, а не этот путь. Одна загрузка допускает
+одну попытку execute. Existing output не перезаписывается.
+
+Введены явные пределы: manifest/scenario/reference JSON до1MiB, до256 reference frames,
+до514 members, до16MiB на PPM и64MiB total member bytes. Decoded reference дополнительно
+проверяется прежним128MiB pixel budget. Это не обещание фиксированного RSS. Cancel
+проверяется между chunks и до execute; parser/syscall не прерывается посередине.
+Экспорт валидирует copied inputs до создания destination и пишет manifest последним,
+но не реализует atomic publication/fsync. При ошибке может остаться partial новая папка,
+которую нельзя принимать за bundle без полной проверки.
+
+Шесть GTest cases проверяют перенос каталога, literal `#`/`%` в путях, сохранность criteria
+и source digest, отсутствие reference, отказ от overwrite, pre-cancel и invalid mask,
+изменённые/пропущенные/symlink/FIFO members, traversal/неполную closure даже после
+пересчёта raw hashes, version/size/digest limits и mismatch reference description.
+Отдельно проверено удаление исходников и bundle после загрузки: frozen reference и
+provenance доступны в отчёте намеренно неудачной попытки без сервера. Нативный harness
+добавляет offline export/verify, перемещение папки и исполнение на реальном sv-server
+через Unix/TCP; испорченный member отклоняется до создания report.
+
+SHA256 подтверждает соответствие прочитанных данных manifest, а не авторство manifest.
+Согласованное изменение всех полей создаёт другой unsigned набор. Signature, dataset/
+config/build registry, GUI integration, batch/multi-recording bundles, deduplication и
+resume остаются открытыми. Приёмка качества по-прежнему требует независимого reference
+и обоснованной серии; точное воспроизведение regression fixture не заменяет её.
+Использование: [[engineering/RESEARCH_BATCH#Переносимый набор сценария]].
+
+Приёмка реализации: полная сборка, Linux CTest68/68 за162,34с; native Unix/TCP
+harness91,43с, QML7,16с. Bundle GTest6/6 и новый parser case1/1 успешны. Проверены55
+PlantUML вставок architecture/главы3 и git diff --check. Полные сведения:
+[[validation/RESEARCH_RUNTIME]].

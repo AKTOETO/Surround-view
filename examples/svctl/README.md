@@ -29,3 +29,16 @@ cmake -S . -B build -DSV_GTEST_TESTS=ON
 cmake --build build --target svctl-option-tests
 ctest --test-dir build -R svctl_options --output-on-failure
 ```
+
+Переносимые client inputs одного исследования (без server replay/config):
+
+```bash
+svctl research-bundle-export scenario.json new-bundle
+svctl research-bundle-verify new-bundle
+svctl --unix /tmp/sv-prototype research-bundle-run new-bundle new-report.json
+```
+
+Export/verify работают offline; run повторно проверяет hashes, closure и reference,
+фиксирует inputs до подключения и пишет input_bundle identity в report.
+Родители output должны существовать, сами output должны быть новыми.
+[Формат, пределы и ограничения](../../docs/engineering/RESEARCH_BATCH.md#переносимый-набор-сценария).
