@@ -584,3 +584,68 @@ note over Editor,File: Повторный импорт и исполнение �
 ```
 
 *Рисунок RR.12 — сохранение черновика не создаёт исследовательский отчёт или серверную операцию.*
+
+## Следующий срез: сопоставление двух исследовательских отчётов
+
+Это **проектный контракт, ещё не реализованная функция**. Предыдущий срез завершил сохранение
+черновика; следующие изменения должны дать C++ application service и отдельную GUI вкладку
+сравнения без запуска Python и без сетевых мутаций. Начальный вход — два individual ExperimentRunner
+report files; batch.json выбирается через отдельные ID.json, а не исполняется как report.
+
+Предлагаемые правила:
+
+- Чтение ordinary files с явным пределом размера; schema/число variants/samples/типовые bounds
+  проверять до передачи компактных rows в QML. Не загружать RGBA payload и не читать произвольные
+  capture/reference paths из импортированного report. Report — заявленные данные, не аттестация.
+- Подбирать строки по полным fusion/surface settings, не по index либо одному mode/boundary:
+  levels, solver, carrier, support/visibility и остальные применённые параметры участвуют
+  в identity. Перестановка variants не должна менять результат сопоставления.
+- Workflow success, restore и quality acceptance показывать отдельно у обоих запусков.
+  Missing/partial/unknown нельзя превращать в нули или passed; маленькие ошибки сохранять,
+  exact-match PSNR отображать отдельно от отсутствующей метрики.
+- Для matched-workload сверять replay input/camera-model identities, последовательность кадров,
+  view/output size и measurement/warmup/repeat policy. Не считать frame_set_id или timestamp
+  сами по себе доказательством одинакового content; использовать существующие identity guards.
+- Аппаратные платформы и backend/build показывать раздельно: PC/Aurora сравнение намеренно
+  допускает разные устройства, но требует одинаковой измеряемой работы и явной области
+  подтверждения. Отсутствующие provenance должны давать unverified, а не совместимость.
+- Quality deltas разрешать только для совместимого набора truth/masks/view и определённых
+  metrics; одинакового dataset_id недостаточно. Не смешивать regression и independent truth
+  под одной зелёной отметкой. Не усреднять frame PSNR вместо уже определённой pooled MSE.
+- В первом UI показывать две сводки и причины unmatched/unverified. Ratio/delta доступен только
+  при явно выполненных gates; универсальный winner и causal performance conclusion не выводить.
+- Loading/parsing выполнять вне UI thread; frozen file pair, queued completion, cancel/close
+  и защита от stale results обязательны. Не заменять результаты последнего серверного прогона
+  локальным сравнением. Error не должен оставлять rows/badge от другой пары файлов.
+- Сохранять raw report hashes, policy version и выбранные сопоставления для воспроизведения.
+  Полный bundle, multi-report statistics/CI и автоматическая научная приёмка — отдельные срезы.
+
+```plantuml
+@startuml
+title План следующего среза: контролируемое сравнение report A/B
+actor Исследователь as User
+participant "GUI сравнения" as UI
+participant "C++ comparison worker" as Worker
+database "Report A / Report B" as Files
+User -> UI: Выбрать два отчёта; сравнить
+UI -> Worker: Frozen pair; очистить прежнюю сводку
+Worker -> Files: Bounded read обычных файлов
+Files --> Worker: JSON bytes
+Worker -> Worker: Schema/bounds + raw hashes
+Worker -> Worker: Полные settings и provenance gates
+alt Matched и достаточные данные
+  Worker --> UI: Две сводки + разрешённые deltas
+else Несовместимые или неполные evidence
+  Worker --> UI: Сводки + причины unmatched/unverified
+end
+UI --> User: Раздельные workflow/quality/restore и платформы
+@enduml
+```
+
+*Рисунок RR.13 — планируемое сравнение не подменяет совпадение workloads названием алгоритма.*
+
+Приёмочные tests: reordered variants и разные levels/surfaces; одинаковые IDs при изменённых
+image bytes; разные truth/masks/view; missing/partial metadata; zero/tiny/exact/unavailable
+metrics; malformed/oversize/FIFO input; cancel/close/stale callback; сохранность результата
+прошлого server run. Затем live отчёты одного Linux fixture и отдельный cross-platform report
+после появления целевого устройства. Прежние research/hardware gates этим не закрываются.

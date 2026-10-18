@@ -1,5 +1,9 @@
 # Подробный план реализации
 
+Следующий срез сравнения двух individual reports зафиксирован как проектный контракт
+(не реализованная функция): полные settings, input/truth/view/workload gates, раздельные
+платформы/acceptance, bounded worker и отсутствие stale results. [[architecture/RESEARCH_RUNTIME#Следующий срез: сопоставление двух исследовательских отчётов]].
+
 18.10.2026: сохранение batch-черновика без исполнения реализовано через общий C++
 write_batch_plan/ReportOutput. Выбор нового файла, structural validation, absolute scenario
 paths, SHA256 и O_EXCL защита; source/reference IO и серверных операций нет. Qt UI отмечает
