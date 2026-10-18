@@ -400,3 +400,10 @@ Image digest рассчитан worker по immutable decoded buffer при cach
 файлу после загрузки. Cache reset перечитывает и заново хэширует pixels. Нет новой wire команды,
 нет передачи truth на сервер, нет автоматического hashing реальных камер/socket inputs.
 Формат digest и strict schema2 reference guards: [[engineering/RESEARCH_QUALITY#Schema2: проверка содержимого входов и числовой модели]].
+
+
+Набор носителей в исследовательской форме не вводит новую wire-команду: C++ adapter
+создаёт обычные variants с полным surface, runner использует прежние revision-aware
+`configure_surface`/`configure_fusion` и проверяет metadata кадров. Снимки поступают из
+active `config_read`, доступность типа — из `config_catalog.surface.types`.
+[[architecture/RESEARCH_RUNTIME#Матрица носителей: снимки active, а не черновиков]].

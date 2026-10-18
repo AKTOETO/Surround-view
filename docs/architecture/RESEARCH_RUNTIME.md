@@ -766,3 +766,46 @@ Prepare -> Run: Прежнее исполнение и restore
 ```
 
 *Рисунок RR.16 — нерелевантные оси не создают повторные псевдоварианты.*
+
+## Матрица носителей: снимки active, а не черновиков
+
+Профили формы — полные копии `ConfigurationEditor.activeSurface` из последнего
+ответа `read_configuration`. Редактирование `surface` не меняет снимок active.
+Исследователь применяет геометрию через существующий конфигуратор, обновляет
+active и добавляет профиль в набор. Смена типа не создаёт исследовательский
+профиль автоматически. Копия сохраняет optional support/occlusion параметры.
+
+```plantuml
+@startuml
+title Сбор профилей носителя и выполнение матрицы
+actor Исследователь as User
+participant "Конфигуратор" as Config
+participant "sv-server" as Server
+participant "Форма исследования" as Form
+participant "C++ adapter / runner" as Runner
+User -> Config: Выбрать геометрию и размеры
+Config -> Server: validate / apply / read_configuration
+Server --> Config: active.surface и revision
+User -> Form: Добавить снимок active
+Config --> Form: Копия полного active.surface
+note right of Form: Неприменённый draft не используется
+User -> Form: Повторить для других носителей; запустить
+Form -> Runner: surface_profiles × fusion variants
+Runner -> Runner: Проверить дубликаты, catalog types и лимиты
+loop Варианты в воспроизводимом порядке
+  Runner -> Server: configure_surface + configure_fusion
+  Server --> Runner: Кадр с actual surface / fusion
+  Runner -> Runner: Проверить фактическую геометрию
+end
+Runner -> Server: Восстановить исходные surface / fusion / pause
+Runner --> Form: Отчёт и отдельные карточки вариантов
+@enduml
+```
+
+*Рисунок RR.17 — сбор полных снимков и разворачивание матрицы носителей.*
+
+Снимок active подтверждает принятие геометрии в момент чтения. Он не гарантирует
+совместимость с другой машиной, изменённым vehicle/view или новым состоянием
+сервера. Окончательная семантическая проверка остаётся серверной; ошибка прерывает
+эксперимент с попыткой восстановления. Без набора профилей сохраняется прежняя
+семантика baseline surface. Пустой явно заданный набор и дубликаты недопустимы.

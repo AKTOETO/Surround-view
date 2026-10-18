@@ -1,5 +1,12 @@
 # Состояние прототипа и границы подтверждения
 
+18.10.2026: набор active-профилей носителей в исследовательской форме реализован.
+Полные снимки, независимые от черновика, пересекаются с применимыми fusion variants
+в C++; duplicate/catalog/aggregate guards выполняются до worker/output. Остаются
+матрицы остальных fusion parameters, bundles/multi-recording и независимая
+исследовательская/аппаратная приёмка. [[engineering/RESEARCH_BATCH#Набор носителей в форме]].
+
+
 18.10.2026: GUI матрица fusion parameters реализована для диапазона pyramid levels,
 seam solver comparison и прежних methods/boundary. Применимые axes разворачиваются общим
 C++ expander, лимиты32/10000 и сводка проверяются в C++; snapshot содержит ordinary variants.

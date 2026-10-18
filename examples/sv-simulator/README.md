@@ -163,3 +163,10 @@ I/O details include optional per-camera recovery snapshots: exact failure streak
 
 
 Current and Selected I/O details distinguish checked profile fields from optional Automatic readback (FPS/FOURCC/buffers). Invalid/unsupported readback is unknown and does not imply capture failure. The selected Frame retains its opening snapshot across reconnect. [[engineering/SOURCES#Наблюдаемые свойства автоматического профиля камеры]].
+
+
+В форме исследования можно собирать набор полных active-профилей носителя и пересекать
+его с fusion matrix. Сначала примените геометрию через конфигуратор и обновите active,
+затем добавьте снимок; черновик не используется. Включите набор перед запуском.
+Сценарий сохраняет точные surface в каждом variant, а карточки различаются индексом
+и типом. Подробности: [набор носителей](../../docs/engineering/RESEARCH_BATCH.md#набор-носителей-в-форме).

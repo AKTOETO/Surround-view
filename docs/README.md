@@ -117,3 +117,7 @@ Multilabel server candidate/cost/global-gap controls: [[validation/MULTILABEL_SE
 
 
 Тестовый Aurora RPM с приватным target OpenCV и offline GLM: [[engineering/PRIVATE_DEPENDENCIES]].
+
+
+Матрицы параметров и полные active-профили носителей в форме исследования:
+[[engineering/RESEARCH_BATCH#Набор носителей в форме]].

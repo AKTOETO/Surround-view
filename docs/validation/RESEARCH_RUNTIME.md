@@ -712,3 +712,38 @@ transport85,14с, QML7,06с. Проверены46 PlantUML вставок archit
 проверка, не benchmark: один sample без warmup не подтверждает распределение времени,
 raw metrics качества отсутствуют и verdict не объявлен passed. Носители, прочие параметры,
 independent truth/holdout, Qt5/Аврора и аппаратная приёмка остаются открытыми.
+
+## Набор носителей из active snapshots — 18.10.2026
+
+Форма разворачивает `surface_profiles × applicable fusion variants` в C++ и сохраняет
+обычный scenario schema1. Пустой набор, полный дубликат, неизвестный/неполный профиль,
+отсутствующий в текущем surface catalog тип и превышение общих лимитов блокируют запуск.
+Отсутствие набора сохраняет прежнюю baseline-семантику. Отдельный accessor activeSurface
+не читает mutable draft и очищает доступ при disconnect.
+
+Проверки добавлены к существующим GTest/QML executables:
+
+- независимость active от правок draft и от изменения возвращённой копии;
+- разворачивание нескольких размеров одного типа, стабильный порядок, точные optional
+  support/visibility snapshots без flattening, каталожный guard до worker/output;
+- кнопки добавления, duplicate notice, отключение/повторное включение набора,
+  пустая матрица, неизменность копии при новом active и блокировка при потере catalog;
+- live reference GUI workflow дополнен отдельным запуском формы: plane/bowl/dome/cylinder/cube
+  сначала применяются к реальному серверу, затем читаются через config_read и добавляются
+  кнопкой формы. Тест использует серверный config_catalog.surface, а не список GUI defaults.
+  После сбора исходный носитель восстанавливается, запускаются5 variants edge_feather,
+ 1 frame/0 warmup/1 repeat. Каждый sample.metadata.surface сравнивается с соответствующим
+  scenario variant, inputs — с baseline. После runner отдельно читается state и проверяется
+  исходная поверхность. Выполнение проверено в Unix/TCP/combined harness.
+
+Полная сборка успешна; последовательный Linux CTest **68/68 за157,92с**:
+client_transports87,02с, simulator_configuration_qml7,09с. После добавления отдельной проверки
+вложенных optional snapshots повторная сборка и research unit CTest1/1 успешны;
+финальные Qt research GTest **33/33**. Проверены48 PlantUML вставок architecture/главы3 и `git diff --check`.
+Новые фигуры3.67–3.68 — фактические screenshots native workflow.
+
+Это функциональная проверка, не сравнение качества/производительности. Reference не задан,
+quality остаётся not_requested. Снимок принят на момент чтения; сервер остаётся последним
+валидатором vehicle/view, optional fields и ресурсов. Не подтверждены независимая truth,
+holdout/многокадровая устойчивость, Qt5/Аврора или аппаратная производительность. Набор до
+запуска живёт в памяти окна; bundle import/export не реализован этим срезом.
