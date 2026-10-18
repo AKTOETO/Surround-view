@@ -585,14 +585,14 @@ note over Editor,File: Повторный импорт и исполнение �
 
 *Рисунок RR.12 — сохранение черновика не создаёт исследовательский отчёт или серверную операцию.*
 
-## Следующий срез: сопоставление двух исследовательских отчётов
+## Сопоставление двух исследовательских отчётов
 
-Это **проектный контракт, ещё не реализованная функция**. Предыдущий срез завершил сохранение
-черновика; следующие изменения должны дать C++ application service и отдельную GUI вкладку
-сравнения без запуска Python и без сетевых мутаций. Начальный вход — два individual ExperimentRunner
+Контракт реализован 18.10.2026: общий C++ application service и отдельная GUI вкладка
+сравнения работают без запуска Python и без сетевых мутаций. Реализация и ограничения:
+[[engineering/RESEARCH_REPORTS]]. Следующие правила фиксируют границы этого среза. Начальный вход — два individual ExperimentRunner
 report files; batch.json выбирается через отдельные ID.json, а не исполняется как report.
 
-Предлагаемые правила:
+Правила реализации:
 
 - Чтение ordinary files с явным пределом размера; schema/число variants/samples/типовые bounds
   проверять до передачи компактных rows в QML. Не загружать RGBA payload и не читать произвольные
@@ -612,7 +612,7 @@ report files; batch.json выбирается через отдельные ID.j
 - Quality deltas разрешать только для совместимого набора truth/masks/view и определённых
   metrics; одинакового dataset_id недостаточно. Не смешивать regression и independent truth
   под одной зелёной отметкой. Не усреднять frame PSNR вместо уже определённой pooled MSE.
-- В первом UI показывать две сводки и причины unmatched/unverified. Ratio/delta доступен только
+- В первом UI показывать две сводки и причины unmatched/unverified. Delta доступна только
   при явно выполненных gates; универсальный winner и causal performance conclusion не выводить.
 - Loading/parsing выполнять вне UI thread; frozen file pair, queued completion, cancel/close
   и защита от stale results обязательны. Не заменять результаты последнего серверного прогона
@@ -622,7 +622,7 @@ report files; batch.json выбирается через отдельные ID.j
 
 ```plantuml
 @startuml
-title План следующего среза: контролируемое сравнение report A/B
+title Контролируемое сравнение report A/B
 actor Исследователь as User
 participant "GUI сравнения" as UI
 participant "C++ comparison worker" as Worker
@@ -642,10 +642,10 @@ UI --> User: Раздельные workflow/quality/restore и платформы
 @enduml
 ```
 
-*Рисунок RR.13 — планируемое сравнение не подменяет совпадение workloads названием алгоритма.*
+*Рисунок RR.13 — локальное сравнение не подменяет совпадение workloads названием алгоритма.*
 
-Приёмочные tests: reordered variants и разные levels/surfaces; одинаковые IDs при изменённых
+Приёмочные проверки реализованы: reordered variants и разные levels/surfaces; одинаковые IDs при изменённых
 image bytes; разные truth/masks/view; missing/partial metadata; zero/tiny/exact/unavailable
 metrics; malformed/oversize/FIFO input; cancel/close/stale callback; сохранность результата
-прошлого server run. Затем live отчёты одного Linux fixture и отдельный cross-platform report
-после появления целевого устройства. Прежние research/hardware gates этим не закрываются.
+прошлого server run. Live отчёты одного Linux fixture проверены для Unix/TCP/combined;
+отдельный cross-platform report остаётся после появления целевого устройства. Прежние research/hardware gates этим не закрываются.

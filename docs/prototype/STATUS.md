@@ -1,5 +1,14 @@
 # Состояние прототипа и границы подтверждения
 
+18.10.2026: сравнение двух individual research reports доступно в отдельной вкладке
+sv-simulator и общем C++ service. Полные settings, входы/эталоны/workload проверяются
+до вычисления B−A; worker, cancel, раздельные паспорта и O_EXCL экспорт с raw hashes.
+Это сравнение заявленных данных, не аттестация или научная приёмка. [[engineering/RESEARCH_REPORTS]].
+Проверки: полный Linux CTest68/68 за152,17с; transport79,13с, QML6,97с;
+11 новых common C++ cases,2 Qt model и2 QML cases, live Unix/TCP/combined reports.
+Диаграммы и фактический GUI: §3.59, рисунки3.56–3.57.
+
+
 18.10.2026: сохранение batch-черновика без исполнения реализовано через общий C++
 write_batch_plan/ReportOutput. Выбор нового файла, structural validation, absolute scenario
 paths, SHA256 и O_EXCL защита; source/reference IO и серверных операций нет. Qt UI отмечает

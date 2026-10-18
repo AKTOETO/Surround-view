@@ -1,8 +1,14 @@
 # Подробный план реализации
 
-Следующий срез сравнения двух individual reports зафиксирован как проектный контракт
-(не реализованная функция): полные settings, input/truth/view/workload gates, раздельные
-платформы/acceptance, bounded worker и отсутствие stale results. [[architecture/RESEARCH_RUNTIME#Следующий срез: сопоставление двух исследовательских отчётов]].
+18.10.2026: сравнение двух individual reports реализовано общим C++ service и отдельной
+GUI вкладкой: full-settings matching, guards входов/эталонов/измеряемой работы, два паспорта,
+worker/cancel и экспорт с raw hashes. Ограничения и инструкция: [[engineering/RESEARCH_REPORTS]].
+Проверки: полный Linux CTest68/68 за152,17с; transport79,13с, QML6,97с;
+11 новых common C++ cases,2 Qt model и2 QML cases, live Unix/TCP/combined reports.
+Диаграммы и фактический GUI: §3.59, рисунки3.56–3.57.
+
+Следующие срезы: catalog-driven controls, criteria editor, bundles/multi-recording,
+multi-report statistics и независимые подтверждающие/целевые опыты.
 
 18.10.2026: сохранение batch-черновика без исполнения реализовано через общий C++
 write_batch_plan/ReportOutput. Выбор нового файла, structural validation, absolute scenario

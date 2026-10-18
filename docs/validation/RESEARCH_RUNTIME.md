@@ -567,3 +567,42 @@ checkpoint. Dataset bundling/report comparison и прежние научные/
 client_transports83,47с, simulator_configuration_qml6,92с. Финальный прогон включает обе
 source/destination symlink-identity assertions, а также save/import/execute live QML workflow.
 Сохранение плана не подменяет independent quality/holdout и не квалифицирует Aurora hardware.
+
+## 18.10.2026 — локальное сравнение individual reports
+
+Реализация: общий C++ `report_comparison` + bounded `regular_input`, отдельный Qt
+`ResearchComparison` и вкладка **Сравнение**. Контракт/инструкция:
+[[engineering/RESEARCH_REPORTS]]; процесс — [[architecture/RESEARCH_RUNTIME#Сопоставление двух исследовательских отчётов]].
+
+Новые проверки:
+
+- **11 C++ cases**: перестановка вариантов с remap indices и integer/double view;
+  изменение decoded content при тех же IDs; разные mask hashes и неполные прогоны;
+  другой carrier и дубликаты профилей; duplicate coordinates, negative metrics, batch input;
+  missing metrics/provenance, FIFO/oversize/cancel; source/percentile changes; unknown truth,
+  неверный quality count и sample/baseline mismatch; exact/legacy PSNR; shape/trial index bounds;
+- **2 Qt model cases**: асинхронная фиксированная пара, busy rejection, literal `#`/`%`,
+  SHA256 raw bytes и policy в экспорте, неизменность исходного файла, no-overwrite,
+  очистка после invalid URL/missing file, cancel и destructor/queued completion;
+- **2 QML cases**: offline compare/render/export без сервера/предупреждений и close guard,
+  который отменяет worker и закрывает окно только после queued terminal event;
+- существующий live reference QML workflow расширен сопоставлением реального individual
+  report с `case-2.json` составленного batch. Проверяются matching input/workload/reference
+  claims, одна matched row, MAE delta и экспорт; batch results остаются доступны.
+  Workflow исполняется transport harness для Unix, TCP и combined profiles.
+
+Fixture C++ cases содержит искусственные hashes и не служит исследовательским эталоном.
+Live workflow использует прежний трёхкадровый regression capture, не independent truth.
+Скриншот live GUI — рисунок3.57 в §3.59. Это инженерная регрессия, а не новый fusion benchmark.
+
+Общий transport suite дважды достиг прежнего лимита90с (в том числе при полном прогоне
+67/68 за197,36с). Лимит всей группы увеличен до150с; deadlines дочерних процессов не увеличены.
+Verbose unittest вывод позволяет видеть выполняемый case при повторном timeout. После
+прежних таймаутов оставшихся sv-server/svctl/GUI test процессов не обнаружено.
+Финальная сборка завершена успешно. Полный последовательный Linux CTest **68/68 за152,17с**,
+transport suite79,13с, QML6,97с. Отдельно выполнены11/11 comparison C++ cases и17/17
+research Qt model/draft cases. Проверены40 PlantUML вставок architecture/главы3 и
+`git diff --check`. Повышение лимита само по себе не считалось успешной проверкой.
+
+Qt5/Aurora, реальная cross-platform пара, полная build/OS attestation, revalidation изображений,
+statistics/CI и независимая подтверждающая серия этим срезом не закрываются.

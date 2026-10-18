@@ -193,7 +193,7 @@ warmup/repeats и exclusive report reservation реализованы в общ�
 [[architecture/RESEARCH_RUNTIME#Ограниченные матрицы и фиксированный план испытаний]].
 
 - Явный replay start + decode-cache/sync-history reset реализован через replay_reset_v1 и scenario.reset_replay. Остаются checkpoint/restore предыдущего cursor и отдельная GPU/OS cache policy; не считать cold hardware benchmark.
-- Расширить compiled supervisor на несколько recording, добавить noise streams и полный immutable dataset/config passport. Последовательные сценарии одной записи уже исполняются через `svctl research-batch`: [[engineering/RESEARCH_BATCH]].
+- Расширить compiled supervisor на несколько recording, добавить noise streams и полный immutable dataset/config/build passport (compiler/options/SDK/dependency versions; одного source fingerprint недостаточно). Последовательные сценарии одной записи уже исполняются через `svctl research-batch`: [[engineering/RESEARCH_BATCH]].
   Генерация street/cargo_yard с независимыми scene_seed/mount_seed выполнена; native matched
   screen на4 новых случаях/5 carriers выполнен: [[validation/FAMILY_CARRIER_SCREEN]].
   Decoded replay-image/numeric camera-model identity и strict reference schema2 реализованы;
@@ -203,7 +203,7 @@ warmup/repeats и exclusive report reservation реализованы в общ�
   научно обоснованные критерии/thresholds, natural-object/ghost metrics и подтверждающая серия;
   технический механизм thresholds/all-measured acceptance и CLI scientific rejection уже реализован;
   regression captures не считать independent truth.
-- Реализовать сравнение individual research reports через общий C++ service и отдельный GUI workflow: full-settings matching, input/truth/view/workload gates, раздельные платформы и workflow/quality/restore, bounded worker/cancel и отсутствие stale rows. Проектный контракт: [[architecture/RESEARCH_RUNTIME#Следующий срез: сопоставление двух исследовательских отчётов]]. Добавить bundle export и durable resume/checkpoints.
+- Добавить переносимый bundle export, durable resume/checkpoints и multi-report statistics/CI. Базовое сравнение двух individual reports реализовано: [[engineering/RESEARCH_REPORTS]].
 
 
 ## После validation pilot семейств окружения

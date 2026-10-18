@@ -377,3 +377,8 @@ Qt6 SaveFile dialog использует DontConfirmOverwrite, поскольк�
 Защита записи обеспечивается C++, независимо от поведения диалога. Qt5 wrapper подготовлен
 по существующему шаблону export dialog; отдельная Qt5/Aurora приёмка остаётся открытой.
 Трасса: рисунок RR.12 в [[architecture/RESEARCH_RUNTIME]].
+
+
+Сохранённые individual reports можно сопоставить без сервера во вкладке
+**Исследование → Сравнение**: [[engineering/RESEARCH_REPORTS]]. Для batch выбирайте
+конкретные `ID.json`, а не индекс `batch.json`.
