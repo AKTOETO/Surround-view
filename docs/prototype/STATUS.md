@@ -1,5 +1,13 @@
 # Состояние прототипа и границы подтверждения
 
+18.10.2026: исправлен timing gate сравнения отчётов: observation policy фиксирует
+capture/evaluator/progress-presence и telemetry до/после внутри lease. Policy v2
+не вычисляет timing delta для старых/неподтверждённых либо разных observation profiles;
+исходные метрики и допустимые quality deltas сохраняются. Полный build/runtime passport,
+bundles/multi-report и аппаратная приёмка остаются открытыми.
+[[engineering/RESEARCH_REPORTS#Нагрузка наблюдения и policy v2]].
+
+
 18.10.2026: применимые числовые списки edge width/angle power/smoothness добавлены
 в форму исследования: SpinBox/add/remove, C++ validation/expansion, catalog bounds
 для всех отправляемых чисел, включая defaults. Остались bundles/multi-recording,

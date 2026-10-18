@@ -21,7 +21,7 @@ individual `ExperimentRunner` report schema1: `report.json` отдельного
 | Соответствие вариантов | Полные наблюдённые `fusion` и `surface`, согласованные с заявленным scenario; численные значения сравниваются независимо от JSON integer/double | Только односторонняя строка либо `ambiguous`, без delta |
 | Входы | READY paused replay, четыре использованные камеры; hashes decoded RGB8 и численной модели, calibration ID, timestamp, порядок кадров, view/shape/product | `different_or_unverified` |
 | Полнота | success + restored, полный набор warmup/measured координат, известный quality status | Все вычисляемые deltas отключены |
-| Время | Одинаковые frames/warmup/repeats/seed/reset, фактический порядок полных профилей, native trial-order algorithm и percentile definition, одинаковый source fingerprint; известные backend/vendor/renderer | Нет timing delta |
+| Время | Одинаковые frames/warmup/repeats/seed/reset/capture, подтверждённый observation profile, фактический порядок полных профилей, native trial-order algorithm и percentile definition, одинаковый source fingerprint; известные backend/vendor/renderer | Нет timing delta |
 | Качество | Reference schema2 `masked_rgb8_v1`; одинаковые kind/view/shape/inputs, decoded RGB и mask hashes, число выбранных пикселей; все frames оценены | Нет quality delta |
 
 Поддержаны reference kinds `regression` и `independent_ground_truth`; они не смешиваются.
@@ -66,7 +66,7 @@ Failed quality acceptance видна отдельно: успешное испо
 элементами GUI; модель сравнения сама не имеет доступа к серверу.
 
 **Сохранить сравнение…** создаёт новый JSON schema1 с policy
-`report_claims_comparison_v1`, путями A/B, SHA256 прочитанных raw bytes, паспортами,
+`report_claims_comparison_v2`, путями A/B, SHA256 прочитанных raw bytes, паспортами,
 строками/соответствиями, gates/reasons и ограничением интерпретации. Это audit summary,
 не новый ExperimentRunner report; повторно сравнивать его как исходный report нельзя.
 `ReportOutput` использует `O_EXCL`: существующий файл/ссылку не заменяет. При ошибке
@@ -83,3 +83,67 @@ revalidation hashes по первичным данным и целевая кв�
 добавляется `acceptance_policy_differs`. Raw MAE/RMSE deltas зависят от одинаковых truth/inputs,
 а не от одинаковых thresholds; это не эквивалентность verdict.
 [[engineering/RESEARCH_QUALITY#Критерии конкретного сценария без изменения эталона]].
+
+
+## Нагрузка наблюдения и policy v2
+
+Исправлен допуск сравнения времени: совпадения inputs, trial plan и source fingerprint
+недостаточно, если между render samples выполнялась разная работа. Новые отчёты содержат
+`observation_policy.policy=paused_observation_v1`:
+
+| Поле | Что фиксирует |
+|---|---|
+| frame_digest | SHA256 RGBA каждого trial, включая warmup |
+| capture_frames / capture_consumer | Наличие файлового сохранения; FileExperiment помечает известный consumer `rgba8_files_v1` |
+| quality_evaluation / quality_algorithm | Включение masked_rgb8_v1 evaluator для измерительных samples |
+| progress_callback | Наличие callback прогресса; реализация callback не аттестуется |
+| telemetry_before / telemetry_after | Нормализованные enabled/period_ms/history_capacity сервера внутри lease |
+| telemetry_stable | До/после прочитаны и совпадают |
+
+Runner читает telemetry через существующий config_read, после получения lease и после
+последнего trial перед restore. Он не меняет telemetry и не записывает конфиг.
+Недоступный capability/read/parse не подменяется значением false: остаётся null,
+при ошибке чтения добавляется `observation_error`, а эксперимент может продолжиться.
+Такой отчёт не разрешает timing delta. Два снимка не являются непрерывной аттестацией;
+защита lease запрещает обычный config apply во время исследования.
+
+Произвольный capture callback общего `run` помечается `callback_unverified`.
+Совпадения двух таких строк недостаточно: без известного файлового consumer timing delta
+также недоступна. Capture flag должен быть boolean и совпадать с scenario.capture_frames.
+При отсутствии capture допустим только consumer none. Неизвестная версия/лишние поля,
+невалидные пределы telemetry или нестабильность делают policy неподтверждённой.
+
+Сравнение v2 добавляет `observation_gate`. Для timing delta необходимы совпадающие
+подтверждённые policies, включая progress flag и все три telemetry settings. Если evaluator
+включён, нужны также одинаковые schema2 content-bound reference и effective criteria:
+разное число/набор проверок и разные reference могут менять работу evaluator между samples.
+Разный criteria_source при одинаковых criteria сам по себе не меняет работу evaluator,
+но по-прежнему отображается как acceptance_policy_differs.
+
+При несовпадении добавляются причины observation_workload_differs либо
+quality_evaluation_reference_or_criteria_differ; при пропущенной/непроверенной policy —
+observation_policy_missing_or_unverified. Старые native schema1 reports читаются: исходные
+p50/p95 остаются видны, quality deltas возможны по прежним content/reference guards,
+но timing delta становится `—`. Качество не превращается в passed из-за доступности timing.
+Изменение reference mask теперь блокирует и timing delta, если evaluator был включён.
+
+Это **допуск сравнения заявленной работы**, не доказательство одинакового стенда или
+статистической значимости. Не аттестуются callback implementation, client/server binary
+build, compiler/options/SDK/dependencies, storage/cache/CPU/GPU clocks/thermal, trace I/O
+и сторонняя нагрузка. Сам render_wall не включает полный клиентский capture/evaluator
+latency; flags нужны из-за возможного влияния межкадровой работы на последующие samples.
+Полный build/runtime passport и аппаратная приёмка остаются открытыми.
+
+В GUI паспорта A/B показывают capture/evaluator/progress/telemetry, отдельно отображается
+observation gate. Старый паспорт подписан как неподтверждённый; значения не рисуются нулями.
+Диаграмма: [[architecture/RESEARCH_RUNTIME#Профиль наблюдения и допуск сравнения времени]].
+
+Исходное состояние для restore теперь берётся из ACK успешного experiment_acquire,
+а не отдельного state перед acquire. Поле `initial_state_origin=experiment_acquire_ack_v1`
+фиксирует этот источник. Так снимок соответствует той конфигурации и pause state,
+которые lease сохраняет для восстановления, без отдельного read до acquire.
+Это также проверяется по active lease ID в нативном transport test.
+
+Односессионный server не квалифицирован как multi-client. Проверка acquire snapshot
+не является испытанием конкурентных клиентов; она фиксирует нужную границу снимка
+для дальнейшего расширения server concurrency.

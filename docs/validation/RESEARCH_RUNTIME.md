@@ -787,3 +787,49 @@ benchmark и Qt5/Аврора этим функциональным прогон
 Тест кнопок Repeater использует visual tree QQuickItem, поскольку делегаты не обязаны
 находиться в QObject children формы. Исправлен поиск в тесте; удаление и повторное
 добавление значения подтверждены фактическими clicked handlers.
+
+## Observation policy и acquire snapshot — 18.10.2026
+
+Исправлен допуск сравнения времени: versioned observation profile фиксирует capture
+consumer, evaluator, progress-presence, digest и telemetry before/after внутри lease.
+FileExperiment помечает известный файловый consumer; произвольные callbacks остаются
+неподтверждёнными. Failed read не превращается в telemetry=false: unknown profile
+блокирует только timing comparison. Comparison audit policy повышена до v2, отчёты
+native schema1 сохраняют совместимость чтения. Паспорта GUI показывают observation load.
+
+Restore snapshot теперь берётся из ACK успешного experiment_acquire, а не до acquire.
+Нативные проверки сверяют origin, active lease state и lease ID исходного snapshot,
+а прежние проверки restore fusion/surface/pause/RGBA остаются обязательными.
+
+Проверки:
+
+- четыре новых GTest cases покрывают capture/progress flags, unknown callback consumer,
+  legacy/future/malformed/unstable policy, разные telemetry enabled/period/capacity,
+  evaluator reference/criteria и сохранность raw metrics/допустимых quality deltas;
+- общий comparison subset16/16 и Qt research units36/36 успешны;
+- QML offline comparison проверяет legacy report: timing delta null, исходный p50
+  и quality delta доступны, ошибок binding нет;
+- Unix/TCP harness проверяет capture off, file capture on и evaluator on;
+  в combined profile серверная telemetry включена, в Unix/TCP-only выключена;
+  сравниваются оба telemetry snapshot с исходным конфигом;
+- native GUI comparison проверяет observation gate, progress flag, evaluator и
+  capture consumer, ожидаемый из source scenario, а не заданный тестом предположительно.
+
+Первый полный прогон:67/68 CTest. Новый native GUI assert ошибочно ожидал файловый
+consumer у source scenario с capture=false. Отчёт правильно возвращал consumer none;
+тест исправлен на ожидание из parse_scenario исходного файла. Это ошибка нового
+assert, не потеря capture кадров. Последующая регрессия фиксируется ниже.
+
+Проверены52 PlantUML вставки architecture/главы3; Python harness прошёл py_compile.
+Фигура3.73 — actual native GUI comparison с regression reference; это функциональная
+проверка, не независимая приёмка качества или аппаратный benchmark.
+
+Финальная полная сборка успешна; последовательный Linux CTest **68/68 за156,91с**:
+client_transports87,50с, simulator_configuration_qml7,12с. Проверены config-read policies
+с telemetry on/off, три комбинации capture/evaluator, acquire ACK anchor и прежние
+restore проверки. Native GUI comparison сохраняется и повторно читается без ошибок.
+
+Текущий server односессионный: отдельная многоклиентная гонка не воспроизводилась.
+Привязка initial_state к acquire ACK проверяет границу lease snapshot и устраняет
+зависимость будущего кода от pre-acquire read. Полный build/runtime passport,
+independent truth/holdout и Аврора остаются открытыми.

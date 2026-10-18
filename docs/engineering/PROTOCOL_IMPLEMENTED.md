@@ -414,3 +414,10 @@ active `config_read`, доступность типа — из `config_catalog.s
 через существующий configure_fusion. Catalog guard проверяет edge_width_px,
 angle_power и smoothness_weight каждого варианта, включая неявные defaults.
 [[engineering/RESEARCH_BATCH#Числовые списки параметров fusion]].
+
+
+Профиль наблюдения research runner использует существующий read-only `config_read` внутри
+experiment lease для telemetry before/after; wire-команды не меняются. При недоступном
+чтении эксперимент не выдумывает defaults и не разрешает timing comparison. Новые поля —
+добавление в отчёт native schema1; offline comparison audit использует policy v2.
+[[engineering/RESEARCH_REPORTS#Нагрузка наблюдения и policy v2]].

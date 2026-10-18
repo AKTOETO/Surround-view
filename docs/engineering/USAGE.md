@@ -1535,3 +1535,10 @@ C++ сводка ниже показывает фактическое число
 оси автоматически пересекаются с methods/levels/solvers/carriers; остальные не размножают
 варианты. Отключённая ось использует defaults сценария, а не active сервера.
 [[engineering/RESEARCH_BATCH#Числовые списки параметров fusion]].
+
+
+При сравнении research reports проверяйте новый допуск «Наблюдение» и capture/evaluator/
+progress/telemetry в паспортах A/B. Старый отчёт без observation_policy читается, но разница
+времени недоступна; p50/p95 и подтверждённые quality deltas сохраняются. Для нового профиля
+повторите эксперимент текущим compiled runner, не дописывайте отсутствующие данные вручную.
+[[engineering/RESEARCH_REPORTS#Нагрузка наблюдения и policy v2]].

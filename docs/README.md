@@ -124,3 +124,6 @@ Multilabel server candidate/cost/global-gap controls: [[validation/MULTILABEL_SE
 
 Применимые числовые оси в исследовательской форме и их серверная проверка:
 [[engineering/RESEARCH_BATCH#Числовые списки параметров fusion]].
+
+Профиль наблюдения и исправленный допуск сравнения времени:
+[[engineering/RESEARCH_REPORTS#Нагрузка наблюдения и policy v2]].

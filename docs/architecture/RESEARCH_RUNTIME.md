@@ -846,3 +846,45 @@ Catalog guard проверяет все три фактически переда
 включая defaults. Один глобальный предел32 variants/10000 trials применяется после
 числовых осей, pyramid/solver axes и carrier profiles. Точная таблица применимости и
 диапазоны: [[engineering/RESEARCH_BATCH#Числовые списки параметров fusion]].
+
+## Профиль наблюдения и допуск сравнения времени
+
+Сохранение кадров, подсчёт hash, клиентский evaluator и серверная telemetry могут
+менять работу между render samples. Совпадение порядка trial не подтверждает
+совпадение этой нагрузки. Runner фиксирует версионированный observation profile;
+FileExperiment уточняет известный файловый consumer. Telemetry читается внутри lease
+перед trial и после них; неизвестные или нестабильные данные не разрешают timing delta.
+
+```plantuml
+@startuml
+title Фиксация нагрузки наблюдения и сравнение отчётов
+participant "FileExperiment / runner" as Run
+participant "sv-server" as Server
+participant "Report A/B" as Reports
+participant "Comparison service" as Compare
+Run -> Run: Capture/evaluator/digest profile
+Run -> Server: Acquire lease; config_read
+Server --> Run: Active telemetry before
+Run -> Server: Paused trials
+Server --> Run: Frames + timings
+Run -> Run: Hash / optional evaluator / optional file capture
+Run -> Server: config_read inside lease
+Server --> Run: Active telemetry after
+Run -> Reports: Versioned observation policy + stability claim
+Reports -> Compare: Two reports
+Compare -> Compare: Validate policies and match observation load
+alt Unknown, different, unstable, evaluator reference differs
+  Compare -> Compare: Timing delta = unavailable
+else Same verified observation claims
+  Compare -> Compare: Continue existing input/order/build gates
+end
+@enduml
+```
+
+*Рисунок RR.19 — одинаковые исходники и trial не заменяют сведения о нагрузке наблюдения.*
+
+Исходные fusion/surface/pause фиксируются из successful acquire ACK
+(`initial_state_origin=experiment_acquire_ack_v1`). Предварительный отдельный state read
+для restore больше не используется. ACK содержит то же текущее состояние, которое
+захватывает lease baseline. Это убирает зависимость от интервала read→acquire для будущего
+расширения concurrency; текущий односессионный server не проверен как multi-client.

@@ -2915,3 +2915,113 @@ width12.5, angle power1/2 и smoothness0/0.125. Для каждого sample я�
 Проверены50 PlantUML вставок architecture/главы3; сравнительные screenshots получены
 из реального GUI workflow. Дополнительная QML проверка охватывает нажатие кнопки удаления значения;
 research GTest36/36. Подробности: [[validation/RESEARCH_RUNTIME]].
+
+## 3.65. Допуск сравнения времени с учётом нагрузки наблюдения
+
+При аудите сравнения отчётов обнаружен методический пробел: допуск учитывал порядок
+trial, входы и source fingerprint, но не различал сохранение RGBA и работу evaluator.
+Render wall измеряет отдельную серверную стадию, однако межкадровая клиентская работа
+может влиять на условия последующих измерений. Поэтому доступность разницы времени
+не должна определяться только совпадением названия алгоритма и replay inputs.
+
+В общий C++ runner добавлен `observation_policy` с идентификатором
+`paused_observation_v1`. Он фиксирует SHA256 RGBA каждого trial, capture flag/consumer,
+включение masked RGB evaluator, наличие progress callback и telemetry settings сервера.
+FileExperiment уточняет известный файловый consumer `rgba8_files_v1`; произвольный
+capture callback остаётся неподтверждённым. Телеметрия читается через существующий
+read-only config_read после получения lease и после последнего trial перед restore.
+Нормализуются enabled, period_ms и history_capacity; конфигурация не изменяется.
+
+```plantuml
+@startuml
+title Нагрузка наблюдения как отдельное условие сравнения времени
+participant "Runner / FileExperiment" as Run
+participant "sv-server" as Server
+participant "Отчёт A/B" as Reports
+participant "C++ comparison" as Compare
+participant "GUI паспорт" as UI
+Run -> Run: Capture/evaluator/progress/digest profile
+Run -> Server: Acquire lease; config_read
+Server --> Run: Telemetry before
+loop Paused trials
+  Run -> Server: Configure fusion/surface
+  Server --> Run: Frame + stage timings
+  Run -> Run: SHA256; optional evaluate / capture / progress
+end
+Run -> Server: config_read before restore
+Server --> Run: Telemetry after
+Run -> Reports: Versioned profile; stability
+Reports -> Compare: Две независимые записи
+Compare -> Compare: Observation schema/flags/telemetry checks
+Compare -> Compare: Inputs/order/build/reference/criteria gates
+alt Совместимые заявления о работе и полные samples
+  Compare --> UI: Допустимая разница B-A
+else Нагрузка неизвестна или отличается
+  Compare --> UI: Исходные p50/p95 видны; timing delta отсутствует
+end
+@enduml
+```
+
+*Рисунок3.72 — профиль наблюдения фиксируется отдельно от исходных render timings.*
+
+Формально допуск времени расширен:
+
+\[
+G_t=G_{inputs}\land G_{complete}\land G_{trial}\land G_{source}\land G_{observation}.
+\]
+
+Последний множитель требует известных совпадающих observation profiles. Если evaluator
+включён, дополнительно проверяются одинаковые schema2 reference content/ROI и effective
+criteria: evaluator выполняет metric computation и проверки порогов между samples.
+Равенство criteria_source само по себе не требуется для одинаковой вычислительной работы,
+но разница происхождения criteria остаётся видимой в acceptance_policy_differs.
+Разность \(\Delta t=p50_B-p50_A\) вычисляется только после этого допуска и проверки
+полноты счётчиков строки. Недоступная разность отображается как «—», а не ноль.
+
+| Ситуация | Поведение сравнения policy v2 |
+|---|---|
+| Старый report без observation_policy | Читается; timing delta недоступна |
+| Разные capture flags или неизвестный capture callback | Timing delta недоступна, raw timings сохранены |
+| Разные progress-presence flags | Timing delta недоступна |
+| Telemetry unknown/unstable/разная | Timing delta недоступна |
+| Evaluator включён, разные reference masks/criteria | Timing delta недоступна |
+| Разные criteria, но одинаковые content-bound reference | Raw MAE/RMSE deltas по-прежнему могут быть доступны |
+| Совпадает observation profile | Далее проверяются прежние inputs/order/source/complete gates |
+
+![Паспорт нагрузки в нативном сравнении](figures/implementation/research_observation_comparison.png)
+
+*Рисунок3.73 — сравнение двух отчётов реального сервера. В паспортах видны capture,
+evaluator, progress и telemetry; observation gate отделён от timing/quality gates.
+Источник качества — regression fixture, не независимая ground truth.*
+
+Неполученные telemetry settings не заменяются значениями false/0: соответствующее поле
+остаётся null, при ошибке чтения записывается observation_error. Сбор экспериментальных
+данных может продолжиться, но сравнение времени не получает разрешения. Два снимка —
+не непрерывная аттестация; при штатном исполнении lease запрещает конкурирующий config apply.
+Новый экспорт сравнения помечен `report_claims_comparison_v2`, native report сохраняет
+schema1 с добавленным полем. Существующие отчёты доступны для просмотра и допустимых
+quality comparisons, но недостающие сведения не восстанавливаются предположениями.
+
+Это ограниченная методическая защита, а не performance-приёмка. Совпадение флага progress
+не аттестует реализацию callback; идентификатор файлового consumer не описывает storage
+latency и cache. Не квалифицированы compiler/options/SDK/dependencies, binary identity,
+trace I/O, частоты/thermal, внешняя нагрузка и аппаратная платформа. Source fingerprint
+по-прежнему описывает исходники. Вывод о лучшем алгоритме требует отдельного стендового
+паспорта, достаточной серии и независимого качества, а не одного допущенного delta.
+Контракт: [[engineering/RESEARCH_REPORTS#Нагрузка наблюдения и policy v2]].
+
+В том же аудите уточнена граница исходного restore snapshot: прежний отдельный state
+читался до acquire. Теперь initial_state берётся
+из ACK успешного acquire, включающего active lease ID и текущие fusion/surface/pause.
+Сервер сериализует acquire и формирование ACK в обработке команды; это согласует клиентский
+снимок с серверным lease baseline. В отчёте добавлен origin experiment_acquire_ack_v1,
+нативный тест сверяет active state и lease ID. Отдельный pre-acquire запрос удалён.
+
+Текущий сервер односессионный: этот прогон не воспроизводит многоклиентную гонку.
+Привязка к acquire ACK исключает зависимость от интервала read→acquire при будущем
+расширении concurrency; тест подтверждает согласованный lease snapshot и restore.
+
+Приёмка реализации: полная сборка, Linux CTest68/68 за156,91с, в том числе
+Unix/TCP/combined87,50с и QML7,12с; comparison GTest16/16 и Qt research units36/36.
+Проверены52 PlantUML вставки architecture/главы3. Подробности и первоначальная ошибка
+нового assert описаны в [[validation/RESEARCH_RUNTIME]].

@@ -176,3 +176,8 @@ Current and Selected I/O details distinguish checked profile fields from optiona
 SpinBox, добавление и удаление отдельных значений. Оси учитываются только применимыми
 методами; catalog проверяет и явные значения, и отправляемые defaults сценария.
 [Применимость и пределы](../../docs/engineering/RESEARCH_BATCH.md#числовые-списки-параметров-fusion).
+
+
+Сравнение отчётов использует policy v2 с observation gate: capture/evaluator/progress flag
+и стабильные telemetry settings. Паспорта показывают эту нагрузку; legacy reports остаются
+читаемыми, но не разрешают timing delta. [Контракт и пределы](../../docs/engineering/RESEARCH_REPORTS.md#нагрузка-наблюдения-и-policy-v2).
