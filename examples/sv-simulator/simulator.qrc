@@ -4,6 +4,7 @@
         <file>DriveWorld.qml</file>
         <file>RuntimePanel.qml</file>
         <file>ResearchPanel.qml</file>
+        <file>ResearchCriteriaEditor.qml</file>
         <file>ResearchComparisonPanel.qml</file>
         <file>ResearchBatchEditor.qml</file>
         <file>ResearchCloseGuard.qml</file>

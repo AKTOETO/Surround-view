@@ -16,6 +16,10 @@ The form reads the current session's ConfigService fusion catalog. Known methods
 pyramid boundaries, level ranges and seam solvers are checked in C++ before launching.
 Unsupported selections remain explicit; unavailable or malformed catalogs block form starts.
 Saved scenario/batch workflows retain their existing runner/server validation.
+The **Критерии качества опыта** group optionally replaces the reference manifest's full
+threshold set with explicitly selected MAE/RMSE/PSNR limits. A reference and nonempty set
+are required; the original manifest is unchanged and both policies are recorded in the report.
+Default behavior still inherits the manifest. See docs/engineering/RESEARCH_QUALITY.md.
 The **Сравнение** tab reads two individual native reports offline in a C++ worker, matches
 full settings and gates B−A timing/quality deltas on reported input/workload/reference identities.
 It shows both platform passports and exports an exclusive new audit file with raw SHA256.

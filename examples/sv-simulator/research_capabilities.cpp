@@ -1,4 +1,5 @@
 #include "research_capabilities.hpp"
+#include "research_batch_draft.hpp"
 #include "research_controller.hpp"
 #include "research_draft.hpp"
 #include "scenario.hpp"
@@ -174,11 +175,14 @@ QVariantMap ResearchController::draftCapabilities(const QVariantMap &catalog) co
 }
 
 QString ResearchController::draftCapabilityError(const QVariantMap &values,
-                                                 const QVariantMap &catalog) const
+                                                 const QVariantMap &catalog,
+                                                 const QUrl &reference) const
 {
     try
     {
-        validateResearchCapabilities(researchDraft(values), catalog);
+        validateResearchCapabilities(
+            researchDraft(values, reference.isEmpty() ? QString{} : researchLocalPath(reference)),
+            catalog);
         return {};
     }
     catch (const std::exception &error)
@@ -196,7 +200,9 @@ bool ResearchController::startCatalogDraft(const QVariantMap &values, const QStr
     }
     try
     {
-        validateResearchCapabilities(researchDraft(values), catalog);
+        validateResearchCapabilities(
+            researchDraft(values, reference.isEmpty() ? QString{} : researchLocalPath(reference)),
+            catalog);
         return startDraftWithReference(values, directory, reference);
     }
     catch (const std::exception &error)

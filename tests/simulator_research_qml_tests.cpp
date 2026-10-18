@@ -499,6 +499,8 @@ TEST(SimulatorResearchQml, ReferenceWorkflowRendersMeasuredResults)
                                    std::string(sourceDocument.at("quality_reference").as_string());
             object->setProperty("referenceSource",
                                 QUrl::fromLocalFile(QString::fromStdString(reference.string())));
+            object->findChild<QObject *>("researchOverrideCriteria")->setProperty("checked", true);
+            object->findChild<QObject *>("researchUseMae")->setProperty("checked", true);
             ASSERT_TRUE(object->property("draftIssue").toString().isEmpty())
                 << object->property("draftIssue").toString().toStdString();
             ASSERT_TRUE(
@@ -506,11 +508,13 @@ TEST(SimulatorResearchQml, ReferenceWorkflowRendersMeasuredResults)
             const auto capture = qEnvironmentVariable("SV_RESEARCH_QUALITY_SCREENSHOT");
             if (!capture.isEmpty())
             {
-                window.resize(1040, 1430);
+                window.resize(1040, 1740);
                 QEventLoop paint;
                 QTimer::singleShot(100, &paint, &QEventLoop::quit);
                 paint.exec();
-                ASSERT_TRUE(window.grabWindow().save(capture + ".catalog.png"));
+                const auto formImage = window.grabWindow();
+                ASSERT_TRUE(formImage.save(capture + ".catalog.png"));
+                ASSERT_TRUE(formImage.save(capture + ".criteria.png"));
                 window.resize(1040, 630);
             }
         }
@@ -531,6 +535,18 @@ TEST(SimulatorResearchQml, ReferenceWorkflowRendersMeasuredResults)
         ASSERT_EQ(controller.exitCode(), 0) << controller.status().toStdString();
         EXPECT_EQ(controller.qualityStatus(), "passed");
         EXPECT_EQ(controller.batchMode(), batch);
+        if (mode == 0)
+        {
+            QFile reportFile(controller.reportPath());
+            ASSERT_TRUE(reportFile.open(QIODevice::ReadOnly));
+            const auto report = QJsonDocument::fromJson(reportFile.readAll()).object();
+            const auto reference = report.value("quality_reference").toObject();
+            EXPECT_EQ(reference.value("criteria_source").toString(), "scenario_override_v1");
+            EXPECT_TRUE(reference.contains("manifest_criteria"));
+            EXPECT_EQ(reference.value("criteria").toObject().size(), 1);
+            EXPECT_EQ(reference.value("criteria").toObject().value("max_mae_rgb8").toDouble(), 0);
+            EXPECT_TRUE(report.value("scenario").toObject().contains("quality_criteria"));
+        }
         if (batch)
         {
             ASSERT_EQ(controller.batchRows().size(), 2);
@@ -714,4 +730,49 @@ TEST(SimulatorResearchQml, CatalogChangesKeepUnsupportedSelectionsVisibleAndGate
     EXPECT_TRUE(controller.reportPath().isEmpty());
     EXPECT_TRUE(warnings.messages().isEmpty()) << warnings.messages().join('\n').toStdString();
     item->setParentItem(nullptr);
+}
+
+TEST(SimulatorResearchQml, CriteriaEditorRequiresReferenceAndRetainsExplicitThresholds)
+{
+    QmlWarningCapture warnings;
+    ResearchController controller;
+    controller.setConnection(sv::client::Options{});
+    QQmlApplicationEngine engine;
+    engine.rootContext()->setContextProperty("researchController", &controller);
+    engine.rootContext()->setContextProperty("simulatorQtMajorVersion", QT_VERSION_MAJOR);
+    QQmlComponent component(&engine, QUrl("qrc:/ResearchPanel.qml"));
+    std::unique_ptr<QObject> object(component.create());
+    ASSERT_TRUE(object) << component.errorString().toStdString();
+    object->setProperty("fusionCatalog", capability_fixture::catalog());
+    auto *start = object->findChild<QObject *>("researchStart");
+    auto *choice = object->findChild<QObject *>("researchOverrideCriteria");
+    auto *mae = object->findChild<QObject *>("researchUseMae");
+    auto *editor = object->findChild<QObject *>("researchCriteriaEditor");
+    ASSERT_TRUE(start && choice && mae && editor);
+    EXPECT_TRUE(start->property("enabled").toBool());
+    choice->setProperty("checked", true);
+    EXPECT_FALSE(start->property("enabled").toBool());
+    object->setProperty("referenceSource", QUrl::fromLocalFile("/missing reference # %.json"));
+    EXPECT_FALSE(start->property("enabled").toBool()); // explicit empty override
+    mae->setProperty("checked", true);
+    EXPECT_TRUE(start->property("enabled").toBool()); // IO remains deferred to preflight
+    auto *number = object->findChild<QObject *>("researchMaeLimit");
+    ASSERT_TRUE(number);
+    ASSERT_TRUE(QMetaObject::invokeMethod(number, "edited", Q_ARG(double, .125)));
+    EXPECT_DOUBLE_EQ(editor->property("maeLimit").toDouble(), .125);
+    QVariant form;
+    ASSERT_TRUE(QMetaObject::invokeMethod(object.get(), "draft", Q_RETURN_ARG(QVariant, form)));
+    const auto values = form.value<QJSValue>().toVariant().toMap();
+    EXPECT_EQ(values.value("quality_criteria").toMap().size(), 1);
+    EXPECT_DOUBLE_EQ(values.value("quality_criteria").toMap().value("max_mae_rgb8").toDouble(),
+                     .125);
+    choice->setProperty("checked", false);
+    ASSERT_TRUE(QMetaObject::invokeMethod(object.get(), "draft", Q_RETURN_ARG(QVariant, form)));
+    EXPECT_FALSE(form.value<QJSValue>().toVariant().toMap().contains("quality_criteria"));
+    choice->setProperty("checked", true);
+    EXPECT_DOUBLE_EQ(editor->property("maeLimit").toDouble(), .125);
+    object->setProperty("referenceSource", QUrl{});
+    EXPECT_FALSE(start->property("enabled").toBool());
+    EXPECT_FALSE(controller.busy());
+    EXPECT_TRUE(warnings.messages().isEmpty()) << warnings.messages().join('\n').toStdString();
 }

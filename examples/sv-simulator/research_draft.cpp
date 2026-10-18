@@ -6,13 +6,14 @@
 #include <set>
 #include <stdexcept>
 
-boost::json::object researchDraft(const QVariantMap &values)
+boost::json::object researchDraft(const QVariantMap &values, const QString &reference)
 {
     const auto bytes = QJsonDocument::fromVariant(values).toJson(QJsonDocument::Compact);
     const auto document = sv::parse_json(std::string_view(bytes.constData(), size_t(bytes.size())));
     const auto &form = document.as_object();
-    const std::set<std::string> allowed{"modes", "frames",   "warmup",         "repeats",
-                                        "seed",  "boundary", "pyramid_levels", "seam_solver"};
+    const std::set<std::string> allowed{"modes",          "frames",      "warmup",
+                                        "repeats",        "seed",        "boundary",
+                                        "pyramid_levels", "seam_solver", "quality_criteria"};
     for (const auto &entry : form)
     {
         if (!allowed.count(std::string(entry.key())))
@@ -73,6 +74,14 @@ boost::json::object researchDraft(const QVariantMap &values)
     for (const auto *field : {"frames", "warmup", "repeats", "seed"})
     {
         scenario[field] = form.at(field);
+    }
+    if (!reference.isEmpty())
+    {
+        scenario["quality_reference"] = reference.toStdString();
+    }
+    if (const auto *criteria = form.if_contains("quality_criteria"))
+    {
+        scenario["quality_criteria"] = *criteria;
     }
     (void)sv::research::parse_scenario(scenario);
     return scenario;

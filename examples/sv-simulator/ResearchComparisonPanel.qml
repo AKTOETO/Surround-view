@@ -34,7 +34,7 @@ Column {
         if (!value)
             return "Паспорт ещё не загружен";
 
-        return "workflow=" + value.success + " · restore=" + value.restored + " · quality=" + value.quality_status + " · truth=" + (value.reference_kind || "неизвестно") + " · dataset=" + (value.reference_dataset_id || "неизвестно") + "\n" + (value.backend || "backend неизвестен") + " · " + (value.gl_vendor || "vendor неизвестен") + " · " + (value.gl_renderer || "renderer неизвестен") + "\nsource: " + (value.source_revision || "неизвестно") + " · fingerprint: " + (value.source_fingerprint || "неизвестно");
+        return "workflow=" + value.success + " · restore=" + value.restored + " · quality=" + value.quality_status + " · criteria=" + (value.criteria_source || "unverified") + " [" + (value.criteria ? fields(value.criteria, "").join(", ") : "не заданы") + "] · truth=" + (value.reference_kind || "неизвестно") + " · dataset=" + (value.reference_dataset_id || "неизвестно") + "\n" + (value.backend || "backend неизвестен") + " · " + (value.gl_vendor || "vendor неизвестен") + " · " + (value.gl_renderer || "renderer неизвестен") + "\nsource: " + (value.source_revision || "неизвестно") + " · fingerprint: " + (value.source_fingerprint || "неизвестно");
     }
 
     function fields(object, prefix) {

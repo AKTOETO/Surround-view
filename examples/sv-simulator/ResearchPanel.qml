@@ -9,7 +9,7 @@ Pane {
     property var comparisonController: typeof reportComparisonController !== "undefined" ? reportComparisonController : null
     property var fusionCatalog: typeof configurationEditor !== "undefined" && configurationEditor.ready ? (configurationEditor.catalog.fusion || {}) : ({})
     property var draftCapabilities: controller.draftCapabilities(fusionCatalog)
-    property string draftIssue: controller.draftCapabilityError(draft(), fusionCatalog)
+    property string draftIssue: controller.draftCapabilityError(draft(), fusionCatalog, referenceSource)
     property string selectedBoundary: "both"
     property string selectedSolver: "binary_pairs"
     property var qualityLabels: ({
@@ -52,7 +52,7 @@ Pane {
     }
 
     function draft() {
-        return {
+        var result = {
             "modes": selectedModes,
             "frames": framesCount.value,
             "warmup": warmupCount.value,
@@ -62,6 +62,9 @@ Pane {
             "pyramid_levels": levelsCount.value,
             "seam_solver": selectedSolver
         };
+        if (criteriaEditor.overrideEnabled)
+            result.quality_criteria = criteriaEditor.criteria;
+        return result;
     }
 
     padding: 0
@@ -462,6 +465,12 @@ Pane {
 
                 }
 
+            }
+
+            ResearchCriteriaEditor {
+                id: criteriaEditor
+                width: parent.width
+                visible: planMode.currentIndex === 0
             }
 
             Label {

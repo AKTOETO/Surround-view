@@ -185,11 +185,8 @@ bool ResearchController::startDraftWithReference(const QVariantMap &values,
     }
     try
     {
-        auto document = researchDraft(values);
-        if (!reference.isEmpty())
-        {
-            document["quality_reference"] = researchLocalPath(reference).toStdString();
-        }
+        auto document =
+            researchDraft(values, reference.isEmpty() ? QString{} : researchLocalPath(reference));
         return launch(std::move(document), {}, directory);
     }
     catch (const std::exception &error)
@@ -428,6 +425,12 @@ bool ResearchController::launch(std::optional<boost::json::object> document,
                                          QString::fromStdString(
                                              std::string(identity.at("dataset_id").as_string())))
                                     .arg(identity.at("schema_version").to_number<unsigned>());
+                            if (const auto *origin = identity.if_contains("criteria_source"))
+                            {
+                                referenceInfo +=
+                                    " · criteria: " +
+                                    QString::fromStdString(std::string(origin->as_string()));
+                            }
                         }
                         else
                         {
