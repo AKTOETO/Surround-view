@@ -34,7 +34,12 @@ Column {
         if (!value)
             return "Паспорт ещё не загружен";
 
-        return "workflow=" + value.success + " · restore=" + value.restored + " · quality=" + value.quality_status + " · criteria=" + (value.criteria_source || "unverified") + " [" + (value.criteria ? fields(value.criteria, "").join(", ") : "не заданы") + "] · truth=" + (value.reference_kind || "неизвестно") + " · dataset=" + (value.reference_dataset_id || "неизвестно") + "\n" + (value.backend || "backend неизвестен") + " · " + (value.gl_vendor || "vendor неизвестен") + " · " + (value.gl_renderer || "renderer неизвестен") + "\nsource: " + (value.source_revision || "неизвестно") + " · fingerprint: " + (value.source_fingerprint || "неизвестно");
+        return "workflow=" + value.success + " · restore=" + value.restored + " · quality=" + value.quality_status + " · criteria=" + (value.criteria_source || "unverified") + " [" + (value.criteria ? fields(value.criteria, "").join(", ") : "не заданы") + "] · truth=" + (value.reference_kind || "неизвестно") + " · dataset=" + (value.reference_dataset_id || "неизвестно") + "\n" + (value.backend || "backend неизвестен") + " · " + (value.gl_vendor || "vendor неизвестен") + " · " + (value.gl_renderer || "renderer неизвестен") + "\nsource: " + (value.source_revision || "неизвестно") + " · fingerprint: " + (value.source_fingerprint || "неизвестно") + "\n" + observations(value.observation_policy);
+    }
+
+    function observations(value) {
+        if (!value) return "Нагрузка наблюдения не подтверждена";
+        return "capture=" + value.capture_frames + " (" + value.capture_consumer + ") · evaluator=" + value.quality_evaluation + " · progress=" + value.progress_callback + " · telemetry=" + value.telemetry_before.enabled + " / " + value.telemetry_before.period_ms + " ms / " + value.telemetry_before.history_capacity;
     }
 
     function fields(object, prefix) {
@@ -158,7 +163,7 @@ Column {
         width: parent.width
         wrapMode: Text.Wrap
         visible: panel.comparisonData.rows !== undefined
-        text: "Inputs: " + (panel.comparisonData.inputs || "—") + "\nTimings: " + (panel.comparisonData.timing_gate || "—") + "\nQuality: " + (panel.comparisonData.quality_gate || "—") + "\nПричины: " + (panel.comparisonData.reasons ? panel.comparisonData.reasons.join(", ") : "—")
+        text: "Inputs: " + (panel.comparisonData.inputs || "—") + "\nНаблюдение: " + (panel.comparisonData.observation_gate || "—") + "\nTimings: " + (panel.comparisonData.timing_gate || "—") + "\nQuality: " + (panel.comparisonData.quality_gate || "—") + "\nПричины: " + (panel.comparisonData.reasons ? panel.comparisonData.reasons.join(", ") : "—")
     }
 
     Label {

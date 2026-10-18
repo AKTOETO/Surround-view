@@ -7,6 +7,7 @@
 #include "research_controller.hpp"
 #include "research_draft.hpp"
 #include "research_numeric_workflow.hpp"
+#include "scenario.hpp"
 #include "sv/json.hpp"
 #include <QEventLoop>
 #include <QFile>
@@ -740,6 +741,19 @@ TEST(SimulatorResearchQml, ReferenceWorkflowRendersMeasuredResults)
             const auto result = comparison.result();
             ASSERT_EQ(result.value("inputs").toString(), "matching_claims")
                 << comparison.status().toStdString();
+            EXPECT_EQ(result.value("observation_gate").toString(), "matching_observation_claims");
+            const auto observations =
+                result.value("left").toMap().value("observation_policy").toMap();
+            const auto expectedCapture =
+                sv::research::parse_scenario(
+                    sv::parse_json(sv::research::read_batch_plan(source.toStdString())))
+                    .capture_frames;
+            EXPECT_EQ(observations.value("capture_frames").toBool(), expectedCapture);
+            EXPECT_EQ(observations.value("capture_consumer").toString(),
+                      expectedCapture ? "rgba8_files_v1" : "none");
+            EXPECT_TRUE(observations.value("quality_evaluation").toBool());
+            EXPECT_TRUE(observations.value("progress_callback").toBool());
+            EXPECT_TRUE(observations.value("telemetry_stable").toBool());
             EXPECT_EQ(result.value("timing_gate").toString(), "matching_workload_claims");
             EXPECT_EQ(result.value("quality_gate").toString(), "matching_reference_claims");
             ASSERT_EQ(result.value("rows").toList().size(), 1);

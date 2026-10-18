@@ -57,6 +57,22 @@ TEST(SimulatorComparisonQml, LoadsRunsRendersAndExportsWithoutServerOrWarnings)
     const auto output = QUrl::fromLocalFile(directory.path() + "/comparison.json");
     ASSERT_TRUE(QMetaObject::invokeMethod(dialogs, "saveChosen", Q_ARG(QUrl, output)));
     EXPECT_TRUE(std::filesystem::exists(output.toLocalFile().toStdString()));
+    EXPECT_EQ(model.result().value("observation_gate").toString(), "matching_observation_claims");
+    auto legacy = comparison_fixture::report();
+    legacy.erase("observation_policy");
+    const auto legacyPath = directory.path() + "/legacy.json";
+    std::ofstream(legacyPath.toStdString()) << boost::json::serialize(legacy);
+    object->setProperty("rightFile", QUrl::fromLocalFile(legacyPath));
+    ASSERT_TRUE(QMetaObject::invokeMethod(start, "clicked"));
+    QTimer::singleShot(10000, &loop, &QEventLoop::quit);
+    loop.exec();
+    ASSERT_FALSE(model.busy());
+    EXPECT_EQ(model.result().value("observation_gate").toString(),
+              "different_or_unverified_observation");
+    const auto row = model.result().value("rows").toList().front().toMap();
+    EXPECT_TRUE(row.value("timing_delta_ms").isNull());
+    EXPECT_FALSE(row.value("left").toMap().value("render_p50_ms").isNull());
+    EXPECT_FALSE(row.value("mae_delta").isNull());
     EXPECT_TRUE(warnings.messages().isEmpty()) << warnings.messages().join('\n').toStdString();
     item->setParentItem(nullptr);
 }
