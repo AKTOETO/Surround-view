@@ -1,3 +1,4 @@
+#include "research_capabilities.hpp"
 #include "research_capabilities_fixture.hpp"
 #include "research_controller.hpp"
 #include "research_draft.hpp"
@@ -9,6 +10,7 @@
 #include <QTemporaryDir>
 #include <filesystem>
 #include <gtest/gtest.h>
+#include <map>
 #include <vector>
 
 namespace
@@ -254,4 +256,105 @@ TEST(ResearchGuiMatrix, OptionalCarrierGeometryAndVisibilityAreFrozenWithoutFlat
     {
         EXPECT_EQ(value.as_object().at("surface"), expected);
     }
+}
+
+TEST(ResearchGuiMatrix, NumericAxesExpandOnlyColorParametersActuallyUsedByEachMethod)
+{
+    auto form = capability_fixture::form();
+    form["modes"] = QStringList{"edge_feather",          "angular_feather", "hard_best_angle",
+                                "seam_distance_feather", "graph_cut_seam",  "multi_band",
+                                "graph_cut_multi_band"};
+    form["boundary"] = "zero";
+    form["edge_width_values"] = QVariantList{12., 24.};
+    form["angle_power_values"] = QVariantList{1., 2.};
+    form["smoothness_values"] = QVariantList{0., .125};
+    const auto document = researchDraft(form);
+    const auto &variants = document.at("variants").as_array();
+    ASSERT_EQ(variants.size(), 14U); // 2+4+1+1+2+2+2
+    std::map<std::string, int> counts;
+    for (const auto &value : variants)
+    {
+        const auto &variant = value.as_object();
+        const std::string mode(variant.at("mode").as_string());
+        ++counts[mode];
+        EXPECT_EQ(variant.contains("edge_width_px"),
+                  mode == "edge_feather" || mode == "angular_feather" || mode == "multi_band");
+        EXPECT_EQ(variant.contains("angle_power"), mode == "angular_feather");
+        EXPECT_EQ(variant.contains("smoothness_weight"),
+                  mode == "graph_cut_seam" || mode == "graph_cut_multi_band");
+    }
+    EXPECT_EQ(counts["angular_feather"], 4);
+    EXPECT_EQ(document, researchDraft(form));
+    ResearchController controller;
+    EXPECT_TRUE(controller.draftCapabilityError(form, capability_fixture::catalog()).isEmpty());
+    const auto rows =
+        researchResultRows({{"scenario", document}, {"summaries", boost::json::array{}}});
+    EXPECT_TRUE(rows[0].toMap().value("profile").toString().contains("edge_width_px=12"));
+}
+
+TEST(ResearchGuiMatrix, NumericAxesRejectMalformedValuesAndNarrowedCatalogBeforeWorker)
+{
+    ResearchController controller;
+    controller.setConnection(sv::client::Options{});
+    auto form = capability_fixture::form();
+    form["modes"] = QStringList{"angular_feather"};
+    for (const auto &values : std::vector<QVariantList>{{},
+                                                        {true},
+                                                        {"2"},
+                                                        {0.},
+                                                        {-1.},
+                                                        {4097.},
+                                                        {12., 12.},
+                                                        {1., 2., 3., 4., 5., 6., 7., 8., 9.}})
+    {
+        form["edge_width_values"] = values;
+        EXPECT_ANY_THROW(researchDraft(form));
+    }
+    form["edge_width_values"] = QVariantList{12., 24.};
+    form["angle_power_values"] = QVariantList{1., 2.};
+    auto catalog = capability_fixture::catalog();
+    catalog["edge_width_px"] = QVariantMap{{"exclusive_min", 12}, {"max", 24}};
+    EXPECT_FALSE(controller.draftCapabilityError(form, catalog).isEmpty());
+    catalog["edge_width_px"] = QVariantMap{{"exclusive_min", 0}, {"max", 12}};
+    EXPECT_FALSE(controller.draftCapabilityError(form, catalog).isEmpty());
+    catalog.remove("edge_width_px");
+    QTemporaryDir directory;
+    ASSERT_TRUE(directory.isValid());
+    const auto output = directory.path() + "/result";
+    EXPECT_FALSE(controller.startCatalogDraft(form, output, {}, catalog));
+    EXPECT_FALSE(controller.busy());
+    EXPECT_FALSE(std::filesystem::exists(output.toStdString()));
+    form = capability_fixture::form();
+    form["smoothness_values"] = QVariantList{0., 100.};
+    catalog = capability_fixture::catalog();
+    EXPECT_TRUE(controller.draftCapabilityError(form, catalog).isEmpty());
+    catalog["smoothness_weight"] = QVariantMap{{"min", .01}, {"max", 100}};
+    EXPECT_FALSE(controller.draftCapabilityError(form, catalog).isEmpty());
+    form["smoothness_values"] = QVariantList{101.};
+    EXPECT_ANY_THROW(researchDraft(form));
+    form["smoothness_values"] = QVariantList{0., .1};
+    form["modes"] = QStringList{"graph_cut_multi_band"};
+    form["seam_solvers"] = QStringList{"binary_pairs", "alpha_expansion"};
+    form["pyramid_levels_range"] = QVariantMap{{"from", 1}, {"to", 8}, {"step", 1}};
+    EXPECT_ANY_THROW(researchDraft(form)); // aggregate numeric x pyramid x solver budget
+}
+
+TEST(ResearchGuiMatrix, NumericCatalogChecksImplicitValuesSentToServerAndMatrixDocuments)
+{
+    auto form = capability_fixture::form();
+    form["modes"] = QStringList{"hard_best_angle"};
+    auto catalog = capability_fixture::catalog();
+    catalog["edge_width_px"] = QVariantMap{{"exclusive_min", 0}, {"max", 20}};
+    // Even a non-edge method sends a full FusionSettings struct, including default width24.
+    EXPECT_ANY_THROW(validateResearchCapabilities(researchDraft(form), catalog));
+    catalog = capability_fixture::catalog();
+    const boost::json::object matrix{
+        {"schema_version", 1},
+        {"matrix",
+         boost::json::object{
+             {"axes", boost::json::object{{"mode", boost::json::array{"edge_feather"}},
+                                          {"edge_width_px", boost::json::array{12.5, 24.}}}}}}};
+    EXPECT_NO_THROW(validateResearchCapabilities(matrix, catalog));
+    catalog["edge_width_px"] = QVariantMap{{"exclusive_min", 0}, {"max", 20}};
+    EXPECT_ANY_THROW(validateResearchCapabilities(matrix, catalog));
 }

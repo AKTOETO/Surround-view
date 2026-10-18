@@ -1,4 +1,5 @@
 #include "research_matrix_draft.hpp"
+#include "research_numeric_axes.hpp"
 #include "sv/surface_runtime.hpp"
 #include "trial_plan.hpp"
 #include <set>
@@ -109,6 +110,7 @@ boost::json::array researchFusionVariants(const boost::json::object &form)
         {
             axes["seam_solver"] = seamSolvers;
         }
+        researchNumericAxes(form, mode, axes);
         const auto expanded = sv::research::expand_variant_matrix({{"axes", axes}});
         if (variants.size() + expanded.size() > 32)
         {

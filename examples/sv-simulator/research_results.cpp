@@ -72,6 +72,14 @@ QVariantList researchResultRows(const boost::json::object &report)
             row["surfaceType"] = label(surface->as_object(), "type");
             profile += " · carrier=" + row.value("surfaceType").toString();
         }
+        for (const auto *key : {"edge_width_px", "angle_power", "smoothness_weight"})
+        {
+            if (const auto *value = variant.if_contains(key); value && value->is_number())
+            {
+                profile += " · " + QString::fromLatin1(key) + "=" +
+                           QString::number(value->to_number<double>(), 'g', 12);
+            }
+        }
         row["profile"] = profile;
         if (index < summaries.size())
         {

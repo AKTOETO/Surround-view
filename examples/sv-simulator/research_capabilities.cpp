@@ -2,6 +2,7 @@
 #include "research_batch_draft.hpp"
 #include "research_controller.hpp"
 #include "research_draft.hpp"
+#include "research_numeric_axes.hpp"
 #include "scenario.hpp"
 #include "sv/json.hpp"
 #include <QJsonDocument>
@@ -134,6 +135,8 @@ void validateResearchCapabilities(const boost::json::object &document,
 {
     const auto scenario = sv::research::parse_scenario(document);
     const auto caps = researchCapabilities(fusionCatalog);
+    const auto bytes = QJsonDocument::fromVariant(fusionCatalog).toJson(QJsonDocument::Compact);
+    const auto catalog = sv::parse_json(std::string_view(bytes.constData(), size_t(bytes.size())));
     for (const auto &variant : scenario.variants)
     {
         if (variant.surface)
@@ -146,6 +149,10 @@ void validateResearchCapabilities(const boost::json::object &document,
             }
         }
         const auto &fusion = variant.fusion;
+        validateResearchNumericCatalog({{"edge_width_px", fusion.edge_width_px},
+                                        {"angle_power", fusion.angle_power},
+                                        {"smoothness_weight", fusion.smoothness_weight}},
+                                       catalog.as_object());
         if (!caps.value("modes").toStringList().contains(QString::fromStdString(fusion.mode)))
         {
             throw std::invalid_argument("selected method unavailable in server catalog");

@@ -22,6 +22,7 @@ add_library(sv-simulator-research STATIC
     research_capabilities.cpp research_capabilities.hpp
     research_comparison.cpp research_comparison.hpp
     research_batch_draft.cpp research_batch_draft.hpp
+    research_numeric_axes.cpp research_numeric_axes.hpp
     research_matrix_draft.cpp research_matrix_draft.hpp
     research_draft.cpp research_draft.hpp research_results.cpp research_results.hpp)
 target_include_directories(sv-simulator-research PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})

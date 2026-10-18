@@ -22,7 +22,10 @@ boost::json::object researchDraft(const QVariantMap &values, const QString &refe
                                         "quality_criteria",
                                         "pyramid_levels_range",
                                         "seam_solvers",
-                                        "surface_profiles"};
+                                        "surface_profiles",
+                                        "edge_width_values",
+                                        "angle_power_values",
+                                        "smoothness_values"};
     for (const auto &entry : form)
     {
         if (!allowed.count(std::string(entry.key())))
