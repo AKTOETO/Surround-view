@@ -461,3 +461,11 @@ job/checkpoint. [[engineering/RESEARCH_BATCH#Визуальное составл
 исследования. Импорт не читает references и не доказывает совместимость server recording;
 последующий запуск выполняет прежний полный preflight/reset/apply/render/restore.
 [[engineering/RESEARCH_BATCH#Импорт плана в редактор серии]], рисунок RR.11.
+
+
+Сохранение batch-черновика — локальный C++ write_batch_plan без wire-команд и без запуска
+worker. Builder фиксирует абсолютные scenario paths; общий parser проверяет структуру до
+O_EXCL reservation нового файла. Отмена/ошибка сохраняет UI состав и прежние результаты;
+busy save отклоняется. Последующее исполнение заново проверяет inputs/budgets и использует
+прежние lease/reset/apply/render/restore. См. рисунок RR.12 и
+[[engineering/RESEARCH_BATCH#Сохранение черновика без исполнения]].

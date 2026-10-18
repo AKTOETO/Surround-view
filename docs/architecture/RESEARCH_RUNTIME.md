@@ -551,3 +551,36 @@ note over Editor: Запуск отдельно повторяет полный 
 ```
 
 *Рисунок RR.11 — импорт структуры не запускает исследование и не подменяет полный preflight.*
+
+## Сохранение неисполненного batch-черновика
+
+Сохранение — локальная структурная операция: состав переводится в обычный schema1 plan с
+абсолютными scenario paths, проверяется общим parser и записывается в новый файл через
+ReportOutput/O_EXCL. Оно не читает scenarios/references, не запускает worker и не подключается
+к серверу. Ошибка или отмена сохраняет редактируемый состав; прежний файл не перезаписывается.
+
+```plantuml
+@startuml
+title Сохранение batch-черновика без запуска
+actor Пользователь as User
+participant "ResearchBatchEditor / QML" as Editor
+participant "C++ builder / write_batch_plan" as Writer
+participant "Общий structural parser" as Parser
+database "Новый plan.json" as File
+User -> Editor: Сохранить черновик как…
+Editor -> Writer: Состав + локальный URL файла
+Writer -> Writer: Типы/URL, абсолютные scenario paths
+Writer -> Parser: Проверить весь документ и лимиты
+Parser --> Writer: Структурно валидный план
+Writer -> File: O_EXCL reserve; compact JSON + LF
+alt Файл занят или IO error
+  Writer --> Editor: Ошибка; прежний состав сохранён
+else Успешная запись
+  Writer --> Editor: Путь и SHA256 записанных bytes
+  Editor --> User: Сохранён черновик; полный preflight при запуске
+end
+note over Editor,File: Повторный импорт и исполнение — отдельные действия
+@enduml
+```
+
+*Рисунок RR.12 — сохранение черновика не создаёт исследовательский отчёт или серверную операцию.*

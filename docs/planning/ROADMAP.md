@@ -1,5 +1,13 @@
 # Подробный план реализации
 
+18.10.2026: сохранение batch-черновика без исполнения реализовано через общий C++
+write_batch_plan/ReportOutput. Выбор нового файла, structural validation, absolute scenario
+paths, SHA256 и O_EXCL защита; source/reference IO и серверных операций нет. Qt UI отмечает
+изменения после сохранения; повторный импорт сохраняет порядок/ID/filesystem meaning.
+Остаются report comparison, catalog-driven controls, criterion editor, bundles/multi-recording
+и прежние научные/целевые gates. Полный последовательный Linux CTest68/68 за160,35с; client_transports83,47с, QML6,92с.
+[[engineering/RESEARCH_BATCH#Сохранение черновика без исполнения]], §3.58.
+
 18.10.2026: импорт существующего batch-плана в редактируемый список выполнен. Общий C++
 parser сохраняет ID/порядок, проверяет структуру до замены состава; ошибка/отмена сохраняет
 черновик. Исправлена потеря filesystem meaning при lexical нормализации symlink/.. в file URL;

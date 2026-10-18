@@ -203,7 +203,7 @@ warmup/repeats и exclusive report reservation реализованы в общ�
   научно обоснованные критерии/thresholds, natural-object/ghost metrics и подтверждающая серия;
   технический механизм thresholds/all-measured acceptance и CLI scientific rejection уже реализован;
   regression captures не считать independent truth.
-- Добавить сохранение черновика без запуска, bundle export и сравнение нескольких отчётов; добавить durable resume/checkpoints.
+- Добавить bundle export и сравнение нескольких отчётов; добавить durable resume/checkpoints.
 
 
 ## После validation pilot семейств окружения

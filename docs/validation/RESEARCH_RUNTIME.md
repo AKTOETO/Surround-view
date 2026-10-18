@@ -520,3 +520,50 @@ Targeted research_scenarios/simulator_research_unit/simulator_configuration_qml 
 **CTest68/68 за159,29с**, client_transports82,54с, simulator_configuration_qml6,87с.
 После исправления file URL regression все input/restore/quality и QML проверки прошли;
 изменение алгоритмов сшивки либо новое научное подтверждение этим срезом не заявляются.
+
+## 18.10.2026: сохранение неисполненного batch-черновика
+
+Общий C++ write_batch_plan проверяет структуру до reservation, возвращает SHA256 точных
+compact JSON + LF bytes и пишет новый файл через прежний ReportOutput/O_EXCL. Qt controller
+saveBatch использует общий builder абсолютных file paths, не читает scenarios/references и
+не запускает worker. Busy save отклоняется; прежние reportPath/quality/exitCode не меняются.
+Состав в UI сохраняется при отмене/ошибке. Dirty-state сравнивает текущее представление состава
+с последним сохранённым; внешние изменения файла и scientific equivalence этим не проверяются.
+
+Добавленные проверки:
+
+- C++ common: missing scenarios допустимы для draft, exact bytes/digest/parser roundtrip,
+  неверный поздний ID не создаёт файл; overwrite/hardlink/symlink/dangling symlink отвергаются,
+  исходные bytes сохранены, missing parent не создаётся;
+- Qt controller: save/import без endpoint и without runtime preflight, перенос plan в другой
+  каталог не меняет absolute source identities, literal `#`/`%`, empty/duplicate/remote URL
+  отвергаются до записи, busy save не создаёт файл;
+- filesystem symlink/..: сохраняются identity источника и назначения; запись через
+  link/../saved.json создаёт real/saved.json, а не соседний saved.json;
+- настоящий QML editor: пустую серию сохранить нельзя, Save dialog открывается/отменяется,
+  Qt6 DontConfirmOverwrite установлен; chosen URL сохраняет draft без сервера, повторная
+  запись отказана, файл/состав целы, edit/return-to-saved меняют UI отметку;
+- live QML Unix/TCP/combined: отредактированный batch сохраняется в новый JSON, импортируется
+  обратно и исполняется общим runner с проверкой итогового порядка ID. Новых wire operations нет.
+
+Targeted research_scenarios/simulator_research_unit/simulator_configuration_qml прошли3/3
+за7,01с до добавления двух destination-identity assertions, которые включены в финальный прогон.
+Рисунок3.55 — реальный offline QML save с намеренно отсутствующими source paths, не scientific
+truth и не свидетельство готовности dataset. Воспроизведение screenshot:
+
+```sh
+SV_RESEARCH_SAVE_SCREENSHOT=/tmp/sv-batch-save-ui.png \\
+  ctest --test-dir build -R '^simulator_configuration_qml$' --output-on-failure
+```
+
+Окно показывает сохранение, а не исполнение. Временный файл плана удаляет fixture; изображение
+остаётся по указанному пути. 38 PlantUML blocks архитектурной главы и главы3 прошли -checkonly;
+clang-format и git diff --check прошли. Это Linux/Qt6.11.2 evidence, не Qt5/Aurora/device acceptance.
+O_EXCL защищает прежние файлы; после IO error может остаться новый partial file, не durable
+checkpoint. Dataset bundling/report comparison и прежние научные/целевые gates остаются открытыми.
+
+
+Итоговый полный последовательный Linux прогон с локальными сокетами: **CTest68/68 за160,35с**;
+client_transports83,47с, simulator_configuration_qml6,92с. Финальный прогон включает обе
+source/destination symlink-identity assertions, а также save/import/execute live QML workflow.
+Сохранение плана не подменяет independent quality/holdout и не квалифицирует Aurora hardware.
