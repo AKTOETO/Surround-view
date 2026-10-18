@@ -26,18 +26,8 @@ Pane {
     property bool choosingImport: false
     property url referenceSource: ""
     property var selectedModes: ["multi_band", "graph_cut_multi_band"]
-    property int variantCount: {
-        var count = selectedModes.length;
-        if (selectedBoundary === "both") {
-            if (selectedModes.indexOf("multi_band") !== -1)
-                ++count;
-
-            if (selectedModes.indexOf("graph_cut_multi_band") !== -1)
-                ++count;
-
-        }
-        return count;
-    }
+    property var formSummary: controller.draftSummary(draft(), referenceSource)
+    property int variantCount: formSummary.valid ? formSummary.variants : 0
 
     function changeMode(mode, checked) {
         var values = selectedModes.slice(0);
@@ -62,6 +52,8 @@ Pane {
             "pyramid_levels": levelsCount.value,
             "seam_solver": selectedSolver
         };
+        var axes = matrixEditor.axes;
+        for (var key in axes) result[key] = axes[key];
         if (criteriaEditor.overrideEnabled)
             result.quality_criteria = criteriaEditor.criteria;
         return result;
@@ -395,7 +387,7 @@ Pane {
                         id: levelsCount
 
                         objectName: "researchLevels"
-                        enabled: boundaryChoice.enabled
+                        enabled: boundaryChoice.enabled && !matrixEditor.levelSweepEnabled
 
                         from: 1
                         to: 8
@@ -411,7 +403,7 @@ Pane {
                         id: solverChoice
 
                         objectName: "researchSolver"
-                        enabled: panel.selectedModes.indexOf("graph_cut_seam") !== -1 || panel.selectedModes.indexOf("graph_cut_multi_band") !== -1
+                        enabled: (panel.selectedModes.indexOf("graph_cut_seam") !== -1 || panel.selectedModes.indexOf("graph_cut_multi_band") !== -1) && !matrixEditor.solverSweepEnabled
                         model: panel.draftCapabilities.ready ? panel.draftCapabilities.solvers : ["binary_pairs", "alpha_expansion"]
                         currentIndex: model.indexOf(panel.selectedSolver)
                         displayText: currentIndex === -1 ? panel.selectedSolver + " (недоступно)" : currentText
@@ -421,6 +413,15 @@ Pane {
 
                 }
 
+            }
+
+            ResearchMatrixEditor {
+                id: matrixEditor
+                width: parent.width
+                visible: planMode.currentIndex === 0
+                pyramidSelected: panel.selectedModes.indexOf("multi_band") !== -1 || panel.selectedModes.indexOf("graph_cut_multi_band") !== -1
+                graphSelected: panel.selectedModes.indexOf("graph_cut_seam") !== -1 || panel.selectedModes.indexOf("graph_cut_multi_band") !== -1
+                capabilities: panel.draftCapabilities
             }
 
             GroupBox {
@@ -477,8 +478,9 @@ Pane {
                 width: parent.width
                 wrapMode: Text.Wrap
                 color: "#64d2ff"
+                objectName: "researchVariantSummary"
                 visible: planMode.currentIndex === 0
-                text: panel.variantCount + " вариантов × " + framesCount.value + " кадров × " + (warmupCount.value + repeatCount.value) + " блоков = " + (panel.variantCount * framesCount.value * (warmupCount.value + repeatCount.value)) + " trials (предел 10000). Seed меняет порядок методов, а не сцену."
+                text: panel.formSummary.valid ? panel.formSummary.variants + " вариантов × " + panel.formSummary.frames + " кадров × " + panel.formSummary.blocks + " блоков = " + panel.formSummary.trials + " trials (предел 10000). Seed меняет порядок методов, а не сцену." : "Профиль недопустим: " + panel.formSummary.error
             }
 
             Label {
@@ -604,27 +606,34 @@ Pane {
 
                 delegate: Rectangle {
                     width: panel.width
-                    height: 90
+                    height: resultContent.implicitHeight + 18
                     radius: 6
                     color: "#263244"
 
                     Column {
+                        id: resultContent
                         anchors.fill: parent
                         anchors.margins: 9
                         spacing: 4
 
                         Label {
-                            text: modelData.mode + " / " + modelData.boundary
+                            width: parent.width
+                            wrapMode: Text.Wrap
+                            text: modelData.profile
                             color: "#e2e8f0"
                             font.bold: true
                         }
 
                         Label {
+                            width: parent.width
+                            wrapMode: Text.Wrap
                             text: "Render p50: " + modelData.p50 + " мс  ·  p95: " + modelData.p95 + " мс  ·  n=" + modelData.measured
                             color: "#cbd5e0"
                         }
 
                         Label {
+                            width: parent.width
+                            wrapMode: Text.Wrap
                             text: "MAE RGB8: " + modelData.mae + " · RMSE RGB8: " + modelData.rmse + " · PSNR: " + modelData.psnr + " dB · frames=" + modelData.qualityFrames
                             color: "#cbd5e0"
                         }

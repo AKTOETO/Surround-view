@@ -16,6 +16,10 @@ The form reads the current session's ConfigService fusion catalog. Known methods
 pyramid boundaries, level ranges and seam solvers are checked in C++ before launching.
 Unsupported selections remain explicit; unavailable or malformed catalogs block form starts.
 Saved scenario/batch workflows retain their existing runner/server validation.
+The **Матрица параметров** group sweeps a pyramid-level range and/or both seam solvers.
+The C++ adapter applies axes only to relevant methods and shares the common matrix expander;
+C++ preview enforces the aggregate 32-variant/10000-trial limits. Expanded ordinary scenarios
+remain reusable with svctl. Carrier and other numeric parameter matrices remain future work.
 The **Критерии качества опыта** group optionally replaces the reference manifest's full
 threshold set with explicitly selected MAE/RMSE/PSNR limits. A reference and nonempty set
 are required; the original manifest is unchanged and both policies are recorded in the report.

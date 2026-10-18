@@ -398,7 +398,7 @@ if(BUILD_TESTING AND SV_GTEST_TESTS)
       target_link_libraries(sv-simulator-research-tests PRIVATE sv-simulator-research GTest::gtest)
       add_test(NAME simulator_research_unit COMMAND sv-simulator-research-tests)
       add_executable(sv-simulator-configuration-qml-tests tests/simulator_configuration_qml_tests.cpp
-        tests/simulator_drive_world_qml_tests.cpp tests/simulator_telemetry_qml_tests.cpp tests/simulator_research_qml_tests.cpp tests/simulator_comparison_qml_tests.cpp
+        tests/simulator_drive_world_qml_tests.cpp tests/simulator_telemetry_qml_tests.cpp tests/simulator_research_qml_tests.cpp tests/simulator_comparison_qml_tests.cpp tests/simulator_research_matrix_qml_tests.cpp
         examples/sv-simulator/telemetry_model.cpp examples/sv-simulator/telemetry_metrics.cpp examples/sv-simulator/telemetry_files.cpp examples/sv-simulator/telemetry_model.hpp
         examples/sv-simulator/configuration_editor.hpp examples/sv-simulator/configuration_editor.cpp
         examples/sv-simulator/configuration_draft.cpp examples/sv-simulator/configuration_surface.cpp examples/sv-simulator/configuration_operation.cpp

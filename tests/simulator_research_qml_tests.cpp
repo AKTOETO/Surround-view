@@ -10,12 +10,14 @@
 #include <QFile>
 #include <QImage>
 #include <QJSValue>
+#include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QQuickItem>
 #include <QQuickWindow>
+#include <QSet>
 #include <QTemporaryDir>
 #include <QTimer>
 #include <fstream>
@@ -356,9 +358,9 @@ TEST(SimulatorResearchQml, ReferenceWorkflowRendersMeasuredResults)
     QTemporaryDir retained;
     ASSERT_TRUE(retained.isValid());
     const auto reportA = retained.path() + "/a.json";
-    for (const int mode : {1, 0, 2, 3})
+    for (const int mode : {1, 0, 2, 3, 4})
     {
-        const bool batch = mode >= 2;
+        const bool batch = mode == 2 || mode == 3;
         const auto endpoint =
             sv::parse_json(qEnvironmentVariable("SV_RESEARCH_GUI_ENDPOINT").toStdString())
                 .as_object();
@@ -398,7 +400,8 @@ TEST(SimulatorResearchQml, ReferenceWorkflowRendersMeasuredResults)
         window.show();
         QTemporaryDir directory;
         ASSERT_TRUE(directory.isValid());
-        object->findChild<QObject *>("researchPlanMode")->setProperty("currentIndex", mode);
+        object->findChild<QObject *>("researchPlanMode")
+            ->setProperty("currentIndex", mode == 4 ? 0 : mode);
         if (mode == 2)
         {
             const auto plan = directory.path() + "/batch.json";
@@ -467,7 +470,7 @@ TEST(SimulatorResearchQml, ReferenceWorkflowRendersMeasuredResults)
                 window.resize(1040, 630);
             }
         }
-        else if (mode == 0)
+        else if (mode == 0 || mode == 4)
         {
             QFile native(reportA);
             ASSERT_TRUE(native.open(QIODevice::ReadOnly));
@@ -495,12 +498,28 @@ TEST(SimulatorResearchQml, ReferenceWorkflowRendersMeasuredResults)
                 ->setProperty("value", sourceDocument.at("warmup").to_number<int>());
             object->findChild<QObject *>("researchRepeats")
                 ->setProperty("value", sourceDocument.at("repeats").to_number<int>());
-            const auto reference = std::filesystem::path(source.toStdString()).parent_path() /
-                                   std::string(sourceDocument.at("quality_reference").as_string());
-            object->setProperty("referenceSource",
-                                QUrl::fromLocalFile(QString::fromStdString(reference.string())));
-            object->findChild<QObject *>("researchOverrideCriteria")->setProperty("checked", true);
-            object->findChild<QObject *>("researchUseMae")->setProperty("checked", true);
+            if (mode == 0)
+            {
+                const auto reference =
+                    std::filesystem::path(source.toStdString()).parent_path() /
+                    std::string(sourceDocument.at("quality_reference").as_string());
+                object->setProperty("referenceSource", QUrl::fromLocalFile(QString::fromStdString(
+                                                           reference.string())));
+                object->findChild<QObject *>("researchOverrideCriteria")
+                    ->setProperty("checked", true);
+                object->findChild<QObject *>("researchUseMae")->setProperty("checked", true);
+            }
+            else
+            {
+                object->findChild<QObject *>("researchFrames")->setProperty("value", 1);
+                object->findChild<QObject *>("researchWarmup")->setProperty("value", 0);
+                object->findChild<QObject *>("researchRepeats")->setProperty("value", 1);
+                object->findChild<QObject *>("researchSweepLevels")->setProperty("checked", true);
+                object->findChild<QObject *>("researchLevelFrom")->setProperty("value", 2);
+                object->findChild<QObject *>("researchLevelTo")->setProperty("value", 3);
+                object->findChild<QObject *>("researchSweepSolvers")->setProperty("checked", true);
+                EXPECT_EQ(object->property("variantCount").toInt(), 4);
+            }
             ASSERT_TRUE(object->property("draftIssue").toString().isEmpty())
                 << object->property("draftIssue").toString().toStdString();
             ASSERT_TRUE(
@@ -513,8 +532,15 @@ TEST(SimulatorResearchQml, ReferenceWorkflowRendersMeasuredResults)
                 QTimer::singleShot(100, &paint, &QEventLoop::quit);
                 paint.exec();
                 const auto formImage = window.grabWindow();
-                ASSERT_TRUE(formImage.save(capture + ".catalog.png"));
-                ASSERT_TRUE(formImage.save(capture + ".criteria.png"));
+                if (mode == 4)
+                {
+                    ASSERT_TRUE(formImage.save(capture + ".matrix.png"));
+                }
+                else
+                {
+                    ASSERT_TRUE(formImage.save(capture + ".catalog.png"));
+                    ASSERT_TRUE(formImage.save(capture + ".criteria.png"));
+                }
                 window.resize(1040, 630);
             }
         }
@@ -533,7 +559,7 @@ TEST(SimulatorResearchQml, ReferenceWorkflowRendersMeasuredResults)
         loop.exec();
         ASSERT_FALSE(controller.busy());
         ASSERT_EQ(controller.exitCode(), 0) << controller.status().toStdString();
-        EXPECT_EQ(controller.qualityStatus(), "passed");
+        EXPECT_EQ(controller.qualityStatus(), mode == 4 ? "not_requested" : "passed");
         EXPECT_EQ(controller.batchMode(), batch);
         if (mode == 0)
         {
@@ -547,6 +573,57 @@ TEST(SimulatorResearchQml, ReferenceWorkflowRendersMeasuredResults)
             EXPECT_EQ(reference.value("criteria").toObject().value("max_mae_rgb8").toDouble(), 0);
             EXPECT_TRUE(report.value("scenario").toObject().contains("quality_criteria"));
         }
+        if (mode == 4)
+        {
+            QFile reportFile(controller.reportPath());
+            ASSERT_TRUE(reportFile.open(QIODevice::ReadOnly));
+            const auto report = QJsonDocument::fromJson(reportFile.readAll()).object();
+            const auto variants = report.value("scenario").toObject().value("variants").toArray();
+            ASSERT_EQ(variants.size(), 4);
+            EXPECT_EQ(report.value("samples").toArray().size(), 4);
+            for (const auto &entry : report.value("samples").toArray())
+            {
+                const auto sample = entry.toObject();
+                const int index = sample.value("variant").toInt(-1);
+                ASSERT_GE(index, 0);
+                ASSERT_LT(index, variants.size());
+                const auto declared = variants[index].toObject();
+                const auto metadata = sample.value("metadata").toObject();
+                const auto applied = metadata.value("fusion").toObject();
+                EXPECT_EQ(applied.value("pyramid_levels").toInt(-1),
+                          declared.value("pyramid_levels").toInt());
+                EXPECT_EQ(applied.value("seam_solver").toString("binary_pairs"),
+                          declared.value("seam_solver").toString("binary_pairs"));
+                EXPECT_EQ(applied.value("pyramid_boundary").toString(),
+                          declared.value("pyramid_boundary").toString());
+                EXPECT_EQ(metadata.value("inputs"),
+                          report.value("baseline").toObject().value("inputs"));
+            }
+            EXPECT_FALSE(report.contains("quality_reference"));
+            QSet<QString> profiles;
+            for (const auto &entry : variants)
+            {
+                const auto v = entry.toObject();
+                profiles.insert(QString::number(v.value("pyramid_levels").toInt()) + ":" +
+                                v.value("seam_solver").toString("binary_pairs"));
+            }
+            EXPECT_EQ(profiles, (QSet<QString>{"2:binary_pairs", "2:alpha_expansion",
+                                               "3:binary_pairs", "3:alpha_expansion"}));
+        }
+        if (mode == 4)
+        {
+            QSet<QString> labels;
+            for (const auto &value : controller.rows())
+            {
+                const auto row = value.toMap();
+                EXPECT_TRUE(row.value("profile").toString().contains(
+                    "levels=" + row.value("pyramidLevels").toString()));
+                EXPECT_TRUE(row.value("profile").toString().contains(
+                    "solver=" + row.value("solver").toString()));
+                labels.insert(row.value("profile").toString());
+            }
+            EXPECT_EQ(labels.size(), 4);
+        }
         if (batch)
         {
             ASSERT_EQ(controller.batchRows().size(), 2);
@@ -559,10 +636,17 @@ TEST(SimulatorResearchQml, ReferenceWorkflowRendersMeasuredResults)
         }
         else
         {
-            EXPECT_TRUE(controller.referenceInfo().contains("regression"));
-            ASSERT_EQ(controller.rows().size(), 1);
+            if (mode != 4)
+            {
+                EXPECT_TRUE(controller.referenceInfo().contains("regression"));
+            }
+            ASSERT_EQ(controller.rows().size(), mode == 4 ? 4 : 1);
         }
         object->findChild<QObject *>("researchTabs")->setProperty("currentIndex", 2);
+        if (mode == 4)
+        {
+            window.resize(1040, 1250);
+        }
         QTimer::singleShot(100, &loop, &QEventLoop::quit);
         loop.exec();
         const auto image = window.grabWindow();
@@ -570,9 +654,10 @@ TEST(SimulatorResearchQml, ReferenceWorkflowRendersMeasuredResults)
         const auto screenshot = qEnvironmentVariable("SV_RESEARCH_QUALITY_SCREENSHOT");
         if (!screenshot.isEmpty())
         {
-            ASSERT_TRUE(image.save(mode == 3 ? screenshot + ".composed.png"
-                                   : batch   ? screenshot + ".batch.png"
-                                             : screenshot));
+            ASSERT_TRUE(image.save(mode == 4   ? screenshot + ".matrix-results.png"
+                                   : mode == 3 ? screenshot + ".composed.png"
+                                   : batch     ? screenshot + ".batch.png"
+                                               : screenshot));
         }
         if (mode == 1)
         {
