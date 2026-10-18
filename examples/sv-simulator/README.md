@@ -12,6 +12,10 @@ current draft intact; scenario/reference preflight still runs at execution.
 The **Сохранить черновик как…** button writes a new schema1 plan without a connection or
 scenario/reference IO. It refuses overwrite and tracks edits after saving. Saved absolute paths
 remain valid when the plan file is moved, provided the source files stay in place.
+The form reads the current session's ConfigService fusion catalog. Known methods,
+pyramid boundaries, level ranges and seam solvers are checked in C++ before launching.
+Unsupported selections remain explicit; unavailable or malformed catalogs block form starts.
+Saved scenario/batch workflows retain their existing runner/server validation.
 The **Сравнение** tab reads two individual native reports offline in a C++ worker, matches
 full settings and gates B−A timing/quality deltas on reported input/workload/reference identities.
 It shows both platform passports and exports an exclusive new audit file with raw SHA256.

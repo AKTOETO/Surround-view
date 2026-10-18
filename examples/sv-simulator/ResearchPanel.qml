@@ -7,6 +7,11 @@ Pane {
 
     property var controller: researchController
     property var comparisonController: typeof reportComparisonController !== "undefined" ? reportComparisonController : null
+    property var fusionCatalog: typeof configurationEditor !== "undefined" && configurationEditor.ready ? (configurationEditor.catalog.fusion || {}) : ({})
+    property var draftCapabilities: controller.draftCapabilities(fusionCatalog)
+    property string draftIssue: controller.draftCapabilityError(draft(), fusionCatalog)
+    property string selectedBoundary: "both"
+    property string selectedSolver: "binary_pairs"
     property var qualityLabels: ({
         "not_available": "не проверено",
         "not_requested": "критерии не заданы",
@@ -23,7 +28,7 @@ Pane {
     property var selectedModes: ["multi_band", "graph_cut_multi_band"]
     property int variantCount: {
         var count = selectedModes.length;
-        if (boundaryChoice.currentIndex === 2) {
+        if (selectedBoundary === "both") {
             if (selectedModes.indexOf("multi_band") !== -1)
                 ++count;
 
@@ -53,9 +58,9 @@ Pane {
             "warmup": warmupCount.value,
             "repeats": repeatCount.value,
             "seed": seedValue.value,
-            "boundary": ["zero", "normalized", "both"][boundaryChoice.currentIndex],
+            "boundary": selectedBoundary,
             "pyramid_levels": levelsCount.value,
-            "seam_solver": solverChoice.currentIndex === 0 ? "binary_pairs" : "alpha_expansion"
+            "seam_solver": selectedSolver
         };
     }
 
@@ -244,6 +249,18 @@ Pane {
                 }
             }
 
+            Label {
+                objectName: "researchCapabilityStatus"
+                width: parent.width
+                wrapMode: Text.Wrap
+                visible: planMode.currentIndex === 0
+                color: panel.draftIssue.length ? "#ffcc80" : "#aab8cc"
+                text: "Каталог: " + panel.draftCapabilities.status +
+                      (panel.draftCapabilities.ready && panel.draftCapabilities.levels_min <= panel.draftCapabilities.levels_max ? " · уровни пирамиды " + panel.draftCapabilities.levels_min + "…" + panel.draftCapabilities.levels_max : "") +
+                      (panel.draftIssue.length ? "\nПрофиль не готов: " + panel.draftIssue : "") +
+                      "\nНедоступный выбранный метод нужно снять явно; каталог не резервирует серверные ресурсы."
+            }
+
             GroupBox {
                 visible: planMode.currentIndex === 0
                 title: "Алгоритмы"
@@ -254,11 +271,12 @@ Pane {
                     columns: width > 650 ? 2 : 1
 
                     Repeater {
-                        model: ["edge_feather", "hard_best_angle", "angular_feather", "seam_distance_feather", "graph_cut_seam", "multi_band", "graph_cut_multi_band"]
+                        model: panel.draftCapabilities.known_modes || []
 
                         CheckBox {
                             objectName: "researchMethod_" + modelData
-                            text: modelData
+                            text: modelData + (panel.draftCapabilities.ready && panel.draftCapabilities.modes.indexOf(modelData) === -1 ? " (недоступен)" : "")
+                            enabled: !panel.draftCapabilities.ready || panel.draftCapabilities.modes.indexOf(modelData) !== -1 || checked
                             checked: panel.selectedModes.indexOf(modelData) !== -1
                             onToggled: panel.changeMode(modelData, checked)
                         }
@@ -358,8 +376,11 @@ Pane {
                         id: boundaryChoice
 
                         objectName: "researchBoundary"
-                        model: ["zero", "normalized", "Сравнить обе"]
-                        currentIndex: 2
+                        enabled: panel.selectedModes.indexOf("multi_band") !== -1 || panel.selectedModes.indexOf("graph_cut_multi_band") !== -1
+                        model: panel.draftCapabilities.ready ? panel.draftCapabilities.boundaries : ["zero", "normalized", "both"]
+                        currentIndex: model.indexOf(panel.selectedBoundary)
+                        displayText: currentIndex === -1 ? panel.selectedBoundary + " (недоступно)" : currentText === "both" ? "Сравнить обе" : currentText
+                        onActivated: function(index) { panel.selectedBoundary = model[index]; }
                         Layout.fillWidth: true
                     }
 
@@ -369,6 +390,9 @@ Pane {
 
                     SpinBox {
                         id: levelsCount
+
+                        objectName: "researchLevels"
+                        enabled: boundaryChoice.enabled
 
                         from: 1
                         to: 8
@@ -383,7 +407,12 @@ Pane {
                     ComboBox {
                         id: solverChoice
 
-                        model: ["binary_pairs", "alpha_expansion"]
+                        objectName: "researchSolver"
+                        enabled: panel.selectedModes.indexOf("graph_cut_seam") !== -1 || panel.selectedModes.indexOf("graph_cut_multi_band") !== -1
+                        model: panel.draftCapabilities.ready ? panel.draftCapabilities.solvers : ["binary_pairs", "alpha_expansion"]
+                        currentIndex: model.indexOf(panel.selectedSolver)
+                        displayText: currentIndex === -1 ? panel.selectedSolver + " (недоступно)" : currentText
+                        onActivated: function(index) { panel.selectedSolver = model[index]; }
                         Layout.fillWidth: true
                     }
 
@@ -477,9 +506,9 @@ Pane {
             Button {
                 objectName: "researchStart"
                 text: "Начать исследование"
-                enabled: panel.controller.available && (planMode.currentIndex === 3 ? batchEditor.members.length > 0 : planMode.currentIndex === 2 ? panel.batchSource.toString().length > 0 : planMode.currentIndex === 1 ? panel.scenarioSource.toString().length > 0 : panel.variantCount > 0 && panel.variantCount * framesCount.value * (warmupCount.value + repeatCount.value) <= 10000)
+                enabled: panel.controller.available && (planMode.currentIndex === 3 ? batchEditor.members.length > 0 : planMode.currentIndex === 2 ? panel.batchSource.toString().length > 0 : planMode.currentIndex === 1 ? panel.scenarioSource.toString().length > 0 : panel.draftIssue.length === 0 && panel.variantCount > 0 && panel.variantCount * framesCount.value * (warmupCount.value + repeatCount.value) <= 10000)
                 onClicked: {
-                    if (planMode.currentIndex === 3 ? panel.controller.startBatchDraft(batchEditor.members, outputDirectory.text) : planMode.currentIndex === 2 ? panel.controller.startBatch(panel.batchSource, outputDirectory.text) : planMode.currentIndex === 1 ? panel.controller.startScenario(panel.scenarioSource, outputDirectory.text) : panel.controller.startDraftWithReference(panel.draft(), outputDirectory.text, panel.referenceSource))
+                    if (planMode.currentIndex === 3 ? panel.controller.startBatchDraft(batchEditor.members, outputDirectory.text) : planMode.currentIndex === 2 ? panel.controller.startBatch(panel.batchSource, outputDirectory.text) : planMode.currentIndex === 1 ? panel.controller.startScenario(panel.scenarioSource, outputDirectory.text) : panel.controller.startCatalogDraft(panel.draft(), outputDirectory.text, panel.referenceSource, panel.fusionCatalog))
                         tabs.currentIndex = 1;
 
                 }

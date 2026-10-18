@@ -1,6 +1,7 @@
 #include "batch_plan.hpp"
 #include "qml_warning_capture.hpp"
 #include "research_batch_draft.hpp"
+#include "research_capabilities_fixture.hpp"
 #include "research_comparison.hpp"
 #include "research_controller.hpp"
 #include "research_draft.hpp"
@@ -9,6 +10,8 @@
 #include <QFile>
 #include <QImage>
 #include <QJSValue>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QQuickItem>
@@ -75,6 +78,8 @@ TEST(SimulatorResearchQml, FormEditsGenerateTypedDraftAndTabsRenderWithoutWarnin
     EXPECT_EQ(document.at("variants").as_array().size(), 4U);
     controller.setConnection(sv::client::Options{});
     QCoreApplication::processEvents();
+    EXPECT_FALSE(start->property("enabled").toBool()); // no catalog yet
+    object->setProperty("fusionCatalog", capability_fixture::catalog());
     EXPECT_TRUE(start->property("enabled").toBool());
     auto *loader = object->findChild<QObject *>("researchFilesLoader");
     ASSERT_TRUE(loader);
@@ -351,7 +356,7 @@ TEST(SimulatorResearchQml, ReferenceWorkflowRendersMeasuredResults)
     QTemporaryDir retained;
     ASSERT_TRUE(retained.isValid());
     const auto reportA = retained.path() + "/a.json";
-    for (const int mode : {1, 2, 3})
+    for (const int mode : {1, 0, 2, 3})
     {
         const bool batch = mode >= 2;
         const auto endpoint =
@@ -459,6 +464,53 @@ TEST(SimulatorResearchQml, ReferenceWorkflowRendersMeasuredResults)
                 QTimer::singleShot(100, &paint, &QEventLoop::quit);
                 paint.exec();
                 ASSERT_TRUE(window.grabWindow().save(screenshot + ".editor.png"));
+                window.resize(1040, 630);
+            }
+        }
+        else if (mode == 0)
+        {
+            QFile native(reportA);
+            ASSERT_TRUE(native.open(QIODevice::ReadOnly));
+            const auto catalog = QJsonDocument::fromJson(native.readAll())
+                                     .object()
+                                     .value("catalog")
+                                     .toObject()
+                                     .toVariantMap();
+            object->setProperty("fusionCatalog", catalog);
+            const auto sourceDocument =
+                sv::parse_json(sv::research::read_batch_plan(source.toStdString())).as_object();
+            const auto &variant = sourceDocument.at("variants").as_array()[0].as_object();
+            object->setProperty("selectedModes", QStringList{QString::fromStdString(
+                                                     std::string(variant.at("mode").as_string()))});
+            object->setProperty(
+                "selectedBoundary",
+                QString::fromStdString(std::string(variant.at("pyramid_boundary").as_string())));
+            object->setProperty("selectedSolver", QString::fromStdString(std::string(
+                                                      variant.at("seam_solver").as_string())));
+            object->findChild<QObject *>("researchLevels")
+                ->setProperty("value", variant.at("pyramid_levels").to_number<int>());
+            object->findChild<QObject *>("researchFrames")
+                ->setProperty("value", sourceDocument.at("frames").to_number<int>());
+            object->findChild<QObject *>("researchWarmup")
+                ->setProperty("value", sourceDocument.at("warmup").to_number<int>());
+            object->findChild<QObject *>("researchRepeats")
+                ->setProperty("value", sourceDocument.at("repeats").to_number<int>());
+            const auto reference = std::filesystem::path(source.toStdString()).parent_path() /
+                                   std::string(sourceDocument.at("quality_reference").as_string());
+            object->setProperty("referenceSource",
+                                QUrl::fromLocalFile(QString::fromStdString(reference.string())));
+            ASSERT_TRUE(object->property("draftIssue").toString().isEmpty())
+                << object->property("draftIssue").toString().toStdString();
+            ASSERT_TRUE(
+                object->findChild<QObject *>("researchStart")->property("enabled").toBool());
+            const auto capture = qEnvironmentVariable("SV_RESEARCH_QUALITY_SCREENSHOT");
+            if (!capture.isEmpty())
+            {
+                window.resize(1040, 1430);
+                QEventLoop paint;
+                QTimer::singleShot(100, &paint, &QEventLoop::quit);
+                paint.exec();
+                ASSERT_TRUE(window.grabWindow().save(capture + ".catalog.png"));
                 window.resize(1040, 630);
             }
         }
@@ -588,4 +640,78 @@ TEST(SimulatorResearchQml, CloseWaitsForWorkerCompletionWithoutBlockingEventLoop
     EXPECT_FALSE(guard->property("closeWhenDone").toBool());
     EXPECT_EQ(controller.exitCode(), 3);
     EXPECT_TRUE(warnings.messages().isEmpty()) << warnings.messages().join('\n').toStdString();
+}
+
+TEST(SimulatorResearchQml, CatalogChangesKeepUnsupportedSelectionsVisibleAndGateLaunch)
+{
+    QmlWarningCapture warnings;
+    ResearchController controller;
+    controller.setConnection(sv::client::Options{});
+    QQmlApplicationEngine engine;
+    engine.rootContext()->setContextProperty("researchController", &controller);
+    engine.rootContext()->setContextProperty("simulatorQtMajorVersion", QT_VERSION_MAJOR);
+    QQmlComponent component(&engine, QUrl("qrc:/ResearchPanel.qml"));
+    std::unique_ptr<QObject> object(component.create());
+    ASSERT_TRUE(object) << component.errorString().toStdString();
+    auto *item = qobject_cast<QQuickItem *>(object.get());
+    ASSERT_TRUE(item);
+    QQuickWindow window;
+    window.resize(1080, 1460);
+    window.setColor(QColor("#1a1f2c"));
+    item->setParentItem(window.contentItem());
+    item->setWidth(1040);
+    item->setX(20);
+    item->setY(15);
+    window.show();
+    auto *start = object->findChild<QObject *>("researchStart");
+    ASSERT_TRUE(start);
+    EXPECT_FALSE(start->property("enabled").toBool());
+    auto catalog = capability_fixture::catalog();
+    object->setProperty("fusionCatalog", catalog);
+    EXPECT_TRUE(start->property("enabled").toBool());
+    catalog["pyramid_boundary"] = QStringList{"zero"};
+    object->setProperty("fusionCatalog", catalog);
+    EXPECT_EQ(object->property("selectedBoundary").toString(), "both");
+    EXPECT_FALSE(start->property("enabled").toBool());
+    auto *boundary = object->findChild<QObject *>("researchBoundary");
+    ASSERT_TRUE(boundary);
+    EXPECT_EQ(boundary->property("currentIndex").toInt(), -1);
+    ASSERT_TRUE(QMetaObject::invokeMethod(boundary, "activated", Q_ARG(int, 0)));
+    EXPECT_EQ(object->property("selectedBoundary").toString(), "zero");
+    EXPECT_TRUE(start->property("enabled").toBool());
+    catalog["modes"] = QStringList{"edge_feather", "multi_band"};
+    object->setProperty("fusionCatalog", catalog);
+    EXPECT_FALSE(start->property("enabled").toBool());
+    QCoreApplication::processEvents();
+    auto *unsupported = researchItem(item, "researchMethod_graph_cut_multi_band");
+    ASSERT_TRUE(unsupported);
+    EXPECT_TRUE(unsupported->property("checked").toBool());
+    EXPECT_TRUE(unsupported->property("enabled").toBool()); // permit explicit removal
+    const auto screenshot = qEnvironmentVariable("SV_RESEARCH_CATALOG_SCREENSHOT");
+    if (!screenshot.isEmpty())
+    {
+        QEventLoop paint;
+        QTimer::singleShot(100, &paint, &QEventLoop::quit);
+        paint.exec();
+        ASSERT_TRUE(window.grabWindow().save(screenshot));
+    }
+    unsupported->setProperty("checked", false);
+    ASSERT_TRUE(QMetaObject::invokeMethod(unsupported, "toggled"));
+    EXPECT_TRUE(start->property("enabled").toBool());
+    auto *levels = object->findChild<QObject *>("researchLevels");
+    ASSERT_TRUE(levels);
+    catalog["pyramid_levels"] = QVariantMap{{"min", 5}, {"max", 6}};
+    object->setProperty("fusionCatalog", catalog);
+    EXPECT_EQ(levels->property("value").toInt(), 4); // retain explicit draft
+    EXPECT_FALSE(start->property("enabled").toBool());
+    levels->setProperty("value", 5);
+    EXPECT_TRUE(start->property("enabled").toBool());
+    object->setProperty("fusionCatalog", QVariantMap{}); // reset/disconnect
+    EXPECT_FALSE(start->property("enabled").toBool());
+    EXPECT_EQ(object->property("selectedBoundary").toString(), "zero");
+    EXPECT_EQ(levels->property("value").toInt(), 5);
+    EXPECT_FALSE(controller.busy());
+    EXPECT_TRUE(controller.reportPath().isEmpty());
+    EXPECT_TRUE(warnings.messages().isEmpty()) << warnings.messages().join('\n').toStdString();
+    item->setParentItem(nullptr);
 }
