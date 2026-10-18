@@ -241,3 +241,19 @@ TEST(ResearchComparison, InvalidInputShapeAndTrialOrderCannotPassGuards)
     b.at("samples").as_array()[0].as_object()["trial_index"] = 999;
     EXPECT_ANY_THROW(sv::research::compare_reports(a, b));
 }
+
+TEST(ResearchComparison, DifferentAcceptancePoliciesAreVisibleWithoutChangingRawMetricDeltas)
+{
+    auto a = comparison_fixture::report();
+    a.at("quality_reference").as_object()["criteria"] = boost::json::object{{"max_mae_rgb8", 2}};
+    a.at("quality_reference").as_object()["criteria_source"] = "manifest_v1";
+    auto b = a;
+    b.at("quality_reference").as_object()["criteria"] = boost::json::object{{"max_mae_rgb8", 3}};
+    b.at("quality_reference").as_object()["criteria_source"] = "scenario_override_v1";
+    const auto result = sv::research::compare_reports(a, b);
+    EXPECT_EQ(result.at("quality_gate"), "matching_reference_claims");
+    EXPECT_FALSE(first(result).at("mae_delta").is_null());
+    EXPECT_EQ(result.at("reasons").as_array()[0], "acceptance_policy_differs");
+    EXPECT_NE(result.at("left").as_object().at("criteria"),
+              result.at("right").as_object().at("criteria"));
+}

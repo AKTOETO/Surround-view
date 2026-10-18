@@ -29,7 +29,8 @@ struct FileExperiment::Impl
         scenario = parse_scenario(sv::parse_json(text));
         if (scenario.quality_reference)
         {
-            quality = std::make_shared<QualityReference>(base / *scenario.quality_reference);
+            quality = std::make_shared<QualityReference>(base / *scenario.quality_reference,
+                                                         scenario.quality_criteria);
             quality->validate(scenario);
         }
     }

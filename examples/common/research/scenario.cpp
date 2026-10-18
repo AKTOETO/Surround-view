@@ -48,7 +48,7 @@ Scenario parse_scenario(const boost::json::value &value)
 {
     const auto &object = value.as_object();
     keys(object, {"schema_version", "variants", "matrix", "repeats", "warmup", "seed", "frames",
-                  "capture_frames", "reset_replay", "quality_reference"});
+                  "capture_frames", "reset_replay", "quality_reference", "quality_criteria"});
     if (integer(object.at("schema_version"), 1, 1) != 1)
     {
         throw std::invalid_argument("scenario schema version");
@@ -74,6 +74,14 @@ Scenario parse_scenario(const boost::json::value &value)
             throw std::invalid_argument("invalid quality_reference path");
         }
         result.quality_reference = std::string(path);
+    }
+    if (auto v = object.if_contains("quality_criteria"))
+    {
+        if (!result.quality_reference)
+        {
+            throw std::invalid_argument("quality_criteria requires quality_reference");
+        }
+        result.quality_criteria = parse_quality_criteria(v->as_object());
     }
     if (auto v = object.if_contains("repeats"))
     {

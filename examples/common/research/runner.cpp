@@ -123,6 +123,10 @@ boost::json::object run(const Scenario &scenario, const client::Options &options
     {
         description["quality_reference"] = *scenario.quality_reference;
     }
+    if (scenario.quality_criteria)
+    {
+        description["quality_criteria"] = quality_criteria_json(*scenario.quality_criteria);
+    }
     // Also validate callers that construct Scenario directly (e.g. future GUI).
     (void)parse_scenario(description);
     const auto plan = make_trial_plan(scenario);

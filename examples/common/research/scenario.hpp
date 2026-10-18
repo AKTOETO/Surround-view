@@ -1,4 +1,5 @@
 #pragma once
+#include "quality_criteria.hpp"
 #include "sv/client.hpp"
 #include <atomic>
 #include <functional>
@@ -22,6 +23,7 @@ struct Scenario
     bool capture_frames = false;
     bool reset_replay = false;
     std::optional<std::string> quality_reference;
+    std::optional<QualityCriteria> quality_criteria;
 };
 
 struct Sample

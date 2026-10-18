@@ -11,7 +11,8 @@ class QualityReference
 {
   public:
 
-    explicit QualityReference(const std::filesystem::path &manifest);
+    explicit QualityReference(const std::filesystem::path &manifest,
+                              std::optional<QualityCriteria> criteriaOverride = {});
     ~QualityReference();
     QualityReference(const QualityReference &) = delete;
     QualityReference &operator=(const QualityReference &) = delete;

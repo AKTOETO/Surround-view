@@ -1,3 +1,4 @@
+#include "file_experiment.hpp"
 #include "quality_metrics.hpp"
 #include "quality_reference.hpp"
 #include "sv/frame.hpp"
@@ -6,6 +7,7 @@
 #include <cmath>
 #include <fstream>
 #include <gtest/gtest.h>
+#include <limits>
 
 namespace
 {
@@ -323,4 +325,91 @@ TEST(ResearchQuality, SchemaTwoRequiresImageAndNumericCameraGuards)
         .as_object()["camera_model_sha256"] = "not-a-digest";
     fixture.save();
     EXPECT_ANY_THROW(sv::research::QualityReference{fixture.directory / "reference.json"});
+}
+
+TEST(ResearchQuality, ScenarioCriteriaReplaceManifestWithoutMutatingOrMergingIt)
+{
+    ReferenceFixture fixture;
+    fixture.manifest["criteria"] = boost::json::object{{"max_mae_rgb8", 0}, {"min_psnr_db", 200}};
+    fixture.save();
+    const auto original = boost::json::serialize(fixture.manifest);
+    fixture.frame.payload[0] = 11;
+    const sv::research::Sample sample{0, 0, 0, false, std::make_shared<sv::Message>(fixture.frame)};
+    sv::research::QualityReference inherited(fixture.directory / "reference.json");
+    EXPECT_FALSE(inherited.evaluate(sample).at("acceptance").as_object().at("passed").as_bool());
+    const auto overrideCriteria = sv::research::parse_quality_criteria({{"max_mae_rgb8", 2}});
+    sv::research::QualityReference selected(fixture.directory / "reference.json", overrideCriteria);
+    const auto description = selected.description();
+    EXPECT_EQ(description.at("criteria_source"), "scenario_override_v1");
+    EXPECT_EQ(description.at("manifest_criteria"),
+              sv::research::quality_criteria_json(sv::research::parse_quality_criteria(
+                  fixture.manifest.at("criteria").as_object())));
+    EXPECT_EQ(description.at("manifest_sha256"), inherited.description().at("manifest_sha256"));
+    EXPECT_FALSE(description.at("criteria").as_object().contains("min_psnr_db"));
+    EXPECT_TRUE(selected.evaluate(sample).at("acceptance").as_object().at("passed").as_bool());
+    std::ifstream input(fixture.directory / "reference.json");
+    EXPECT_EQ(std::string(std::istreambuf_iterator<char>(input), {}), original);
+    // Later disk edits cannot change the evaluator's already prepared criteria or pixels.
+    fixture.manifest["criteria"] = boost::json::object{{"max_mae_rgb8", 255}};
+    fixture.save();
+    EXPECT_EQ(selected.description(), description);
+    EXPECT_TRUE(selected.evaluate(sample).at("acceptance").as_object().at("passed").as_bool());
+}
+
+TEST(ResearchQuality, CriteriaOverrideRequiresMatchingScenarioAndRejectsInvalidTypedValues)
+{
+    ReferenceFixture fixture;
+    const auto overrideCriteria = sv::research::parse_quality_criteria({{"max_mae_rgb8", 0}});
+    sv::research::QualityReference selected(fixture.directory / "reference.json", overrideCriteria);
+    sv::research::Scenario scenario;
+    scenario.frames = 1;
+    scenario.reset_replay = true;
+    scenario.variants.push_back({sv::client::FusionSettings{}, {}});
+    EXPECT_ANY_THROW(selected.validate(scenario));
+    scenario.quality_criteria = overrideCriteria;
+    EXPECT_NO_THROW(selected.validate(scenario));
+    scenario.quality_criteria->max_mae_rgb8 = 1;
+    EXPECT_ANY_THROW(selected.validate(scenario));
+    EXPECT_ANY_THROW(sv::research::QualityReference(fixture.directory / "reference.json",
+                                                    sv::research::QualityCriteria{}));
+    auto invalid = overrideCriteria;
+    invalid.max_mae_rgb8 = std::numeric_limits<double>::quiet_NaN();
+    EXPECT_ANY_THROW(sv::research::QualityReference(fixture.directory / "reference.json", invalid));
+    sv::research::QualityReference noCriteria(fixture.directory / "reference.json");
+    EXPECT_EQ(noCriteria.description().at("criteria_source"), "not_requested");
+    fixture.manifest["criteria"] = boost::json::object{{"max_mae_rgb8", 1}};
+    fixture.save();
+    sv::research::QualityReference inherited(fixture.directory / "reference.json");
+    EXPECT_EQ(inherited.description().at("criteria_source"), "manifest_v1");
+}
+
+TEST(ResearchQuality, ScenarioOverridePreflightAndCancellationReportRetainEffectivePolicy)
+{
+    ReferenceFixture fixture;
+    fixture.manifest["criteria"] = boost::json::object{{"max_mae_rgb8", 5}};
+    fixture.save();
+    boost::json::object document{
+        {"schema_version", 1},
+        {"reset_replay", true},
+        {"warmup", 0},
+        {"repeats", 1},
+        {"quality_reference", "reference.json"},
+        {"quality_criteria", boost::json::object{{"max_rmse_rgb8", .000001}}},
+        {"variants", boost::json::array{boost::json::object{{"mode", "edge_feather"}}}}};
+    const auto text = boost::json::serialize(document);
+    sv::research::FileExperiment prepared(text, fixture.directory);
+    document.erase("quality_reference");
+    EXPECT_ANY_THROW(sv::research::parse_scenario(document));
+    prepared.reserve(fixture.directory / "cancelled.json");
+    std::atomic_bool cancel{true};
+    const auto report = prepared.execute(sv::client::Options{}, &cancel);
+    EXPECT_FALSE(report.at("success").as_bool());
+    EXPECT_EQ(report.at("scenario").as_object().at("quality_criteria"),
+              document.at("quality_criteria"));
+    const auto &reference = report.at("quality_reference").as_object();
+    EXPECT_EQ(reference.at("criteria_source"), "scenario_override_v1");
+    EXPECT_EQ(reference.at("manifest_criteria"),
+              sv::research::quality_criteria_json(sv::research::parse_quality_criteria(
+                  fixture.manifest.at("criteria").as_object())));
+    EXPECT_FALSE(reference.at("criteria").as_object().contains("max_mae_rgb8"));
 }

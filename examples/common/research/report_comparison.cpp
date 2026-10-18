@@ -132,9 +132,24 @@ boost::json::object passport(const boost::json::object &report)
             }
         }
     }
+    result["criteria"] = nullptr;
+    result["criteria_source"] = "legacy_unverified";
     if (const auto *reference = report.if_contains("quality_reference");
         reference && reference->is_object())
     {
+        if (const auto *criteria = reference->as_object().if_contains("criteria"))
+        {
+            result["criteria"] =
+                quality_criteria_json(parse_quality_criteria(criteria->as_object()));
+        }
+        if (const auto *origin = reference->as_object().if_contains("criteria_source"))
+        {
+            if (!origin->is_string() || origin->as_string().size() > 128)
+            {
+                throw std::invalid_argument("invalid criteria source");
+            }
+            result["criteria_source"] = *origin;
+        }
         for (const auto *key : {"kind", "dataset_id"})
         {
             if (const auto *value = reference->as_object().if_contains(key))
@@ -319,6 +334,12 @@ boost::json::object compare_reports(const boost::json::object &a, const boost::j
     }
     const bool timings = inputs && complete && timing_policy(a, b, left, right);
     boost::json::array reasons;
+    const auto policyA = passport(a), policyB = passport(b);
+    if (!equal(policyA.at("criteria"), policyB.at("criteria")) ||
+        policyA.at("criteria_source") != policyB.at("criteria_source"))
+    {
+        reasons.push_back("acceptance_policy_differs");
+    }
     if (!complete)
     {
         reasons.push_back("one_or_both_runs_incomplete");

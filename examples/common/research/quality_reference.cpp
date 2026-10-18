@@ -103,9 +103,11 @@ struct QualityReference::Impl
     boost::json::object view, description;
     std::vector<FrameReference> frames;
     std::optional<QualityCriteria> criteria;
+    bool overridden = false;
 };
 
-QualityReference::QualityReference(const std::filesystem::path &manifest)
+QualityReference::QualityReference(const std::filesystem::path &manifest,
+                                   std::optional<QualityCriteria> criteriaOverride)
     : impl_(std::make_unique<Impl>())
 {
     const auto text = read_manifest(manifest);
@@ -117,6 +119,12 @@ QualityReference::QualityReference(const std::filesystem::path &manifest)
     if (const auto *criteria = object.if_contains("criteria"))
     {
         impl_->criteria = parse_quality_criteria(criteria->as_object());
+    }
+    const auto manifestCriteria = impl_->criteria;
+    if (criteriaOverride)
+    {
+        impl_->criteria = parse_quality_criteria(quality_criteria_json(*criteriaOverride));
+        impl_->overridden = true;
     }
     const auto kind = string(object.at("kind"), 64);
     if (kind != "independent_ground_truth" && kind != "regression")
@@ -182,6 +190,15 @@ QualityReference::QualityReference(const std::filesystem::path &manifest)
         {"input_guard", impl_->version == 2
                             ? "decoded RGB8 content and numeric camera model, IDs and timestamps"
                             : "legacy metadata only: calibration IDs and scenario timestamps"}};
+    impl_->description["criteria_source"] = impl_->overridden  ? "scenario_override_v1"
+                                            : manifestCriteria ? "manifest_v1"
+                                                               : "not_requested";
+    if (impl_->overridden)
+    {
+        impl_->description["manifest_criteria"] =
+            manifestCriteria ? boost::json::value(quality_criteria_json(*manifestCriteria))
+                             : boost::json::value();
+    }
     if (impl_->criteria)
     {
         impl_->description["criteria"] = quality_criteria_json(*impl_->criteria);
@@ -272,6 +289,12 @@ const std::optional<QualityCriteria> &QualityReference::criteria() const
 
 void QualityReference::validate(const Scenario &scenario) const
 {
+    if (bool(scenario.quality_criteria) != impl_->overridden ||
+        (scenario.quality_criteria && quality_criteria_json(*scenario.quality_criteria) !=
+                                          quality_criteria_json(*impl_->criteria)))
+    {
+        throw std::invalid_argument("scenario/evaluator criteria override mismatch");
+    }
     if (!scenario.reset_replay || scenario.frames != impl_->frames.size())
     {
         throw std::invalid_argument(
