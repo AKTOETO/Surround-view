@@ -649,3 +649,46 @@ image bytes; разные truth/masks/view; missing/partial metadata; zero/tiny/
 metrics; malformed/oversize/FIFO input; cancel/close/stale callback; сохранность результата
 прошлого server run. Live отчёты одного Linux fixture проверены для Unix/TCP/combined;
 отдельный cross-platform report остаётся после появления целевого устройства. Прежние research/hardware gates этим не закрываются.
+
+## Выбор профиля исследования по каталогу сервера
+
+Реализованный контракт: форма исследования использует уже полученный ConfigurationEditor
+fusion catalog той же сессии. Новый запрос/соединение для UI не создаётся. Клиент показывает
+пересечение известных ему методов с объявлениями сервера; неизвестные enum не включаются
+автоматически. Отсутствующий/ошибочный каталог не разрешает запуск формы. Saved scenarios
+и batch сохраняют прежний общий runner и серверную проверку.
+
+Выбор метода не подменяется при обновлении capabilities: неподдерживаемая отмеченная
+строка остаётся видимой и её можно снять; запуск блокируется до исправления выбора.
+Boundary/solver выбираются по значению, не по индексу. Уровни пирамиды проверяются по
+пересечению клиентских и серверных границ. C++ application validation повторяет проверку
+формы с фиксированным snapshot каталога до filesystem/network действий. Сервер остаётся
+владельцем окончательной проверки; каталог не резервирует backend или конфигурацию.
+
+```plantuml
+@startuml
+title Каталог возможностей и фиксированный выбор исследования
+participant "sv-server" as Server
+participant "sv-client-lib / ConfigurationEditor" as Config
+participant "ResearchPanel" as UI
+participant "C++ draft validation" as Draft
+participant "FileExperiment / runner" as Runner
+Server --> Config: config_catalog текущей сессии
+Config --> UI: fusion catalog либо очистка после disconnect
+UI -> Draft: Пересечение enum/ranges с поддержкой клиента
+Draft --> UI: Доступные методы, границы, причины отказа
+UI -> UI: Сохранить выбранные имена; не заменять недоступные
+actor Исследователь as User
+User -> UI: Запустить форму
+UI -> Draft: Frozen values + catalog snapshot
+alt Неподдерживаемый/неполный профиль
+  Draft --> UI: Ошибка до output/network
+else Профиль допустим по snapshot
+  Draft -> Runner: Обычный scenario
+  Runner -> Server: Прежние lease/apply/frame/restore
+  Server --> Runner: Авторитетный результат проверки/исполнения
+end
+@enduml
+```
+
+*Рисунок RR.14 — каталог ограничивает форму, но не заменяет серверную проверку.*

@@ -1,5 +1,16 @@
 # Состояние прототипа и границы подтверждения
 
+18.10.2026: форма исследования использует fusion catalog текущей сессии ConfigService.
+C++ пересечение methods/boundaries/solvers и диапазона levels, явное сохранение недоступного
+выбора и повторная проверка frozen values/catalog до output/network. Saved scenarios и batch
+сохраняют общий runner и серверную проверку. Документация:
+[[engineering/RESEARCH_BATCH#Каталог возможностей в форме исследования]].
+Полный Linux CTest68/68 за155,01с; transport82,20с, QML6,99с;5 новых Qt/C++ cases,
+QML catalog-change case и live form workflow для Unix/TCP/combined. §3.60, рисунки3.58–3.60.
+
+Остаются carrier/parameter matrices, остальные поля fusion, criteria editor,
+bundles/multi-recording, statistics и прежние научные/целевые gates.
+
 18.10.2026: сравнение двух individual research reports доступно в отдельной вкладке
 sv-simulator и общем C++ service. Полные settings, входы/эталоны/workload проверяются
 до вычисления B−A; worker, cancel, раздельные паспорта и O_EXCL экспорт с raw hashes.

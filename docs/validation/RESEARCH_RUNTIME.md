@@ -606,3 +606,37 @@ research Qt model/draft cases. Проверены40 PlantUML вставок arch
 
 Qt5/Aurora, реальная cross-platform пара, полная build/OS attestation, revalidation изображений,
 statistics/CI и независимая подтверждающая серия этим срезом не закрываются.
+
+## 18.10.2026 — выбор fusion-профиля по серверному каталогу
+
+Форма исследования теперь использует fusion catalog уже подключённого ConfigurationEditor.
+C++ адаптер вычисляет совместимые enum и диапазоны; `startCatalogDraft` повторяет проверку
+до запуска worker/создания output/network. Прежние saved scenario/batch пути не изменены.
+Процесс и ограничения: [[engineering/RESEARCH_BATCH#Каталог возможностей в форме исследования]],
+[[architecture/RESEARCH_RUNTIME#Выбор профиля исследования по каталогу сервера]].
+
+Проверены:
+
+- **5 новых Qt/C++ GTests**: пересечение известных/объявленных methods, unknown enum,
+  отсутствие prerequisites отдельных семейств, single boundary/solver и узкий levels range,
+  missing/malformed/unknown-version каталоги, boolean/fractional/reversed bounds и duplicate enum;
+  неподдерживаемый профиль не создаёт output и не запускает worker, busy не заменяет запуск;
+- **новый QML case**: нет каталога → запуск запрещён; сужение boundary не заменяет `both`,
+  явный выбор исправляет профиль; недоступный отмеченный mode сохраняется и допускает снятие;
+  выход за levels range не меняет число автоматически; reset каталога сохраняет черновик,
+  но блокирует запуск; предупреждения отсутствуют;
+- прежняя QML проверка формы теперь требует каталог даже после задания endpoint;
+- live reference workflow расширен режимом формы: каталог взят из native report того же
+  стенда; graph-cut multiband / zero / alpha-expansion /3 levels,3 frames,1 warmup и2 measured
+  blocks. Запуск/quality acceptance/restore проверяются через реальные Unix/TCP/combined
+  endpoints. Источник truth — прежний regression fixture, не независимый holdout.
+
+Сборка успешна. Полный последовательный Linux CTest **68/68 за155,01с**,
+client_transports82,20с, QML6,99с. Отдельный Qt unit прогон **22/22**, standalone research QML
+**6 passed /1 skipped** (live-only case затем выполнен transport harness).
+Проверены42 PlantUML вставки architecture/главы3 и `git diff --check`.
+
+Рисунки3.59 и3.60 показывают раздельно искусственно суженный каталог для проверки UI
+и форму с native server catalog. Каталог не резервирует ресурсы и не гарантирует исполнение
+при смене состояния; авторитетная серверная проверка сохранена. Этот срез не подтверждает
+Qt5/Аврору, performance переносимость, independent truth или качество нового алгоритма.
