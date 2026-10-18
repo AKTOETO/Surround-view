@@ -11,6 +11,7 @@ class ConfigurationEditor : public QObject
     Q_PROPERTY(QVariantMap telemetry READ telemetry NOTIFY draftChanged)
     Q_PROPERTY(QVariantMap fusion READ fusion NOTIFY draftChanged)
     Q_PROPERTY(QVariantMap surface READ surface NOTIFY draftChanged)
+    Q_PROPERTY(QVariantMap activeSurface READ activeSurface NOTIFY changed)
     Q_PROPERTY(QVariantMap catalog READ catalog NOTIFY changed)
     Q_PROPERTY(QString baseRevision READ baseRevision NOTIFY draftChanged)
     Q_PROPERTY(QString serverRevision READ serverRevision NOTIFY changed)
@@ -46,6 +47,8 @@ class ConfigurationEditor : public QObject
     {
         return surface_;
     }
+
+    QVariantMap activeSurface() const;
 
     QVariantMap catalog() const
     {

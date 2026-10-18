@@ -67,6 +67,11 @@ QVariantList researchResultRows(const boost::json::object &report)
         {
             profile += " · solver=" + solver;
         }
+        if (const auto *surface = variant.if_contains("surface"))
+        {
+            row["surfaceType"] = label(surface->as_object(), "type");
+            profile += " · carrier=" + row.value("surfaceType").toString();
+        }
         row["profile"] = profile;
         if (index < summaries.size())
         {

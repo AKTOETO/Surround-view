@@ -4,4 +4,5 @@
 
 QVariantMap researchCapabilities(const QVariantMap &fusionCatalog);
 void validateResearchCapabilities(const boost::json::object &scenario,
-                                  const QVariantMap &fusionCatalog);
+                                  const QVariantMap &fusionCatalog,
+                                  const QVariantMap &surfaceCatalog = {});

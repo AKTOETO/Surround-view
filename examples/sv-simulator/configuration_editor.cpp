@@ -13,6 +13,16 @@ QVariantMap map(const boost::json::value &value)
 }
 } // namespace
 
+QVariantMap ConfigurationEditor::activeSurface() const
+{
+    if (!ready())
+    {
+        return {};
+    }
+    const auto *surface = snapshot_.active.if_contains("surface");
+    return surface ? map(*surface) : QVariantMap{};
+}
+
 std::shared_ptr<sv::client::Client> ConfigurationEditor::client() const
 {
     const auto result = client_.lock();

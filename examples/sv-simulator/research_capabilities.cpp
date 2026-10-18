@@ -129,12 +129,22 @@ QVariantMap researchCapabilities(const QVariantMap &fusionCatalog)
 }
 
 void validateResearchCapabilities(const boost::json::object &document,
-                                  const QVariantMap &fusionCatalog)
+                                  const QVariantMap &fusionCatalog,
+                                  const QVariantMap &surfaceCatalog)
 {
     const auto scenario = sv::research::parse_scenario(document);
     const auto caps = researchCapabilities(fusionCatalog);
     for (const auto &variant : scenario.variants)
     {
+        if (variant.surface)
+        {
+            const auto type =
+                QString::fromStdString(std::string(variant.surface->at("type").as_string()));
+            if (!surfaceCatalog.value("types").toStringList().contains(type))
+            {
+                throw std::invalid_argument("carrier type unavailable in server catalog");
+            }
+        }
         const auto &fusion = variant.fusion;
         if (!caps.value("modes").toStringList().contains(QString::fromStdString(fusion.mode)))
         {
@@ -175,14 +185,14 @@ QVariantMap ResearchController::draftCapabilities(const QVariantMap &catalog) co
 }
 
 QString ResearchController::draftCapabilityError(const QVariantMap &values,
-                                                 const QVariantMap &catalog,
-                                                 const QUrl &reference) const
+                                                 const QVariantMap &catalog, const QUrl &reference,
+                                                 const QVariantMap &surfaceCatalog) const
 {
     try
     {
         validateResearchCapabilities(
             researchDraft(values, reference.isEmpty() ? QString{} : researchLocalPath(reference)),
-            catalog);
+            catalog, surfaceCatalog);
         return {};
     }
     catch (const std::exception &error)
@@ -192,7 +202,8 @@ QString ResearchController::draftCapabilityError(const QVariantMap &values,
 }
 
 bool ResearchController::startCatalogDraft(const QVariantMap &values, const QString &directory,
-                                           const QUrl &reference, const QVariantMap &catalog)
+                                           const QUrl &reference, const QVariantMap &catalog,
+                                           const QVariantMap &surfaceCatalog)
 {
     if (busy())
     {
@@ -202,7 +213,7 @@ bool ResearchController::startCatalogDraft(const QVariantMap &values, const QStr
     {
         validateResearchCapabilities(
             researchDraft(values, reference.isEmpty() ? QString{} : researchLocalPath(reference)),
-            catalog);
+            catalog, surfaceCatalog);
         return startDraftWithReference(values, directory, reference);
     }
     catch (const std::exception &error)

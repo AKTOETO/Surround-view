@@ -1,4 +1,5 @@
 #include "research_matrix_draft.hpp"
+#include "sv/surface_runtime.hpp"
 #include "trial_plan.hpp"
 #include <set>
 #include <stdexcept>
@@ -119,4 +120,49 @@ boost::json::array researchFusionVariants(const boost::json::object &form)
         }
     }
     return variants;
+}
+
+boost::json::array researchCarrierVariants(const boost::json::array &fusion,
+                                           const boost::json::value &profiles)
+{
+    const auto &surfaces = profiles.as_array();
+    if (surfaces.empty() || surfaces.size() > 32 || fusion.size() > 32 / surfaces.size())
+    {
+        throw std::invalid_argument(
+            "carrier matrix requires 1..32 profiles and at most 32 variants");
+    }
+    const auto descriptors = sv::surface_geometry_fields();
+    boost::json::array unique, result;
+    for (const auto &value : surfaces)
+    {
+        const auto &surface = value.as_object();
+        const auto &type = surface.at("type").as_string();
+        const auto *descriptor = descriptors.if_contains(type);
+        if (!descriptor)
+        {
+            throw std::invalid_argument("unsupported carrier profile type");
+        }
+        for (const auto &required : descriptor->as_object().at("required").as_array())
+        {
+            if (!surface.contains(required.as_string()))
+            {
+                throw std::invalid_argument("incomplete carrier profile");
+            }
+        }
+        for (const auto &prior : unique)
+        {
+            if (prior == value)
+            {
+                throw std::invalid_argument("duplicate carrier profile");
+            }
+        }
+        unique.push_back(value);
+        for (const auto &entry : fusion)
+        {
+            auto variant = entry.as_object();
+            variant["surface"] = surface;
+            result.push_back(std::move(variant));
+        }
+    }
+    return result;
 }

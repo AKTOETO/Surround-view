@@ -535,3 +535,19 @@ TEST(SimulatorConfigurationPersistent, SavesCompleteRuntimeSnapshotThroughClient
     EXPECT_EQ(editor.fusion().value("angle_power").toDouble(), 3.0);
     client->stop();
 }
+
+TEST_F(EditorUnit, ActiveCarrierSnapshotIsIndependentOfDraftAndClearedOnDisconnect)
+{
+    const auto active = editor.activeSurface();
+    ASSERT_EQ(active.value("type").toString(), "rectangular_bowl_v1");
+    ASSERT_TRUE(active.contains("local_support_patch"));
+    editor.setSurfaceType("dome_floor_v1");
+    EXPECT_EQ(editor.surface().value("type").toString(), "dome_floor_v1");
+    EXPECT_EQ(editor.activeSurface(), active);
+    auto copy = editor.activeSurface();
+    copy["corner_height_m"] = 9.;
+    EXPECT_EQ(editor.activeSurface(), active);
+    editor.disconnected();
+    EXPECT_TRUE(editor.activeSurface().isEmpty());
+    EXPECT_EQ(active.value("corner_height_m").toDouble(), 1.5);
+}

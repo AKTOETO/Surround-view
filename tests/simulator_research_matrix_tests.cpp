@@ -3,6 +3,8 @@
 #include "research_draft.hpp"
 #include "research_results.hpp"
 #include "scenario.hpp"
+#include "sv/surface_runtime.hpp"
+#include <QJsonDocument>
 #include <QSet>
 #include <QTemporaryDir>
 #include <filesystem>
@@ -154,4 +156,102 @@ TEST(ResearchGuiMatrix, ResultLabelsIdentifyTheSweptLevelsAndSolvers)
         labels.insert(row.value("profile").toString());
     }
     EXPECT_EQ(labels.size(), 4);
+}
+
+TEST(ResearchGuiMatrix, CarrierProfilesCrossFusionAndPreserveCompleteSnapshots)
+{
+    const QVariantMap dome{{"type", "dome_floor_v1"},
+                           {"dome_radius_m", 14.},
+                           {"dome_latitude_cells", 14},
+                           {"dome_longitude_cells", 64},
+                           {"floor_radial_cells", 12}};
+    auto second = dome;
+    second["dome_radius_m"] = 15.;
+    auto values = capability_fixture::form();
+    values["surface_profiles"] = QVariantList{dome, second};
+    const auto document = researchDraft(values);
+    const auto &variants = document.at("variants").as_array();
+    ASSERT_EQ(variants.size(), 8U);
+    for (size_t i = 0; i < variants.size(); ++i)
+    {
+        const auto &surface = variants[i].as_object().at("surface").as_object();
+        EXPECT_EQ(surface.at("type"), "dome_floor_v1");
+        EXPECT_DOUBLE_EQ(surface.at("dome_radius_m").to_number<double>(), i < 4 ? 14. : 15.);
+    }
+    ResearchController controller;
+    EXPECT_FALSE(controller.draftCapabilityError(values, capability_fixture::catalog()).isEmpty());
+    controller.setConnection(sv::client::Options{});
+    QTemporaryDir outputRoot;
+    ASSERT_TRUE(outputRoot.isValid());
+    const auto output = outputRoot.path() + "/must-not-exist";
+    EXPECT_FALSE(controller.startCatalogDraft(values, output, {}, capability_fixture::catalog()));
+    EXPECT_FALSE(controller.busy());
+    EXPECT_FALSE(std::filesystem::exists(output.toStdString()));
+    QVariantMap catalog{{"types", QStringList{"dome_floor_v1"}}};
+    EXPECT_TRUE(controller.draftCapabilityError(values, capability_fixture::catalog(), {}, catalog)
+                    .isEmpty());
+    catalog["types"] = QStringList{"cube_floor_v1"};
+    EXPECT_FALSE(controller.draftCapabilityError(values, capability_fixture::catalog(), {}, catalog)
+                     .isEmpty());
+    const auto rows =
+        researchResultRows({{"scenario", document}, {"summaries", boost::json::array{}}});
+    QSet<QString> labels;
+    for (const auto &value : rows)
+    {
+        const auto row = value.toMap();
+        EXPECT_EQ(row.value("surfaceType").toString(), "dome_floor_v1");
+        labels.insert(row.value("profile").toString());
+    }
+    EXPECT_EQ(labels.size(), 8);
+    values["surface_profiles"] = QVariantList{dome, dome};
+    EXPECT_ANY_THROW(researchDraft(values));
+    values["surface_profiles"] = QVariantList{};
+    EXPECT_ANY_THROW(researchDraft(values));
+    auto missing = dome;
+    missing.remove("floor_radial_cells");
+    values["surface_profiles"] = QVariantList{missing};
+    EXPECT_ANY_THROW(researchDraft(values));
+    missing = dome;
+    missing["type"] = "unknown";
+    values["surface_profiles"] = QVariantList{missing};
+    EXPECT_ANY_THROW(researchDraft(values));
+    values = matrixForm();
+    values["modes"] = QStringList{"graph_cut_multi_band"};
+    values["pyramid_levels_range"] = QVariantMap{{"from", 1}, {"to", 8}, {"step", 1}};
+    values["surface_profiles"] = QVariantList{dome, second};
+    EXPECT_ANY_THROW(researchDraft(values)); // 32 fusion variants times two carriers
+}
+
+TEST(ResearchGuiMatrix, OptionalCarrierGeometryAndVisibilityAreFrozenWithoutFlattening)
+{
+    const QVariantMap surface{
+        {"type", "rectangular_bowl_v1"},
+        {"flat_half_length_m", 2.6},
+        {"flat_half_width_m", 1.2},
+        {"outer_half_length_m", 14.},
+        {"outer_half_width_m", 14.},
+        {"corner_height_m", 1.5},
+        {"uniform_cells", QVariantList{32, 45}},
+        {"reference_height_m", .125},
+        {"local_support_patch", QVariantMap{{"center_x_m", 5.},
+                                            {"center_y_m", 0.},
+                                            {"half_length_m", 1.},
+                                            {"half_width_m", 1.},
+                                            {"height_m", .1},
+                                            {"transition_m", .5}}},
+        {"source_occlusion_box", QVariantMap{{"min_m", QVariantList{4., -1., 0.}},
+                                             {"max_m", QVariantList{6., 1., 1.}},
+                                             {"tolerance_m", .01},
+                                             {"mode", "bilinear_box_surface_v1"}}}};
+    auto values = capability_fixture::form();
+    values["surface_profiles"] = QVariantList{surface};
+    const auto first = researchDraft(values);
+    values["surface_profiles"] = QVariantList{};
+    const auto bytes = QJsonDocument::fromVariant(surface).toJson(QJsonDocument::Compact);
+    const auto expected =
+        boost::json::parse(std::string_view(bytes.constData(), size_t(bytes.size())));
+    for (const auto &value : first.at("variants").as_array())
+    {
+        EXPECT_EQ(value.as_object().at("surface"), expected);
+    }
 }

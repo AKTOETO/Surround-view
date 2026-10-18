@@ -11,10 +11,18 @@ boost::json::object researchDraft(const QVariantMap &values, const QString &refe
     const auto bytes = QJsonDocument::fromVariant(values).toJson(QJsonDocument::Compact);
     const auto document = sv::parse_json(std::string_view(bytes.constData(), size_t(bytes.size())));
     const auto &form = document.as_object();
-    const std::set<std::string> allowed{
-        "modes",       "frames",         "warmup",      "repeats",          "seed",
-        "boundary",    "pyramid_levels", "seam_solver", "quality_criteria", "pyramid_levels_range",
-        "seam_solvers"};
+    const std::set<std::string> allowed{"modes",
+                                        "frames",
+                                        "warmup",
+                                        "repeats",
+                                        "seed",
+                                        "boundary",
+                                        "pyramid_levels",
+                                        "seam_solver",
+                                        "quality_criteria",
+                                        "pyramid_levels_range",
+                                        "seam_solvers",
+                                        "surface_profiles"};
     for (const auto &entry : form)
     {
         if (!allowed.count(std::string(entry.key())))
@@ -23,6 +31,10 @@ boost::json::object researchDraft(const QVariantMap &values, const QString &refe
         }
     }
     auto variants = researchFusionVariants(form);
+    if (const auto *profiles = form.if_contains("surface_profiles"))
+    {
+        variants = researchCarrierVariants(variants, *profiles);
+    }
     boost::json::object scenario{{"schema_version", 1},
                                  {"reset_replay", true},
                                  {"capture_frames", true},
