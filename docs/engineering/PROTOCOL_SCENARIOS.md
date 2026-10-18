@@ -9,6 +9,10 @@
 capability guard не добавляет wire messages; после него выполняется прежний runner workflow.
 [[architecture/RESEARCH_RUNTIME#Выбор профиля исследования по каталогу сервера]].
 
+Критерии опыта остаются локальными в общем C++ evaluator: `quality_criteria` — поле
+scenario/report, а не новая SV01 команда и не настройка серверного renderer. Truth и пороги
+алгоритму не передаются. [[engineering/RESEARCH_QUALITY#Критерии конкретного сценария без изменения эталона]].
+
 ## Границы и обозначения
 
 Реализация: `include/sv/client.hpp`, `src/client_library/client.cpp`, `src/apps/server.cpp`, `src/core/protocol.cpp`, `include/sv/experiment_lease.hpp`. Unix и TCP используют одинаковые сообщения, но разные явно выбранные endpoints. Одна сессия требует двух stream-соединений: control и data. Producer изображений — отдельный входной протокол [[engineering/SOURCES]], не data channel клиентской библиотеки.

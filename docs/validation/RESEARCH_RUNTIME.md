@@ -640,3 +640,38 @@ client_transports82,20с, QML6,99с. Отдельный Qt unit прогон **2
 и форму с native server catalog. Каталог не резервирует ресурсы и не гарантирует исполнение
 при смене состояния; авторитетная серверная проверка сохранена. Этот срез не подтверждает
 Qt5/Аврору, performance переносимость, independent truth или качество нового алгоритма.
+
+## 18.10.2026 — criteria override конкретного опыта
+
+Общий C++ scenario/FileExperiment/QualityReference поддерживает `quality_criteria`:
+полная замена manifest policy, immutable effective evaluator, raw manifest hash без
+редактирования исходника и provenance `criteria_source`/`manifest_criteria`.
+Форма использует переключатель, три флажка и числовые поля; default остаётся inherit.
+Сравнение отчётов показывает оба policy и предупреждает об отличии acceptance условий,
+сохраняя независимые gates для сырых metrics. Формат:
+[[engineering/RESEARCH_QUALITY#Критерии конкретного сценария без изменения эталона]].
+
+Добавлены8 GTests:
+
+- 3 evaluator/preflight cases: replacement без merge с другим verdict на известной ошибке;
+  сохранность source manifest/hash и frozen policy после изменения диска;
+  mismatch scenario/evaluator, typed invalid override, наследование/default origin,
+  orphan criteria и policy в cancelled offline report;
+- 1 comparison case: разные thresholds/source явно показаны, raw quality deltas не подменяются
+  различием acceptance policy;
+- 3 Qt cases: inherit/default, explicit zero/tiny doubles, отсутствие reference,
+  invalid criteria до worker/output, URL guards и отсутствие IO в проверке готовности;
+- 1 QML case: explicit empty override не разрешает старт, reference обязателен,
+  числовой edited signal формирует выбранный набор, отключение/включение сохраняет значения.
+
+Live form workflow для Unix/TCP/combined теперь включает override MAE≤0 поверх прежнего
+regression manifest. Проверены completed workflow/quality/restore, наличие override в scenario,
+source `scenario_override_v1`, сохранённый manifest policy и effective набор из одного поля.
+Нулевой threshold здесь проверяет совпадение RGB в выбранной маске fixture, не задаёт норму
+качества реального surround-view. GUI capture — рисунок3.62; источник truth reused, не holdout.
+
+Сборка успешна. Targeted CTest3/3 за7,08с; финальный последовательный Linux CTest
+**68/68 за156,20с**, transport82,35с, QML7,02с. Проверены44 PlantUML вставки и
+`git diff --check`. Прежние сценарии без override сохраняют семантику; новые требуют
+обновлённого strict parser. Qt5/Аврора, научное обоснование thresholds и независимое
+подтверждающее исследование остаются открытыми.

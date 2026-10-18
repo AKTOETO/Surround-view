@@ -692,3 +692,36 @@ end
 ```
 
 *Рисунок RR.14 — каталог ограничивает форму, но не заменяет серверную проверку.*
+
+## Критерии качества конкретного опыта
+
+Реализованный контракт: по умолчанию критерии наследуются из reference manifest. Явный режим формы
+«Задать для этого опыта» заменяет весь набор criteria непустым выбранным набором MAE/RMSE/PSNR,
+а не объединяет его с manifest. Пустой override и criteria без reference запрещены.
+Scenario содержит `quality_criteria`; original manifest bytes/hashes и truth не меняются.
+Общий C++ FileExperiment до output/network загружает reference и фиксирует эффективные
+criteria, их источник и исходные manifest criteria. Runner применяет прежнюю политику
+all_measured_samples_v1. Порог — условие конкретного опыта, не доказательство независимости truth.
+
+```plantuml
+@startuml
+title Фиксация критериев качества до исследовательского прогона
+actor Исследователь as User
+participant "GUI / scenario file" as UI
+participant "FileExperiment preflight" as Prepare
+database "Reference manifest + RGB/masks" as Reference
+participant "Immutable QualityReference" as Quality
+participant "ExperimentRunner" as Runner
+User -> UI: Наследовать criteria или явно задать полный override
+UI -> Prepare: Frozen scenario, reference path, optional quality_criteria
+Prepare -> Reference: Читать исходный manifest и изображения
+Reference --> Prepare: Original bytes/hash, manifest criteria, truth
+Prepare -> Quality: Зафиксировать effective criteria + origin
+Prepare -> Runner: После preflight и reservation
+Runner -> Quality: Оценить каждый measured sample
+Quality --> Runner: Metrics + acceptance
+Runner --> UI: Отчёт: scenario, source/effective criteria, all-samples verdict
+@enduml
+```
+
+*Рисунок RR.15 — критерии фиксируются до запуска без редактирования исходного эталона.*

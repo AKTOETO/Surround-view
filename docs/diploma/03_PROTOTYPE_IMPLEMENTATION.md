@@ -2503,3 +2503,98 @@ QML проверяет смену каталога, сохранение выб�
 Отдельно выполнены22/22 Qt unit cases; пять новых cases относятся к capability adapter.
 В research QML standalone пройдено6 cases, live-only case выполнен transport harness.
 Подтверждающая серия исследований и квалификация на Авроре остаются открытыми.
+
+## 3.61. Фиксация критериев конкретного опыта и происхождение оценки
+
+Метрика качества и условие приёмки решают разные задачи. MAE/RMSE/PSNR описывают отличие
+изображения от заданного эталона; порог определяет, какое отличие допускается в конкретном
+протоколе опыта. Ранее thresholds задавались только в manifest эталона. Для исследования
+с разными заранее выбранными условиями это вынуждало менять исходный manifest или создавать
+его копии, смешивая описание truth и решение о допустимой ошибке.
+
+В общий C++ scenario schema1 добавлен optional `quality_criteria`. По умолчанию сохраняется
+наследование criteria manifest. При явном override задаётся **полный заменяющий набор**, а
+не дополнение к прежнему. Например, manifest с MAE и PSNR плюс override только RMSE
+означает проверку только RMSE. Это правило позволяет точно воспроизвести условия, не
+предполагая неявного объединения полей. Пустой override, неизвестный критерий, нечисловое,
+неfinite или отрицательное значение и criteria без reference отклоняются.
+
+| Режим | Эффективные критерии | Запись происхождения |
+|---|---|---|
+| Нет override, manifest содержит criteria | Набор из manifest | `manifest_v1` |
+| Нет override и criteria в manifest | Приёмка не запрошена; вычисляются доступные метрики | `not_requested` |
+| Явный непустой override | Только выбранные поля scenario | `scenario_override_v1` и исходный `manifest_criteria` |
+| Пустой override либо нет reference | Запуск не подготавливается | Ошибка до output/network |
+
+В FileExperiment reference и override загружаются при preflight. Неизменяемый evaluator
+фиксирует truth, masks, guards и выбранные thresholds до создания результата и соединения
+с сервером. Исходный manifest не переписывается: его raw SHA256 сохраняется отдельно от
+`scenario_sha256`, учитывающего override. Нормализованные effective criteria и источник
+сохраняются в `quality_reference`; при override добавляется прежний набор либо null,
+если его не было. Прямой C++ вызов runner также проверяет согласованность scenario и
+подготовленного evaluator, чтобы забытый override не привёл к оценке по другим условиям.
+
+```plantuml
+@startuml
+title Критерии конкретного опыта без изменения исходного truth
+actor Исследователь as User
+participant "sv-simulator / svctl" as Client
+participant "FileExperiment" as Prepare
+database "Исходный reference manifest\nRGB / masks / guards" as Files
+participant "Immutable evaluator" as Evaluate
+participant "Общий runner" as Runner
+participant "sv-server" as Server
+User -> Client: Reference + явный полный набор criteria
+Client -> Prepare: Frozen scenario
+Prepare -> Files: Чтение до output/network
+Files --> Prepare: Original bytes/hash + manifest criteria + truth
+Prepare -> Evaluate: Effective criteria и исходный policy
+Prepare -> Runner: Prepared inputs; reserved output
+Runner -> Server: Прежние команды получения кадров
+Server --> Runner: Результаты renderer
+Runner -> Evaluate: Measured RGBA sample
+Evaluate --> Runner: Metrics + sample acceptance
+Runner --> Client: Scenario/hash, criteria/source, original policy, итог
+@enduml
+```
+
+*Рисунок 3.61 — truth и пороги остаются в клиентском evaluator и не передаются исследуемому алгоритму сервера.*
+
+Итоговая политика не изменена. Для множества измеренных samples \(S\) и выбранных условий
+\(C\) успешная пороговая приёмка требует
+
+$$\mathrm{passed}=\mathrm{workflow\_complete}\land\mathrm{restored}
+\land\bigl(|S|=N_{frames}N_{variants}N_{repeats}\bigr)
+\land\bigwedge_{s\in S}\bigwedge_{c\in C}c(s).$$
+
+Warmup исключён. Нарушение порога не прекращает остальные trials и восстановление:
+полный опыт получает `failed`, неполный — `incomplete`. Точное совпадение при нулевой MSE
+по-прежнему имеет бесконечный PSNR, представленный парой null/`exact_match`, а не нулём.
+
+![Форма критериев конкретного опыта](figures/implementation/research_criteria_native.png)
+
+*Рисунок 3.62 — реальная Qt6 форма перед native запуском: явный override MAE≤0 для regression fixture; нулевой порог проверяет совпадение RGB в выбранной маске и не является рекомендованным порогом для реальной сцены.*
+
+GUI использует отдельный компонент с переключателем наследования/override, флажками
+MAE/RMSE/PSNR и числовыми полями. Непомеченные поля не входят в policy. Начальный набор
+пуст, поэтому включение override требует явного выбора. MAE/RMSE допускают0…255,
+PSNR0…200dB; форма поддерживает шесть знаков после запятой, общий C++ API — поддерживаемую
+double точность. Отключение режима возвращает наследование, сохраняя введённые значения
+для последующего явного включения. Параметры формы не переопределяют saved scenario/batch.
+
+При сравнении отчётов паспорта показывают effective criteria/source, а разные policy дают
+причину `acceptance_policy_differs`. Это не запрещает вычисление сырых MAE/RMSE deltas на
+тех же inputs/truth: одинаковое качество и прохождение разных thresholds — разные утверждения.
+Никакой общий рейтинг или научная приёмка из смены порога не выводится.
+
+Проверки включают replacement без merge, сохранность manifest/hash, неизменность prepared
+policy после редактирования файлов, несогласованность scenario/evaluator, сохранение criteria
+в отменённом отчёте, invalid/orphan criteria, состояние QML формы и native запуск через
+Unix/TCP/combined с проверкой provenance. Это инженерная проверка механизма. Обоснование
+thresholds до confirmatory серии, независимость truth и целевая квалификация остаются
+открытыми. Формат и использование: [[engineering/RESEARCH_QUALITY#Критерии конкретного сценария без изменения эталона]].
+
+Финальная Linux регрессия:68/68 CTest за156,20с, transport82,35с и QML7,02с.
+Три новых evaluator/preflight cases, один comparison-policy case, три Qt model/draft cases
+и один QML case дополняют live form workflow. Проверены44 PlantUML вставки architecture/главы3.
+Qt5/Аврора и независимая подтверждающая серия в эту проверку не входят.

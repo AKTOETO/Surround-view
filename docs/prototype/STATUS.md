@@ -1,5 +1,17 @@
 # Состояние прототипа и границы подтверждения
 
+18.10.2026: критерии конкретного опыта реализованы в общем C++ FileExperiment/QualityReference
+и форме sv-simulator. Optional scenario.quality_criteria полностью заменяет manifest criteria;
+исходный manifest/hash сохранён, effective/source/original criteria записываются в report.
+Пустой набор/отсутствие reference запрещены, прежняя all-measured policy сохранена.
+Сравнение отчётов показывает разные acceptance policies отдельно от сырых quality deltas.
+[[engineering/RESEARCH_QUALITY#Критерии конкретного сценария без изменения эталона]].
+Проверки: Linux CTest68/68 за156,20с; transport82,35с, QML7,02с;8 новых GTests,
+live criteria provenance для Unix/TCP/combined; §3.61, рисунки3.61–3.62.
+
+Остаются carrier/parameter matrices, bundles/multi-recording, обоснование критериев,
+независимая подтверждающая серия и целевая приёмка.
+
 18.10.2026: форма исследования использует fusion catalog текущей сессии ConfigService.
 C++ пересечение methods/boundaries/solvers и диапазона levels, явное сохранение недоступного
 выбора и повторная проверка frozen values/catalog до output/network. Saved scenarios и batch

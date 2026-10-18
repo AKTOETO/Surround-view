@@ -285,3 +285,64 @@ report.json, report.json.frames и oracle-check.json. Это результат�
 Старый output нельзя перезаписывать. Test сравнивает24 samples/96 metric values с NumPy,
 не требует ненулевой ошибки (совершенная реконструкция тоже допустима), не задаёт quality thresholds.
 Fixture reused, три близкие позы одной низкодетализированной сцены — не новый holdout.
+
+## Критерии конкретного сценария без изменения эталона
+
+Scenario schema1 теперь допускает optional непустой `quality_criteria` вместе с
+`quality_reference`. Пример фрагмента:
+
+```json
+{
+  "quality_reference": "quality/reference.json",
+  "quality_criteria": {"max_mae_rgb8": 0.125, "min_psnr_db": 40}
+}
+```
+
+Это **полная замена** criteria из manifest для данного опыта. В примере прежний
+`max_rmse_rgb8`, даже если он был в manifest, больше не применяется. При отсутствии
+`quality_criteria` сохраняется прежнее наследование; пустой объект, неизвестное поле,
+нечисловое/неfinite/отрицательное значение и criteria без reference отвергаются.
+Диапазоны те же: MAE/RMSE0…255, PSNR0…200dB; примеры не задают норму качества.
+Для режима «только метрики» без приёмки используйте reference без criteria и не задавайте
+override. Отдельного скрытого отключения manifest thresholds нет.
+
+`FileExperiment` передаёт override immutable `QualityReference` при preflight; RGB/masks,
+view/input guards и содержимое исходного manifest не меняются. Даже при override manifest
+обязан оставаться корректным. Prepared evaluator фиксирует изображения и критерии до
+output reservation/network; позднее редактирование файлов не меняет текущий опыт.
+Прямой C++ `run` требует согласованных Scenario и загруженного evaluator: несоответствие
+criteria override отвергается до подключения.
+
+Отчёт содержит:
+
+| Поле | Значение |
+|---|---|
+| `scenario.quality_criteria` | Явно заданный override; участвует в scenario hash |
+| `quality_reference.manifest_sha256` | SHA256 исходных bytes manifest без переписывания |
+| `quality_reference.criteria` | Эффективный набор, если задан |
+| `quality_reference.criteria_source` | `manifest_v1`, `scenario_override_v1` или `not_requested` |
+| `quality_reference.manifest_criteria` | При override — исходные нормализованные criteria либо null, если их не было |
+| `quality_acceptance.criteria` | Набор, применённый прежней all_measured_samples_v1 policy |
+
+Прежние manifest schema1/schema2 не получают новых обязательных полей. `criteria_source`
+и `manifest_criteria` — metadata отчёта, их не надо добавлять в исходный manifest.
+GUI scenario snapshot сохраняет reference locator и override до исполнения; batch использует
+тот же FileExperiment, поэтому каждый участник может иметь собственные criteria.
+
+В **Исследование → План → Настроить через форму** выберите reference, включите
+**Задать полный набор критериев для этого опыта**, отметьте нужные MAE/RMSE/PSNR и
+задайте пределы. Каждое неотмеченное поле исключено из override. Изначально не отмечено
+ни одного предела: запуск потребует явного выбора. Ноль допустим, но не рекомендован
+автоматически. Форма поддерживает шесть знаков после запятой; C++/scenario API сохраняет
+поддерживаемую double точность для более мелких порогов. Отключение режима возвращает
+наследование manifest, сохраняя введённые значения для последующего явного включения.
+Saved scenario/batch не получают thresholds текущей формы.
+
+В сравнении отчётов два паспорта теперь показывают effective criteria/source. Разные
+thresholds/origins дают reason `acceptance_policy_differs`. Это не запрещает сравнение
+сырых MAE/RMSE при прежних content/truth gates, но два verdict нельзя интерпретировать как
+прохождение одинаковых условий. Независимость truth и научная обоснованность выбранных
+порогов по-прежнему требуют отдельного подтверждения.
+
+Сценарии с новым `quality_criteria` требуют обновлённого runner: прежний strict parser
+отклонит неизвестное поле. Старые сценарии без override сохраняют прежнюю семантику.

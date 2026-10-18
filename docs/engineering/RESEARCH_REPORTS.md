@@ -76,3 +76,10 @@ Failed quality acceptance видна отдельно: успешное испо
 Сравнение более двух отчётов, confidence intervals, переносимый bundle с изображениями,
 revalidation hashes по первичным данным и целевая квалификация остаются в [[planning/ROADMAP]].
 Диаграмма процесса: [[architecture/RESEARCH_RUNTIME#Сопоставление двух исследовательских отчётов]].
+
+
+Паспорта также показывают effective `criteria` и `criteria_source`; для прежних reports
+без origin используется `legacy_unverified`. При различии наборов/источников в reasons
+добавляется `acceptance_policy_differs`. Raw MAE/RMSE deltas зависят от одинаковых truth/inputs,
+а не от одинаковых thresholds; это не эквивалентность verdict.
+[[engineering/RESEARCH_QUALITY#Критерии конкретного сценария без изменения эталона]].
