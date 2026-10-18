@@ -1,3 +1,5 @@
+#include "batch_plan.hpp"
+#include "digest.hpp"
 #include "research_batch_draft.hpp"
 #include "research_controller.hpp"
 #include "research_draft.hpp"
@@ -314,6 +316,17 @@ TEST(ResearchGuiDraft, ImportedDotDotAcrossSymlinkKeepsFilesystemMeaning)
     EXPECT_EQ(std::filesystem::canonical(std::string(
                   plan.at("runs").as_array()[0].as_object().at("scenario").as_string())),
               root / "real/scenario.json");
+    ResearchController controller;
+    const auto target = QUrl::fromLocalFile(directory.path() + "/link/../saved.json");
+    ASSERT_TRUE(controller.saveBatch(rows, target).value("success").toBool());
+    EXPECT_TRUE(std::filesystem::exists(root / "real/saved.json"));
+    EXPECT_FALSE(std::filesystem::exists(root / "saved.json"));
+    const auto restored = controller.importBatch(target);
+    ASSERT_TRUE(restored.value("success").toBool());
+    const auto savedPlan = researchBatchDraft(restored.value("members").toList());
+    EXPECT_EQ(std::filesystem::canonical(std::string(
+                  savedPlan.at("runs").as_array()[0].as_object().at("scenario").as_string())),
+              root / "real/scenario.json");
 }
 
 TEST(ResearchGuiUnit, ImportWithoutEndpointDoesNotMutateRunResultsAndBusyRejectsIt)
@@ -332,9 +345,53 @@ TEST(ResearchGuiUnit, ImportWithoutEndpointDoesNotMutateRunResultsAndBusyRejects
     controller.setConnection(sv::client::Options{});
     ASSERT_TRUE(controller.startDraft(draft(), directory.path()));
     EXPECT_FALSE(controller.importBatch(QUrl::fromLocalFile(source)).value("success").toBool());
+    const QVariantList saveMembers{
+        QVariantMap{{"id", "a"}, {"scenario", QUrl::fromLocalFile(source)}}};
+    EXPECT_FALSE(controller.saveBatch(saveMembers, QUrl::fromLocalFile(source + "-save"))
+                     .value("success")
+                     .toBool());
+    EXPECT_FALSE(std::filesystem::exists((source + "-save").toStdString()));
     EXPECT_TRUE(controller.busy());
     ASSERT_TRUE(waitFor([&] { return !controller.busy(); }));
     EXPECT_EQ(controller.exitCode(), 3);
+}
+
+TEST(ResearchGuiUnit, SavesDraftOfflineWithoutPreflightAndCanImportFromAnotherDirectory)
+{
+    QTemporaryDir directory;
+    ASSERT_TRUE(directory.isValid());
+    const std::filesystem::path root(directory.path().toStdString());
+    std::filesystem::create_directories(root / "plans/nested");
+    const auto source = QUrl::fromLocalFile(directory.path() + "/missing # %.json");
+    const QVariantList members{QVariantMap{{"id", "repeat"}, {"scenario", source}},
+                               QVariantMap{{"id", "first"}, {"scenario", source}}};
+    ResearchController controller;
+    const auto target = QUrl::fromLocalFile(directory.path() + "/plans/draft # %.json");
+    const auto result = controller.saveBatch(members, target);
+    ASSERT_TRUE(result.value("success").toBool())
+        << result.value("message").toString().toStdString();
+    EXPECT_FALSE(controller.available());
+    EXPECT_FALSE(controller.busy());
+    EXPECT_EQ(controller.exitCode(), -1);
+    EXPECT_TRUE(controller.reportPath().isEmpty());
+    EXPECT_EQ(controller.qualityStatus(), "not_available");
+    const auto bytes = sv::research::read_batch_plan(root / "plans/draft # %.json");
+    EXPECT_EQ(result.value("sha256").toString().toStdString(),
+              sv::research::sha256(bytes.data(), bytes.size()));
+    std::filesystem::rename(root / "plans/draft # %.json", root / "plans/nested/moved.json");
+    const auto restored =
+        controller.importBatch(QUrl::fromLocalFile(directory.path() + "/plans/nested/moved.json"));
+    ASSERT_TRUE(restored.value("success").toBool());
+    EXPECT_EQ(researchBatchDraft(restored.value("members").toList()), researchBatchDraft(members));
+    EXPECT_FALSE(controller.saveBatch({}, target).value("success").toBool());
+    EXPECT_FALSE(std::filesystem::exists(root / "plans/draft # %.json"));
+    auto duplicate = members;
+    duplicate[1] = duplicate[0];
+    EXPECT_FALSE(controller.saveBatch(duplicate, target).value("success").toBool());
+    EXPECT_FALSE(std::filesystem::exists(root / "plans/draft # %.json"));
+    EXPECT_FALSE(controller.saveBatch(members, QUrl("https://example.invalid/draft.json"))
+                     .value("success")
+                     .toBool());
 }
 
 TEST(ResearchGuiUnit, ComposedBatchLateFailureDoesNotCreateOutput)

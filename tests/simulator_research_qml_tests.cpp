@@ -1,4 +1,6 @@
+#include "batch_plan.hpp"
 #include "qml_warning_capture.hpp"
+#include "research_batch_draft.hpp"
 #include "research_controller.hpp"
 #include "research_draft.hpp"
 #include "sv/json.hpp"
@@ -253,6 +255,90 @@ TEST(SimulatorResearchQml, BatchImportIsTransactionalAndKeepsDraftOnInvalidPlan)
     item->setParentItem(nullptr);
 }
 
+TEST(SimulatorResearchQml, SavesDraftWithoutServerRejectsOverwriteAndTracksEdits)
+{
+    QmlWarningCapture warnings;
+    ResearchController controller;
+    QQmlApplicationEngine engine;
+    engine.rootContext()->setContextProperty("researchController", &controller);
+    engine.rootContext()->setContextProperty("simulatorQtMajorVersion", QT_VERSION_MAJOR);
+    QQmlComponent component(&engine, QUrl("qrc:/ResearchPanel.qml"));
+    std::unique_ptr<QObject> object(component.create());
+    ASSERT_TRUE(object) << component.errorString().toStdString();
+    auto *item = qobject_cast<QQuickItem *>(object.get());
+    ASSERT_TRUE(item);
+    QQuickWindow window;
+    window.resize(1040, 1080);
+    window.setColor(QColor("#1a1f2c"));
+    item->setParentItem(window.contentItem());
+    item->setWidth(1000);
+    item->setX(20);
+    item->setY(15);
+    window.show();
+    object->findChild<QObject *>("researchPlanMode")->setProperty("currentIndex", 3);
+    auto *editor = object->findChild<QObject *>("researchBatchEditor");
+    ASSERT_TRUE(editor);
+    auto *save = editor->findChild<QObject *>("batchSavePlan");
+    ASSERT_TRUE(save);
+    EXPECT_FALSE(save->property("enabled").toBool());
+    const auto source = QUrl::fromLocalFile("/tmp/missing # %.json");
+    for (unsigned i = 0; i < 2; ++i)
+    {
+        ASSERT_TRUE(QMetaObject::invokeMethod(editor, "addScenario",
+                                              Q_ARG(QVariant, QVariant::fromValue(source))));
+    }
+    EXPECT_TRUE(save->property("enabled").toBool());
+    QTemporaryDir directory;
+    ASSERT_TRUE(directory.isValid());
+    const auto target = QUrl::fromLocalFile(directory.path() + "/draft # %.json");
+    auto *dialogs =
+        object->findChild<QObject *>("researchFilesLoader")->property("item").value<QObject *>();
+    ASSERT_TRUE(dialogs);
+    ASSERT_TRUE(QMetaObject::invokeMethod(save, "clicked"));
+#if QT_VERSION_MAJOR >= 6
+    auto *chooser = dialogs->findChild<QObject *>("researchSaveDialog");
+    ASSERT_TRUE(chooser);
+    EXPECT_TRUE(chooser->property("visible").toBool());
+    EXPECT_NE(chooser->property("options").toInt() & 4, 0); // DontConfirmOverwrite
+    ASSERT_TRUE(QMetaObject::invokeMethod(chooser, "reject"));
+#endif
+    EXPECT_TRUE(editor->property("savedPath").toString().isEmpty());
+    EXPECT_FALSE(std::filesystem::exists(target.toLocalFile().toStdString()));
+    ASSERT_TRUE(QMetaObject::invokeMethod(dialogs, "saveChosen", Q_ARG(QUrl, target)));
+    ASSERT_EQ(editor->property("savedPath").toString(), target.toLocalFile());
+    EXPECT_TRUE(editor->property("saveStatus").toString().contains("Черновик сохранён"));
+    const auto bytes = sv::research::read_batch_plan(target.toLocalFile().toStdString());
+    ASSERT_EQ(sv::research::parse_batch_plan(bytes).at("runs").as_array().size(), 2U);
+    const auto screenshot = qEnvironmentVariable("SV_RESEARCH_SAVE_SCREENSHOT");
+    if (!screenshot.isEmpty())
+    {
+        QEventLoop paint;
+        QTimer::singleShot(100, &paint, &QEventLoop::quit);
+        paint.exec();
+        ASSERT_TRUE(window.grabWindow().save(screenshot));
+    }
+    ASSERT_TRUE(QMetaObject::invokeMethod(dialogs, "saveChosen", Q_ARG(QUrl, target)));
+    EXPECT_TRUE(editor->property("saveStatus").toString().contains("не сохранён"));
+    EXPECT_EQ(sv::research::read_batch_plan(target.toLocalFile().toStdString()), bytes);
+    QCoreApplication::processEvents();
+    auto *down = researchItem(qobject_cast<QQuickItem *>(editor), "batchMoveDown_case-1");
+    ASSERT_TRUE(down);
+    ASSERT_TRUE(QMetaObject::invokeMethod(down, "clicked"));
+    EXPECT_TRUE(editor->property("saveStatus").toString().contains("Состав изменён"));
+    QVariant restored;
+    ASSERT_TRUE(QMetaObject::invokeMethod(editor, "importPlan", Q_RETURN_ARG(QVariant, restored),
+                                          Q_ARG(QVariant, QVariant::fromValue(target))));
+    EXPECT_TRUE(restored.toBool());
+    EXPECT_TRUE(editor->property("saveStatus").toString().contains("совпадает"));
+    EXPECT_EQ(sv::research::read_batch_plan(target.toLocalFile().toStdString()), bytes);
+    EXPECT_FALSE(controller.busy());
+    EXPECT_FALSE(controller.available());
+    EXPECT_EQ(controller.exitCode(), -1);
+    EXPECT_TRUE(controller.reportPath().isEmpty());
+    EXPECT_TRUE(warnings.messages().isEmpty()) << warnings.messages().join('\n').toStdString();
+    item->setParentItem(nullptr);
+}
+
 TEST(SimulatorResearchQml, ReferenceWorkflowRendersMeasuredResults)
 {
     const auto source = qEnvironmentVariable("SV_RESEARCH_GUI_SCENARIO");
@@ -348,6 +434,17 @@ TEST(SimulatorResearchQml, ReferenceWorkflowRendersMeasuredResults)
             auto *down = researchItem(qobject_cast<QQuickItem *>(editor), "batchMoveDown_case-1");
             ASSERT_TRUE(down);
             ASSERT_TRUE(QMetaObject::invokeMethod(down, "clicked"));
+            const auto savedDraft = QUrl::fromLocalFile(directory.path() + "/saved-draft.json");
+            QVariant saved;
+            ASSERT_TRUE(
+                QMetaObject::invokeMethod(editor, "savePlan", Q_RETURN_ARG(QVariant, saved),
+                                          Q_ARG(QVariant, QVariant::fromValue(savedDraft))));
+            ASSERT_TRUE(saved.toBool());
+            ASSERT_TRUE(
+                QMetaObject::invokeMethod(editor, "importPlan", Q_RETURN_ARG(QVariant, imported),
+                                          Q_ARG(QVariant, QVariant::fromValue(savedDraft))));
+            ASSERT_TRUE(imported.toBool());
+            EXPECT_FALSE(controller.busy());
             if (!screenshot.isEmpty())
             {
                 window.resize(1040, 960);

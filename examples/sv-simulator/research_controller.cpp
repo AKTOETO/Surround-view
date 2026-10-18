@@ -1,5 +1,6 @@
 #include "research_controller.hpp"
 #include "batch.hpp"
+#include "batch_plan.hpp"
 #include "file_experiment.hpp"
 #include "report_output.hpp"
 #include "research_batch_draft.hpp"
@@ -266,6 +267,30 @@ QVariantMap ResearchController::importBatch(const QUrl &file)
     {
         return {{"success", false},
                 {"message", "Импорт не выполнен: " + QString::fromUtf8(error.what())}};
+    }
+}
+
+QVariantMap ResearchController::saveBatch(const QVariantList &members, const QUrl &file)
+{
+    if (impl_->busy)
+    {
+        return {{"success", false}, {"message", "Дождитесь завершения текущего исследования"}};
+    }
+    try
+    {
+        const auto document = researchBatchDraft(members);
+        const auto path = researchLocalPath(file);
+        const auto digest = sv::research::write_batch_plan(document, path.toStdString());
+        return {{"success", true},
+                {"path", path},
+                {"sha256", QString::fromStdString(digest)},
+                {"message",
+                 "Черновик сохранён: " + path + ". Полный preflight будет выполнен при запуске."}};
+    }
+    catch (const std::exception &error)
+    {
+        return {{"success", false},
+                {"message", "Черновик не сохранён: " + QString::fromUtf8(error.what())}};
     }
 }
 

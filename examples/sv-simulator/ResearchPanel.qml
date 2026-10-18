@@ -75,18 +75,23 @@ Pane {
         objectName: "researchFilesLoader"
         visible: false
         source: simulatorQtMajorVersion >= 6 ? "ResearchFilesQt6.qml" : "ResearchFilesQt5.qml"
-        onLoaded: item.chosen.connect(function(file, reference) {
-            if (reference)
-                panel.referenceSource = file;
-            else if (panel.choosingImport)
-                batchEditor.importPlan(file);
-            else if (panel.choosingMember)
-                batchEditor.addScenario(file);
-            else if (panel.choosingBatch)
-                panel.batchSource = file;
-            else
-                panel.scenarioSource = file;
-        })
+        onLoaded: {
+            item.saveChosen.connect(function(file) {
+                batchEditor.savePlan(file);
+            });
+            item.chosen.connect(function(file, reference) {
+                if (reference)
+                    panel.referenceSource = file;
+                else if (panel.choosingImport)
+                    batchEditor.importPlan(file);
+                else if (panel.choosingMember)
+                    batchEditor.addScenario(file);
+                else if (panel.choosingBatch)
+                    panel.batchSource = file;
+                else
+                    panel.scenarioSource = file;
+            });
+        }
     }
 
     background: Rectangle {
@@ -218,6 +223,7 @@ Pane {
                 width: parent.width
                 controller: panel.controller
                 visible: planMode.currentIndex === 3
+                onChooseSave: researchFiles.item.save()
                 onChoosePlan: {
                     panel.choosingImport = true;
                     panel.choosingMember = false;

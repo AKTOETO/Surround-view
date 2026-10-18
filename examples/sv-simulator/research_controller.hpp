@@ -49,6 +49,7 @@ class ResearchController : public QObject
     Q_INVOKABLE bool startBatch(const QUrl &file, const QString &newDirectory);
     Q_INVOKABLE bool startBatchDraft(const QVariantList &members, const QString &newDirectory);
     Q_INVOKABLE QVariantMap importBatch(const QUrl &file);
+    Q_INVOKABLE QVariantMap saveBatch(const QVariantList &members, const QUrl &file);
     Q_INVOKABLE void cancel();
 
   signals:

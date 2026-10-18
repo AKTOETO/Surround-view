@@ -8,9 +8,13 @@ GroupBox {
     property var members: []
     property var controller
     property string importStatus: ""
+    property string saveStatus: ""
+    property string savedPath: ""
+    property string savedComposition: ""
 
     signal chooseScenario()
     signal choosePlan()
+    signal chooseSave()
 
     function importPlan(file) {
         var result = controller.importBatch(file);
@@ -25,6 +29,16 @@ GroupBox {
         })
         members = next;
         return true;
+    }
+
+    function savePlan(file) {
+        var result = controller.saveBatch(members, file);
+        saveStatus = result.message;
+        if (result.success) {
+            savedPath = result.path;
+            savedComposition = JSON.stringify(members);
+        }
+        return result.success;
     }
 
     function addScenario(file) {
@@ -65,6 +79,11 @@ GroupBox {
         return true;
     }
 
+    onMembersChanged: {
+        if (savedPath.length > 0)
+            saveStatus = JSON.stringify(members) === savedComposition ? "Состав совпадает с ранее сохранённым черновиком: " + savedPath : "Состав изменён после сохранения. Сохраните новую версию в новый файл.";
+
+    }
     objectName: "researchBatchEditor"
     title: "Состав серии · " + members.length + " / 8"
 
@@ -153,6 +172,27 @@ GroupBox {
             text: "Добавить сценарий…"
             enabled: editor.members.length < 8
             onClicked: editor.chooseScenario()
+        }
+
+        Button {
+            objectName: "batchSavePlan"
+            text: "Сохранить черновик как…"
+            enabled: editor.members.length > 0
+            onClicked: editor.chooseSave()
+        }
+
+        Label {
+            width: parent.width
+            wrapMode: Text.Wrap
+            text: "Выберите новый файл: существующие файлы не перезаписываются. Сохранение не запускает сервер и не проверяет содержимое сценариев и эталонов."
+        }
+
+        Label {
+            objectName: "batchSaveStatus"
+            width: parent.width
+            wrapMode: Text.Wrap
+            visible: editor.saveStatus.length > 0
+            text: editor.saveStatus
         }
 
         Label {
