@@ -1,4 +1,6 @@
 #include "batch_plan.hpp"
+#include "digest.hpp"
+#include "report_output.hpp"
 #include "sv/json.hpp"
 #include <algorithm>
 #include <cerrno>
@@ -126,5 +128,15 @@ std::string read_batch_plan(const std::filesystem::path &path)
         throw std::invalid_argument("batch plan must contain 1..65536 bytes");
     }
     return text;
+}
+
+std::string write_batch_plan(const boost::json::object &plan, const std::filesystem::path &file)
+{
+    const auto text = boost::json::serialize(plan) + '\n';
+    parse_batch_plan(text);
+    const auto digest = sha256(text.data(), text.size());
+    ReportOutput output(file);
+    output.write(plan);
+    return digest;
 }
 } // namespace sv::research

@@ -10,4 +10,6 @@ namespace sv::research
 boost::json::object parse_batch_plan(std::string_view);
 // Bounded regular-file input; exact bytes retained for the execution digest.
 std::string read_batch_plan(const std::filesystem::path &);
+// Validate structure before reserving a new file; returns SHA256 of compact JSON + LF.
+std::string write_batch_plan(const boost::json::object &, const std::filesystem::path &);
 } // namespace sv::research

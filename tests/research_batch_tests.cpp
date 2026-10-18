@@ -255,3 +255,37 @@ TEST_F(ResearchBatch, BoundedPlanReadRejectsNonRegularAndOversizeInputs)
     EXPECT_ANY_THROW(sv::research::read_batch_plan(root / "empty.json"));
     EXPECT_ANY_THROW(sv::research::read_batch_plan(root / "missing.json"));
 }
+
+TEST_F(ResearchBatch, DraftSaveValidatesBeforeCreationAndHashesExactWrittenBytes)
+{
+    const auto document = plan();
+    std::filesystem::remove(root / "scenario.json"); // drafts do not read scenarios
+    const auto digest = sv::research::write_batch_plan(document, root / "draft.json");
+    const auto text = sv::research::read_batch_plan(root / "draft.json");
+    EXPECT_EQ(text, boost::json::serialize(document) + '\n');
+    EXPECT_EQ(digest, sv::research::sha256(text.data(), text.size()));
+    EXPECT_EQ(sv::research::parse_batch_plan(text), document);
+    auto invalid = document;
+    invalid.at("runs").as_array()[1].as_object()["id"] = "first";
+    EXPECT_ANY_THROW(sv::research::write_batch_plan(invalid, root / "invalid.json"));
+    EXPECT_FALSE(std::filesystem::exists(root / "invalid.json"));
+    EXPECT_ANY_THROW(sv::research::write_batch_plan(document, root / "draft.json"));
+    EXPECT_EQ(sv::research::read_batch_plan(root / "draft.json"), text);
+}
+
+TEST_F(ResearchBatch, DraftSaveNeverReplacesHardLinksOrSymlinksAndRequiresExistingParent)
+{
+    write("existing.json", "keep-original");
+    std::filesystem::create_hard_link(root / "existing.json", root / "hard.json");
+    std::filesystem::create_symlink("existing.json", root / "linked.json");
+    std::filesystem::create_symlink("missing.json", root / "dangling.json");
+    for (const auto *name : {"existing.json", "hard.json", "linked.json", "dangling.json"})
+    {
+        EXPECT_ANY_THROW(sv::research::write_batch_plan(plan(), root / name));
+    }
+    EXPECT_EQ(sv::research::read_batch_plan(root / "existing.json"), "keep-original");
+    EXPECT_TRUE(std::filesystem::is_symlink(root / "dangling.json"));
+    EXPECT_FALSE(std::filesystem::exists(root / "missing.json"));
+    EXPECT_ANY_THROW(sv::research::write_batch_plan(plan(), root / "absent-parent/plan.json"));
+    EXPECT_FALSE(std::filesystem::exists(root / "absent-parent"));
+}
