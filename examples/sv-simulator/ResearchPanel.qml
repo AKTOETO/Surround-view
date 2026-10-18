@@ -427,6 +427,7 @@ Pane {
                 pyramidSelected: panel.selectedModes.indexOf("multi_band") !== -1 || panel.selectedModes.indexOf("graph_cut_multi_band") !== -1
                 graphSelected: panel.selectedModes.indexOf("graph_cut_seam") !== -1 || panel.selectedModes.indexOf("graph_cut_multi_band") !== -1
                 capabilities: panel.draftCapabilities
+                modes: panel.selectedModes
             }
 
             ResearchCarrierEditor {

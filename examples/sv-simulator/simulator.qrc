@@ -5,6 +5,7 @@
         <file>RuntimePanel.qml</file>
         <file>ResearchPanel.qml</file>
         <file>ResearchMatrixEditor.qml</file>
+        <file>ResearchNumericAxis.qml</file>
         <file>ResearchCarrierEditor.qml</file>
         <file>ResearchCriteriaEditor.qml</file>
         <file>ResearchComparisonPanel.qml</file>

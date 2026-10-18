@@ -5,7 +5,27 @@
 #include <QQmlApplicationEngine>
 #include <QQmlComponent>
 #include <QQmlContext>
+#include <QQuickItem>
 #include <gtest/gtest.h>
+
+namespace
+{
+QQuickItem *matrixItem(QQuickItem *root, const QString &name)
+{
+    if (!root || root->objectName() == name)
+    {
+        return root;
+    }
+    for (auto *child : root->childItems())
+    {
+        if (auto *match = matrixItem(child, name))
+        {
+            return match;
+        }
+    }
+    return nullptr;
+}
+} // namespace
 
 TEST(SimulatorResearchMatrixQml, PreviewAndCatalogGatesTrackAxesWithoutSilentlyEditingTheDraft)
 {
@@ -124,5 +144,65 @@ TEST(SimulatorResearchMatrixQml, CarrierSnapshotsAreCopiedDeduplicatedAndCatalog
     use->setProperty("checked", true);
     EXPECT_EQ(object->property("variantCount").toInt(), 8); // retained, not silently filtered
     EXPECT_FALSE(start->property("enabled").toBool());
+    EXPECT_TRUE(warnings.messages().isEmpty()) << warnings.messages().join('\n').toStdString();
+}
+
+TEST(SimulatorResearchMatrixQml, NumericListsUseControlsKeepSelectionsAndRespectCatalog)
+{
+    QmlWarningCapture warnings;
+    ResearchController controller;
+    controller.setConnection(sv::client::Options{});
+    QQmlApplicationEngine engine;
+    engine.rootContext()->setContextProperty("researchController", &controller);
+    engine.rootContext()->setContextProperty("simulatorQtMajorVersion", QT_VERSION_MAJOR);
+    QQmlComponent component(&engine, QUrl("qrc:/ResearchPanel.qml"));
+    std::unique_ptr<QObject> object(component.create());
+    ASSERT_TRUE(object) << component.errorString().toStdString();
+    auto catalog = capability_fixture::catalog();
+    object->setProperty("fusionCatalog", catalog);
+    object->setProperty("selectedModes", QStringList{"angular_feather"});
+    object->findChild<QObject *>("researchShowNumericAxes")->setProperty("checked", true);
+    auto *edge = object->findChild<QObject *>("researchAxis_edge_width_px");
+    auto *angle = object->findChild<QObject *>("researchAxis_angle_power");
+    auto *start = object->findChild<QObject *>("researchStart");
+    auto *use = object->findChild<QObject *>("researchUse_edge_width_px");
+    auto *add = object->findChild<QObject *>("researchAdd_edge_width_px");
+    auto *number = object->findChild<QObject *>("researchValue_edge_width_px");
+    ASSERT_TRUE(edge && angle && start && use && add && number);
+    use->setProperty("checked", true);
+    EXPECT_EQ(object->property("variantCount").toInt(), 1);
+    number->setProperty("number", 12.5);
+    ASSERT_TRUE(QMetaObject::invokeMethod(add, "clicked"));
+    EXPECT_EQ(object->property("variantCount").toInt(), 2);
+    ASSERT_TRUE(QMetaObject::invokeMethod(add, "clicked"));
+    EXPECT_EQ(object->property("variantCount").toInt(), 2);
+    EXPECT_TRUE(edge->property("notice").toString().contains("уже добавлено"));
+    auto *remove =
+        matrixItem(qobject_cast<QQuickItem *>(object.get()), "researchRemove_edge_width_px_0");
+    ASSERT_TRUE(remove);
+    ASSERT_TRUE(QMetaObject::invokeMethod(remove, "clicked"));
+    EXPECT_EQ(object->property("variantCount").toInt(), 1);
+    number->setProperty("number", 24.);
+    ASSERT_TRUE(QMetaObject::invokeMethod(add, "clicked"));
+    EXPECT_EQ(object->property("variantCount").toInt(), 2);
+    object->findChild<QObject *>("researchUse_angle_power")->setProperty("checked", true);
+    angle->setProperty("values", QVariantList{1., 2.});
+    EXPECT_EQ(object->property("variantCount").toInt(), 4);
+    EXPECT_TRUE(start->property("enabled").toBool());
+    catalog["edge_width_px"] = QVariantMap{{"exclusive_min", 20}, {"max", 24}};
+    object->setProperty("fusionCatalog", catalog);
+    EXPECT_FALSE(start->property("enabled").toBool()); // retained12.5 still unavailable
+    object->setProperty("selectedModes", QStringList{"hard_best_angle"});
+    EXPECT_EQ(object->property("variantCount").toInt(), 1);
+    EXPECT_TRUE(start->property("enabled").toBool()); // irrelevant axes omitted
+    object->setProperty("selectedModes", QStringList{"angular_feather"});
+    EXPECT_EQ(object->property("variantCount").toInt(), 4);
+    EXPECT_FALSE(start->property("enabled").toBool());
+    edge->setProperty("values", QVariantList{});
+    EXPECT_FALSE(start->property("enabled").toBool());
+    use->setProperty("checked", false);
+    EXPECT_EQ(object->property("variantCount").toInt(), 2);
+    EXPECT_TRUE(start->property("enabled").toBool());
+    EXPECT_FALSE(controller.busy());
     EXPECT_TRUE(warnings.messages().isEmpty()) << warnings.messages().join('\n').toStdString();
 }

@@ -6,6 +6,7 @@
 #include "research_comparison.hpp"
 #include "research_controller.hpp"
 #include "research_draft.hpp"
+#include "research_numeric_workflow.hpp"
 #include "sv/json.hpp"
 #include <QEventLoop>
 #include <QFile>
@@ -359,7 +360,7 @@ TEST(SimulatorResearchQml, ReferenceWorkflowRendersMeasuredResults)
     QTemporaryDir retained;
     ASSERT_TRUE(retained.isValid());
     const auto reportA = retained.path() + "/a.json";
-    for (const int mode : {1, 0, 2, 3, 4, 5})
+    for (const int mode : {1, 0, 2, 3, 4, 5, 6})
     {
         const bool batch = mode == 2 || mode == 3;
         const auto endpoint =
@@ -530,6 +531,11 @@ TEST(SimulatorResearchQml, ReferenceWorkflowRendersMeasuredResults)
                 ASSERT_NO_THROW(carrier_workflow::capture(object.get(), options));
                 EXPECT_EQ(object->property("variantCount").toInt(), 5);
             }
+            if (mode == 6)
+            {
+                numeric_workflow::prepare(object.get());
+                EXPECT_EQ(object->property("variantCount").toInt(), 10);
+            }
             ASSERT_TRUE(object->property("draftIssue").toString().isEmpty())
                 << object->property("draftIssue").toString().toStdString();
             ASSERT_TRUE(
@@ -537,12 +543,16 @@ TEST(SimulatorResearchQml, ReferenceWorkflowRendersMeasuredResults)
             const auto capture = qEnvironmentVariable("SV_RESEARCH_QUALITY_SCREENSHOT");
             if (!capture.isEmpty())
             {
-                window.resize(1040, 1740);
+                window.resize(1040, mode == 6 ? 2500 : 1740);
                 QEventLoop paint;
                 QTimer::singleShot(100, &paint, &QEventLoop::quit);
                 paint.exec();
                 const auto formImage = window.grabWindow();
-                if (mode == 5)
+                if (mode == 6)
+                {
+                    ASSERT_TRUE(formImage.save(capture + ".numeric.png"));
+                }
+                else if (mode == 5)
                 {
                     ASSERT_TRUE(formImage.save(capture + ".carriers.png"));
                 }
@@ -624,6 +634,10 @@ TEST(SimulatorResearchQml, ReferenceWorkflowRendersMeasuredResults)
             EXPECT_EQ(profiles, (QSet<QString>{"2:binary_pairs", "2:alpha_expansion",
                                                "3:binary_pairs", "3:alpha_expansion"}));
         }
+        if (mode == 6)
+        {
+            numeric_workflow::check(controller, options);
+        }
         if (mode == 5)
         {
             QFile file(controller.reportPath());
@@ -682,12 +696,12 @@ TEST(SimulatorResearchQml, ReferenceWorkflowRendersMeasuredResults)
             {
                 EXPECT_TRUE(controller.referenceInfo().contains("regression"));
             }
-            ASSERT_EQ(controller.rows().size(), mode == 5 ? 5 : mode == 4 ? 4 : 1);
+            ASSERT_EQ(controller.rows().size(), mode == 6 ? 10 : mode == 5 ? 5 : mode == 4 ? 4 : 1);
         }
         object->findChild<QObject *>("researchTabs")->setProperty("currentIndex", 2);
         if (mode >= 4)
         {
-            window.resize(1040, mode == 5 ? 1550 : 1250);
+            window.resize(1040, mode == 6 ? 1600 : mode == 5 ? 1550 : 1250);
         }
         QTimer::singleShot(100, &loop, &QEventLoop::quit);
         loop.exec();
@@ -696,7 +710,8 @@ TEST(SimulatorResearchQml, ReferenceWorkflowRendersMeasuredResults)
         const auto screenshot = qEnvironmentVariable("SV_RESEARCH_QUALITY_SCREENSHOT");
         if (!screenshot.isEmpty())
         {
-            ASSERT_TRUE(image.save(mode == 5   ? screenshot + ".carrier-results.png"
+            ASSERT_TRUE(image.save(mode == 6   ? screenshot + ".numeric-results.png"
+                                   : mode == 5 ? screenshot + ".carrier-results.png"
                                    : mode == 4 ? screenshot + ".matrix-results.png"
                                    : mode == 3 ? screenshot + ".composed.png"
                                    : batch     ? screenshot + ".batch.png"
