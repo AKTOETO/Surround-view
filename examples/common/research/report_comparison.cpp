@@ -1,5 +1,6 @@
 #include "report_comparison.hpp"
 #include "digest.hpp"
+#include "observation_policy.hpp"
 #include "regular_input.hpp"
 #include "report_evidence.hpp"
 #include "sv/json.hpp"
@@ -132,6 +133,7 @@ boost::json::object passport(const boost::json::object &report)
             }
         }
     }
+    result["observation_policy"] = verified_observation_policy(report);
     result["criteria"] = nullptr;
     result["criteria_source"] = "legacy_unverified";
     if (const auto *reference = report.if_contains("quality_reference");
@@ -256,7 +258,8 @@ bool truth_inputs(const boost::json::value &value, const Evidence &evidence)
 bool timing_policy(const boost::json::object &a, const boost::json::object &b, const Evidence &left,
                    const Evidence &right)
 {
-    for (const auto *key : {"frames", "warmup", "repeats", "seed", "reset_replay"})
+    for (const auto *key :
+         {"frames", "warmup", "repeats", "seed", "reset_replay", "capture_frames"})
     {
         if (!a.at("scenario").as_object().contains(key) ||
             !b.at("scenario").as_object().contains(key) ||
@@ -332,13 +335,29 @@ boost::json::object compare_reports(const boost::json::object &a, const boost::j
             quality_pixels += frame.as_object().at("selected_pixels").to_number<uint64_t>();
         }
     }
-    const bool timings = inputs && complete && timing_policy(a, b, left, right);
-    boost::json::array reasons;
     const auto policyA = passport(a), policyB = passport(b);
+    const auto oa = verified_observation_policy(a), ob = verified_observation_policy(b);
+    const bool observations = oa.is_object() && ob.is_object() && equal(oa, ob) &&
+                              (!oa.as_object().at("quality_evaluation").as_bool() ||
+                               (quality && equal(policyA.at("criteria"), policyB.at("criteria"))));
+    const bool timings = inputs && complete && observations && timing_policy(a, b, left, right);
+    boost::json::array reasons;
     if (!equal(policyA.at("criteria"), policyB.at("criteria")) ||
         policyA.at("criteria_source") != policyB.at("criteria_source"))
     {
         reasons.push_back("acceptance_policy_differs");
+    }
+    if (!oa.is_object() || !ob.is_object())
+    {
+        reasons.push_back("observation_policy_missing_or_unverified");
+    }
+    else if (!equal(oa, ob))
+    {
+        reasons.push_back("observation_workload_differs");
+    }
+    else if (!observations)
+    {
+        reasons.push_back("quality_evaluation_reference_or_criteria_differ");
     }
     if (!complete)
     {
@@ -443,7 +462,9 @@ boost::json::object compare_reports(const boost::json::object &a, const boost::j
     }
     return {
         {"schema_version", 1},
-        {"policy", "report_claims_comparison_v1"},
+        {"policy", "report_claims_comparison_v2"},
+        {"observation_gate",
+         observations ? "matching_observation_claims" : "different_or_unverified_observation"},
         {"inputs", inputs ? "matching_claims" : "different_or_unverified"},
         {"timing_gate", timings ? "matching_workload_claims" : "incomplete_or_unverified_workload"},
         {"quality_gate",

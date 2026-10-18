@@ -66,6 +66,7 @@ class ClientTransportTests(unittest.TestCase):
                                    'control_port': ctl, 'data_port': data},
                            'udp': {'enabled': False}}
             cfg['connections'] = connections
+            cfg['telemetry'] = dict(enabled=profile == 'both', period_ms=100, history_capacity=128)
             config = directory / 'config.json'
             config.write_text(json.dumps(cfg))
             server = subprocess.Popen([str(BUILD / 'sv-server'), '--config', str(config),
@@ -157,6 +158,17 @@ class ClientTransportTests(unittest.TestCase):
                 self.assertNotEqual(refused.returncode, 0)
                 self.assertIn('cannot reserve new research report', refused.stderr)
                 self.assertEqual(report_path.read_bytes(), before_report)
+                self.assertEqual(report['initial_state_origin'], 'experiment_acquire_ack_v1')
+                self.assertEqual(report['initial_state']['experiment_lease']['state'], 'active')
+                self.assertEqual(report['initial_state']['experiment_lease']['lease_id'], report['lease_id'])
+                policy = report['observation_policy']
+                self.assertEqual(policy['policy'], 'paused_observation_v1')
+                self.assertFalse(policy['capture_frames'])
+                self.assertFalse(policy['quality_evaluation'])
+                self.assertEqual(policy['capture_consumer'], 'none')
+                self.assertTrue(policy['telemetry_stable'])
+                self.assertEqual(policy['telemetry_before'], cfg['telemetry'])
+                self.assertEqual(policy['telemetry_after'], cfg['telemetry'])
                 self.assertEqual(len(report['summaries']), 7)
                 for summary in report['summaries']:
                     timing = summary['timings']['render_wall']
@@ -191,6 +203,11 @@ class ClientTransportTests(unittest.TestCase):
                     text=True, capture_output=True, timeout=20)
                 self.assertEqual(sequence.returncode,0,sequence.stderr+sequence.stdout)
                 sequence_data = json.loads(sequence_report.read_text())
+                self.assertEqual(sequence_data['observation_policy']['capture_consumer'], 'rgba8_files_v1')
+                self.assertTrue(sequence_data['observation_policy']['capture_frames'])
+                self.assertFalse(sequence_data['observation_policy']['quality_evaluation'])
+                self.assertTrue(sequence_data['observation_policy']['telemetry_stable'])
+                self.assertEqual(sequence_data['observation_policy']['telemetry_before'], cfg['telemetry'])
                 self.assertTrue(sequence_data['restored'])
                 self.assertEqual(sequence_data['ready_preparation'], 'reset_first_row')
                 self.assertTrue(sequence_data['scenario']['reset_replay'])
@@ -322,6 +339,11 @@ class ClientTransportTests(unittest.TestCase):
                 self.assertEqual(quality.returncode, 0, quality.stderr + quality.stdout)
                 quality_data = json.loads(quality_report.read_text())
                 self.assertTrue(quality_data['restored'])
+                self.assertTrue(quality_data['observation_policy']['quality_evaluation'])
+                self.assertEqual(quality_data['observation_policy']['quality_algorithm'], 'masked_rgb8_v1')
+                self.assertEqual(quality_data['observation_policy']['telemetry_before'], cfg['telemetry'])
+                self.assertEqual(quality_data['observation_policy']['telemetry_after'], cfg['telemetry'])
+                self.assertTrue(quality_data['observation_policy']['telemetry_stable'])
                 self.assertEqual(quality_data['quality_acceptance']['status'], 'passed')
                 self.assertEqual(quality_data['quality_acceptance']['evaluated_frame_variants'], 3)
                 self.assertEqual(quality_data['quality_acceptance']['evaluated_samples'], 6)

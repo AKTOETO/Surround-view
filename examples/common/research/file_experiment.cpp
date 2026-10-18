@@ -143,6 +143,10 @@ boost::json::object FileExperiment::execute(const client::Options &options,
     }
     auto report = run(impl_->scenario, options, cancel, std::move(progress), std::move(capture),
                       impl_->quality);
+    if (impl_->scenario.capture_frames)
+    {
+        report.at("observation_policy").as_object()["capture_consumer"] = "rgba8_files_v1";
+    }
     if (impl_->quality && !report.contains("quality_reference"))
     {
         report["quality_reference"] = impl_->quality->description();

@@ -87,7 +87,7 @@ TEST(ResearchComparison, MaskMismatchAndIncompleteRunsRemainVisibleWithoutAccept
         .as_object()["mask_pixels_sha256"] = std::string(64, 'e');
     auto result = sv::research::compare_reports(a, b);
     EXPECT_TRUE(first(result).at("mae_delta").is_null());
-    EXPECT_FALSE(first(result).at("timing_delta_ms").is_null());
+    EXPECT_TRUE(first(result).at("timing_delta_ms").is_null());
     b["success"] = false;
     result = sv::research::compare_reports(a, b);
     EXPECT_TRUE(first(result).at("timing_delta_ms").is_null());
@@ -256,4 +256,110 @@ TEST(ResearchComparison, DifferentAcceptancePoliciesAreVisibleWithoutChangingRaw
     EXPECT_EQ(result.at("reasons").as_array()[0], "acceptance_policy_differs");
     EXPECT_NE(result.at("left").as_object().at("criteria"),
               result.at("right").as_object().at("criteria"));
+}
+
+TEST(ResearchComparison, CaptureAndProgressFlagsAreRequiredEvenForMatchingRenderSamples)
+{
+    const auto a = comparison_fixture::report();
+    auto b = a;
+    b.at("scenario").as_object()["capture_frames"] = true;
+    auto &policy = b.at("observation_policy").as_object();
+    policy["capture_frames"] = true;
+    policy["capture_consumer"] = "rgba8_files_v1";
+    auto result = sv::research::compare_reports(a, b);
+    EXPECT_EQ(result.at("observation_gate"), "different_or_unverified_observation");
+    EXPECT_TRUE(first(result).at("timing_delta_ms").is_null());
+    EXPECT_FALSE(first(result).at("mae_delta").is_null());
+    EXPECT_FALSE(first(sv::research::compare_reports(b, b)).at("timing_delta_ms").is_null());
+    policy["capture_consumer"] = "callback_unverified";
+    EXPECT_TRUE(first(sv::research::compare_reports(b, b)).at("timing_delta_ms").is_null());
+    b = a;
+    b.at("observation_policy").as_object()["progress_callback"] = true;
+    EXPECT_TRUE(first(sv::research::compare_reports(a, b)).at("timing_delta_ms").is_null());
+}
+
+TEST(ResearchComparison, LegacyUnknownMalformedAndUnstableObservationClaimsDisableOnlyTiming)
+{
+    const auto a = comparison_fixture::report();
+    for (unsigned variation = 0; variation < 8; ++variation)
+    {
+        auto b = a;
+        auto &p = b.at("observation_policy").as_object();
+        switch (variation)
+        {
+        case 0:
+            b.erase("observation_policy");
+            break;
+        case 1:
+            p["policy"] = "future_observation_v2";
+            break;
+        case 2:
+            p["telemetry_stable"] = false;
+            break;
+        case 3:
+            p["telemetry_before"] = nullptr;
+            break;
+        case 4:
+            p.at("telemetry_after").as_object()["period_ms"] = 200;
+            break;
+        case 5:
+            p["extra"] = 1;
+            break;
+        case 6:
+            b.at("scenario").as_object()["capture_frames"] = "false";
+            break;
+        case 7:
+            p["frame_digest"] = "none";
+            break;
+        }
+        // Invalid scenario field types are rejected by the existing scenario parser.
+        if (variation == 6)
+        {
+            EXPECT_ANY_THROW(sv::research::compare_reports(a, b));
+            continue;
+        }
+        const auto result = sv::research::compare_reports(a, b);
+        EXPECT_TRUE(first(result).at("timing_delta_ms").is_null()) << variation;
+        EXPECT_FALSE(first(result).at("mae_delta").is_null()) << variation;
+        EXPECT_TRUE(result.at("right").as_object().at("observation_policy").is_null());
+    }
+}
+
+TEST(ResearchComparison, EvaluatorReferenceAndCriteriaAffectTimingButNotEquivalentRawQuality)
+{
+    const auto a = comparison_fixture::report();
+    auto b = a;
+    b.at("quality_reference").as_object()["criteria"] = boost::json::object{{"max_mae_rgb8", 2}};
+    auto result = sv::research::compare_reports(a, b);
+    EXPECT_TRUE(first(result).at("timing_delta_ms").is_null());
+    EXPECT_FALSE(first(result).at("mae_delta").is_null());
+    b = a;
+    b.erase("quality_reference");
+    b.at("observation_policy").as_object()["quality_evaluation"] = false;
+    b.at("observation_policy").as_object()["quality_algorithm"] = "none";
+    EXPECT_TRUE(first(sv::research::compare_reports(a, b)).at("timing_delta_ms").is_null());
+    result = sv::research::compare_reports(b, b);
+    EXPECT_FALSE(first(result).at("timing_delta_ms").is_null());
+    EXPECT_TRUE(first(result).at("mae_delta").is_null());
+}
+
+TEST(ResearchComparison, DifferentServerTelemetrySettingsDisableTimingWithoutHidingMetrics)
+{
+    const auto a = comparison_fixture::report();
+    for (const auto *field : {"enabled", "period_ms", "history_capacity"})
+    {
+        auto b = a;
+        auto &policy = b.at("observation_policy").as_object();
+        for (const auto *when : {"telemetry_before", "telemetry_after"})
+        {
+            auto &telemetry = policy.at(when).as_object();
+            telemetry[field] = std::string_view(field) == "enabled" ? boost::json::value(true)
+                                                                    : boost::json::value(200);
+        }
+        const auto result = sv::research::compare_reports(a, b);
+        EXPECT_TRUE(first(result).at("timing_delta_ms").is_null());
+        EXPECT_FALSE(first(result).at("left").as_object().at("render_p50_ms").is_null());
+        EXPECT_FALSE(first(result).at("mae_delta").is_null());
+        EXPECT_FALSE(first(sv::research::compare_reports(b, b)).at("timing_delta_ms").is_null());
+    }
 }

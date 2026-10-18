@@ -1,8 +1,10 @@
 #include "connection.hpp"
 #include "digest.hpp"
+#include "observation_policy.hpp"
 #include "quality_metrics.hpp"
 #include "quality_reference.hpp"
 #include "scenario.hpp"
+#include "sv/config.hpp"
 #include "trial_plan.hpp"
 #include <algorithm>
 #include <chrono>
@@ -135,6 +137,8 @@ boost::json::object run(const Scenario &scenario, const client::Options &options
     const auto serialized = boost::json::serialize(description);
     boost::json::object report{
         {"schema_version", 1},
+        {"observation_policy",
+         observation_policy(scenario.capture_frames, bool(quality), bool(progress))},
         {"trial_order_algorithm", trial_order_algorithm},
         {"trial_plan", plan_json},
         {"trial_plan_sha256", sha256(serialized_plan.data(), serialized_plan.size())},
@@ -201,17 +205,35 @@ boost::json::object run(const Scenario &scenario, const client::Options &options
         }
         const auto catalog = accepted(*connection, "fusion_catalog");
         report["catalog"] = catalog.at("fusion_catalog");
-        original = accepted(*connection, "state");
-        report["initial_state"] = original;
-        if (original.at("source_type").as_string() != "replay")
-        {
-            throw std::runtime_error("research requires replay source");
-        }
         const auto acquired = accepted(*connection, "experiment_acquire", {{"ttl_ms", 30000}});
+        // The acquire ACK snapshots exactly the state protected by this lease.
+        // A separate pre-acquire read can race another client's configuration update.
+        original = acquired;
+        report["initial_state"] = original;
+        report["initial_state_origin"] = "experiment_acquire_ack_v1";
         lease_id = text(acquired.at("experiment_lease").as_object(), "lease_id");
         report["lease_id"] = lease_id;
         revision = text(acquired, "config_revision");
         report["restore_required"] = true;
+        auto read_telemetry = [&]() -> boost::json::value
+        {
+            if (!connection->supports("config_read_v1"))
+            {
+                return nullptr;
+            }
+            try
+            {
+                const auto reply = accepted(*connection, "config_read");
+                const auto snapshot = client::parse_configuration_snapshot(Message{21, reply, {}});
+                return telemetry_settings(parse_config(snapshot.active).telemetry);
+            }
+            catch (const std::exception &error)
+            {
+                report["observation_error"] = error.what();
+                return nullptr;
+            }
+        };
+        report.at("observation_policy").as_object()["telemetry_before"] = read_telemetry();
         const auto paused = accepted(*connection, scenario.reset_replay ? "replay_reset" : "pause",
                                      {{"lease_id", lease_id}});
         auto baseline = connection->frame(text(paused, "state_revision"));
@@ -349,6 +371,11 @@ boost::json::object run(const Scenario &scenario, const client::Options &options
                 }
             }
         }
+        auto &observations = report.at("observation_policy").as_object();
+        observations["telemetry_after"] = read_telemetry();
+        observations["telemetry_stable"] =
+            !observations.at("telemetry_before").is_null() &&
+            observations.at("telemetry_before") == observations.at("telemetry_after");
         report["success"] = true;
     }
     catch (const std::exception &error)

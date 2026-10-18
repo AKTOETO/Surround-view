@@ -1,4 +1,5 @@
 #pragma once
+#include "observation_policy.hpp"
 #include "trial_plan.hpp"
 #include <boost/json.hpp>
 
@@ -66,7 +67,13 @@ inline boost::json::object report()
                                    {"pixel_weighted_psnr_db", 108.13},
                                    {"exact_match", false}});
     }
+    auto observations = sv::research::observation_policy(false, true);
+    observations["telemetry_before"] =
+        object{{"enabled", false}, {"period_ms", 100}, {"history_capacity", 128}};
+    observations["telemetry_after"] = observations.at("telemetry_before");
+    observations["telemetry_stable"] = true;
     return {{"schema_version", 1},
+            {"observation_policy", observations},
             {"experiment", "paused_frame_fusion_screen"},
             {"success", true},
             {"restored", true},
