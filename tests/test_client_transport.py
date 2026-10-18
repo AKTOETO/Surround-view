@@ -361,6 +361,40 @@ class ClientTransportTests(unittest.TestCase):
                         self.assertIsNone(sample['quality']['psnr_db'])
                         self.assertEqual(sample['quality']['selected_pixels'], width * height // 2)
                 gui_quality("passed")
+                # Portable client-input bundle: export/verify offline, relocate, then run natively.
+                bundle = directory / 'bundle'
+                exported = subprocess.run([str(BUILD / 'svctl'), '--unix', str(directory / 'no-server'),
+                    'research-bundle-export', str(quality_scenario), str(bundle)],
+                    text=True, capture_output=True, timeout=8)
+                self.assertEqual(exported.returncode, 0, exported.stdout + exported.stderr)
+                receipt = json.loads(exported.stdout)
+                relocated = directory / 'relocated bundle # %'
+                bundle.rename(relocated)
+                verified = subprocess.run([str(BUILD / 'svctl'), '--unix', str(directory / 'no-server'),
+                    'research-bundle-verify', str(relocated)], text=True, capture_output=True, timeout=8)
+                self.assertEqual(verified.returncode, 0, verified.stdout + verified.stderr)
+                self.assertEqual(json.loads(verified.stdout)['manifest_sha256'], receipt['manifest_sha256'])
+                bundle_report = directory / 'bundle-report.json'
+                completed = subprocess.run([str(BUILD / 'svctl'), *endpoint, '--timeout-ms', '3000',
+                    'research-bundle-run', str(relocated), str(bundle_report)],
+                    text=True, capture_output=True, timeout=20)
+                self.assertEqual(completed.returncode, 0, completed.stdout + completed.stderr)
+                bundled = json.loads(bundle_report.read_text())
+                self.assertTrue(bundled['restored'])
+                self.assertEqual(bundled['input_bundle']['manifest_sha256'], receipt['manifest_sha256'])
+                self.assertEqual(bundled['scenario_input_kind'], 'verified_bundle_snapshot_v1')
+                self.assertEqual(bundled['quality_acceptance']['status'], 'passed')
+                self.assertEqual(bundled['quality_summaries'][0]['pixel_weighted_mae_rgb8'], 0)
+                manifest = json.loads((relocated / 'bundle.json').read_text())
+                asset = next(row['path'] for row in manifest['files'] if row['path'].endswith('-rgb.ppm'))
+                with (relocated / asset).open('ab') as changed:
+                    changed.write(b'x')
+                rejected_output = directory / 'unverified-report.json'
+                rejected = subprocess.run([str(BUILD / 'svctl'), '--unix', str(directory / 'no-server'),
+                    'research-bundle-run', str(relocated), str(rejected_output)],
+                    text=True, capture_output=True, timeout=8)
+                self.assertNotEqual(rejected.returncode, 0)
+                self.assertFalse(rejected_output.exists(), 'invalid bundle reserved output before preflight')
                 original_reference = reference_path.read_bytes()
                 no_criteria = dict(reference)
                 del no_criteria['criteria']

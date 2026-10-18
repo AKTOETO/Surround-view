@@ -102,3 +102,20 @@ TEST(SvctlOptions, ResearchBatchPathsAndArity)
     EXPECT_ANY_THROW(sv::ctl::parse({"research-batch", "plan.json"}));
     EXPECT_ANY_THROW(sv::ctl::parse({"research-batch", "plan.json", "out", "extra"}));
 }
+
+TEST(SvctlOptions, PortableResearchBundleCommandsHaveStrictArity)
+{
+    for (const auto *operation : {"research-bundle-export", "research-bundle-run"})
+    {
+        const auto options = sv::ctl::parse({operation, "input # %.json", "new-output"});
+        EXPECT_EQ(options.request.operation, operation);
+        EXPECT_EQ(options.request.parameters.at("scenario_path"), "input # %.json");
+        EXPECT_EQ(options.request.parameters.at("report_path"), "new-output");
+        EXPECT_ANY_THROW(sv::ctl::parse({operation, "input"}));
+        EXPECT_ANY_THROW(sv::ctl::parse({operation, "input", "output", "extra"}));
+    }
+    EXPECT_EQ(sv::ctl::parse({"research-bundle-verify", "bundle"}).request.operation,
+              "research-bundle-verify");
+    EXPECT_ANY_THROW(sv::ctl::parse({"research-bundle-verify"}));
+    EXPECT_ANY_THROW(sv::ctl::parse({"research-bundle-verify", "bundle", "extra"}));
+}

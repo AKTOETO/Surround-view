@@ -98,10 +98,15 @@ Options parse(const std::vector<std::string> &args)
     options.request.operation = next();
     auto &operation = options.request.operation;
     auto &parameters = options.request.parameters;
-    if (operation == "research" || operation == "research-batch")
+    if (operation == "research" || operation == "research-batch" ||
+        operation == "research-bundle-export" || operation == "research-bundle-run")
     {
         parameters["scenario_path"] = next();
         parameters["report_path"] = next();
+    }
+    else if (operation == "research-bundle-verify")
+    {
+        parameters["scenario_path"] = next();
     }
     else if (operation == "preset")
     {
@@ -195,6 +200,9 @@ std::string usage()
            "      command TYPE [--params JSON_OBJECT]\n"
            "      research SCENARIO_JSON REPORT_JSON\n"
            "      research-batch PLAN_JSON NEW_OUTPUT_DIRECTORY\n"
+           "      research-bundle-export SCENARIO_JSON NEW_BUNDLE_DIRECTORY\n"
+           "      research-bundle-verify BUNDLE_DIRECTORY\n"
+           "      research-bundle-run BUNDLE_DIRECTORY REPORT_JSON\n"
            "Default: Unix /tmp/sv-prototype, state. Output: one JSON ACK.\n"
            "Exit codes: 0 accepted, 2 arguments, 3 setup/connection, 4 rejected/incomplete, "
            "5 completed research quality rejection.\n";

@@ -1,6 +1,7 @@
 #include "batch.hpp"
 #include "file_experiment.hpp"
 #include "options.hpp"
+#include "scenario_bundle.hpp"
 #include <chrono>
 #include <condition_variable>
 #include <deque>
@@ -13,6 +14,38 @@ namespace sv::ctl
 {
 int execute(const Options &options)
 {
+    if (options.request.operation == "research-bundle-export")
+    {
+        const auto &p = options.request.parameters;
+        const auto receipt =
+            research::export_scenario_bundle(std::string(p.at("scenario_path").as_string()),
+                                             std::string(p.at("report_path").as_string()));
+        std::cout << boost::json::serialize(receipt) << '\n';
+        return 0;
+    }
+    if (options.request.operation == "research-bundle-verify" ||
+        options.request.operation == "research-bundle-run")
+    {
+        const auto &p = options.request.parameters;
+        research::ScenarioBundle bundle(std::string(p.at("scenario_path").as_string()));
+        if (options.request.operation == "research-bundle-verify")
+        {
+            std::cout << boost::json::serialize(bundle.summary()) << '\n';
+            return 0;
+        }
+        client::Options connection;
+        connection.endpoint = options.endpoint;
+        connection.timeout_ms = options.timeout_ms;
+        const auto report =
+            bundle.execute(std::string(p.at("report_path").as_string()), connection);
+        std::cout << boost::json::serialize(
+                         boost::json::object{{"success", report.at("success")},
+                                             {"restored", report.at("restored")},
+                                             {"quality_status", research::quality_status(report)},
+                                             {"input_bundle", report.at("input_bundle")}})
+                  << '\n';
+        return research::research_exit_code(report);
+    }
     if (options.request.operation == "research" || options.request.operation == "research-batch")
     {
         const auto &parameters = options.request.parameters;
