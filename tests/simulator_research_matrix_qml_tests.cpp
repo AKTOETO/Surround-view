@@ -76,3 +76,53 @@ TEST(SimulatorResearchMatrixQml, PreviewAndCatalogGatesTrackAxesWithoutSilentlyE
     EXPECT_TRUE(controller.reportPath().isEmpty());
     EXPECT_TRUE(warnings.messages().isEmpty()) << warnings.messages().join('\n').toStdString();
 }
+
+TEST(SimulatorResearchMatrixQml, CarrierSnapshotsAreCopiedDeduplicatedAndCatalogGated)
+{
+    QmlWarningCapture warnings;
+    ResearchController controller;
+    controller.setConnection(sv::client::Options{});
+    QQmlApplicationEngine engine;
+    engine.rootContext()->setContextProperty("researchController", &controller);
+    engine.rootContext()->setContextProperty("simulatorQtMajorVersion", QT_VERSION_MAJOR);
+    QQmlComponent component(&engine, QUrl("qrc:/ResearchPanel.qml"));
+    std::unique_ptr<QObject> object(component.create());
+    ASSERT_TRUE(object) << component.errorString().toStdString();
+    object->setProperty("fusionCatalog", capability_fixture::catalog());
+    object->setProperty("surfaceCatalog", QVariantMap{{"types", QStringList{"dome_floor_v1"}}});
+    auto *editor = object->findChild<QObject *>("researchCarrierEditor");
+    auto *use = object->findChild<QObject *>("researchUseCarriers");
+    auto *capture = object->findChild<QObject *>("researchCaptureCarrier");
+    auto *start = object->findChild<QObject *>("researchStart");
+    ASSERT_TRUE(editor && use && capture && start);
+    EXPECT_FALSE(capture->property("enabled").toBool());
+    use->setProperty("checked", true);
+    EXPECT_FALSE(start->property("enabled").toBool()); // explicit empty matrix
+    QVariantMap dome{{"type", "dome_floor_v1"},
+                     {"dome_radius_m", 14.},
+                     {"dome_latitude_cells", 14},
+                     {"dome_longitude_cells", 64},
+                     {"floor_radial_cells", 12}};
+    object->setProperty("activeSurface", dome);
+    object->setProperty("canCaptureSurface", true);
+    ASSERT_TRUE(QMetaObject::invokeMethod(capture, "clicked"));
+    EXPECT_TRUE(start->property("enabled").toBool());
+    EXPECT_EQ(object->property("variantCount").toInt(), 4);
+    ASSERT_TRUE(QMetaObject::invokeMethod(capture, "clicked"));
+    EXPECT_EQ(object->property("variantCount").toInt(), 4);
+    EXPECT_TRUE(editor->property("notice").toString().contains("уже добавлен"));
+    dome["dome_radius_m"] = 15.;
+    object->setProperty("activeSurface", dome);
+    EXPECT_EQ(object->property("variantCount").toInt(), 4); // existing snapshot unchanged
+    ASSERT_TRUE(QMetaObject::invokeMethod(capture, "clicked"));
+    EXPECT_EQ(object->property("variantCount").toInt(), 8);
+    object->setProperty("surfaceCatalog", QVariantMap{});
+    EXPECT_FALSE(start->property("enabled").toBool());
+    use->setProperty("checked", false);
+    EXPECT_TRUE(start->property("enabled").toBool()); // baseline doesn't need surface catalog
+    EXPECT_EQ(object->property("variantCount").toInt(), 4);
+    use->setProperty("checked", true);
+    EXPECT_EQ(object->property("variantCount").toInt(), 8); // retained, not silently filtered
+    EXPECT_FALSE(start->property("enabled").toBool());
+    EXPECT_TRUE(warnings.messages().isEmpty()) << warnings.messages().join('\n').toStdString();
+}

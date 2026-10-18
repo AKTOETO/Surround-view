@@ -8,8 +8,11 @@ Pane {
     property var controller: researchController
     property var comparisonController: typeof reportComparisonController !== "undefined" ? reportComparisonController : null
     property var fusionCatalog: typeof configurationEditor !== "undefined" && configurationEditor.ready ? (configurationEditor.catalog.fusion || {}) : ({})
+    property var surfaceCatalog: typeof configurationEditor !== "undefined" && configurationEditor.ready ? (configurationEditor.catalog.surface || {}) : ({})
+    property var activeSurface: typeof configurationEditor !== "undefined" ? configurationEditor.activeSurface : ({})
+    property bool canCaptureSurface: typeof configurationEditor !== "undefined" && configurationEditor.ready && !configurationEditor.busy && !configurationEditor.unresolved && !controller.busy
     property var draftCapabilities: controller.draftCapabilities(fusionCatalog)
-    property string draftIssue: controller.draftCapabilityError(draft(), fusionCatalog, referenceSource)
+    property string draftIssue: controller.draftCapabilityError(draft(), fusionCatalog, referenceSource, surfaceCatalog)
     property string selectedBoundary: "both"
     property string selectedSolver: "binary_pairs"
     property var qualityLabels: ({
@@ -54,6 +57,8 @@ Pane {
         };
         var axes = matrixEditor.axes;
         for (var key in axes) result[key] = axes[key];
+        var carriers = carrierEditor.axes;
+        for (var carrierKey in carriers) result[carrierKey] = carriers[carrierKey];
         if (criteriaEditor.overrideEnabled)
             result.quality_criteria = criteriaEditor.criteria;
         return result;
@@ -424,6 +429,16 @@ Pane {
                 capabilities: panel.draftCapabilities
             }
 
+            ResearchCarrierEditor {
+                id: carrierEditor
+                objectName: "researchCarrierEditor"
+                width: parent.width
+                visible: planMode.currentIndex === 0
+                activeSurface: panel.activeSurface
+                canCapture: panel.canCaptureSurface
+                enabled: !panel.controller.busy
+            }
+
             GroupBox {
                 title: "Внешний эталон (необязательно)"
                 width: parent.width
@@ -519,7 +534,7 @@ Pane {
                 text: "Начать исследование"
                 enabled: panel.controller.available && (planMode.currentIndex === 3 ? batchEditor.members.length > 0 : planMode.currentIndex === 2 ? panel.batchSource.toString().length > 0 : planMode.currentIndex === 1 ? panel.scenarioSource.toString().length > 0 : panel.draftIssue.length === 0 && panel.variantCount > 0 && panel.variantCount * framesCount.value * (warmupCount.value + repeatCount.value) <= 10000)
                 onClicked: {
-                    if (planMode.currentIndex === 3 ? panel.controller.startBatchDraft(batchEditor.members, outputDirectory.text) : planMode.currentIndex === 2 ? panel.controller.startBatch(panel.batchSource, outputDirectory.text) : planMode.currentIndex === 1 ? panel.controller.startScenario(panel.scenarioSource, outputDirectory.text) : panel.controller.startCatalogDraft(panel.draft(), outputDirectory.text, panel.referenceSource, panel.fusionCatalog))
+                    if (planMode.currentIndex === 3 ? panel.controller.startBatchDraft(batchEditor.members, outputDirectory.text) : planMode.currentIndex === 2 ? panel.controller.startBatch(panel.batchSource, outputDirectory.text) : planMode.currentIndex === 1 ? panel.controller.startScenario(panel.scenarioSource, outputDirectory.text) : panel.controller.startCatalogDraft(panel.draft(), outputDirectory.text, panel.referenceSource, panel.fusionCatalog, panel.surfaceCatalog))
                         tabs.currentIndex = 1;
 
                 }

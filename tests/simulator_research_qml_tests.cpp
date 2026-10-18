@@ -2,6 +2,7 @@
 #include "qml_warning_capture.hpp"
 #include "research_batch_draft.hpp"
 #include "research_capabilities_fixture.hpp"
+#include "research_carrier_workflow.hpp"
 #include "research_comparison.hpp"
 #include "research_controller.hpp"
 #include "research_draft.hpp"
@@ -358,7 +359,7 @@ TEST(SimulatorResearchQml, ReferenceWorkflowRendersMeasuredResults)
     QTemporaryDir retained;
     ASSERT_TRUE(retained.isValid());
     const auto reportA = retained.path() + "/a.json";
-    for (const int mode : {1, 0, 2, 3, 4})
+    for (const int mode : {1, 0, 2, 3, 4, 5})
     {
         const bool batch = mode == 2 || mode == 3;
         const auto endpoint =
@@ -401,7 +402,7 @@ TEST(SimulatorResearchQml, ReferenceWorkflowRendersMeasuredResults)
         QTemporaryDir directory;
         ASSERT_TRUE(directory.isValid());
         object->findChild<QObject *>("researchPlanMode")
-            ->setProperty("currentIndex", mode == 4 ? 0 : mode);
+            ->setProperty("currentIndex", mode >= 4 ? 0 : mode);
         if (mode == 2)
         {
             const auto plan = directory.path() + "/batch.json";
@@ -470,7 +471,7 @@ TEST(SimulatorResearchQml, ReferenceWorkflowRendersMeasuredResults)
                 window.resize(1040, 630);
             }
         }
-        else if (mode == 0 || mode == 4)
+        else if (mode == 0 || mode >= 4)
         {
             QFile native(reportA);
             ASSERT_TRUE(native.open(QIODevice::ReadOnly));
@@ -509,7 +510,7 @@ TEST(SimulatorResearchQml, ReferenceWorkflowRendersMeasuredResults)
                     ->setProperty("checked", true);
                 object->findChild<QObject *>("researchUseMae")->setProperty("checked", true);
             }
-            else
+            else if (mode == 4)
             {
                 object->findChild<QObject *>("researchFrames")->setProperty("value", 1);
                 object->findChild<QObject *>("researchWarmup")->setProperty("value", 0);
@@ -519,6 +520,15 @@ TEST(SimulatorResearchQml, ReferenceWorkflowRendersMeasuredResults)
                 object->findChild<QObject *>("researchLevelTo")->setProperty("value", 3);
                 object->findChild<QObject *>("researchSweepSolvers")->setProperty("checked", true);
                 EXPECT_EQ(object->property("variantCount").toInt(), 4);
+            }
+            if (mode == 5)
+            {
+                object->setProperty("selectedModes", QStringList{"edge_feather"});
+                object->findChild<QObject *>("researchFrames")->setProperty("value", 1);
+                object->findChild<QObject *>("researchWarmup")->setProperty("value", 0);
+                object->findChild<QObject *>("researchRepeats")->setProperty("value", 1);
+                ASSERT_NO_THROW(carrier_workflow::capture(object.get(), options));
+                EXPECT_EQ(object->property("variantCount").toInt(), 5);
             }
             ASSERT_TRUE(object->property("draftIssue").toString().isEmpty())
                 << object->property("draftIssue").toString().toStdString();
@@ -532,7 +542,11 @@ TEST(SimulatorResearchQml, ReferenceWorkflowRendersMeasuredResults)
                 QTimer::singleShot(100, &paint, &QEventLoop::quit);
                 paint.exec();
                 const auto formImage = window.grabWindow();
-                if (mode == 4)
+                if (mode == 5)
+                {
+                    ASSERT_TRUE(formImage.save(capture + ".carriers.png"));
+                }
+                else if (mode == 4)
                 {
                     ASSERT_TRUE(formImage.save(capture + ".matrix.png"));
                 }
@@ -559,7 +573,7 @@ TEST(SimulatorResearchQml, ReferenceWorkflowRendersMeasuredResults)
         loop.exec();
         ASSERT_FALSE(controller.busy());
         ASSERT_EQ(controller.exitCode(), 0) << controller.status().toStdString();
-        EXPECT_EQ(controller.qualityStatus(), mode == 4 ? "not_requested" : "passed");
+        EXPECT_EQ(controller.qualityStatus(), mode >= 4 ? "not_requested" : "passed");
         EXPECT_EQ(controller.batchMode(), batch);
         if (mode == 0)
         {
@@ -610,6 +624,34 @@ TEST(SimulatorResearchQml, ReferenceWorkflowRendersMeasuredResults)
             EXPECT_EQ(profiles, (QSet<QString>{"2:binary_pairs", "2:alpha_expansion",
                                                "3:binary_pairs", "3:alpha_expansion"}));
         }
+        if (mode == 5)
+        {
+            QFile file(controller.reportPath());
+            ASSERT_TRUE(file.open(QIODevice::ReadOnly));
+            const auto report = QJsonDocument::fromJson(file.readAll()).object();
+            const auto variants = report.value("scenario").toObject().value("variants").toArray();
+            ASSERT_EQ(variants.size(), 5);
+            ASSERT_EQ(report.value("samples").toArray().size(), 5);
+            for (const auto &value : report.value("samples").toArray())
+            {
+                const auto sample = value.toObject();
+                const int index = sample.value("variant").toInt(-1);
+                ASSERT_GE(index, 0);
+                ASSERT_LT(index, variants.size());
+                EXPECT_EQ(sample.value("metadata").toObject().value("surface"),
+                          variants[index].toObject().value("surface"));
+                EXPECT_EQ(sample.value("metadata").toObject().value("inputs"),
+                          report.value("baseline").toObject().value("inputs"));
+            }
+            EXPECT_TRUE(report.value("restored").toBool());
+            sv::research::Connection connection(options);
+            const auto state = connection.request("state");
+            EXPECT_EQ(carrier_workflow::map(state.at("surface")), report.value("initial_state")
+                                                                      .toObject()
+                                                                      .value("surface")
+                                                                      .toObject()
+                                                                      .toVariantMap());
+        }
         if (mode == 4)
         {
             QSet<QString> labels;
@@ -636,16 +678,16 @@ TEST(SimulatorResearchQml, ReferenceWorkflowRendersMeasuredResults)
         }
         else
         {
-            if (mode != 4)
+            if (mode < 4)
             {
                 EXPECT_TRUE(controller.referenceInfo().contains("regression"));
             }
-            ASSERT_EQ(controller.rows().size(), mode == 4 ? 4 : 1);
+            ASSERT_EQ(controller.rows().size(), mode == 5 ? 5 : mode == 4 ? 4 : 1);
         }
         object->findChild<QObject *>("researchTabs")->setProperty("currentIndex", 2);
-        if (mode == 4)
+        if (mode >= 4)
         {
-            window.resize(1040, 1250);
+            window.resize(1040, mode == 5 ? 1550 : 1250);
         }
         QTimer::singleShot(100, &loop, &QEventLoop::quit);
         loop.exec();
@@ -654,7 +696,8 @@ TEST(SimulatorResearchQml, ReferenceWorkflowRendersMeasuredResults)
         const auto screenshot = qEnvironmentVariable("SV_RESEARCH_QUALITY_SCREENSHOT");
         if (!screenshot.isEmpty())
         {
-            ASSERT_TRUE(image.save(mode == 4   ? screenshot + ".matrix-results.png"
+            ASSERT_TRUE(image.save(mode == 5   ? screenshot + ".carrier-results.png"
+                                   : mode == 4 ? screenshot + ".matrix-results.png"
                                    : mode == 3 ? screenshot + ".composed.png"
                                    : batch     ? screenshot + ".batch.png"
                                                : screenshot));
