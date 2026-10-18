@@ -17,6 +17,7 @@ struct FileExperiment::Impl
     std::unique_ptr<ReportOutput> output;
     std::string hash;
     bool attempted = false;
+    boost::json::value bundle_identity;
 
     void load(std::string_view text, const std::filesystem::path &directory)
     {
@@ -74,6 +75,24 @@ size_t FileExperiment::reference_bytes() const
 size_t FileExperiment::trial_count() const
 {
     return make_trial_plan(impl_->scenario).size();
+}
+
+boost::json::value FileExperiment::reference_description() const
+{
+    return impl_->quality ? boost::json::value(impl_->quality->description())
+                          : boost::json::value{};
+}
+
+void FileExperiment::set_bundle_identity(const std::string &manifest, const std::string &source)
+{
+    if (impl_->output || impl_->attempted)
+    {
+        throw std::logic_error("bundle identity must precede output reservation");
+    }
+    impl_->bundle_identity = boost::json::object{{"policy", "scenario_bundle_v1"},
+                                                 {"manifest_sha256", manifest},
+                                                 {"source_scenario_sha256", source},
+                                                 {"scope", "client_scenario_and_reference_only"}};
 }
 
 bool FileExperiment::resets_replay() const
@@ -151,9 +170,15 @@ boost::json::object FileExperiment::execute(const client::Options &options,
     {
         report["quality_reference"] = impl_->quality->description();
     }
+    if (!impl_->bundle_identity.is_null())
+    {
+        report["input_bundle"] = impl_->bundle_identity;
+    }
     report["scenario_input_sha256"] = impl_->hash;
-    report["scenario_input_kind"] =
-        impl_->source.empty() ? "memory_json_bytes_v1" : "file_bytes_v1";
+    report["scenario_input_kind"] = !impl_->bundle_identity.is_null()
+                                        ? "verified_bundle_snapshot_v1"
+                                    : impl_->source.empty() ? "memory_json_bytes_v1"
+                                                            : "file_bytes_v1";
     report["scenario_input_base_directory"] = impl_->base.string();
     if (!impl_->source.empty())
     {

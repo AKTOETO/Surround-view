@@ -19,6 +19,7 @@ class FileExperiment
     FileExperiment &operator=(const FileExperiment &) = delete;
 
     size_t reference_bytes() const;
+    boost::json::value reference_description() const;
     size_t trial_count() const;
     bool resets_replay() const;
     const std::string &input_sha256() const;
@@ -28,6 +29,8 @@ class FileExperiment
 
   private:
 
+    friend class ScenarioBundle;
+    void set_bundle_identity(const std::string &manifest_sha256, const std::string &source_sha256);
     struct Impl;
     std::unique_ptr<Impl> impl_;
 };
