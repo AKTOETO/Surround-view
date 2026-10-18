@@ -44,6 +44,30 @@ QVariantList researchResultRows(const boost::json::object &report)
                         {"psnr", QString::fromUtf8("—")},
                         {"qualityFrames", 0},
                         {"measured", 0}};
+        const auto mode = row.value("mode").toString();
+        const bool pyramid = mode == "multi_band" || mode == "graph_cut_multi_band";
+        const bool graph = mode == "graph_cut_seam" || mode == "graph_cut_multi_band";
+        QString levels = QString::fromUtf8("—");
+        if (const auto *value = variant.if_contains("pyramid_levels");
+            pyramid && value && value->is_number())
+        {
+            levels = QString::number(value->to_number<unsigned>());
+        }
+        const auto solver =
+            graph ? label(variant, "seam_solver", "binary_pairs") : QString::fromUtf8("—");
+        row["variantIndex"] = unsigned(index);
+        row["pyramidLevels"] = levels;
+        row["solver"] = solver;
+        QString profile = QString("#%1 · %2").arg(index).arg(mode);
+        if (pyramid)
+        {
+            profile += " / " + row.value("boundary").toString() + " · levels=" + levels;
+        }
+        if (graph)
+        {
+            profile += " · solver=" + solver;
+        }
+        row["profile"] = profile;
         if (index < summaries.size())
         {
             const auto &timings = summaries[index].as_object().at("timings").as_object();

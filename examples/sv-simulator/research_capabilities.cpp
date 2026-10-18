@@ -210,3 +210,24 @@ bool ResearchController::startCatalogDraft(const QVariantMap &values, const QStr
         return reject(QString::fromUtf8(error.what()));
     }
 }
+
+QVariantMap ResearchController::draftSummary(const QVariantMap &values, const QUrl &reference) const
+{
+    try
+    {
+        const auto document =
+            researchDraft(values, reference.isEmpty() ? QString{} : researchLocalPath(reference));
+        const auto scenario = sv::research::parse_scenario(document);
+        const auto count = unsigned(scenario.variants.size());
+        const auto blocks = scenario.warmup + scenario.repeats;
+        return {{"valid", true},
+                {"variants", count},
+                {"frames", scenario.frames},
+                {"blocks", blocks},
+                {"trials", count * scenario.frames * blocks}};
+    }
+    catch (const std::exception &error)
+    {
+        return {{"valid", false}, {"error", QString::fromUtf8(error.what())}};
+    }
+}
