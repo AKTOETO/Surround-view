@@ -19,6 +19,7 @@ endif()
 
 add_library(sv-simulator-research STATIC
     research_controller.cpp research_controller.hpp
+    research_capabilities.cpp research_capabilities.hpp
     research_comparison.cpp research_comparison.hpp
     research_batch_draft.cpp research_batch_draft.hpp
     research_draft.cpp research_draft.hpp research_results.cpp research_results.hpp)

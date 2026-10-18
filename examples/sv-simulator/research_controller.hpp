@@ -42,6 +42,11 @@ class ResearchController : public QObject
     QString referenceInfo() const;
 
     Q_INVOKABLE QString suggestOutput();
+    Q_INVOKABLE QVariantMap draftCapabilities(const QVariantMap &catalog) const;
+    Q_INVOKABLE QString draftCapabilityError(const QVariantMap &values,
+                                             const QVariantMap &catalog) const;
+    Q_INVOKABLE bool startCatalogDraft(const QVariantMap &values, const QString &newDirectory,
+                                       const QUrl &reference, const QVariantMap &catalog);
     Q_INVOKABLE bool startDraft(const QVariantMap &values, const QString &newDirectory);
     Q_INVOKABLE bool startDraftWithReference(const QVariantMap &values, const QString &newDirectory,
                                              const QUrl &reference);
