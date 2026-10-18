@@ -2697,7 +2697,7 @@ sample должны содержать соответствующие levels, so
 независимое качество остаются предметом прежних oracle/confirmatory этапов.
 
 Реализация закрывает первый срез parameter matrices. Набор геометрий добавлен в §3.63;
-матрицы edge width/angle power/smoothness и других параметров, bundles/multi-recording и
+применимые числовые оси добавлены в §3.64. Bundles/multi-recording и
 исследовательская/целевая приёмка остаются открытыми. Использование:
 [[engineering/RESEARCH_BATCH#Матрица параметров fusion в форме]].
 
@@ -2809,3 +2809,109 @@ QML7,09с. После добавления проверки точного со�
 сборка и research unit CTest1/1, GTest33/33. Новые проверки включают два C++ matrix cases,
 один EditorUnit case, один QML case и расширенный live GUI workflow. Проверены48 PlantUML
 вставок architecture/главы3.
+
+## 3.64. Числовые оси и исключение неприменимых параметров
+
+Следующий срез формы охватывает ширину смешивания, степень углового веса и регуляризацию
+graph-cut. Полный декартов продукт этих полей для каждого метода создавал бы повторные
+варианты с неиспользуемыми настройками. Применимость проверена по фактическим путям
+`src/render/surface.frag` и `src/fusion/fusion.cpp`, а не по названию семейства.
+
+| Метод | Edge width | Angle power | Smoothness |
+|---|---|---|---|
+| edge_feather | Да | Нет | Нет |
+| angular_feather | Да | Да | Нет |
+| hard_best_angle | Нет | Не перебирается | Нет |
+| seam_distance_feather | Нет | Нет | Нет |
+| graph_cut_seam | Нет | Нет | Да |
+| multi_band | Да | Нет | Нет |
+| graph_cut_multi_band | Нет | Нет | Да |
+
+В shader обычное смешивание использует \(w_e=\operatorname{clamp}(d/e,0,1)\), где
+\(e\) — edge width, \(d\) — расстояние до края изображения. Angular feather умножает
+этот вес на \(\max(\cos\theta,0)^p\). Hard best angle выбирает максимум углового веса;
+для положительного \(p\) математический порядок не меняется. Поэтому эта степень
+не создаёт отдельную ось hard-best исследования; численные underflow-эффекты здесь
+не исследуются. Обычный multiband использует edge weights проекционных слоёв. Graph-cut
+строит шов из distances и smoothness; его multiband-вариант сглаживает cut labels,
+поэтому edge width не является осью этих двух методов в текущей реализации.
+
+Каждая числовая ось задаётся явным упорядоченным списком, а не десятичным диапазоном
+с накоплением шага. Пользователь раскрывает группу, включает ось, вводит число в SpinBox
+и добавляет его кнопкой. Значения удаляются по отдельности; допускается1..8 различных
+конечных чисел. UI поддерживает точность0.001, C++ проверяет полный числовой диапазон:
+edge width \((0,4096]\), angle power \((0,32]\), smoothness \([0,100]\).
+Включённый пустой список блокирует запуск. Сворачивание группы не выключает оси.
+
+Пусть \(A_m\) — множество применимых осей метода \(m\), а \(L_a\) — список значений
+оси \(a\). При \(s\) носителях число вариантов равно
+
+\[
+N=s\sum_{m\in M}\prod_{a\in A_m}|L_a|\le32,
+\]
+
+где в \(A_m\) включены также применимые boundaries, levels и solvers из §3.62.
+Например, для edge/angle/smoothness списков по два значения и фиксированной boundary
+набор edge_feather, angular_feather, graph_cut_seam и multi_band даёт
+\(2+2\cdot2+2+2=10\) вариантов. Каждый native sample сопоставляется по variant index,
+поскольку порядок trial перемешан общим планировщиком.
+
+```plantuml
+@startuml
+title От числовых controls до подтверждённых настроек кадра
+actor Исследователь as User
+participant "Раскрываемые списки GUI" as UI
+participant "C++ numeric axes adapter" as Adapter
+participant "Catalog guard" as Guard
+participant "ExperimentRunner" as Runner
+participant "sv-server" as Server
+User -> UI: Включить оси, добавить явные числа
+UI -> Adapter: Typed lists
+Adapter -> Adapter: Конечность / пределы / distinct / применимость
+Adapter -> Adapter: Common expander, общий лимит32 variants
+Adapter -> Guard: Parsed FusionSettings каждого варианта
+Guard -> Guard: Все числовые поля, включая defaults
+Guard --> UI: Preview либо ошибка; выбор сохраняется
+User -> UI: Запустить
+UI -> Runner: Frozen ordinary scenario
+loop Trial
+  Runner -> Server: configure_fusion
+  Server --> Runner: Frame + actual fusion metadata
+  Runner -> Runner: Сверить применённые настройки
+end
+Runner -> Server: Восстановить исходные настройки
+@enduml
+```
+
+*Рисунок3.69 — выбор применимых осей и проверка полного набора отправляемых чисел.*
+
+![Числовые списки в форме нативного исследования](figures/implementation/research_numeric_native.png)
+
+*Рисунок3.70 — форма с числовыми осями для десяти вариантов. Явные списки редактируются
+через controls; отдельный JSON для настройки не требуется.*
+
+![Результаты числовой матрицы](figures/implementation/research_numeric_results.png)
+
+*Рисунок3.71 — карточки числовой матрицы: параметры различаются в подписях, значения
+метрик качества отсутствуют, поскольку независимый reference не задан.*
+
+Отключённые оси не наследуют active-настройки сервера: сохраняется прежняя семантика
+Scenario defaults — ширина24, степень2 и smoothness0.1. Runner отправляет полный
+FusionSettings, поэтому каталожная проверка охватывает и эти неявные числа. Даже если
+конкретный метод не использует параметр для color, сервер может отклонить его значение
+как невалидную конфигурацию. Сужение catalog не исправляет список молча; ошибка блокирует
+worker/output. Общий лимит10000 trials применяется после всех осей и носителей.
+
+Нативный GUI workflow проверяет десять вариантов на реальном сервере, включая fractional
+width12.5, angle power1/2 и smoothness0/0.125. Для каждого sample явно выбранные числа
+сверяются с actual fusion metadata, input identities — с baseline; после завершения
+отдельное чтение state проверяет восстановление исходной fusion. Функциональные данные
+содержат один кадр и один repeat без warmup: они подтверждают переключение параметров,
+но не оценивают статистическое преимущество алгоритмов. Применимость параметра не
+гарантирует, что два значения дадут разные изображения на любой сцене. Научная приёмка,
+многокадровые серии, bundles и Аврора остаются отдельными этапами.
+
+Полная сборка и Linux CTest68/68 за161,04с, включая Unix/TCP/combined и QML.
+Проверены50 PlantUML вставок architecture/главы3; сравнительные screenshots получены
+из реального GUI workflow. Дополнительная QML проверка охватывает нажатие кнопки удаления значения;
+research GTest36/36. Подробности: [[validation/RESEARCH_RUNTIME]].

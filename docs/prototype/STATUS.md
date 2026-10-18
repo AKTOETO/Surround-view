@@ -1,5 +1,12 @@
 # Состояние прототипа и границы подтверждения
 
+18.10.2026: применимые числовые списки edge width/angle power/smoothness добавлены
+в форму исследования: SpinBox/add/remove, C++ validation/expansion, catalog bounds
+для всех отправляемых чисел, включая defaults. Остались bundles/multi-recording,
+многоотчётная статистика и подтверждающая исследовательская/аппаратная приёмка.
+[[engineering/RESEARCH_BATCH#Числовые списки параметров fusion]].
+
+
 18.10.2026: набор active-профилей носителей в исследовательской форме реализован.
 Полные снимки, независимые от черновика, пересекаются с применимыми fusion variants
 в C++; duplicate/catalog/aggregate guards выполняются до worker/output. Остаются

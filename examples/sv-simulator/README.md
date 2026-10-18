@@ -170,3 +170,9 @@ Current and Selected I/O details distinguish checked profile fields from optiona
 затем добавьте снимок; черновик не используется. Включите набор перед запуском.
 Сценарий сохраняет точные surface в каждом variant, а карточки различаются индексом
 и типом. Подробности: [набор носителей](../../docs/engineering/RESEARCH_BATCH.md#набор-носителей-в-форме).
+
+
+В группе матрицы доступны раскрываемые числовые списки edge width/angle power/smoothness:
+SpinBox, добавление и удаление отдельных значений. Оси учитываются только применимыми
+методами; catalog проверяет и явные значения, и отправляемые defaults сценария.
+[Применимость и пределы](../../docs/engineering/RESEARCH_BATCH.md#числовые-списки-параметров-fusion).

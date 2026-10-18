@@ -121,3 +121,6 @@ Multilabel server candidate/cost/global-gap controls: [[validation/MULTILABEL_SE
 
 Матрицы параметров и полные active-профили носителей в форме исследования:
 [[engineering/RESEARCH_BATCH#Набор носителей в форме]].
+
+Применимые числовые оси в исследовательской форме и их серверная проверка:
+[[engineering/RESEARCH_BATCH#Числовые списки параметров fusion]].

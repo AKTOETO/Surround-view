@@ -747,3 +747,43 @@ quality остаётся not_requested. Снимок принят на моме�
 валидатором vehicle/view, optional fields и ресурсов. Не подтверждены независимая truth,
 holdout/многокадровая устойчивость, Qt5/Аврора или аппаратная производительность. Набор до
 запуска живёт в памяти окна; bundle import/export не реализован этим срезом.
+
+## Применимые числовые списки fusion — 18.10.2026
+
+Добавлены C++ numeric-axis validation/expansion и раскрываемые QML controls для
+edge width, angle power и smoothness. Оси сохраняют явный порядок значений,
+ограничены1..8 числами; общие пределы variants/trials действуют после всех пересечений.
+Выключенная ось оставляет defaults сценария. Catalog guard проверяет полный набор
+отправляемых чисел, включая defaults даже у методов, не использующих поле в color.
+
+Новые GTest cases проверяют:
+
+- counts2+4+1+1+2+2+2=14 для семи методов и двух значений на числовую ось;
+  исключение неприменимых полей и стабильный порядок;
+- пустые/дублированные/нечисловые/out-of-range/слишком длинные списки,
+  inclusive smoothness zero, exclusive lower bound, narrowed/missing catalog,
+  aggregate numeric×pyramid×solver budget и отказ до worker/output;
+- каталожные пределы для defaults полного FusionSettings и обычного matrix scenario;
+- QML SpinBox/add/remove model, duplicate notice, сохранение выбора при смене методов,
+  пустой список и восстановление доступности после явного выключения оси.
+
+Native GUI workflow дополнен10-case запуском edge_feather/angular_feather/graph_cut_seam/
+multi_band, width12.5/24, power1/2 и smoothness0/0.125. Применимые поля каждого sample
+сверяются с variants[sample.variant], inputs — с baseline; отдельно читается итоговый
+state и проверяется восстановление исходной fusion. В этом запуске1 frame,0 warmup,
+1 repeat и нет reference: это проверка управления, не качества или рейтинга времени.
+Полные результаты регрессии приведены ниже.
+
+Полная последовательная Linux регрессия: **68/68 CTest за161,04с**;
+client_transports89,66с, simulator_configuration_qml7,15с. Новая матрица выполнена
+Unix/TCP/combined harness; screenshots сохранены как фигуры3.70–3.71. Проверены50
+PlantUML вставок architecture/главы3 и `git diff --check`. Финальная повторная сборка успешна; research GTest36/36. Фактическое нажатие
+кнопки удаления значения включено в QML case.
+
+Независимая truth/holdout, качество на temporal/exposure/noise сериях, аппаратный
+benchmark и Qt5/Аврора этим функциональным прогоном не квалифицированы.
+
+Финальные research unit/QML CTest **2/2 за7,16с**, QML7,12с; GTest36/36.
+Тест кнопок Repeater использует visual tree QQuickItem, поскольку делегаты не обязаны
+находиться в QObject children формы. Исправлен поиск в тесте; удаление и повторное
+добавление значения подтверждены фактическими clicked handlers.

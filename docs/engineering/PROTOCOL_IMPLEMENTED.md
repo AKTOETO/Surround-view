@@ -407,3 +407,10 @@ Image digest рассчитан worker по immutable decoded buffer при cach
 `configure_surface`/`configure_fusion` и проверяет metadata кадров. Снимки поступают из
 active `config_read`, доступность типа — из `config_catalog.surface.types`.
 [[architecture/RESEARCH_RUNTIME#Матрица носителей: снимки active, а не черновиков]].
+
+
+Числовые списки исследовательской формы также не меняют wire format: C++ adapter
+разворачивает их в обычные fusion variants; runner передаёт полный FusionSettings
+через существующий configure_fusion. Catalog guard проверяет edge_width_px,
+angle_power и smoothness_weight каждого варианта, включая неявные defaults.
+[[engineering/RESEARCH_BATCH#Числовые списки параметров fusion]].

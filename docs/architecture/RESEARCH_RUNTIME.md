@@ -809,3 +809,40 @@ Runner --> Form: Отчёт и отдельные карточки вариан�
 сервера. Окончательная семантическая проверка остаётся серверной; ошибка прерывает
 эксперимент с попыткой восстановления. Без набора профилей сохраняется прежняя
 семантика baseline surface. Пустой явно заданный набор и дубликаты недопустимы.
+
+## Числовые оси fusion: применимость до разворачивания
+
+Форма задаёт явные списки чисел через SpinBox и кнопки добавления/удаления.
+C++ проверяет конечность, диапазон и дубликаты; десятичный шаг диапазона не
+используется, поэтому накопление floating-point step не меняет число вариантов.
+Применимость определяется текущим кодом renderer/fusion, а не названием параметра.
+
+```plantuml
+@startuml
+title Применимые числовые оси исследования
+actor Исследователь as User
+participant "Числовые controls" as UI
+participant "C++ form adapter" as Adapter
+participant "Fusion catalog guard" as Guard
+participant "ExperimentRunner / server" as Run
+User -> UI: Включить ось; добавить явные значения
+UI -> Adapter: Списки edge_width / angle_power / smoothness
+Adapter -> Adapter: Проверить числа, дубликаты и применимость
+Adapter -> Adapter: Развернуть только используемые оси
+Adapter -> Guard: Все развёрнутые profiles
+Guard -> Guard: Проверить пределы текущего catalog
+Guard --> UI: Preview либо ошибка без изменения выбора
+User -> UI: Запустить
+UI -> Run: Frozen ordinary variants
+Run --> UI: Sample metadata и результат
+@enduml
+```
+
+*Рисунок RR.18 — в матрицу не включаются параметры, не используемые выбранным методом.*
+
+
+Отключённая числовая ось сохраняет defaults Scenario/FusionSettings, а не active сервера.
+Catalog guard проверяет все три фактически передаваемых числа после parse_scenario,
+включая defaults. Один глобальный предел32 variants/10000 trials применяется после
+числовых осей, pyramid/solver axes и carrier profiles. Точная таблица применимости и
+диапазоны: [[engineering/RESEARCH_BATCH#Числовые списки параметров fusion]].
