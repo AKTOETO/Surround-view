@@ -15,6 +15,7 @@ Window {
     property bool drivingWorldLoaded: driveLoader.status === Loader.Ready
     property bool showResearch: false
     ResearchCloseGuard { targetWindow: window }
+    ResearchCloseGuard { targetWindow: window; controller: reportComparisonController }
 
     // Top Header Bar
     Rectangle {

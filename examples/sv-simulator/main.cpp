@@ -1,3 +1,4 @@
+#include "research_comparison.hpp"
 #include "research_controller.hpp"
 #include "simulator_bridge.hpp"
 #include <QGuiApplication>
@@ -92,6 +93,7 @@ int main(int argc, char **argv)
     auto *provider = new SimulatorFrameProvider();
     SimulatorBridge bridge(endpoint, provider);
     ResearchController research;
+    ResearchComparison comparison;
     auto update_research_connection = [&]
     { research.setConnection(bridge.researchConnectionOptions()); };
     QObject::connect(&bridge, &SimulatorBridge::changed, &research, update_research_connection);
@@ -121,6 +123,7 @@ int main(int argc, char **argv)
 
     QQmlApplicationEngine engine;
     engine.rootContext()->setContextProperty("simulatorQtMajorVersion", QT_VERSION_MAJOR);
+    engine.rootContext()->setContextProperty("reportComparisonController", &comparison);
     engine.addImageProvider(QStringLiteral("frames"), provider);
     engine.rootContext()->setContextProperty(QStringLiteral("bridge"), &bridge);
     engine.rootContext()->setContextProperty(QStringLiteral("runtimeSettings"),

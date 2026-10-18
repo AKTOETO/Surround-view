@@ -713,4 +713,4 @@ class ClientTransportTests(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    unittest.main(argv=[sys.argv[0]])
+    unittest.main(argv=[sys.argv[0]], verbosity=2)

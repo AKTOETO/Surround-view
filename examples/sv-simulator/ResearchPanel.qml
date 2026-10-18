@@ -6,6 +6,7 @@ Pane {
     id: panel
 
     property var controller: researchController
+    property var comparisonController: typeof reportComparisonController !== "undefined" ? reportComparisonController : null
     property var qualityLabels: ({
         "not_available": "не проверено",
         "not_requested": "критерии не заданы",
@@ -133,6 +134,11 @@ Pane {
                 text: "Результаты"
             }
 
+            TabButton {
+                text: "Сравнение"
+                enabled: panel.comparisonController !== null
+            }
+
         }
 
         Label {
@@ -148,7 +154,7 @@ Pane {
             wrapMode: Text.Wrap
             color: "#cbd5e0"
             text: panel.controller.referenceInfo + " · критерии: " + (panel.qualityLabels[panel.controller.qualityStatus] || panel.controller.qualityStatus)
-            visible: tabs.currentIndex !== 0
+            visible: tabs.currentIndex === 1 || tabs.currentIndex === 2
         }
 
         Label {
@@ -163,7 +169,7 @@ Pane {
             width: parent.width
             spacing: 12
             visible: tabs.currentIndex === 0
-            enabled: !panel.controller.busy
+            enabled: !panel.controller.busy && !(panel.comparisonController && panel.comparisonController.busy)
 
             GroupBox {
                 title: "Источник плана"
@@ -530,7 +536,7 @@ Pane {
 
             Button {
                 text: "Показать результаты"
-                enabled: !panel.controller.busy
+                enabled: !panel.controller.busy && !(panel.comparisonController && panel.comparisonController.busy)
                 onClicked: tabs.currentIndex = 2
             }
 
@@ -651,6 +657,13 @@ Pane {
                 color: "#aab8cc"
             }
 
+        }
+
+        ResearchComparisonPanel {
+            width: parent.width
+            visible: tabs.currentIndex === 3 && panel.comparisonController !== null
+            controller: panel.comparisonController
+            researchBusy: panel.controller.busy
         }
 
     }

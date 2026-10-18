@@ -1,10 +1,12 @@
 #include "batch_plan.hpp"
 #include "qml_warning_capture.hpp"
 #include "research_batch_draft.hpp"
+#include "research_comparison.hpp"
 #include "research_controller.hpp"
 #include "research_draft.hpp"
 #include "sv/json.hpp"
 #include <QEventLoop>
+#include <QFile>
 #include <QImage>
 #include <QJSValue>
 #include <QQmlApplicationEngine>
@@ -346,6 +348,9 @@ TEST(SimulatorResearchQml, ReferenceWorkflowRendersMeasuredResults)
     {
         GTEST_SKIP() << "Executed by transport harness with regression reference";
     }
+    QTemporaryDir retained;
+    ASSERT_TRUE(retained.isValid());
+    const auto reportA = retained.path() + "/a.json";
     for (const int mode : {1, 2, 3})
     {
         const bool batch = mode >= 2;
@@ -366,11 +371,13 @@ TEST(SimulatorResearchQml, ReferenceWorkflowRendersMeasuredResults)
             options.endpoint.data_port = endpoint.at("data_port").to_number<uint16_t>();
         }
         QmlWarningCapture warnings;
+        ResearchComparison comparison;
         ResearchController controller;
         controller.setConnection(options);
         QQmlApplicationEngine engine;
         engine.rootContext()->setContextProperty("researchController", &controller);
         engine.rootContext()->setContextProperty("simulatorQtMajorVersion", QT_VERSION_MAJOR);
+        engine.rootContext()->setContextProperty("reportComparisonController", &comparison);
         QQmlComponent component(&engine, QUrl("qrc:/ResearchPanel.qml"));
         std::unique_ptr<QObject> object(component.create());
         ASSERT_TRUE(object) << component.errorString().toStdString();
@@ -498,6 +505,43 @@ TEST(SimulatorResearchQml, ReferenceWorkflowRendersMeasuredResults)
             ASSERT_TRUE(image.save(mode == 3 ? screenshot + ".composed.png"
                                    : batch   ? screenshot + ".batch.png"
                                              : screenshot));
+        }
+        if (mode == 1)
+        {
+            ASSERT_TRUE(QFile::copy(controller.reportPath(), reportA));
+        }
+        if (mode == 3)
+        {
+            const auto reportB = directory.path() + "/result/case-2.json";
+            auto *panel = object->findChild<QObject *>("researchComparisonPanel");
+            ASSERT_TRUE(panel);
+            panel->setProperty("leftFile", QUrl::fromLocalFile(reportA));
+            panel->setProperty("rightFile", QUrl::fromLocalFile(reportB));
+            object->findChild<QObject *>("researchTabs")->setProperty("currentIndex", 3);
+            ASSERT_TRUE(QMetaObject::invokeMethod(panel->findChild<QObject *>("comparisonStart"),
+                                                  "clicked"));
+            QEventLoop compareLoop;
+            QObject::connect(&comparison, &ResearchComparison::finished, &compareLoop,
+                             &QEventLoop::quit);
+            QTimer::singleShot(15000, &compareLoop, &QEventLoop::quit);
+            compareLoop.exec();
+            ASSERT_FALSE(comparison.busy());
+            const auto result = comparison.result();
+            ASSERT_EQ(result.value("inputs").toString(), "matching_claims")
+                << comparison.status().toStdString();
+            EXPECT_EQ(result.value("timing_gate").toString(), "matching_workload_claims");
+            EXPECT_EQ(result.value("quality_gate").toString(), "matching_reference_claims");
+            ASSERT_EQ(result.value("rows").toList().size(), 1);
+            EXPECT_EQ(result.value("rows").toList()[0].toMap().value("mae_delta").toDouble(), 0);
+            ASSERT_TRUE(comparison.save(QUrl::fromLocalFile(retained.path() + "/comparison.json")));
+            EXPECT_EQ(controller.batchRows().size(), 2);
+            if (!screenshot.isEmpty())
+            {
+                window.resize(1040, 1180);
+                QTimer::singleShot(100, &loop, &QEventLoop::quit);
+                loop.exec();
+                ASSERT_TRUE(window.grabWindow().save(screenshot + ".comparison.png"));
+            }
         }
         EXPECT_TRUE(warnings.messages().isEmpty()) << warnings.messages().join('\n').toStdString();
         item->setParentItem(nullptr);

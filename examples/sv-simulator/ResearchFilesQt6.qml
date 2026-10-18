@@ -4,6 +4,8 @@ import QtQuick.Dialogs
 Item {
     id: dialogs
 
+    property string openTitle: ""
+    property string saveTitle: "Сохранить черновик в новый файл"
     property bool reference: false
     property bool batch: false
 
@@ -24,7 +26,7 @@ Item {
         id: chooser
 
         objectName: "researchFileDialog"
-        title: dialogs.reference ? "Выбрать внешний reference manifest" : dialogs.batch ? "Выбрать batch-план" : "Выбрать сохранённый сценарий"
+        title: dialogs.openTitle.length ? dialogs.openTitle : dialogs.reference ? "Выбрать внешний reference manifest" : dialogs.batch ? "Выбрать batch-план" : "Выбрать сохранённый сценарий"
         fileMode: FileDialog.OpenFile
         nameFilters: ["JSON (*.json)"]
         options: FileDialog.DontUseNativeDialog
@@ -35,7 +37,7 @@ Item {
         id: saveDialog
 
         objectName: "researchSaveDialog"
-        title: "Сохранить черновик в новый файл"
+        title: dialogs.saveTitle
         fileMode: FileDialog.SaveFile
         defaultSuffix: "json"
         nameFilters: ["Batch plan (*.json)"]

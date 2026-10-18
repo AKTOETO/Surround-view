@@ -669,6 +669,6 @@ int main(int argc, char **argv)
     ::testing::GTEST_FLAG(filter) =
         live ? (qEnvironmentVariableIsSet("SV_RESEARCH_GUI_SCENARIO") ? "ResearchGuiReferenceLive.*"
                                                                       : "ResearchGuiLive.*")
-             : "ResearchGuiDraft.*:ResearchGuiUnit.*";
+             : "ResearchGuiDraft.*:ResearchGuiUnit.*:ResearchGuiComparison.*";
     return RUN_ALL_TESTS();
 }

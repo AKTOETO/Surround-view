@@ -12,6 +12,11 @@ current draft intact; scenario/reference preflight still runs at execution.
 The **Сохранить черновик как…** button writes a new schema1 plan without a connection or
 scenario/reference IO. It refuses overwrite and tracks edits after saving. Saved absolute paths
 remain valid when the plan file is moved, provided the source files stay in place.
+The **Сравнение** tab reads two individual native reports offline in a C++ worker, matches
+full settings and gates B−A timing/quality deltas on reported input/workload/reference identities.
+It shows both platform passports and exports an exclusive new audit file with raw SHA256.
+This checks report claims, not data attestation or scientific acceptance; see
+[report comparison](../../docs/engineering/RESEARCH_REPORTS.md).
 See docs/engineering/RESEARCH_BATCH.md, section «Исследование из sv-simulator».
 
 `sv-simulator` is a Qt 6 desktop client for connecting to `sv-server` through `sv-client-lib`. The current GUI provides connection settings, local Unix IPC discovery, remote TCP connection, the server commands currently supported by the protocol, and read-only frame/source timing diagnostics. When Qt Quick 3D is installed, the GUI also provides a procedural street preview with a drivable vehicle and four visible camera markers. This first driving scene is a visualization only: it does not yet render synchronized camera images or send them to `sv-server`, and it does not generate calibration observations. The world editor, camera-error controls and remaining ConfigService root groups remain future work. Typed ConfigService forms for fusion/surface, explicit runtime/persistence and process-scoped operation recovery are available through the client library.

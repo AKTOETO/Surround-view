@@ -282,7 +282,9 @@ add_executable(sv-core-tests tests/core_tests.cpp)
         set_tests_properties(telemetry_ipc PROPERTIES ENVIRONMENT "LIBGL_ALWAYS_SOFTWARE=1;EGL_PLATFORM=surfaceless" TIMEOUT 40)
         add_test(NAME output_products COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_output_products.py ${CMAKE_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/configs/synthetic.json)
         set_tests_properties(output_products PROPERTIES ENVIRONMENT "LIBGL_ALWAYS_SOFTWARE=1;EGL_PLATFORM=surfaceless" TIMEOUT 90)
-        set_tests_properties(client_transports PROPERTIES ENVIRONMENT "LIBGL_ALWAYS_SOFTWARE=1;EGL_PLATFORM=surfaceless" TIMEOUT 90)
+        # Three transport profiles include native/Qt research, report comparison and exports.
+    # Each child process retains its own shorter deadline; allow headroom for the full suite.
+    set_tests_properties(client_transports PROPERTIES ENVIRONMENT "LIBGL_ALWAYS_SOFTWARE=1;EGL_PLATFORM=surfaceless" TIMEOUT 150)
         set_tests_properties(replay_ipc PROPERTIES ENVIRONMENT "LIBGL_ALWAYS_SOFTWARE=1;EGL_PLATFORM=surfaceless" TIMEOUT 90)
       endif()
     endif()
@@ -392,11 +394,11 @@ if(BUILD_TESTING AND SV_GTEST_TESTS)
       Qt${QT_VERSION_MAJOR}::Core Qt${QT_VERSION_MAJOR}::Gui Qt${QT_VERSION_MAJOR}::Quick GTest::gtest)
     add_test(NAME simulator_session_state COMMAND sv-simulator-session-tests)
     if(SV_SIMULATOR)
-      add_executable(sv-simulator-research-tests tests/simulator_research_tests.cpp)
+      add_executable(sv-simulator-research-tests tests/simulator_research_tests.cpp tests/simulator_comparison_tests.cpp)
       target_link_libraries(sv-simulator-research-tests PRIVATE sv-simulator-research GTest::gtest)
       add_test(NAME simulator_research_unit COMMAND sv-simulator-research-tests)
       add_executable(sv-simulator-configuration-qml-tests tests/simulator_configuration_qml_tests.cpp
-        tests/simulator_drive_world_qml_tests.cpp tests/simulator_telemetry_qml_tests.cpp tests/simulator_research_qml_tests.cpp
+        tests/simulator_drive_world_qml_tests.cpp tests/simulator_telemetry_qml_tests.cpp tests/simulator_research_qml_tests.cpp tests/simulator_comparison_qml_tests.cpp
         examples/sv-simulator/telemetry_model.cpp examples/sv-simulator/telemetry_metrics.cpp examples/sv-simulator/telemetry_files.cpp examples/sv-simulator/telemetry_model.hpp
         examples/sv-simulator/configuration_editor.hpp examples/sv-simulator/configuration_editor.cpp
         examples/sv-simulator/configuration_draft.cpp examples/sv-simulator/configuration_surface.cpp examples/sv-simulator/configuration_operation.cpp
