@@ -13,6 +13,10 @@ capability guard не добавляет wire messages; после него вы
 scenario/report, а не новая SV01 команда и не настройка серверного renderer. Truth и пороги
 алгоритму не передаются. [[engineering/RESEARCH_QUALITY#Критерии конкретного сценария без изменения эталона]].
 
+GUI parameter matrix — локальное построение ordinary variants общим C++ expander.
+Новых wire messages нет: каждый вариант исполняется прежними lease/apply/frame/restore
+операциями. [[architecture/RESEARCH_RUNTIME#Матрица параметров fusion в форме исследования]].
+
 ## Границы и обозначения
 
 Реализация: `include/sv/client.hpp`, `src/client_library/client.cpp`, `src/apps/server.cpp`, `src/core/protocol.cpp`, `include/sv/experiment_lease.hpp`. Unix и TCP используют одинаковые сообщения, но разные явно выбранные endpoints. Одна сессия требует двух stream-соединений: control и data. Producer изображений — отдельный входной протокол [[engineering/SOURCES]], не data channel клиентской библиотеки.

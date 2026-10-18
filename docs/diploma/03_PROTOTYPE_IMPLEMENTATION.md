@@ -2598,3 +2598,110 @@ thresholds до confirmatory серии, независимость truth и ц�
 Три новых evaluator/preflight cases, один comparison-policy case, три Qt model/draft cases
 и один QML case дополняют live form workflow. Проверены44 PlantUML вставки architecture/главы3.
 Qt5/Аврора и независимая подтверждающая серия в эту проверку не входят.
+
+## 3.62. Применимые матрицы параметров fusion в интерфейсе исследования
+
+Фиксированный выбор одного числа уровней и одного решателя достаточен для демонстрации,
+но не для воспроизводимого исследования чувствительности метода. Поэтому в форму добавлены
+диапазон уровней пирамиды и сравнение двух поддержанных решателей шва. Они сочетаются
+с прежними methods и boundary. Реализация остаётся C++: application adapter использует
+общий `expand_variant_matrix`, а GUI передаёт только типизированные значения элементов формы.
+
+Полный Cartesian product всех полей для всех методов был бы некорректен как план опыта.
+Например, pyramid levels не изменяет `edge_feather`, а seam solver не относится к обычному
+multiband. Такие оси увеличивали бы число trials, создавая повторные псевдоварианты.
+Поэтому матрица строится отдельно для каждого метода с его применимыми осями.
+
+| Метод | Boundary axis | Levels axis | Solver axis | Вариантов в примере |
+|---|---|---|---|---:|
+| edge_feather | Не применяется | Не применяется | Не применяется |1|
+| graph_cut_seam | Не применяется | Не применяется | binary_pairs / alpha_expansion |2|
+| multi_band | zero / normalized |2 /4| Не применяется |4|
+| graph_cut_multi_band | zero / normalized |2 /4| binary_pairs / alpha_expansion |8|
+| Всего | | | |15|
+
+Для диапазона с первым уровнем \(a\), верхней границей \(b\) и положительным шагом \(s\)
+число значений равно
+
+$$n_L=\left\lfloor\frac{b-a}{s}\right\rfloor+1,\qquad 1\le a\le b\le8.$$
+
+Конечное значение не добавляется принудительно: диапазон2…5 с шагом2 даёт2 и4.
+Если \(B_m,L_m,S_m\) — числа значений применимых осей метода \(m\), то
+
+$$N_{variants}=\sum_m B_mL_mS_m,\qquad
+N_{trials}=N_{variants}N_{frames}(N_{warmup}+N_{repeats}).$$
+
+Для отсутствующей либо неприменимой оси множитель равен1. Предел32 variants и10000 trials
+проверяется для всего профиля до запуска worker, создания output и сетевых операций.
+Неверный диапазон, дробные/boolean значения, нулевой шаг и повторные/неизвестные solver
+отклоняются. Число trials не означает число независимых сцен или наблюдений качества.
+
+```plantuml
+@startuml
+title Матрица параметров: применимые оси и проверка фактического исполнения
+actor Исследователь as User
+participant "ResearchMatrixEditor" as UI
+participant "C++ form adapter" as Build
+participant "Common matrix expander" as Expand
+participant "Catalog guard / FileExperiment" as Prepare
+participant "Runner / sv-server" as Run
+User -> UI: Methods, boundary, level range, solvers
+UI -> Build: Typed form values
+loop Для каждого метода
+  Build -> Expand: Только применимые axes
+  Expand --> Build: Детерминированные варианты
+end
+Build --> UI: C++ counts либо ошибка лимита
+User -> UI: Запустить
+UI -> Prepare: Frozen ordinary scenario
+Prepare -> Prepare: Проверить все variants по catalog и inputs
+Prepare -> Run: Прежний shuffled trial plan
+Run --> UI: Report + metadata фактических settings
+UI --> User: Подписанные карточки: index, levels, solver
+@enduml
+```
+
+*Рисунок 3.63 — общий построитель и серверный workflow сохраняются при добавлении матрицы формы.*
+
+C++ функция `draftSummary` формирует preview quantities из того же scenario, которое
+проверяется перед исполнением. QML не поддерживает отдельную формулу разворачивания.
+При ошибке отображается причина, а не нулевое число вариантов. Сужение каталога не фильтрует
+выбранную матрицу молча: пользователь явно исправляет диапазон или отключает сравнение
+solver. Одиночные значения временно отключаются при sweep и сохраняются для возврата.
+При снятии всех методов семейства его ось не передаётся в scenario; при возврате метода
+сохранённые настройки вновь проверяются.
+
+![Матрица уровней и решателей в GUI](figures/implementation/research_matrix_native.png)
+
+*Рисунок 3.64 — native GUI профиль из четырёх graph-cut multiband вариантов: levels2/3 × два solver, одна zero boundary. Reference не выбран: это проверка исполнения, не качества.*
+
+![Раздельные карточки вариантов матрицы](figures/implementation/research_matrix_results.png)
+
+*Рисунок 3.65 — результаты native матрицы с явными levels/solver и индексом варианта; по одному measured sample на вариант без warmup иллюстрируют связность системы, не статистическое преимущество алгоритма.*
+
+При реализации выявлена отдельная проблема представления: прежние карточки содержали только
+mode/boundary и не различали варианты с другими levels/solver. Теперь подпись содержит номер,
+уровни для pyramid family и solver для graph-cut. Высота карточки вычисляется по содержимому,
+текст переносится при недостаточной ширине. Неприменимые параметры в подпись не добавляются.
+
+Snapshot остаётся обычным scenario со списком всех `variants`; его можно повторить через
+`svctl research`. Дополнительного server protocol или интерпретатора сценариев не вводится.
+Внутренние UI range/checkbox состояния отдельно не сериализуются; повторение готового списка
+не требует их восстановления. Критерии/reference продолжают фиксироваться FileExperiment.
+
+В native transport test проверяются не только четыре подписи scenario: metadata каждого
+sample должны содержать соответствующие levels, solver и boundary, а input identities
+оставаться равными baseline. Варианты выполняются shuffled, поэтому проверка сопоставляет
+их по sample.variant, а не порядку прихода. Отдельно проверяется уникальность отображаемых
+профилей. Это проверка конфигурации и исполнения; численная корректность алгоритмов и
+независимое качество остаются предметом прежних oracle/confirmatory этапов.
+
+Реализация закрывает первый срез parameter matrices. Матрицы геометрии носителей,
+edge width/angle power/smoothness и других параметров, bundles/multi-recording и
+исследовательская/целевая приёмка остаются открытыми. Использование:
+[[engineering/RESEARCH_BATCH#Матрица параметров fusion в форме]].
+
+Финальная сборка успешна, Linux CTest68/68 за155,97с; transport85,14с, QML7,06с.
+Отдельно прошли31/31 Qt unit cases и QML matrix case; добавлены шесть C++ cases и один QML case.
+Проверены46 PlantUML вставок architecture/главы3. Целевая Аврора и независимая
+подтверждающая серия не квалифицированы этим функциональным прогоном.

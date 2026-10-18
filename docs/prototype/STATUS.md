@@ -1,5 +1,16 @@
 # Состояние прототипа и границы подтверждения
 
+18.10.2026: GUI матрица fusion parameters реализована для диапазона pyramid levels,
+seam solver comparison и прежних methods/boundary. Применимые axes разворачиваются общим
+C++ expander, лимиты32/10000 и сводка проверяются в C++; snapshot содержит ordinary variants.
+Каталог проверяет каждый вариант без скрытого изменения выбора.
+[[engineering/RESEARCH_BATCH#Матрица параметров fusion в форме]].
+Проверки: Linux CTest68/68 за155,97с; transport85,14с, QML7,06с;6 новых Qt/C++ cases,
+QML matrix case и native metadata/labels для Unix/TCP/combined. §3.62, рисунки3.63–3.65.
+
+Остаются carriers и остальные parameter axes, bundles/multi-recording, независимое
+подтверждающее исследование и целевая приёмка.
+
 18.10.2026: критерии конкретного опыта реализованы в общем C++ FileExperiment/QualityReference
 и форме sv-simulator. Optional scenario.quality_criteria полностью заменяет manifest criteria;
 исходный manifest/hash сохранён, effective/source/original criteria записываются в report.

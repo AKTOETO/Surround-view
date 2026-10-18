@@ -675,3 +675,40 @@ source `scenario_override_v1`, сохранённый manifest policy и effecti
 `git diff --check`. Прежние сценарии без override сохраняют семантику; новые требуют
 обновлённого strict parser. Qt5/Аврора, научное обоснование thresholds и независимое
 подтверждающее исследование остаются открытыми.
+
+## 18.10.2026 — применимые GUI матрицы fusion
+
+C++ адаптер `research_matrix_draft` использует общий deterministic expander отдельно для
+каждого метода. Диапазон pyramid levels и solver comparison не создают повторных вариантов
+методов, к которым поля не относятся. Preview count также вычисляется в C++;
+каталог проверяет каждый готовый variant. Пользовательский выбор не сужается автоматически.
+Формат и инструкция: [[engineering/RESEARCH_BATCH#Матрица параметров fusion в форме]].
+
+Новые проверки:
+
+- 6 Qt/C++ cases:15-variant mixed-family expansion и порядок axes; неприменимые axes;
+  invalid/reversed/fractional/boolean ranges, нулевой шаг, missing/unknown keys и solver duplicates;
+  лимиты32 variants/10000 trials до worker/output, отсутствие ложных нулей preview;
+  catalog guard всех значений, совместимость с criteria; подписи levels/solver/index;
+- 1 QML case: C++ quantities4→12→18→12, single-value controls отключены при sweep,
+  каталог не переписывает range/solver choice, invalid range не превращается в0 variants,
+  временно неприменимые axes опускаются, значения сохраняются при смене методов;
+- live reference workflow расширен отдельным запуском без reference: graph-cut multiband,
+  levels2/3 × binary_pairs/alpha_expansion, zero boundary,1 frame,0 warmup,1 repeat.
+  Для Unix/TCP/combined проверяются4 samples и4 profiles, metadata settings каждого
+  sample против scenario по sample.variant, неизменность baseline input identities,
+  отсутствие quality reference и статус not_requested. Shuffled order не принимается за
+  порядок variants. Подписи результатов также проверяются.
+
+Во время реализации исправлено обнаруженное совпадение подписей карточек: раньше разные
+levels/solver имели одинаковый mode/boundary. Добавлены index/levels/solver и динамическая
+высота с переносом текста. Первая полная регрессия до изменения подписей прошла68/68
+за156,62с; после изменения выполнены31/31 Qt unit cases и QML matrix case.
+Финальная сборка успешна: полный последовательный Linux CTest **68/68 за155,97с**,
+transport85,14с, QML7,06с. Проверены46 PlantUML вставок architecture/главы3
+(локальный PlantUML1.2026.6 из установленного server WAR) и `git diff --check`.
+
+Фигуры3.64–3.65 показывают фактическую форму и результаты native workflow. Это функциональная
+проверка, не benchmark: один sample без warmup не подтверждает распределение времени,
+raw metrics качества отсутствуют и verdict не объявлен passed. Носители, прочие параметры,
+independent truth/holdout, Qt5/Аврора и аппаратная приёмка остаются открытыми.

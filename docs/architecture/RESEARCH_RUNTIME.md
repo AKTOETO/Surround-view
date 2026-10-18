@@ -725,3 +725,44 @@ Runner --> UI: Отчёт: scenario, source/effective criteria, all-samples verd
 ```
 
 *Рисунок RR.15 — критерии фиксируются до запуска без редактирования исходного эталона.*
+
+## Матрица параметров fusion в форме исследования
+
+Реализованный контракт: необязательный диапазон pyramid levels и сравнение seam solvers добавляются
+к прежним methods/boundary. C++ строит отдельную применимую матрицу каждого метода через
+общий `expand_variant_matrix`: непирамидальные методы не умножаются по levels/boundary,
+методы без graph-cut не умножаются по solver. Порядок methods сохраняется, axes имеют
+прежний детерминированный порядок общего expander. Не более32 variants и10000 trials;
+неверные/пустые/повторные значения отклоняются до output/network.
+
+Сводка количества вариантов/испытаний также вычисляется в C++, не независимой формулой
+QML. Каталог проверяется для каждого развёрнутого варианта. Изменение каталога не
+сужает выбранный диапазон или solver matrix автоматически. Обычный scenario snapshot
+фиксирует все полученные variants; runner и серверный протокол остаются прежними.
+
+```plantuml
+@startuml
+title Применимые оси параметров и общий построитель вариантов
+actor Исследователь as User
+participant "GUI matrix controls" as UI
+participant "C++ form adapter" as Adapter
+participant "Common expand_variant_matrix" as Expand
+participant "Catalog guard / FileExperiment" as Prepare
+participant "ExperimentRunner / sv-server" as Run
+User -> UI: Methods, boundary, levels range, solver comparison
+UI -> Adapter: Typed values
+loop Каждый выбранный метод
+  Adapter -> Adapter: Выбрать только применимые axes
+  Adapter -> Expand: Base method + axes
+  Expand --> Adapter: Детерминированные variants
+end
+Adapter -> Adapter: Общий лимит32 variants /10000 trials
+Adapter --> UI: C++ summary либо ошибка; без изменения выбора
+User -> UI: Запустить
+UI -> Prepare: Frozen expanded scenario + catalog
+Prepare -> Prepare: Проверить все variants и inputs
+Prepare -> Run: Прежнее исполнение и restore
+@enduml
+```
+
+*Рисунок RR.16 — нерелевантные оси не создают повторные псевдоварианты.*
