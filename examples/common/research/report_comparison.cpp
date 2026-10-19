@@ -3,6 +3,7 @@
 #include "observation_policy.hpp"
 #include "regular_input.hpp"
 #include "report_evidence.hpp"
+#include "sv/build_passport.hpp"
 #include "sv/json.hpp"
 #include "trial_plan.hpp"
 #include <cmath>
@@ -130,6 +131,24 @@ boost::json::object passport(const boost::json::object &report)
                     throw std::invalid_argument("invalid platform label");
                 }
                 result[key] = *value;
+            }
+        }
+    }
+    result["build_passport"] = nullptr;
+    if (const auto *catalog = report.if_contains("catalog"); catalog && catalog->is_object())
+    {
+        if (const auto *claim = catalog->as_object().if_contains("build_passport"))
+        {
+            auto verified = sv::verified_build_passport(*claim);
+            if (verified.is_object() && result.contains("source_fingerprint") &&
+                verified.as_object()
+                        .at("descriptor")
+                        .as_object()
+                        .at("source")
+                        .as_object()
+                        .at("fingerprint") == result.at("source_fingerprint"))
+            {
+                result["build_passport"] = std::move(verified);
             }
         }
     }
@@ -311,7 +330,10 @@ bool timing_policy(const boost::json::object &a, const boost::json::object &b, c
             return false;
         }
     }
-    return pa.at("source_fingerprint").as_string().size() == 64 &&
+    return pa.at("build_passport").is_object() && pb.at("build_passport").is_object() &&
+           pa.at("build_passport").as_object().at("sha256") ==
+               pb.at("build_passport").as_object().at("sha256") &&
+           pa.at("source_fingerprint").as_string().size() == 64 &&
            pb.at("source_fingerprint").as_string().size() == 64 &&
            pa.at("source_fingerprint") == pb.at("source_fingerprint");
 }
@@ -358,6 +380,17 @@ boost::json::object compare_reports(const boost::json::object &a, const boost::j
     else if (!observations)
     {
         reasons.push_back("quality_evaluation_reference_or_criteria_differ");
+    }
+    const auto &buildA = policyA.at("build_passport"), &buildB = policyB.at("build_passport");
+    const bool builds = buildA.is_object() && buildB.is_object() &&
+                        buildA.as_object().at("sha256") == buildB.as_object().at("sha256");
+    if (!buildA.is_object() || !buildB.is_object())
+    {
+        reasons.push_back("build_passport_missing_or_unverified");
+    }
+    else if (!builds)
+    {
+        reasons.push_back("configured_build_differs");
     }
     if (!complete)
     {
@@ -462,7 +495,9 @@ boost::json::object compare_reports(const boost::json::object &a, const boost::j
     }
     return {
         {"schema_version", 1},
-        {"policy", "report_claims_comparison_v2"},
+        {"policy", "report_claims_comparison_v3"},
+        {"build_gate",
+         builds ? "matching_configured_build_claims" : "different_or_unverified_configured_build"},
         {"observation_gate",
          observations ? "matching_observation_claims" : "different_or_unverified_observation"},
         {"inputs", inputs ? "matching_claims" : "different_or_unverified"},

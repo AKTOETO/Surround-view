@@ -1,5 +1,6 @@
 #pragma once
 #include "observation_policy.hpp"
+#include "sv/build_passport.hpp"
 #include "trial_plan.hpp"
 #include <boost/json.hpp>
 
@@ -72,6 +73,7 @@ inline boost::json::object report()
         object{{"enabled", false}, {"period_ms", 100}, {"history_capacity", 128}};
     observations["telemetry_after"] = observations.at("telemetry_before");
     observations["telemetry_stable"] = true;
+    const auto build = sv::configured_build_passport();
     return {{"schema_version", 1},
             {"observation_policy", observations},
             {"experiment", "paused_frame_fusion_screen"},
@@ -92,11 +94,14 @@ inline boost::json::object report()
             {"quality_summaries", qualities},
             {"frame_baselines", array{object{{"frame_index", 0}, {"metadata", metadata}}}},
             {"initial_state", object{{"surface", surface}}},
-            {"catalog", object{{"backend", "fixture"},
-                               {"gl_vendor", "fixture"},
-                               {"gl_renderer", "fixture"},
-                               {"source_revision", "fixture"},
-                               {"source_fingerprint", std::string(64, 'c')}}},
+            {"catalog",
+             object{{"backend", "fixture"},
+                    {"gl_vendor", "fixture"},
+                    {"gl_renderer", "fixture"},
+                    {"source_revision", "fixture"},
+                    {"source_fingerprint",
+                     build.at("descriptor").as_object().at("source").as_object().at("fingerprint")},
+                    {"build_passport", build}}},
             {"quality_acceptance", object{{"status", "not_requested"}}},
             {"quality_reference",
              object{{"schema_version", 2},

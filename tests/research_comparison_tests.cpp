@@ -363,3 +363,38 @@ TEST(ResearchComparison, DifferentServerTelemetrySettingsDisableTimingWithoutHid
         EXPECT_FALSE(first(sv::research::compare_reports(b, b)).at("timing_delta_ms").is_null());
     }
 }
+
+TEST(ResearchComparison, MissingTamperedOrDifferentConfiguredBuildBlocksOnlyTiming)
+{
+    const auto a = comparison_fixture::report();
+    for (int kind = 0; kind < 5; ++kind)
+    {
+        auto b = a;
+        auto &catalog = b.at("catalog").as_object();
+        if (kind == 0)
+        {
+            catalog.erase("build_passport");
+        }
+        else if (kind == 1)
+        {
+            catalog.at("build_passport").as_object()["sha256"] = std::string(64, '0');
+        }
+        else if (kind == 2)
+        {
+            catalog.at("build_passport").as_object()["policy"] = "future";
+        }
+        else
+        {
+            auto descriptor = catalog.at("build_passport").as_object().at("descriptor").as_object();
+            descriptor.at("configuration").as_object()[kind == 3 ? "name" : "cxx_flags"] =
+                "changed";
+            catalog["build_passport"] = sv::make_build_passport(descriptor);
+        }
+        const auto result = sv::research::compare_reports(a, b);
+        EXPECT_EQ(result.at("policy"), "report_claims_comparison_v3");
+        EXPECT_EQ(result.at("build_gate"), "different_or_unverified_configured_build");
+        EXPECT_TRUE(first(result).at("timing_delta_ms").is_null());
+        EXPECT_EQ(first(result).at("mae_delta").to_number<double>(), 0);
+        EXPECT_FALSE(first(result).at("right").is_null());
+    }
+}

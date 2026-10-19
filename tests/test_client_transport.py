@@ -149,6 +149,13 @@ class ClientTransportTests(unittest.TestCase):
                     for key in ('trial_index', 'frame_index', 'variant', 'block', 'warmup'):
                         self.assertEqual(sample[key], plan[index][key])
                 self.assertEqual(len(report['catalog']['source_fingerprint']), 64)
+                build = report['catalog']['build_passport']
+                self.assertEqual(build['policy'], 'configured_build_v1')
+                canonical = json.dumps(build['descriptor'], sort_keys=True, separators=(',', ':'), ensure_ascii=False).encode()
+                self.assertEqual(build['sha256'], hashlib.sha256(b'sv-configured-build-v1\0' + canonical).hexdigest())
+                self.assertEqual(build['descriptor']['source']['fingerprint'], report['catalog']['source_fingerprint'])
+                self.assertTrue(build['descriptor']['toolchain']['compiler_version'])
+                self.assertTrue(build['descriptor']['dependencies']['opencv_configured_version'])
                 self.assertEqual(len(report['samples']), 21)
                 # Metadata-only runs also reserve the destination before touching the server.
                 before_report = report_path.read_bytes()

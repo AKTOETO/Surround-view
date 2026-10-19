@@ -44,7 +44,7 @@ TEST(ResearchGuiComparison, AsyncFrozenPairSavesAuditAndClearsStaleResultsOnFail
     EXPECT_FALSE(model.save(output));
     const auto bytes = sv::research::read_batch_plan(output.toLocalFile().toStdString());
     const auto audit = sv::parse_json(bytes).as_object();
-    EXPECT_EQ(audit.at("policy"), "report_claims_comparison_v2");
+    EXPECT_EQ(audit.at("policy"), "report_claims_comparison_v3");
     EXPECT_EQ(std::string(audit.at("left_sha256").as_string()),
               sv::research::sha256(sourceBytes.data(), sourceBytes.size()));
     EXPECT_EQ(audit.at("left_sha256"), audit.at("right_sha256"));

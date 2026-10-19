@@ -34,7 +34,13 @@ Column {
         if (!value)
             return "Паспорт ещё не загружен";
 
-        return "workflow=" + value.success + " · restore=" + value.restored + " · quality=" + value.quality_status + " · criteria=" + (value.criteria_source || "unverified") + " [" + (value.criteria ? fields(value.criteria, "").join(", ") : "не заданы") + "] · truth=" + (value.reference_kind || "неизвестно") + " · dataset=" + (value.reference_dataset_id || "неизвестно") + "\n" + (value.backend || "backend неизвестен") + " · " + (value.gl_vendor || "vendor неизвестен") + " · " + (value.gl_renderer || "renderer неизвестен") + "\nsource: " + (value.source_revision || "неизвестно") + " · fingerprint: " + (value.source_fingerprint || "неизвестно") + "\n" + observations(value.observation_policy);
+        return "workflow=" + value.success + " · restore=" + value.restored + " · quality=" + value.quality_status + " · criteria=" + (value.criteria_source || "unverified") + " [" + (value.criteria ? fields(value.criteria, "").join(", ") : "не заданы") + "] · truth=" + (value.reference_kind || "неизвестно") + " · dataset=" + (value.reference_dataset_id || "неизвестно") + "\n" + (value.backend || "backend неизвестен") + " · " + (value.gl_vendor || "vendor неизвестен") + " · " + (value.gl_renderer || "renderer неизвестен") + "\nsource: " + (value.source_revision || "неизвестно") + " · fingerprint: " + (value.source_fingerprint || "неизвестно") + "\n" + build(value.build_passport) + "\n" + observations(value.observation_policy);
+    }
+
+    function build(value) {
+        if (!value) return "Паспорт сборки отсутствует или не подтверждён; временные дельты недоступны";
+        var d = value.descriptor;
+        return "Build: " + value.sha256 + "\n" + d.toolchain.compiler_id + " " + d.toolchain.compiler_version + " · C++" + d.toolchain.cxx_standard + " · " + d.configuration.name + " · " + d.target.processor + " · SDK: " + d.target.sdk_id + "\nFlags: " + d.configuration.cxx_flags + " · OpenCV: " + d.dependencies.opencv_configured_version + " (" + d.dependencies.opencv_provision + ")";
     }
 
     function observations(value) {
