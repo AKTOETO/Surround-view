@@ -11,6 +11,7 @@
         <file>ResearchCarrierEditor.qml</file>
         <file>ResearchCriteriaEditor.qml</file>
         <file>ResearchComparisonPanel.qml</file>
+        <file>ResearchSeriesPanel.qml</file>
         <file>ResearchBatchEditor.qml</file>
         <file>ResearchCloseGuard.qml</file>
         <file>ResearchFilesQt6.qml</file>

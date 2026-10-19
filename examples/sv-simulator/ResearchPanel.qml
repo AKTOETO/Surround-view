@@ -759,11 +759,31 @@ Pane {
 
         }
 
-        ResearchComparisonPanel {
+        Column {
             width: parent.width
+            spacing: 10
             visible: tabs.currentIndex === 3 && panel.comparisonController !== null
-            controller: panel.comparisonController
-            researchBusy: panel.controller.busy
+
+            ComboBox {
+                id: comparisonKind
+                objectName: "researchComparisonKind"
+                model: ["Два отчёта", "Серия 2–8 отчётов"]
+                enabled: !panel.controller.busy && !(panel.comparisonController && panel.comparisonController.busy)
+            }
+
+            ResearchComparisonPanel {
+                width: parent.width
+                visible: comparisonKind.currentIndex === 0
+                controller: panel.comparisonController
+                researchBusy: panel.controller.busy
+            }
+
+            ResearchSeriesPanel {
+                width: parent.width
+                visible: comparisonKind.currentIndex === 1
+                controller: panel.comparisonController
+                researchBusy: panel.controller.busy
+            }
         }
 
     }

@@ -10,7 +10,7 @@ Column {
     property url leftFile: ""
     property url rightFile: ""
     property bool selectingLeft: true
-    property var comparisonData: controller ? controller.result : ({
+    property var comparisonData: controller && !controller.series ? controller.result : ({
     })
 
     function metric(value) {

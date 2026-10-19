@@ -1,6 +1,7 @@
 #include "research_comparison.hpp"
 #include "report_comparison.hpp"
 #include "report_output.hpp"
+#include "report_series.hpp"
 #include "research_batch_draft.hpp"
 #include <atomic>
 #include <thread>
@@ -9,7 +10,7 @@ struct ResearchComparison::Impl
 {
     std::atomic_bool cancelled{false};
     std::thread worker;
-    bool busy = false;
+    bool busy = false, series = false;
     QString status = "Выберите два individual research report файла";
     boost::json::object report;
     QVariantMap view;
@@ -73,6 +74,11 @@ bool ResearchComparison::busy() const
     return impl_->busy;
 }
 
+bool ResearchComparison::series() const
+{
+    return impl_->series;
+}
+
 QString ResearchComparison::status() const
 {
     return impl_->status;
@@ -85,30 +91,57 @@ QVariantMap ResearchComparison::result() const
 
 bool ResearchComparison::compare(const QUrl &left, const QUrl &right)
 {
+    return launch({left, right}, false);
+}
+
+bool ResearchComparison::compareSeries(const QVariantList &files)
+{
+    return launch(files, true);
+}
+
+bool ResearchComparison::launch(const QVariantList &files, bool series)
+{
     if (impl_->busy)
     {
         return false;
     }
     impl_->report.clear();
     impl_->view.clear();
+    impl_->series = series;
     try
     {
-        const auto a = researchLocalPath(left).toStdString(),
-                   b = researchLocalPath(right).toStdString();
+        if (files.size() < 2 || files.size() > (series ? 8 : 2))
+        {
+            throw std::invalid_argument("Выберите от 2 до 8 отчётов для серии");
+        }
+        std::vector<std::filesystem::path> paths;
+        for (const auto &file : files)
+        {
+            paths.emplace_back(researchLocalPath(file.toUrl()).toStdString());
+        }
         impl_->cancelled = false;
         impl_->busy = true;
         impl_->status = "Чтение и проверка отчётов…";
         impl_->worker = std::thread(
-            [this, a, b]
+            [this, paths = std::move(paths), series]
             {
                 boost::json::object report;
                 QVariantMap view;
                 QString status;
                 try
                 {
-                    report = sv::research::compare_report_files(a, b, &impl_->cancelled);
-                    report["left_path"] = a;
-                    report["right_path"] = b;
+                    if (series)
+                    {
+                        report =
+                            sv::research::compare_report_series_files(paths, &impl_->cancelled);
+                    }
+                    else
+                    {
+                        report = sv::research::compare_report_files(paths[0], paths[1],
+                                                                    &impl_->cancelled);
+                        report["left_path"] = paths[0].string();
+                        report["right_path"] = paths[1].string();
+                    }
                     if (impl_->cancelled)
                     {
                         throw std::runtime_error("cancelled");

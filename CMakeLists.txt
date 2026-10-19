@@ -394,11 +394,11 @@ if(BUILD_TESTING AND SV_GTEST_TESTS)
       Qt${QT_VERSION_MAJOR}::Core Qt${QT_VERSION_MAJOR}::Gui Qt${QT_VERSION_MAJOR}::Quick GTest::gtest)
     add_test(NAME simulator_session_state COMMAND sv-simulator-session-tests)
     if(SV_SIMULATOR)
-      add_executable(sv-simulator-research-tests tests/simulator_research_tests.cpp tests/simulator_research_inline_tests.cpp tests/simulator_research_bundle_tests.cpp tests/simulator_comparison_tests.cpp tests/simulator_research_capabilities_tests.cpp tests/simulator_research_criteria_tests.cpp tests/simulator_research_matrix_tests.cpp)
+      add_executable(sv-simulator-research-tests tests/simulator_research_tests.cpp tests/simulator_research_inline_tests.cpp tests/simulator_research_bundle_tests.cpp tests/simulator_comparison_tests.cpp tests/simulator_report_series_tests.cpp tests/simulator_research_capabilities_tests.cpp tests/simulator_research_criteria_tests.cpp tests/simulator_research_matrix_tests.cpp)
       target_link_libraries(sv-simulator-research-tests PRIVATE sv-simulator-research GTest::gtest)
       add_test(NAME simulator_research_unit COMMAND sv-simulator-research-tests)
       add_executable(sv-simulator-configuration-qml-tests tests/simulator_configuration_qml_tests.cpp
-        tests/simulator_drive_world_qml_tests.cpp tests/simulator_telemetry_qml_tests.cpp tests/simulator_research_qml_tests.cpp tests/simulator_comparison_qml_tests.cpp tests/simulator_research_matrix_qml_tests.cpp tests/simulator_research_inline_qml_tests.cpp tests/simulator_research_bundle_qml_tests.cpp
+        tests/simulator_drive_world_qml_tests.cpp tests/simulator_telemetry_qml_tests.cpp tests/simulator_research_qml_tests.cpp tests/simulator_comparison_qml_tests.cpp tests/simulator_report_series_qml_tests.cpp tests/simulator_research_matrix_qml_tests.cpp tests/simulator_research_inline_qml_tests.cpp tests/simulator_research_bundle_qml_tests.cpp
         examples/sv-simulator/telemetry_model.cpp examples/sv-simulator/telemetry_metrics.cpp examples/sv-simulator/telemetry_files.cpp examples/sv-simulator/telemetry_model.hpp
         examples/sv-simulator/configuration_editor.hpp examples/sv-simulator/configuration_editor.cpp
         examples/sv-simulator/configuration_draft.cpp examples/sv-simulator/configuration_surface.cpp examples/sv-simulator/configuration_operation.cpp
