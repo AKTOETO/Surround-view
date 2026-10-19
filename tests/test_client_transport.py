@@ -248,6 +248,43 @@ class ClientTransportTests(unittest.TestCase):
                     self.assertEqual(result.returncode, expected_code, result.stderr + result.stdout)
                     return output, json.loads((output / 'batch.json').read_text())
 
+                def portable_batch_run(label, scenarios, expected_code):
+                    plan_path = directory / (label + '-plan # %.json')
+                    plan_path.write_text(json.dumps(dict(schema_version=1, runs=[
+                        dict(id=f'case-{index}', scenario=path.name)
+                        for index, path in enumerate(scenarios)])))
+                    source_bundle = directory / (label + '-bundle')
+                    exported = subprocess.run([str(BUILD / 'svctl'), '--unix', str(directory / 'no-server'),
+                        'research-batch-bundle-export', str(plan_path), str(source_bundle)],
+                        text=True, capture_output=True, timeout=8)
+                    self.assertEqual(exported.returncode, 0, exported.stdout + exported.stderr)
+                    receipt = json.loads(exported.stdout)
+                    self.assertEqual(receipt['source_plan_sha256'], hashlib.sha256(plan_path.read_bytes()).hexdigest())
+                    relocated = directory / (label + ' relocated # %')
+                    source_bundle.rename(relocated)
+                    verified = subprocess.run([str(BUILD / 'svctl'), '--unix', str(directory / 'no-server'),
+                        'research-batch-bundle-verify', str(relocated)], text=True, capture_output=True, timeout=8)
+                    self.assertEqual(verified.returncode, 0, verified.stdout + verified.stderr)
+                    self.assertEqual(json.loads(verified.stdout), receipt)
+                    output = directory / (label + '-output')
+                    result = subprocess.run([str(BUILD / 'svctl'), *endpoint, '--timeout-ms', '3000',
+                        'research-batch-bundle-run', str(relocated), str(output)],
+                        text=True, capture_output=True, timeout=30)
+                    self.assertEqual(result.returncode, expected_code, result.stdout + result.stderr)
+                    summary = json.loads((output / 'batch.json').read_text())
+                    self.assertEqual(summary['input_bundle'], receipt)
+                    for row, identity in zip(summary['runs'], receipt['runs']):
+                        self.assertEqual(row['id'], identity['id'])
+                        report_path = output / row['report']
+                        self.assertTrue(report_path.exists())
+                        if row['status'] == 'reported':
+                            report = json.loads(report_path.read_text())
+                            self.assertEqual(report['scenario_input_kind'], 'verified_bundle_snapshot_v1')
+                            self.assertEqual(report['input_bundle']['manifest_sha256'], identity['manifest_sha256'])
+                        else:
+                            self.assertEqual(report_path.stat().st_size, 0)
+                    return relocated, summary
+
                 batch_output, batch = batch_run('batch-complete', [batch_scenario] * 2, 0)
                 self.assertTrue(batch['success'])
                 self.assertTrue(batch['restored'])
@@ -395,6 +432,18 @@ class ClientTransportTests(unittest.TestCase):
                     text=True, capture_output=True, timeout=8)
                 self.assertNotEqual(rejected.returncode, 0)
                 self.assertFalse(rejected_output.exists(), 'invalid bundle reserved output before preflight')
+                batch_bundle, portable = portable_batch_run('portable-success', [quality_scenario] * 2, 0)
+                self.assertTrue(portable['restored'])
+                self.assertEqual(portable['completed'], 2)
+                self.assertEqual(portable['quality_acceptance']['status'], 'passed')
+                with (batch_bundle / 'run-1' / 'scenario.json').open('ab') as changed:
+                    changed.write(b' ')
+                invalid_output = directory / 'portable-late-tamper'
+                refused = subprocess.run([str(BUILD / 'svctl'), '--unix', str(directory / 'no-server'),
+                    'research-batch-bundle-run', str(batch_bundle), str(invalid_output)],
+                    text=True, capture_output=True, timeout=8)
+                self.assertEqual(refused.returncode, 3, refused.stdout + refused.stderr)
+                self.assertFalse(invalid_output.exists())
                 original_reference = reference_path.read_bytes()
                 no_criteria = dict(reference)
                 del no_criteria['criteria']
@@ -424,6 +473,12 @@ class ClientTransportTests(unittest.TestCase):
                     self.assertTrue(any(not s['quality']['acceptance']['passed']
                                         for s in rejected_data['samples'] if not s['warmup']))
                     gui_quality('failed')
+                    _, portable_rejected = portable_batch_run('portable-quality-rejected',
+                        [quality_scenario, batch_scenario], 5)
+                    self.assertTrue(portable_rejected['restored'])
+                    self.assertEqual(portable_rejected['completed'], 2)
+                    self.assertEqual([row['quality_status'] for row in portable_rejected['runs']],
+                                     ['failed', 'not_requested'])
                     _, rejected_batch = batch_run('batch-quality-rejected',
                         [quality_scenario, batch_scenario], 5)
                     self.assertTrue(rejected_batch['success'])
@@ -451,6 +506,12 @@ class ClientTransportTests(unittest.TestCase):
                     self.assertEqual(content_data['quality_acceptance']['status'], 'incomplete')
                     self.assertEqual(content_data['error'], 'quality reference input guard mismatch')
                     gui_quality('incomplete')
+                    _, portable_failed = portable_batch_run('portable-guard-failed',
+                        [quality_scenario, batch_scenario], 4)
+                    self.assertTrue(portable_failed['restored'])
+                    self.assertEqual(portable_failed['reported'], 1)
+                    self.assertEqual(portable_failed['completed'], 0)
+                    self.assertEqual(portable_failed['runs'][1]['status'], 'not_started')
                     failed_output, failed_batch = batch_run('batch-guard-failed',
                         [quality_scenario, batch_scenario], 4)
                     self.assertFalse(failed_batch['success'])

@@ -1,4 +1,5 @@
 #include "batch.hpp"
+#include "batch_bundle.hpp"
 #include "file_experiment.hpp"
 #include "options.hpp"
 #include "scenario_bundle.hpp"
@@ -14,6 +15,33 @@ namespace sv::ctl
 {
 int execute(const Options &options)
 {
+    if (options.request.operation == "research-batch-bundle-export")
+    {
+        const auto &p = options.request.parameters;
+        std::cout << boost::json::serialize(research::export_batch_bundle(
+                         std::string(p.at("scenario_path").as_string()),
+                         std::string(p.at("report_path").as_string())))
+                  << '\n';
+        return 0;
+    }
+    if (options.request.operation == "research-batch-bundle-verify" ||
+        options.request.operation == "research-batch-bundle-run")
+    {
+        const auto &p = options.request.parameters;
+        research::BatchBundle bundle(std::string(p.at("scenario_path").as_string()));
+        if (options.request.operation == "research-batch-bundle-verify")
+        {
+            std::cout << boost::json::serialize(bundle.summary()) << '\n';
+            return 0;
+        }
+        client::Options connection;
+        connection.endpoint = options.endpoint;
+        connection.timeout_ms = options.timeout_ms;
+        const auto report =
+            bundle.execute(std::string(p.at("report_path").as_string()), connection);
+        std::cout << boost::json::serialize(report) << '\n';
+        return research::research_exit_code(report);
+    }
     if (options.request.operation == "research-bundle-export")
     {
         const auto &p = options.request.parameters;

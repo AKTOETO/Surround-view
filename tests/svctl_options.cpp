@@ -105,7 +105,8 @@ TEST(SvctlOptions, ResearchBatchPathsAndArity)
 
 TEST(SvctlOptions, PortableResearchBundleCommandsHaveStrictArity)
 {
-    for (const auto *operation : {"research-bundle-export", "research-bundle-run"})
+    for (const auto *operation : {"research-bundle-export", "research-bundle-run",
+                                  "research-batch-bundle-export", "research-batch-bundle-run"})
     {
         const auto options = sv::ctl::parse({operation, "input # %.json", "new-output"});
         EXPECT_EQ(options.request.operation, operation);
@@ -118,4 +119,12 @@ TEST(SvctlOptions, PortableResearchBundleCommandsHaveStrictArity)
               "research-bundle-verify");
     EXPECT_ANY_THROW(sv::ctl::parse({"research-bundle-verify"}));
     EXPECT_ANY_THROW(sv::ctl::parse({"research-bundle-verify", "bundle", "extra"}));
+}
+
+TEST(SvctlOptions, PortableBatchBundleVerifyHasStrictArity)
+{
+    EXPECT_EQ(sv::ctl::parse({"research-batch-bundle-verify", "bundle"}).request.operation,
+              "research-batch-bundle-verify");
+    EXPECT_ANY_THROW(sv::ctl::parse({"research-batch-bundle-verify"}));
+    EXPECT_ANY_THROW(sv::ctl::parse({"research-batch-bundle-verify", "bundle", "extra"}));
 }
