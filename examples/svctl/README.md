@@ -42,3 +42,17 @@ Export/verify работают offline; run повторно проверяет 
 фиксирует inputs до подключения и пишет input_bundle identity в report.
 Родители output должны существовать, сами output должны быть новыми.
 [Формат, пределы и ограничения](../../docs/engineering/RESEARCH_BATCH.md#переносимый-набор-сценария).
+
+Portable batches for a single server recording:
+
+```bash
+svctl research-batch-bundle-export PLAN_JSON NEW_BUNDLE_DIRECTORY
+svctl research-batch-bundle-verify BUNDLE_DIRECTORY
+svctl --unix /tmp/sv-prototype research-batch-bundle-run BUNDLE_DIRECTORY NEW_OUTPUT_DIRECTORY
+```
+
+Export/verify are offline. All 1–8 scenarios/references are frozen before run output or
+connection; all reports are reserved before the first member connects. Quality rejection
+continues (exit5), technical failure stops (exit4); preparation errors return3. Server
+recording/config/build are not included. Preserve the original bundle for reruns, not
+private staging paths in reports. [Limits and format](../../docs/engineering/RESEARCH_BATCH.md#переносимая-серия-одной-записи).

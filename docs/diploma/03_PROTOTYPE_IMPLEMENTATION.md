@@ -3262,3 +3262,125 @@ fixture, а не новая независимая серия качества �
 Финальная Linux-проверка этого среза: сборка успешна, CTest68/68 за165,91с,
 client_transports94,55с, QML7,15с. Контроллер39/39 GTest;57 PlantUML вставок architecture
 и главы3 корректны. Подробности и границы свидетельств: [[validation/RESEARCH_RUNTIME]].
+
+## 3.68. Переносимая серия сценариев одной серверной записи
+
+Следующий недостаток воспроизводимости относился к серии: обычный batch-план хранил
+пути к сценариям, а перенос отдельного сценария не сохранял порядок и состав серии.
+Добавлен C++ BatchBundle и три команды svctl. Формат batch_bundle_v1 объединяет1–8
+проверяемых дочерних scenario_bundle_v1; каждая строка top manifest связывает ID,
+фиксированный каталог run-N и SHA256 точных bytes child manifest. Исходный план
+фиксируется через source_plan_sha256. Все клиентские references доступны после
+перемещения папки; серверная запись и конфигурация подготавливаются отдельно.
+
+```plantuml
+@startuml
+left to right direction
+folder "batch bundle" {
+  artifact "bundle.json\nkind=batch_bundle_v1\nsource_plan_sha256\nordered runs" as Top
+  folder "run-0" {
+    artifact "bundle.json\nkind=scenario_bundle_v1" as Child0
+    artifact "scenario / reference / PPM" as Data0
+  }
+  folder "run-1 .. run-7" {
+    artifact "bundle.json\nkind=scenario_bundle_v1" as ChildN
+    artifact "scenario / reference / PPM" as DataN
+  }
+}
+Top --> Child0 : id / directory / manifest SHA256
+Top --> ChildN : id / directory / manifest SHA256
+Child0 --> Data0 : sizes / hashes / closure
+ChildN --> DataN : sizes / hashes / closure
+@enduml
+```
+
+*Рисунок3.78 — top manifest связывает состав серии, child manifests связывают её входы.*
+
+Проверка выполняется до output/network. Top manifest ограничен64KiB, ID уникальны и
+безопасны для имён отчётов, directories строго соответствуют позиции run-0..run-7.
+Файлы читаются по фиксированным путям с no-follow на root, run-N, assets и leaves;
+FIFO/devices отвергаются. Verified bytes копируются в private staging, после чего
+каждый child проходит прежние hash/closure/decoder/reference-description проверки.
+Конструктор сохраняет все FileExperiment до исполнения. Поэтому удаление исходной
+папки после загрузки не подменяет входы в следующих сценариях.
+
+Для серии из n сценариев введены суммарные ограничения:
+
+$$
+1 \le n \le 8,\qquad
+\sum_{i=1}^{n} T_i \le 10000,\qquad
+\sum_{i=1}^{n} R_i \le 128\,\mathrm{MiB},\qquad
+\sum_{i=1}^{n} B_i \le 64\,\mathrm{MiB},
+$$
+
+где T_i — число trials сценария, R_i — объём decoded references, B_i — точные bytes
+child manifest и перечисленных child files. Top manifest имеет отдельный64KiB budget.
+Каждый сценарий обязан явно reset_replay=true. Это пределы принимаемого набора;
+они не равны пику RSS или временному месту на диске. Во время preflight существуют
+дополнительные raw/decoded/staging копии. Односценарные пределы JSON/PPM/frame count
+из §3.66 также сохраняются. Отдельный тест строит шесть допустимых children примерно
+по12MiB: каждый child проходит собственную проверку, суммарная серия отклоняется
+при export и при независимом verify.
+
+Обычный batch и BatchBundle используют общий executor над уже подготовленными
+FileExperiment. Он сохраняет прежнее поведение: создаёт новый output, резервирует
+batch.json и все `<id>.json` до первого подключения, выполняет сценарии последовательно
+и формирует summary. Критерий качества со статусом failed не останавливает следующие
+сценарии, technical failure/cancel останавливает. Для не начатых сценариев reservation
+может остаться пустым файлом; источник истины о состоянии — summary.runs, а не сам
+факт наличия `<id>.json`. Existing output не заменяется, empty/NUL output paths
+отвергаются до создания каталога.
+
+```plantuml
+@startuml
+start
+:Проверить top manifest и child hashes;
+:Зафиксировать все scenario/reference inputs;
+:Проверить aggregate budgets и replay reset;
+:Создать новый output;
+:Зарезервировать summary и все member reports;
+while (Есть следующий сценарий?) is (да)
+  if (Cancel?) then (да)
+    :Остановить серию;
+    break
+  endif
+  :Обычный runner, кадры и restore;
+  if (Technical failure?) then (да)
+    :Отметить incomplete / restore status;
+    break
+  else (нет)
+    :Сохранить quality status;
+  endif
+endwhile (нет)
+:Записать batch.json с top и child identities;
+stop
+@enduml
+```
+
+*Рисунок3.79 — scientific rejection не приравнивается к технической остановке серии.*
+
+Summary получает input_bundle с top identity и упорядоченными child receipts.
+Individual reports сохраняют child manifest identity и snapshot kind
+verified_bundle_snapshot_v1. Внутренний plan_sha256 относится к построенному плану,
+source_plan_sha256 — к исходному документу. Пути run-N в summary разрешаются от
+bundle, не от результата; inputs/plan.json для этого режима не публикуется как
+повторяемый launcher. Для нового запуска сохраняется bundle и вызывается
+research-batch-bundle-run. Один экземпляр BatchBundle допускает одну попытку execute.
+
+Экспорт создаёт children в private staging, проверяет всю серию, затем создаёт новый
+destination, копирует children и пишет top manifest последним. Ошибка записи или
+отмена может оставить частичный новый destination. Atomic publication/fsync, signature,
+resume, deduplication и server dataset/config/build registry не реализованы. Multi-recording
+не заявляется: все сценарии используют одну заранее выбранную запись сервера.
+GUI для batch bundle остаётся отдельной задачей; текущий single-bundle GUI не принимает
+этот формат. Общий сервис и CLI используют C++; Python остаётся проверочным harness.
+Команды и ограничения: [[engineering/RESEARCH_BATCH#Переносимая серия одной записи]].
+
+Шесть GTest нового формата покрывают relocation/freeze/reservation, поздние ошибки и
+aggregate trials, overwrite/pre-cancel/output-path guards, tampering/regular-file checks,
+строгий manifest и aggregate raw budget. В native Unix/TCP harness проверены успешная
+серия, продолжение после quality rejection с кодом5, остановка после input guard failure
+с кодом4 и отказ до output при повреждении позднего child. Это инженерные regression
+controls, не новая независимая проверка качества сшивки. Финальная Linux-сборка успешна,
+CTest68/68 за169,93с, client_transports99,73с, QML7,16с;60 PlantUML вставок корректны.
+Подробные результаты и ограничения: [[validation/RESEARCH_RUNTIME]].

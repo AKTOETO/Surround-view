@@ -685,3 +685,86 @@ FileExperiment/ExperimentRunner, не запускают Python и не доба
 пределами общего сервиса выше; переносится client-side reference, не server recording.
 Qt6/Linux проверен автоматически; диалоги Qt5 подготовлены, но Aurora/Qt5 требуют
 отдельной проверки. Последовательность: [[architecture/RESEARCH_RUNTIME#Переносимый набор в GUI]].
+
+## Переносимая серия одной записи
+
+`BatchBundle` переносит упорядоченный batch-план из1–8 сценариев вместе с их client-side
+PPM references. Все сценарии выполняются последовательно на **одной уже подготовленной
+серверной записи**. Серверные recording/config/build не входят, запись между сценариями
+не переключается. Это отдельный формат `batch_bundle_v1`; GUI режима «Переносимый
+набор» пока принимает только одиночный `scenario_bundle_v1`.
+
+```bash
+./build/svctl research-batch-bundle-export artifacts/plan.json artifacts/portable-series
+./build/svctl research-batch-bundle-verify artifacts/portable-series
+./build/svctl --unix /tmp/sv-prototype research-batch-bundle-run artifacts/portable-series artifacts/series-results
+```
+
+Подставьте существующий план и новые каталоги с существующими родителями. Export и
+verify не подключаются к серверу. Для TCP используется обычный `--tcp HOST CONTROL_PORT
+DATA_PORT`. Run возвращает0 при завершении без провала критериев,5 при завершённом
+провале заданных критериев,4 при technical failure/incomplete и3 при ошибке подготовки;
+аргументы CLI —2. Quality rejection не останавливает следующие сценарии; technical
+failure или cancel останавливает. Ошибка restore отражается отдельно в summary.
+
+### Manifest, фиксация и output
+
+```text
+portable-series/
+  bundle.json              # batch_bundle_v1
+  run-0/
+    bundle.json            # scenario_bundle_v1
+    scenario.json
+    reference.json         # если задан
+    assets/frame-0-rgb.ppm
+    assets/frame-0-mask.ppm
+  run-1/
+    ...
+```
+
+Top manifest содержит ровно schema_version=1, kind=batch_bundle_v1,
+scope=client_scenarios_and_references_only, source_plan_sha256 и runs. Каждая строка
+runs содержит id, directory и manifest_sha256. Directory фиксирован по позиции:
+run-0..run-7. ID проверяются правилами обычного batch: уникальные безопасные имена,
+не `batch`. Manifest hash связывает точные bytes child manifest, а тот связывает свои
+scenario/reference/assets. ID и порядок сохраняются, source_plan_sha256 относится к
+исходным bytes plan, а plan_sha256 отчёта — к построенному внутреннему плану.
+
+Конструктор читает top manifest с пределом64KiB, копирует только фиксированные child
+paths в private staging, проверяет child hashes, closure и decoded reference через
+ScenarioBundle и проверяет суммарные бюджеты до output/network. Root, run-N, assets и
+file leaves открываются no-follow; FIFO/devices отвергаются. После конструктора удаление
+или изменение исходного набора не влияет на execute. Один объект допускает одну
+попытку execute; pre-cancel проверяется до output. Общий executor резервирует batch.json
+и все member reports до первого подключения, затем использует прежний runner.
+
+Результат — новый каталог с batch.json, `<id>.json` и RGBA captures. Summary получает
+input_bundle с top identity и ordered child receipts; individual reports сохраняют
+свои child identities и scenario_input_kind=verified_bundle_snapshot_v1. Для
+невыполненных сценариев зарезервированные reports могут оставаться пустыми: статус
+смотрите в summary.runs. Внутренние run-N paths относительны **bundle**, а не output;
+inputs/plan.json для такого запуска не создаётся. Для повторения сохраняйте bundle и
+используйте research-batch-bundle-run, не извлекайте внутренний план как готовый launcher.
+Private staging paths в individual reports временные.
+
+### Бюджеты и ограничения
+
+- До8 child bundles, до10000 trials суммарно; каждый сценарий обязан reset_replay=true.
+- До64MiB суммарно на child manifests и перечисленные child files; top manifest имеет
+  отдельный предел64KiB. Single-child limits остаются прежними: до514 members,
+  JSON до1MiB, PPM до16MiB, до256 reference frames.
+- До128MiB суммарных decoded references. Это предел принимаемых данных, не гарантия RSS
+  или пикового staging disk usage: временные копии, raw/decoded buffers и preflight
+  последнего child требуют дополнительного пространства.
+- Экспорт сначала проверяет всю серию в private staging, потом создаёт новый destination,
+  копирует child bundles и пишет top manifest последним. Existing output не заменяется.
+  При I/O error/cancel может остаться новая неполная папка. Atomic publication/fsync,
+  resume/checkpoints, подпись, deduplication и архивный контейнер отсутствуют.
+- Hashes подтверждают согласованность с unsigned manifest, не независимость truth,
+  авторство, неизменность server dataset или scientific acceptance.
+- Batch GUI, экспорт несохранённой формы, multi-recording supervisor и server registry
+  остаются в TODO. Продуктовый сервис и CLI — C++; Python используется только как harness.
+
+API: export_batch_bundle(plan,new_directory,cancel), BatchBundle(path,cancel), summary(),
+execute(new_output,options,cancel,progress(member,done,total)). Схема взаимодействия:
+[[architecture/RESEARCH_RUNTIME#Переносимая серия одной записи]].

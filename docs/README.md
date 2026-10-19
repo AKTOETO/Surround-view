@@ -130,3 +130,6 @@ Multilabel server candidate/cost/global-gap controls: [[validation/MULTILABEL_SE
 
 Переносимые client-side сценарии с эталоном, compiled export/verify/run из CLI и GUI:
 [[engineering/RESEARCH_BATCH#Переносимый набор сценария]].
+
+Переносимые серии сценариев одной серверной записи через C++/svctl:
+[[engineering/RESEARCH_BATCH#Переносимая серия одной записи]].

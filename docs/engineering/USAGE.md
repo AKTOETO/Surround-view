@@ -1560,3 +1560,18 @@ connection. В GUI: **Исследования → План → Переноси
 сохранённый сценарий**, выберите сценарий, родительскую папку и новое имя.
 Для запуска подключитесь, подготовьте server replay и нажмите **Начать исследование**.
 Проверка повторяется перед каждым запуском. [[engineering/RESEARCH_BATCH#Переносимый набор сценария]].
+
+### Перенос серии сценариев с эталонами
+
+```bash
+./build/svctl research-batch-bundle-export artifacts/plan.json artifacts/portable-series
+./build/svctl research-batch-bundle-verify artifacts/portable-series
+./build/svctl --unix /tmp/sv-prototype research-batch-bundle-run artifacts/portable-series artifacts/series-results
+```
+
+План должен существовать, каталоги destination/results должны быть новыми. Export и
+verify работают offline. Подготовьте соответствующую запись на сервере отдельно:
+переносятся только client scenarios/references одной записи, а не server dataset/config.
+Summary — series-results/batch.json; member reports — `<id>.json`. Код5 означает
+завершённый провал критериев, код4 — технически незавершённую серию. GUI для batch
+bundle пока не добавлен. [[engineering/RESEARCH_BATCH#Переносимая серия одной записи]].

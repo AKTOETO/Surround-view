@@ -905,3 +905,42 @@ client_transports94,55с, simulator_configuration_qml7,15с. Отдельно к
 Это перенос client inputs и проверка управляющего пути. Несохранённая форма,
 batch/multi-recording bundle, server dataset/config/build registry, durable resume,
 независимая scientific acceptance и Aurora/Qt5 остаются открытыми.
+
+## Переносимая batch-серия одной записи — 19.10.2026
+
+Реализован C++ BatchBundle и svctl research-batch-bundle-export/verify/run. Все children
+проверяются и фиксируются до output/network; отчёты резервирует общий executor обычного
+batch. Нового server wire protocol нет. Обычные file/memory batch workflows и их
+pre-cancel summary/reservation поведение сохранены. Empty/NUL output paths отвергаются
+до filesystem mutation.
+
+| Свойство | Проверка |
+|---|---|
+| Relocation, ordered IDs/source hash, freeze после удаления source/bundle, reservation всех reports до callback, запрет второго execute | BatchBundleFixture.RelocatesFreezesAllMembersAndReservesEveryReportBeforeExecution |
+| Ошибка позднего child, обязательный reset и aggregate trials до destination | BatchBundleFixture.LateInvalidInputAndAggregateTrialBudgetLeaveNoDestination |
+| Pre-cancel, overwrite refusal, empty/NUL output без усечения пути | BatchBundleFixture.RefusesOverwriteAndHonorsPrecancelBeforeOutput |
+| Child manifest tamper, missing member, run/root/leaf symlink, FIFO | BatchBundleFixture.RejectsTamperedLateChildMissingFilesAndNoFollowViolations |
+| Строгие версии/fields/IDs/directory/hash | BatchBundleFixture.StrictManifestRejectsVersionsUnknownFieldsIdsPathsAndHashes |
+| Шесть индивидуально допустимых ~12MiB children превышают64MiB при export и verify | BatchBundleFixture.AggregateRawBudgetRejectsEvenWhenEveryChildIsIndividuallyValid |
+
+Fixture helpers вынесены из тестов single bundle в общий header; существующие6 single
+bundle и14 ordinary batch tests остаются отдельными проверками. CLI option parser
+проверяет строгую арность всех трёх новых команд.
+
+Native transport harness экспортирует план offline с заведомо отсутствующим endpoint,
+перемещает каталог с #/% в имени, проверяет receipt, исполняет через реальный sv-server
+и сопоставляет top/child identities с каждым reported member. Проверяются три ветви:
+успех двух regression-сценариев; quality failure первого с продолжением до второго и
+кодом5; input guard failure первого с остановкой, пустым зарезервированным вторым
+report и кодом4. Отдельное повреждение позднего child отклоняется с кодом3 до создания
+output. Это проверка compiled product path; Python только создаёт fixture и assertions.
+
+Это не multi-recording и не server configuration/dataset registry. GUI для batch bundle,
+independent truth, научное обоснование критериев, durable resume и Aurora qualification
+остаются открытыми. Команды/бюджеты: [[engineering/RESEARCH_BATCH#Переносимая серия одной записи]].
+
+Финальная сборка успешна. Полная последовательная Linux-регрессия **68/68 CTest
+за169,93с**: client_transports99,73с, simulator_configuration_qml7,16с,
+research_scenarios0,28с. Новые batch bundle cases6/6, прежние single bundle6/6 и ordinary
+batch14/14; CLI parser10/10. Проверены60 PlantUML blocks architecture + главы3,
+py_compile harness и git diff --check. Таймауты native subprocess/CTest не увеличивались.

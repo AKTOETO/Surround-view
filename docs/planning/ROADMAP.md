@@ -1,5 +1,12 @@
 # Подробный план реализации
 
+19.10.2026: переносимая серия одной записи реализована в C++/svctl: batch_bundle_v1,
+1–8 упорядоченных single bundles, top/child hashes, aggregate raw/decoded/trial budgets,
+frozen inputs до output/network и общий batch executor с предварительной reservation
+всех reports. GUI для batch bundle, unsaved form export, multi-recording и server registry
+остаются открытыми. [[engineering/RESEARCH_BATCH#Переносимая серия одной записи]].
+
+
 19.10.2026: sv-simulator получил режим «Переносимый набор»: export сохранённого
 сценария, offline verify с квитанцией и запуск с повторной проверкой. Файловые операции
 в одном research worker, общий busy/cancel/close, результаты обычного runner. Replay/config

@@ -965,3 +965,38 @@ end note
 ```
 
 *Рисунок RR.21 — файловые операции и декодирование выполняются вне GUI-потока.*
+
+
+## Переносимая серия одной записи
+
+BatchBundle фиксирует все дочерние single-scenario bundles до output/network.
+Общий executor принимает уже подготовленные FileExperiment, резервирует все отчёты
+и использует прежнюю политику quality rejection / technical stop.
+
+```plantuml
+@startuml
+actor User
+participant BatchBundle as Bundle
+participant "Private staging" as Staging
+participant "ScenarioBundle[1..8]" as Members
+participant "Shared batch executor" as Executor
+participant "sv-server" as Server
+User -> Bundle: Verify directory
+Bundle -> Bundle: Validate top manifest and ordered IDs
+loop Each fixed run-N directory
+  Bundle -> Staging: Bounded no-follow copy; aggregate raw budget
+  Bundle -> Members: Verify and freeze child
+end
+Bundle -> Bundle: Check aggregate trials, decoded bytes, replay reset
+User -> Bundle: Execute(new output)
+Bundle -> Executor: Frozen members and bundle identity
+Executor -> Executor: Reserve all reports before connection
+loop Until end or technical failure
+  Executor -> Server: Existing research protocol
+  Server --> Executor: Frames / restore / report
+end
+Executor --> User: batch.json plus member reports
+@enduml
+```
+
+*Рисунок RR.22 — серия переносит client inputs одной записи, без server recording/config.*
