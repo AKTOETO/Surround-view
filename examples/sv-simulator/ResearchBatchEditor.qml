@@ -7,6 +7,9 @@ GroupBox {
 
     property var members: []
     property var controller
+    property var currentDraft: ({})
+    property url currentReference
+    property string draftStatus: ""
     property string importStatus: ""
     property string saveStatus: ""
     property string savedPath: ""
@@ -25,7 +28,7 @@ GroupBox {
         var next = [];
         for (var i = 0; i < result.members.length; ++i) next.push({
             "id": result.members[i].id.toString(),
-            "scenario": result.members[i].scenario.toString()
+            "scenario": inlineScenario(result.members[i].scenario) ? result.members[i].scenario : result.members[i].scenario.toString()
         })
         members = next;
         return true;
@@ -41,21 +44,34 @@ GroupBox {
         return result.success;
     }
 
-    function addScenario(file) {
+    function inlineScenario(value) {
+        return value && value.schema_version !== undefined;
+    }
+
+    function addSource(source) {
         if (members.length >= 8)
             return false;
-
         var next = members.slice(0);
         var number = 1;
-        while (next.some(function(row) {
-            return row.id === "case-" + number;
-        }))++number
-        next.push({
-            "id": "case-" + number,
-            "scenario": file.toString()
-        });
+        while (next.some(function(row) { return row.id === "case-" + number; })) ++number;
+        next.push({ "id": "case-" + number, "scenario": source });
         members = next;
         return true;
+    }
+
+    function addScenario(file) {
+        return addSource(file.toString());
+    }
+
+    function addDraft() {
+        if (members.length >= 8)
+            return false;
+        var result = controller.batchScenario(currentDraft, currentReference);
+        draftStatus = result.message;
+        if (!result.success)
+            return false;
+        // Deep copy prevents later form edits from changing a queued member.
+        return addSource(JSON.parse(JSON.stringify(result.scenario)));
     }
 
     function moveMember(from, to) {
@@ -94,7 +110,7 @@ GroupBox {
         Label {
             width: parent.width
             wrapMode: Text.Wrap
-            text: "Добавьте готовые сценарии в порядке выполнения. Один файл можно повторить. Каждый сценарий должен задавать reset_replay=true и подходить к одной подключённой записи. Его эталон разрешается от исходного каталога."
+            text: "Добавьте готовые сценарии или снимки текущей формы в порядке выполнения. Один файл можно повторить. Каждый сценарий должен задавать reset_replay=true и подходить к одной подключённой записи. Его эталон разрешается от исходного каталога."
         }
 
         Button {
@@ -160,11 +176,26 @@ GroupBox {
                 Label {
                     width: parent.width
                     wrapMode: Text.WrapAnywhere
-                    text: modelData.scenario
+                    text: editor.inlineScenario(modelData.scenario) ? "Снимок формы · вариантов: " + modelData.scenario.variants.length + " · кадров: " + (modelData.scenario.frames || 1) + " · эталон: " + (modelData.scenario.quality_reference || "не задан") : modelData.scenario
                 }
 
             }
 
+        }
+
+        Button {
+            objectName: "batchAddDraft"
+            text: "Добавить снимок текущей формы"
+            enabled: editor.members.length < 8
+            onClicked: editor.addDraft()
+        }
+
+        Label {
+            objectName: "batchDraftStatus"
+            width: parent.width
+            wrapMode: Text.Wrap
+            visible: editor.draftStatus.length > 0
+            text: editor.draftStatus
         }
 
         Button {
@@ -198,7 +229,7 @@ GroupBox {
         Label {
             width: parent.width
             wrapMode: Text.Wrap
-            text: "Состав фиксируется при запуске. После проверки входов план сохраняется в inputs/plan.json нового каталога отчётов. Это ссылки на исходные файлы; данные не копируются."
+            text: "Состав фиксируется при запуске. После проверки входов план сохраняется в inputs/plan.json нового каталога отчётов. Снимки формы встроены в план; файловые участники и эталоны остаются ссылками. Для переноса экспортируйте bundle."
         }
 
     }

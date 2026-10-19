@@ -423,10 +423,18 @@ TEST(SimulatorResearchQml, ReferenceWorkflowRendersMeasuredResults)
             const auto relative =
                 std::filesystem::relative(source.toStdString(), directory.path().toStdString())
                     .string();
-            const boost::json::object first{{"id", "case-1"}, {"scenario", relative}};
+            auto inlineScenario =
+                sv::parse_json(sv::research::read_batch_plan(source.toStdString())).as_object();
+            if (auto *reference = inlineScenario.if_contains("quality_reference"))
+            {
+                *reference = (std::filesystem::path(source.toStdString()).parent_path() /
+                              std::string(reference->as_string()))
+                                 .string();
+            }
+            const boost::json::object first{{"id", "case-1"}, {"scenario", inlineScenario}};
             const boost::json::object second{{"id", "retired"}, {"scenario", relative}};
             std::ofstream(plan.toStdString()) << boost::json::serialize(boost::json::object{
-                {"schema_version", 1}, {"runs", boost::json::array{first, second}}});
+                {"schema_version", 2}, {"runs", boost::json::array{first, second}}});
             QVariant imported;
             ASSERT_TRUE(QMetaObject::invokeMethod(
                 editor, "importPlan", Q_RETURN_ARG(QVariant, imported),

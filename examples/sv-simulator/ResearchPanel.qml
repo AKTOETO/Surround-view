@@ -244,6 +244,8 @@ Pane {
 
             ResearchBatchEditor {
                 id: batchEditor
+                currentDraft: panel.draft()
+                currentReference: panel.referenceSource
 
                 width: parent.width
                 controller: panel.controller
