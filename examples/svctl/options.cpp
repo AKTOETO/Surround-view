@@ -105,6 +105,20 @@ Options parse(const std::vector<std::string> &args)
         parameters["scenario_path"] = next();
         parameters["report_path"] = next();
     }
+    else if (operation == "research-compare-series")
+    {
+        parameters["report_path"] = next();
+        boost::json::array reports;
+        while (index < args.size())
+        {
+            reports.emplace_back(next());
+        }
+        if (reports.size() < 2 || reports.size() > 8)
+        {
+            throw std::invalid_argument("report comparison requires 2..8 reports");
+        }
+        parameters["reports"] = std::move(reports);
+    }
     else if (operation == "research-bundle-verify" || operation == "research-batch-bundle-verify")
     {
         parameters["scenario_path"] = next();
@@ -201,6 +215,7 @@ std::string usage()
            "      command TYPE [--params JSON_OBJECT]\n"
            "      research SCENARIO_JSON REPORT_JSON\n"
            "      research-batch PLAN_JSON NEW_OUTPUT_DIRECTORY\n"
+           "      research-compare-series NEW_AUDIT_JSON REPORT_A REPORT_B [REPORT_C ...]\n"
            "      research-bundle-export SCENARIO_JSON NEW_BUNDLE_DIRECTORY\n"
            "      research-bundle-verify BUNDLE_DIRECTORY\n"
            "      research-bundle-run BUNDLE_DIRECTORY REPORT_JSON\n"

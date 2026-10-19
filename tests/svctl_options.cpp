@@ -128,3 +128,15 @@ TEST(SvctlOptions, PortableBatchBundleVerifyHasStrictArity)
     EXPECT_ANY_THROW(sv::ctl::parse({"research-batch-bundle-verify"}));
     EXPECT_ANY_THROW(sv::ctl::parse({"research-batch-bundle-verify", "bundle", "extra"}));
 }
+
+TEST(SvctlOptions, ReportSeriesIsOfflineBoundedAndPreservesLiteralPaths)
+{
+    const auto options =
+        sv::ctl::parse({"research-compare-series", "new # %.json", "a.json", "b.json", "c.json"});
+    EXPECT_EQ(options.request.operation, "research-compare-series");
+    EXPECT_EQ(options.request.parameters.at("report_path"), "new # %.json");
+    EXPECT_EQ(options.request.parameters.at("reports").as_array().size(), 3U);
+    EXPECT_ANY_THROW(sv::ctl::parse({"research-compare-series", "out.json", "one.json"}));
+    EXPECT_ANY_THROW(sv::ctl::parse(
+        {"research-compare-series", "out.json", "0", "1", "2", "3", "4", "5", "6", "7", "8"}));
+}

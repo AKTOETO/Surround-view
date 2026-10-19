@@ -2,6 +2,8 @@
 #include "batch_bundle.hpp"
 #include "file_experiment.hpp"
 #include "options.hpp"
+#include "report_output.hpp"
+#include "report_series.hpp"
 #include "scenario_bundle.hpp"
 #include <chrono>
 #include <condition_variable>
@@ -15,6 +17,20 @@ namespace sv::ctl
 {
 int execute(const Options &options)
 {
+    if (options.request.operation == "research-compare-series")
+    {
+        const auto &p = options.request.parameters;
+        std::vector<std::filesystem::path> paths;
+        for (const auto &path : p.at("reports").as_array())
+        {
+            paths.emplace_back(std::string(path.as_string()));
+        }
+        const auto audit = research::compare_report_series_files(paths);
+        research::ReportOutput output(std::string(p.at("report_path").as_string()));
+        output.write(audit);
+        std::cout << boost::json::serialize(audit) << '\n';
+        return 0;
+    }
     if (options.request.operation == "research-batch-bundle-export")
     {
         const auto &p = options.request.parameters;

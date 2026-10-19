@@ -312,6 +312,32 @@ class ClientTransportTests(unittest.TestCase):
                                  for row in batch['runs']]
                 self.assertEqual([s['rgba_sha256'] for s in batch_reports[0]['samples']],
                                  [s['rgba_sha256'] for s in batch_reports[1]['samples']])
+                # Offline compiled series comparison uses real reports, not the live endpoint.
+                series_path = directory / 'series # %.json'
+                series_inputs = [batch_output / row['report'] for row in batch['runs']]
+                series_run = subprocess.run([str(BUILD / 'svctl'), '--unix', str(directory / 'no-server'),
+                    'research-compare-series', str(series_path), *map(str, series_inputs)],
+                    text=True, capture_output=True, timeout=10)
+                self.assertEqual(series_run.returncode, 0, series_run.stdout + series_run.stderr)
+                series = json.loads(series_path.read_text())
+                self.assertEqual(series['policy'], 'report_series_comparison_v1')
+                self.assertEqual(series['report_count'], 2)
+                self.assertEqual(series['rows'][0]['render_p50_ms']['eligible_reports'], 2)
+                self.assertEqual(series['rows'][0]['render_p50_ms']['status'], 'all_reports_comparable')
+                self.assertIsNone(series['rows'][0]['mae_rgb8']['median'])
+                for identity, source in zip(series['inputs'], series_inputs):
+                    self.assertEqual(identity['sha256'], hashlib.sha256(source.read_bytes()).hexdigest())
+                original_series = series_path.read_bytes()
+                repeated = subprocess.run([str(BUILD / 'svctl'), 'research-compare-series',
+                    str(series_path), *map(str, series_inputs)], text=True, capture_output=True, timeout=10)
+                self.assertEqual(repeated.returncode, 3)
+                self.assertEqual(series_path.read_bytes(), original_series)
+                duplicate_output = directory / 'duplicate-series.json'
+                duplicate = subprocess.run([str(BUILD / 'svctl'), 'research-compare-series',
+                    str(duplicate_output), str(series_inputs[0]), str(series_inputs[0])],
+                    text=True, capture_output=True, timeout=10)
+                self.assertEqual(duplicate.returncode, 3)
+                self.assertFalse(duplicate_output.exists())
                 for row, member_report in zip(batch['runs'], batch_reports):
                     self.assertTrue(member_report['restored'])
                     self.assertEqual(member_report['scenario_input_sha256'], row['scenario_input_sha256'])
