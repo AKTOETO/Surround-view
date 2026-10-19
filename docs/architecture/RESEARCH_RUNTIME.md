@@ -1180,3 +1180,43 @@ end
 ```
 
 *Рисунок RR.27 — оба типа участников используют общий preflight и прежний runner.*
+
+## Описательная сводка нескольких отчётов
+
+Report series использует прежний pair engine, не отдельный сокращённый verifier.
+Baseline — первый из2–8 reports. Aggregate table охватывает только его profiles;
+полные pair results сохраняют односторонние/ambiguous profiles и причины отказа.
+Контракт: [[engineering/RESEARCH_REPORT_SERIES]].
+
+```plantuml
+@startuml
+actor User
+participant "GUI / svctl" as Client
+participant "Series service" as Series
+participant "Regular-file reader" as Reader
+participant "Pair comparison v4" as Pair
+participant "New audit" as Audit
+User -> Client: Выбрать2–8 reports; baseline первым
+Client -> Series: Snapshot ordered paths; cancel token
+Series -> Reader: <=16MiB/file; <=64MiB total
+Reader --> Series: Documents; raw hashes/path/bytes
+Series -> Series: Reject duplicate parsed documents
+Series -> Pair: Baseline self-check
+loop Каждый последующий report
+  Series -> Pair: Baseline vs report; full guards
+  Pair --> Series: Settings matches; raw metrics; deltas; gates/reasons
+end
+loop Каждый baseline profile / metric
+  alt Все reports допущены
+    Series -> Series: Min / median / max report summaries
+  else Есть пропуск либо непроверенный report
+    Series -> Series: Null aggregate; eligible/required count
+  end
+end
+Series --> Client: Descriptive summary + full pair results
+User -> Client: Save to new file
+Client -> Audit: O_EXCL; no server connection
+@enduml
+```
+
+*Рисунок RR.28 — сводка не удаляет недопущенные reports ради вычисления агрегата.*

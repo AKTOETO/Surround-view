@@ -73,7 +73,8 @@ Failed quality acceptance видна отдельно: успешное испо
 записи может остаться неполный новый файл; fsync/durable journal не реализован.
 Экспорт содержит локальные пути: перед передачей третьим лицам учитывайте их содержимое.
 
-Сравнение более двух отчётов, confidence intervals, переносимый bundle с изображениями,
+Описательная сводка2–8 отчётов реализована: [[engineering/RESEARCH_REPORT_SERIES]].
+Confidence intervals, переносимый bundle с изображениями,
 revalidation hashes по первичным данным и целевая квалификация остаются в [[planning/ROADMAP]].
 Диаграмма процесса: [[architecture/RESEARCH_RUNTIME#Сопоставление двух исследовательских отчётов]].
 

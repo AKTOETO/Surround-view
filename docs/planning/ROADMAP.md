@@ -1,5 +1,12 @@
 # Подробный план реализации
 
+20.10.2026: C++/svctl/sv-simulator сравнивают2–8 individual reports относительно первого.
+Полные pair guards сохранены; min/median/max report summaries доступны только при допуске
+всех reports для данной метрики. Дубликаты отклоняются, входы ограничены16MiB/file и
+64MiB total. Это описательная сводка, не pooled frame quantiles, независимость или CI.
+Multi-recording, подтверждающая статистика и target hardware gates остаются открытыми.
+[[engineering/RESEARCH_REPORT_SERIES]].
+
 20.10.2026: batch plan schema2 поддерживает смешанные file/inline сценарии в C++/svctl,
 GUI и offline bundle export. Кнопка снимка формы фиксирует самостоятельный участник;
 save/import сохраняют типы и абсолютные GUI references. Общие aggregate preflight/restore

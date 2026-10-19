@@ -3855,3 +3855,115 @@ Native Unix/TCP harness исполняет schema2 напрямую и чере�
 Финальная сборка успешна;5/5 затронутых CTest за121,54с, включая Unix/TCP112,67с
 и QML7,28с. Standalone batch/bundle27/27 и Qt controller46/46; все70 PlantUML-вставок
 корректны. Свидетельства относятся к Linux, а не к проверке на целевом устройстве Авроры.
+
+## 3.74. Сопоставление нескольких отчётов без смешивания кадров
+
+Попарный audit удобен для двух запусков, однако серия повторов требует видеть разброс
+между отчётами. Простое объединение summaries создаёт методическую опасность: p50 отчёта
+не является отдельным кадровым sample, а наличие нескольких файлов не гарантирует
+независимость опытов. Поэтому реализован ограниченный описательный анализ2–8 reports,
+с сохранением прежних guards и без автоматического научного вывода.
+
+Первый report выбран baseline. Каждый последующий сопоставляется с ним прежним C++
+`compare_reports`; перед этим baseline проходит self-check. Используются full-settings
+matching, content/model/reference identities, counters/completeness, trial plan,
+observation workload и configured build claims обеих ролей. Нового ослабленного допуска
+нет. Исходники механизма — `report_series.cpp`, `research_comparison.cpp` и
+`ResearchSeriesPanel.qml`. Пользовательский контракт: [[engineering/RESEARCH_REPORT_SERIES]].
+
+Пусть $x_{ri}$ — значение выбранной report-level метрики варианта $i$ в report $r$,
+а $g_{ri}$ — её допуск общим pair engine относительно baseline. Значение агрегата
+доступно только при
+
+$$
+G_i=\bigwedge_{r=0}^{R-1} g_{ri},\qquad 2\le R\le8.
+$$
+
+Тогда выводятся $\min_r x_{ri}$, $\operatorname{median}_r x_{ri}$ и $\max_r x_{ri}$.
+При $G_i=false$ все три значения отсутствуют; вместо молчаливого исключения report
+показывается число допустимых reports из полного $R$ и сохраняются pair reasons.
+Для чётного числа значений median — полусумма двух центральных упорядоченных значений.
+Вычисление не взвешивает отчёты количеством кадров и не объединяет raw samples.
+
+| Метрика | Единица агрегирования | Что результат не означает |
+|---|---|---|
+| Render p50 | Report-level p50 render_wall, ms | Не p50 всех объединённых кадров, не FPS |
+| MAE RGB8 | Report-level pixel-weighted MAE | Не ошибка объединённого image dataset |
+| RMSE RGB8 | Report-level pixel-weighted RMSE | Не RMSE из объединённой суммы квадратов |
+
+Допуск каждой метрики раздельный. Например, отсутствие client passport в третьем
+report не разрешает median времени по оставшимся двум. При этом одинаковые reference
+и inputs могут допускать quality summaries всех трёх. Отсутствие одного варианта
+также не превращается в его нулевой результат. Таблица aggregates охватывает baseline
+profiles, а right_only/ambiguous profiles остаются в pair audit. Для исследования
+другого набора вариантов оператор может переставить baseline.
+
+```plantuml
+@startuml
+start
+:Прочитать2–8 individual reports;
+:Проверить byte budgets и дубликаты;
+:Baseline self-check;
+:Сопоставить baseline с каждым report\nобщим pair engine;
+while (Есть baseline profile / metric?) is (да)
+  if (Все reports допущены?) then (да)
+    :Min / median / max\nreport-level summaries;
+  else (нет)
+    :Aggregate = null;\neligible / required count;
+  endif
+  :Сохранить raw pair metrics\nи причины отказа;
+endwhile (нет)
+:Показать описательную сводку;\nсохранить новый audit по запросу;
+stop
+@enduml
+```
+
+*Рисунок3.90 — неполнота серии сохраняется в результате, а не скрывается отбором строк.*
+
+В GUI вкладка сравнения теперь разделена на «Два отчёта» и «Серия2–8 отчётов».
+У серии есть file chooser, упорядоченный список, стрелки смены baseline, удаление,
+сравнение, cancel и save. Загруженный baseline указан отдельно: редактирование списка
+следующего запуска не меняет источники предыдущего результата. Pair и series используют
+один worker/PImpl, поэтому не стартуют параллельно. Результаты одного типа не выводятся
+на странице другого. Error/cancel очищают прежние results, output не заменяет inputs.
+
+CLI `svctl research-compare-series NEW_AUDIT REPORT_A REPORT_B [REPORT_C ...]` использует
+тот же application service offline. Серверу не добавлены команды или mutations.
+Export имеет policy `report_series_comparison_v1`, хранит pair policy, baseline index,
+input raw SHA256/path/bytes, aggregate scope, полный набор pair results и eligibility
+counts. До создания output все reports проверены. Existing output не заменяется;
+ошибка записи может оставить неполный новый файл, поскольку fsync/atomic publication
+пока не реализованы.
+
+Файловые границы:16MiB/report,64MiB total raw bytes,2–8 files. Reader отвергает
+необычные файловые типы и проверяет фактическое число прочитанных bytes. Это не RSS limit:
+JSON DOM и audit objects требуют дополнительной памяти. Parse/один recursive comparison
+не прерываются внутри операции, поэтому cancel не является hard deadline. Одинаковые
+parsed documents, включая перестановку ключей/whitespace/aliases, не допускаются как
+несколько участников. Однако изменённая метка или timestamp может отличить копию;
+это не тест независимости выборки.
+
+Не рассчитываются CI, значимость, итоговый ranking или scientific acceptance. Их нельзя
+получить только из нескольких summary файлов без описания независимых repeats,
+распределения условий и единицы статистического анализа. Multi-recording supervisor,
+confirmatory holdout и обоснованная статистическая модель остаются в TODO. Уже реализованная
+сводка полезна как инженерная проверка сопоставимости и видимости разброса текущих reports.
+
+Проверки включают точный odd/even median, modified client build, incomplete workflow,
+missing variant, semantic duplicates, input/hash/byte budgets, FIFO/directory/NUL paths,
+cancel и сохранность inputs. Qt проверяет frozen selection, pair/series switching,
+audit export, teardown и rendering без warnings. CLI применяется к реальным reports
+Unix/TCP harness с независимым Python SHA256 oracle и проверкой запрета overwrite.
+Подробные результаты: [[validation/RESEARCH_RUNTIME]].
+
+
+![Описательная сводка трёх отчётов](figures/implementation/research_report_series.png)
+
+*Рисунок3.91 — Linux/Qt6 component screenshot из regression fixture: time aggregate
+отсутствует при2/3 eligible, quality aggregate остаётся доступным при3/3. Это UI-проверка
+на подготовленных документах, не результат подтверждающего опыта.*
+
+Финальная сборка успешна;6/6 затронутых CTest за122,82с, включая Unix/TCP113,77с
+и QML7,35с. Отдельно6/6 новых common tests,48/48 Qt controller и11/11 CLI parser;
+все72 PlantUML-вставки корректны. Реальная Аврора и независимая подтверждающая серия
+этим инженерным прогоном не проверялись.

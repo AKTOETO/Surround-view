@@ -446,3 +446,8 @@ Batch plan schema2 с inline scenario objects — локальный форма�
 не расширение SV01. `sv-client-lib`/сервер получают прежние команды runner; ownership
 config, lease и restore не меняются. Контракт файлов и GUI:
 [[engineering/RESEARCH_BATCH#Встроенные снимки формы в серии]].
+
+
+`svctl research-compare-series` и GUI report series — offline application services,
+не команды SV01. Они читают individual reports, используют прежнюю pair policy и
+не подключаются к серверу: [[engineering/RESEARCH_REPORT_SERIES]].

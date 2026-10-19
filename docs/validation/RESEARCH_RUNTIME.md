@@ -1105,3 +1105,30 @@ research_quality_fixture1,23с, simulator_research_unit0,07с,
 simulator_configuration_qml7,28с, research_scenarios0,29с. Все70 PlantUML-вставок
 прошли syntax check; py_compile и git diff --check успешны. Свежий native GUI screenshot
 проверен визуально и сохранён как рисунок3.89. Полный69-test suite здесь не повторялся.
+
+## Сводка2–8 individual reports (20.10.2026)
+
+Общий C++ series service строит baseline self-check и прежние pair audits, не ослабляя
+matching/identity/workload/build guards. Агрегат отдельной метрики отсутствует, если
+не прошли все reports. Контракт: [[engineering/RESEARCH_REPORT_SERIES]], диплом §3.74.
+
+Standalone6/6 ResearchReportSeries/SeriesFiles проверяют odd/even median report p50,
+missing client build при доступном quality aggregate, incomplete reports, missing profile,
+duplicate documents (object key reorder), count/version/cancel, raw SHA256 с whitespace,
+literal paths, hard-link aliases, FIFO/directory/NUL и16MiB/file/64MiB total budgets.
+Qt controller48/48 и CLI parser11/11 прошли. Предварительный QML CTest1/1 за7,42с;
+отдельный screenshot/export case1/1 за56ms проверен визуально: time aggregate скрыт
+при2/3 eligible, quality aggregate доступен при3/3. Это синтетический report fixture,
+не новые замеры качества алгоритмов или target hardware evidence.
+
+Native Unix/TCP harness сравнивает отчёты настоящего runner через offline svctl,
+проверяет raw hashes независимым hashlib, eligible timing count, duplicate rejection
+до output и сохранность existing audit. Server endpoint для этой команды не используется.
+Полный69-test suite предыдущих срезов этим описанием не объявляется повторённым.
+
+Финальный selected CTest:6/6 за122,82с; client_transports113,77с,
+research_quality_fixture1,27с, simulator_research_unit0,08с,
+simulator_configuration_qml7,35с, research_scenarios0,36с, svctl_options0,00с.
+Все72 PlantUML-вставки прошли syntax check; py_compile и git diff --check успешны.
+Рисунок3.91 содержит отдельный synthetic Qt component fixture, а native CLI assertions
+выше используют reports реального сервера. Эти уровни свидетельств не смешиваются.

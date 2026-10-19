@@ -1624,3 +1624,18 @@ Runner также сохраняет локальную сборку в `report.
 текущий состав в переносимый набор. Предварительно сохранять каждый scenario не требуется.
 CLI запускает такой schema2 plan прежней `svctl research-batch` командой; описание путей,
 hashes и bundle-команд: [[engineering/RESEARCH_BATCH#Встроенные снимки формы в серии]].
+
+
+## Сводка нескольких исследовательских отчётов
+
+В **Исследование → Сравнение → Серия 2–8 отчётов** добавьте individual reports,
+выберите первый как baseline стрелками и нажмите **Сравнить серию**. Min/median/max
+показываются отдельно для render p50, MAE и RMSE, только если прошли все отчёты.
+Для offline CLI:
+
+```sh
+build/svctl research-compare-series artifacts/new-series-audit.json   artifacts/run-a/report.json artifacts/run-b/report.json artifacts/run-c/report.json
+```
+
+Output должен быть новым. Это сводка report summaries, а не объединённые кадровые
+percentiles, CI или scientific acceptance. [[engineering/RESEARCH_REPORT_SERIES]].
