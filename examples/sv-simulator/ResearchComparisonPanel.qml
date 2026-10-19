@@ -34,7 +34,7 @@ Column {
         if (!value)
             return "Паспорт ещё не загружен";
 
-        return "workflow=" + value.success + " · restore=" + value.restored + " · quality=" + value.quality_status + " · criteria=" + (value.criteria_source || "unverified") + " [" + (value.criteria ? fields(value.criteria, "").join(", ") : "не заданы") + "] · truth=" + (value.reference_kind || "неизвестно") + " · dataset=" + (value.reference_dataset_id || "неизвестно") + "\n" + (value.backend || "backend неизвестен") + " · " + (value.gl_vendor || "vendor неизвестен") + " · " + (value.gl_renderer || "renderer неизвестен") + "\nsource: " + (value.source_revision || "неизвестно") + " · fingerprint: " + (value.source_fingerprint || "неизвестно") + "\n" + build(value.build_passport) + "\n" + observations(value.observation_policy);
+        return "workflow=" + value.success + " · restore=" + value.restored + " · quality=" + value.quality_status + " · criteria=" + (value.criteria_source || "unverified") + " [" + (value.criteria ? fields(value.criteria, "").join(", ") : "не заданы") + "] · truth=" + (value.reference_kind || "неизвестно") + " · dataset=" + (value.reference_dataset_id || "неизвестно") + "\n" + (value.backend || "backend неизвестен") + " · " + (value.gl_vendor || "vendor неизвестен") + " · " + (value.gl_renderer || "renderer неизвестен") + "\nsource: " + (value.source_revision || "неизвестно") + " · fingerprint: " + (value.source_fingerprint || "неизвестно") + "\n" + "Сервер: " + build(value.build_passport) + "\nКлиент: " + build(value.client_build_passport) + "\n" + observations(value.observation_policy);
     }
 
     function build(value) {
@@ -169,7 +169,7 @@ Column {
         width: parent.width
         wrapMode: Text.Wrap
         visible: panel.comparisonData.rows !== undefined
-        text: "Inputs: " + (panel.comparisonData.inputs || "—") + "\nНаблюдение: " + (panel.comparisonData.observation_gate || "—") + "\nTimings: " + (panel.comparisonData.timing_gate || "—") + "\nQuality: " + (panel.comparisonData.quality_gate || "—") + "\nПричины: " + (panel.comparisonData.reasons ? panel.comparisonData.reasons.join(", ") : "—")
+        text: "Inputs: " + (panel.comparisonData.inputs || "—") + "\nСборка сервера: " + (panel.comparisonData.build_gate || "—") + "\nСборка клиента: " + (panel.comparisonData.client_build_gate || "—") + "\nНаблюдение: " + (panel.comparisonData.observation_gate || "—") + "\nTimings: " + (panel.comparisonData.timing_gate || "—") + "\nQuality: " + (panel.comparisonData.quality_gate || "—") + "\nПричины: " + (panel.comparisonData.reasons ? panel.comparisonData.reasons.join(", ") : "—")
     }
 
     Label {

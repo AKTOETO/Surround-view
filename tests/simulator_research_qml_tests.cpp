@@ -741,6 +741,9 @@ TEST(SimulatorResearchQml, ReferenceWorkflowRendersMeasuredResults)
             const auto result = comparison.result();
             ASSERT_EQ(result.value("inputs").toString(), "matching_claims")
                 << comparison.status().toStdString();
+            EXPECT_EQ(result.value("build_gate").toString(), "matching_configured_build_claims");
+            EXPECT_EQ(result.value("client_build_gate").toString(),
+                      "matching_configured_build_claims");
             EXPECT_EQ(result.value("observation_gate").toString(), "matching_observation_claims");
             const auto observations =
                 result.value("left").toMap().value("observation_policy").toMap();
