@@ -1,4 +1,5 @@
 #include "sv/build_info.hpp"
+#include "sv/build_passport.hpp"
 #include "sv/report.hpp"
 #include "sv/vision.hpp"
 #include <algorithm>
@@ -481,7 +482,8 @@ int main(int argc, char **argv)
                              {"boost", BOOST_LIB_VERSION},
                              {"glm", GLM_VERSION},
                              {"processor", sv::target_processor},
-                             {"opencv_build_information", cv::getBuildInformation()}}},
+                             {"opencv_build_information", cv::getBuildInformation()},
+                             {"configured_build_passport", sv::configured_build_passport()}}},
             {"profile_id", config.profile_id},
             {"config_sha256", sv::file_sha256(config_path)},
             {"settings",

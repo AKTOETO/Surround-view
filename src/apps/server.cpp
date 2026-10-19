@@ -3,6 +3,7 @@
 #include "output_selection.hpp"
 #include "renderer_configuration.hpp"
 #include "sv/build_info.hpp"
+#include "sv/build_passport.hpp"
 #include "sv/calibration_job.hpp"
 #include "sv/config_operations.hpp"
 #include "sv/config_service.hpp"
@@ -1060,6 +1061,7 @@ int main(int argc, char **argv)
                         catalog["gl_vendor"] = renderer->vendor();
                         catalog["source_revision"] = sv::source_revision;
                         catalog["source_fingerprint"] = sv::source_fingerprint;
+                        catalog["build_passport"] = sv::configured_build_passport();
                         extra_res["fusion_catalog"] = std::move(catalog);
                     }
                     else if (type == "output_catalog")
