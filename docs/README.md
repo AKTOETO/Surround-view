@@ -133,3 +133,6 @@ Multilabel server candidate/cost/global-gap controls: [[validation/MULTILABEL_SE
 
 Переносимые серии сценариев одной серверной записи через C++/svctl:
 [[engineering/RESEARCH_BATCH#Переносимая серия одной записи]].
+
+Графическое управление переносимыми сериями, квитанции и повторная проверка перед запуском:
+[[engineering/RESEARCH_BATCH#Серия в GUI переносимых наборов]].

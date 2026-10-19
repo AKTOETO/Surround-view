@@ -189,5 +189,14 @@ runs it through the same C++ ScenarioBundle service as svctl. Expand **Эксп�
 File reads/copying/hashing/reference decoding happen in the research worker; operations
 share busy/cancel/close handling. A previous verification receipt never bypasses run-time
 verification. Server replay/configuration must be prepared separately; the bundle carries
-client scenario/reference only. Unsaved form export and batch bundles remain future work.
+client scenario/reference only. Unsaved form export remains future work.
 [Workflow and limits](../../docs/engineering/RESEARCH_BATCH.md#переносимый-набор-в-sv-simulator).
+
+
+Select **Тип переносимого набора → Серия одной серверной записи** to export a saved
+batch plan, verify its folder offline and run it via the shared C++ BatchBundle service.
+Changing the type clears selected inputs. The receipt lists the actual verified type,
+ordered IDs, total/member trial counts and top hash; every run verifies all children again.
+Batch progress and result rows reuse the existing runner workflow/quality/restore display.
+Create a plan with the **Составить серию** editor and save it before bundle export.
+[GUI workflow](../../docs/engineering/RESEARCH_BATCH.md#серия-в-gui-переносимых-наборов).

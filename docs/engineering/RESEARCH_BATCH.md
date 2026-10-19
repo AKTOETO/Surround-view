@@ -646,8 +646,8 @@ reference. Изменение данных и согласованное ред�
 - Cancel проверяется между chunks/файлами и до execute; он не прерывает уже выполняющийся
   syscall или parser/decoder. Входы должны быть обычными локальными файлами.
 - Экспорт сохранённого сценария, offline-проверка и запуск набора доступны в svctl и
-  sv-simulator. Экспорт текущей несохранённой формы, batch/multi-recording bundles,
-  server config/dataset/build registry, архивный контейнер и deduplication остаются открытыми.
+  sv-simulator. Серии одной записи тоже поддерживаются. Экспорт текущей несохранённой
+  формы, multi-recording bundles, server config/dataset/build registry, архивный контейнер и deduplication остаются открытыми.
 
 API: export_scenario_bundle(path,new_directory,cancel), ScenarioBundle(path,cancel),
 summary(), execute(new_report,client_options,cancel,progress). Они используют тот же
@@ -692,7 +692,7 @@ Qt6/Linux проверен автоматически; диалоги Qt5 под
 PPM references. Все сценарии выполняются последовательно на **одной уже подготовленной
 серверной записи**. Серверные recording/config/build не входят, запись между сценариями
 не переключается. Это отдельный формат `batch_bundle_v1`; GUI режима «Переносимый
-набор» пока принимает только одиночный `scenario_bundle_v1`.
+набор» поддерживает оба формата через явный выбор типа.
 
 ```bash
 ./build/svctl research-batch-bundle-export artifacts/plan.json artifacts/portable-series
@@ -762,9 +762,37 @@ Private staging paths в individual reports временные.
   resume/checkpoints, подпись, deduplication и архивный контейнер отсутствуют.
 - Hashes подтверждают согласованность с unsigned manifest, не независимость truth,
   авторство, неизменность server dataset или scientific acceptance.
-- Batch GUI, экспорт несохранённой формы, multi-recording supervisor и server registry
+- Экспорт несохранённой формы, multi-recording supervisor и server registry
   остаются в TODO. Продуктовый сервис и CLI — C++; Python используется только как harness.
 
 API: export_batch_bundle(plan,new_directory,cancel), BatchBundle(path,cancel), summary(),
 execute(new_output,options,cancel,progress(member,done,total)). Схема взаимодействия:
 [[architecture/RESEARCH_RUNTIME#Переносимая серия одной записи]].
+
+
+### Серия в GUI переносимых наборов
+
+1. Если плана ещё нет, составьте его через **Исследования → План → Составить серию**,
+   добавьте сохранённые сценарии, установите порядок и сохраните черновик отдельным файлом.
+2. Выберите **Источник плана → Переносимый набор**, затем **Тип переносимого набора →
+   Серия одной серверной записи**. При смене типа выбор входной папки и исходного файла
+   сбрасывается. Одиночные наборы выбираются первым пунктом этого списка.
+3. Для экспорта раскройте **Экспортировать сохранённый batch-план**. Кнопкой **Batch-план…**
+   выберите план, задайте родительскую папку и имя нового каталога. Экспорт работает
+   без сервера, проверяет все сценарии и references до создания destination.
+4. Выберите папку готового набора и нажмите **Проверить без сервера**. Квитанция показывает
+   фактически прочитанный тип, top manifest SHA256, число сценариев, суммарные trials и
+   упорядоченные ID с trials каждого участника. Это не quality acceptance.
+5. Подготовьте нужную запись на сервере, подключитесь, укажите новый каталог результата
+   и нажмите **Начать исследование**. В worker создаётся новый BatchBundle и повторно
+   проверяется **вся** серия до output/network. Старый receipt не разрешает обход проверки.
+6. Во вкладке Выполнение показаны номер участника и trials текущего сценария; отмена
+   использует общий runner/restore. Во вкладке Результаты — отдельные строки сценариев
+   с workflow, quality, restore, member report и error. Итоговый путь указывает на batch.json.
+
+Offline export/verify и run используют общий worker и busy/close guard. Изменение endpoint
+после запуска не меняет текущую задачу. Неверно выбранный формат или повреждение позднего
+child не создают каталог результата. Общая политика прежняя: quality rejection продолжает
+серию, technical failure/cancel останавливает. Между участниками lease не удерживается;
+серия не является глобальной атомарной транзакцией. Пределы и границы переносимости
+совпадают с BatchBundle выше. Qt6/Linux проверяется, Aurora/Qt5 остаётся целевой проверкой.

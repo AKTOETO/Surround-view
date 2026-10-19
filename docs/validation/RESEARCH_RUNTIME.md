@@ -944,3 +944,41 @@ independent truth, научное обоснование критериев, dur
 research_scenarios0,28с. Новые batch bundle cases6/6, прежние single bundle6/6 и ordinary
 batch14/14; CLI parser10/10. Проверены60 PlantUML blocks architecture + главы3,
 py_compile harness и git diff --check. Таймауты native subprocess/CTest не увеличивались.
+
+## GUI переносимой серии — 20.10.2026
+
+В существующий ResearchBundleEditor добавлен explicit single/batch type. При смене
+типа очищаются selected folder/export source. Offline export/verify и run используют
+общий worker и необязательный batch flag Qt adapter; common BatchBundle, server commands
+и CLI не менялись. Receipt показывает фактически прочитанный тип, top hash, ordered IDs
+и total/member trials. Каждый run создаёт новый verified snapshot всех children.
+
+Новые controller cases:
+
+- ResearchGuiUnit.BatchBundleOfflinePreflightWrongTypeAndLateTamperLeaveNoRunOutput:
+  offline export/verify, общий busy, wrong type без receipt, endpoint gate, поздний
+  tamper после verify до output/network и отсутствие stale report/rows;
+- ResearchGuiUnit.BatchBundleExportReusesUrlGuardsAndWorkerTeardown: remote URL и
+  traversal name, cancel и destruction/join без endpoint. Tiny job может успеть
+  завершиться до cancel; это lifecycle check, не прерывание syscall.
+
+QML OfflineExportVerifyControlsAndReceiptRejectChangedInputs теперь проверяет оба
+типа, доступность кнопок offline, receipt с ordered IDs и очистку inputs при смене типа.
+Native VerifiedBundleRunsOnLiveServerThroughTypedControls также исполняет оба типа:
+export → перемещение папки #/% → offline verify → endpoint → кнопка run. Для batch
+проверяются две completed rows, order/quality/restore, top manifest identity, child
+identity и snapshot kind в каждом member report. Case запускается transport harness
+через реальные Unix/TCP endpoints; standalone skip не считается live-свидетельством.
+QmlWarningCapture требует отсутствие Qt/QML warnings. Таймауты не увеличены.
+
+Это инженерная проверка Qt6/Linux с regression reference. GUI не добавляет scientific
+acceptance, multi-recording, server registry или Aurora/Qt5 qualification. Workflow:
+[[engineering/RESEARCH_BATCH#Серия в GUI переносимых наборов]], диплом §3.69.
+
+
+Финальная сборка успешна; Linux CTest **68/68 за174,72с**, client_transports104,32с,
+QML7,18с. Controller GTest41/41, включая два новых cases. Offline/live bundle QML
+cases исполняют обе ветви single/batch; live-case standalone пропускается и отдельно
+исполняется транспортным harness. Проверены62 PlantUML blocks architecture/главы3 и
+git diff --check. Фактические GUI screenshots сохранены в diploma/figures/implementation:
+research_batch_bundle_native.png и research_batch_bundle_results.png, рисунки3.81–3.82.

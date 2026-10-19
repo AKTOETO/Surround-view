@@ -3372,8 +3372,8 @@ destination, копирует children и пишет top manifest последн
 отмена может оставить частичный новый destination. Atomic publication/fsync, signature,
 resume, deduplication и server dataset/config/build registry не реализованы. Multi-recording
 не заявляется: все сценарии используют одну заранее выбранную запись сервера.
-GUI для batch bundle остаётся отдельной задачей; текущий single-bundle GUI не принимает
-этот формат. Общий сервис и CLI используют C++; Python остаётся проверочным harness.
+В срезе §3.68 GUI для batch bundle ещё отсутствовал; он добавлен в §3.69.
+Общий сервис и CLI используют C++; Python остаётся проверочным harness.
 Команды и ограничения: [[engineering/RESEARCH_BATCH#Переносимая серия одной записи]].
 
 Шесть GTest нового формата покрывают relocation/freeze/reservation, поздние ошибки и
@@ -3384,3 +3384,92 @@ aggregate trials, overwrite/pre-cancel/output-path guards, tampering/regular-fil
 controls, не новая независимая проверка качества сшивки. Финальная Linux-сборка успешна,
 CTest68/68 за169,93с, client_transports99,73с, QML7,16с;60 PlantUML вставок корректны.
 Подробные результаты и ограничения: [[validation/RESEARCH_RUNTIME]].
+
+## 3.69. Графическое управление переносимой серией
+
+После общего сервиса §3.68 оставался разрыв пользовательского процесса: подготовленный
+набор серии можно было запускать только из CLI. В sv-simulator добавлен выбор типа
+«Одиночный сценарий» / «Серия одной серверной записи» внутри существующего режима
+«Переносимый набор». Отдельный редактор JSON не требуется. Пользователь выбирает
+сохранённый batch-план, родительскую папку и новое имя; экспорт/verify выполняются без
+endpoint. План можно предварительно составить и сохранить прежним визуальным редактором
+серии. Экспорт несохранённых форм остаётся отдельной работой.
+
+| Свойство интерфейса | Одиночный набор | Серия |
+|---|---|---|
+| Export source | Сохранённый scenario | Сохранённый batch-план |
+| Common service | ScenarioBundle | BatchBundle |
+| Offline receipt | Manifest hash и file count | Top hash, ordered IDs, total/member trials |
+| Output | report.json и captures | batch.json, member reports и captures |
+| Result rows | Варианты, timings и quality | Участники, workflow, quality и restore |
+| Проверка перед run | Новый экземпляр, full preflight | Новый экземпляр, full preflight всех children |
+
+При смене типа текущие input folder и export source очищаются. Это исключает случайное
+использование прежнего выбора как входа другого формата. Квитанция явно показывает
+фактически проверенный тип и называется результатом последней операции: смена выбора
+не превращает старый receipt в разрешение на новый запуск. Ошибка формата или tampering
+позднего child сбрасывает receipt и не создаёт output. Offline-проверка не устанавливает
+quality status passed.
+
+```plantuml
+@startuml
+package "Ноутбук исследователя: Linux / Qt6" {
+  component "ResearchBundleEditor\nТип / файлы / папки / квитанция" as UI
+  component "ResearchController\nGUI thread + worker lifecycle" as Controller
+  component "ScenarioBundle" as Single
+  component "BatchBundle" as Batch
+  component "Общий batch executor\nи ExperimentRunner" as Executor
+  component "sv-client-lib" as Client
+  UI --> Controller : frozen type / paths / endpoint
+  Controller --> Single : single task
+  Controller --> Batch : batch task
+  Batch --> Executor : verified frozen members
+  Single --> Executor : existing runner
+  Executor --> Client : research protocol
+  Controller --> UI : queued progress / receipt / rows
+}
+node "Серверный стенд: Linux\nАврора требует отдельной проверки" {
+  component "sv-server" as Server
+}
+Client --> Server : Unix local / TCP remote
+@enduml
+```
+
+*Рисунок3.80 — GUI использует общие compiled services и sv-client-lib; wire protocol не изменён.*
+
+![Проверка переносимой серии в sv-simulator](figures/implementation/research_batch_bundle_native.png)
+
+*Рисунок3.81 — фактический Linux/Qt6 GUI после offline-проверки перемещённого набора:
+два сценария по9 trials, всего18 с учётом warmup. Временные пути относятся к test fixture.*
+
+![Результат запуска переносимой серии](figures/implementation/research_batch_bundle_results.png)
+
+*Рисунок3.82 — завершение обоих сценариев, отдельные workflow/quality/restore и путь
+к batch.json. Regression-критерии пройдены; независимая truth этим снимком не подтверждается.*
+
+Выбранный тип, source/output paths и endpoint передаются worker как снимок. Чтение,
+copying, hash и reference decoding не выполняются в GUI-потоке. Общий busy gate запрещает
+параллельный запуск второй задачи, а существующий close/cancel guard ждёт worker и
+необходимый restore. Batch progress показывает номер участника и trials текущего
+сценария. Результат сохраняет прежнее разделение workflow, quality и restore для каждой
+строки; итоговый reportPath указывает на batch.json. Успешная quality acceptance относится
+только к заданным критериям и не доказывает независимость regression reference.
+
+Публичный Qt adapter расширен необязательным флагом batch у startBundle, verifyBundle и
+exportBundle; прежние single-вызовы остаются допустимыми. Сам common BatchBundle и
+server commands не менялись. Ошибки готовности endpoint, URL/name guards, wrong type,
+поздний tamper, отмена и teardown проверяются тестами. Native QML workflow исполняет
+одиночный и batch-вариант: export → relocation → offline verify → кнопка run → реальные
+Unix/TCP → summary/member reports. В серии проверяются порядок двух ID, top/child hashes,
+restored, quality status и строки результатов. Harness остаётся Python, продуктовый путь
+целиком compiled C++.
+
+Серия ограничена одной серверной записью; между участниками lease не удерживается.
+Server registry, multi-recording, полный build/runtime passport, independent truth и
+Aurora/Qt5 qualification остаются открытыми. Использование:
+[[engineering/RESEARCH_BATCH#Серия в GUI переносимых наборов]].
+
+
+Финальная Linux-проверка20.10.2026: сборка успешна; CTest68/68 за174,72с,
+client_transports104,32с, QML7,18с, controller41/41 GTest. Проверены62 PlantUML blocks.
+Подробности: [[validation/RESEARCH_RUNTIME]].

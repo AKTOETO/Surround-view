@@ -1,5 +1,12 @@
 # Подробный план реализации
 
+20.10.2026: GUI переносимых серий добавлен в sv-simulator: explicit single/batch type,
+offline export/verify, ordered receipt и повторный полный preflight при run. Общий worker,
+endpoint snapshot, busy/cancel/close и per-member progress/results используют прежний
+runner. Несохранённая форма, multi-recording, registry и scientific/target gates открыты.
+[[engineering/RESEARCH_BATCH#Серия в GUI переносимых наборов]].
+
+
 19.10.2026: переносимая серия одной записи реализована в C++/svctl: batch_bundle_v1,
 1–8 упорядоченных single bundles, top/child hashes, aggregate raw/decoded/trial budgets,
 frozen inputs до output/network и общий batch executor с предварительной reservation

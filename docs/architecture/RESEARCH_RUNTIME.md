@@ -1000,3 +1000,35 @@ Executor --> User: batch.json plus member reports
 ```
 
 *Рисунок RR.22 — серия переносит client inputs одной записи, без server recording/config.*
+
+## Выбор типа переносимого набора в GUI
+
+Тип задаётся явно: одиночный сценарий или серия одной записи. При смене типа выбор
+входной папки и экспортируемого файла очищается; квитанция помечает фактически
+проверенный тип. Проверка всегда повторяется при запуске, а endpoint фиксируется
+перед передачей задачи worker.
+
+```plantuml
+@startuml
+actor User
+participant "ResearchBundleEditor" as UI
+participant "ResearchController" as Controller
+participant "Research worker" as Worker
+participant BatchBundle as Bundle
+participant "Shared batch executor" as Executor
+User -> UI: Select batch bundle type / folder
+UI -> Controller: verifyBundle(folder, batch=true)
+Controller -> Worker: Offline task; busy=true
+Worker -> Bundle: Verify and freeze every child
+Bundle --> UI: Queued receipt with ordered IDs and totals
+User -> UI: Start research
+UI -> Controller: startBundle(folder, output, batch=true)
+Controller -> Worker: Frozen endpoint / paths / type
+Worker -> Bundle: New instance; verify again
+Worker -> Executor: Execute frozen members
+Executor --> Controller: Member progress / summary / restore
+Controller --> UI: batch rows and output path
+@enduml
+```
+
+*Рисунок RR.23 — GUI выбирает тип, а проверку и исполнение серии выполняет общий C++ сервис.*
