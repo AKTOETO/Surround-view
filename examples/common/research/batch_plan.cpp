@@ -2,6 +2,7 @@
 #include "digest.hpp"
 #include "regular_input.hpp"
 #include "report_output.hpp"
+#include "scenario.hpp"
 #include "sv/json.hpp"
 #include <algorithm>
 #include <set>
@@ -44,9 +45,10 @@ boost::json::object parse_batch_plan(std::string_view text)
     auto plan = sv::parse_json(text).as_object();
     keys(plan, {"schema_version", "runs"});
     const auto &version = plan.at("schema_version");
-    if ((!version.is_int64() && !version.is_uint64()) || version.to_number<uint64_t>() != 1)
+    if ((!version.is_int64() && !version.is_uint64()) ||
+        (version.to_number<uint64_t>() != 1 && version.to_number<uint64_t>() != 2))
     {
-        throw std::invalid_argument("batch schema_version must be integer 1");
+        throw std::invalid_argument("batch schema_version must be integer 1 or 2");
     }
     const auto &runs = plan.at("runs").as_array();
     if (runs.empty() || runs.size() > 8)
@@ -59,12 +61,22 @@ boost::json::object parse_batch_plan(std::string_view text)
         const auto &row = value.as_object();
         keys(row, {"id", "scenario"});
         const std::string id(row.at("id").as_string());
-        const std::string path(row.at("scenario").as_string());
-        if (!safe_id(id) || id == "batch" || !ids.insert(id).second || path.empty() ||
-            path.size() > 4096 || path.find('\0') != std::string::npos)
+        if (!safe_id(id) || id == "batch" || !ids.insert(id).second)
         {
-            throw std::invalid_argument(
-                "batch requires unique safe IDs and nonempty scenario paths");
+            throw std::invalid_argument("batch requires unique safe IDs");
+        }
+        const auto &scenario = row.at("scenario");
+        if (scenario.is_object() && version.to_number<uint64_t>() == 2)
+        {
+            (void)parse_scenario(scenario); // Structure only, no reference file IO.
+        }
+        else
+        {
+            const std::string path(scenario.as_string());
+            if (path.empty() || path.size() > 4096 || path.find('\0') != std::string::npos)
+            {
+                throw std::invalid_argument("batch requires nonempty scenario paths");
+            }
         }
     }
     return plan;

@@ -227,9 +227,13 @@ boost::json::object export_batch_bundle(std::string_view text,
     for (size_t index = 0; index < plan.at("runs").as_array().size(); ++index)
     {
         const auto &row = plan.at("runs").as_array()[index].as_object();
+        const auto &source = row.at("scenario");
         const auto child =
-            export_scenario_bundle(scenario_base / std::string(row.at("scenario").as_string()),
-                                   staging.path / run_name(index), cancel);
+            source.is_object()
+                ? export_scenario_bundle(boost::json::serialize(source) + '\n', scenario_base,
+                                         staging.path / run_name(index), cancel)
+                : export_scenario_bundle(scenario_base / std::string(source.as_string()),
+                                         staging.path / run_name(index), cancel);
         const auto child_text =
             read_member(staging.path / run_name(index), "bundle.json", json_limit, cancel);
         if (child_text.size() > total_limit - raw)

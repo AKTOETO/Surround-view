@@ -266,3 +266,41 @@ TEST_F(BatchBundleFixture, MemoryPlanExportRejectsBadBaseOversizeAndLateMemberBe
         sv::research::export_batch_bundle(boost::json::serialize(plan), source, bundle));
     EXPECT_FALSE(std::filesystem::exists(bundle));
 }
+
+TEST_F(BatchBundleFixture, MixedInlineAndFileMembersRelocateWithIdenticalScenarioBytes)
+{
+    plan["schema_version"] = 2;
+    plan.at("runs").as_array()[0].as_object()["scenario"] = scenario;
+    save_plan();
+    const auto receipt = export_batch();
+    const auto text = boost::json::serialize(scenario) + '\n';
+    const auto &members = receipt.at("runs").as_array();
+    EXPECT_EQ(std::string(members[0].as_object().at("source_scenario_sha256").as_string()),
+              sv::research::sha256(text.data(), text.size()));
+    EXPECT_EQ(members[0].as_object().at("manifest_sha256"),
+              members[1].as_object().at("manifest_sha256"));
+    const auto moved = directory.path / "inline-relocated";
+    std::filesystem::rename(bundle, moved);
+    std::filesystem::remove_all(source);
+    sv::research::BatchBundle frozen(moved);
+    EXPECT_EQ(frozen.summary(), receipt);
+}
+
+TEST_F(BatchBundleFixture, InlineMemoryBaseKeepsSymlinkDotDotMeaning)
+{
+    std::filesystem::create_directory(source / "deep");
+    std::filesystem::create_directory_symlink(source / "deep", directory.path / "link");
+    bundle_fixture::json(directory.path / "reference.json", boost::json::object{{"wrong", true}});
+    const auto base = directory.path / "link/..";
+    const auto text = boost::json::serialize(scenario) + '\n';
+    sv::research::FileExperiment experiment(text, base);
+    EXPECT_GT(experiment.reference_bytes(), 0U);
+    plan["schema_version"] = 2;
+    for (auto &row : plan.at("runs").as_array())
+    {
+        row.as_object()["scenario"] = scenario;
+    }
+    std::filesystem::remove(source / "scenario.json");
+    EXPECT_NO_THROW(sv::research::export_batch_bundle(boost::json::serialize(plan), base, bundle));
+    EXPECT_TRUE(sv::research::BatchBundle(bundle).summary().at("verified").as_bool());
+}

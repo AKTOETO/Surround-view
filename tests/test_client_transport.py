@@ -251,9 +251,10 @@ class ClientTransportTests(unittest.TestCase):
 
                 def batch_run(label, scenarios, expected_code):
                     batch_plan = directory / (label + '-plan.json')
-                    batch_plan.write_text(json.dumps(dict(schema_version=1, runs=[
-                        dict(id=f'case-{index}', scenario=path.name)
-                        for index, path in enumerate(scenarios)])))
+                    batch_plan.write_text(json.dumps(dict(
+                        schema_version=2 if any(isinstance(item, dict) for item in scenarios) else 1,
+                        runs=[dict(id=f'case-{index}', scenario=item if isinstance(item, dict) else item.name)
+                              for index, item in enumerate(scenarios)])))
                     output = directory / label
                     result = subprocess.run([str(BUILD / 'svctl'), *endpoint,
                         '--timeout-ms', '3000', 'research-batch', str(batch_plan), str(output)],
@@ -263,9 +264,10 @@ class ClientTransportTests(unittest.TestCase):
 
                 def portable_batch_run(label, scenarios, expected_code):
                     plan_path = directory / (label + '-plan # %.json')
-                    plan_path.write_text(json.dumps(dict(schema_version=1, runs=[
-                        dict(id=f'case-{index}', scenario=path.name)
-                        for index, path in enumerate(scenarios)])))
+                    plan_path.write_text(json.dumps(dict(
+                        schema_version=2 if any(isinstance(item, dict) for item in scenarios) else 1,
+                        runs=[dict(id=f'case-{index}', scenario=item if isinstance(item, dict) else item.name)
+                              for index, item in enumerate(scenarios)])))
                     source_bundle = directory / (label + '-bundle')
                     exported = subprocess.run([str(BUILD / 'svctl'), '--unix', str(directory / 'no-server'),
                         'research-batch-bundle-export', str(plan_path), str(source_bundle)],
@@ -317,6 +319,21 @@ class ClientTransportTests(unittest.TestCase):
                     self.assertEqual(member_report['ready_preparation'], 'reset_first_row')
                     for sample in member_report['samples']:
                         self.assertTrue((batch_output / sample['rgba_file']).is_file())
+                # Schema2 mixes a frozen inline document and an ordinary scenario file.
+                inline_scenario = json.loads(batch_scenario.read_text())
+                inline_output, inline_batch = batch_run('batch-inline', [inline_scenario, batch_scenario], 0)
+                self.assertEqual(inline_batch['plan']['schema_version'], 2)
+                inline_report = json.loads((inline_output / 'case-0.json').read_text())
+                self.assertEqual(inline_report['scenario_input_kind'], 'memory_json_bytes_v1')
+                self.assertNotIn('scenario_input_path', inline_report)
+                inline_bytes = (json.dumps(inline_scenario, separators=(',', ':'), ensure_ascii=False) + '\n').encode()
+                self.assertEqual(inline_report['scenario_input_sha256'], hashlib.sha256(inline_bytes).hexdigest())
+                self.assertEqual(inline_batch['runs'][0]['scenario'], inline_scenario)
+                portable_output, portable_inline = portable_batch_run('portable-inline', [inline_scenario, batch_scenario], 0)
+                self.assertEqual(portable_inline['completed'], 2)
+                self.assertTrue(portable_inline['restored'])
+                self.assertEqual(portable_inline['input_bundle']['runs'][0]['source_scenario_sha256'],
+                                 inline_report['scenario_input_sha256'])
                 # A server capture is explicitly a regression reference, never independent truth.
                 reference_dir = directory / 'quality'
                 reference_dir.mkdir()

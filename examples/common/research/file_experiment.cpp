@@ -25,7 +25,8 @@ struct FileExperiment::Impl
         {
             throw std::invalid_argument("scenario must contain 1..1048576 bytes");
         }
-        base = std::filesystem::absolute(directory).lexically_normal();
+        // Preserve symlink/.. semantics for explicitly supplied reference bases.
+        base = std::filesystem::absolute(directory);
         hash = sha256(text.data(), text.size());
         scenario = parse_scenario(sv::parse_json(text));
         if (scenario.quality_reference)

@@ -6,6 +6,7 @@
 
 namespace sv::research
 {
+// Schema1 file rows; schema2 permits inline scenario objects as well.
 // Structure only; does not open scenario/reference paths or contact a server.
 boost::json::object parse_batch_plan(std::string_view);
 // Bounded regular-file input; exact bytes retained for the execution digest.

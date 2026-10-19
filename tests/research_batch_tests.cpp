@@ -96,7 +96,7 @@ TEST_F(ResearchBatch, RejectsAmbiguousOrUnboundedPlansBeforeOutput)
         EXPECT_FALSE(std::filesystem::exists(root / "output"));
     }
     for (const auto &version :
-         {boost::json::value(true), boost::json::value(1.0), boost::json::value(2)})
+         {boost::json::value(true), boost::json::value(1.0), boost::json::value(3)})
     {
         auto document = plan();
         document["schema_version"] = version;
@@ -288,4 +288,91 @@ TEST_F(ResearchBatch, DraftSaveNeverReplacesHardLinksOrSymlinksAndRequiresExisti
     EXPECT_FALSE(std::filesystem::exists(root / "missing.json"));
     EXPECT_ANY_THROW(sv::research::write_batch_plan(plan(), root / "absent-parent/plan.json"));
     EXPECT_FALSE(std::filesystem::exists(root / "absent-parent"));
+}
+
+TEST_F(ResearchBatch, InlineSchemaTwoMixesFilesAndSnapshotsWithoutScenarioFile)
+{
+    auto document = plan();
+    document["schema_version"] = 2;
+    const auto scenario = sv::parse_json(sv::research::read_batch_plan(root / "scenario.json"));
+    document.at("runs").as_array()[0].as_object()["scenario"] = scenario;
+    const auto summary = execute(document);
+    EXPECT_EQ(summary.at("plan"), document);
+    EXPECT_EQ(summary.at("status"), "cancelled");
+    const auto text = boost::json::serialize(scenario) + '\n';
+    EXPECT_EQ(
+        std::string(
+            summary.at("runs").as_array()[0].as_object().at("scenario_input_sha256").as_string()),
+        sv::research::sha256(text.data(), text.size()));
+    EXPECT_EQ(summary.at("runs").as_array()[0].as_object().at("scenario"), scenario);
+    document.at("runs").as_array()[1].as_object()["scenario"] = scenario;
+    std::filesystem::remove(root / "scenario.json");
+    const auto result = sv::research::run_batch(document, root, root / "all-inline", {}, &cancel);
+    EXPECT_EQ(result.at("plan"), document);
+    EXPECT_TRUE(std::filesystem::exists(root / "all-inline/inputs/plan.json"));
+    const auto repeated = sv::research::run_batch(root / "all-inline/inputs/plan.json",
+                                                  root / "repeated", {}, &cancel);
+    EXPECT_EQ(result.at("plan_sha256"), repeated.at("plan_sha256"));
+    EXPECT_EQ(result.at("runs"), repeated.at("runs"));
+}
+
+TEST_F(ResearchBatch, InlineInvalidLateMemberFailsBeforeOutputAndVersionOneRemainsStrict)
+{
+    auto document = plan();
+    document["schema_version"] = 2;
+    auto scenario =
+        sv::parse_json(sv::research::read_batch_plan(root / "scenario.json")).as_object();
+    document.at("runs").as_array()[1].as_object()["scenario"] = scenario;
+    document["schema_version"] = 1;
+    EXPECT_ANY_THROW(execute(document));
+    document["schema_version"] = 2;
+    scenario["repeats"] = 0;
+    document.at("runs").as_array()[1].as_object()["scenario"] = scenario;
+    EXPECT_ANY_THROW(execute(document));
+    scenario["repeats"] = 1;
+    scenario["quality_reference"] = "missing-reference.json";
+    document.at("runs").as_array()[1].as_object()["scenario"] = scenario;
+    EXPECT_NO_THROW(sv::research::parse_batch_plan(boost::json::serialize(document)));
+    EXPECT_ANY_THROW(execute(document));
+    EXPECT_FALSE(std::filesystem::exists(root / "output"));
+    scenario.erase("quality_reference");
+    scenario["reset_replay"] = false;
+    document.at("runs").as_array()[1].as_object()["scenario"] = scenario;
+    EXPECT_ANY_THROW(execute(document));
+    scenario["reset_replay"] = true;
+    scenario["frames"] = 6;
+    scenario["repeats"] = 1000;
+    for (auto &member : document.at("runs").as_array())
+    {
+        member.as_object()["scenario"] = scenario;
+    }
+    EXPECT_ANY_THROW(execute(document));
+    EXPECT_FALSE(std::filesystem::exists(root / "output"));
+}
+
+TEST_F(ResearchBatch, InlinePlanFilenameWithoutParentUsesCurrentDirectory)
+{
+    struct RestoreDirectory
+    {
+        std::filesystem::path old = std::filesystem::current_path();
+
+        ~RestoreDirectory()
+        {
+            std::filesystem::current_path(old);
+        }
+    } restore;
+
+    auto document = plan();
+    document["schema_version"] = 2;
+    const auto scenario = sv::parse_json(sv::research::read_batch_plan(root / "scenario.json"));
+    for (auto &member : document.at("runs").as_array())
+    {
+        member.as_object()["scenario"] = scenario;
+    }
+    write("inline-plan.json", boost::json::serialize(document));
+    std::filesystem::current_path(root);
+    const auto result =
+        sv::research::run_batch("inline-plan.json", root / "cwd-output", {}, &cancel);
+    EXPECT_EQ(result.at("status"), "cancelled");
+    EXPECT_EQ(result.at("plan"), document);
 }

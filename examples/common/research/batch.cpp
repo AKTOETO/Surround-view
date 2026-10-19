@@ -30,7 +30,7 @@ boost::json::object execute_prepared_batch(
     {
         const auto &row = runs[index].as_object();
         const std::string id(row.at("id").as_string());
-        const std::string path(row.at("scenario").as_string());
+        const auto &source = row.at("scenario");
         const auto *experiment = experiments[index];
         bytes += experiment->reference_bytes();
         trials += experiment->trial_count();
@@ -40,7 +40,7 @@ boost::json::object execute_prepared_batch(
                 "batch requires reset_replay and at most 128 MiB references/10000 trials");
         }
         members.push_back(boost::json::object{{"id", id},
-                                              {"scenario", path},
+                                              {"scenario", source},
                                               {"scenario_input_sha256", experiment->input_sha256()},
                                               {"report", id + ".json"},
                                               {"status", "not_started"}});
@@ -163,8 +163,11 @@ boost::json::object execute_batch(std::string_view text, const std::filesystem::
     size_t bytes = 0, trials = 0;
     for (const auto &run : plan.at("runs").as_array())
     {
-        owned.push_back(std::make_unique<FileExperiment>(
-            base / std::string(run.as_object().at("scenario").as_string())));
+        const auto &source = run.as_object().at("scenario");
+        owned.push_back(
+            source.is_object()
+                ? std::make_unique<FileExperiment>(boost::json::serialize(source) + '\n', base)
+                : std::make_unique<FileExperiment>(base / std::string(source.as_string())));
         bytes += owned.back()->reference_bytes();
         trials += owned.back()->trial_count();
         if (!owned.back()->resets_replay() || bytes > 128 * 1024 * 1024 || trials > 10000)
@@ -185,8 +188,9 @@ boost::json::object run_batch(const std::filesystem::path &plan_path,
                               std::function<void(unsigned, unsigned, unsigned)> progress)
 {
     const auto text = read_batch_plan(plan_path);
-    return execute_batch(text, plan_path.parent_path(), output_directory, options, cancel,
-                         std::move(progress), false);
+    const auto base =
+        plan_path.has_parent_path() ? plan_path.parent_path() : std::filesystem::current_path();
+    return execute_batch(text, base, output_directory, options, cancel, std::move(progress), false);
 }
 
 boost::json::object run_batch(const boost::json::object &plan, const std::filesystem::path &base,
