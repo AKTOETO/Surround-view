@@ -237,3 +237,32 @@ TEST_F(BatchBundleFixture, AggregateRawBudgetRejectsEvenWhenEveryChildIsIndividu
                                                   {"runs", descriptors}});
     EXPECT_ANY_THROW(sv::research::BatchBundle loaded(bundle));
 }
+
+TEST_F(BatchBundleFixture, UnsavedPlanExportUsesExactBytesBaseAndOrderWithoutAPlanFile)
+{
+    std::swap(plan.at("runs").as_array()[0], plan.at("runs").as_array()[1]);
+    const auto text = "\n " + boost::json::serialize(plan) + "\n";
+    std::filesystem::remove(source / "plan # %.json");
+    const auto receipt = sv::research::export_batch_bundle(text, source, bundle);
+    EXPECT_EQ(std::string(receipt.at("source_plan_sha256").as_string()),
+              sv::research::sha256(text.data(), text.size()));
+    EXPECT_EQ(receipt.at("runs").as_array()[0].as_object().at("id"), "second");
+    EXPECT_FALSE(std::filesystem::exists(source / "plan # %.json"));
+    std::filesystem::remove_all(source);
+    EXPECT_NO_THROW(sv::research::BatchBundle loaded(bundle));
+}
+
+TEST_F(BatchBundleFixture, MemoryPlanExportRejectsBadBaseOversizeAndLateMemberBeforeDestination)
+{
+    const auto text = boost::json::serialize(plan);
+    EXPECT_ANY_THROW(sv::research::export_batch_bundle(text, {}, bundle));
+    EXPECT_ANY_THROW(
+        sv::research::export_batch_bundle(text, source.string() + '\0' + "bad", bundle));
+    EXPECT_ANY_THROW(
+        sv::research::export_batch_bundle(text, source, bundle.string() + '\0' + "bad"));
+    EXPECT_ANY_THROW(sv::research::export_batch_bundle(std::string(65537, ' '), source, bundle));
+    plan.at("runs").as_array()[1].as_object()["scenario"] = "missing.json";
+    EXPECT_ANY_THROW(
+        sv::research::export_batch_bundle(boost::json::serialize(plan), source, bundle));
+    EXPECT_FALSE(std::filesystem::exists(bundle));
+}

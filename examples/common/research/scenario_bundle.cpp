@@ -129,12 +129,27 @@ boost::json::object export_scenario_bundle(const std::filesystem::path &scenario
     }
     const auto source_path = std::filesystem::canonical(scenario_path);
     const auto text = read_regular_file(source_path, 1024 * 1024, cancel);
+    return export_scenario_bundle(text, source_path.parent_path(), destination, cancel);
+}
+
+boost::json::object export_scenario_bundle(std::string_view text,
+                                           const std::filesystem::path &reference_base,
+                                           const std::filesystem::path &destination,
+                                           const std::atomic_bool *cancel)
+{
+    check_cancel(cancel);
+    if (text.empty() || text.size() > 1024 * 1024 || reference_base.empty() ||
+        destination.empty() || reference_base.string().find('\0') != std::string::npos ||
+        destination.string().find('\0') != std::string::npos)
+    {
+        throw std::invalid_argument("invalid memory scenario/base/destination or JSON exceeds1MiB");
+    }
     auto scenario = sv::parse_json(text).as_object();
     const auto parsed = parse_scenario(scenario);
     Files files;
     if (parsed.quality_reference)
     {
-        const auto reference_path = source_path.parent_path() / *parsed.quality_reference;
+        const auto reference_path = reference_base / *parsed.quality_reference;
         auto reference =
             sv::parse_json(read_regular_file(reference_path, 1024 * 1024, cancel)).as_object();
         auto &frames = reference.at("frames").as_array();

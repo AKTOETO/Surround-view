@@ -141,3 +141,50 @@ TEST_F(BundleFixture, ManifestVersionsLimitsAndFrozenDescriptionAreStrict)
         EXPECT_ANY_THROW(sv::research::ScenarioBundle{bundle}) << variation;
     }
 }
+
+TEST_F(BundleFixture, MemoryExportPreservesExactSourceBytesAndExplicitReferenceBase)
+{
+    const auto text = " \n" + boost::json::serialize(scenario) + "\n ";
+    std::filesystem::remove(source / "scenario.json");
+    const auto receipt = sv::research::export_scenario_bundle(text, source, bundle);
+    EXPECT_EQ(std::string(receipt.at("source_scenario_sha256").as_string()),
+              sv::research::sha256(text.data(), text.size()));
+    EXPECT_FALSE(std::filesystem::exists(source / "scenario.json"));
+    EXPECT_EQ(document(bundle / "scenario.json").at("quality_criteria"),
+              scenario.at("quality_criteria"));
+    std::filesystem::remove_all(source);
+    EXPECT_NO_THROW(sv::research::ScenarioBundle loaded(bundle));
+}
+
+TEST_F(BundleFixture, MemoryExportRejectsBadTextBaseReferenceAndCancelBeforeDestination)
+{
+    const auto text = boost::json::serialize(scenario);
+    for (const auto &bad : {std::string{}, std::string("{}"), std::string(1024 * 1024 + 1, ' ')})
+    {
+        EXPECT_ANY_THROW(sv::research::export_scenario_bundle(bad, source, bundle));
+    }
+    EXPECT_ANY_THROW(sv::research::export_scenario_bundle(text, {}, bundle));
+    EXPECT_ANY_THROW(
+        sv::research::export_scenario_bundle(text, source.string() + '\0' + "bad", bundle));
+    EXPECT_ANY_THROW(
+        sv::research::export_scenario_bundle(text, source, bundle.string() + '\0' + "bad"));
+    std::atomic_bool cancelled{true};
+    EXPECT_ANY_THROW(sv::research::export_scenario_bundle(text, source, bundle, &cancelled));
+    EXPECT_ANY_THROW(sv::research::export_scenario_bundle(text, directory.path, bundle));
+    EXPECT_FALSE(std::filesystem::exists(bundle));
+}
+
+TEST_F(BundleFixture, MemoryReferenceBasePreservesDotDotAcrossSymlink)
+{
+    const auto real = directory.path / "real";
+    std::filesystem::create_directory(real);
+    std::filesystem::create_directory(real / "child");
+    std::filesystem::create_directory_symlink(real / "child", directory.path / "link");
+    std::filesystem::rename(source / "reference.json", real / "reference.json");
+    std::filesystem::rename(source / "rgb # %.ppm", real / "rgb # %.ppm");
+    std::filesystem::rename(source / "mask.ppm", real / "mask.ppm");
+    const auto base = directory.path / "link" / "..";
+    EXPECT_NO_THROW(
+        sv::research::export_scenario_bundle(boost::json::serialize(scenario), base, bundle));
+    EXPECT_NO_THROW(sv::research::ScenarioBundle loaded(bundle));
+}

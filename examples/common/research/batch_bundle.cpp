@@ -203,6 +203,23 @@ boost::json::object export_batch_bundle(const std::filesystem::path &path,
         throw std::invalid_argument("invalid batch bundle source/destination");
     }
     const auto text = read_batch_plan(path);
+    return export_batch_bundle(
+        text, path.has_parent_path() ? path.parent_path() : std::filesystem::current_path(), output,
+        cancel);
+}
+
+boost::json::object export_batch_bundle(std::string_view text,
+                                        const std::filesystem::path &scenario_base,
+                                        const std::filesystem::path &output,
+                                        const std::atomic_bool *cancel)
+{
+    check_cancel(cancel);
+    if (scenario_base.empty() || output.empty() ||
+        scenario_base.string().find('\0') != std::string::npos ||
+        output.string().find('\0') != std::string::npos)
+    {
+        throw std::invalid_argument("invalid memory batch base/destination");
+    }
     const auto plan = parse_batch_plan(text);
     TemporaryDirectory staging;
     boost::json::array runs;
@@ -211,7 +228,7 @@ boost::json::object export_batch_bundle(const std::filesystem::path &path,
     {
         const auto &row = plan.at("runs").as_array()[index].as_object();
         const auto child =
-            export_scenario_bundle(path.parent_path() / std::string(row.at("scenario").as_string()),
+            export_scenario_bundle(scenario_base / std::string(row.at("scenario").as_string()),
                                    staging.path / run_name(index), cancel);
         const auto child_text =
             read_member(staging.path / run_name(index), "bundle.json", json_limit, cancel);
