@@ -3661,3 +3661,82 @@ C++17, OpenCV5.0.0 и SDK unreported. Показанные времена отн
 
 Полный regression suite:69/69 CTest за183,12с, включая native transport111,56с,
 Qt/QML7,25с и CMake passport0,80с. Все66 PlantUML-вставок корректны.
+
+## 3.72. Воспроизводимость клиентской части измерения
+
+После фиксации серверной сборки остаётся отдельный источник различий: исследовательский
+клиент. Между запросами он может сохранять изображения, вычислять masked RGB metrics
+и вызывать progress callback. Даже если серверная стадия измеряется собственным таймером,
+межкадровая работа клиента меняет интервал поступления запросов и потенциально состояние
+системы к следующему trial. Поэтому одного server passport недостаточно для строгого
+допуска сравнения заявленной конфигурации опыта.
+
+Общий C++ runner получает локальный `configured_build_passport()` из `sv-core` и сохраняет
+его в `report.client_build_passport` до соединения. Это относится к CLI, GUI и запуску
+bundles через общий service; при ранней отмене сведения о клиентской сборке также остаются
+в отчёте. Серверный passport берётся из catalog и хранится отдельно. Основание раздела —
+`examples/common/research/runner.cpp` и `report_comparison.cpp`; контракт:
+[[engineering/RESEARCH_REPORTS#Клиентская сборка и policy v4]].
+
+Для отчётов $A,B$ необходимое условие сравнения времени теперь имеет вид
+
+$$
+G_{build} = V(S_A) \land V(S_B) \land V(C_A) \land V(C_B)
+\land [h(S_A)=h(S_B)] \land [h(C_A)=h(C_B)],
+$$
+
+где $S$ — серверные, $C$ — клиентские configured claims, $V$ — проверка схемы и hash,
+а $h$ — правило §3.71. Равенство $h(C_A)=h(S_A)$ в условие не входит: автомобиль
+и ноутбук могут иметь разные архитектуры и SDK. Проверка клиента не сопоставляет его
+source fingerprint с серверным catalog. Это позволяет сравнивать две повторные серии
+одной пары разных платформ, сохраняя разделение ответственности узлов.
+
+```plantuml
+@startuml
+rectangle "Запуск A" {
+  component "Client A\nноутбук / Linux" as CA
+  component "Server A\nLinux или Aurora (целевая проверка)" as SA
+  CA --> SA : SV01 commands
+}
+rectangle "Запуск B" {
+  component "Client B\nноутбук / Linux" as CB
+  component "Server B\nLinux или Aurora (целевая проверка)" as SB
+  CB --> SB : SV01 commands
+}
+CA .. CB : Требуется совпадение client claims
+SA .. SB : Требуется совпадение server claims
+note bottom of CA
+Равенство client/server внутри запуска не требуется.
+Диаграмма не подтверждает исполнение на Aurora.
+end note
+@enduml
+```
+
+*Рисунок3.87 — сопоставляются роли между опытами, а не разные устройства внутри опыта.*
+
+| Ситуация | Timing delta | Остальные данные |
+|---|---|---|
+| Проверенные server A/B и client A/B совпадают | При выполнении всех прежних guards | Raw timing и качество доступны |
+| Сервер совпадает, клиентские flags/source различаются | Отсутствует; client_configured_build_differs | Raw timing и допустимые quality deltas остаются |
+| Клиентский passport отсутствует, повреждён либо имеет неизвестную policy | Отсутствует; missing_or_unverified | Legacy report читается |
+| Клиент отличается от сервера, но каждая роль совпадает между A/B | Допускается при остальных guards | Обычное удалённое размещение |
+
+Comparison export помечен `report_claims_comparison_v4`. Поле `build_gate` по-прежнему
+описывает сервер, `client_build_gate` — клиент; GUI подписывает оба явно. Hash/schema
+проверяются общим bounded verifier. Их совпадение не является проверкой подписи,
+бинарника, реализации callback или полного процесса. В частности, passport сформирован
+переведённым `sv-core`: Qt/plugins, per-target compiler overrides и executable hash
+клиента пока не включены. Storage/cache, runtime load, частоты и сетевые условия также
+требуют отдельных измерений. Это ограничение остаётся в TODO, а новый gate не заменяет
+обоснование метода и научную приёмку.
+
+GTest проверяет шесть вариантов missing/null/future/tampered/changed flags/changed client
+source с неизменным сервером. Для valid изменённой клиентской сборки self-comparison
+разрешён, даже если её source отличается от серверного. При неизвестном паспорте два
+одинаково неполных отчёта не получают timing delta. Native harness независимо пересчитывает
+client SHA256 через Python, Qt audit сохраняет оба passports, а live GUI проверяет оба gates.
+Результаты: [[validation/RESEARCH_RUNTIME]].
+
+Финальная сборка успешна;5/5 затронутых CTest за120,39с, включая native transport111,52с
+и QML7,24с. Отдельно27/27 selected common GTest и43/43 Qt controller; все68 PlantUML
+блоков корректны. Это проверка инженерного механизма, не новая confirmatory серия.

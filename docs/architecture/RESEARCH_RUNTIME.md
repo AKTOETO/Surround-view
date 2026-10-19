@@ -1099,3 +1099,36 @@ end
 ```
 
 *Рисунок RR.25 — configured-build claims не являются binary/runtime attestation.*
+
+## Раздельная идентичность серверной и клиентской сборок
+
+Runner создаёт локальный configured-build envelope до подключения. Report сохраняет
+его отдельно от catalog сервера. Comparison v4 не требует равенства разных узлов,
+но требует совпадения каждой роли между A и B. Остальные workload/quality guards
+продолжают действовать: [[engineering/RESEARCH_REPORTS#Клиентская сборка и policy v4]].
+
+```plantuml
+@startuml
+participant "Client A/B runner" as Client
+participant "Local sv-core" as Core
+participant "Remote sv-server" as Server
+participant "Report A/B" as Report
+participant "Comparison v4" as Compare
+Client -> Core: configured_build_passport()
+Core --> Client: Local configured claims + hash
+Client -> Report: client_build_passport (before connect)
+Client -> Server: fusion_catalog
+Server --> Client: Server build_passport
+Client -> Report: catalog; trials; observation policy
+Compare -> Report: Read A and B (offline)
+Compare -> Compare: Verify four envelopes
+Compare -> Compare: server A == server B\nclient A == client B
+note right of Compare
+client == server is not required.
+Matching claims are not process attestation.
+end note
+Compare --> Client: Gates / reasons; raw metrics; permitted deltas
+@enduml
+```
+
+*Рисунок RR.26 — клиентская и серверная роли имеют независимые configured-build claims.*

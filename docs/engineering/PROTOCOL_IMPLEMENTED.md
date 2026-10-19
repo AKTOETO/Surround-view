@@ -435,3 +435,9 @@ Scenario bundle — локальный формат client inputs, не wire ext
 добавлены. Reader обязан проверять policy/schema/hash перед использованием для сравнения;
 legacy catalogs могут не содержать поле. Подробный контракт и ограничения:
 [[engineering/RESEARCH_REPORTS#Паспорт конфигурации сборки и policy v3]].
+
+
+`report.client_build_passport` создаётся runner локально; сервер не передаёт его и не
+подменяет своим catalog. Comparison policy v4 проверяет клиентские claims отдельно от
+серверных. Это metadata файлов отчётов, не новая SV01 команда:
+[[engineering/RESEARCH_REPORTS#Клиентская сборка и policy v4]].

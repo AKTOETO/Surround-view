@@ -1,5 +1,12 @@
 # Подробный план реализации
 
+20.10.2026: runner сохраняет локальный client_build_passport, comparison policy v4
+проверяет отдельно client A/B и server A/B. GUI и audit показывают оба паспорта и gates;
+legacy raw metrics доступны без timing delta. Разные клиент/сервер внутри запуска
+допустимы. Полная process/binary/runtime provenance, Qt/plugins/callback implementation
+и target hardware остаются открытыми.
+[[engineering/RESEARCH_REPORTS#Клиентская сборка и policy v4]].
+
 20.10.2026: configured-build passport реализован в CMake/core/server/platform report.
 Comparison policy v3 проверяет schema/hash/source consistency и требует одинакового
 build hash для timing delta. GUI показывает compiler/options/SDK/OpenCV claims; legacy

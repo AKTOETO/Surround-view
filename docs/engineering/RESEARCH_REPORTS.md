@@ -21,15 +21,15 @@ individual `ExperimentRunner` report schema1: `report.json` отдельного
 | Соответствие вариантов | Полные наблюдённые `fusion` и `surface`, согласованные с заявленным scenario; численные значения сравниваются независимо от JSON integer/double | Только односторонняя строка либо `ambiguous`, без delta |
 | Входы | READY paused replay, четыре использованные камеры; hashes decoded RGB8 и численной модели, calibration ID, timestamp, порядок кадров, view/shape/product | `different_or_unverified` |
 | Полнота | success + restored, полный набор warmup/measured координат, известный quality status | Все вычисляемые deltas отключены |
-| Время | Одинаковые frames/warmup/repeats/seed/reset/capture, подтверждённый observation profile, фактический порядок полных профилей, native trial-order algorithm и percentile definition, одинаковые source fingerprint и проверенный configured-build hash; известные backend/vendor/renderer | Нет timing delta |
+| Время | Одинаковые frames/warmup/repeats/seed/reset/capture, подтверждённый observation profile, фактический порядок полных профилей, native trial-order algorithm и percentile definition, одинаковые source fingerprint и проверенные configured-build hashes сервера и клиента; известные backend/vendor/renderer | Нет timing delta |
 | Качество | Reference schema2 `masked_rgb8_v1`; одинаковые kind/view/shape/inputs, decoded RGB и mask hashes, число выбранных пикселей; все frames оценены | Нет quality delta |
 
 Поддержаны reference kinds `regression` и `independent_ground_truth`; они не смешиваются.
 Dataset ID и путь файла не заменяют content identity. Reference path, capture path и
 остальные вложенные пути **не открываются**, изображения повторно не декодируются.
 Hashes в отчёте являются заявлениями автора: импорт не аттестует исходные данные,
-аппаратную платформу или независимость truth. Разные GPU/backend не запрещают чтение отчётов. Policy v3 требует совпадения
-проверенных configured-build claims для автоматической timing delta. При разных
+аппаратную платформу или независимость truth. Разные GPU/backend не запрещают чтение отчётов. Текущая policy v4 требует совпадения
+проверенных configured-build claims сервера и отдельно клиента для автоматической timing delta. При разных
 сборках PC/Aurora исходные p50/p95 остаются видны, но автоматическая разница выключена.
 Сопоставимость OS/CPU/частот/нагрузки требует отдельного
 [[engineering/PLATFORM_TEST|паспорта стенда]] и квалифицированной методики.
@@ -66,7 +66,7 @@ Failed quality acceptance видна отдельно: успешное испо
 элементами GUI; модель сравнения сама не имеет доступа к серверу.
 
 **Сохранить сравнение…** создаёт новый JSON schema1 с policy
-`report_claims_comparison_v3`, путями A/B, SHA256 прочитанных raw bytes, паспортами,
+`report_claims_comparison_v4`, путями A/B, SHA256 прочитанных raw bytes, паспортами,
 строками/соответствиями, gates/reasons и ограничением интерпретации. Это audit summary,
 не новый ExperimentRunner report; повторно сравнивать его как исходный report нельзя.
 `ReportOutput` использует `O_EXCL`: существующий файл/ссылку не заменяет. При ошибке
@@ -185,3 +185,35 @@ storage/cache/нагрузка. SDK string вводится сборщиком; 
 Hash кешируется при первом запросе, не рассчитывается на каждый кадр; его overhead отдельно
 не измерен. Клиентская сборка/callback этим серверным паспортом также не аттестуются.
 Диаграмма: [[architecture/RESEARCH_RUNTIME#Паспорт конфигурации сборки]], диплом §3.71.
+
+
+## Клиентская сборка и policy v4
+
+Runner добавляет `report.client_build_passport` при создании отчёта, до соединения и
+начала trials. Это локальный `configured_build_v1` envelope, сформированный кодом
+`sv-core`, с теми же правилами схемы, bounds и SHA256, что и серверный паспорт.
+Он есть также при отмене до подключения. Серверное поле остаётся в
+`report.catalog.build_passport`; wire protocol не меняется.
+
+Для сравнения времени нужна пара равенств:
+`server_A.sha256 == server_B.sha256` и `client_A.sha256 == client_B.sha256`.
+Равенство client/server внутри одного отчёта **не требуется**: ноутбук и автомобиль
+могут собираться разными toolchains. Client source fingerprint также не обязан совпадать
+с server catalog. Собственная схема/hash клиентского envelope проверяются полностью.
+
+Экспорт comparison schema1 имеет policy `report_claims_comparison_v4`, новый
+`client_build_gate` с теми же значениями, что и `build_gate`, и verified client passport
+в `left`/`right`. Причины отказа:
+`client_build_passport_missing_or_unverified` или `client_configured_build_differs`.
+Остальные guards действуют одновременно. GUI явно разделяет сборку сервера и клиента.
+Legacy reports без клиентского поля открываются; raw p50/p95 и допустимые quality deltas
+остаются доступны, автоматическая timing delta отсутствует. Два legacy отчёта тоже не
+подтверждают клиентскую сборку простым совпадением отсутствующих полей.
+
+Паспорт описывает configured project и compiler/header facts переведённого `sv-core`,
+а не весь процесс клиента. Он пока не аттестует executable, Qt/plugin versions,
+per-target overrides клиентского кода, callback implementation, файловую систему,
+нагрузку и сетевые условия. Одинаковые claims у CLI и GUI не доказывают одинаковый
+observer workload: прежние progress/capture/evaluator guards сохраняются, полная
+проверка реализации consumer/callback остаётся TODO. Сравнение не становится
+performance-приёмкой из-за совпадения двух build gates.

@@ -1054,3 +1054,26 @@ actual loaded dependencies/driver, clocks/cache/storage и target Aurora qualifi
 Полная Linux-сборка успешна. Финальный `ctest --test-dir build --output-on-failure -j1`:
 **69/69**,183,12с; client_transports111,56с, QML7,25с,
 build_passport_cmake0,80с. Повторные прогоны после этого не требовались.
+
+## Клиентский configured-build passport и comparison v4 (20.10.2026)
+
+Runner добавляет локальный envelope до подключения, отдельно от server catalog. Gate
+сопоставляет client A/B и server A/B, не client/server внутри запуска. Contract:
+[[engineering/RESEARCH_REPORTS#Клиентская сборка и policy v4]], диплом §3.72.
+
+GTest покрывает missing/null/future/hash corruption, valid flags/source changes,
+независимость server gate, сохранность raw timing и quality delta, self-comparison
+remote pair с различными source fingerprints и раннюю отмену runner до connect.
+27/27 selected ResearchScenario/BuildPassport/ResearchComparison и43/43 Qt controller
+прошли после финальной сборки. Native transport проверяет независимый Python SHA256
+client envelope; Qt audit и live QML проверяют client gate. Python — только test oracle.
+
+Scope ограничен configured project/compiler/header facts sv-core. Полная process/client
+executable/Qt/plugin/callback provenance и hardware/runtime acceptance не подтверждены.
+
+Финальные затронутые CTest:5/5 за120,39с — client_transports111,52с,
+research_quality_fixture1,26с, simulator_research_unit0,07с,
+simulator_configuration_qml7,24с, research_scenarios0,30с. Свежий снимок native GUI
+проверен визуально: оба паспорта и gates отображаются. Полный69-test suite предыдущего
+среза здесь не повторялся. Все68 PlantUML blocks прошли local syntax check;
+py_compile и git diff --check успешны.

@@ -1606,3 +1606,11 @@ cmake --build build -j6
 `build.configured_build_passport`. В **Исследование → Сравнение** GUI показывает оба паспорта.
 Старые отчёты читаются, но без verified build timing delta недоступна; raw values остаются.
 [[engineering/RESEARCH_REPORTS#Паспорт конфигурации сборки и policy v3]].
+
+
+Runner также сохраняет локальную сборку в `report.client_build_passport`. Для удалённого
+запуска соберите ноутбучный клиент с собственным SDK ID; копировать серверный hash в
+отчёт нельзя. В сравнении показаны отдельные server/client build gates. После обновления
+клиентской сборки подготовьте новые сравниваемые отчёты: прежние raw timings видны,
+но policy v4 не разрешает timing delta без проверенного совпадения обеих пар сборок.
+[[engineering/RESEARCH_REPORTS#Клиентская сборка и policy v4]].
