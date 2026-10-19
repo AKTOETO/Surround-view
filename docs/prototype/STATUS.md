@@ -1,5 +1,12 @@
 # Состояние прототипа и границы подтверждения
 
+20.10.2026: configured-build passport реализован в CMake/core/server/platform report.
+Comparison policy v3 проверяет schema/hash/source consistency и требует одинакового
+build hash для timing delta. GUI показывает compiler/options/SDK/OpenCV claims; legacy
+raw metrics сохраняются. Полная binary/runtime attestation, client build, target hardware,
+нагрузка и научная приёмка остаются открытыми.
+[[engineering/RESEARCH_REPORTS#Паспорт конфигурации сборки и policy v3]].
+
 20.10.2026: экспорт текущей формы и состава серии без source JSON реализован через
 C++ memory overloads и общий worker. UI фиксирует owned document/base, валидирует
 refs/members до destination и открывает последний набор по typed local URL. Участники

@@ -3572,3 +3572,92 @@ references, quality/restore и top/child identities. Это инженерные
 Финальная Linux-сборка успешна; CTest68/68 за182,69с, client_transports111,79с,
 QML7,28с. Common bundle suites17/17, controller43/43;64 PlantUML вставки корректны.
 Подробности и границы свидетельств: [[validation/RESEARCH_RUNTIME]].
+
+## 3.71. Условия сравнения времени при изменении сборки
+
+Одинаковый source fingerprint не гарантирует одинаковую программу: Debug/Release,
+санитайзеры, другой компилятор либо версия OpenCV могут менять время исполнения.
+Поэтому допуск timing delta дополнен паспортом configured build. Это инженерная
+защита от необоснованного сравнения, а не новый эксперимент качества сшивки.
+Основание — реализованные `cmake/BuildPassport.cmake`, `src/core/build_passport.cpp`
+и `examples/common/research/report_comparison.cpp`; подробный контракт:
+[[engineering/RESEARCH_REPORTS#Паспорт конфигурации сборки и policy v3]].
+
+| Группа | Фиксируемые сведения | Ограничение интерпретации |
+|---|---|---|
+| Source | Revision, version, fingerprint | Не hash бинарника |
+| Toolchain | Compiler ID/version/target, standard, hash основного toolchain file | Включаемые toolchain файлы и compiler executable не хешируются |
+| Configuration | Имя, generator, global/config flags, directory options, root IPO/PIC | Per-target overrides полностью не покрыты |
+| Target | OS/version/processor/sysroot, SDK ID | SDK ID объявлен сборщиком |
+| Dependencies | Configured OpenCV/EGL/GLES, provision; Boost/GLM/OpenSSL headers | Не идентичность загруженных shared libraries |
+| Compiler facts | `__cplusplus`, standard library/ABI, pointer bits | Не runtime platform attestation |
+
+CMake формирует отдельный header для каждой конфигурации. Значения сериализуются как
+данные: кавычки, обратные слеши и переводы строк экранируются; literal generator expressions
+в metadata не выполняются. Raw-string delimiter выбирается без коллизии с содержимым.
+Путь config header имеет приоритет над старым общим header при переключении generator.
+Это проверено реальной компиляцией небольшого fixture Debug/Release через Ninja Multi-Config.
+
+Пусть $D$ — descriptor после строгой проверки схемы, $C(D)$ — компактная сериализация
+с рекурсивно отсортированными ключами объектов и сохранённым порядком массивов. Тогда
+
+$$
+h = \operatorname{SHA256}(\texttt{sv-configured-build-v1} \Vert 0x00 \Vert C(D)).
+$$
+
+Алгоритм использует ограниченную схему с целыми числами/строками/boolean/null, а не
+универсальную канонизацию произвольного JSON. Envelope содержит policy, schema, descriptor
+и hash. Неизвестная версия, лишние поля, неверные типы или hash исключают паспорт из допуска.
+Кроме того, descriptor.source.fingerprint должен совпадать с fingerprint серверного catalog.
+Самостоятельный пересчёт hash проверяет согласованность заявления, не его авторство.
+
+```plantuml
+@startuml
+start
+:Прочитать отчёты A и B;
+:Проверить schema, bounds, canonical hash\nи source consistency каждого build passport;
+if (Оба паспорта проверены\nи build hashes совпадают?) then (да)
+  :Проверить inputs, полноту trials,\nпорядок, observation policy;
+  if (Остальные timing guards выполнены?) then (да)
+    :Разрешить timing delta B-A;
+  else (нет)
+    :Timing delta отсутствует;
+  endif
+else (нет)
+  :Причина missing/unverified\nлибо configured_build_differs;
+  :Timing delta отсутствует;
+endif
+:Показать исходные timings;\nquality deltas по отдельным guards;
+stop
+@enduml
+```
+
+*Рисунок3.85 — build gate policy v3 дополняет условия сопоставимости измерений.*
+
+В частности, PC и Aurora могут иметь разные configured-build hashes: отчёты по-прежнему
+открываются и сохраняют исходные времена, но автоматически вычисленная разница не
+выдаётся как подтверждённый результат. Для научного межплатформенного вывода ещё нужны
+паспорт аппаратуры, обоснование различий сборки и условий нагрузки, достаточная серия
+и анализ разброса. Совпадение hash также не подтверждает эти условия.
+
+Паспорт доступен через прежний `fusion_catalog`, сохраняется runner в report и отдельно
+в отчёте `sv-platform-test`. GUI показывает основные поля; экспорт сравнения содержит
+полный verified descriptor либо null и объяснение отказа. Legacy reports сохраняют raw
+metrics и quality deltas при выполнении независимых guards. Policy экспорта теперь
+`report_claims_comparison_v3`; прежняя schema1 входного report не изменяется.
+
+Проверки включают изменение flags/config/compiler/dependencies/SDK, перестановку ключей,
+повреждение hash, future schema/policy, лишние поля и bounds. Native Unix/TCP harness
+самостоятельно вычисляет SHA256 в Python над catalog реального сервера; Python здесь
+служит независимым тестовым oracle, продуктовый путь остаётся C++. Результаты полного
+прогона и границы подтверждения: [[validation/RESEARCH_RUNTIME]].
+
+
+![Паспорта сборки в сравнении двух отчётов](figures/implementation/research_build_comparison.png)
+
+*Рисунок3.86 — Linux/Qt6 GUI с паспортами реального сервера: Release, GNU16.2.1,
+C++17, OpenCV5.0.0 и SDK unreported. Показанные времена относятся к regression fixture,
+не к подтверждающему исследованию производительности алгоритмов.*
+
+Полный regression suite:69/69 CTest за183,12с, включая native transport111,56с,
+Qt/QML7,25с и CMake passport0,80с. Все66 PlantUML-вставок корректны.

@@ -1588,3 +1588,21 @@ Summary — series-results/batch.json; member reports — `<id>.json`. Код5 �
 запуск повторяет проверку до output/network. Сценарии участников серии пока выбираются
 из файлов; предварительное сохранение самого batch-плана не требуется.
 [[engineering/RESEARCH_BATCH#Экспорт текущей формы и состава серии]].
+
+
+## Идентификация исследовательской сборки
+
+При configure укажите различимую версию своего SDK (это заявление сборщика):
+
+```sh
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DSV_SDK_ID=linux-host-2026-10
+cmake --build build -j6
+```
+
+Для Aurora задавайте фактический SDK ID в SDK-сборке с её toolchain и offline dependencies
+по [[engineering/AURORA]], а не копируйте host configure. Debug/Release получают разные
+паспорта, включая Ninja Multi-Config. После смены flags/dependencies пересоберите сервер.
+Новый `fusion_catalog` и research report содержат `build_passport`; platform report содержит
+`build.configured_build_passport`. В **Исследование → Сравнение** GUI показывает оба паспорта.
+Старые отчёты читаются, но без verified build timing delta недоступна; raw values остаются.
+[[engineering/RESEARCH_REPORTS#Паспорт конфигурации сборки и policy v3]].

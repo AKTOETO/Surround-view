@@ -26,7 +26,7 @@ Handshake объявляет `fusion_runtime_v1`. Это первый реали
 
 | Команда / поле | Контракт |
 |---|---|
-| `fusion_catalog` | Read-only ACK с `fusion_catalog`: version=4, modes, diagnostics, пределы параметров, temporary persistence, backend/GL device и server source revision/fingerprint |
+| `fusion_catalog` | Read-only ACK с `fusion_catalog`: version=4, modes, diagnostics, пределы параметров, temporary persistence, backend/GL device, server source revision/fingerprint и configured `build_passport` |
 | `configure_fusion` | Обязательные `base_config_revision` (decimal string) и `fusion` (object); полностью заменяет fusion-секцию, пропущенные необязательные поля получают defaults |
 | `fusion.mode` | `edge_feather`, `hard_best_angle`, `angular_feather`, `seam_distance_feather`, `graph_cut_seam`, `multi_band`, `graph_cut_multi_band` |
 | `fusion.diagnostic` | `color` (default), `coverage`, `weights` |
@@ -428,3 +428,10 @@ Scenario bundle — локальный формат client inputs, не wire ext
 через sv-client-lib. Сервер не получает reference и не меняет source/config из bundle.
 В native report добавлены input_bundle и scenario_input_kind=verified_bundle_snapshot_v1.
 [[engineering/RESEARCH_BATCH#Переносимый набор сценария]].
+
+
+`fusion_catalog.build_passport` добавляет versioned claims конфигурации серверной сборки.
+`sv-client-lib` передаёт это поле в существующем JSON catalog, новая команда/transport не
+добавлены. Reader обязан проверять policy/schema/hash перед использованием для сравнения;
+legacy catalogs могут не содержать поле. Подробный контракт и ограничения:
+[[engineering/RESEARCH_REPORTS#Паспорт конфигурации сборки и policy v3]].

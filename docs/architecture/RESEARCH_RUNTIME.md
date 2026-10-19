@@ -1067,3 +1067,35 @@ end note
 ```
 
 *Рисунок RR.24 — экспорт фиксирует форму, последующий запуск проверяет созданный bundle заново.*
+
+## Паспорт конфигурации сборки
+
+Source fingerprint не фиксирует compiler/flags/dependencies. Сервер добавляет в
+fusion_catalog versioned configured-build descriptor с SHA256; runner сохраняет raw
+catalog в report. Comparison policy v3 проверяет структуру/hash/source consistency
+и допускает timing delta только при совпадающих configured-build claims. Legacy или
+изменённый паспорт не скрывает исходные метрики/допустимые quality deltas.
+
+```plantuml
+@startuml
+participant CMake
+participant "Generated per-config header" as Header
+participant "sv-server" as Server
+participant "ExperimentRunner" as Runner
+participant "Report comparison v3" as Compare
+CMake -> Header: Source / compiler / flags / target / dependency claims
+Server -> Header: Load compiled descriptor + header versions
+Server -> Server: Canonical sorted-object JSON; SHA256
+Runner -> Server: fusion_catalog
+Server --> Runner: Existing catalog + build_passport
+Runner -> Runner: Preserve catalog in report
+Compare -> Compare: Validate schema, canonical hash, source consistency
+alt Matching build + workload + observation gates
+  Compare -> Compare: Timing deltas
+else Missing, invalid or different build
+  Compare -> Compare: Raw timing/quality remain; no timing delta
+end
+@enduml
+```
+
+*Рисунок RR.25 — configured-build claims не являются binary/runtime attestation.*

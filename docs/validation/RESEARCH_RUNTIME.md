@@ -1022,3 +1022,35 @@ client_transports111,79с, simulator_configuration_qml7,28с. Common bundle suit
 типов. Проверены64 PlantUML blocks architecture/главы3 и git diff --check. Таймауты не
 увеличены. Native screenshot: diploma/figures/implementation/research_unsaved_series.png,
 рисунок3.84. Реальный Aurora/device и independent scientific acceptance не заявлены.
+
+## Configured-build passport и comparison v3 (20.10.2026)
+
+Проверяемая граница: CMake per-config metadata → core canonical hash → real server
+fusion_catalog → native report → common comparison → Qt presentation/audit export.
+Контракт: [[engineering/RESEARCH_REPORTS#Паспорт конфигурации сборки и policy v3]],
+диплом §3.71. `sv-platform-test` также включает envelope в build section.
+
+- BuildPassport GTest проверяют bounds/schema/hash, перестановку object keys,
+  изменение compiler/config/flags/dependency/SDK и stale hash.
+- ResearchComparison проверяет missing/future/tampered/different build claims:
+  timing delta null, исходные timings и допустимые quality deltas сохраняются.
+- CMake unittest проверяет quoted/backslash/newline/tab/semicolon/literal generator
+  expressions, raw delimiter collision, source-relative toolchain hash и превышение bounds.
+  Actual Ninja Multi-Config Debug/Release compile/run выбирает правильный header даже при
+  устаревшем общем header. Toolchain SDK normal variable не перезаписывается cache default.
+- Native Unix/TCP transport harness независимо вычисляет SHA256 через Python hashlib,
+  сравнивает source fingerprint и наличие compiler/OpenCV claims. Qt controller тестирует
+  экспорт audit policy v3; QML показывает реальные паспорта. Снимок: рисунок3.86.
+
+Отдельные проверки до полного прогона:20/20 BuildPassport+ResearchComparison,
+43/43 Qt controller,4/4 CMake unittest; py_compile двух изменённых Python tests,
+git diff --check и syntax check всех66 PlantUML блоков прошли.
+
+Это regression validation configured claims, не сравнение производительности алгоритмов.
+Binary/runtime/client provenance, transitive toolchain hashes, per-target overrides,
+actual loaded dependencies/driver, clocks/cache/storage и target Aurora qualification
+этими тестами не подтверждены. SDK unreported не заменяет паспорт SDK; hash не подпись.
+
+Полная Linux-сборка успешна. Финальный `ctest --test-dir build --output-on-failure -j1`:
+**69/69**,183,12с; client_transports111,56с, QML7,25с,
+build_passport_cmake0,80с. Повторные прогоны после этого не требовались.

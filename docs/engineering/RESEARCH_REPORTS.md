@@ -15,24 +15,24 @@ individual `ExperimentRunner` report schema1: `report.json` отдельного
 прогона и локального сравнения хранятся раздельно. Это операция application service;
 новой команды SV01, lease либо изменения server config нет.
 
-| Условие | Правило первой реализации | При недостатке данных |
+| Условие | Текущее правило | При недостатке данных |
 |---|---|---|
 | Структура | schema1, paused frame/sequence fusion experiment; scenario parser, ≤32 variants, ≤10000 samples; уникальные frame/block/variant | Некорректный документ отклоняется |
 | Соответствие вариантов | Полные наблюдённые `fusion` и `surface`, согласованные с заявленным scenario; численные значения сравниваются независимо от JSON integer/double | Только односторонняя строка либо `ambiguous`, без delta |
 | Входы | READY paused replay, четыре использованные камеры; hashes decoded RGB8 и численной модели, calibration ID, timestamp, порядок кадров, view/shape/product | `different_or_unverified` |
 | Полнота | success + restored, полный набор warmup/measured координат, известный quality status | Все вычисляемые deltas отключены |
-| Время | Одинаковые frames/warmup/repeats/seed/reset/capture, подтверждённый observation profile, фактический порядок полных профилей, native trial-order algorithm и percentile definition, одинаковый source fingerprint; известные backend/vendor/renderer | Нет timing delta |
+| Время | Одинаковые frames/warmup/repeats/seed/reset/capture, подтверждённый observation profile, фактический порядок полных профилей, native trial-order algorithm и percentile definition, одинаковые source fingerprint и проверенный configured-build hash; известные backend/vendor/renderer | Нет timing delta |
 | Качество | Reference schema2 `masked_rgb8_v1`; одинаковые kind/view/shape/inputs, decoded RGB и mask hashes, число выбранных пикселей; все frames оценены | Нет quality delta |
 
 Поддержаны reference kinds `regression` и `independent_ground_truth`; они не смешиваются.
 Dataset ID и путь файла не заменяют content identity. Reference path, capture path и
 остальные вложенные пути **не открываются**, изображения повторно не декодируются.
 Hashes в отчёте являются заявлениями автора: импорт не аттестует исходные данные,
-аппаратную платформу или независимость truth. Разные GPU/backend разрешены для будущего
-сравнения PC/целевой платформы; timing gate требует совпадения source fingerprint и измеряемой работы,
-но не доказывает сопоставимость OS/CPU/частот/нагрузки. Source fingerprint описывает исходники, а не полный бинарный build: compiler/options,
-SDK и зависимые библиотеки этим gate не аттестуются. Для этого нужен отдельный
-[[engineering/PLATFORM_TEST|паспорт стенда]].
+аппаратную платформу или независимость truth. Разные GPU/backend не запрещают чтение отчётов. Policy v3 требует совпадения
+проверенных configured-build claims для автоматической timing delta. При разных
+сборках PC/Aurora исходные p50/p95 остаются видны, но автоматическая разница выключена.
+Сопоставимость OS/CPU/частот/нагрузки требует отдельного
+[[engineering/PLATFORM_TEST|паспорта стенда]] и квалифицированной методики.
 
 ## Интерфейс и значения
 
@@ -66,7 +66,7 @@ Failed quality acceptance видна отдельно: успешное испо
 элементами GUI; модель сравнения сама не имеет доступа к серверу.
 
 **Сохранить сравнение…** создаёт новый JSON schema1 с policy
-`report_claims_comparison_v2`, путями A/B, SHA256 прочитанных raw bytes, паспортами,
+`report_claims_comparison_v3`, путями A/B, SHA256 прочитанных raw bytes, паспортами,
 строками/соответствиями, gates/reasons и ограничением интерпретации. Это audit summary,
 не новый ExperimentRunner report; повторно сравнивать его как исходный report нельзя.
 `ReportOutput` использует `O_EXCL`: существующий файл/ссылку не заменяет. При ошибке
@@ -128,8 +128,8 @@ p50/p95 остаются видны, quality deltas возможны по пре
 Изменение reference mask теперь блокирует и timing delta, если evaluator был включён.
 
 Это **допуск сравнения заявленной работы**, не доказательство одинакового стенда или
-статистической значимости. Не аттестуются callback implementation, client/server binary
-build, compiler/options/SDK/dependencies, storage/cache/CPU/GPU clocks/thermal, trace I/O
+статистической значимости. Configured compiler/options/SDK/dependency claims добавлены policy v3 ниже. Не аттестуются
+callback implementation, client/server binaries, loaded dependencies, storage/cache/CPU/GPU clocks/thermal, trace I/O
 и сторонняя нагрузка. Сам render_wall не включает полный клиентский capture/evaluator
 latency; flags нужны из-за возможного влияния межкадровой работы на последующие samples.
 Полный build/runtime passport и аппаратная приёмка остаются открытыми.
@@ -147,3 +147,41 @@ observation gate. Старый паспорт подписан как непод
 Односессионный server не квалифицирован как multi-client. Проверка acquire snapshot
 не является испытанием конкурентных клиентов; она фиксирует нужную границу снимка
 для дальнейшего расширения server concurrency.
+
+
+## Паспорт конфигурации сборки и policy v3
+
+`fusion_catalog.build_passport` — дополнительное поле существующего ACK. Runner
+сохраняет его в `report.catalog`, а `sv-platform-test` — в
+`report.build.configured_build_passport`. Новая команда либо изменение SV01 не нужны.
+GUI сравнения показывает hash, compiler/version, C++ standard, configuration, processor,
+SDK, C++ flags и настроенный OpenCV. Полный descriptor остаётся в audit JSON.
+
+Envelope имеет ровно `schema_version=1`, `policy=configured_build_v1`, `sha256`,
+`descriptor`. Descriptor содержит source version/revision/fingerprint; compiler ID/version/
+target/C++ standard и SHA256 основного toolchain file; target OS/version/processor/sysroot/
+объявленный SDK; configuration/generator, global+configuration C++ и executable linker flags,
+directory compile/link options, root IPO/PIC declarations; configured OpenCV/EGL/GLES versions,
+способ provision GLM/OpenCV и feature flags. Header facts добавляют фактические `__cplusplus`,
+`__VERSION__`, Boost/GLM/OpenSSL, standard library version/ABI и pointer bits.
+
+SHA256 вычисляется над `sv-configured-build-v1` + NUL + компактным UTF-8 JSON descriptor:
+ключи объектов сортируются рекурсивно, порядок массивов сохраняется. Это локальное правило,
+не RFC8785 и не цифровая подпись. Структура, типы, обязательные/лишние поля, глубина,
+размеры и source consistency проверяются до допуска. Ограничения: descriptor ≤16KiB,
+строка ≤8192 bytes, depth≤8, nodes≤512; CMake ограничивает исходный metadata JSON12KiB.
+
+`build_gate=matching_configured_build_claims` означает совпадающие проверенные hashes.
+Иначе `different_or_unverified_configured_build`, reason
+`build_passport_missing_or_unverified` либо `configured_build_differs` и timing delta `—`.
+Отсутствующий legacy паспорт, неизвестная policy или неверный hash не скрывают исходные
+тайминги и допустимые quality deltas. Совпадение build gate само по себе недостаточно:
+остальные guards входов, полноты, нагрузки наблюдения и trial plan действуют одновременно.
+
+Это паспорт **заявленной конфигурации**, не hash исполняемого файла. Не покрыты
+per-target overrides, binary/object/compiler hashes, transitive toolchain includes,
+патчи зависимостей и загруженные shared libraries, runtime driver/SDK attestation,
+storage/cache/нагрузка. SDK string вводится сборщиком; `unreported` не доказывает его наличие.
+Hash кешируется при первом запросе, не рассчитывается на каждый кадр; его overhead отдельно
+не измерен. Клиентская сборка/callback этим серверным паспортом также не аттестуются.
+Диаграмма: [[architecture/RESEARCH_RUNTIME#Паспорт конфигурации сборки]], диплом §3.71.
