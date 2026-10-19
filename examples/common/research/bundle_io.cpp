@@ -93,8 +93,10 @@ void write_new(const std::filesystem::path &path, std::string_view bytes,
     }
 }
 
-std::string read_member(const std::filesystem::path &root, const std::string &name, size_t limit,
-                        const std::atomic_bool *cancel)
+namespace
+{
+std::string read_submember(const std::filesystem::path &root, int run, const std::string &name,
+                           size_t limit, const std::atomic_bool *cancel)
 {
     if (name != "bundle.json" && !safe_file(name))
     {
@@ -107,10 +109,14 @@ std::string read_member(const std::filesystem::path &root, const std::string &na
     }
     Descriptor directory(
         ::open(directory_path.c_str(), O_RDONLY | O_DIRECTORY | O_CLOEXEC | O_NOFOLLOW));
+    Descriptor run_directory(run >= 0
+                                 ? ::openat(directory.fd, ("run-" + std::to_string(run)).c_str(),
+                                            O_RDONLY | O_DIRECTORY | O_CLOEXEC | O_NOFOLLOW)
+                                 : ::dup(directory.fd));
     const bool asset = name.rfind("assets/", 0) == 0;
-    Descriptor parent(
-        asset ? ::openat(directory.fd, "assets", O_RDONLY | O_DIRECTORY | O_CLOEXEC | O_NOFOLLOW)
-              : ::dup(directory.fd));
+    Descriptor parent(asset ? ::openat(run_directory.fd, "assets",
+                                       O_RDONLY | O_DIRECTORY | O_CLOEXEC | O_NOFOLLOW)
+                            : ::dup(run_directory.fd));
     const auto leaf = asset ? name.substr(7) : name;
     Descriptor file(
         ::openat(parent.fd, leaf.c_str(), O_RDONLY | O_CLOEXEC | O_NOFOLLOW | O_NONBLOCK));
@@ -145,6 +151,24 @@ std::string read_member(const std::filesystem::path &root, const std::string &na
         throw std::invalid_argument("bundle member is empty or exceeds limit");
     }
     return bytes;
+}
+
+} // namespace
+
+std::string read_member(const std::filesystem::path &root, const std::string &name, size_t limit,
+                        const std::atomic_bool *cancel)
+{
+    return read_submember(root, -1, name, limit, cancel);
+}
+
+std::string read_run_member(const std::filesystem::path &root, unsigned run,
+                            const std::string &name, size_t limit, const std::atomic_bool *cancel)
+{
+    if (run > 7)
+    {
+        throw std::invalid_argument("invalid bundle run index");
+    }
+    return read_submember(root, static_cast<int>(run), name, limit, cancel);
 }
 
 TemporaryDirectory::TemporaryDirectory()

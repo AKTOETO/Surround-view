@@ -25,6 +25,8 @@ class ScenarioBundle
 
   private:
 
+    friend class BatchBundle;
+    FileExperiment &experiment();
     struct Impl;
     std::unique_ptr<Impl> impl_;
 };

@@ -17,6 +17,10 @@ void write_new(const std::filesystem::path &, std::string_view, const std::atomi
 std::string read_member(const std::filesystem::path &, const std::string &, size_t,
                         const std::atomic_bool *);
 
+// Same fixed single-scenario layout inside run-0 .. run-7; every directory opened no-follow.
+std::string read_run_member(const std::filesystem::path &, unsigned run, const std::string &,
+                            size_t, const std::atomic_bool *);
+
 struct TemporaryDirectory
 {
     std::filesystem::path path;

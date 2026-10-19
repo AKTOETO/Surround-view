@@ -273,6 +273,11 @@ ScenarioBundle::ScenarioBundle(const std::filesystem::path &root, const std::ato
 
 ScenarioBundle::~ScenarioBundle() = default;
 
+FileExperiment &ScenarioBundle::experiment()
+{
+    return *impl_->experiment;
+}
+
 boost::json::object ScenarioBundle::summary() const
 {
     auto value = receipt(impl_->manifest, impl_->digest);

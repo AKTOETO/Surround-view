@@ -1,4 +1,5 @@
 #include "batch.hpp"
+#include "batch_execution.hpp"
 #include "batch_plan.hpp"
 #include "digest.hpp"
 #include "file_experiment.hpp"
@@ -7,25 +8,30 @@
 
 namespace sv::research
 {
-namespace
+boost::json::object execute_prepared_batch(
+    std::string_view text, const std::vector<FileExperiment *> &experiments,
+    const std::filesystem::path &output_directory, const client::Options &options,
+    const std::atomic_bool *cancel, std::function<void(unsigned, unsigned, unsigned)> progress,
+    bool snapshot, const boost::json::value &bundle_identity)
 {
-boost::json::object execute_batch(std::string_view text, const std::filesystem::path &base,
-                                  const std::filesystem::path &output_directory,
-                                  const client::Options &options, const std::atomic_bool *cancel,
-                                  std::function<void(unsigned, unsigned, unsigned)> progress,
-                                  bool snapshot)
-{
+    if (output_directory.empty() || output_directory.string().find('\0') != std::string::npos)
+    {
+        throw std::invalid_argument("invalid batch output directory");
+    }
     const auto plan = parse_batch_plan(text);
     const auto &runs = plan.at("runs").as_array();
-    std::vector<std::unique_ptr<FileExperiment>> experiments;
+    if (runs.size() != experiments.size())
+    {
+        throw std::invalid_argument("batch member mismatch");
+    }
     boost::json::array members;
     size_t bytes = 0, trials = 0;
-    for (const auto &value : runs)
+    for (size_t index = 0; index < runs.size(); ++index)
     {
-        const auto &row = value.as_object();
+        const auto &row = runs[index].as_object();
         const std::string id(row.at("id").as_string());
         const std::string path(row.at("scenario").as_string());
-        auto experiment = std::make_unique<FileExperiment>(base / path);
+        const auto *experiment = experiments[index];
         bytes += experiment->reference_bytes();
         trials += experiment->trial_count();
         if (!experiment->resets_replay() || bytes > 128 * 1024 * 1024 || trials > 10000)
@@ -38,7 +44,6 @@ boost::json::object execute_batch(std::string_view text, const std::filesystem::
                                               {"scenario_input_sha256", experiment->input_sha256()},
                                               {"report", id + ".json"},
                                               {"status", "not_started"}});
-        experiments.push_back(std::move(experiment));
     }
     // A new directory prevents overwriting any previous member, plan, or report.
     if (!std::filesystem::create_directory(output_directory))
@@ -72,6 +77,10 @@ boost::json::object execute_batch(std::string_view text, const std::filesystem::
         ReportOutput plan_output(inputs / "plan.json");
         plan_output.write(plan);
         summary["plan_snapshot"] = "inputs/plan.json";
+    }
+    if (!bundle_identity.is_null())
+    {
+        summary["input_bundle"] = bundle_identity;
     }
     unsigned criteria_requested = 0, quality_failed = 0;
     for (size_t index = 0; index < experiments.size(); ++index)
@@ -138,6 +147,35 @@ boost::json::object execute_batch(std::string_view text, const std::filesystem::
     summary["runs"] = std::move(members);
     summary_output.write(summary);
     return summary;
+}
+
+namespace
+{
+boost::json::object execute_batch(std::string_view text, const std::filesystem::path &base,
+                                  const std::filesystem::path &output,
+                                  const client::Options &options, const std::atomic_bool *cancel,
+                                  std::function<void(unsigned, unsigned, unsigned)> progress,
+                                  bool snapshot)
+{
+    const auto plan = parse_batch_plan(text);
+    std::vector<std::unique_ptr<FileExperiment>> owned;
+    std::vector<FileExperiment *> experiments;
+    size_t bytes = 0, trials = 0;
+    for (const auto &run : plan.at("runs").as_array())
+    {
+        owned.push_back(std::make_unique<FileExperiment>(
+            base / std::string(run.as_object().at("scenario").as_string())));
+        bytes += owned.back()->reference_bytes();
+        trials += owned.back()->trial_count();
+        if (!owned.back()->resets_replay() || bytes > 128 * 1024 * 1024 || trials > 10000)
+        {
+            throw std::invalid_argument(
+                "batch requires reset_replay and at most 128 MiB references/10000 trials");
+        }
+        experiments.push_back(owned.back().get());
+    }
+    return execute_prepared_batch(text, experiments, output, options, cancel, std::move(progress),
+                                  snapshot);
 }
 } // namespace
 
