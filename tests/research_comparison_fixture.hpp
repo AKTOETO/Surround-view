@@ -75,6 +75,7 @@ inline boost::json::object report()
     observations["telemetry_stable"] = true;
     const auto build = sv::configured_build_passport();
     return {{"schema_version", 1},
+            {"client_build_passport", build},
             {"observation_policy", observations},
             {"experiment", "paused_frame_fusion_screen"},
             {"success", true},

@@ -4,6 +4,7 @@
 #include "quality_metrics.hpp"
 #include "quality_reference.hpp"
 #include "scenario.hpp"
+#include "sv/build_passport.hpp"
 #include "sv/config.hpp"
 #include "trial_plan.hpp"
 #include <algorithm>
@@ -137,6 +138,7 @@ boost::json::object run(const Scenario &scenario, const client::Options &options
     const auto serialized = boost::json::serialize(description);
     boost::json::object report{
         {"schema_version", 1},
+        {"client_build_passport", sv::configured_build_passport()},
         {"observation_policy",
          observation_policy(scenario.capture_frames, bool(quality), bool(progress))},
         {"trial_order_algorithm", trial_order_algorithm},

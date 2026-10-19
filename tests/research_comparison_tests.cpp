@@ -1,6 +1,7 @@
 #include "regular_input.hpp"
 #include "report_comparison.hpp"
 #include "research_comparison_fixture.hpp"
+#include <algorithm>
 #include <chrono>
 #include <fstream>
 #include <gtest/gtest.h>
@@ -391,10 +392,61 @@ TEST(ResearchComparison, MissingTamperedOrDifferentConfiguredBuildBlocksOnlyTimi
             catalog["build_passport"] = sv::make_build_passport(descriptor);
         }
         const auto result = sv::research::compare_reports(a, b);
-        EXPECT_EQ(result.at("policy"), "report_claims_comparison_v3");
+        EXPECT_EQ(result.at("policy"), "report_claims_comparison_v4");
         EXPECT_EQ(result.at("build_gate"), "different_or_unverified_configured_build");
         EXPECT_TRUE(first(result).at("timing_delta_ms").is_null());
         EXPECT_EQ(first(result).at("mae_delta").to_number<double>(), 0);
         EXPECT_FALSE(first(result).at("right").is_null());
+    }
+}
+
+TEST(ResearchComparison, ClientBuildClaimsGateTimingIndependentlyOfServer)
+{
+    const auto a = comparison_fixture::report();
+    for (int kind = 0; kind < 6; ++kind)
+    {
+        SCOPED_TRACE(kind);
+        auto b = a;
+        if (kind == 0)
+        {
+            b.erase("client_build_passport");
+        }
+        else if (kind == 1)
+        {
+            b["client_build_passport"] = nullptr;
+        }
+        else if (kind == 2)
+        {
+            b.at("client_build_passport").as_object()["policy"] = "future";
+        }
+        else if (kind == 3)
+        {
+            b.at("client_build_passport").as_object()["sha256"] = std::string(64, '0');
+        }
+        else
+        {
+            auto descriptor =
+                b.at("client_build_passport").as_object().at("descriptor").as_object();
+            descriptor.at(kind == 4 ? "configuration" : "source")
+                .as_object()[kind == 4 ? "cxx_flags" : "fingerprint"] =
+                kind == 4 ? "-O0" : std::string(64, 'e');
+            b["client_build_passport"] = sv::make_build_passport(descriptor);
+        }
+        const auto result = sv::research::compare_reports(a, b);
+        EXPECT_EQ(result.at("policy"), "report_claims_comparison_v4");
+        EXPECT_EQ(result.at("build_gate"), "matching_configured_build_claims");
+        EXPECT_EQ(result.at("client_build_gate"), "different_or_unverified_configured_build");
+        EXPECT_TRUE(first(result).at("timing_delta_ms").is_null());
+        EXPECT_FALSE(first(result).at("left").as_object().at("render_p50_ms").is_null());
+        EXPECT_FALSE(first(result).at("right").as_object().at("render_p50_ms").is_null());
+        EXPECT_EQ(first(result).at("mae_delta").to_number<double>(), 0);
+        const auto &reasons = result.at("reasons").as_array();
+        EXPECT_NE(std::find(reasons.begin(), reasons.end(),
+                            kind < 4 ? "client_build_passport_missing_or_unverified"
+                                     : "client_configured_build_differs"),
+                  reasons.end());
+        const auto self = sv::research::compare_reports(b, b);
+        // Different client/server source identities are legitimate in remote deployments.
+        EXPECT_EQ(first(self).at("timing_delta_ms").is_null(), kind < 4);
     }
 }

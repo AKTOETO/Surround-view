@@ -89,6 +89,7 @@ TEST(ResearchScenario, CancelBeforeConnectingReturnsFailureWithoutRestore)
     scenario.variants.push_back({});
     std::atomic_bool cancel{true};
     const auto report = sv::research::run(scenario, {}, &cancel);
+    EXPECT_TRUE(report.at("client_build_passport").is_object());
     EXPECT_FALSE(report.at("success").as_bool());
     EXPECT_FALSE(report.at("restore_required").as_bool());
     EXPECT_EQ(report.at("error").as_string(), "cancelled");

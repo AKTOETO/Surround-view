@@ -156,6 +156,12 @@ class ClientTransportTests(unittest.TestCase):
                 self.assertEqual(build['descriptor']['source']['fingerprint'], report['catalog']['source_fingerprint'])
                 self.assertTrue(build['descriptor']['toolchain']['compiler_version'])
                 self.assertTrue(build['descriptor']['dependencies']['opencv_configured_version'])
+                client_build = report['client_build_passport']
+                self.assertEqual(client_build['policy'], 'configured_build_v1')
+                client_canonical = json.dumps(client_build['descriptor'], sort_keys=True, separators=(',', ':'), ensure_ascii=False).encode()
+                self.assertEqual(client_build['sha256'], hashlib.sha256(b'sv-configured-build-v1\0' + client_canonical).hexdigest())
+                # This harness builds both processes together; remote deployments need not match.
+                self.assertEqual(client_build['sha256'], build['sha256'])
                 self.assertEqual(len(report['samples']), 21)
                 # Metadata-only runs also reserve the destination before touching the server.
                 before_report = report_path.read_bytes()

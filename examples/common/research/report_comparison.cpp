@@ -134,6 +134,11 @@ boost::json::object passport(const boost::json::object &report)
             }
         }
     }
+    result["client_build_passport"] = nullptr;
+    if (const auto *claim = report.if_contains("client_build_passport"))
+    {
+        result["client_build_passport"] = sv::verified_build_passport(*claim);
+    }
     result["build_passport"] = nullptr;
     if (const auto *catalog = report.if_contains("catalog"); catalog && catalog->is_object())
     {
@@ -330,7 +335,10 @@ bool timing_policy(const boost::json::object &a, const boost::json::object &b, c
             return false;
         }
     }
-    return pa.at("build_passport").is_object() && pb.at("build_passport").is_object() &&
+    const auto &clientA = pa.at("client_build_passport"), &clientB = pb.at("client_build_passport");
+    return clientA.is_object() && clientB.is_object() &&
+           clientA.as_object().at("sha256") == clientB.as_object().at("sha256") &&
+           pa.at("build_passport").is_object() && pb.at("build_passport").is_object() &&
            pa.at("build_passport").as_object().at("sha256") ==
                pb.at("build_passport").as_object().at("sha256") &&
            pa.at("source_fingerprint").as_string().size() == 64 &&
@@ -391,6 +399,18 @@ boost::json::object compare_reports(const boost::json::object &a, const boost::j
     else if (!builds)
     {
         reasons.push_back("configured_build_differs");
+    }
+    const auto &clientA = policyA.at("client_build_passport"),
+               &clientB = policyB.at("client_build_passport");
+    const bool clientBuilds = clientA.is_object() && clientB.is_object() &&
+                              clientA.as_object().at("sha256") == clientB.as_object().at("sha256");
+    if (!clientA.is_object() || !clientB.is_object())
+    {
+        reasons.push_back("client_build_passport_missing_or_unverified");
+    }
+    else if (!clientBuilds)
+    {
+        reasons.push_back("client_configured_build_differs");
     }
     if (!complete)
     {
@@ -495,9 +515,11 @@ boost::json::object compare_reports(const boost::json::object &a, const boost::j
     }
     return {
         {"schema_version", 1},
-        {"policy", "report_claims_comparison_v3"},
+        {"policy", "report_claims_comparison_v4"},
         {"build_gate",
          builds ? "matching_configured_build_claims" : "different_or_unverified_configured_build"},
+        {"client_build_gate", clientBuilds ? "matching_configured_build_claims"
+                                           : "different_or_unverified_configured_build"},
         {"observation_gate",
          observations ? "matching_observation_claims" : "different_or_unverified_observation"},
         {"inputs", inputs ? "matching_claims" : "different_or_unverified"},
