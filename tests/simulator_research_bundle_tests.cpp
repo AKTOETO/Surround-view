@@ -99,3 +99,69 @@ TEST(ResearchGuiUnit, BundleWorkerCanBeCancelledAndDestroyedWithoutEndpoint)
     }
     QCoreApplication::processEvents();
 }
+
+TEST(ResearchGuiUnit, BatchBundleOfflinePreflightWrongTypeAndLateTamperLeaveNoRunOutput)
+{
+    QTemporaryDir temporary;
+    ASSERT_TRUE(temporary.isValid());
+    ResearchController controller;
+    const auto scenario = gui_bundle::scenario(temporary.path());
+    const auto input = QUrl::fromLocalFile(gui_bundle::plan(temporary.path(), scenario));
+    const auto parent = QUrl::fromLocalFile(temporary.path());
+    const auto folder = QUrl::fromLocalFile(temporary.path() + "/batch # %");
+    ASSERT_TRUE(controller.exportBundle(input, parent, "batch # %", true));
+    EXPECT_FALSE(controller.verifyBundle(folder, true)); // same shared busy gate
+    ASSERT_TRUE(gui_bundle::wait(controller));
+    ASSERT_EQ(controller.exitCode(), 0) << controller.status().toStdString();
+    EXPECT_EQ(controller.bundleInfo().value("policy").toString(), "batch_bundle_v1");
+    EXPECT_EQ(controller.bundleInfo().value("runs").toList().size(), 2);
+    EXPECT_EQ(controller.bundleInfo().value("trials").toInt(), 2);
+    EXPECT_TRUE(controller.reportPath().isEmpty());
+    EXPECT_TRUE(controller.batchRows().isEmpty());
+    ASSERT_TRUE(controller.verifyBundle(folder, false)); // wrong explicit type must fail
+    ASSERT_TRUE(gui_bundle::wait(controller));
+    EXPECT_EQ(controller.exitCode(), 3);
+    EXPECT_TRUE(controller.bundleInfo().isEmpty());
+    ASSERT_TRUE(controller.verifyBundle(folder, true));
+    ASSERT_TRUE(gui_bundle::wait(controller));
+    EXPECT_EQ(controller.exitCode(), 0);
+    const auto output = temporary.path() + "/result";
+    EXPECT_FALSE(controller.startBundle(folder, output, true)); // needs endpoint
+    std::ofstream((temporary.path() + "/batch # %/run-1/scenario.json").toStdString(),
+                  std::ios::app)
+        << ' ';
+    sv::client::Options connection;
+    connection.endpoint.directory = (temporary.path() + "/no-server").toStdString();
+    controller.setConnection(connection);
+    ASSERT_TRUE(controller.startBundle(folder, output, true));
+    ASSERT_TRUE(gui_bundle::wait(controller));
+    EXPECT_EQ(controller.exitCode(), 3);
+    EXPECT_TRUE(controller.bundleInfo().isEmpty());
+    EXPECT_TRUE(controller.batchRows().isEmpty());
+    EXPECT_TRUE(controller.reportPath().isEmpty());
+    EXPECT_FALSE(std::filesystem::exists(output.toStdString()));
+}
+
+TEST(ResearchGuiUnit, BatchBundleExportReusesUrlGuardsAndWorkerTeardown)
+{
+    QTemporaryDir temporary;
+    ASSERT_TRUE(temporary.isValid());
+    const auto scenario = gui_bundle::scenario(temporary.path());
+    const auto input = QUrl::fromLocalFile(gui_bundle::plan(temporary.path(), scenario));
+    const auto parent = QUrl::fromLocalFile(temporary.path());
+    {
+        ResearchController controller;
+        EXPECT_FALSE(controller.verifyBundle(QUrl("https://example.org/bundle"), true));
+        EXPECT_FALSE(controller.exportBundle(input, parent, "../escape", true));
+        ASSERT_TRUE(controller.exportBundle(input, parent, "cancelled-series", true));
+        controller.cancel();
+        ASSERT_TRUE(gui_bundle::wait(controller));
+        EXPECT_TRUE(controller.exitCode() == 0 || controller.exitCode() == 3);
+        EXPECT_TRUE(controller.reportPath().isEmpty());
+    }
+    {
+        ResearchController controller;
+        ASSERT_TRUE(controller.exportBundle(input, parent, "destroyed-series", true));
+    }
+    QCoreApplication::processEvents();
+}

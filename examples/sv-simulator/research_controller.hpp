@@ -57,9 +57,11 @@ class ResearchController : public QObject
     Q_INVOKABLE bool startDraftWithReference(const QVariantMap &values, const QString &newDirectory,
                                              const QUrl &reference);
     Q_INVOKABLE bool startScenario(const QUrl &file, const QString &newDirectory);
-    Q_INVOKABLE bool startBundle(const QUrl &directory, const QString &newDirectory);
-    Q_INVOKABLE bool verifyBundle(const QUrl &directory);
-    Q_INVOKABLE bool exportBundle(const QUrl &scenario, const QUrl &parent, const QString &name);
+    Q_INVOKABLE bool startBundle(const QUrl &directory, const QString &newDirectory,
+                                 bool batch = false);
+    Q_INVOKABLE bool verifyBundle(const QUrl &directory, bool batch = false);
+    Q_INVOKABLE bool exportBundle(const QUrl &scenario, const QUrl &parent, const QString &name,
+                                  bool batch = false);
     Q_INVOKABLE bool startBatch(const QUrl &file, const QString &newDirectory);
     Q_INVOKABLE bool startBatchDraft(const QVariantList &members, const QString &newDirectory);
     Q_INVOKABLE QVariantMap importBatch(const QUrl &file);

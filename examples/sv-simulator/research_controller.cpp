@@ -1,5 +1,6 @@
 #include "research_controller.hpp"
 #include "batch.hpp"
+#include "batch_bundle.hpp"
 #include "batch_plan.hpp"
 #include "file_experiment.hpp"
 #include "report_output.hpp"
@@ -161,7 +162,7 @@ QVariantMap ResearchController::bundleInfo() const
     return impl_->bundle_info;
 }
 
-bool ResearchController::startBundle(const QUrl &directory, const QString &output)
+bool ResearchController::startBundle(const QUrl &directory, const QString &output, bool batch)
 {
     if (impl_->busy)
     {
@@ -169,7 +170,7 @@ bool ResearchController::startBundle(const QUrl &directory, const QString &outpu
     }
     try
     {
-        return launch({}, researchLocalPath(directory), output, false, BundleAction::Run);
+        return launch({}, researchLocalPath(directory), output, batch, BundleAction::Run);
     }
     catch (const std::exception &error)
     {
@@ -177,7 +178,7 @@ bool ResearchController::startBundle(const QUrl &directory, const QString &outpu
     }
 }
 
-bool ResearchController::verifyBundle(const QUrl &directory)
+bool ResearchController::verifyBundle(const QUrl &directory, bool batch)
 {
     if (impl_->busy)
     {
@@ -185,7 +186,7 @@ bool ResearchController::verifyBundle(const QUrl &directory)
     }
     try
     {
-        return launch({}, researchLocalPath(directory), {}, false, BundleAction::Verify);
+        return launch({}, researchLocalPath(directory), {}, batch, BundleAction::Verify);
     }
     catch (const std::exception &error)
     {
@@ -193,7 +194,8 @@ bool ResearchController::verifyBundle(const QUrl &directory)
     }
 }
 
-bool ResearchController::exportBundle(const QUrl &scenario, const QUrl &parent, const QString &name)
+bool ResearchController::exportBundle(const QUrl &scenario, const QUrl &parent, const QString &name,
+                                      bool batch)
 {
     if (impl_->busy)
     {
@@ -207,7 +209,7 @@ bool ResearchController::exportBundle(const QUrl &scenario, const QUrl &parent, 
             throw std::invalid_argument("Укажите имя новой папки без разделителей пути");
         }
         const auto destination = QDir(researchLocalPath(parent)).filePath(name);
-        return launch({}, researchLocalPath(scenario), destination, false, BundleAction::Export);
+        return launch({}, researchLocalPath(scenario), destination, batch, BundleAction::Export);
     }
     catch (const std::exception &error)
     {
@@ -412,11 +414,18 @@ bool ResearchController::launch(std::optional<boost::json::object> document,
                     {
                         const auto receipt =
                             bundle == BundleAction::Export
-                                ? sv::research::export_scenario_bundle(
-                                      scenarioFile.toStdString(), output, &impl_->progress.cancel)
-                                : sv::research::ScenarioBundle(scenarioFile.toStdString(),
-                                                               &impl_->progress.cancel)
-                                      .summary();
+                                ? (batch ? sv::research::export_batch_bundle(
+                                               scenarioFile.toStdString(), output,
+                                               &impl_->progress.cancel)
+                                         : sv::research::export_scenario_bundle(
+                                               scenarioFile.toStdString(), output,
+                                               &impl_->progress.cancel))
+                                : (batch ? sv::research::BatchBundle(scenarioFile.toStdString(),
+                                                                     &impl_->progress.cancel)
+                                               .summary()
+                                         : sv::research::ScenarioBundle(scenarioFile.toStdString(),
+                                                                        &impl_->progress.cancel)
+                                               .summary());
                         bundleInfo = QJsonDocument::fromJson(
                                          QByteArray::fromStdString(boost::json::serialize(receipt)))
                                          .toVariant()
@@ -440,13 +449,28 @@ bool ResearchController::launch(std::optional<boost::json::object> document,
                             impl_->progress.completed = done;
                             impl_->progress.member = member + 1;
                         };
+                        std::unique_ptr<sv::research::BatchBundle> verifiedBatch;
+                        if (bundle == BundleAction::Run)
+                        {
+                            verifiedBatch = std::make_unique<sv::research::BatchBundle>(
+                                scenarioFile.toStdString(), &impl_->progress.cancel);
+                            bundleInfo = QJsonDocument::fromJson(
+                                             QByteArray::fromStdString(
+                                                 boost::json::serialize(verifiedBatch->summary())))
+                                             .toVariant()
+                                             .toMap();
+                            bundleInfo["directory"] = scenarioFile;
+                        }
                         const auto summary =
-                            document ? sv::research::run_batch(*document, output.parent_path(),
-                                                               output, connection,
-                                                               &impl_->progress.cancel, progress)
-                                     : sv::research::run_batch(scenarioFile.toStdString(), output,
-                                                               connection, &impl_->progress.cancel,
-                                                               progress);
+                            verifiedBatch
+                                ? verifiedBatch->execute(output, connection,
+                                                         &impl_->progress.cancel, progress)
+                            : document ? sv::research::run_batch(*document, output.parent_path(),
+                                                                 output, connection,
+                                                                 &impl_->progress.cancel, progress)
+                                       : sv::research::run_batch(scenarioFile.toStdString(), output,
+                                                                 connection,
+                                                                 &impl_->progress.cancel, progress);
                         path = QString::fromStdString((output / "batch.json").string());
                         batchRows = researchBatchRows(summary);
                         code = sv::research::research_exit_code(summary);

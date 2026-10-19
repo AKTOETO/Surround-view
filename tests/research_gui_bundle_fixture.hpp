@@ -34,4 +34,17 @@ inline QString scenario(const QString &root)
     std::ofstream(file.toStdString()) << boost::json::serialize(document);
     return file;
 }
+
+inline QString plan(const QString &root, const QString &source)
+{
+    const auto file = root + "/plan # %.json";
+    boost::json::array runs;
+    for (const auto *id : {"first", "second"})
+    {
+        runs.push_back(boost::json::object{{"id", id}, {"scenario", source.toStdString()}});
+    }
+    std::ofstream(file.toStdString())
+        << boost::json::serialize(boost::json::object{{"schema_version", 1}, {"runs", runs}});
+    return file;
+}
 } // namespace gui_bundle
