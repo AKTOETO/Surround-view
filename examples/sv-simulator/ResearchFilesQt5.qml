@@ -11,6 +11,11 @@ Item {
 
     signal chosen(url file, bool reference)
     signal saveChosen(url file)
+    signal folderChosen(url folder)
+
+    function chooseFolder() {
+        folderDialog.open();
+    }
 
     function save() {
         saveDialog.open();
@@ -40,6 +45,16 @@ Item {
         defaultSuffix: "json"
         nameFilters: ["Batch plan (*.json)"]
         onAccepted: dialogs.saveChosen(fileUrl)
+    }
+
+    FileDialog {
+        id: folderDialog
+
+        objectName: "researchFolderDialog"
+        title: "Выбрать папку"
+        selectFolder: true
+        selectExisting: true
+        onAccepted: dialogs.folderChosen(fileUrl)
     }
 
 }

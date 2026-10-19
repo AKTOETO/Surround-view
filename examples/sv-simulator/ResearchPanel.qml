@@ -170,6 +170,12 @@ Pane {
             visible: tabs.currentIndex === 2
         }
 
+        Button {
+            text: "Отменить текущую операцию"
+            visible: tabs.currentIndex === 0 && panel.controller.busy
+            onClicked: panel.controller.cancel()
+        }
+
         Column {
             width: parent.width
             spacing: 12
@@ -189,7 +195,7 @@ Pane {
 
                         objectName: "researchPlanMode"
                         width: parent.width
-                        model: ["Настроить через форму", "Запустить сохранённый сценарий", "Запустить batch-план", "Составить серию"]
+                        model: ["Настроить через форму", "Запустить сохранённый сценарий", "Запустить batch-план", "Составить серию", "Переносимый набор"]
                     }
 
                     RowLayout {
@@ -226,6 +232,14 @@ Pane {
 
                 }
 
+            }
+
+            ResearchBundleEditor {
+                id: bundleEditor
+                objectName: "researchBundleEditor"
+                width: parent.width
+                controller: panel.controller
+                visible: planMode.currentIndex === 4
             }
 
             ResearchBatchEditor {
@@ -533,9 +547,9 @@ Pane {
             Button {
                 objectName: "researchStart"
                 text: "Начать исследование"
-                enabled: panel.controller.available && (planMode.currentIndex === 3 ? batchEditor.members.length > 0 : planMode.currentIndex === 2 ? panel.batchSource.toString().length > 0 : planMode.currentIndex === 1 ? panel.scenarioSource.toString().length > 0 : panel.draftIssue.length === 0 && panel.variantCount > 0 && panel.variantCount * framesCount.value * (warmupCount.value + repeatCount.value) <= 10000)
+                enabled: panel.controller.available && (planMode.currentIndex === 4 ? bundleEditor.directory.toString().length > 0 : planMode.currentIndex === 3 ? batchEditor.members.length > 0 : planMode.currentIndex === 2 ? panel.batchSource.toString().length > 0 : planMode.currentIndex === 1 ? panel.scenarioSource.toString().length > 0 : panel.draftIssue.length === 0 && panel.variantCount > 0 && panel.variantCount * framesCount.value * (warmupCount.value + repeatCount.value) <= 10000)
                 onClicked: {
-                    if (planMode.currentIndex === 3 ? panel.controller.startBatchDraft(batchEditor.members, outputDirectory.text) : planMode.currentIndex === 2 ? panel.controller.startBatch(panel.batchSource, outputDirectory.text) : planMode.currentIndex === 1 ? panel.controller.startScenario(panel.scenarioSource, outputDirectory.text) : panel.controller.startCatalogDraft(panel.draft(), outputDirectory.text, panel.referenceSource, panel.fusionCatalog, panel.surfaceCatalog))
+                    if (planMode.currentIndex === 4 ? panel.controller.startBundle(bundleEditor.directory, outputDirectory.text) : planMode.currentIndex === 3 ? panel.controller.startBatchDraft(batchEditor.members, outputDirectory.text) : planMode.currentIndex === 2 ? panel.controller.startBatch(panel.batchSource, outputDirectory.text) : planMode.currentIndex === 1 ? panel.controller.startScenario(panel.scenarioSource, outputDirectory.text) : panel.controller.startCatalogDraft(panel.draft(), outputDirectory.text, panel.referenceSource, panel.fusionCatalog, panel.surfaceCatalog))
                         tabs.currentIndex = 1;
 
                 }

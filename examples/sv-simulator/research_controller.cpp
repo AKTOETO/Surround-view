@@ -6,10 +6,12 @@
 #include "research_batch_draft.hpp"
 #include "research_draft.hpp"
 #include "research_results.hpp"
+#include "scenario_bundle.hpp"
 #include "trial_plan.hpp"
 #include <QDateTime>
 #include <QDir>
 #include <QFileInfo>
+#include <QJsonDocument>
 #include <QTimer>
 #include <atomic>
 #include <thread>
@@ -30,6 +32,7 @@ struct ResearchController::Impl
     QString status = "Исследования ещё не запускались", report;
     QString quality_status = "not_available", reference_info = "Эталон не задан";
     QVariantList rows, batch_rows;
+    QVariantMap bundle_info;
     int exit_code = -1;
     unsigned output_counter = 0;
 };
@@ -153,6 +156,65 @@ QString ResearchController::referenceInfo() const
     return impl_->reference_info;
 }
 
+QVariantMap ResearchController::bundleInfo() const
+{
+    return impl_->bundle_info;
+}
+
+bool ResearchController::startBundle(const QUrl &directory, const QString &output)
+{
+    if (impl_->busy)
+    {
+        return false;
+    }
+    try
+    {
+        return launch({}, researchLocalPath(directory), output, false, BundleAction::Run);
+    }
+    catch (const std::exception &error)
+    {
+        return reject(QString::fromUtf8(error.what()));
+    }
+}
+
+bool ResearchController::verifyBundle(const QUrl &directory)
+{
+    if (impl_->busy)
+    {
+        return false;
+    }
+    try
+    {
+        return launch({}, researchLocalPath(directory), {}, false, BundleAction::Verify);
+    }
+    catch (const std::exception &error)
+    {
+        return reject(QString::fromUtf8(error.what()));
+    }
+}
+
+bool ResearchController::exportBundle(const QUrl &scenario, const QUrl &parent, const QString &name)
+{
+    if (impl_->busy)
+    {
+        return false;
+    }
+    try
+    {
+        if (name.trimmed().isEmpty() || name.trimmed() != name || name == "." || name == ".." ||
+            name.contains('/') || name.contains('\\') || name.contains(QChar(0)))
+        {
+            throw std::invalid_argument("Укажите имя новой папки без разделителей пути");
+        }
+        const auto destination = QDir(researchLocalPath(parent)).filePath(name);
+        return launch({}, researchLocalPath(scenario), destination, false, BundleAction::Export);
+    }
+    catch (const std::exception &error)
+    {
+        return reject(QString::fromUtf8(error.what()));
+    }
+}
+
 bool ResearchController::reject(const QString &message)
 {
     if (!impl_->busy)
@@ -160,6 +222,7 @@ bool ResearchController::reject(const QString &message)
         impl_->status = message;
         impl_->quality_status = "not_available";
         impl_->reference_info = "Подготовка не выполнена";
+        impl_->bundle_info.clear();
         impl_->rows.clear();
         impl_->batch_rows.clear();
         impl_->report.clear();
@@ -293,7 +356,7 @@ QVariantMap ResearchController::saveBatch(const QVariantList &members, const QUr
 
 bool ResearchController::launch(std::optional<boost::json::object> document,
                                 const QString &scenarioFile, const QString &newDirectory,
-                                bool batch)
+                                bool batch, BundleAction bundle)
 {
     if (impl_->busy)
     {
@@ -301,7 +364,8 @@ bool ResearchController::launch(std::optional<boost::json::object> document,
     }
     try
     {
-        if (!impl_->connection)
+        const bool offline = bundle == BundleAction::Verify || bundle == BundleAction::Export;
+        if (!offline && !impl_->connection)
         {
             throw std::runtime_error("Сначала подключитесь к серверу");
         }
@@ -309,18 +373,22 @@ bool ResearchController::launch(std::optional<boost::json::object> document,
             document && !batch
                 ? sv::research::make_trial_plan(sv::research::parse_scenario(*document)).size()
                 : 0;
-        if (newDirectory.trimmed().isEmpty() || newDirectory.contains(QChar(0)))
+        if (bundle != BundleAction::Verify &&
+            (newDirectory.trimmed().isEmpty() || newDirectory.contains(QChar(0))))
         {
             throw std::invalid_argument("Укажите новый каталог отчёта");
         }
         const auto directory = QFileInfo(newDirectory.trimmed()).absoluteFilePath().toStdString();
-        const auto connection = *impl_->connection;
+        const auto connection = impl_->connection.value_or(sv::client::Options{});
         impl_->progress.cancel = false;
         impl_->progress.member = 0;
         impl_->batch = batch;
         impl_->progress.completed = 0;
         impl_->progress.total = static_cast<unsigned>(trials);
-        impl_->status = "Подготовка сценария и нового каталога…";
+        impl_->status = bundle == BundleAction::Verify   ? "Проверка и фиксация входов набора…"
+                        : bundle == BundleAction::Export ? "Экспорт переносимого набора…"
+                                                         : "Подготовка сценария и нового каталога…";
+        impl_->bundle_info.clear();
         impl_->rows.clear();
         impl_->batch_rows.clear();
         impl_->report.clear();
@@ -329,16 +397,42 @@ bool ResearchController::launch(std::optional<boost::json::object> document,
         impl_->reference_info = "Подготовка входов…";
         impl_->busy = true;
         impl_->worker = std::thread(
-            [this, document = std::move(document), scenarioFile, directory, connection, batch]
+            [this, document = std::move(document), scenarioFile, directory, connection, batch,
+             bundle]
             {
                 QString status, path, qualityStatus = "not_available",
                                       referenceInfo = "Не загружен";
                 QVariantList rows, batchRows;
+                QVariantMap bundleInfo;
                 int code = 3;
                 try
                 {
                     const std::filesystem::path output(directory);
-                    if (batch)
+                    if (bundle == BundleAction::Verify || bundle == BundleAction::Export)
+                    {
+                        const auto receipt =
+                            bundle == BundleAction::Export
+                                ? sv::research::export_scenario_bundle(
+                                      scenarioFile.toStdString(), output, &impl_->progress.cancel)
+                                : sv::research::ScenarioBundle(scenarioFile.toStdString(),
+                                                               &impl_->progress.cancel)
+                                      .summary();
+                        bundleInfo = QJsonDocument::fromJson(
+                                         QByteArray::fromStdString(boost::json::serialize(receipt)))
+                                         .toVariant()
+                                         .toMap();
+                        bundleInfo["directory"] = bundle == BundleAction::Export
+                                                      ? QString::fromStdString(output.string())
+                                                      : scenarioFile;
+                        code = 0;
+                        referenceInfo = "Проверена целостность входов, качество не оценивалось";
+                        status = bundle == BundleAction::Export
+                                     ? "Набор экспортирован. Запись камер и конфигурация сервера "
+                                       "не включены."
+                                     : "Набор проверен без подключения. При запуске проверка "
+                                       "повторится.";
+                    }
+                    else if (batch)
                     {
                         auto progress = [this](unsigned member, unsigned done, unsigned total)
                         {
@@ -373,7 +467,21 @@ bool ResearchController::launch(std::optional<boost::json::object> document,
                     {
                         // Freeze all scenario/reference bytes before output creation or networking.
                         std::unique_ptr<sv::research::FileExperiment> experiment;
-                        if (document)
+                        std::unique_ptr<sv::research::ScenarioBundle> verifiedBundle;
+                        if (bundle == BundleAction::Run)
+                        {
+                            verifiedBundle = std::make_unique<sv::research::ScenarioBundle>(
+                                scenarioFile.toStdString(), &impl_->progress.cancel);
+                            const auto receipt = verifiedBundle->summary();
+                            bundleInfo =
+                                QJsonDocument::fromJson(
+                                    QByteArray::fromStdString(boost::json::serialize(receipt)))
+                                    .toVariant()
+                                    .toMap();
+                            bundleInfo["directory"] = scenarioFile;
+                            impl_->progress.total = receipt.at("trials").to_number<unsigned>();
+                        }
+                        else if (document)
                         {
                             const auto text = boost::json::serialize(*document) + '\n';
                             experiment = std::make_unique<sv::research::FileExperiment>(
@@ -384,7 +492,15 @@ bool ResearchController::launch(std::optional<boost::json::object> document,
                             experiment = std::make_unique<sv::research::FileExperiment>(
                                 scenarioFile.toStdString());
                         }
-                        impl_->progress.total = static_cast<unsigned>(experiment->trial_count());
+                        if (experiment)
+                        {
+                            impl_->progress.total =
+                                static_cast<unsigned>(experiment->trial_count());
+                        }
+                        if (impl_->progress.cancel)
+                        {
+                            throw std::runtime_error("cancelled");
+                        }
                         if (!std::filesystem::create_directory(output))
                         {
                             throw std::runtime_error(
@@ -395,14 +511,21 @@ bool ResearchController::launch(std::optional<boost::json::object> document,
                             sv::research::ReportOutput snapshot(output / "scenario.json");
                             snapshot.write(*document);
                         }
-                        experiment->reserve(output / "report.json");
+                        const auto progress = [this](unsigned done, unsigned total)
+                        {
+                            impl_->progress.total = total;
+                            impl_->progress.completed = done;
+                        };
+                        if (experiment)
+                        {
+                            experiment->reserve(output / "report.json");
+                        }
                         const auto report =
-                            experiment->execute(connection, &impl_->progress.cancel,
-                                                [this](unsigned done, unsigned total)
-                                                {
-                                                    impl_->progress.total = total;
-                                                    impl_->progress.completed = done;
-                                                });
+                            verifiedBundle
+                                ? verifiedBundle->execute(output / "report.json", connection,
+                                                          &impl_->progress.cancel, progress)
+                                : experiment->execute(connection, &impl_->progress.cancel,
+                                                      progress);
                         path = QString::fromStdString((output / "report.json").string());
                         rows = researchResultRows(report);
                         code = sv::research::research_exit_code(report);
@@ -466,7 +589,8 @@ bool ResearchController::launch(std::optional<boost::json::object> document,
                 }
                 QMetaObject::invokeMethod(
                     this,
-                    [this, status, path, rows, batchRows, code, qualityStatus, referenceInfo]
+                    [this, status, path, rows, batchRows, code, qualityStatus, referenceInfo,
+                     bundleInfo]
                     {
                         impl_->worker.join();
                         impl_->timer.stop();
@@ -478,6 +602,7 @@ bool ResearchController::launch(std::optional<boost::json::object> document,
                         impl_->exit_code = code;
                         impl_->quality_status = qualityStatus;
                         impl_->reference_info = referenceInfo;
+                        impl_->bundle_info = bundleInfo;
                         emit changed();
                         emit finished();
                     },

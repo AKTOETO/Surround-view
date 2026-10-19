@@ -328,7 +328,7 @@ class ClientTransportTests(unittest.TestCase):
                             dict(host='127.0.0.1', control_port=ctl, data_port=data))
                         env['SV_RESEARCH_QUALITY_SCREENSHOT'] = '/tmp/sv-reference-result.png'
                         result = subprocess.run([str(qml_test),
-                            '--gtest_filter=SimulatorResearchQml.ReferenceWorkflowRendersMeasuredResults'],
+                            '--gtest_filter=SimulatorResearchQml.ReferenceWorkflowRendersMeasuredResults:SimulatorResearchBundleQml.VerifiedBundleRunsOnLiveServerThroughTypedControls'],
                             env=env, text=True, capture_output=True, timeout=25)
                         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 

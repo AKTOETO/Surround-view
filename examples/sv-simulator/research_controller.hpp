@@ -22,6 +22,7 @@ class ResearchController : public QObject
     Q_PROPERTY(int exitCode READ exitCode NOTIFY changed)
     Q_PROPERTY(QString qualityStatus READ qualityStatus NOTIFY changed)
     Q_PROPERTY(QString referenceInfo READ referenceInfo NOTIFY changed)
+    Q_PROPERTY(QVariantMap bundleInfo READ bundleInfo NOTIFY changed)
 
   public:
 
@@ -40,6 +41,7 @@ class ResearchController : public QObject
     int exitCode() const;
     QString qualityStatus() const;
     QString referenceInfo() const;
+    QVariantMap bundleInfo() const;
 
     Q_INVOKABLE QString suggestOutput();
     Q_INVOKABLE QVariantMap draftSummary(const QVariantMap &values,
@@ -55,6 +57,9 @@ class ResearchController : public QObject
     Q_INVOKABLE bool startDraftWithReference(const QVariantMap &values, const QString &newDirectory,
                                              const QUrl &reference);
     Q_INVOKABLE bool startScenario(const QUrl &file, const QString &newDirectory);
+    Q_INVOKABLE bool startBundle(const QUrl &directory, const QString &newDirectory);
+    Q_INVOKABLE bool verifyBundle(const QUrl &directory);
+    Q_INVOKABLE bool exportBundle(const QUrl &scenario, const QUrl &parent, const QString &name);
     Q_INVOKABLE bool startBatch(const QUrl &file, const QString &newDirectory);
     Q_INVOKABLE bool startBatchDraft(const QVariantList &members, const QString &newDirectory);
     Q_INVOKABLE QVariantMap importBatch(const QUrl &file);
@@ -67,9 +72,17 @@ class ResearchController : public QObject
 
   private:
 
+    enum class BundleAction
+    {
+        None,
+        Verify,
+        Export,
+        Run
+    };
     struct Impl;
     std::unique_ptr<Impl> impl_;
     bool launch(std::optional<boost::json::object>, const QString &scenarioFile,
-                const QString &directory, bool batch = false);
+                const QString &directory, bool batch = false,
+                BundleAction bundle = BundleAction::None);
     bool reject(const QString &message);
 };
