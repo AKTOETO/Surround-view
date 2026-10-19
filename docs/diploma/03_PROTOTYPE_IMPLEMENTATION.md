@@ -3740,3 +3740,118 @@ client SHA256 через Python, Qt audit сохраняет оба passports, �
 Финальная сборка успешна;5/5 затронутых CTest за120,39с, включая native transport111,52с
 и QML7,24с. Отдельно27/27 selected common GTest и43/43 Qt controller; все68 PlantUML
 блоков корректны. Это проверка инженерного механизма, не новая confirmatory серия.
+
+## 3.73. Серии исследований без промежуточных файлов сценариев
+
+Для сравнения нескольких конфигураций оператору ранее приходилось сохранять каждый
+сценарий отдельно, а затем собирать план из путей. Экспорт несохранённого состава серии
+убирал только файл самого плана: его участники всё ещё ссылались на scenario files.
+Это затрудняло подготовку последовательных вариантов непосредственно из GUI и оставляло
+риск незаметного изменения исходного сценария между подготовкой и запуском.
+
+Введён batch plan schema2. Поле `runs[].scenario` допускает строковый путь либо полный
+scenario schema1 object. Наличие inline participants не меняет алгоритмы сервера или wire
+protocol: клиентский application service выбирает способ подготовки `FileExperiment`,
+затем использует существующие trial plan, lease, quality evaluator и restore. Старые
+schema1 plans принимают только пути, а новая версия не распознаётся старыми binaries
+автоматически. Фактическая реализация: `batch_plan.cpp`, `batch.cpp`, `batch_bundle.cpp`
+и `research_batch_draft.cpp`; использование:
+[[engineering/RESEARCH_BATCH#Встроенные снимки формы в серии]].
+
+| Свойство | Файловый участник | Inline-снимок |
+|---|---|---|
+| Подготовка | Чтение указанного файла | Сериализация встроенного object |
+| Источник в GUI | File chooser | Кнопка снимка typed form |
+| Изменение формы после добавления | Не связано с файловым участником | Не меняет deep copy |
+| Относительный reference | Каталог canonical scenario file | Каталог plan / explicit memory base |
+| Hash входа | Точные bytes файла | Compact Boost.JSON + LF |
+| Экспорт | Обычный child bundle | Тот же child bundle через memory API |
+
+Кнопка **Добавить снимок текущей формы** преобразует обычные controls в полный сценарий,
+включая развернутые variant matrices, носители, reference и criteria. Каждому участнику
+назначается свободный ID. Оператор может добавить несколько снимков, файловые сценарии,
+менять их порядок и удалять. JSON editor не нужен. Для обновления снимка предусмотрено
+повторное добавление после удаления; обратная загрузка произвольного scenario в controls
+на этом этапе не реализована.
+
+```plantuml
+@startuml
+start
+:Заполнить typed form;
+:Добавить снимок;
+:Validate scenario + local reference URL;
+:Deep copy в состав серии;
+fork
+  :Продолжить редактировать форму;
+  :Добавить следующий снимок;
+fork again
+  :Первый снимок сохраняет прежние значения;
+end fork
+:При необходимости добавить файловый scenario;
+:Run / save plan / export composition;
+:Проверить schema2, ID и все inputs;
+if (Все участники и aggregate budgets корректны?) then (да)
+  :Создать новый output; исполнить runner\nили записать переносимый bundle;
+else (нет)
+  :Отказ до output/server contact;
+endif
+stop
+@enduml
+```
+
+*Рисунок3.88 — фиксация снимка отделяет редактируемую форму от очереди опытов.*
+
+Parser проверяет типы и структуру встроенных сценариев без файловых операций. Перед
+исполнением все участники готовятся и удерживаются в памяти, проверяются reset_replay,
+совокупные trials и decoded reference bytes. Неверный поздний участник не позволяет
+раннему открыть серверную сессию. Прежние ограничения остаются:1–8 участников,64KiB plan,
+10000 trials,128MiB удерживаемых reference pixels; raw/decoded bundle budgets также
+не расширены. Поэтому embedded documents делят общий64KiB бюджет, а не получают по1MiB.
+
+Hash исходного plan по-прежнему связан с точными input bytes. Для inline scenario
+
+$$
+h_{scenario}=\operatorname{SHA256}(\operatorname{serialize}_{Boost.JSON}(S)\Vert\texttt{LF}).
+$$
+
+Это hash подготовленных bytes объекта, а не подстроки исходного plan: пробелы между
+токенами parent JSON отдельно не сохраняются. Одинаковое правило используется обычным
+batch runner и exporter. Individual report помечает такой вход `memory_json_bytes_v1`,
+сохраняет base/hash и не выдумывает `scenario_input_path`. Summary сохраняет исходный
+object в поле scenario и версию вложенного plan. Потребители summary должны учитывать
+union-типы участников; schema summary остаётся1.
+
+GUI фиксирует reference абсолютным путём. При импорте относительный reference внутри
+inline scenario привязывается к выбранному каталогу plan; сохранение в другом каталоге
+не меняет его смысл. При обычном CLI запуске base остаётся каталогом выбранного plan;
+для имени без parent используется cwd. В памяти `FileExperiment` ранее выполнял lexical
+сокращение base. Для `link/../reference.json`, где link указывает в другое дерево,
+это могло подставить другой файл. Теперь `absolute(base)` сохраняет компоненты пути,
+а разрешение делает файловая система. Regression fixture содержит два разных reference
+по лексически похожим путям и проверяет выбор исходно заданного.
+
+Переносимый формат `batch_bundle_v1` не расширяется: inline scenario проходит уже
+реализованный memory exporter и становится обычным child bundle со своим inventory,
+references/images и hashes. Проверка после relocation не нуждается в исходном scenario
+file. Bundle содержит нормализованный file-based plan; source plan hash и source scenario
+hashes остаются в receipts. Это перенос клиентской серии одной recording, не server
+recording registry и не multi-recording supervisor.
+
+Проверки охватывают отсутствие исходных scenario файлов, смешанные file/inline rows,
+strict schema1, malformed late inputs, reset/trial budgets, reusable saved snapshots,
+hash bytes, relocation, offline Qt export/verify, snapshot immutability и QML import.
+Native Unix/TCP harness исполняет schema2 напрямую и через переносимый bundle; live GUI
+импортирует смешанную серию, меняет порядок, сохраняет, импортирует повторно и исполняет её
+с quality/restore. Это regression fixtures, не дополнительная независимая выборка сшивки.
+Результаты и границы: [[validation/RESEARCH_RUNTIME]].
+
+
+![Смешанная серия в sv-simulator](figures/implementation/research_inline_series.png)
+
+*Рисунок3.89 — фактический Linux/Qt6 GUI после save/import смешанной серии: первый
+участник ссылается на файл, второй содержит inline scenario с эталоном. Снимок получен
+в regression harness с настоящим сервером; это не подтверждающий научный опыт.*
+
+Финальная сборка успешна;5/5 затронутых CTest за121,54с, включая Unix/TCP112,67с
+и QML7,28с. Standalone batch/bundle27/27 и Qt controller46/46; все70 PlantUML-вставок
+корректны. Свидетельства относятся к Linux, а не к проверке на целевом устройстве Авроры.

@@ -441,3 +441,8 @@ legacy catalogs могут не содержать поле. Подробный 
 подменяет своим catalog. Comparison policy v4 проверяет клиентские claims отдельно от
 серверных. Это metadata файлов отчётов, не новая SV01 команда:
 [[engineering/RESEARCH_REPORTS#Клиентская сборка и policy v4]].
+
+Batch plan schema2 с inline scenario objects — локальный формат application service,
+не расширение SV01. `sv-client-lib`/сервер получают прежние команды runner; ownership
+config, lease и restore не меняются. Контракт файлов и GUI:
+[[engineering/RESEARCH_BATCH#Встроенные снимки формы в серии]].

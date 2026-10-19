@@ -30,7 +30,8 @@ build/svctl --unix /tmp/sv-prototype --timeout-ms 5000 \
 }
 ```
 
-Относительный `scenario` разрешается от каталога batch plan. Относительный `quality_reference`
+В schema1 `scenario` — путь файла; schema2 разрешает также объект встроенного сценария
+([[#Встроенные снимки формы в серии]]). Относительный файловый `scenario` разрешается от каталога batch plan. Относительный `quality_reference`
 внутри сценария — от каталога самого сценария. Output paths не задаются участниками:
 они выводятся из безопасного ID. Допустимы ASCII буквы/цифры/`_`/`-`, длина 1–64;
 ID уникальны, `batch` зарезервирован для summary. Неизвестные поля отвергаются.
@@ -763,7 +764,7 @@ Private staging paths в individual reports временные.
 - Hashes подтверждают согласованность с unsigned manifest, не независимость truth,
   авторство, неизменность server dataset или scientific acceptance.
 - Multi-recording supervisor и server registry остаются в TODO.
-  Состав серии можно экспортировать без файла плана; участники пока задаются saved scenarios. Продуктовый сервис и CLI — C++; Python используется только как harness.
+  Состав серии можно экспортировать без файла плана; участники могут быть saved scenarios или inline-снимками ([[#Встроенные снимки формы в серии]]). Продуктовый сервис и CLI — C++; Python используется только как harness.
 
 API: export_batch_bundle(plan,new_directory,cancel), BatchBundle(path,cancel), summary(),
 execute(new_output,options,cancel,progress(member,done,total)). Схема взаимодействия:
@@ -804,7 +805,7 @@ child не создают каталог результата. Общая пол
 **Упаковать текущую форму** / **Упаковать текущий состав серии**:
 
 1. Настройте параметры формы, матрицы и optional reference/criteria либо составьте
-   и упорядочьте список saved scenarios. Сохранять исходный scenario/plan JSON не нужно.
+   и упорядочьте файловые сценарии либо снимки формы. Сохранять исходный scenario/plan JSON не нужно.
 2. Раскройте группу упаковки, выберите существующую родительскую папку и имя новой
    папки. Нажмите **Экспортировать текущий план**. Подключение к серверу не требуется.
 3. Typed document и base directory фиксируются при нажатии; worker проверяет references
@@ -818,8 +819,8 @@ child не создают каталог результата. Общая пол
 Экспорт формы проверяет известную схему, не требует текущего server catalog и не
 резервирует его ресурсы. Поэтому форму можно упаковать без подключения; совместимость
 алгоритмов, geometry и references с выбранным server проверится при run. Серия без
-файла плана сохраняет текущие ID/порядок, но её участники по-прежнему читаются из saved
-scenario files. Inline несохранённые member-сценарии этим срезом не добавлены.
+файла плана сохраняет текущие ID/порядок; источниками участников служат saved
+scenario files либо inline objects schema2: [[#Встроенные снимки формы в серии]].
 
 Изменение формы после нажатия не меняет owned document рабочего потока и ранее
 созданный bundle. Кнопка открытия относится к **последнему проверенному набору**, а не
@@ -848,3 +849,90 @@ API. Private staging для проверенных members/references сохра
 bundle сервиса. Qt adapter добавляет directoryUrl только в QVariant receipt для UI:
 он создаётся через QUrl::fromLocalFile, поэтому `#`, `%`, пробелы не становятся URL query
 или fragment. В bundle manifest, report identity и server wire эта UI metadata не входит.
+
+
+## Встроенные снимки формы в серии
+
+В **Исследование → План** заполните обычную форму (режимы, параметры, носители,
+frames/warmup/repeats, reference/criteria). Переключитесь в **Состав серии** и нажмите
+**Добавить снимок текущей формы**. Получится отдельный участник `case-N` с полным
+сценарием, включая развернутую матрицу вариантов. Изменение формы после добавления его
+не меняет. Чтобы заменить снимок, удалите участник и добавьте новый; редактор JSON не нужен.
+
+Файловые сценарии по-прежнему добавляются кнопкой **Добавить сценарий…**. Типы можно
+смешивать, перемещать и удалять. Строка встроенного участника показывает число вариантов,
+кадров и путь эталона. До восьми участников; сохранение/импорт работают offline.
+**Сохранить черновик как…** сохраняет schema2 при наличии встроенных участников;
+чисто файловый GUI plan остаётся schema1. Повторный импорт сохраняет объект, не превращает
+его в строку. Неверный импорт не заменяет предыдущий состав.
+
+```json
+{
+  "schema_version": 2,
+  "runs": [
+    {"id": "saved", "scenario": "research/saved.json"},
+    {"id": "draft", "scenario": {
+      "schema_version": 1,
+      "reset_replay": true,
+      "capture_frames": false,
+      "frames": 1,
+      "warmup": 1,
+      "repeats": 3,
+      "seed": 17,
+      "variants": [{"mode": "edge_feather"}]
+    }}
+  ]
+}
+```
+
+`scenario` в schema2 — либо непустой путь, либо полный scenario schema1 object. Schema1
+plan по-прежнему принимает только пути. Неизвестные версии/поля, плохие ID, malformed
+inline scenarios и прежние пределы отклоняются общим parser. Весь plan по-прежнему ≤64KiB:
+это также суммарная граница размера встроенных документов, отдельный лимит1MiB файлового
+сценария её не расширяет. Schema2 с одними файловыми строками также допустима.
+
+| Откуда участник | База относительного quality_reference | Identity исходного сценария |
+|---|---|---|
+| Файл | Каталог canonical scenario file | Точные bytes файла |
+| Inline из plan файла | Выбранный каталог plan, даже при symlink/.. | Compact Boost.JSON serialization объекта + LF |
+| Inline из C++ memory plan | Переданная explicit base | То же compact serialization + LF |
+| Снимок формы / импорт в GUI | Reference фиксируется абсолютным путём | То же compact serialization + LF |
+
+Raw plan hash сохраняет точные bytes файлового входа; hash inline scenario не является hash
+подстроки исходного файла с её пробелами. C++ parser сохраняет порядок ключей/численные
+типы объекта, затем serializer создаёт bytes для `FileExperiment` и bundle exporter.
+Они используют одно правило. В обычном inline report `scenario_input_kind=memory_json_bytes_v1`,
+есть base и scenario_input_sha256, а scenario_input_path отсутствует. Summary `runs[].scenario`
+содержит исходное значение (строку либо object), `plan.schema_version` различает контракт.
+Schema summary остаётся1; consumers должны учитывать тип scenario из вложенного plan.
+
+CLI использует прежние команды:
+
+```sh
+build/svctl --unix /tmp/sv research-batch artifacts/inline-plan.json artifacts/inline-results
+build/svctl research-batch-bundle-export artifacts/inline-plan.json artifacts/inline-bundle
+build/svctl research-batch-bundle-verify artifacts/inline-bundle
+build/svctl --unix /tmp/sv research-batch-bundle-run artifacts/inline-bundle artifacts/inline-portable-results
+```
+
+Для offline export/verify endpoint не используется. Export текущего GUI состава теперь
+принимает и inline participants, без временных исходных scenario файлов. Формат
+`batch_bundle_v1` сохраняется: каждый участник материализуется в обычный child bundle;
+только source plan/schema меняются. `source_plan_sha256` связывает исходный plan, child
+`source_scenario_sha256` — bytes соответствующего сценария. После relocation run использует
+проверенные child snapshots, а не исходные пути. Нормализованный исполняемый plan bundle
+содержит пути к child scenarios, поэтому может быть schema1 даже для source plan schema2.
+
+Все references/images и aggregate raw/decoded/trial budgets проверяются до создания
+целевого каталога/первого подключения. Плохой поздний участник не запускает ранний.
+Сохранение черновика проверяет структуру, но не наличие эталонов; добавление снимка
+проверяет форму/URL, а не серверный catalog. Фактические настройки/доступность алгоритмов
+снова проверяются сервером при исполнении; ошибка отражается обычным runner/restore.
+Это серия одной server recording, не multi-recording и не registry datasets.
+
+Исправлена также база memory `FileExperiment`: `absolute(base)` сохраняет symlink/..
+семантику, lexical сокращение убрано. Открытие `link/../reference.json`, где link ведёт
+в другой каталог, не заменяется открытием соседнего файла с тем же именем. Для inline
+plan без каталога (`plan.json` из cwd) CLI использует текущий каталог.
+Диаграмма: [[architecture/RESEARCH_RUNTIME#Смешанные файловые и встроенные сценарии]],
+диплом §3.73. Проверки: [[validation/RESEARCH_RUNTIME]].

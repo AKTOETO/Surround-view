@@ -1077,3 +1077,31 @@ simulator_configuration_qml7,24с, research_scenarios0,30с. Свежий сни
 проверен визуально: оба паспорта и gates отображаются. Полный69-test suite предыдущего
 среза здесь не повторялся. Все68 PlantUML blocks прошли local syntax check;
 py_compile и git diff --check успешны.
+
+## Batch schema2: inline snapshots и mixed participants (20.10.2026)
+
+Общий C++ parser/runner/exporter поддерживает file path либо встроенный scenario object.
+Schema1 остаётся path-only. Qt кнопка фиксирует deep copy формы, save/import не теряют
+тип участника; references GUI абсолютные. Контракт:
+[[engineering/RESEARCH_BATCH#Встроенные снимки формы в серии]], диплом §3.73.
+
+Standalone27/27 ResearchBatch+BatchBundleFixture и46/46 Qt controller прошли после
+финальной сборки. Проверены смешанные и полностью inline plans без scenario файлов,
+late invalid input до destination, strict schema1, reset/trial budgets, compact+LF hash,
+relocation и memory base symlink/.. . CWD plan filename имеет отдельный regression test.
+Новый QML test проверяет кнопку, неизменность предыдущего снимка, malformed reference URL,
+сохранение/повторный импорт typed inline rows и отсутствие warnings; предварительный
+simulator_configuration_qml1/1 прошёл за7,29с.
+
+Native harness дополнен direct schema2 и portable mixed runs через Unix/TCP с независимым
+Python oracle input SHA256. Existing live GUI mode использует mixed plan, reorder,
+save/import и quality/restore. Python не является launcher продуктового workflow.
+
+Это клиентские сценарии одной recording. Multi-recording, server dataset/config registry,
+durable resume, independent truth/holdout и реальная Aurora platform acceptance не закрыты.
+
+Финальные затронутые CTest:5/5 за121,54с; client_transports112,67с,
+research_quality_fixture1,23с, simulator_research_unit0,07с,
+simulator_configuration_qml7,28с, research_scenarios0,29с. Все70 PlantUML-вставок
+прошли syntax check; py_compile и git diff --check успешны. Свежий native GUI screenshot
+проверен визуально и сохранён как рисунок3.89. Полный69-test suite здесь не повторялся.

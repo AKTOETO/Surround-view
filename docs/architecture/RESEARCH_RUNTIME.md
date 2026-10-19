@@ -1132,3 +1132,51 @@ Compare --> Client: Gates / reasons; raw metrics; permitted deltas
 ```
 
 *Рисунок RR.26 — клиентская и серверная роли имеют независимые configured-build claims.*
+
+## Смешанные файловые и встроенные сценарии
+
+Batch plan schema2 расширяет источник участника до file path либо scenario object.
+Schema1 и bundle manifest остаются прежними. Shared parser не читает references;
+загрузка всех inputs и aggregate budget checks выполняются до output/server contact.
+Контракт: [[engineering/RESEARCH_BATCH#Встроенные снимки формы в серии]].
+
+```plantuml
+@startuml
+actor User
+participant "Typed form" as Form
+participant "Batch editor" as Editor
+participant "Shared parser" as Parser
+participant "Batch worker" as Worker
+participant "FileExperiment / exporter" as Prepare
+participant "sv-server" as Server
+User -> Form: Настроить алгоритмы, носитель, критерии
+User -> Editor: Добавить снимок текущей формы
+Editor -> Form: Прочитать текущие значения
+Editor -> Parser: Validate scenario (без IO)
+Editor -> Editor: Deep copy scenario; stable member ID
+User -> Form: Изменить параметры
+note over Editor
+Ранее добавленный снимок не меняется.
+Можно добавить файловых участников.
+end note
+User -> Editor: Run / export current composition
+Editor -> Worker: Owned schema2 plan
+Worker -> Parser: Structure / IDs / inline scenario validation
+loop Все участники
+  alt Встроенный scenario object
+    Worker -> Prepare: Compact JSON + LF; explicit reference base
+  else Путь сценария
+    Worker -> Prepare: Read scenario file; own reference base
+  end
+end
+Worker -> Worker: Aggregate budgets; all inputs frozen
+alt Export
+  Worker -> Prepare: Existing child bundles + batch manifest
+else Run
+  Worker -> Worker: Reserve all reports
+  Worker -> Server: Ordered trials; lease / restore per member
+end
+@enduml
+```
+
+*Рисунок RR.27 — оба типа участников используют общий preflight и прежний runner.*

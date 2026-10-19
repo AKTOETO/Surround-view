@@ -1,5 +1,12 @@
 # Состояние прототипа и границы подтверждения
 
+20.10.2026: batch plan schema2 поддерживает смешанные file/inline сценарии в C++/svctl,
+GUI и offline bundle export. Кнопка снимка формы фиксирует самостоятельный участник;
+save/import сохраняют типы и абсолютные GUI references. Общие aggregate preflight/restore
+сохраняются. Исправлена lexical normalization memory reference base через symlink/.. .
+Multi-recording, server datasets/config registry и научные/target gates остаются открытыми.
+[[engineering/RESEARCH_BATCH#Встроенные снимки формы в серии]].
+
 20.10.2026: runner сохраняет локальный client_build_passport, comparison policy v4
 проверяет отдельно client A/B и server A/B. GUI и audit показывают оба паспорта и gates;
 legacy raw metrics доступны без timing delta. Разные клиент/сервер внутри запуска
