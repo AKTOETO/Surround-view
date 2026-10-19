@@ -870,3 +870,38 @@ py_compile транспортного harness и git diff --check. Дополн�
 Это проверка переноса client inputs и управляющего пути. Regression exact match не
 квалифицирует независимую truth, аппаратную производительность или Аврору. GUI/batch/
 server registry/resume/подпись не реализованы этим срезом.
+
+## GUI переносимого набора — 19.10.2026
+
+Реализован режим «Переносимый набор» в sv-simulator поверх того же C++ сервиса:
+экспорт сохранённого сценария в новую папку, offline-проверка с квитанцией и запуск
+с обязательным повторным preflight. Чтение/copy/hash/decode выполняются в одном
+research worker; busy/cancel/destructor и close guard общие с обычным runner.
+
+| Проверка | Свидетельство |
+|---|---|
+| Offline export/verify, busy exclusion, #/% paths и отказ overwrite | ResearchGuiUnit.BundleExportVerifyAreOfflineExclusiveAndKeepLiteralPaths |
+| URL/name validation, endpoint required для run и tampering после verify до output | ResearchGuiUnit.BundleRejectsRemoteUrlsNamesAndTamperingBeforeRunOutput |
+| Cancel/destruction без endpoint, join и безопасные queued callbacks | ResearchGuiUnit.BundleWorkerCanBeCancelledAndDestroyedWithoutEndpoint |
+| Кнопки доступны offline, квитанция сбрасывается, changed inputs отвергаются | SimulatorResearchBundleQml.OfflineExportVerifyControlsAndReceiptRejectChangedInputs |
+| Экспорт regression-сценария, relocation, verify и запуск кнопкой через Unix/TCP | SimulatorResearchBundleQml.VerifiedBundleRunsOnLiveServerThroughTypedControls в client_transports |
+
+Native QML workflow требует фактический endpoint и reference fixture; самостоятельный
+запуск этого live-case пропускается, транспортный harness его исполняет. Проверяются
+quality passed, непустые measured rows, restored и соответствие input_bundle.manifest_sha256
+предварительно прочитанному manifest; snapshot kind — verified_bundle_snapshot_v1.
+Timeout subprocess25с и CTest150с не увеличивались. Ошибки/депрекации QML собираются
+QmlWarningCapture, успешный путь требует пустой список. Проверка lifecycle допускает,
+что маленький экспорт успел завершиться до отмены; она не доказывает прерывание syscall.
+
+Полная сборка успешна. Последовательный Linux CTest: **68/68 за165,91с**;
+client_transports94,55с, simulator_configuration_qml7,15с. Отдельно контроллер прошёл
+39/39 GTest; standalone QML entry содержит16 успешных и2 условно пропущенных live-case,
+которые исполняются транспортным harness. Проверены57 PlantUML blocks architecture +
+главы3, py_compile harness и git diff --check. Фактический снимок GUI:
+[[diploma/03_PROTOTYPE_IMPLEMENTATION#3.67. Управление переносимым набором из графического клиента]],
+рисунок3.77.
+
+Это перенос client inputs и проверка управляющего пути. Несохранённая форма,
+batch/multi-recording bundle, server dataset/config/build registry, durable resume,
+независимая scientific acceptance и Aurora/Qt5 остаются открытыми.

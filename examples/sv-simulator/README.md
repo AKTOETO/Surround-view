@@ -19,7 +19,7 @@ Saved scenario/batch workflows retain their existing runner/server validation.
 The **Матрица параметров** group sweeps a pyramid-level range and/or both seam solvers.
 The C++ adapter applies axes only to relevant methods and shares the common matrix expander;
 C++ preview enforces the aggregate 32-variant/10000-trial limits. Expanded ordinary scenarios
-remain reusable with svctl. Carrier and other numeric parameter matrices remain future work.
+remain reusable with svctl. Carrier profiles and applicable edge-width/angle-power/smoothness lists are also supported.
 The **Критерии качества опыта** group optionally replaces the reference manifest's full
 threshold set with explicitly selected MAE/RMSE/PSNR limits. A reference and nonempty set
 are required; the original manifest is unchanged and both policies are recorded in the report.
@@ -181,3 +181,13 @@ SpinBox, добавление и удаление отдельных значе�
 Сравнение отчётов использует policy v2 с observation gate: capture/evaluator/progress flag
 и стабильные telemetry settings. Паспорта показывают эту нагрузку; legacy reports остаются
 читаемыми, но не разрешают timing delta. [Контракт и пределы](../../docs/engineering/RESEARCH_REPORTS.md#нагрузка-наблюдения-и-policy-v2).
+
+
+The **Переносимый набор** plan mode selects a bundle directory, verifies it offline and
+runs it through the same C++ ScenarioBundle service as svctl. Expand **Экспортировать
+сохранённый сценарий** to select a saved scenario, parent folder and new folder name.
+File reads/copying/hashing/reference decoding happen in the research worker; operations
+share busy/cancel/close handling. A previous verification receipt never bypasses run-time
+verification. Server replay/configuration must be prepared separately; the bundle carries
+client scenario/reference only. Unsaved form export and batch bundles remain future work.
+[Workflow and limits](../../docs/engineering/RESEARCH_BATCH.md#переносимый-набор-в-sv-simulator).

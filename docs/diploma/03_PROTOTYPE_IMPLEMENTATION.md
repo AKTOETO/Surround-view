@@ -3165,3 +3165,100 @@ resume остаются открытыми. Приёмка качества по
 harness91,43с, QML7,16с. Bundle GTest6/6 и новый parser case1/1 успешны. Проверены55
 PlantUML вставок architecture/главы3 и git diff --check. Полные сведения:
 [[validation/RESEARCH_RUNTIME]].
+
+
+## 3.67. Управление переносимым набором из графического клиента
+
+В §3.66 переносимый набор реализован как общий C++ сервис и команды svctl. Для
+практического использования на исследовательском стенде добавлен режим
+«Переносимый набор» в исследовательскую страницу sv-simulator. Пользователь выбирает
+папку, получает результат offline-проверки и запускает опыт теми же кнопками прогресса,
+отмены и просмотра результатов. Сценарий не вводится как JSON-текст в поле интерфейса.
+Экспорт сохранённого сценария вынесен в отдельную раскрываемую группу: исходный файл,
+родительская папка, имя нового каталога и кнопка экспорта. Несохранённая форма этого
+режима пока не экспортируется; такой пункт оставлен в плане явно.
+
+| Действие в GUI | Общий C++ сервис | Нужен endpoint | Результат |
+|---|---|---|---|
+| Проверить без сервера | ScenarioBundle constructor + summary | Нет | Квитанция целостности |
+| Экспортировать без сервера | export_scenario_bundle | Нет | Новая папка с manifest |
+| Начать исследование | Новый ScenarioBundle + execute | Да | report.json обычного runner |
+| Отменить | Общий atomic cancel | Только уже начатый прогон | Ожидание текущей операции и необходимого restore |
+
+Квитанция содержит путь прочитанного каталога, число файлов и manifest SHA256. При
+следующей операции она сбрасывается. Даже успешная проверка не разрешает пропустить
+повторное чтение при запуске: между действиями пользователь может изменить файл,
+переместить каталог или заменить носитель. Поэтому каждая попытка запуска создаёт
+новый ScenarioBundle, который проверяет и фиксирует входы до создания выходного
+каталога и сетевого соединения. Проверка целостности и проверка научного качества
+отображаются отдельно: offline-проверка не переводит quality status в passed.
+
+```plantuml
+@startuml
+actor "Исследователь" as User
+participant "ResearchBundleEditor\nGUI thread" as UI
+participant "ResearchController" as Controller
+participant "Research worker" as Worker
+participant "ScenarioBundle" as Bundle
+participant "sv-server" as Server
+User -> UI: Выбрать каталог; проверить
+UI -> Controller: verifyBundle(local URL)
+Controller -> Worker: busy=true; frozen path
+Worker -> Bundle: Проверка и фиксация входов
+Bundle --> Worker: summary
+Worker --> Controller: queued receipt
+Controller --> UI: Квитанция; busy=false
+note over User,Bundle: Файлы могли измениться после проверки
+User -> UI: Начать исследование
+UI -> Controller: startBundle(folder, new output)
+Controller -> Worker: frozen path / output / endpoint
+Worker -> Bundle: Новый экземпляр; повторная проверка
+alt Ошибка входов
+  Bundle --> UI: Ошибка; каталог отчёта не создан
+else Входы корректны
+  Worker -> Bundle: execute(new report)
+  Bundle -> Server: Обычный lease / research protocol
+  Server --> Bundle: Кадры и metadata
+  Bundle --> Controller: Report + input_bundle identity
+  Controller --> UI: Rows / quality / restore
+end
+@enduml
+```
+
+*Рисунок3.76 — квитанция предыдущей проверки не заменяет preflight запуска.*
+
+![Режим переносимого набора в sv-simulator](figures/implementation/research_bundle_native.png)
+
+*Рисунок3.77 — фактический Linux/Qt6 GUI после экспорта, перемещения и offline-проверки
+regression-набора; endpoint выбран для последующего запуска. Временные пути являются
+путями тестового стенда, а не инструкцией по ручному вводу.*
+
+Чтение файлов, копирование, hashing и декодирование reference выполняются в worker,
+который уже используется обычными исследованиями и batch. Busy gate запрещает запуск
+второй операции и блокирует изменение параметров из исследовательской формы. Endpoint
+снимается в момент запуска и не меняется при последующих обновлениях состояния GUI.
+Отмена и закрытие окна используют существующий общий lifecycle: worker получает atomic
+cancel, завершает текущую неделимую операцию и необходимое восстановление, а QObject
+не уничтожается с работающим потоком. Для offline-действий сервер не подключается,
+поэтому восстанавливать его настройки не требуется.
+
+Источник поведения — общий сервис examples/common/research/scenario_bundle, Qt-адаптер
+examples/sv-simulator/research_controller и ResearchBundleEditor.qml; новый wire protocol
+не добавлен. Linux/Qt6 проверен GTest и QML workflow. Три новые проверки контроллера
+покрывают offline export/verify, exclusive busy, literal #/% paths, отказ от overwrite,
+ошибочные URL/имена, tampering до output, отмену и destruction/join. QML-проверка
+проверяет доступность кнопок без сервера, квитанцию и отказ после изменения файлов.
+Отдельный native workflow через Unix/TCP экспортирует реальный regression-сценарий,
+перемещает папку, проверяет её и запускает через кнопку GUI, затем проверяет restore,
+quality status и manifest identity в report. Это проверка инженерного workflow на
+fixture, а не новая независимая серия качества сшивки.
+
+Пределы сервиса из §3.66 сохранены. Набор не содержит server replay/config/build;
+согласование серверной записи остаётся отдельной подготовкой. При неудачном экспорте
+может остаться новая частичная папка. Qt5-диалог предусмотрен в отдельном компоненте,
+но тестирование Aurora/Qt5 и автомобильного устройства не подменяется Linux/Qt6.
+Пошаговое использование: [[engineering/RESEARCH_BATCH#Переносимый набор в sv-simulator]].
+
+Финальная Linux-проверка этого среза: сборка успешна, CTest68/68 за165,91с,
+client_transports94,55с, QML7,15с. Контроллер39/39 GTest;57 PlantUML вставок architecture
+и главы3 корректны. Подробности и границы свидетельств: [[validation/RESEARCH_RUNTIME]].

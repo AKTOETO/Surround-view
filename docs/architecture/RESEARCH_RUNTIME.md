@@ -927,3 +927,41 @@ end
 ```
 
 *Рисунок RR.20 — переносимость client-side inputs не заменяет регистрацию server recording.*
+
+## Переносимый набор в GUI
+
+Операции экспорта, проверки и запуска используют один worker ResearchController.
+Они взаимоисключающие; закрытие окна и отмена используют существующий lifecycle.
+Проверка и экспорт доступны без подключения, запуск требует выбранного endpoint.
+
+```plantuml
+@startuml
+actor User
+participant "ResearchBundleEditor" as UI
+participant "ResearchController (GUI thread)" as Controller
+participant "Research worker" as Worker
+participant "ScenarioBundle / FileExperiment" as Bundle
+participant "sv-server" as Server
+User -> UI: Choose folder / saved scenario
+UI -> Controller: Verify / export / run
+Controller -> Controller: Validate local URL; freeze operation parameters
+Controller -> Worker: Start; busy = true
+Worker -> Bundle: Read, validate and freeze inputs
+alt Offline verify / export
+  Bundle --> Worker: Receipt or error
+else Run
+  Worker -> Bundle: Reserve new report; execute frozen inputs
+  Bundle -> Server: Existing research protocol
+  Server --> Bundle: Frames and metadata
+  Bundle --> Worker: Report and bundle identity
+end
+Worker --> Controller: Queued result
+Controller -> UI: busy = false; receipt / report / error
+note over UI,Bundle
+Every run verifies again; a previous receipt
+does not authorize changed files.
+end note
+@enduml
+```
+
+*Рисунок RR.21 — файловые операции и декодирование выполняются вне GUI-потока.*

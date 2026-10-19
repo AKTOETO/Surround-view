@@ -1,9 +1,17 @@
 # Подробный план реализации
 
+19.10.2026: sv-simulator получил режим «Переносимый набор»: export сохранённого
+сценария, offline verify с квитанцией и запуск с повторной проверкой. Файловые операции
+в одном research worker, общий busy/cancel/close, результаты обычного runner. Replay/config
+сервера не включены; несохранённая форма, batch/multi-recording bundles, registry и
+научные/аппаратные gates остаются открытыми.
+[[engineering/RESEARCH_BATCH#Переносимый набор в sv-simulator]].
+
+
 18.10.2026: single-scenario client bundle реализован в общем C++ service и svctl:
 export/verify/verified-run, относительные PPM references, hashes/closure/budgets,
 private frozen inputs и report provenance. Server replay/config/build не входят;
-GUI и batch/multi-recording integration остаются открытыми.
+GUI добавлен19.10.2026; batch/multi-recording integration остаётся открытой.
 [[engineering/RESEARCH_BATCH#Переносимый набор сценария]].
 
 

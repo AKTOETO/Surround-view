@@ -128,5 +128,5 @@ Multilabel server candidate/cost/global-gap controls: [[validation/MULTILABEL_SE
 Профиль наблюдения и исправленный допуск сравнения времени:
 [[engineering/RESEARCH_REPORTS#Нагрузка наблюдения и policy v2]].
 
-Переносимые client-side сценарии с эталоном, compiled export/verify/run:
+Переносимые client-side сценарии с эталоном, compiled export/verify/run из CLI и GUI:
 [[engineering/RESEARCH_BATCH#Переносимый набор сценария]].
