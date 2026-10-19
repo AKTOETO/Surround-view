@@ -646,8 +646,8 @@ reference. Изменение данных и согласованное ред�
 - Cancel проверяется между chunks/файлами и до execute; он не прерывает уже выполняющийся
   syscall или parser/decoder. Входы должны быть обычными локальными файлами.
 - Экспорт сохранённого сценария, offline-проверка и запуск набора доступны в svctl и
-  sv-simulator. Серии одной записи тоже поддерживаются. Экспорт текущей несохранённой
-  формы, multi-recording bundles, server config/dataset/build registry, архивный контейнер и deduplication остаются открытыми.
+  sv-simulator, включая текущую форму и несохранённый состав серии. Multi-recording
+  bundles, server config/dataset/build registry, архивный контейнер и deduplication остаются открытыми.
 
 API: export_scenario_bundle(path,new_directory,cancel), ScenarioBundle(path,cancel),
 summary(), execute(new_report,client_options,cancel,progress). Они используют тот же
@@ -762,8 +762,8 @@ Private staging paths в individual reports временные.
   resume/checkpoints, подпись, deduplication и архивный контейнер отсутствуют.
 - Hashes подтверждают согласованность с unsigned manifest, не независимость truth,
   авторство, неизменность server dataset или scientific acceptance.
-- Экспорт несохранённой формы, multi-recording supervisor и server registry
-  остаются в TODO. Продуктовый сервис и CLI — C++; Python используется только как harness.
+- Multi-recording supervisor и server registry остаются в TODO.
+  Состав серии можно экспортировать без файла плана; участники пока задаются saved scenarios. Продуктовый сервис и CLI — C++; Python используется только как harness.
 
 API: export_batch_bundle(plan,new_directory,cancel), BatchBundle(path,cancel), summary(),
 execute(new_output,options,cancel,progress(member,done,total)). Схема взаимодействия:
@@ -796,3 +796,55 @@ child не создают каталог результата. Общая пол
 серию, technical failure/cancel останавливает. Между участниками lease не удерживается;
 серия не является глобальной атомарной транзакцией. Пределы и границы переносимости
 совпадают с BatchBundle выше. Qt6/Linux проверяется, Aurora/Qt5 остаётся целевой проверкой.
+
+
+## Экспорт текущей формы и состава серии
+
+В режимах **Настроить через форму** и **Составить серию** доступна раскрываемая группа
+**Упаковать текущую форму** / **Упаковать текущий состав серии**:
+
+1. Настройте параметры формы, матрицы и optional reference/criteria либо составьте
+   и упорядочьте список saved scenarios. Сохранять исходный scenario/plan JSON не нужно.
+2. Раскройте группу упаковки, выберите существующую родительскую папку и имя новой
+   папки. Нажмите **Экспортировать текущий план**. Подключение к серверу не требуется.
+3. Typed document и base directory фиксируются при нажатии; worker проверяет references
+   и saved members, budgets и closure, затем создаёт bundle. Existing output не заменяется.
+   Ошибка preflight не создаёт destination; write/cancel после начала копирования может
+   оставить новую частичную папку. Действуют прежние лимиты обоих форматов.
+4. **Открыть последний набор** переключает страницу на **Переносимый набор**, выбирает
+   фактический single/batch type и локальную папку без ручного ввода/декодирования пути.
+   Можно проверить её offline либо подключиться и запустить обычное исследование.
+
+Экспорт формы проверяет известную схему, не требует текущего server catalog и не
+резервирует его ресурсы. Поэтому форму можно упаковать без подключения; совместимость
+алгоритмов, geometry и references с выбранным server проверится при run. Серия без
+файла плана сохраняет текущие ID/порядок, но её участники по-прежнему читаются из saved
+scenario files. Inline несохранённые member-сценарии этим срезом не добавлены.
+
+Изменение формы после нажатия не меняет owned document рабочего потока и ранее
+созданный bundle. Кнопка открытия относится к **последнему проверенному набору**, а не
+является обещанием, что он соответствует текущим значениям формы. Verify/run всегда
+читают и фиксируют его содержимое заново. Offline export не устанавливает quality passed.
+Refs на диске фиксируются во время preflight, не атомарно в момент нажатия.
+
+Общий C++ API дополнен overloads:
+
+```cpp
+export_scenario_bundle(scenario_utf8, reference_base, new_directory, cancel);
+export_batch_bundle(plan_utf8, scenario_base, new_directory, cancel);
+```
+
+Передаются точные bytes: scenario до1MiB, batch plan до64KiB; base обязателен, не пустой,
+без NUL. Relative paths разрешаются через filesystem semantics относительно explicit
+base, без lexical_normalize; `symlink/..` сохраняет смысл. File overloads делегируют
+этим функциям и сохраняют прежнюю семантику. GUI сериализует owned document через
+boost::json::serialize + LF: source_scenario_sha256/source_plan_sha256 относятся к этим
+bytes до переписывания portable paths. Memory bytes не публикуются как отдельный
+source JSON; исходный hash не доказывает, что файл когда-либо существовал на диске.
+Полный original-source/build registry остаётся отдельной задачей.
+
+Worker использует memory overload напрямую, не создаёт input JSON shim для вызова file
+API. Private staging для проверенных members/references сохраняется как часть прежнего
+bundle сервиса. Qt adapter добавляет directoryUrl только в QVariant receipt для UI:
+он создаётся через QUrl::fromLocalFile, поэтому `#`, `%`, пробелы не становятся URL query
+или fragment. В bundle manifest, report identity и server wire эта UI metadata не входит.

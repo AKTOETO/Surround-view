@@ -1,5 +1,12 @@
 # Подробный план реализации
 
+20.10.2026: экспорт текущей формы и состава серии без source JSON реализован через
+C++ memory overloads и общий worker. UI фиксирует owned document/base, валидирует
+refs/members до destination и открывает последний набор по typed local URL. Участники
+серии пока saved scenarios; inline members, multi-recording, registry и научные/target
+проверки остаются открытыми. [[engineering/RESEARCH_BATCH#Экспорт текущей формы и состава серии]].
+
+
 20.10.2026: GUI переносимых серий добавлен в sv-simulator: explicit single/batch type,
 offline export/verify, ordered receipt и повторный полный preflight при run. Общий worker,
 endpoint snapshot, busy/cancel/close и per-member progress/results используют прежний

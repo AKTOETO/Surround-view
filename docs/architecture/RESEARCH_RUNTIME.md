@@ -1032,3 +1032,38 @@ Controller --> UI: batch rows and output path
 ```
 
 *Рисунок RR.23 — GUI выбирает тип, а проверку и исполнение серии выполняет общий C++ сервис.*
+
+## Экспорт несохранённых планов
+
+Qt adapter фиксирует typed form/composition в owned JSON и базовый каталог до запуска
+worker. Memory overload общего exporter принимает точные bytes, явный reference/scenario
+base и новый destination. Он не создаёт временный исходный JSON для вызова file API.
+Существующий manifest format и wire protocol сохраняются. Unsaved batch composition
+содержит пути к сохранённым scenario files, а не inline-сценарии.
+
+```plantuml
+@startuml
+actor User
+participant "Typed form / composition" as UI
+participant ResearchController as Controller
+participant "Research worker" as Worker
+participant "Memory exporter" as Exporter
+participant "References / saved members" as Inputs
+User -> UI: Export current draft
+UI -> Controller: Values / parent / new name
+Controller -> Controller: Validate; freeze JSON + base
+Controller -> Worker: Owned document; busy=true
+Worker -> Exporter: Exact serialized bytes + base
+Exporter -> Inputs: Bounded reads and full preflight
+Exporter -> Exporter: Rewrite portable paths; hashes; budgets
+Exporter --> UI: New bundle / receipt (queued)
+User -> UI: Open last bundle
+UI -> UI: Set type and local folder URL
+note over UI,Exporter
+Verify/run reads the bundle again.
+No server connection during export.
+end note
+@enduml
+```
+
+*Рисунок RR.24 — экспорт фиксирует форму, последующий запуск проверяет созданный bundle заново.*

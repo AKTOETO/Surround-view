@@ -982,3 +982,43 @@ cases исполняют обе ветви single/batch; live-case standalone п
 исполняется транспортным harness. Проверены62 PlantUML blocks architecture/главы3 и
 git diff --check. Фактические GUI screenshots сохранены в diploma/figures/implementation:
 research_batch_bundle_native.png и research_batch_bundle_results.png, рисунки3.81–3.82.
+
+## Экспорт несохранённых форм — 20.10.2026
+
+Common memory overloads принимают exact bytes, explicit base и new output. File overloads
+используют их же, без изменения bundle schema. Qt adapter фиксирует document/base до
+worker, экспортирует offline и выдаёт typed directoryUrl только как UI metadata.
+Исходный JSON shim не создаётся; references/members по-прежнему проходят private staging.
+
+| Проверка | Case |
+|---|---|
+| Exact-byte scenario hash, нет исходного файла, criteria сохранены, references переносимы | BundleFixture.MemoryExportPreservesExactSourceBytesAndExplicitReferenceBase |
+| Invalid/oversize JSON, empty/NUL paths, missing reference и pre-cancel до output | BundleFixture.MemoryExportRejectsBadTextBaseReferenceAndCancelBeforeDestination |
+| Explicit reference base не нормализует symlink/.. лексически | BundleFixture.MemoryReferenceBasePreservesDotDotAcrossSymlink |
+| Unsaved plan: exact-byte hash, ID/order и отсутствие plan file | BatchBundleFixture.UnsavedPlanExportUsesExactBytesBaseAndOrderWithoutAPlanFile |
+| Bad base/oversize/late member до destination | BatchBundleFixture.MemoryPlanExportRejectsBadBaseOversizeAndLateMemberBeforeDestination |
+| Frozen Qt values/composition, busy и URL #/% | ResearchGuiUnit.UnsavedFormAndCompositionExportFreezeValuesAndKeepLiteralUrls |
+| Invalid typed values/paths/reference без output | ResearchGuiUnit.UnsavedExportsRejectInvalidValuesPathsAndReferencesWithoutOutput |
+| Offline UI export и переход к фактическому type/folder без JSON файла | SimulatorResearchBundleQml.CurrentDraftExportsOfflineAndOpensTypedUrlWithoutAJsonFile |
+
+Native VerifiedBundleRunsOnLiveServerThroughTypedControls теперь выполняет4 режима:
+file/memory × single/batch. Memory single настраивает реальные typed controls/reference,
+memory batch — editable member list. Далее export → кнопка открытия → relocation →
+verify → настоящий Unix/TCP server → quality/restore/top/child identities. Исполнение
+live-case обеспечивается transport harness; отдельный standalone skip его не заменяет.
+Warnings QML считаются ошибкой, timeouts не увеличиваются.
+
+Этот срез не добавляет inline несохранённые member-сценарии, multi-recording или server
+registry. Source hashes относятся к serialize(document)+LF до portable path rewriting,
+не доказывают наличие original source file; raw form JSON отдельно в bundle не хранится.
+Offline export не требует server catalog и не подтверждает поддержку параметров целевым
+server. Научные и Aurora gates прежние. Workflow:
+[[engineering/RESEARCH_BATCH#Экспорт текущей формы и состава серии]], диплом §3.70.
+
+
+Финальная сборка успешна; последовательный Linux CTest **68/68 за182,69с**:
+client_transports111,79с, simulator_configuration_qml7,28с. Common bundle suites17/17
+(9 single +8 batch), Qt controller43/43, новый offline QML case проходит для обоих
+типов. Проверены64 PlantUML blocks architecture/главы3 и git diff --check. Таймауты не
+увеличены. Native screenshot: diploma/figures/implementation/research_unsaved_series.png,
+рисунок3.84. Реальный Aurora/device и independent scientific acceptance не заявлены.

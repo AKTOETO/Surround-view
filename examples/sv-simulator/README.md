@@ -189,7 +189,7 @@ runs it through the same C++ ScenarioBundle service as svctl. Expand **Эксп�
 File reads/copying/hashing/reference decoding happen in the research worker; operations
 share busy/cancel/close handling. A previous verification receipt never bypasses run-time
 verification. Server replay/configuration must be prepared separately; the bundle carries
-client scenario/reference only. Unsaved form export remains future work.
+client scenario/reference only. Current-form export is available without saving an input JSON file.
 [Workflow and limits](../../docs/engineering/RESEARCH_BATCH.md#переносимый-набор-в-sv-simulator).
 
 
@@ -200,3 +200,12 @@ ordered IDs, total/member trial counts and top hash; every run verifies all chil
 Batch progress and result rows reuse the existing runner workflow/quality/restore display.
 Create a plan with the **Составить серию** editor and save it before bundle export.
 [GUI workflow](../../docs/engineering/RESEARCH_BATCH.md#серия-в-gui-переносимых-наборов).
+
+
+Expand **Упаковать текущую форму** or **Упаковать текущий состав серии**, choose a parent
+folder and new name, then **Экспортировать текущий план**. The Qt adapter freezes typed
+values/composition and uses the common C++ memory exporter in its worker. No connection
+or source JSON file is required. Batch members remain saved scenarios. **Открыть последний
+набор** selects its actual type and correctly encoded folder URL; verification/run always
+revalidate it. Changes to the form do not change a previously exported bundle.
+[Memory export](../../docs/engineering/RESEARCH_BATCH.md#экспорт-текущей-формы-и-состава-серии).

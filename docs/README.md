@@ -136,3 +136,6 @@ Multilabel server candidate/cost/global-gap controls: [[validation/MULTILABEL_SE
 
 Графическое управление переносимыми сериями, квитанции и повторная проверка перед запуском:
 [[engineering/RESEARCH_BATCH#Серия в GUI переносимых наборов]].
+
+Экспорт текущей формы и несохранённого состава серии напрямую в переносимый набор:
+[[engineering/RESEARCH_BATCH#Экспорт текущей формы и состава серии]].

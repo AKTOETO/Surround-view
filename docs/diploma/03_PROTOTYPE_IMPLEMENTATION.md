@@ -3473,3 +3473,102 @@ Aurora/Qt5 qualification остаются открытыми. Использов
 Финальная Linux-проверка20.10.2026: сборка успешна; CTest68/68 за174,72с,
 client_transports104,32с, QML7,18с, controller41/41 GTest. Проверены62 PlantUML blocks.
 Подробности: [[validation/RESEARCH_RUNTIME]].
+
+## 3.70. Экспорт формы и состава серии без исходного файла
+
+Следующий разрыв workflow состоял в обязательном сохранении scenario/plan JSON перед
+экспортом переносимого набора. Общий C++ сервис дополнен memory overloads: точные UTF-8
+bytes, явный base directory и новый destination. File overloads делегируют той же
+реализации. Memory exporter не записывает временный input JSON для последующего вызова
+file API; private staging для уже проверяемых bundle members сохраняется.
+
+В GUI группа «Упаковать текущую форму» / «Упаковать текущий состав серии» содержит
+выбор родительской папки, новое имя и кнопку экспорта. В момент нажатия Qt adapter
+преобразует typed values в owned document и фиксирует base. Worker сериализует этот
+документ, выполняет bounded reads, preflight, portable path rewriting, hashing и запись
+bundle. Изменение полей после dispatch не изменяет переданную задачу. References и
+saved member files фиксируются во время их чтения в preflight, а не атомарно с нажатием.
+
+| Вход | Что фиксируется без source JSON | Что продолжает читаться с диска |
+|---|---|---|
+| Текущая форма | Параметры, matrix axes, carriers, criteria и reference path | Выбранный reference manifest, RGB/mask |
+| Текущий состав серии | Упорядоченные ID и scenario paths | Saved scenarios и их references |
+| Сохранённый файл | Прежние точные source bytes | Прежние зависимости относительно source base |
+
+Серия без input JSON означает отсутствие файла **плана**, а не поддержку inline
+несохранённых member-сценариев. Новый memory API сохраняет прежние limits: scenario
+до1MiB, batch plan до64KiB, а также raw/decoded/trial budgets из §3.66/§3.68. Empty/NUL
+base и destination, malformed/oversized text, invalid reference или late invalid member
+отвергаются до destination. Existing output не заменяется. Ошибка записи/cancel после
+начала публикации может оставить новый partial directory.
+
+Для созданного GUI документа D исходная идентичность определяется как
+
+$$
+H_{source}=\operatorname{SHA256}(\operatorname{serialize}_{Boost.JSON}(D)\,\Vert\,\mathrm{LF}).
+$$
+
+Это hash точных переданных bytes до переписывания reference/member paths, не обещание
+межверсионной canonical JSON encoding. Packed scenario может содержать другие пути;
+original bytes не добавляются отдельным source JSON в bundle. Hash не доказывает
+существование исходного файла или независимость reference. Семантические параметры,
+criteria и содержимое portable references сохраняются прежним форматом; полный source/
+build registry остаётся открытым.
+
+```plantuml
+@startuml
+actor "Исследователь" as User
+participant "Form / composition" as UI
+participant "Qt adapter" as Adapter
+participant "Worker" as Worker
+participant "Memory exporter" as Exporter
+participant "Bundle" as Bundle
+User -> UI: Упаковать текущий план
+UI -> Adapter: typed values / parent / name
+Adapter -> Adapter: Validate and freeze document + base
+Adapter -> Worker: Owned snapshot; busy
+Worker -> Exporter: Exact bytes + explicit base
+Exporter -> Exporter: Read dependencies; preflight and budgets
+Exporter -> Bundle: New members; manifest last
+Bundle --> UI: Receipt and typed local URL
+User -> UI: Открыть последний набор
+UI -> UI: Select actual type and folder
+User -> UI: Verify / run
+UI -> Bundle: New verified snapshot before execution
+@enduml
+```
+
+*Рисунок3.83 — source document фиксируется до worker, а bundle повторно проверяется перед run.*
+
+![Экспорт текущего состава серии без файла плана](figures/implementation/research_unsaved_series.png)
+
+*Рисунок3.84 — фактический Linux/Qt6 интерфейс после offline-экспорта состава из двух
+saved scenarios. Файл плана не создавался; кнопка открытия выбирает созданный bundle.
+Временные пути принадлежат regression fixture.*
+
+«Открыть последний набор» использует directoryUrl из Qt-only receipt, сформированный
+через QUrl::fromLocalFile. Поэтому literal #/% и пробелы не интерпретируются как fragment
+или query. Кнопка выбирает фактический single/batch type и папку в прежнем режиме;
+verify/run повторяет проверку, даже если уже есть квитанция. Изменённая форма не
+объявляется идентичной последнему bundle. URL metadata не входит в common manifest,
+report identity или server wire protocol.
+
+Экспорт работает offline и проверяет известную schema; server catalog не требуется.
+При последующем исполнении серверные возможности, ресурсы и input guards проверяются
+обычным runner. Научная приёмка и подключение к целевой Авроре этим не заменяются.
+Публичные compiled API: memory overloads export_scenario_bundle/export_batch_bundle,
+Qt exportDraftBundle/exportBatchDraftBundle. Продуктовый путь остаётся C++.
+
+Новые GTest проверяют exact-byte hashes, отсутствие source file, explicit base и
+symlink/.. semantics, malformed/oversized input, NUL paths, pre-cancel/late errors,
+сохранность criteria и order, frozen Qt values и typed local URLs. QML проверяет
+offline controls и переход к bundle без ручного ввода пути. Native workflow исполняет
+четыре варианта через настоящий sv-server: file/memory × single/batch, с relocation,
+references, quality/restore и top/child identities. Это инженерные regression controls,
+не новая независимая выборка качества сшивки. Использование:
+[[engineering/RESEARCH_BATCH#Экспорт текущей формы и состава серии]].
+
+
+Финальная Linux-сборка успешна; CTest68/68 за182,69с, client_transports111,79с,
+QML7,28с. Common bundle suites17/17, controller43/43;64 PlantUML вставки корректны.
+Подробности и границы свидетельств: [[validation/RESEARCH_RUNTIME]].
