@@ -513,6 +513,27 @@ Pane {
                 text: panel.formSummary.valid ? panel.formSummary.variants + " вариантов × " + panel.formSummary.frames + " кадров × " + panel.formSummary.blocks + " блоков = " + panel.formSummary.trials + " trials (предел 10000). Seed меняет порядок методов, а не сцену." : "Профиль недопустим: " + panel.formSummary.error
             }
 
+            ResearchDraftExport {
+                id: draftExport
+                objectName: "researchDraftBundleExport"
+                width: parent.width
+                controller: panel.controller
+                visible: planMode.currentIndex === 0 || planMode.currentIndex === 3
+                batch: planMode.currentIndex === 3
+                ready: batch ? batchEditor.members.length > 0 : panel.formSummary.valid
+                issue: batch ? "Добавьте хотя бы один сценарий" : (panel.formSummary.error || "")
+                onExportRequested: function(parentDirectory, name) {
+                    if (draftExport.batch)
+                        panel.controller.exportBatchDraftBundle(batchEditor.members, parentDirectory, name);
+                    else
+                        panel.controller.exportDraftBundle(panel.draft(), parentDirectory, name, panel.referenceSource);
+                }
+                onUseBundle: function(directory, batch) {
+                    bundleEditor.selectBundle(directory, batch);
+                    planMode.currentIndex = 4;
+                }
+            }
+
             Label {
                 text: "Новый каталог результата"
                 color: "#cbd5e0"

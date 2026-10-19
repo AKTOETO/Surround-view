@@ -1,4 +1,8 @@
+#include "digest.hpp"
+#include "regular_input.hpp"
+#include "research_batch_draft.hpp"
 #include "research_gui_bundle_fixture.hpp"
+#include "sv/json.hpp"
 #include <QTemporaryDir>
 #include <gtest/gtest.h>
 
@@ -164,4 +168,66 @@ TEST(ResearchGuiUnit, BatchBundleExportReusesUrlGuardsAndWorkerTeardown)
         ASSERT_TRUE(controller.exportBundle(input, parent, "destroyed-series", true));
     }
     QCoreApplication::processEvents();
+}
+
+TEST(ResearchGuiUnit, UnsavedFormAndCompositionExportFreezeValuesAndKeepLiteralUrls)
+{
+    QTemporaryDir temporary;
+    ASSERT_TRUE(temporary.isValid());
+    ResearchController controller;
+    const auto parent = QUrl::fromLocalFile(temporary.path());
+    auto values = gui_bundle::values();
+    const auto bytes = boost::json::serialize(researchDraft(values)) + '\n';
+    ASSERT_TRUE(controller.exportDraftBundle(values, parent, "form # %"));
+    values["frames"] = 4;
+    EXPECT_FALSE(controller.exportDraftBundle(values, parent, "overlap"));
+    ASSERT_TRUE(gui_bundle::wait(controller));
+    ASSERT_EQ(controller.exitCode(), 0) << controller.status().toStdString();
+    EXPECT_EQ(controller.bundleInfo().value("source_scenario_sha256").toString().toStdString(),
+              sv::research::sha256(bytes.data(), bytes.size()));
+    const auto folder = controller.bundleInfo().value("directoryUrl").toUrl();
+    EXPECT_EQ(folder, QUrl::fromLocalFile(temporary.path() + "/form # %"));
+    auto document =
+        sv::parse_json(sv::research::read_regular_file(
+                           folder.toLocalFile().toStdString() + "/scenario.json", 1024 * 1024))
+            .as_object();
+    EXPECT_EQ(document.at("frames").to_number<unsigned>(), 1U);
+    const auto source = QUrl::fromLocalFile(gui_bundle::scenario(temporary.path()));
+    QVariantList members{QVariantMap{{"id", "second"}, {"scenario", source.toString()}},
+                         QVariantMap{{"id", "first"}, {"scenario", source.toString()}}};
+    const auto plan = boost::json::serialize(researchBatchDraft(members)) + '\n';
+    ASSERT_TRUE(controller.exportBatchDraftBundle(members, parent, "series # %"));
+    members.clear();
+    ASSERT_TRUE(gui_bundle::wait(controller));
+    ASSERT_EQ(controller.exitCode(), 0) << controller.status().toStdString();
+    EXPECT_EQ(controller.bundleInfo().value("source_plan_sha256").toString().toStdString(),
+              sv::research::sha256(plan.data(), plan.size()));
+    const auto runs = controller.bundleInfo().value("runs").toList();
+    ASSERT_EQ(runs.size(), 2);
+    EXPECT_EQ(runs[0].toMap().value("id").toString(), "second");
+    EXPECT_TRUE(controller.reportPath().isEmpty());
+    EXPECT_FALSE(controller.available());
+    EXPECT_FALSE(std::filesystem::exists((temporary.path() + "/overlap").toStdString()));
+}
+
+TEST(ResearchGuiUnit, UnsavedExportsRejectInvalidValuesPathsAndReferencesWithoutOutput)
+{
+    QTemporaryDir temporary;
+    ASSERT_TRUE(temporary.isValid());
+    ResearchController controller;
+    const auto parent = QUrl::fromLocalFile(temporary.path());
+    auto values = gui_bundle::values();
+    values["frames"] = false;
+    EXPECT_FALSE(controller.exportDraftBundle(values, parent, "bad"));
+    EXPECT_FALSE(controller.exportBatchDraftBundle({}, parent, "bad"));
+    values = gui_bundle::values();
+    EXPECT_FALSE(controller.exportDraftBundle(values, parent, "../escape"));
+    EXPECT_FALSE(
+        controller.exportDraftBundle(values, parent, "bad", QUrl("https://example.org/ref")));
+    ASSERT_TRUE(controller.exportDraftBundle(
+        values, parent, "bad", QUrl::fromLocalFile(temporary.path() + "/missing.json")));
+    ASSERT_TRUE(gui_bundle::wait(controller));
+    EXPECT_EQ(controller.exitCode(), 3);
+    EXPECT_TRUE(controller.bundleInfo().isEmpty());
+    EXPECT_FALSE(std::filesystem::exists((temporary.path() + "/bad").toStdString()));
 }

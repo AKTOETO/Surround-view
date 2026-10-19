@@ -1,4 +1,5 @@
 #include "qml_warning_capture.hpp"
+#include "regular_input.hpp"
 #include "research_gui_bundle_fixture.hpp"
 #include "sv/json.hpp"
 #include <QFile>
@@ -26,6 +27,36 @@ bool click(QObject *root, const char *name)
     auto *button = root->findChild<QObject *>(name);
     return button && button->property("enabled").toBool() &&
            QMetaObject::invokeMethod(button, "clicked");
+}
+
+void configureForm(QObject *root, const QString &source)
+{
+    const auto document =
+        sv::parse_json(sv::research::read_regular_file(source.toStdString(), 1024 * 1024))
+            .as_object();
+    const auto &variant = document.at("variants").as_array()[0].as_object();
+    root->setProperty("selectedModes", QStringList{QString::fromStdString(
+                                           std::string(variant.at("mode").as_string()))});
+    root->setProperty("selectedBoundary", QString::fromStdString(std::string(
+                                              variant.at("pyramid_boundary").as_string())));
+    if (const auto *solver = variant.if_contains("seam_solver"))
+    {
+        root->setProperty("selectedSolver",
+                          QString::fromStdString(std::string(solver->as_string())));
+    }
+    root->findChild<QObject *>("researchLevels")
+        ->setProperty("value", variant.at("pyramid_levels").to_number<int>());
+    for (const auto &field : {std::pair{"frames", "researchFrames"},
+                              {"warmup", "researchWarmup"},
+                              {"repeats", "researchRepeats"}})
+    {
+        root->findChild<QObject *>(field.second)
+            ->setProperty("value", document.at(field.first).to_number<int>());
+    }
+    const auto reference = std::filesystem::path(source.toStdString()).parent_path() /
+                           std::string(document.at("quality_reference").as_string());
+    root->setProperty("referenceSource",
+                      QUrl::fromLocalFile(QString::fromStdString(reference.string())));
 }
 } // namespace
 
@@ -104,8 +135,9 @@ TEST(SimulatorResearchBundleQml, VerifiedBundleRunsOnLiveServerThroughTypedContr
     {
         GTEST_SKIP() << "Executed with Unix/TCP regression fixture";
     }
-    for (const bool batch : {false, true})
+    for (const int mode : {0, 1, 2, 3})
     {
+        const bool batch = mode % 2 != 0, memory = mode >= 2;
         QmlWarningCapture warnings;
         QTemporaryDir temporary;
         ASSERT_TRUE(temporary.isValid());
@@ -130,14 +162,61 @@ TEST(SimulatorResearchBundleQml, VerifiedBundleRunsOnLiveServerThroughTypedContr
         ASSERT_TRUE(editor);
         root->findChild<QObject *>("researchBundleKind")
             ->setProperty("currentIndex", batch ? 1 : 0);
-        const auto input = batch ? gui_bundle::plan(temporary.path(), source) : source;
-        editor->setProperty("exportSource", QUrl::fromLocalFile(input));
-        editor->setProperty("exportParent", QUrl::fromLocalFile(temporary.path()));
-        root->findChild<QObject *>("researchBundleShowExport")->setProperty("checked", true);
-        root->findChild<QObject *>("researchBundleExportName")->setProperty("text", "portable # %");
-        ASSERT_TRUE(click(root.get(), "researchBundleExport"));
-        ASSERT_TRUE(gui_bundle::wait(controller));
-        ASSERT_EQ(controller.exitCode(), 0) << controller.status().toStdString();
+        if (memory)
+        {
+            root->findChild<QObject *>("researchPlanMode")
+                ->setProperty("currentIndex", batch ? 3 : 0);
+            if (batch)
+            {
+                QVariantList members;
+                for (const auto *id : {"first", "second"})
+                {
+                    members.push_back(QVariantMap{
+                        {"id", id}, {"scenario", QUrl::fromLocalFile(source).toString()}});
+                }
+                root->findChild<QObject *>("researchBatchEditor")->setProperty("members", members);
+            }
+            else
+            {
+                configureForm(root.get(), source);
+            }
+            auto *exporter = root->findChild<QObject *>("researchDraftBundleExport");
+            ASSERT_TRUE(exporter);
+            exporter->setProperty("parentDirectory", QUrl::fromLocalFile(temporary.path()));
+            root->findChild<QObject *>("researchDraftBundleExpand")->setProperty("checked", true);
+            root->findChild<QObject *>("researchDraftBundleName")
+                ->setProperty("text", "portable # %");
+            ASSERT_TRUE(click(root.get(), "researchDraftBundleStart"));
+            ASSERT_TRUE(gui_bundle::wait(controller));
+            ASSERT_EQ(controller.exitCode(), 0) << controller.status().toStdString();
+            EXPECT_FALSE(
+                std::filesystem::exists((temporary.path() + "/plan # %.json").toStdString()));
+            const auto capture = qEnvironmentVariable("SV_RESEARCH_QUALITY_SCREENSHOT");
+            if (!capture.isEmpty() && batch)
+            {
+                QCoreApplication::processEvents();
+                ASSERT_TRUE(window.grabWindow().save(capture + ".unsaved-series.png"));
+            }
+            ASSERT_TRUE(click(root.get(), "researchDraftBundleUse"));
+            EXPECT_EQ(
+                root->findChild<QObject *>("researchPlanMode")->property("currentIndex").toInt(),
+                4);
+            EXPECT_EQ(editor->property("batch").toBool(), batch);
+            EXPECT_EQ(editor->property("directory").toUrl(),
+                      QUrl::fromLocalFile(temporary.path() + "/portable # %"));
+        }
+        else
+        {
+            const auto input = batch ? gui_bundle::plan(temporary.path(), source) : source;
+            editor->setProperty("exportSource", QUrl::fromLocalFile(input));
+            editor->setProperty("exportParent", QUrl::fromLocalFile(temporary.path()));
+            root->findChild<QObject *>("researchBundleShowExport")->setProperty("checked", true);
+            root->findChild<QObject *>("researchBundleExportName")
+                ->setProperty("text", "portable # %");
+            ASSERT_TRUE(click(root.get(), "researchBundleExport"));
+            ASSERT_TRUE(gui_bundle::wait(controller));
+            ASSERT_EQ(controller.exitCode(), 0) << controller.status().toStdString();
+        }
         const auto relocated = temporary.path() + "/relocated # %";
         std::filesystem::rename((temporary.path() + "/portable # %").toStdString(),
                                 relocated.toStdString());
@@ -222,6 +301,59 @@ TEST(SimulatorResearchBundleQml, VerifiedBundleRunsOnLiveServerThroughTypedContr
         EXPECT_EQ(document.value("input_bundle").toObject().value("manifest_sha256").toString(),
                   digest);
         EXPECT_EQ(controller.bundleInfo().value("manifest_sha256").toString(), digest);
+        EXPECT_TRUE(warnings.messages().isEmpty()) << warnings.messages().join('\n').toStdString();
+    }
+}
+
+TEST(SimulatorResearchBundleQml, CurrentDraftExportsOfflineAndOpensTypedUrlWithoutAJsonFile)
+{
+    for (const bool batch : {false, true})
+    {
+        QmlWarningCapture warnings;
+        QTemporaryDir temporary;
+        ASSERT_TRUE(temporary.isValid());
+        ResearchController controller;
+        QQmlApplicationEngine engine;
+        setup(engine, controller);
+        QQmlComponent component(&engine, QUrl("qrc:/ResearchPanel.qml"));
+        std::unique_ptr<QObject> root(component.create());
+        ASSERT_TRUE(root) << component.errorString().toStdString();
+        root->setProperty("width", 1040);
+        root->findChild<QObject *>("researchPlanMode")->setProperty("currentIndex", batch ? 3 : 0);
+        if (batch)
+        {
+            const auto source = QUrl::fromLocalFile(gui_bundle::scenario(temporary.path()));
+            root->findChild<QObject *>("researchBatchEditor")
+                ->setProperty(
+                    "members",
+                    QVariantList{QVariantMap{{"id", "second"}, {"scenario", source.toString()}},
+                                 QVariantMap{{"id", "first"}, {"scenario", source.toString()}}});
+        }
+        auto *exporter = root->findChild<QObject *>("researchDraftBundleExport");
+        exporter->setProperty("parentDirectory", QUrl::fromLocalFile(temporary.path()));
+        root->findChild<QObject *>("researchDraftBundleExpand")->setProperty("checked", true);
+        root->findChild<QObject *>("researchDraftBundleName")->setProperty("text", "unsaved # %");
+        EXPECT_FALSE(controller.available());
+        ASSERT_TRUE(click(root.get(), "researchDraftBundleStart"));
+        ASSERT_TRUE(gui_bundle::wait(controller));
+        ASSERT_EQ(controller.exitCode(), 0) << controller.status().toStdString();
+        EXPECT_FALSE(std::filesystem::exists((temporary.path() + "/plan # %.json").toStdString()));
+        ASSERT_TRUE(click(root.get(), "researchDraftBundleUse"));
+        auto *editor = root->findChild<QObject *>("researchBundleEditor");
+        EXPECT_EQ(root->findChild<QObject *>("researchPlanMode")->property("currentIndex").toInt(),
+                  4);
+        EXPECT_EQ(editor->property("batch").toBool(), batch);
+        EXPECT_EQ(editor->property("directory").toUrl(),
+                  QUrl::fromLocalFile(temporary.path() + "/unsaved # %"));
+        if (batch)
+        {
+            EXPECT_EQ(
+                controller.bundleInfo().value("runs").toList()[0].toMap().value("id").toString(),
+                "second");
+        }
+        ASSERT_TRUE(click(root.get(), "researchBundleVerify"));
+        ASSERT_TRUE(gui_bundle::wait(controller));
+        EXPECT_EQ(controller.exitCode(), 0);
         EXPECT_TRUE(warnings.messages().isEmpty()) << warnings.messages().join('\n').toStdString();
     }
 }

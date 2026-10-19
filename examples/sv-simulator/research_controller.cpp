@@ -46,6 +46,16 @@ auto key(const sv::client::Options &options)
     return std::make_tuple(endpoint.transport, endpoint.directory, endpoint.host,
                            endpoint.control_port, endpoint.data_port, options.timeout_ms);
 }
+
+QString bundleDestination(const QUrl &parent, const QString &name)
+{
+    if (name.trimmed().isEmpty() || name.trimmed() != name || name == "." || name == ".." ||
+        name.contains('/') || name.contains('\\') || name.contains(QChar(0)))
+    {
+        throw std::invalid_argument("Укажите имя новой папки без разделителей пути");
+    }
+    return QDir(researchLocalPath(parent)).filePath(name);
+}
 } // namespace
 
 ResearchController::ResearchController(QObject *parent)
@@ -203,13 +213,46 @@ bool ResearchController::exportBundle(const QUrl &scenario, const QUrl &parent, 
     }
     try
     {
-        if (name.trimmed().isEmpty() || name.trimmed() != name || name == "." || name == ".." ||
-            name.contains('/') || name.contains('\\') || name.contains(QChar(0)))
-        {
-            throw std::invalid_argument("Укажите имя новой папки без разделителей пути");
-        }
-        const auto destination = QDir(researchLocalPath(parent)).filePath(name);
+        const auto destination = bundleDestination(parent, name);
         return launch({}, researchLocalPath(scenario), destination, batch, BundleAction::Export);
+    }
+    catch (const std::exception &error)
+    {
+        return reject(QString::fromUtf8(error.what()));
+    }
+}
+
+bool ResearchController::exportDraftBundle(const QVariantMap &values, const QUrl &parent,
+                                           const QString &name, const QUrl &reference)
+{
+    if (impl_->busy)
+    {
+        return false;
+    }
+    try
+    {
+        const auto document =
+            researchDraft(values, reference.isEmpty() ? QString{} : researchLocalPath(reference));
+        return launch(document, QDir::currentPath(), bundleDestination(parent, name), false,
+                      BundleAction::Export);
+    }
+    catch (const std::exception &error)
+    {
+        return reject(QString::fromUtf8(error.what()));
+    }
+}
+
+bool ResearchController::exportBatchDraftBundle(const QVariantList &members, const QUrl &parent,
+                                                const QString &name)
+{
+    if (impl_->busy)
+    {
+        return false;
+    }
+    try
+    {
+        return launch(researchBatchDraft(members), QDir::currentPath(),
+                      bundleDestination(parent, name), true, BundleAction::Export);
     }
     catch (const std::exception &error)
     {
@@ -412,20 +455,35 @@ bool ResearchController::launch(std::optional<boost::json::object> document,
                     const std::filesystem::path output(directory);
                     if (bundle == BundleAction::Verify || bundle == BundleAction::Export)
                     {
-                        const auto receipt =
-                            bundle == BundleAction::Export
-                                ? (batch ? sv::research::export_batch_bundle(
+                        const auto receipt = [&]() -> boost::json::object
+                        {
+                            if (bundle == BundleAction::Verify)
+                            {
+                                return batch ? sv::research::BatchBundle(scenarioFile.toStdString(),
+                                                                         &impl_->progress.cancel)
+                                                   .summary()
+                                             : sv::research::ScenarioBundle(
+                                                   scenarioFile.toStdString(),
+                                                   &impl_->progress.cancel)
+                                                   .summary();
+                            }
+                            if (document)
+                            {
+                                const auto text = boost::json::serialize(*document) + '\n';
+                                return batch ? sv::research::export_batch_bundle(
+                                                   text, scenarioFile.toStdString(), output,
+                                                   &impl_->progress.cancel)
+                                             : sv::research::export_scenario_bundle(
+                                                   text, scenarioFile.toStdString(), output,
+                                                   &impl_->progress.cancel);
+                            }
+                            return batch ? sv::research::export_batch_bundle(
                                                scenarioFile.toStdString(), output,
                                                &impl_->progress.cancel)
                                          : sv::research::export_scenario_bundle(
                                                scenarioFile.toStdString(), output,
-                                               &impl_->progress.cancel))
-                                : (batch ? sv::research::BatchBundle(scenarioFile.toStdString(),
-                                                                     &impl_->progress.cancel)
-                                               .summary()
-                                         : sv::research::ScenarioBundle(scenarioFile.toStdString(),
-                                                                        &impl_->progress.cancel)
-                                               .summary());
+                                               &impl_->progress.cancel);
+                        }();
                         bundleInfo = QJsonDocument::fromJson(
                                          QByteArray::fromStdString(boost::json::serialize(receipt)))
                                          .toVariant()
@@ -610,6 +668,11 @@ bool ResearchController::launch(std::optional<boost::json::object> document,
                 catch (const std::exception &error)
                 {
                     status = "Ошибка подготовки/исполнения: " + QString::fromUtf8(error.what());
+                }
+                if (bundleInfo.contains("directory"))
+                {
+                    bundleInfo["directoryUrl"] =
+                        QUrl::fromLocalFile(bundleInfo.value("directory").toString());
                 }
                 QMetaObject::invokeMethod(
                     this,

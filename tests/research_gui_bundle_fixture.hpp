@@ -20,6 +20,18 @@ inline bool wait(ResearchController &controller)
     return !controller.busy();
 }
 
+inline QVariantMap values()
+{
+    return {{"modes", QStringList{"edge_feather"}},
+            {"frames", 1},
+            {"warmup", 0},
+            {"repeats", 1},
+            {"seed", 17},
+            {"boundary", "both"},
+            {"pyramid_levels", 3},
+            {"seam_solver", "binary_pairs"}};
+}
+
 inline QString scenario(const QString &root)
 {
     const auto file = root + "/scenario # %.json";

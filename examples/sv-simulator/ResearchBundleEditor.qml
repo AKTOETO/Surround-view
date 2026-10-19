@@ -16,6 +16,10 @@ Column {
         directory = "";
         exportSource = "";
     }
+    function selectBundle(folder, forBatch) {
+        bundleKind.currentIndex = forBatch ? 1 : 0;
+        directory = folder;
+    }
     spacing: 10
 
     Loader {
