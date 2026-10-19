@@ -10,6 +10,12 @@ Column {
     property url exportSource: ""
     property url exportParent: ""
     property bool choosingParent: false
+    readonly property bool batch: bundleKind.currentIndex === 1
+    readonly property bool receiptBatch: controller.bundleInfo.policy === "batch_bundle_v1"
+    onBatchChanged: {
+        directory = "";
+        exportSource = "";
+    }
     spacing: 10
 
     Loader {
@@ -25,6 +31,14 @@ Column {
                     editor.directory = folder;
             });
         }
+    }
+
+    Label { text: "Тип переносимого набора" }
+    ComboBox {
+        id: bundleKind
+        objectName: "researchBundleKind"
+        width: parent.width
+        model: ["Одиночный сценарий", "Серия одной серверной записи"]
     }
 
     GroupBox {
@@ -54,7 +68,7 @@ Column {
                 objectName: "researchBundleVerify"
                 text: "Проверить без сервера"
                 enabled: editor.directory.toString().length > 0 && !editor.controller.busy
-                onClicked: editor.controller.verifyBundle(editor.directory)
+                onClicked: editor.controller.verifyBundle(editor.directory, editor.batch)
             }
             Label {
                 Layout.fillWidth: true
@@ -67,7 +81,7 @@ Column {
     CheckBox {
         id: showExport
         objectName: "researchBundleShowExport"
-        text: "Экспортировать сохранённый сценарий"
+        text: editor.batch ? "Экспортировать сохранённый batch-план" : "Экспортировать сохранённый сценарий"
     }
 
     GroupBox {
@@ -83,11 +97,11 @@ Column {
                     readOnly: true
                     selectByMouse: true
                     text: editor.exportSource.toString()
-                    placeholderText: "Сохранённый сценарий не выбран"
+                    placeholderText: editor.batch ? "Batch-план не выбран" : "Сохранённый сценарий не выбран"
                 }
                 Button {
-                    text: "Сценарий…"
-                    onClicked: files.item.open(false, false)
+                    text: editor.batch ? "Batch-план…" : "Сценарий…"
+                    onClicked: files.item.open(false, editor.batch)
                 }
             }
             RowLayout {
@@ -119,12 +133,12 @@ Column {
                 objectName: "researchBundleExport"
                 text: "Экспортировать без сервера"
                 enabled: !editor.controller.busy && editor.exportSource.toString().length > 0 && editor.exportParent.toString().length > 0 && exportName.text.trim().length > 0
-                onClicked: editor.controller.exportBundle(editor.exportSource, editor.exportParent, exportName.text)
+                onClicked: editor.controller.exportBundle(editor.exportSource, editor.exportParent, exportName.text, editor.batch)
             }
             Label {
                 Layout.fillWidth: true
                 wrapMode: Text.Wrap
-                text: "Экспортируется выбранный файл, а не текущая форма. Relative reference читается от папки сценария. Существующая папка не перезаписывается. При ошибке новая неполная папка может остаться."
+                text: editor.batch ? "Экспортируется сохранённый план из 1–8 сценариев. Все references проверяются до создания папки. Используется одна запись сервера. Существующая папка не перезаписывается; при ошибке новая папка может остаться неполной." : "Экспортируется выбранный файл, а не текущая форма. Relative reference читается от папки сценария. Существующая папка не перезаписывается. При ошибке новая неполная папка может остаться."
             }
         }
     }
@@ -140,7 +154,16 @@ Column {
                 objectName: "researchBundleReceipt"
                 width: parent.width
                 wrapMode: Text.WrapAnywhere
-                text: "Папка: " + (editor.controller.bundleInfo.directory || "") + "\nФайлов: " + (editor.controller.bundleInfo.files || 0) + "\nManifest SHA256: " + (editor.controller.bundleInfo.manifest_sha256 || "")
+                text: (editor.receiptBatch ? "Серия одной записи" : "Одиночный сценарий") + "\nПапка: " + (editor.controller.bundleInfo.directory || "") + (editor.receiptBatch ? "\nСценариев: " + (editor.controller.bundleInfo.runs || []).length + " · Trials: " + editor.controller.bundleInfo.trials : "\nФайлов: " + (editor.controller.bundleInfo.files || 0)) + "\nManifest SHA256: " + (editor.controller.bundleInfo.manifest_sha256 || "")
+            }
+            Label {
+                objectName: "researchBundleMembers"
+                width: parent.width
+                visible: editor.receiptBatch
+                wrapMode: Text.WrapAnywhere
+                text: (editor.controller.bundleInfo.runs || []).map(function(run, index) {
+                    return (index + 1) + ". " + run.id + " · trials: " + run.trials;
+                }).join("\n")
             }
             Label {
                 width: parent.width
