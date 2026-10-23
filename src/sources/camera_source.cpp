@@ -69,7 +69,7 @@ class CameraFrameSource : public FrameSource
         event.request_id = request_id;
 
         if (action == SourceAction::Step || action == SourceAction::ReplayReset ||
-            pending_events_.size() >= queue_capacity)
+            pending_controls_ >= control_capacity)
         {
             return false;
         }
@@ -84,6 +84,7 @@ class CameraFrameSource : public FrameSource
             event.paused = false;
         }
         pending_events_.push_back(event);
+        ++pending_controls_;
         return true;
     }
 
@@ -97,6 +98,8 @@ class CameraFrameSource : public FrameSource
             result.push_back(std::move(pending_events_.front()));
             pending_events_.pop_front();
         }
+        queued_frames_.fill(0);
+        pending_frames_ = pending_statuses_ = pending_controls_ = 0;
         return result;
     }
 
@@ -112,7 +115,7 @@ class CameraFrameSource : public FrameSource
         s.decoded = decoded_count_.load();
         s.received = received_count_.load();
         s.dropped = dropped_count_.load();
-        s.queued_batches = pending_events_.size();
+        s.queued_batches = pending_frames_;
         s.camera_diagnostics = diagnostics_;
         const auto session = timing_.get();
         for (size_t id = 0; id < 4; ++id)
@@ -438,24 +441,27 @@ class CameraFrameSource : public FrameSource
                     }
                     SourceEvent ev;
                     ev.kind = SourceEvent::Kind::Frames;
+                    ev.camera_id = camera_id;
                     ev.batch_id = ++batch_counter_;
                     ev.paused = false;
                     ev.frames[camera_id] = frame;
-                    if (pending_events_.size() >= queue_capacity)
+                    if (queued_frames_[camera_id] >= size_t(config_.queue_size))
                     {
                         const auto oldest_frame =
                             std::find_if(pending_events_.begin(), pending_events_.end(),
-                                         [](const SourceEvent &item)
-                                         { return item.kind == SourceEvent::Kind::Frames; });
-                        if (oldest_frame == pending_events_.end())
-                        {
-                            dropped_count_++;
-                            continue;
-                        }
+                                         [camera_id](const SourceEvent &item)
+                                         {
+                                             return item.kind == SourceEvent::Kind::Frames &&
+                                                    item.camera_id == camera_id;
+                                         });
                         pending_events_.erase(oldest_frame);
+                        --queued_frames_[camera_id];
+                        --pending_frames_;
                         dropped_count_++;
                     }
                     pending_events_.push_back(std::move(ev));
+                    ++queued_frames_[camera_id];
+                    ++pending_frames_;
                     decoded_count_++;
                 }
             }
@@ -551,26 +557,16 @@ class CameraFrameSource : public FrameSource
         event.kind = SourceEvent::Kind::Status;
         event.camera_id = camera_id;
         event.reason = status;
-        if (pending_events_.size() >= queue_capacity)
+        if (pending_statuses_ >= status_capacity)
         {
-            const auto oldest_frame = std::find_if(
-                pending_events_.begin(), pending_events_.end(),
-                [](const SourceEvent &item) { return item.kind == SourceEvent::Kind::Frames; });
-            if (oldest_frame != pending_events_.end())
-            {
-                pending_events_.erase(oldest_frame);
-                dropped_count_++;
-            }
-            else
-            {
-                return;
-            }
+            return;
         }
         pending_events_.push_back(std::move(event));
+        ++pending_statuses_;
         last_status = status;
     }
 
-    static constexpr size_t queue_capacity = 64;
+    static constexpr size_t control_capacity = 64, status_capacity = 16;
     Config config_;
     SourceTimingGate timing_;
     CameraDiagnosticsSet diagnostics_;
@@ -590,6 +586,8 @@ class CameraFrameSource : public FrameSource
     std::array<std::unique_ptr<CameraCapture>, 4> captures_;
     std::vector<std::thread> workers_;
     std::deque<SourceEvent> pending_events_;
+    std::array<size_t, 4> queued_frames_{};
+    size_t pending_frames_ = 0, pending_statuses_ = 0, pending_controls_ = 0;
 };
 } // namespace
 
