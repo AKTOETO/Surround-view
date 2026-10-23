@@ -1252,3 +1252,33 @@ end note
 ```
 
 *Рисунок RR.29 — запись сбоя независима от selected successful frame, но не заменяет worker trace.*
+
+## Конкурентная остановка источников
+
+Replay/socket следуют тому же принципу сериализованного join, что и camera backend.
+Mutex wait predicates освобождается до ожидания worker. [[engineering/SOURCE_LIFECYCLE]].
+
+```plantuml
+@startuml
+participant "Caller A" as A
+participant "Caller B" as B
+participant "Shutdown mutex" as Shutdown
+participant "Source mutex / CV" as Source
+participant Worker
+A -> Shutdown: lock
+A -> Source: lock; stopped=true; unlock
+A -> Source: notify (replay)
+B -> Shutdown: lock (wait)
+A -> Worker: join
+Worker -> Source: Wake / observe stop
+Worker -> Worker: Finish current call; skip next load / publication
+Worker --> A: Exit; join completes
+A -> A: Socket channels/listeners/path cleanup
+A -> Shutdown: unlock
+Shutdown --> B: lock acquired
+B -> B: Worker already joined; idempotent cleanup
+B -> Shutdown: unlock
+@enduml
+```
+
+*Рисунок RR.30 — второй stop ожидает завершения первого, а source mutex не удерживается во время join.*

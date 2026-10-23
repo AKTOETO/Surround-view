@@ -1648,3 +1648,9 @@ percentiles, CI или scientific acceptance. [[engineering/RESEARCH_REPORT_SERI
 Повторяющееся значение не означает новую ошибку; распределение задержек по нему не строится.
 Без telemetry measurements отсутствуют. Поля доступны через прежние telemetry API
 sv-client-lib и сохраняются в archive: [[engineering/SOURCE_TIMING#Последний неуспешный вызов камеры]].
+
+
+Повторная/конкурентная остановка camera, replay и socket sources ожидает завершения
+worker shutdown. Закрываются также producer connections с неполным сообщением; replay
+не начинает следующий camera load после наблюдённого stop. Уже заблокированный loader
+или V4L2 call не становится прерываемым: [[engineering/SOURCE_LIFECYCLE]].

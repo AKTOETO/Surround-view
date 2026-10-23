@@ -144,7 +144,7 @@ driver timeout/cancellation, restart отдельного worker после rele
 camera health/reconnect counters выполнены; вызовы OpenCV не стали прерываемыми.
 
 
-Camera source: stop guards на границах is_open/open/read и ожидание concurrent stop завершены,
+Camera source: stop guards на границах is_open/open/read и ожидание concurrent stop завершены. Replay/socket также сериализуют join/cleanup; replay CV notification и loader boundaries исправлены ([[engineering/SOURCE_LIFECYCLE]]),
 [[engineering/SOURCES#Остановка на границах camera backend]]. Остаётся ограничить сами
 блокирующие OpenCV/V4L2 calls; эти guards не закрывают bounded shutdown на физических камерах.
 

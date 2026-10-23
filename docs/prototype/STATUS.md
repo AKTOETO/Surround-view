@@ -1,5 +1,11 @@
 # Состояние прототипа и границы подтверждения
 
+23.10.2026: исправлена конкурентная остановка replay/socket: join/cleanup сериализованы,
+replay stopped синхронизирован с CV predicates, после blocked loader return не запускаются
+следующие camera loads и не публикуется отменённый batch. Socket request admission
+согласован со stop. Это lifecycle guards, не bounded cancellation зависшего backend.
+[[engineering/SOURCE_LIFECYCLE]], [[validation/SOURCE_SHUTDOWN]].
+
 23.10.2026: измерение последнего неуспешного backend call камеры реализовано при
 включённой telemetry: is_open/open/read/close, false/empty/OpenCV exception, session identity
 и epoch guards. SDK/archive/GUI сохраняют nullable state gauge без quantiles повторных

@@ -4042,3 +4042,71 @@ Mock seam проверяет false/empty/OpenCV exception для четырёх 
 failure tests и26/26 runtime/editor/telemetry tests;74 PlantUML-вставки корректны.
 Установленный SDK проверен внешним C++17 CMake consumer с configure/build/run exit0.
 Aurora/физические камеры этими проверками не квалифицированы.
+
+## 3.76. Согласованное завершение источников данных
+
+Серии опытов используют replay и socket producers, поэтому зависание при завершении
+прогона является инженерной проблемой воспроизводимости. Аудит lifecycle обнаружил,
+что их stop использовал atomic flag, но не сериализовал пару `joinable()/join()`.
+Два внешних callers могли одновременно обращаться к одному std::thread и выполнять
+cleanup. У camera backend отдельный shutdown mutex уже был реализован.
+
+Replay также менял stopped вне mutex condition variable. Notification могло произойти
+после проверки predicate, но до входа worker в wait. Исправление устанавливает stopped
+под mutex predicates и уведомляет после его освобождения. Shutdown mutex удерживается
+до завершения join/cleanup; source mutex во время join не удерживается, поскольку он
+нужен самому worker для завершения. Исходники: `src/sources/replay.cpp`, `socket.cpp`;
+контракт и ограничения: [[engineering/SOURCE_LIFECYCLE]].
+
+| Проблема | Исправление | Проверяемое поведение |
+|---|---|---|
+| Concurrent join | Отдельный shutdown mutex | Каждый stop возвращается после shutdown |
+| Replay CV notification race | Stopped под mutex predicates | Wait может наблюдать stop без потерянного notify |
+| Blocked loader вернулся после stop | Checks перед input и после loader | Следующие camera loads не запускаются |
+| Отменённый decode | Проверки перед advance/publish | Новый batch не добавляется в очередь |
+| Socket request/stop race | Admission/post под source mutex | После установленного stop новые requests отклонены |
+| Повторный cleanup | Сериализация и очищенный список paths | Replacement file после первого stop сохраняется |
+| Подмена пути при активном listener | lstat type/device/inode guard | Replacement file/symlink/socket не удаляется |
+
+```plantuml
+@startuml
+start
+:Внешний stop caller получает shutdown mutex;
+:Под source mutex установить stopped;
+:Освободить source mutex;
+:Replay notify / socket io_context.stop;
+:Ожидать join worker;
+:Socket close channels/listeners; cleanup paths;
+:Освободить shutdown mutex;
+:Конкурентный caller получает mutex\nи видит завершённый worker;
+stop
+@enduml
+```
+
+*Рисунок3.93 — lifecycle сериализует завершение, сохраняя доступ worker к source mutex.*
+
+Тест blocked loader одновременно запускает два stop и проверяет, что оба ждут возврата
+вызова. После освобождения выполняется ровно один loader call, а новый batch не появляется.
+Socket stress подключает producer, передаёт только prefix SV01 и запускает шесть stop;
+проверяются завершение callers, закрытие peer/listeners и повторный cleanup. Queued-control
+replay stress дополняет проверку порядка mutex. Данные и результаты:
+[[validation/SOURCE_SHUTDOWN]].
+
+Это checks на границах вызовов, не механизм прерывания зависшего decoder/driver. Уже
+выполняющийся loader/hash/OpenCV call может задержать stop; hard deadline и driver
+isolation остаются открытыми. Ранее опубликованные events могут оставаться в poll queue,
+а принятые до stop requests не обязаны получить ACK при shutdown. Владелец сохраняет
+объект до возврата всех callers; concurrent destruction не поддерживается.
+
+
+Unix cleanup теперь проверяет сохранённые при bind filesystem device/inode и тип socket.
+Замена пути во время работы listener не даёт оснований удалять новый filesystem object.
+Проверка best-effort: bind/lstat/unlink не атомарны относительно активной подмены,
+поэтому она не заменяет права родительского каталога. Четвёртый regression case отдельно
+проверяет regular file, symlink и новый socket до первого stop, затем destructor.
+Общий timeout полного client_transports harness увеличен150→240с после успешного
+прогона149,06с; производственные request/subprocess deadlines не изменялись.
+
+Первый integration run7/7 прошёл за181,89с; после дополнительного ownership guard
+финальные3/3 затронутых CTest прошли за20,62с, source suite60/60. Все76 PlantUML-вставок
+корректны. Это Linux lifecycle regression, не квалификация Aurora/физических драйверов.
