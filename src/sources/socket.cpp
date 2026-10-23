@@ -1,3 +1,4 @@
+#include "socket_message_deadline.hpp"
 #include "sv/protocol.hpp"
 #include "sv/source.hpp"
 #include <algorithm>
@@ -83,7 +84,7 @@ class SocketSource final : public FrameSource
         Socket socket;
         SocketSource &host;
         int id;
-        asio::steady_timer deadline;
+        SocketMessageDeadline<asio::steady_timer> deadline;
         Decoder decoder;
         std::array<unsigned char, 8192> bytes{};
         bool closed = false, hello = false;
@@ -130,17 +131,9 @@ class SocketSource final : public FrameSource
 
         void arm()
         {
-            deadline.expires_after(
-                std::chrono::milliseconds(host.config_.source.message_timeout_ms));
             auto self = shared_from_this();
-            deadline.async_wait(
-                [self](auto ec)
-                {
-                    if (!ec)
-                    {
-                        self->close("source_message_timeout", "message_timeout");
-                    }
-                });
+            deadline.arm(std::chrono::milliseconds(host.config_.source.message_timeout_ms),
+                         [self] { self->close("source_message_timeout", "message_timeout"); });
         }
 
         void start()

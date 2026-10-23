@@ -65,31 +65,38 @@ class SocketDiagnostics : public testing::Test
 class Producer
 {
     boost::asio::io_context io;
+    int camera_;
 
   public:
 
     boost::asio::local::stream_protocol::socket socket{io};
     std::string session;
 
-    explicit Producer(const sv::Config &config)
+    explicit Producer(const sv::Config &config, int camera = 0) : camera_(camera)
     {
         socket.connect(
-            boost::asio::local::stream_protocol::endpoint(config.source.cameras[0].path));
+            boost::asio::local::stream_protocol::endpoint(config.source.cameras[camera_].path));
         socket.non_blocking(true);
     }
 
-    void send(const sv::Message &message)
+    void send(const sv::Message &message, size_t fragment = 0)
     {
         const auto bytes = sv::encode(message);
-        boost::asio::write(socket, boost::asio::buffer(bytes));
+        if (fragment)
+        {
+            boost::asio::write(socket, boost::asio::buffer(bytes.data(), fragment));
+            std::this_thread::sleep_for(std::chrono::milliseconds(20));
+        }
+        boost::asio::write(socket,
+                           boost::asio::buffer(bytes.data() + fragment, bytes.size() - fragment));
     }
 
     void hello(const sv::Config &config)
     {
         send({1,
               {{"role", "producer"},
-               {"camera_id", 0},
-               {"calibration_id", config.cameras[0].calibration_id},
+               {"camera_id", camera_},
+               {"calibration_id", config.cameras[camera_].calibration_id},
                {"width", 2},
                {"height", 2},
                {"pixel_format", "RGB8"},
@@ -122,12 +129,12 @@ class Producer
         throw std::runtime_error("producer handshake timeout");
     }
 
-    void frame(const sv::Config &config, unsigned sequence)
+    void frame(const sv::Config &config, unsigned sequence, size_t fragment = 0)
     {
         send({10,
               {{"session_id", session},
-               {"camera_id", 0},
-               {"calibration_id", config.cameras[0].calibration_id},
+               {"camera_id", camera_},
+               {"calibration_id", config.cameras[camera_].calibration_id},
                {"width", 2},
                {"height", 2},
                {"stride_bytes", 6},
@@ -137,7 +144,8 @@ class Producer
                {"sequence_id", std::to_string(sequence)},
                {"source_timestamp_ns", std::to_string(sequence)},
                {"scenario_timestamp_ns", "0"}},
-              std::vector<unsigned char>(12, 10)});
+              std::vector<unsigned char>(12, 10)},
+             fragment);
     }
 };
 
@@ -360,4 +368,36 @@ TEST_F(SocketDiagnostics, DiagnosticsSurviveSaturatedStatusMailbox)
     const auto stats = source->stats();
     EXPECT_EQ(stats.socket_diagnostics->at(0).counters.rejected, 20U);
     EXPECT_EQ(stats.socket_diagnostics->at(0).connection.last_close_reason, "protocol_rejected");
+}
+
+TEST_F(SocketDiagnostics, CompletedFragmentsCancelDeadlineWhilePartialFrameTimesOutOnlyItsCamera)
+{
+    source.reset();
+    config.source.message_timeout_ms = 200;
+    source = sv::make_socket_source(config);
+    Producer camera0(config), camera1(config, 1);
+    camera0.hello(config);
+    camera1.hello(config);
+    for (unsigned sequence = 0; sequence < 4; ++sequence)
+    {
+        camera0.frame(config, sequence, sequence + 1);
+        wait([sequence](const auto &d) { return d.counters.received == sequence + 1; });
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(250));
+    auto stats = source->stats();
+    EXPECT_EQ(stats.socket_diagnostics->at(0).connection.state, "ready");
+    EXPECT_EQ(stats.socket_diagnostics->at(0).counters.timeouts, 0U);
+    EXPECT_EQ(stats.socket_diagnostics->at(1).connection.state, "ready");
+    const std::string partial = "SV";
+    boost::asio::write(camera0.socket, boost::asio::buffer(partial));
+    auto closed = wait([](const auto &d) { return d.counters.timeouts == 1; });
+    EXPECT_EQ(closed.connection.last_close_reason, "message_timeout");
+    EXPECT_EQ(source->stats().socket_diagnostics->at(1).counters.timeouts, 0U);
+    Producer recovered(config);
+    recovered.hello(config);
+    recovered.frame(config, 0);
+    const auto ready = wait([](const auto &d) { return d.counters.received == 5; });
+    EXPECT_EQ(ready.connection.state, "ready");
+    EXPECT_EQ(ready.counters.reconnects(), 1U);
+    EXPECT_EQ(ready.counters.timeouts, 1U);
 }
