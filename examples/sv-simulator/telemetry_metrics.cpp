@@ -20,6 +20,24 @@ QString automaticPropertiesText(const sv::CameraAutomaticProperties &automatic)
         .arg(automatic.buffer_count ? QString::number(*automatic.buffer_count) : "неизвестно");
 }
 
+const std::array<std::pair<const char *, const char *>, 6> socketMetrics{
+    {{"connected", "Producer подключён"},
+     {"received", "Producer принятые кадры"},
+     {"dropped", "Producer отброшенные кадры"},
+     {"reconnects", "Producer reconnect"},
+     {"timeouts", "Producer message timeout"},
+     {"rejected", "Producer protocol rejected"}}};
+
+std::array<uint64_t, 6> socketValues(const sv::SocketSourceDiagnostics &d)
+{
+    return {uint64_t(d.connection.state != "disconnected"),
+            d.counters.received,
+            d.counters.dropped,
+            d.counters.reconnects(),
+            d.counters.timeouts,
+            d.counters.rejected};
+}
+
 const std::array<std::pair<const char *, const char *>, 6> cameraMetrics{
     {{"open_attempts", "Попытки открытия"},
      {"read_failures", "Ошибки чтения"},
@@ -116,6 +134,20 @@ QVariantList TelemetryModel::sourceMetrics() const
                          "диагностику. Это не частота ошибок и не latency."}});
         }
     }
+    for (int camera = 0; camera < 4; ++camera)
+    {
+        for (const auto &entry : socketMetrics)
+        {
+            result.append(QVariantMap{
+                {"key", QString("socket_%1_%2").arg(camera).arg(entry.first)},
+                {"label",
+                 QString("Socket %1: %2").arg(camera).arg(QString::fromUtf8(entry.second))},
+                {"unit", "count"},
+                {"note", "Producer state/counters, независимо от selected frozen frame. Connected "
+                         "включает handshake; details различают ready/handshaking. Reconnect — "
+                         "новый валидированный HELLO после первого, не число reconnect попыток."}});
+        }
+    }
     return result;
 }
 
@@ -190,6 +222,19 @@ QVariantMap TelemetryModel::makePoint(const sv::client::TelemetrySample &sample,
                     : QVariant{};
         }
     }
+    for (size_t camera = 0; camera < 4; ++camera)
+    {
+        const auto values = sample.source.socket_diagnostics
+                                ? socketValues(sample.source.socket_diagnostics->at(camera))
+                                : std::array<uint64_t, 6>{};
+        for (size_t index = 0; index < socketMetrics.size(); ++index)
+        {
+            point[QString("socket_%1_%2").arg(camera).arg(socketMetrics[index].first)] =
+                sample.source.socket_diagnostics && values[index] <= (uint64_t(1) << 53)
+                    ? QVariant(double(values[index]))
+                    : QVariant{};
+        }
+    }
     point["render"] = point.value("render_wall"); // Preserve existing chart/summary contract.
     return point;
 }
@@ -246,6 +291,26 @@ QString TelemetryModel::sourceDetails() const
             .arg(sample.data_busy ? 1 : 0)
             .arg(QString::number(source.received), QString::number(source.decoded),
                  QString::number(source.dropped), QString::number(source.rejected));
+    if (source.socket_diagnostics)
+    {
+        for (size_t camera = 0; camera < 4; ++camera)
+        {
+            const auto &d = source.socket_diagnostics->at(camera);
+            details +=
+                QString("\nSocket %1: %2; session=%3; last close=%4; accepted=%5; refused=%6; "
+                        "handshakes=%7; closed=%8")
+                    .arg(camera)
+                    .arg(QString::fromStdString(d.connection.state))
+                    .arg(d.connection.session_id ? QString::fromStdString(*d.connection.session_id)
+                                                 : QString("—"))
+                    .arg(d.connection.last_close_reason
+                             ? QString::fromStdString(*d.connection.last_close_reason)
+                             : QString("—"))
+                    .arg(QString::number(d.counters.accepted), QString::number(d.counters.refused),
+                         QString::number(d.counters.handshakes),
+                         QString::number(d.counters.closed));
+        }
+    }
     if (source.camera_diagnostics)
     {
         for (size_t camera = 0; camera < 4; ++camera)

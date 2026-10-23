@@ -196,7 +196,7 @@ TEST(TelemetryUnit, DeliveryGaugesAndRecordAgeContinueForRepeatedFrames)
     EXPECT_TRUE(model.sourceDetails().contains(QString::number(UINT64_MAX)));
     model.clear();
     EXPECT_TRUE(model.sourceDetails().contains("Нет source"));
-    EXPECT_EQ(model.sourceMetrics().size(), 46);
+    EXPECT_EQ(model.sourceMetrics().size(), 70);
 }
 
 TEST(TelemetryUnit, NoRenderRecordProducesMissingFrameMetrics)
@@ -432,7 +432,7 @@ TEST(TelemetryUnit, CheckedCameraModeIsShownWithoutNewMetricChoices)
     EXPECT_TRUE(model.sourceDetails().contains("Automatic readback"));
     EXPECT_TRUE(model.sourceDetails().contains("buffers=64"));
     EXPECT_TRUE(model.sourceDetails().contains("open_attempt=" + QString::number(UINT64_MAX)));
-    EXPECT_EQ(model.sourceMetrics().size(), 46);
+    EXPECT_EQ(model.sourceMetrics().size(), 70);
 }
 
 TEST(TelemetryUnit, SelectedFrameCaptureIsDistinctFromCurrentCameraMode)
@@ -461,7 +461,7 @@ TEST(TelemetryUnit, SelectedFrameCaptureIsDistinctFromCurrentCameraMode)
     EXPECT_TRUE(details.contains("Selected Automatic readback"));
     EXPECT_TRUE(details.contains("buffers=8"));
     EXPECT_TRUE(details.contains("source_sequence=" + QString::number(UINT64_MAX)));
-    EXPECT_EQ(model.sourceMetrics().size(), 46);
+    EXPECT_EQ(model.sourceMetrics().size(), 70);
 }
 
 TEST(TelemetryUnit, CameraFailureLatencyIsLatestStateWithoutFreshRenderOrRepeatedQuantiles)
@@ -484,4 +484,32 @@ TEST(TelemetryUnit, CameraFailureLatencyIsLatestStateWithoutFreshRenderOrRepeate
     EXPECT_FALSE(summary.contains("p50"));
     EXPECT_TRUE(model.sourceDetails().contains("event=9"));
     EXPECT_TRUE(model.sourceDetails().contains("opencv_exception"));
+}
+
+TEST(TelemetryUnit, SocketProducerStateAndCountersRemainDistinctFromFrozenFrame)
+{
+    TelemetryModel model;
+    TelemetryModelTestAccess::catalog(model);
+    TelemetryModelTestAccess::batch(model, 1, 2, 0,
+                                    [](auto &sample)
+                                    {
+                                        sample.frame.reset();
+                                        if (sample.cursor == 2)
+                                        {
+                                            sample.source.socket_diagnostics =
+                                                sv::SocketSourceDiagnosticsSet{};
+                                            auto &camera = sample.source.socket_diagnostics->at(0);
+                                            camera.counters = {3, 4, 2, 3, 1, 1, UINT64_MAX, 5};
+                                            camera.connection.last_close_reason =
+                                                "peer_disconnected";
+                                        }
+                                    });
+    const auto before = model.points().first().toMap();
+    const auto after = model.points().last().toMap();
+    EXPECT_FALSE(before.value("socket_0_connected").isValid());
+    EXPECT_DOUBLE_EQ(after.value("socket_0_connected").toDouble(), 0);
+    EXPECT_DOUBLE_EQ(after.value("socket_0_reconnects").toDouble(), 1);
+    EXPECT_FALSE(after.value("socket_0_received").isValid()); // No binary64 rounding of UINT64_MAX.
+    EXPECT_TRUE(model.sourceDetails().contains("peer_disconnected"));
+    EXPECT_TRUE(model.sourceDetails().contains("handshakes=2"));
 }
