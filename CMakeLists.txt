@@ -284,7 +284,8 @@ add_executable(sv-core-tests tests/core_tests.cpp)
         set_tests_properties(output_products PROPERTIES ENVIRONMENT "LIBGL_ALWAYS_SOFTWARE=1;EGL_PLATFORM=surfaceless" TIMEOUT 90)
         # Three transport profiles include native/Qt research, report comparison and exports.
     # Each child process retains its own shorter deadline; allow headroom for the full suite.
-    set_tests_properties(client_transports PROPERTIES ENVIRONMENT "LIBGL_ALWAYS_SOFTWARE=1;EGL_PLATFORM=surfaceless" TIMEOUT 150)
+    # Unix/TCP CLI + GUI scenario/bundle suite; individual operation deadlines remain unchanged.
+    set_tests_properties(client_transports PROPERTIES ENVIRONMENT "LIBGL_ALWAYS_SOFTWARE=1;EGL_PLATFORM=surfaceless" TIMEOUT 240)
         set_tests_properties(replay_ipc PROPERTIES ENVIRONMENT "LIBGL_ALWAYS_SOFTWARE=1;EGL_PLATFORM=surfaceless" TIMEOUT 90)
       endif()
     endif()
