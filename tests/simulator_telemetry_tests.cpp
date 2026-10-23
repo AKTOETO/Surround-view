@@ -196,7 +196,7 @@ TEST(TelemetryUnit, DeliveryGaugesAndRecordAgeContinueForRepeatedFrames)
     EXPECT_TRUE(model.sourceDetails().contains(QString::number(UINT64_MAX)));
     model.clear();
     EXPECT_TRUE(model.sourceDetails().contains("Нет source"));
-    EXPECT_EQ(model.sourceMetrics().size(), 42);
+    EXPECT_EQ(model.sourceMetrics().size(), 46);
 }
 
 TEST(TelemetryUnit, NoRenderRecordProducesMissingFrameMetrics)
@@ -432,7 +432,7 @@ TEST(TelemetryUnit, CheckedCameraModeIsShownWithoutNewMetricChoices)
     EXPECT_TRUE(model.sourceDetails().contains("Automatic readback"));
     EXPECT_TRUE(model.sourceDetails().contains("buffers=64"));
     EXPECT_TRUE(model.sourceDetails().contains("open_attempt=" + QString::number(UINT64_MAX)));
-    EXPECT_EQ(model.sourceMetrics().size(), 42);
+    EXPECT_EQ(model.sourceMetrics().size(), 46);
 }
 
 TEST(TelemetryUnit, SelectedFrameCaptureIsDistinctFromCurrentCameraMode)
@@ -461,5 +461,27 @@ TEST(TelemetryUnit, SelectedFrameCaptureIsDistinctFromCurrentCameraMode)
     EXPECT_TRUE(details.contains("Selected Automatic readback"));
     EXPECT_TRUE(details.contains("buffers=8"));
     EXPECT_TRUE(details.contains("source_sequence=" + QString::number(UINT64_MAX)));
-    EXPECT_EQ(model.sourceMetrics().size(), 42);
+    EXPECT_EQ(model.sourceMetrics().size(), 46);
+}
+
+TEST(TelemetryUnit, CameraFailureLatencyIsLatestStateWithoutFreshRenderOrRepeatedQuantiles)
+{
+    TelemetryModel model;
+    TelemetryModelTestAccess::catalog(model);
+    TelemetryModelTestAccess::batch(model, 1, 2, 0,
+                                    [](auto &sample)
+                                    {
+                                        sample.frame.reset();
+                                        sample.source.camera_diagnostics =
+                                            sv::CameraDiagnosticsSet{};
+                                        sample.source.camera_diagnostics->at(1).latest_failure = {
+                                            1, 9, 100, 2000100, "read", "opencv_exception"};
+                                    });
+    EXPECT_DOUBLE_EQ(model.points().last().toMap().value("camera_1_failure_wall").toDouble(), 2);
+    EXPECT_FALSE(model.points().last().toMap().value("camera_0_failure_wall").isValid());
+    const auto summary = model.metricSummary("camera_1_failure_wall");
+    EXPECT_TRUE(summary.contains("Последний сбой"));
+    EXPECT_FALSE(summary.contains("p50"));
+    EXPECT_TRUE(model.sourceDetails().contains("event=9"));
+    EXPECT_TRUE(model.sourceDetails().contains("opencv_exception"));
 }

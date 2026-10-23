@@ -97,6 +97,13 @@ QVariantList TelemetryModel::sourceMetrics() const
     }
     for (int camera = 0; camera < 4; ++camera)
     {
+        result.append(QVariantMap{
+            {"key", QString("camera_%1_failure_wall").arg(camera)},
+            {"label", QString("Камера %1: последний неуспешный вызов").arg(camera)},
+            {"unit", "ms"},
+            {"note", "Wall time последнего завершённого сбоя backend в текущей telemetry epoch. "
+                     "Повтор точки не означает новую ошибку. Это не распределение всех сбоев и не "
+                     "timeout."}});
         for (const auto &entry : cameraMetrics)
         {
             result.append(QVariantMap{
@@ -167,6 +174,11 @@ QVariantMap TelemetryModel::makePoint(const sv::client::TelemetrySample &sample,
     }
     for (size_t camera = 0; camera < 4; ++camera)
     {
+        const auto *failure = sample.source.camera_diagnostics
+                                  ? &sample.source.camera_diagnostics->at(camera).latest_failure
+                                  : nullptr;
+        point[QString("camera_%1_failure_wall").arg(camera)] =
+            failure && *failure ? QVariant((*failure)->wall_ms()) : QVariant{};
         const auto values = sample.source.camera_diagnostics
                                 ? cameraValues((*sample.source.camera_diagnostics)[camera])
                                 : std::array<uint64_t, 6>{};
@@ -184,6 +196,15 @@ QVariantMap TelemetryModel::makePoint(const sv::client::TelemetrySample &sample,
 
 QString TelemetryModel::metricSummary(const QString &key) const
 {
+    if (key.endsWith("_failure_wall"))
+    {
+        const auto value = points_.empty() ? QVariant{} : points_.last().toMap().value(key);
+        return value.userType() == QMetaType::Double
+                   ? QString("Последний сбой: %1 ms; повтор snapshot не является новой ошибкой. "
+                             "Quantiles не вычисляются.")
+                         .arg(value.toDouble(), 0, 'g', 8)
+                   : QString("Нет неуспешных вызовов, измеренных в текущей telemetry epoch");
+    }
     std::vector<double> values;
     for (const auto &point : points_)
     {
@@ -235,6 +256,16 @@ QString TelemetryModel::sourceDetails() const
             {
                 details +=
                     QString(" %1=%2").arg(cameraMetrics[i].first).arg(QString::number(values[i]));
+            }
+            const auto &failure = source.camera_diagnostics->at(camera).latest_failure;
+            if (failure)
+            {
+                details +=
+                    QString("\nLast failure: %1 / %2 · %3 ms · event=%4 · epoch=%5")
+                        .arg(QString::fromStdString(failure->operation),
+                             QString::fromStdString(failure->outcome))
+                        .arg(failure->wall_ms(), 0, 'g', 8)
+                        .arg(QString::number(failure->event_id), QString::number(failure->epoch));
             }
             const auto &recovery = source.camera_diagnostics->at(camera).recovery;
             if (recovery)
