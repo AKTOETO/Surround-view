@@ -28,6 +28,7 @@ class ReplaySource final : public FrameSource
     std::string session_ = initial_session_;
     uint64_t reset_epoch_ = 0;
     mutable std::mutex mutex_;
+    std::mutex shutdown_mutex_;
     std::condition_variable wake_;
     std::deque<Request> requests_;
     std::deque<SourceEvent> events_;
@@ -42,6 +43,10 @@ class ReplaySource final : public FrameSource
     void publish(SourceEvent event)
     {
         std::unique_lock<std::mutex> lock(mutex_);
+        if (stopped_)
+        {
+            return;
+        }
         if (event.kind == SourceEvent::Kind::Frames)
         {
             if (batches_ == size_t(config_.queue_size))
@@ -76,10 +81,18 @@ class ReplaySource final : public FrameSource
         }
         for (int k = 0; k < 4; ++k)
         {
+            if (stopped_)
+            {
+                return {};
+            }
             if (!r.paths[k].empty() && cached_paths_[k] != r.paths[k])
             {
                 const auto load_start = timing ? now_ns() : 0;
                 auto image = loader_(r.paths[k]);
+                if (stopped_)
+                {
+                    return {};
+                }
                 const auto load_done = timing ? now_ns() : 0;
                 if (work)
                 {
@@ -158,6 +171,10 @@ class ReplaySource final : public FrameSource
         {
             const bool end = row + 1 == rows_.size();
             auto event = decode(row, sequence++, paused || (end && !loop_));
+            if (stopped_)
+            {
+                return;
+            }
             publish(std::move(event));
             row = end ? 0 : row + 1;
             if (end && !loop_)
@@ -322,7 +339,12 @@ class ReplaySource final : public FrameSource
 
     void stop() override
     {
-        stopped_ = true;
+        std::lock_guard<std::mutex> shutdown_lock(shutdown_mutex_);
+        {
+            // Use the same mutex as wait predicates: notification cannot precede wait entry.
+            std::lock_guard<std::mutex> lock(mutex_);
+            stopped_ = true;
+        }
         wake_.notify_all();
         if (worker_.joinable())
         {

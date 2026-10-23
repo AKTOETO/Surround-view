@@ -49,6 +49,8 @@ class FrameSource
     virtual bool request(SourceAction, uint64_t request_id) = 0;
     virtual std::vector<SourceEvent> poll() = 0;
     virtual SourceStats stats() const = 0;
+    // External callers may stop concurrently: every call waits for worker shutdown.
+    // Object lifetime must cover all calls. A blocked backend/loader may still delay shutdown.
     virtual void stop() = 0;
 
     virtual void set_timing_session(std::shared_ptr<const SourceTimingSession>) noexcept

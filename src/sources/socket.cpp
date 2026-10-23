@@ -6,6 +6,7 @@
 #include <boost/asio/generic/stream_protocol.hpp>
 #include <boost/asio/local/stream_protocol.hpp>
 #include <mutex>
+#include <sys/stat.h>
 #include <thread>
 
 namespace sv
@@ -23,9 +24,18 @@ class SocketSource final : public FrameSource
     std::array<std::unique_ptr<asio::local::stream_protocol::acceptor>, 4> unix_;
     std::array<std::unique_ptr<asio::ip::tcp::acceptor>, 4> tcp_;
     std::array<std::shared_ptr<Channel>, 4> channels_;
-    std::vector<std::filesystem::path> owned_paths_;
+
+    struct OwnedPath
+    {
+        std::filesystem::path path;
+        dev_t device;
+        ino_t inode;
+    };
+
+    std::vector<OwnedPath> owned_paths_;
     std::array<uint64_t, 4> sequences_{};
     mutable std::mutex mutex_;
+    std::mutex shutdown_mutex_;
     std::deque<SourceEvent> events_;
     size_t batches_ = 0, statuses_ = 0;
     std::array<size_t, 4> queued_{};
@@ -277,10 +287,15 @@ class SocketSource final : public FrameSource
 
     void cleanup_paths()
     {
-        for (const auto &path : owned_paths_)
+        for (const auto &owned : owned_paths_)
         {
-            std::error_code ignored;
-            std::filesystem::remove(path, ignored);
+            struct stat current;
+            if (::lstat(owned.path.c_str(), &current) == 0 && S_ISSOCK(current.st_mode) &&
+                current.st_dev == owned.device && current.st_ino == owned.inode)
+            {
+                std::error_code ignored;
+                std::filesystem::remove(owned.path, ignored);
+            }
         }
         owned_paths_.clear();
     }
@@ -306,7 +321,13 @@ class SocketSource final : public FrameSource
                     a = std::make_unique<asio::local::stream_protocol::acceptor>(io_);
                     a->open();
                     a->bind(asio::local::stream_protocol::endpoint(ep.path));
-                    owned_paths_.push_back(ep.path);
+                    struct stat identity;
+                    if (::lstat(ep.path.c_str(), &identity) != 0 || !S_ISSOCK(identity.st_mode))
+                    {
+                        throw std::runtime_error(
+                            "camera socket path ownership changed during bind");
+                    }
+                    owned_paths_.push_back({ep.path, identity.st_dev, identity.st_ino});
                     a->listen(2);
                 }
                 else
@@ -352,6 +373,8 @@ class SocketSource final : public FrameSource
 
     bool request(SourceAction action, uint64_t id) override
     {
+        // Linearize admission/post against the stop flag; post never invokes inline.
+        std::lock_guard<std::mutex> lock(mutex_);
         if (stopped_)
         {
             return false;
@@ -409,7 +432,13 @@ class SocketSource final : public FrameSource
 
     void stop() override
     {
-        if (!stopped_.exchange(true))
+        std::lock_guard<std::mutex> shutdown_lock(shutdown_mutex_);
+        bool first;
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            first = !stopped_.exchange(true);
+        }
+        if (first)
         {
             io_.stop();
         }
