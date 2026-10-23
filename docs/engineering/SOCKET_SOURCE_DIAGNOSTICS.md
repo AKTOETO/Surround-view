@@ -76,3 +76,20 @@ mailbox переполнен и часть trace events пропущена, те
 
 Проверки: [[validation/SOCKET_SOURCE_DIAGNOSTICS]]. Диаграмма:
 [[architecture/RESEARCH_RUNTIME#Состояние socket producer отдельно от кадра]], диплом §3.77.
+
+## Отмена deadline неполного сообщения
+
+`message_timeout_ms` ограничивает ожидание HELLO и сборку неполного сообщения;
+после полного HELLO/сообщения idle разрешён. Продолжение фрагментированного сообщения
+не продлевает его deadline. SV01, конфиг и публичный SDK не меняются.
+
+В `SocketMessageDeadline` каждый arm получает поколение. Callback проверяет совпадение
+поколения и armed; cancel сначала сбрасывает armed, затем отменяет native timer.
+Это необходимо, поскольку уже готовый successful timeout handler нельзя отозвать
+вызовом Asio cancel. Старый callback не закрывает соединение и не снимает новый deadline.
+Даже ошибка native cancel оставляет logical guard выключенным; это не гарантия удаления
+операции из очереди ОС. Состояние используется на source IO thread либо после его join.
+
+Если актуальный timeout callback выполняется первым, соединение закрывается как прежде.
+Это защита от устаревших callbacks, не hard real-time deadline. Частота прежней гонки
+и overhead guard не измерены. Проверки: [[validation/SOCKET_SOURCE_DIAGNOSTICS#Проверка отмены deadline]].

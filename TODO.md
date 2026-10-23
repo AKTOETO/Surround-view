@@ -1,5 +1,11 @@
 # Оставшиеся работы
 
+23.10.2026: socket message deadline защищён от устаревших ready callbacks после cancel/rearm.
+Поколение и armed guard сохраняют актуальный timeout; полный message разрешает idle,
+неполный frame по-прежнему ограничен общим deadline. Linux профильные CTest3/3,
+source GTest71/71. Это callback ordering regression, не hardware/real-time acceptance.
+[[engineering/SOCKET_SOURCE_DIAGNOSTICS#Отмена deadline неполного сообщения]].
+
 14.10.2026: формы reference height/local support/source occlusion/uncertainty реализованы в sv-simulator с server catalog, omission при выключении и cleanup зависимых полей при смене visibility mode. Исправлены QML signal parameters и DriveWorld FINAL left/right, масштаб/углы/Esc. Полная сборка; selected CTest5/5 за29.86s, world-smoke exit0 без сообщений. [[engineering/CONFIG_SERVICE]].
 
 14.10.2026: sv-simulator получил формы ConfigService (fusion/required geometry), validate, explicit runtime/save и process-scoped operation reconciliation. Без ввода JSON; changed groups, immutable retry intent, restart guard и requested/active/persisted comparison. Полная сборка; selected CTest5/5 за29.91s,15 live output cases, native Unix/TCP adapter и offscreen QML checks. SV_SIMULATOR отделён от touchscreen/Aurora. [[engineering/CONFIG_SERVICE]].

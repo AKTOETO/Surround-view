@@ -32,3 +32,26 @@ SDK установлен в /tmp/sv-socket-diagnostics-install. Отдельны
 socket_source_diagnostics.hpp, вычисляет reconnects, сериализует4 snapshots и линкует
 SDK telemetry parser. Configure/build/run успешны, exit0. Это host installation check,
 не Aurora RPM/ABI или физическая camera qualification.
+
+## Проверка отмены deadline
+
+23.10.2026: исправлена обработка уже готового timeout callback после cancel/rearm.
+Четыре GTest в `tests/socket_deadline_tests.cpp` используют детерминированную очередь
+таймера: successful callback после cancel; старые successful/aborted callbacks после
+rearm; destruction/failed rearm; ошибка native cancel. Проверяется также срабатывание
+нового актуального deadline. Это воспроизведение порядка callbacks, а не измерение
+частоты гонки в production или на конкретной версии Boost.
+
+Настоящий Unix socket case в `tests/socket_diagnostics_tests.cpp` передаёт четыре
+фрагментированных кадра, проверяет idle дольше timeout после полного сообщения,
+затем timeout неполного кадра, независимость соседней камеры и reconnect с новым HELLO.
+Реальный socket test дополняет mock; он не форсирует очередь ready callbacks.
+
+Linux build успешен. Финальный профильный прогон:
+`ctest --test-dir build -R '^(sources|camera_sources|source_work_timing)$' --output-on-failure -j1`
+— 3/3 за19,85с, source GTest71/71 (включая четыре deadline cases и новый socket case).
+Прямой запуск SocketDeadline.* также4/4. Полный69-test прогон выше относится к предыдущей
+версии; в этой проверке весь CTest повторно не запускался. Hardware/Aurora и overhead
+не проверены; протокол и публичный SDK не изменены.
+
+Все80 PlantUML-вставок в архитектуре и главе3 прошли syntax check; git diff --check успешен.

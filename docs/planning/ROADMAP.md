@@ -1,5 +1,11 @@
 # Подробный план реализации
 
+23.10.2026: socket message deadline защищён от устаревших ready callbacks после cancel/rearm.
+Поколение и armed guard сохраняют актуальный timeout; полный message разрешает idle,
+неполный frame по-прежнему ограничен общим deadline. Linux профильные CTest3/3,
+source GTest71/71. Это callback ordering regression, не hardware/real-time acceptance.
+[[engineering/SOCKET_SOURCE_DIAGNOSTICS#Отмена deadline неполного сообщения]].
+
 23.10.2026: per-camera socket producer diagnostics реализованы в backend/SDK/archive/GUI:
 connection state/session, accepted/refused/handshakes/closed, rejected/timeouts/received/drop.
 Текущий producer отделён от selected frozen frame; counters сохраняются при потере status

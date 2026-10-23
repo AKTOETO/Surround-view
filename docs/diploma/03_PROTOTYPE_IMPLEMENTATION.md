@@ -4180,3 +4180,60 @@ harness проверяет четыре producer sessions и восстанов�
 telemetry27/27. Проверены78 PlantUML-вставок и внешний установленный C++17 SDK consumer
 (configure/build/run exit0). На Авроре и физическом capture backend эта новая диагностика
 этим прогоном не квалифицирована.
+
+
+## 3.78. Защита от устаревшего timeout виртуальной камеры
+
+При асинхронном чтении отмена таймера не всегда означает отсутствие его callback:
+если срок уже истёк, успешный handler может ожидать выполнения в очереди. В прежнем
+коде он мог закрыть producer после того, как read handler уже завершил сообщение
+или начал ждать следующее. Это дефект порядка обработки событий, который искажает
+также счётчик timeouts и вызывает ненужный reconnect.
+
+Внутренний `SocketMessageDeadline<Timer>` хранит поколение и признак armed. Каждый
+arm увеличивает поколение; cancel логически отключает обработку до native cancel.
+Handler действует только при совпадении поколения и armed. Shared state живёт до
+уничтожения callback, а операции выполняются на source IO thread либо после join.
+Private helper не меняет публичную библиотеку, формат сообщений и конфигурацию.
+
+| Событие | Результат |
+|---|---|
+| Полное сообщение обработано до старого timeout callback | Callback игнорируется |
+| Новый deadline запущен до доставки старого callback | Старый callback не меняет новый deadline |
+| Актуальный timeout выполнен первым | Соединение закрывается с message_timeout |
+| Сообщение продолжается фрагментами | Исходный deadline не продлевается |
+| HELLO/сообщение завершено, новых данных нет | Idle разрешён |
+
+```plantuml
+@startuml
+start
+:Timeout callback delivered;
+if (armed and generation matches?) then (yes)
+  :armed = false;
+  if (successful expiry?) then (yes)
+    :Close this producer channel;
+  else (aborted/error)
+    :No timeout close;
+  endif
+else (no)
+  :Ignore stale callback;
+endif
+stop
+@enduml
+```
+
+*Рисунок3.95 — условие применения timeout к текущему незавершённому сообщению.*
+
+Четыре детерминированных GTest воспроизводят already-ready success, operation_aborted,
+rearm, destruction и ошибки setup/cancel. Отдельный настоящий Unix socket case проверяет
+фрагментированные кадры, idle, timeout неполного кадра, соседнюю камеру и reconnect.
+Linux build успешен; профильный CTest3/3 за19,85с, source suite71/71. Это проверка
+реализации lifecycle, а не новое сравнение fusion-алгоритмов. Полный69-test прогон §3.77
+относится к предыдущей версии; текущий прогон ограничен затронутыми источниками.
+
+Защита не обеспечивает hard real-time: если актуальный callback выполняется первым,
+он штатно закрывает соединение. Ошибка native cancel не отменяет logical invalidation,
+но удаление операции из очереди ОС при такой ошибке не гарантируется. Частота прежней
+гонки, стоимость guard и поведение аппаратной Авроры этим прогоном не измерены.
+Контракт и воспроизводимые проверки: [[engineering/SOCKET_SOURCE_DIAGNOSTICS]],
+[[validation/SOCKET_SOURCE_DIAGNOSTICS]].

@@ -1313,3 +1313,35 @@ end note
 ```
 
 *Рисунок RR.31 — snapshot описывает producer lifecycle, а не пригодность выбранного кадра.*
+
+
+## Поколения deadline producer
+
+Private `SocketMessageDeadline` действует на одном source IO thread. Guard не меняет
+SV01 и timeout policy; [[engineering/SOCKET_SOURCE_DIAGNOSTICS#Отмена deadline неполного сообщения]].
+
+```plantuml
+@startuml
+participant "Read handler" as Read
+participant "Deadline guard" as Guard
+participant "Asio ready queue" as Queue
+participant "Camera channel" as Channel
+Read -> Guard: arm g1
+Guard -> Queue: async_wait g1
+Queue -> Queue: g1 expires; success callback ready
+Read -> Guard: complete message; cancel
+Guard -> Guard: armed = false
+Read -> Guard: next partial message; arm g2
+Queue -> Guard: deliver old g1 success
+Guard -> Guard: g1 != g2; ignore
+Queue -> Guard: deliver current g2 success
+Guard -> Guard: armed and generation match
+Guard -> Channel: close(message_timeout)
+note over Read,Channel
+If a current timeout executes first, normal close applies.
+Continuation fragments do not reset the message budget.
+end note
+@enduml
+```
+
+*Рисунок RR.32 — устаревший callback не закрывает канал и не снимает новый deadline.*
