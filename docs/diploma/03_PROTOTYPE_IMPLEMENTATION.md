@@ -4237,3 +4237,80 @@ Linux build успешен; профильный CTest3/3 за19,85с, source su
 гонки, стоимость guard и поведение аппаратной Авроры этим прогоном не измерены.
 Контракт и воспроизводимые проверки: [[engineering/SOCKET_SOURCE_DIAGNOSTICS]],
 [[validation/SOCKET_SOURCE_DIAGNOSTICS]].
+
+
+## 3.79. Изоляция буферов аппаратных камер
+
+В camera backend была обнаружена общая очередь из64 событий, объединявшая кадры,
+статусы и подтверждения команд. Значение `runtime.input_queue_per_camera` не применялось
+к capture workers. При большой разнице скоростей быстрая камера могла удалить старый
+кадр медленной камеры, а заполненные frames/statuses приводили к отказу в приёме команд.
+Для исследования с разными FPS это создаёт дополнительный источник потерь, который
+нельзя приписывать качеству алгоритма сшивки.
+
+Очередь разделена логически: каждая камера хранит до Q кадров, статусы имеют quota16,
+control completions —64. Сохраняется общий deque и порядок оставшихся событий, но
+при переполнении camera i удаляется только старейший кадр i. Frame event содержит
+явный camera_id. Все изменения quotas и poll выполняются под source mutex. Полный
+poll очищает quotas; rejected control не меняет состояние pause.
+
+| Сценарий | Прежнее поведение | Новое поведение |
+|---|---|---|
+| Быстрая камера заполняет mailbox | Может вытеснить медленного соседа | Заменяет только собственный старейший frame |
+| Много status events | Могут вытеснять frames и занимать command slots | Status budget16, кадры сохраняются |
+| Заполнены frame queues | Команда могла не поместиться | Независимые64 control completions |
+| Camera depth | Все events, включая status/control | Только ожидающие frames |
+
+```plantuml
+@startuml
+rectangle "Capture workers 0..3" as Workers
+rectangle "CameraFrameSource mailbox" {
+  queue "Camera 0: Q frames" as Q0
+  queue "Camera 1: Q frames" as Q1
+  queue "Camera 2: Q frames" as Q2
+  queue "Camera 3: Q frames" as Q3
+  queue "Status: 16" as Status
+  queue "Control completions: 64" as Control
+}
+rectangle "poll / GL owner / Synchronizer" as Consumer
+Workers --> Q0
+Workers --> Q1
+Workers --> Q2
+Workers --> Q3
+Workers --> Status
+Q0 --> Consumer
+Q1 --> Consumer
+Q2 --> Consumer
+Q3 --> Consumer
+Status --> Consumer
+Control --> Consumer
+note bottom of Q0
+Logical quotas in one ordered deque.
+Overflow replaces only the same camera's oldest frame.
+end note
+@enduml
+```
+
+*Рисунок3.96 — независимые бюджеты событий аппаратного источника кадров.*
+
+Для разных разрешений ожидающая RGB payload ограничена
+\(M_{frames} \le Q\sum_{i=0}^{3}3W_iH_i\) байт, Q1…16.
+Общее количество событий ограничено4Q+80. Эта оценка не включает driver buffers,
+текущие Mat/RGB, Synchronizer и GPU allocations и не является измерением RSS.
+На wire поля не изменены, но исторические camera depth observations включали статусы
+и команды: их нельзя напрямую сравнивать с новым frame-only depth.
+
+В MOCK-тесте медленная камера сначала даёт один кадр, затем быстрая —Q+69 без poll.
+Проверяется сохранение соседнего кадра, последних Q sequences и ровно69 drops. Дополнительно
+заполняются все четыре очереди, control quota и status quota; после poll проверяется
+восстановление admission. Следующий gated read означает завершение предыдущей обработки,
+поэтому тест не зависит от предполагаемой sensor cadence. Реальный OpenCV conversion
+и копирование owned Image остаются в проверяемом пути.
+
+Первоначальные три regression cases падали на прежней реализации. После исправления
+расширенный набор9/9 прошёл; Linux build успешна, финальный профильный CTest5/5 за20,61с,
+source suite80/80. Контракт: [[engineering/SOURCES#Независимые очереди аппаратных камер]],
+проверки: [[validation/SOURCES_SMOKE#Изоляция очередей аппаратных камер]].
+Это проверка буферизации, а не подтверждение sensor synchronisation или качества fusion.
+Mixed source, hot source configuration, per-camera physical drop counters и квалификация
+блокирующих V4L2 calls остаются отдельными задачами.

@@ -1345,3 +1345,41 @@ end note
 ```
 
 *Рисунок RR.32 — устаревший callback не закрывает канал и не снимает новый deadline.*
+
+
+## Изоляция camera mailbox
+
+Для camera backend startup Q задаёт независимые per-camera quotas. Общий deque
+сохраняет порядок оставшихся frames/status/control; все изменения защищены source mutex.
+[[engineering/SOURCES#Независимые очереди аппаратных камер]].
+
+```plantuml
+@startuml
+participant "Camera worker i" as Worker
+participant "Source mutex / mailbox" as Mailbox
+participant "Control request" as Control
+participant "GL thread" as GL
+Worker -> Mailbox: Publish valid RGB frame i
+alt i already holds Q frames
+  Mailbox -> Mailbox: Remove oldest frame of i; dropped++
+end
+Mailbox -> Mailbox: Append frame; count i++; frame depth++
+Worker -> Mailbox: Publish status
+alt Status count below 16
+  Mailbox -> Mailbox: Append status; status count++
+else Full
+  Mailbox -> Mailbox: Skip status; keep all frames
+end
+Control -> Mailbox: Pause / Resume
+alt Control count below 64
+  Mailbox -> Mailbox: Set pause state; append completion
+else Full
+  Mailbox --> Control: Reject without changing pause
+end
+GL -> Mailbox: poll
+Mailbox --> GL: Remaining events in order
+Mailbox -> Mailbox: Clear all quotas
+@enduml
+```
+
+*Рисунок RR.33 — кадровая квота каждой камеры отделена от status и control budgets.*

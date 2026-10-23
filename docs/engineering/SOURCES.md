@@ -25,7 +25,7 @@ Linux-профиль **0.6.0**. Реализован C++ `FrameSource` с неб
 }
 ```
 
-Каждый путь должен быть уникальным. Сервер открывает все четыре потока независимо, запрашивает разрешение из camera config, проверяет readback настроек перед чтением и затем принимает только совпадающие размеры кадров; Только8-bit (CV_8U) BGR, grayscale и BGRA приводятся к RGB8; другая глубина отклоняется со status camera_unsupported_depth до публикации Image. Несовпадающее разрешение публикуется как source status и кадр пропускается, потому что автоматическое изменение intrinsics не выполняется. Буфер событий ограничен 64 записями и при насыщении вытесняет старейший кадр. Pause прекращает добавление новых кадров в очередь; Step для live capture не поддерживается. Поток повторяет попытку открытия после ошибки, но блокирующий драйверный `VideoCapture::read` может задержать остановку процесса. Физические камеры не были доступны при создании этого baseline; `camera_source_lifecycle` проверяет только API/control queue, а не сенсор.
+Каждый путь должен быть уникальным. Сервер открывает все четыре потока независимо, запрашивает разрешение из camera config, проверяет readback настроек перед чтением и затем принимает только совпадающие размеры кадров; Только8-bit (CV_8U) BGR, grayscale и BGRA приводятся к RGB8; другая глубина отклоняется со status camera_unsupported_depth до публикации Image. Несовпадающее разрешение публикуется как source status и кадр пропускается, потому что автоматическое изменение intrinsics не выполняется. Очередь хранит до Q кадров каждой камеры (`runtime.input_queue_per_camera`); при насыщении вытесняется старейший кадр той же камеры. Отдельно ограничены16 status events и64 control completions. Pause прекращает добавление новых кадров в очередь; Step для live capture не поддерживается. Поток повторяет попытку открытия после ошибки, но блокирующий драйверный `VideoCapture::read` может задержать остановку процесса. Физические камеры не были доступны при создании этого baseline; `camera_source_lifecycle` проверяет только API/control queue, а не сенсор.
 
 ```json
 "source": {
@@ -47,16 +47,16 @@ Linux-профиль **0.6.0**. Реализован C++ `FrameSource` с неб
 ## Worker, буферы и команды
 
 | Свойство | Replay worker | Socket worker | V4L2 camera workers |
-|---|---|---|
+|---|---|---|---|
 | Работа вне GL-потока | Decode PPM/OpenCV PNG/JPEG, cache | Asio accept/read/decode, проверка RGB8 | OpenCV VideoCapture, BGR/gray/BGRA → RGB8 |
-| Очередь кадров | До Q четырёхкамерных наборов | До Q кадров **каждой** камеры, суммарно 4Q | До 64 событий суммарно; вытесняется старый frame event |
-| Переполнение | Вытеснение старого набора | Вытеснение старого кадра той же камеры |
-| Pause ACK | После завершения текущего decode; новых decode нет | После обработки команды в source io_context; новые входы проверяются и отбрасываются |
+| Очередь кадров | До Q четырёхкамерных наборов | До Q кадров **каждой** камеры, суммарно 4Q | До Q кадров каждой камеры, суммарно4Q; отдельно16 statuses и64 controls |
+| Переполнение | Вытеснение старого набора | Вытеснение старого кадра той же камеры | Вытеснение старого кадра той же камеры; status не вытесняет кадры |
+| Pause ACK | После завершения текущего decode; новых decode нет | После обработки команды в source io_context; новые входы проверяются и отбрасываются | Под source mutex; прежние queued frames сохраняются, новые не публикуются |
 | Step | Один следующий набор, затем пауза | Reject `step_requires_replay`, revision не меняется | Reject через source API; live stepping не реализован |
-| Resume | Следующий ряд немедленно | Публикуются только вновь принятые кадры |
+| Resume | Следующий ряд немедленно | Публикуются только вновь принятые кадры | Разрешается публикация новых кадров; capture при pause продолжался |
 | Stop | Notify/join; ожидание текущего file decode | Stop io_context/join/close/cleanup | Stop/join; ожидание блокирующего camera read |
 
-Q = `runtime.input_queue_per_camera`. У replay cache содержит до четырёх последних изображений. У socket decoder ограничен общим SV01 payload limit 64 MiB на соединение; очередь содержит owning RGB8 buffers, не ссылки на переиспользуемый read buffer. Для больших разрешений учитывать память 4Q × W × H × 3 плюс decoder/current frames и GL textures. Source request queue ограничена 64 запросами; socket status mailbox — 16 событиями. Старые уведомления могут быть пропущены при избытке ошибок, но не отключают остальные камеры.
+Q = `runtime.input_queue_per_camera`. У replay cache содержит до четырёх последних изображений. У socket decoder ограничен общим SV01 payload limit 64 MiB на соединение; очередь содержит owning RGB8 buffers, не ссылки на переиспользуемый read buffer. Для больших разрешений учитывать память 4Q × W × H × 3 плюс decoder/current frames и GL textures. Source request queue ограничена 64 запросами; socket/camera status mailbox —16 событиями. Для camera кадровые quotas не занимают лимит control completions; вся очередь ограничена4Q+80 событиями. Старые уведомления могут быть пропущены при избытке ошибок, но не отключают остальные камеры.
 
 File decode нельзя принудительно прервать внутри OpenCV/файловой системы: для replay нет жёсткой границы shutdown при зависшем чтении. Для обычных локальных файлов пауза и shutdown проверены. Аппаратный backend потребует собственного решения cancellation/timeouts; наивный блокирующий `VideoCapture::read` не объявляется завершённым live-адаптером.
 
@@ -96,7 +96,7 @@ G -> G : render сохранённых textures
 
 В рамках сессии sequence строго возрастает, source timestamp не убывает. Переподключение начинает новую сессию и может сбросить source sequence в 0; локальный sequence Synchronizer продолжает возрастать. Неверные метаданные, payload или порядок закрывают только данный вход. Доставка TCP подтверждает байты транспортом, но не гарантирует, что кадр не был вытеснен перед рендером.
 
-Выходной type 11 содержит `source_type`, `timestamp_basis`, `source_received`, `source_rejected`, `source_dropped_batches`, `source_queue_depth`, `decode_count`; счётчики строковые, глубина очереди integer. Drop unit — replay batch либо один socket camera frame. Depth наблюдается после poll и не является измерением пикового заполнения. Для used inputs добавлены `source_session_id`, `source_clock_domain`, `source_sequence_id`, `source_timestamp_ns`. Независимые source clocks **не вычитаются** из server clock: Synchronizer использует server delivery. READY означает свежий набор по этой шкале, а не доказанную синхронность экспозиции камер.
+Выходной type 11 содержит `source_type`, `timestamp_basis`, `source_received`, `source_rejected`, `source_dropped_batches`, `source_queue_depth`, `decode_count`; счётчики строковые, глубина очереди integer. Drop unit — replay batch либо один socket/physical camera frame. Camera `queued_batches`/`source_queue_depth` считают только frame events, без status/control. До исправления23.10.2026 camera depth включала все события; старые значения не сопоставимы напрямую. Depth наблюдается после poll и не является измерением пикового заполнения. Для used inputs добавлены `source_session_id`, `source_clock_domain`, `source_sequence_id`, `source_timestamp_ns`. Независимые source clocks **не вычитаются** из server clock: Synchronizer использует server delivery. READY означает свежий набор по этой шкале, а не доказанную синхронность экспозиции камер.
 
 ## Producer из Blender-записи
 
@@ -943,3 +943,29 @@ measured cadence и sensor timestamps остаются открытыми.
 
 
 Матрицы камер и startup capture параметры теперь загружаются общей Precise JSON policy на Boost≥1.83; generic dataset loader сохраняет Legacy. Это может изменить последние binary64 bits нового config/wire baseline; input artifacts не переписываются. [[engineering/JSON_PRECISION]].
+
+
+## Независимые очереди аппаратных камер
+
+23.10.2026: `CameraFrameSource` использует startup `runtime.input_queue_per_camera`
+(Q1…16) для каждой камеры. Общий deque сохраняет порядок оставшихся событий, но бюджеты
+раздельны:4Q frames,16 status events,64 control completions. Быстрая камера заменяет
+только свой старейший кадр. `SourceEvent.camera_id` явно соответствует единственному
+заполненному frames[id]. Счётчики очереди меняются под source mutex; poll полностью
+освобождает все quotas. Отклонённый из-за полного control budget запрос не меняет pause.
+
+Status flood больше не вытесняет кадры и не увеличивает frame dropped counter. Если
+status quota заполнена, новый status пропускается; это по-прежнему не надёжный журнал.
+`received` включает прочитанные непустые Mat, `decoded` — опубликованные owned RGB images;
+`dropped` включает invalid format, pause и замещение кадра той же камеры. Per-camera
+physical drop counters ещё не добавлены. `queued_batches` теперь исключает control/status.
+Поля wire не менялись; прежние camera depth observations имеют другой смысл. При overload
+новая политика может выбирать другой набор входов; сравнение исследований требует
+фиксации build/config/input identities, исторические результаты не переписываются.
+
+При одинаковом разрешении ожидающая frame payload ограничена4Q×W×H×3 байт; для разных
+размеров — Q×Σ(WᵢHᵢ×3). Это не RSS bound: capture buffers, текущие Mat/RGB каждого worker,
+Synchronizer и GPU textures учитываются отдельно. Новые источники, driver cancellation,
+hot source ConfigService и гарантии sensor synchronisation этим исправлением не добавлены.
+
+Проверки: [[validation/SOURCES_SMOKE#Изоляция очередей аппаратных камер]], диплом §3.79.

@@ -63,3 +63,38 @@ Source0 обоих пакетов экспортирован из `674102a0b1e6b
 Первый запуск с label Mesa фактически использовал NVIDIA: он оставлен только в локальном `artifacts/platform-mesa-v06` и **не опубликован** как Mesa baseline. Для правильного запуска выбран `/usr/share/glvnd/egl_vendor.d/50_mesa.json`, actual GL_RENDERER — `llvmpipe (LLVM 22.1.8, 256 bits)`, raw report в `artifacts/platform-mesa-v06-forced`. `LIBGL_ALWAYS_SOFTWARE=1` отдельно недостаточен при GLVND. Инструкция — [[engineering/PLATFORM_TEST]].
 
 Последующее host-расширение producer добавляет автоматический reconnect, late-drop и JSON/Markdown отчёты: [[validation/PRODUCER_RECOVERY]]. Первоначальная host acceptance содержала три cases; текущая camera_sources включает 13 cases. C++ payload и первичные native baselines выше не изменены.
+
+
+## Изоляция очередей аппаратных камер
+
+23.10.2026. Дополнение к историческим baseline выше; новая аппаратная или RPM приёмка
+не заявляется. Изменён C++ `CameraFrameSource`; публичные wire/SDK fields сохранены,
+но camera depth теперь исключает status/control. Контракт: [[engineering/SOURCES#Независимые очереди аппаратных камер]].
+
+`tests/camera_queue_tests.cpp` использует четыре независимых MOCK CameraCapture и
+condition variables. Следующий вызов read служит barrier: предыдущий frame уже обработан.
+Порядок не задаётся sleep и не зависит от реальной частоты сенсора; fake blocked read
+явно освобождается до source.stop, также при assertion failure.
+
+| Проверка (каждая при Q1,3,16) | Ожидаемый результат |
+|---|---|
+| Медленная камера:1 frame; быстрая:Q+69 без poll | Последние Q frames быстрой и1 медленной, dropped69 |
+| Полные frame queues, затем64 pause/resume requests | Все64 completions сохранены в порядке request IDs;65-й request отклонён |
+| Каждая из4 камер передала Q+2 | Ровно4Q frames,8 drops, sequences3…Q+2 для каждой камеры |
+| Alternating valid/invalid frames переполняют status budget | Только16 statuses; peer frame сохранён, status не создаёт frame drops |
+| Полный poll, затем новая публикация/статус/команда | Quotas сброшены; новые события доступны |
+
+Первоначальные три regression cases падали на прежнем backend: Q игнорировался,
+control admission зависел от frames/statuses, camera_id оставался−1. После исправления
+расширенный набор9/9 прошёл. Полная Linux build успешна. Первый профильный CTest4/4
+за21,08с; после усиления проверки rejected Pause — финальный CTest5/5 за20,61с
+(sources, camera_source_config, camera_sources16,65с, source_work_timing3,73с, telemetry);
+source GTest80/80. Команда:
+`ctest --test-dir build -R '^(sources|camera_source_config|camera_sources|source_work_timing|telemetry)$' --output-on-failure -j1`.
+Все94 PlantUML-вставки в architecture/RESEARCH_RUNTIME, главе3 и engineering/SOURCES
+прошли syntax check; git diff --check успешен.
+
+Синтетический формат проходит настоящий OpenCV RGB conversion и owning Image pipeline.
+Это не проверка hardware FPS, timestamp, driver buffers, bounded driver shutdown,
+двухмашинного transport или numerical fusion quality. Старые benchmark/RPM baselines
+выше не пересчитаны; общий69-test CTest в этом дополнении не запускался.

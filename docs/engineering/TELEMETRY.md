@@ -64,7 +64,7 @@ end
 | timestamp_ns | server steady clock, наносекунды | Не UTC; нельзя вычитать clock другого host |
 | process.cpu_percent | 100 × Δ(user+system CPU ns)/Δsample timestamp ns | 100% соответствует одному logical CPU; может быть >100%; первый/недоступный интервал null |
 | process.rss_bytes | resident pages × page size, decimal uint64 | Приближённый current RSS Linux `/proc/self/statm`; null при недоступности, не peak RSS |
-| source | received/rejected/decoded/dropped/queued_batches, decimal uint64 | Смысл counters задаёт backend; не длительность decode и не отдельная очередь каждой камеры |
+| source | received/rejected/decoded/dropped/queued_batches, decimal uint64 | Смысл counters задаёт backend; не длительность decode. Camera depth теперь считает только frames; до23.10.2026 включала status/control ([[engineering/SOURCES#Независимые очереди аппаратных камер]]) |
 | paused/data_ready/data_busy | bool | Состояние при sampling; busy — незавершённая доставка, не длительность send |
 | frame | Последний завершённый render record либо null | Может относиться к прежней config revision; fresh=false при повторе |
 | spans_ms | source_poll, pre_render_prepare, render_wall, fusion_cpu, layer_readback_cpu, upload_cpu, readback_copy_cpu, publish_enqueue, nullable gpu_draw | Интервалы перекрываются; сумма не равна latency |

@@ -1,5 +1,11 @@
 # Оставшиеся работы
 
+23.10.2026: аппаратный camera backend теперь соблюдает per-camera Q и вытесняет только
+свои кадры; status16/control64 имеют независимые quotas, depth считает только кадры.
+MOCK-проверки Q1/3/16 подтверждают сохранение медленной камеры, exact drops, четыре
+заполненные очереди и status flood. Mixed source/hot source config/physical acceptance
+остаются открытыми. [[engineering/SOURCES#Независимые очереди аппаратных камер]].
+
 23.10.2026: socket message deadline защищён от устаревших ready callbacks после cancel/rearm.
 Поколение и armed guard сохраняют актуальный timeout; полный message разрешает idle,
 неполный frame по-прежнему ограничен общим deadline. Linux профильные CTest3/3,
