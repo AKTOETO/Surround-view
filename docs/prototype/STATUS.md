@@ -1,5 +1,11 @@
 # Состояние прототипа и границы подтверждения
 
+23.10.2026: измерение последнего неуспешного backend call камеры реализовано при
+включённой telemetry: is_open/open/read/close, false/empty/OpenCV exception, session identity
+и epoch guards. SDK/archive/GUI сохраняют nullable state gauge без quantiles повторных
+snapshots. Полная worker history, bounded driver cancellation и real V4L2/Aurora acceptance
+остаются открытыми. [[engineering/SOURCE_TIMING#Последний неуспешный вызов камеры]].
+
 20.10.2026: C++/svctl/sv-simulator сравнивают2–8 individual reports относительно первого.
 Полные pair guards сохранены; min/median/max report summaries доступны только при допуске
 всех reports для данной метрики. Дубликаты отклоняются, входы ограничены16MiB/file и

@@ -3967,3 +3967,78 @@ Unix/TCP harness с независимым Python SHA256 oracle и провер�
 и QML7,35с. Отдельно6/6 новых common tests,48/48 Qt controller и11/11 CLI parser;
 все72 PlantUML-вставки корректны. Реальная Аврора и независимая подтверждающая серия
 этим инженерным прогоном не проверялись.
+
+## 3.75. Измерение длительности неуспешных вызовов камер
+
+Счётчик ошибок показывает факт сбоя, но не объясняет, занимал ли failed backend call
+миллисекунды либо долго удерживал worker. Успешные source_work records также не закрывают
+этот пробел: при недоступной камере кадра может не быть вовсе. Для подготовки испытаний
+реальных камер добавлен отдельный nullable snapshot последнего завершённого сбоя.
+
+При включённой telemetry измеряются вызовы CameraCapture `is_open`, `open`, `read`,
+`close`. Запись содержит session epoch, event ID, operation/outcome и steady-clock
+start/completion. Длительность вычисляется как
+
+$$
+t_{wall}=\frac{t_{completed}-t_{started}}{10^6}\;\text{ms}.
+$$
+
+Это CPU wall interval уровня backend abstraction: внутри open могут выполняться
+переговоры профиля OpenCV, внутри read — ожидание/декодирование. Retry/backoff и
+последующее close не входят в read interval. Обычный is_open=false не считается ошибкой.
+False read и true read с пустым Mat различаются; невалидные размеры/depth/channels и
+ошибки RGB preparation находятся за границей этого измерения.
+
+| Свойство | Реализованная граница |
+|---|---|
+| Хранение | Один последний failure на камеру, bounded4 records |
+| Disabled | Нет дополнительных instrumentation clock reads/records; обычная работа source и session checks остаются |
+| Hot change | Начатый call привязан к owning session pointer; равного epoch недостаточно |
+| Sampling | Collector фильтрует старый epoch и completion позже sample timestamp |
+| SDK | Проверяет schema, identity, enums, interval и duration; legacy null/omission допустимы |
+| GUI/archive | Сохраняют operation/outcome/event, показывают nullable latest-state gauge |
+
+```plantuml
+@startuml
+start
+:Worker начинает backend call;
+if (Timing session включена?) then (да)
+  :Запомнить session pointer и start;
+else (нет)
+  :Не измерять дополнительный interval;
+endif
+:Выполнить backend call;
+if (Завершённый сбой?) then (да)
+  :При enabled сохранить completion и latest failure;
+  :Выполнить прежнюю recovery policy;
+endif
+:При stats сравнить текущую session;
+if (Session / epoch / interval допустимы?) then (да)
+  :Передать nullable запись через telemetry;
+  :SDK validate; GUI latest value;
+else (нет)
+  :Не публиковать устаревшее measurement;
+endif
+stop
+@enduml
+```
+
+*Рисунок3.92 — measurement не меняет политику восстановления и не переносит старый call в новую серию.*
+
+Повторная выдача того же event в нескольких telemetry samples не является новым failed
+call. Поэтому GUI не вычисляет p50/p95 по этому графику: такой расчёт искусственно
+размножал бы одно событие. Источник кода — `camera_source.cpp`, typed parser
+`camera_failure_timing.cpp` и `telemetry_metrics.cpp`; контракт и использование:
+[[engineering/SOURCE_TIMING#Последний неуспешный вызов камеры]].
+
+Mock seam проверяет false/empty/OpenCV exception для четырёх workers, включая ошибку
+закрытия после failed read. Отдельный blocked mock проверяет замену session с тем же
+номером epoch; disabled, SDK corruption/legacy/archive и byte-budget pagination также
+проверены. Это regression controls, не испытание физических камер и не оценка worst-case
+задержки. Driver timeout/cancellation, полный event stream, независимый sampling и
+измерение overhead остаются открытыми. Результаты: [[validation/CAMERA_FAILURE_TIMING]].
+
+Финальная Linux-сборка и полный CTest69/69 успешны за247,60с. Отдельно5/5 новых camera
+failure tests и26/26 runtime/editor/telemetry tests;74 PlantUML-вставки корректны.
+Установленный SDK проверен внешним C++17 CMake consumer с configure/build/run exit0.
+Aurora/физические камеры этими проверками не квалифицированы.

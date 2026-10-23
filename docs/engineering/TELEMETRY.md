@@ -324,3 +324,10 @@ CameraDiagnostics дополнены optional `recovery`: exact decimal uint64 `
 
 
 CameraCaptureMode дополнен optional `automatic_properties` (nullable fps/fourcc/buffer_count) для best-effort readback незаданных свойств. Checked и automatic значения одного свойства одновременно non-null запрещены. SDK принимает legacy omission/null; extension сохраняется в current telemetry, selected type11 provenance и archive schema1. Новых команд нет. [[engineering/SOURCES#Наблюдаемые свойства автоматического профиля камеры]].
+
+
+Camera diagnostics дополнены default-off timing `latest_failure` и capability
+`camera_failure_wall_v1`. SDK/archive/GUI сохраняют последний completed backend failure
+каждой камеры. Это state gauge с epoch/session guard, не sample distribution; GUI не
+вычисляет quantiles повторных snapshots. Контракт и ограничения:
+[[engineering/SOURCE_TIMING#Последний неуспешный вызов камеры]].

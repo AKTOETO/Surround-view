@@ -133,16 +133,68 @@ optional-field compatibility. Live test явно ставит looping replay н�
 в отсутствии old work и делает step для нового cache-hit observation.
 
 Остаются physical V4L2 acceptance (форматы/FPS/backend buffers/timestamps), bounded stop/reconnect
-при зависшем read, failed-operation timings, independent worker event
+при зависшем read, полная история failed-operation timings (последний backend failure реализован ниже), independent worker event
 stream/dedup, mixed per-camera sources, separate capture/decode, sync/calibration/seam/send timers,
 levels/subsystem budgets и одинаковый replay для overhead on/off. Измерения успешного selected input
 не доказывают worst-case latency устройства и не заменяют сравнение целевых платформ.
 
 Полная сборка Linux успешна. Итоговый выбранный набор CTest: 7/7 за 53,00 с, включая 7 source-work GTest, 15 telemetry/archive GTest, 20 runtime unit cases, 3 QML cases, 6 live telemetry cases и проверки camera/Unix/TCP/installed consumer. Ранее также прошли регрессионные проверки sources/config/replay/output. Полный набор из 64 CTest, физические V4L2-камеры и приёмка на Авроре в этом шаге не проверялись.
 
-Обработка cv::Exception и прерываемое retry wait добавлены после timing-среза: [[engineering/SOURCES#Восстановление camera worker после ошибки OpenCV]]. Failed-operation timings это не добавляет.
+Обработка cv::Exception и прерываемое retry wait добавлены после timing-среза: [[engineering/SOURCES#Восстановление camera worker после ошибки OpenCV]]. Сам recovery-срез timings не добавлял; текущий last-failure snapshot описан ниже.
 
 Несовместимый размер/depth/channels теперь вызывает прерываемый retry wait 100 мс без ready;
 ready следует после owned RGB preparation. Отброшенные форматы по-прежнему не дают source_work,
 а retry wait не включён в successful-operation timing.
 [[engineering/SOURCES#Валидность кадра и статус camera_ready]].
+
+
+## Последний неуспешный вызов камеры
+
+При включённой telemetry camera workers измеряют `is_open`, `open`, `read`, `close`
+на уровне CameraCapture seam. Сохраняется **один последний завершённый сбой на камеру**,
+а не лог всех вызовов. `telemetry_catalog.camera_failure_wall_v1=true` объявляет поддержку.
+`telemetry.samples[].source.camera_diagnostics[].latest_failure` — null либо:
+
+| Поле | Значение |
+|---|---|
+| policy | camera_failure_wall_v1 |
+| epoch / event_id | Decimal uint64 strings; ID возрастает внутри camera source, не число telemetry samples |
+| operation | is_open / open / read / close |
+| outcome | opencv_exception; false_return только open/read; empty_frame только read |
+| started_ns / completed_ns | Server steady clock, границы одного backend call |
+| wall_ms | Разность timestamps /1e6 |
+
+`is_open=false` — обычное состояние закрытого устройства и не является сбоем. Для
+успешного read с пустым Mat сохраняется empty_frame. Размер/depth/channels и ошибки RGB
+preparation находятся за границей этого измерения. Open включает работу CameraCapture::open,
+в том числе настройку/проверку профиля OpenCV; это не отдельный timer системного open().
+Retry sleep, queue wait и закрытие после failed read не входят в read interval.
+Если close тоже упал, его запись заменяет предыдущую: хранится последний сбой.
+
+Измерение запускается только при ненулевой timing session. Disabled не добавляет
+instrumentation clock reads/records, но atomic проверки session и обычные camera source
+clocks остаются; нулевой overhead не измерен и не заявлен. Счётчики ошибок сохраняют
+прежние semantics независимо от timings. Запись удерживается отдельно от selected frames,
+поэтому доступна и без успешного кадра.
+
+Начатый call фиксирует owning session pointer. `stats()` отдаёт failure только при
+совпадении pointer с текущей session: одного равного номера epoch недостаточно. После
+смены telemetry settings/disable прежние записи скрыты. Collector также отбрасывает
+несовпадающий epoch и completion после своего sample timestamp; это защищает границу
+асинхронного stats snapshot. Более поздний sample может включить завершившийся call.
+
+SDK валидирует policy, обязательные/лишние поля, enum combination, epoch/event ID,
+порядок timestamps, completion≤sample timestamp и согласованную конечную duration.
+Legacy omission/null допустимы. Новых SV01 commands нет. Public type CameraFailureTiming
+доступен в CameraDiagnostics; header устанавливается вместе с sv-client-lib. Archive schema1
+сохраняет record и capability, старые archives читаются.
+
+В **Телеметрия → Источники** выберите **Камера N: последний неуспешный вызов**.
+Значение может повторяться в нескольких snapshots: это состояние последнего сбоя,
+не новая операция. В summary нет quantiles, в details показаны operation/outcome/event/epoch.
+Отсутствие value не превращается в ноль. Не нужно получать final render для этих gauges,
+но sampling/control/data lifecycle сохраняет прежние ограничения telemetry.
+
+Это не timeout/cancellation backend, не physical capture latency и не worst-case estimate.
+Полный worker stream, независимый sampler, измерение overhead и реальные V4L2/Aurora
+испытания остаются открытыми. Проверки: [[validation/CAMERA_FAILURE_TIMING]], диплом §3.75.

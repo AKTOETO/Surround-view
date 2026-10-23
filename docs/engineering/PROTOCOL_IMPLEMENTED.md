@@ -451,3 +451,9 @@ config, lease и restore не меняются. Контракт файлов и
 `svctl research-compare-series` и GUI report series — offline application services,
 не команды SV01. Они читают individual reports, используют прежнюю pair policy и
 не подключаются к серверу: [[engineering/RESEARCH_REPORT_SERIES]].
+
+
+`telemetry_catalog.camera_failure_wall_v1` и optional/null
+`telemetry.samples[].source.camera_diagnostics[].latest_failure` — additive metadata
+существующих telemetry commands. Typed SDK проверяет identity/interval/outcome; старые
+отправители могут не иметь поля. [[engineering/SOURCE_TIMING#Последний неуспешный вызов камеры]].

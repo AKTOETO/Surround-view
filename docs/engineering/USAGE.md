@@ -1639,3 +1639,12 @@ build/svctl research-compare-series artifacts/new-series-audit.json   artifacts/
 
 Output должен быть новым. Это сводка report summaries, а не объединённые кадровые
 percentiles, CI или scientific acceptance. [[engineering/RESEARCH_REPORT_SERIES]].
+
+
+## Диагностика длительности сбоев камер
+
+Включите telemetry через её обычную форму, затем в **Телеметрия → Источники** выберите
+**Камера N: последний неуспешный вызов**. Details показывают операцию, исход и event ID.
+Повторяющееся значение не означает новую ошибку; распределение задержек по нему не строится.
+Без telemetry measurements отсутствуют. Поля доступны через прежние telemetry API
+sv-client-lib и сохраняются в archive: [[engineering/SOURCE_TIMING#Последний неуспешный вызов камеры]].

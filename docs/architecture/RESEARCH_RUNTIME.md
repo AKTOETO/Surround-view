@@ -1220,3 +1220,35 @@ Client -> Audit: O_EXCL; no server connection
 ```
 
 *Рисунок RR.28 — сводка не удаляет недопущенные reports ради вычисления агрегата.*
+
+## Последний неуспешный backend call камеры
+
+Measurement живёт в source worker и не требует успешного frame. Снимок публикуется
+через существующие source diagnostics и telemetry, а не через новый control command.
+
+```plantuml
+@startuml
+participant "Camera worker" as Worker
+participant "CameraCapture / OpenCV" as Driver
+participant "Source diagnostics" as Source
+participant "Telemetry collector" as Collector
+participant "sv-client-lib / GUI" as Client
+Worker -> Worker: Snapshot timing session; start if enabled
+Worker -> Driver: is_open / open / read / close
+Driver --> Worker: False / empty / cv::Exception
+Worker -> Worker: Complete interval; preserve existing recovery
+Worker -> Source: Replace latest failure for camera + owning session
+Collector -> Source: stats()
+Source -> Source: Match current session pointer
+Source --> Collector: Counters + nullable latest failure
+Collector -> Collector: Filter epoch / completion after sample time
+Collector --> Client: Existing telemetry_read
+Client -> Client: Validate; show latest value / event ID
+note over Collector,Client
+Repeated snapshots are not new failures.
+No quantiles of repeated latest-state values.
+end note
+@enduml
+```
+
+*Рисунок RR.29 — запись сбоя независима от selected successful frame, но не заменяет worker trace.*

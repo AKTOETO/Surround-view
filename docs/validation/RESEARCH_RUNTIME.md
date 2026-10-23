@@ -1132,3 +1132,8 @@ simulator_configuration_qml7,35с, research_scenarios0,36с, svctl_options0,00с
 Все72 PlantUML-вставки прошли syntax check; py_compile и git diff --check успешны.
 Рисунок3.91 содержит отдельный synthetic Qt component fixture, а native CLI assertions
 выше используют reports реального сервера. Эти уровни свидетельств не смешиваются.
+
+
+23.10.2026: latest failed camera call telemetry реализована и проверена отдельно:
+[[validation/CAMERA_FAILURE_TIMING]]. Полный CTest69/69 за247,60с; installed SDK consumer
+успешен. Это диагностика backend failure, не новый опыт качества fusion либо физической камеры.
