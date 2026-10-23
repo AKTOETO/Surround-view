@@ -21,6 +21,7 @@ class Telemetry(unittest.TestCase):
         ack = self.client.command('telemetry_catalog')
         self.assertTrue(ack['accepted'], ack)
         self.assertTrue(ack['telemetry_catalog']['camera_failure_wall_v1'])
+        self.assertTrue(ack['telemetry_catalog']['socket_source_diagnostics_v1'])
         return ack['telemetry_catalog']
 
     def read(self, catalog, after='0', limit=16, **overrides):

@@ -241,6 +241,8 @@ boost::json::object TelemetryCollector::sample_json(const Sample &sample) const
         {"source",
          boost::json::object{
              {"camera_diagnostics", sv::camera_diagnostics_json(sample.source.camera_diagnostics)},
+             {"socket_diagnostics",
+              sv::socket_source_diagnostics_json(sample.source.socket_diagnostics)},
              {"received", std::to_string(sample.source.received)},
              {"rejected", std::to_string(sample.source.rejected)},
              {"decoded", std::to_string(sample.source.decoded)},
@@ -267,6 +269,7 @@ boost::json::object TelemetryCollector::catalog() const
             {"capture_decode_duration_supported", false},
             {"source_work_timing_v1", true},
             {"camera_failure_wall_v1", true},
+            {"socket_source_diagnostics_v1", true},
             {"legacy_frame_timers_independent", true}};
 }
 

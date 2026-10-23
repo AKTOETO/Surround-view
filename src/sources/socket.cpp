@@ -34,6 +34,7 @@ class SocketSource final : public FrameSource
 
     std::vector<OwnedPath> owned_paths_;
     std::array<uint64_t, 4> sequences_{};
+    SocketSourceDiagnosticsSet diagnostics_;
     mutable std::mutex mutex_;
     std::mutex shutdown_mutex_;
     std::deque<SourceEvent> events_;
@@ -61,6 +62,7 @@ class SocketSource final : public FrameSource
                 --batches_;
                 --queued_[id];
                 ++dropped_;
+                ++diagnostics_[id].counters.dropped;
             }
             ++batches_;
             ++queued_[id];
@@ -93,13 +95,29 @@ class SocketSource final : public FrameSource
         {
         }
 
-        void close(const std::string &why)
+        void close(const std::string &why, const char *reason)
         {
             if (closed)
             {
                 return;
             }
             closed = true;
+            {
+                std::lock_guard<std::mutex> lock(host.mutex_);
+                auto &diagnostic = host.diagnostics_[id];
+                ++diagnostic.counters.closed;
+                if (std::string_view(reason) == "message_timeout")
+                {
+                    ++diagnostic.counters.timeouts;
+                }
+                if (std::string_view(reason) == "protocol_rejected")
+                {
+                    ++diagnostic.counters.rejected;
+                }
+                diagnostic.connection.state = "disconnected";
+                diagnostic.connection.session_id.reset();
+                diagnostic.connection.last_close_reason = reason;
+            }
             boost::system::error_code ec;
             socket.close(ec);
             deadline.cancel();
@@ -120,7 +138,7 @@ class SocketSource final : public FrameSource
                 {
                     if (!ec)
                     {
-                        self->close("source_message_timeout");
+                        self->close("source_message_timeout", "message_timeout");
                     }
                 });
         }
@@ -143,7 +161,7 @@ class SocketSource final : public FrameSource
                                        }
                                        if (ec)
                                        {
-                                           self->close("source_disconnected");
+                                           self->close("source_disconnected", "peer_disconnected");
                                            return;
                                        }
                                        try
@@ -164,7 +182,8 @@ class SocketSource final : public FrameSource
                                        catch (const std::exception &e)
                                        {
                                            ++self->host.rejected_;
-                                           self->close(std::string("source_rejected: ") + e.what());
+                                           self->close(std::string("source_rejected: ") + e.what(),
+                                                       "protocol_rejected");
                                        }
                                        if (!self->closed)
                                        {
@@ -196,6 +215,13 @@ class SocketSource final : public FrameSource
                 }
                 session = "camera-" + std::to_string(id) + "-" + std::to_string(now_ns());
                 hello = true;
+                {
+                    std::lock_guard<std::mutex> lock(host.mutex_);
+                    auto &diagnostic = host.diagnostics_[id];
+                    ++diagnostic.counters.handshakes;
+                    diagnostic.connection.state = "ready";
+                    diagnostic.connection.session_id = session;
+                }
                 auto reply = std::make_shared<std::vector<unsigned char>>(
                     encode({2,
                             {{"session_id", session},
@@ -208,7 +234,8 @@ class SocketSource final : public FrameSource
                                   {
                                       if (ec)
                                       {
-                                          self->close("source_handshake_write_failed");
+                                          self->close("source_handshake_write_failed",
+                                                      "handshake_write_failed");
                                       }
                                   });
                 return;
@@ -239,6 +266,14 @@ class SocketSource final : public FrameSource
             last_sequence = sequence;
             last_timestamp = timestamp;
             ++host.received_;
+            {
+                std::lock_guard<std::mutex> lock(host.mutex_);
+                ++host.diagnostics_[id].counters.received;
+                if (host.paused_)
+                {
+                    ++host.diagnostics_[id].counters.dropped;
+                }
+            }
             if (host.paused_)
             {
                 ++host.dropped_;
@@ -269,12 +304,21 @@ class SocketSource final : public FrameSource
                     auto &current = channels_[id];
                     if (current && !current->closed)
                     {
+                        {
+                            std::lock_guard<std::mutex> lock(mutex_);
+                            ++diagnostics_[id].counters.refused;
+                        }
                         boost::system::error_code ignored;
                         socket.close(ignored);
                     }
                     else
                     {
                         current = std::make_shared<Channel>(Socket(std::move(socket)), *this, id);
+                        {
+                            std::lock_guard<std::mutex> lock(mutex_);
+                            ++diagnostics_[id].counters.accepted;
+                            diagnostics_[id].connection.state = "handshaking";
+                        }
                         current->start();
                     }
                 }
@@ -427,7 +471,9 @@ class SocketSource final : public FrameSource
     SourceStats stats() const override
     {
         std::lock_guard<std::mutex> lock(mutex_);
-        return {0, dropped_.load(), received_.load(), rejected_.load(), batches_};
+        SourceStats result{0, dropped_.load(), received_.load(), rejected_.load(), batches_};
+        result.socket_diagnostics = diagnostics_;
+        return result;
     }
 
     void stop() override
@@ -450,7 +496,7 @@ class SocketSource final : public FrameSource
         {
             if (channel)
             {
-                channel->close("source_stopped");
+                channel->close("source_stopped", "source_stopped");
             }
         }
         for (auto &listener : unix_)

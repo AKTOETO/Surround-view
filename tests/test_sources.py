@@ -37,6 +37,7 @@ class SocketSources(unittest.TestCase):
                     reservations.append(reservation)
                 endpoints.append(endpoint)
             config['source'] = dict(type='socket', message_timeout_ms=150, cameras=endpoints)
+            config['telemetry'] = dict(enabled=True, period_ms=50, history_capacity=32)
             config_path = directory / 'config.json'
             config_path.write_text(json.dumps(config))
             for reservation in reservations:
@@ -95,6 +96,23 @@ class SocketSources(unittest.TestCase):
                         if not duplicate:
                             sequence[i] += 1
 
+                def socket_diagnostics_when(predicate):
+                    catalog = client.command('telemetry_catalog')['telemetry_catalog']
+                    self.assertTrue(catalog['socket_source_diagnostics_v1'])
+                    after = '0'
+                    deadline = time.monotonic() + 4
+                    while time.monotonic() < deadline:
+                        ack = client.command('telemetry_read', server_instance_id=catalog['server_instance_id'],
+                            epoch=catalog['epoch'], after_cursor=after, limit=16)
+                        self.assertTrue(ack['accepted'], ack)
+                        after = ack['telemetry']['next_cursor']
+                        for sample in ack['telemetry']['samples']:
+                            cameras = sample['source']['socket_diagnostics']
+                            if cameras is not None and predicate(cameras):
+                                return cameras
+                        time.sleep(.01)
+                    raise TimeoutError('socket diagnostics')
+
                 def frame_when(predicate):
                     deadline = time.monotonic() + 4
                     while time.monotonic() < deadline:
@@ -110,6 +128,9 @@ class SocketSources(unittest.TestCase):
                 for i, source in enumerate(header['inputs']):
                     self.assertEqual(source['source_session_id'], sessions[i])
                     self.assertEqual(source['source_clock_domain'], 'test_clock')
+                diagnostics = socket_diagnostics_when(lambda cameras: all(c['connection']['state'] == 'ready' for c in cameras))
+                self.assertEqual([c['connection']['session_id'] for c in diagnostics], sessions)
+                self.assertTrue(all(int(c['counters']['handshakes']) == 1 for c in diagnostics))
                 ack = client.command('pause')
                 self.assertTrue(ack['accepted'])
                 header = frame_when(lambda h: int(h['state_revision']) >= int(ack['state_revision']))
@@ -121,6 +142,7 @@ class SocketSources(unittest.TestCase):
                 header = frame_when(lambda h: int(h['state_revision']) >= int(ack['state_revision']))
                 self.assertEqual(header['upload_count'], uploads)
                 self.assertGreater(int(header['source_dropped_batches']), 0)
+                socket_diagnostics_when(lambda cameras: all(int(c['counters']['dropped']) >= 8 for c in cameras))
                 self.assertTrue(client.command('resume')['accepted'])
                 send()
                 frame_when(lambda h: h['health'] == 'READY' and int(h['source_received']) >= 40)
@@ -141,6 +163,10 @@ class SocketSources(unittest.TestCase):
                 send()
                 header = frame_when(lambda h: h['health'] == 'READY' and h['inputs'][0]['source_session_id'] == sessions[0])
                 self.assertEqual(header['inputs'][0]['source_sequence_id'], '0')
+                diagnostics = socket_diagnostics_when(lambda cameras: cameras[0]['connection']['session_id'] == sessions[0])
+                self.assertEqual(diagnostics[0]['counters']['handshakes'], '2')
+                self.assertGreaterEqual(int(diagnostics[0]['counters']['rejected']), 1)
+                self.assertEqual(diagnostics[0]['connection']['last_close_reason'], 'protocol_rejected')
                 client.close()
                 client = None
                 # Wrong calibration and a partial-handshake timeout affect camera zero only.

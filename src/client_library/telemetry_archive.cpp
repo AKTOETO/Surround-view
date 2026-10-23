@@ -24,6 +24,7 @@ boost::json::object catalog_json(const TelemetryCatalog &catalog)
         {"max_read_samples", catalog.max_read_samples},
         {"source_work_timing_v1", catalog.source_work_supported},
         {"camera_failure_wall_v1", catalog.camera_failure_timing_supported},
+        {"socket_source_diagnostics_v1", catalog.socket_source_diagnostics_supported},
         {"settings", boost::json::object{{"enabled", catalog.settings.enabled},
                                          {"period_ms", catalog.settings.period_ms},
                                          {"history_capacity", catalog.settings.history_capacity}}}};
@@ -70,6 +71,8 @@ boost::json::object sample_json(const TelemetrySample &sample)
             {"source",
              boost::json::object{{"camera_diagnostics",
                                   sv::camera_diagnostics_json(sample.source.camera_diagnostics)},
+                                 {"socket_diagnostics", sv::socket_source_diagnostics_json(
+                                                            sample.source.socket_diagnostics)},
                                  {"received", std::to_string(sample.source.received)},
                                  {"rejected", std::to_string(sample.source.rejected)},
                                  {"decoded", std::to_string(sample.source.decoded)},

@@ -1,5 +1,6 @@
 #include "camera_failure_timing.hpp"
 #include "camera_provenance.hpp"
+#include "socket_source_diagnostics.hpp"
 #include "sv/client_telemetry.hpp"
 #include <algorithm>
 #include <array>
@@ -80,6 +81,10 @@ TelemetryCatalog parse_telemetry_catalog(const Message &message)
     result.settings.period_ms = bounded(settings.at("period_ms"), 50, 5000);
     result.settings.history_capacity = bounded(settings.at("history_capacity"), 8, 256);
     result.max_read_samples = bounded(data.at("max_read_samples"), 1, 16);
+    if (const auto *supported = data.if_contains("socket_source_diagnostics_v1"))
+    {
+        result.socket_source_diagnostics_supported = supported->as_bool();
+    }
     if (const auto *supported = data.if_contains("camera_failure_wall_v1"))
     {
         result.camera_failure_timing_supported = supported->as_bool();
@@ -147,6 +152,10 @@ TelemetryBatch parse_telemetry_batch(const Message &message)
         sample.source = {integer(source, "received"), integer(source, "rejected"),
                          integer(source, "decoded"), integer(source, "dropped"),
                          integer(source, "queued_batches")};
+        if (const auto *diagnostics = source.if_contains("socket_diagnostics"))
+        {
+            sample.source.socket_diagnostics = parse_socket_source_diagnostics(*diagnostics);
+        }
         if (const auto *diagnostics = source.if_contains("camera_diagnostics");
             diagnostics && !diagnostics->is_null())
         {
