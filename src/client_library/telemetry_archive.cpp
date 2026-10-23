@@ -23,6 +23,7 @@ boost::json::object catalog_json(const TelemetryCatalog &catalog)
         {"delivery", "bounded_control_poll"},
         {"max_read_samples", catalog.max_read_samples},
         {"source_work_timing_v1", catalog.source_work_supported},
+        {"camera_failure_wall_v1", catalog.camera_failure_timing_supported},
         {"settings", boost::json::object{{"enabled", catalog.settings.enabled},
                                          {"period_ms", catalog.settings.period_ms},
                                          {"history_capacity", catalog.settings.history_capacity}}}};

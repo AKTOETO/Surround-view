@@ -1,5 +1,6 @@
 #pragma once
 #include "sv/camera_capture_mode.hpp"
+#include "sv/camera_failure_timing.hpp"
 #include <array>
 #include <boost/json.hpp>
 #include <cstdint>
@@ -39,6 +40,7 @@ struct CameraDiagnostics
     bool worker_stopped = false;
     std::optional<CameraCaptureMode> negotiated_mode = {};
     std::optional<CameraRecoveryStatus> recovery = {};
+    std::optional<CameraFailureTiming> latest_failure = {};
 };
 
 using CameraDiagnosticsSet = std::array<CameraDiagnostics, 4>;
@@ -55,6 +57,7 @@ inline boost::json::value camera_diagnostics_json(const std::optional<CameraDiag
         const auto &camera = (*set)[id];
         result.emplace_back(boost::json::object{
             {"camera_id", id},
+            {"latest_failure", camera_failure_timing_json(camera.latest_failure)},
             {"recovery", camera_recovery_status_json(camera.recovery)},
             {"negotiated_mode", camera_capture_mode_json(camera.negotiated_mode)},
             {"open_attempts", std::to_string(camera.open_attempts)},

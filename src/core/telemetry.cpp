@@ -156,6 +156,17 @@ void TelemetryCollector::sample(uint64_t now, uint64_t revision, SourceStats sou
     {
         cpu = 100.0 * double(*process.cpu_ns - *last_cpu_) / double(now - *last_sample_ns_);
     }
+    if (source.camera_diagnostics)
+    {
+        for (auto &camera : *source.camera_diagnostics)
+        {
+            if (camera.latest_failure && (camera.latest_failure->epoch != epoch_ ||
+                                          camera.latest_failure->completed_ns > now))
+            {
+                camera.latest_failure.reset();
+            }
+        }
+    }
     Sample sample{++cursor_,
                   now,
                   revision,
@@ -255,6 +266,7 @@ boost::json::object TelemetryCollector::catalog() const
             {"gpu_utilization_supported", false},
             {"capture_decode_duration_supported", false},
             {"source_work_timing_v1", true},
+            {"camera_failure_wall_v1", true},
             {"legacy_frame_timers_independent", true}};
 }
 

@@ -1,3 +1,4 @@
+#include "camera_failure_timing.hpp"
 #include "camera_provenance.hpp"
 #include "sv/client_telemetry.hpp"
 #include <algorithm>
@@ -79,6 +80,10 @@ TelemetryCatalog parse_telemetry_catalog(const Message &message)
     result.settings.period_ms = bounded(settings.at("period_ms"), 50, 5000);
     result.settings.history_capacity = bounded(settings.at("history_capacity"), 8, 256);
     result.max_read_samples = bounded(data.at("max_read_samples"), 1, 16);
+    if (const auto *supported = data.if_contains("camera_failure_wall_v1"))
+    {
+        result.camera_failure_timing_supported = supported->as_bool();
+    }
     if (const auto *supported = data.if_contains("source_work_timing_v1"))
     {
         result.source_work_supported = supported->as_bool();
@@ -162,6 +167,11 @@ TelemetryBatch parse_telemetry_batch(const Message &message)
                     integer(camera, "open_attempts"),     integer(camera, "read_failures"),
                     integer(camera, "opencv_exceptions"), integer(camera, "reconnects"),
                     integer(camera, "release_failures"),  camera.at("worker_stopped").as_bool()};
+                if (const auto *failure = camera.if_contains("latest_failure"))
+                {
+                    parsed[id].latest_failure =
+                        parse_camera_failure_timing(*failure, result.epoch, sample.timestamp_ns);
+                }
                 if (const auto *value = camera.if_contains("recovery"); value && !value->is_null())
                 {
                     const auto &fields = value->as_object();

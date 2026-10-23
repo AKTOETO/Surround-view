@@ -21,6 +21,7 @@ struct TelemetryCatalog
     TelemetrySettings settings;
     unsigned max_read_samples = 16;
     bool source_work_supported = false;
+    bool camera_failure_timing_supported = false;
 };
 
 struct TelemetryProcess

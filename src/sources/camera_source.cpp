@@ -7,6 +7,7 @@
 #include <condition_variable>
 #include <deque>
 #include <filesystem>
+#include <limits>
 #include <mutex>
 #include <opencv2/imgproc.hpp>
 #include <string_view>
@@ -113,6 +114,14 @@ class CameraFrameSource : public FrameSource
         s.dropped = dropped_count_.load();
         s.queued_batches = pending_events_.size();
         s.camera_diagnostics = diagnostics_;
+        const auto session = timing_.get();
+        for (size_t id = 0; id < 4; ++id)
+        {
+            if (session && failures_[id].session == session)
+            {
+                (*s.camera_diagnostics)[id].latest_failure = failures_[id].value;
+            }
+        }
         return s;
     }
 
@@ -138,6 +147,55 @@ class CameraFrameSource : public FrameSource
     }
 
   private:
+
+    struct CameraCallObservation
+    {
+        std::shared_ptr<const SourceTimingSession> session;
+        uint64_t started = 0, completed = 0;
+    };
+
+    struct FailureRecord
+    {
+        std::shared_ptr<const SourceTimingSession> session;
+        CameraFailureTiming value;
+    };
+
+    void remember_failure(int id, const char *operation, const char *outcome,
+                          const CameraCallObservation &call)
+    {
+        if (!call.session)
+        {
+            return;
+        }
+        std::lock_guard<std::mutex> lock(mutex_);
+        auto &sequence = failure_sequences_[id];
+        if (sequence == std::numeric_limits<uint64_t>::max())
+        {
+            return;
+        }
+        failures_[id] = {
+            call.session,
+            {call.session->epoch, ++sequence, call.started, call.completed, operation, outcome}};
+    }
+
+    template <typename Call>
+    bool invoke_camera(int id, const char *operation, CameraCallObservation &observation, Call call)
+    {
+        observation.session = timing_.get();
+        observation.started = observation.session ? now_ns() : 0;
+        try
+        {
+            const bool result = call();
+            observation.completed = observation.session ? now_ns() : 0;
+            return result;
+        }
+        catch (const cv::Exception &)
+        {
+            observation.completed = observation.session ? now_ns() : 0;
+            remember_failure(id, operation, "opencv_exception", observation);
+            throw;
+        }
+    }
 
     void capture_loop(int camera_id)
     {
@@ -185,7 +243,8 @@ class CameraFrameSource : public FrameSource
             const char *phase = "open";
             try
             {
-                if (!cap.is_open())
+                CameraCallObservation opening;
+                if (!invoke_camera(camera_id, "is_open", opening, [&] { return cap.is_open(); }))
                 {
                     if (stopping())
                     {
@@ -199,8 +258,11 @@ class CameraFrameSource : public FrameSource
                                       open_attempt = ++state.open_attempts;
                                       state.negotiated_mode.reset();
                                   });
-                    if (!cap.open(dev_path, cam_cfg.width, cam_cfg.height))
+                    if (!invoke_camera(
+                            camera_id, "open", opening,
+                            [&] { return cap.open(dev_path, cam_cfg.width, cam_cfg.height); }))
                     {
+                        remember_failure(camera_id, "open", "false_return", opening);
                         const auto failure = cap.open_failure();
                         emit_status(camera_id, last_status,
                                     failure.empty() ? "camera_unavailable:" + dev_path : failure);
@@ -242,16 +304,19 @@ class CameraFrameSource : public FrameSource
                     break;
                 }
                 phase = "read";
-                const auto timing = timing_.get();
-                const auto read_start = timing ? now_ns() : 0;
-                const bool read_ok = cap.read(frame_mat);
-                const auto read_done = timing ? now_ns() : 0;
+                CameraCallObservation reading;
+                const bool read_ok =
+                    invoke_camera(camera_id, "read", reading, [&] { return cap.read(frame_mat); });
+                const auto timing = reading.session;
+                const auto read_start = reading.started, read_done = reading.completed;
                 if (stopping())
                 {
                     break;
                 }
                 if (!read_ok || frame_mat.empty())
                 {
+                    remember_failure(camera_id, "read", read_ok ? "empty_frame" : "false_return",
+                                     reading);
                     update_camera(camera_id, [](auto &state) { ++state.read_failures; });
                     emit_status(camera_id, last_status, "camera_read_failed:" + dev_path);
                     if (!close_capture(cap, camera_id, last_status))
@@ -451,8 +516,13 @@ class CameraFrameSource : public FrameSource
         update_camera(camera_id, [](auto &state) { state.negotiated_mode.reset(); });
         try
         {
-            capture.close();
-            return true;
+            CameraCallObservation closing;
+            return invoke_camera(camera_id, "close", closing,
+                                 [&]
+                                 {
+                                     capture.close();
+                                     return true;
+                                 });
         }
         catch (const cv::Exception &)
         {
@@ -515,6 +585,8 @@ class CameraFrameSource : public FrameSource
     std::atomic<uint64_t> received_count_{0};
     std::atomic<uint64_t> dropped_count_{0};
 
+    std::array<FailureRecord, 4> failures_;
+    std::array<uint64_t, 4> failure_sequences_{};
     std::array<std::unique_ptr<CameraCapture>, 4> captures_;
     std::vector<std::thread> workers_;
     std::deque<SourceEvent> pending_events_;
