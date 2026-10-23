@@ -457,3 +457,9 @@ config, lease и restore не меняются. Контракт файлов и
 `telemetry.samples[].source.camera_diagnostics[].latest_failure` — additive metadata
 существующих telemetry commands. Typed SDK проверяет identity/interval/outcome; старые
 отправители могут не иметь поля. [[engineering/SOURCE_TIMING#Последний неуспешный вызов камеры]].
+
+
+`telemetry_catalog.socket_source_diagnostics_v1` и optional/null source.socket_diagnostics
+в существующем telemetry_read добавляют per-camera producer snapshot. RGB8 producer
+HELLO/frame payload, endpoints и policy pause/replay не меняются.
+[[engineering/SOCKET_SOURCE_DIAGNOSTICS]].

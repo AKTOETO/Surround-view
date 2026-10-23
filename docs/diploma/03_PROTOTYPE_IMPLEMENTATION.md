@@ -4110,3 +4110,73 @@ Unix cleanup теперь проверяет сохранённые при bind 
 Первый integration run7/7 прошёл за181,89с; после дополнительного ownership guard
 финальные3/3 затронутых CTest прошли за20,62с, source suite60/60. Все76 PlantUML-вставок
 корректны. Это Linux lifecycle regression, не квалификация Aurora/физических драйверов.
+
+## 3.77. Диагностика соединений виртуальных камер
+
+Симулятор отправляет изображения отдельными producer connections. Общих received/drop
+counters и trace reason недостаточно, чтобы понять, какая камера отключилась, была ли
+проблема handshake или переполнилась очередь. Особенно важно отделять текущий producer
+от selected frame: при pause изображение остаётся сохранённым даже после смены session.
+
+Socket backend дополнен четырьмя диагностическими snapshots. Connection имеет state
+(disconnected/handshaking/ready), optional session и last close category. Counters
+сгруппированы отдельно: accepted/refused/handshakes/closed, rejected/timeouts/received/drop.
+Переключения связанных state/counter fields выполняются под одним source mutex.
+Исходники — socket.cpp, socket_source_diagnostics.cpp и telemetry_metrics.cpp;
+контракт: [[engineering/SOCKET_SOURCE_DIAGNOSTICS]].
+
+| Показатель | Инженерный смысл | Ограничение |
+|---|---|---|
+| ready/session | HELLO прошёл validation | Не подтверждает ACK delivery, наличие кадров или качество rig |
+| refused | Новый peer пришёл к занятой камере | Действующий peer не заменяется |
+| reconnects | max(handshakes−1,0) | Не число TCP/retry attempts |
+| rejected/timeouts | Причина закрытия принятого connection | Не wall latency и не история всех событий |
+| received/dropped | Валидированные frames; pause/mailbox drops | Не sync/render/network drops |
+
+```plantuml
+@startuml
+participant Producer
+participant "Socket source" as Source
+participant "Status mailbox" as Trace
+participant "Per-camera snapshot" as Snapshot
+participant "Telemetry / SDK / GUI" as Client
+Producer -> Source: HELLO / RGB8 frames
+Source -> Snapshot: Coherent state / session / counters
+alt Disconnect / reject / timeout
+  Source -> Snapshot: closed++; category; clear active session
+  Source -> Trace: Existing status event (bounded)
+end
+Client -> Source: stats via existing telemetry collection
+Source --> Client: Snapshot even when status events were dropped
+note over Producer,Client
+Paused selected frame may belong to an older session.
+Producer readiness and frame health are distinct.
+end note
+@enduml
+```
+
+*Рисунок3.94 — диагностика не зависит от успешного сохранения каждого trace event.*
+
+Данные передаются через optional source.socket_diagnostics существующего telemetry_read;
+capability объявлена в telemetry_catalog. Новые commands, endpoints и producer payload
+не нужны. SDK валидирует ordered camera IDs, enum/type/field consistency, active slot,
+session presence и bounds между counters. Legacy omission/null допускаются. Archive
+сохраняет значения как точные uint64; GUI не округляет недоступные для binary64 counters.
+
+Счётчики являются состоянием backend и обновляются также при выключенной telemetry;
+флаг enabled управляет sampler/history. Их overhead отдельно не измерен. По нескольким
+snapshots нельзя восстановить весь lifecycle или измерить частоту ошибок без собственной
+временной модели. Текущая TTL/pause/render-health политика не изменена: diagnostics
+делают различие producer/frame видимым, не вводят новую политику отбрасывания изображения.
+
+C++ regression проверяет отказ занятому peer, rejected duplicate frame, новую session,
+paused/mailbox drops, partial HELLO timeout, archive/SDK corruption и pagination. При20
+rejections в bounded mailbox остаются16 statuses, но snapshot сохраняет20. Native Unix/TCP
+harness проверяет четыре producer sessions и восстановление после rejection. Это тесты
+инструментария, не новая confirmatory выборка fusion или physical camera acceptance.
+Подробности и результаты: [[validation/SOCKET_SOURCE_DIAGNOSTICS]].
+
+Финальный полный Linux CTest69/69 прошёл за197,91с; source suite66/66, Qt runtime/editor/
+telemetry27/27. Проверены78 PlantUML-вставок и внешний установленный C++17 SDK consumer
+(configure/build/run exit0). На Авроре и физическом capture backend эта новая диагностика
+этим прогоном не квалифицирована.

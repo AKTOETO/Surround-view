@@ -1,5 +1,11 @@
 # Состояние прототипа и границы подтверждения
 
+23.10.2026: per-camera socket producer diagnostics реализованы в backend/SDK/archive/GUI:
+connection state/session, accepted/refused/handshakes/closed, rejected/timeouts/received/drop.
+Текущий producer отделён от selected frozen frame; counters сохраняются при потере status
+trace events. Это snapshot, не полная history/latency или подтверждение качества изображения.
+[[engineering/SOCKET_SOURCE_DIAGNOSTICS]].
+
 23.10.2026: исправлена конкурентная остановка replay/socket: join/cleanup сериализованы,
 replay stopped синхронизирован с CV predicates, после blocked loader return не запускаются
 следующие camera loads и не публикуется отменённый batch. Socket request admission

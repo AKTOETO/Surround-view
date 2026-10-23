@@ -1282,3 +1282,34 @@ B -> Shutdown: unlock
 ```
 
 *Рисунок RR.30 — второй stop ожидает завершения первого, а source mutex не удерживается во время join.*
+
+## Состояние socket producer отдельно от кадра
+
+Backend поддерживает coherent per-camera diagnostics независимо от status mailbox и
+selected frames. [[engineering/SOCKET_SOURCE_DIAGNOSTICS]].
+
+```plantuml
+@startuml
+[*] --> disconnected
+state disconnected
+state handshaking
+state ready
+disconnected --> handshaking : New admitted connection; accepted++
+handshaking --> ready : HELLO validated; handshakes++; session set
+handshaking --> disconnected : Timeout / rejection / EOF / stop; closed++
+ready --> disconnected : Timeout / protocol reject / EOF / write failure / stop; closed++
+ready --> ready : Valid frame; received++; optional paused/mailbox drop
+ready --> ready : Busy new connection; refused++; current session unchanged
+note right of ready
+ready = validated HELLO, not image quality.
+Reconnect = handshakes after the first.
+Frozen frames retain their own source session.
+end note
+note bottom of disconnected
+State/counters persist even if status queue is full.
+Telemetry epoch does not reset source counters.
+end note
+@enduml
+```
+
+*Рисунок RR.31 — snapshot описывает producer lifecycle, а не пригодность выбранного кадра.*

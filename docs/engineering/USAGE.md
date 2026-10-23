@@ -1654,3 +1654,12 @@ sv-client-lib и сохраняются в archive: [[engineering/SOURCE_TIMING#
 worker shutdown. Закрываются также producer connections с неполным сообщением; replay
 не начинает следующий camera load после наблюдённого stop. Уже заблокированный loader
 или V4L2 call не становится прерываемым: [[engineering/SOURCE_LIFECYCLE]].
+
+
+## Producer reconnect и потери по камерам
+
+Для socket source включите telemetry и выберите в **Телеметрия → Источники** metric
+`Socket N`. Connected включает handshake; details показывают ready/session и последнюю
+причину закрытия. Reconnects, timeouts, rejected и dropped — cumulative counters,
+не latency/rate. Это текущий producer, а не состояние сохранённого paused кадра.
+[[engineering/SOCKET_SOURCE_DIAGNOSTICS]].

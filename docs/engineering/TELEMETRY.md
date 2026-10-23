@@ -331,3 +331,9 @@ Camera diagnostics дополнены default-off timing `latest_failure` и cap
 каждой камеры. Это state gauge с epoch/session guard, не sample distribution; GUI не
 вычисляет quantiles повторных snapshots. Контракт и ограничения:
 [[engineering/SOURCE_TIMING#Последний неуспешный вызов камеры]].
+
+
+Socket source публикует отдельный nullable socket_diagnostics snapshot по каждой камере:
+connection phase/session, accepted/refused/handshakes/closed, rejection/timeout/received/drop.
+SDK/archive/GUI сохраняют текущий producer state независимо от frozen selected frames.
+Контракт: [[engineering/SOCKET_SOURCE_DIAGNOSTICS]]. Новых commands нет.

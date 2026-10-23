@@ -1137,3 +1137,9 @@ simulator_configuration_qml7,35с, research_scenarios0,36с, svctl_options0,00с
 23.10.2026: latest failed camera call telemetry реализована и проверена отдельно:
 [[validation/CAMERA_FAILURE_TIMING]]. Полный CTest69/69 за247,60с; installed SDK consumer
 успешен. Это диагностика backend failure, не новый опыт качества fusion либо физической камеры.
+
+
+23.10.2026: per-camera socket producer diagnostics проверены отдельно:
+[[validation/SOCKET_SOURCE_DIAGNOSTICS]]. Полный CTest69/69 за197,91с,
+source suite66/66; installed SDK consumer успешен. Это instrumentation validation,
+не новая confirmatory серия качества сшивки.
