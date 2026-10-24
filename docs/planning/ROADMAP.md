@@ -1,5 +1,11 @@
 # Подробный план реализации
 
+25.10.2026: server calibration_result_v1 и native svctl calibration-run позволяют
+сохранить candidate pose/validation без apply в одной owner-сессии. Numerical E1 pilot:
+16/16 completed, все проходят прежний reprojection gate, но SQPnP при outliers даёт
+median centre error971mm. Это ограничение gate/геометрии fixture, не physical acceptance.
+[[validation/THESIS_CORE_PILOT#Численный пилот калибровки E1]].
+
 25.10.2026: компактный протокол E1–E3 и configs/research/thesis-core.json зафиксированы;
 сквозной native пилот54 trials/42 captures/6 variants прошёл с точными input guards
 и RGB restore. Это historical Blender input, не независимая quality confirmation.

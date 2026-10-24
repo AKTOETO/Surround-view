@@ -1,0 +1,419 @@
+{
+  "schema_version": 1,
+  "scope": "numerical_preflight_not_blender_or_detector_or_holdout",
+  "report_sha256": "2c5d7e075e5121dd2b16dba19e12df9683e72d8ac8bf042dac75cbd56fca52fd",
+  "truth_sha256": "2302b85b49e3e66891b2d2cf13334a7a606f2d908f21f9863d9b3894a86f6040",
+  "cases_sha256": "9cd671fba03b338498e6b5264b0ea1fbe0aeaa739f28da15248d3a097b9f09e6",
+  "catalog": {
+    "version": 5,
+    "modes": [
+      "edge_feather",
+      "hard_best_angle",
+      "angular_feather",
+      "seam_distance_feather",
+      "graph_cut_seam",
+      "multi_band",
+      "graph_cut_multi_band"
+    ],
+    "fallback_display": {
+      "modes": [
+        "legacy",
+        "hatch"
+      ],
+      "scope": "existing_fallback_branch_color_only",
+      "implementation": "screen_tiles_8px_v1",
+      "scene_correspondence": false
+    },
+    "diagnostics": [
+      "color",
+      "coverage",
+      "weights"
+    ],
+    "edge_width_px": {
+      "exclusive_min": 0,
+      "max": 4096
+    },
+    "angle_power": {
+      "exclusive_min": 0,
+      "max": 32
+    },
+    "smoothness_weight": {
+      "min": 0,
+      "max": 100
+    },
+    "pyramid_levels": {
+      "min": 1,
+      "max": 8
+    },
+    "pyramid_boundary": [
+      "zero",
+      "normalized"
+    ],
+    "normalized_pyramid_implementation": "normalized_support_v1",
+    "research_backend": "gles_projection_cpu_fusion_v1",
+    "research_fusion_implementation": "validity_zero_extension_v2",
+    "research_pixel_limit": 262144,
+    "seam_solver": [
+      "binary_pairs",
+      "alpha_expansion"
+    ],
+    "graph_cut_scope": "binary_pairs_default_or_global_weighted_potts_expansion",
+    "alpha_expansion_implementation": "integer_potts_v1",
+    "alpha_expansion_max_sweeps": 8,
+    "apply": "between_render_calls",
+    "persistence": "temporary",
+    "backend": "opengl_es3",
+    "gl_renderer": "AMD Ryzen 9 9950X 16-Core Processor (radeonsi, raphael_mendocino, ACO, DRM 3.64, 7.2.6-arch2-1)",
+    "gl_vendor": "AMD",
+    "source_revision": "aaa4d55f3d014023a9ad35632f3978a9e032a1d1",
+    "source_fingerprint": "8764ce76ed5df116f0b2aefae1e9d83a6f44dc5cdc330c9b7d6bef06a8ada7bd",
+    "build_passport": {
+      "schema_version": 1,
+      "policy": "configured_build_v1",
+      "sha256": "e3159aca52ccd2677871019228e20a92c32b3e71b193b94f2a41c0ccb3b8c85a",
+      "descriptor": {
+        "configuration": {
+          "cxx_flags": " -O3 -DNDEBUG",
+          "executable_link_flags": " ",
+          "generator": "Ninja",
+          "interprocedural_optimization": "",
+          "name": "Release",
+          "position_independent_code": "",
+          "project_compile_options": [
+            "-Wall",
+            "-Wextra",
+            "-Wpedantic"
+          ],
+          "project_link_options": []
+        },
+        "dependencies": {
+          "egl_configured_version": "1.5",
+          "gles_configured_version": "3.2",
+          "glm_provision": "system",
+          "opencv_configured_version": "5.0.0",
+          "opencv_provision": "system"
+        },
+        "features": {
+          "CMAKE_CROSSCOMPILING": false,
+          "SV_AURORA": false,
+          "SV_BUNDLE_OPENCV": false,
+          "SV_GPU": true,
+          "SV_OPENCV_FETCHED": false,
+          "SV_SANITIZERS": false
+        },
+        "headers": {
+          "boost": "1_92",
+          "compiler_version": "16.2.1 20260810",
+          "cplusplus": 201703,
+          "cxx11_abi": 1,
+          "glm": 1000,
+          "openssl": "OpenSSL 3.6.4 25 Aug 2026",
+          "pointer_bits": 64,
+          "stdlib": "libstdc++",
+          "stdlib_version": 20260810
+        },
+        "schema_version": 1,
+        "scope": "configured_build_v1",
+        "source": {
+          "fingerprint": "8764ce76ed5df116f0b2aefae1e9d83a6f44dc5cdc330c9b7d6bef06a8ada7bd",
+          "revision": "aaa4d55f3d014023a9ad35632f3978a9e032a1d1",
+          "version": "0.6.0"
+        },
+        "target": {
+          "processor": "x86_64",
+          "sdk_id": "unreported",
+          "sysroot": "",
+          "system": "Linux",
+          "system_version": "7.2.6-arch2-1"
+        },
+        "toolchain": {
+          "compiler_id": "GNU",
+          "compiler_target": "",
+          "compiler_version": "16.2.1",
+          "cxx_standard": 17,
+          "toolchain_sha256": null
+        }
+      }
+    }
+  },
+  "client_build_passport": {
+    "schema_version": 1,
+    "policy": "configured_build_v1",
+    "sha256": "e3159aca52ccd2677871019228e20a92c32b3e71b193b94f2a41c0ccb3b8c85a",
+    "descriptor": {
+      "configuration": {
+        "cxx_flags": " -O3 -DNDEBUG",
+        "executable_link_flags": " ",
+        "generator": "Ninja",
+        "interprocedural_optimization": "",
+        "name": "Release",
+        "position_independent_code": "",
+        "project_compile_options": [
+          "-Wall",
+          "-Wextra",
+          "-Wpedantic"
+        ],
+        "project_link_options": []
+      },
+      "dependencies": {
+        "egl_configured_version": "1.5",
+        "gles_configured_version": "3.2",
+        "glm_provision": "system",
+        "opencv_configured_version": "5.0.0",
+        "opencv_provision": "system"
+      },
+      "features": {
+        "CMAKE_CROSSCOMPILING": false,
+        "SV_AURORA": false,
+        "SV_BUNDLE_OPENCV": false,
+        "SV_GPU": true,
+        "SV_OPENCV_FETCHED": false,
+        "SV_SANITIZERS": false
+      },
+      "headers": {
+        "boost": "1_92",
+        "compiler_version": "16.2.1 20260810",
+        "cplusplus": 201703,
+        "cxx11_abi": 1,
+        "glm": 1000,
+        "openssl": "OpenSSL 3.6.4 25 Aug 2026",
+        "pointer_bits": 64,
+        "stdlib": "libstdc++",
+        "stdlib_version": 20260810
+      },
+      "schema_version": 1,
+      "scope": "configured_build_v1",
+      "source": {
+        "fingerprint": "8764ce76ed5df116f0b2aefae1e9d83a6f44dc5cdc330c9b7d6bef06a8ada7bd",
+        "revision": "aaa4d55f3d014023a9ad35632f3978a9e032a1d1",
+        "version": "0.6.0"
+      },
+      "target": {
+        "processor": "x86_64",
+        "sdk_id": "unreported",
+        "sysroot": "",
+        "system": "Linux",
+        "system_version": "7.2.6-arch2-1"
+      },
+      "toolchain": {
+        "compiler_id": "GNU",
+        "compiler_target": "",
+        "compiler_version": "16.2.1",
+        "cxx_standard": 17,
+        "toolchain_sha256": null
+      }
+    }
+  },
+  "configuration_unchanged": true,
+  "results": [
+    {
+      "camera_id": 0,
+      "profile": "gaussian",
+      "method": "sqpnp",
+      "outcome": "completed",
+      "center_error_mm": 95.80612745393333,
+      "nominal_center_error_mm": 31.68305240749847,
+      "rotation_error_deg": 1.3784297677374444,
+      "validation_rmse_px": 0.782100450322861,
+      "training_rmse_px": 0.6961115761916999,
+      "duration_ms": 0.523123,
+      "quality_accepted": true
+    },
+    {
+      "camera_id": 1,
+      "profile": "gaussian",
+      "method": "sqpnp",
+      "outcome": "completed",
+      "center_error_mm": 128.25836785304443,
+      "nominal_center_error_mm": 9.416169566491988,
+      "rotation_error_deg": 0.5903312515758357,
+      "validation_rmse_px": 0.6790779657672195,
+      "training_rmse_px": 0.7299640990220434,
+      "duration_ms": 0.297154,
+      "quality_accepted": true
+    },
+    {
+      "camera_id": 0,
+      "profile": "outliers",
+      "method": "sqpnp",
+      "outcome": "completed",
+      "center_error_mm": 964.9373722074043,
+      "nominal_center_error_mm": 31.68305240749847,
+      "rotation_error_deg": 2.8242183321548984,
+      "validation_rmse_px": 1.4626670981201433,
+      "training_rmse_px": 3.4771760552917717,
+      "duration_ms": 0.132391,
+      "quality_accepted": true
+    },
+    {
+      "camera_id": 2,
+      "profile": "gaussian",
+      "method": "ransac_epnp_lm",
+      "outcome": "completed",
+      "center_error_mm": 39.23726043253274,
+      "nominal_center_error_mm": 11.584995482503135,
+      "rotation_error_deg": 0.5470003152086079,
+      "validation_rmse_px": 0.7459773086380687,
+      "training_rmse_px": 0.697777601188412,
+      "duration_ms": 1.109877,
+      "quality_accepted": true
+    },
+    {
+      "camera_id": 1,
+      "profile": "outliers",
+      "method": "ransac_epnp_lm",
+      "outcome": "completed",
+      "center_error_mm": 58.846556195983034,
+      "nominal_center_error_mm": 9.416169566491988,
+      "rotation_error_deg": 0.5279314970076473,
+      "validation_rmse_px": 0.7017892368034483,
+      "training_rmse_px": 3.2344434053451057,
+      "duration_ms": 0.783887,
+      "quality_accepted": true
+    },
+    {
+      "camera_id": 3,
+      "profile": "gaussian",
+      "method": "ransac_epnp_lm",
+      "outcome": "completed",
+      "center_error_mm": 48.94300932758704,
+      "nominal_center_error_mm": 45.43155972164695,
+      "rotation_error_deg": 1.8265587064998063,
+      "validation_rmse_px": 0.8557301570836644,
+      "training_rmse_px": 0.651076484979936,
+      "duration_ms": 0.81198,
+      "quality_accepted": true
+    },
+    {
+      "camera_id": 2,
+      "profile": "outliers",
+      "method": "ransac_epnp_lm",
+      "outcome": "completed",
+      "center_error_mm": 36.342577415376624,
+      "nominal_center_error_mm": 11.584995482503135,
+      "rotation_error_deg": 0.7626836762675546,
+      "validation_rmse_px": 0.7496289728195402,
+      "training_rmse_px": 2.672818976772569,
+      "duration_ms": 1.008614,
+      "quality_accepted": true
+    },
+    {
+      "camera_id": 0,
+      "profile": "outliers",
+      "method": "ransac_epnp_lm",
+      "outcome": "completed",
+      "center_error_mm": 19.159285136518417,
+      "nominal_center_error_mm": 31.68305240749847,
+      "rotation_error_deg": 1.1011034975781895,
+      "validation_rmse_px": 0.7476010782067439,
+      "training_rmse_px": 2.908514965441016,
+      "duration_ms": 1.042909,
+      "quality_accepted": true
+    },
+    {
+      "camera_id": 1,
+      "profile": "outliers",
+      "method": "sqpnp",
+      "outcome": "completed",
+      "center_error_mm": 1218.5017142674342,
+      "nominal_center_error_mm": 9.416169566491988,
+      "rotation_error_deg": 1.9297699154380927,
+      "validation_rmse_px": 1.497087225154463,
+      "training_rmse_px": 3.9956769638700775,
+      "duration_ms": 0.127652,
+      "quality_accepted": true
+    },
+    {
+      "camera_id": 3,
+      "profile": "gaussian",
+      "method": "sqpnp",
+      "outcome": "completed",
+      "center_error_mm": 57.84793743764292,
+      "nominal_center_error_mm": 45.43155972164695,
+      "rotation_error_deg": 1.6189517002711118,
+      "validation_rmse_px": 0.8311793308549141,
+      "training_rmse_px": 0.6596366652319623,
+      "duration_ms": 0.388337,
+      "quality_accepted": true
+    },
+    {
+      "camera_id": 3,
+      "profile": "outliers",
+      "method": "sqpnp",
+      "outcome": "completed",
+      "center_error_mm": 977.6379350887347,
+      "nominal_center_error_mm": 45.43155972164695,
+      "rotation_error_deg": 2.0655056832546754,
+      "validation_rmse_px": 1.2482145716309312,
+      "training_rmse_px": 3.1528072366961615,
+      "duration_ms": 0.104859,
+      "quality_accepted": true
+    },
+    {
+      "camera_id": 2,
+      "profile": "gaussian",
+      "method": "sqpnp",
+      "outcome": "completed",
+      "center_error_mm": 53.82353312825478,
+      "nominal_center_error_mm": 11.584995482503135,
+      "rotation_error_deg": 0.4243923425178681,
+      "validation_rmse_px": 0.7435595325323776,
+      "training_rmse_px": 0.7064338874612164,
+      "duration_ms": 0.328243,
+      "quality_accepted": true
+    },
+    {
+      "camera_id": 3,
+      "profile": "outliers",
+      "method": "ransac_epnp_lm",
+      "outcome": "completed",
+      "center_error_mm": 53.47703208243552,
+      "nominal_center_error_mm": 45.43155972164695,
+      "rotation_error_deg": 1.6104321793398422,
+      "validation_rmse_px": 0.8635546984037356,
+      "training_rmse_px": 2.69090032015399,
+      "duration_ms": 1.14871,
+      "quality_accepted": true
+    },
+    {
+      "camera_id": 2,
+      "profile": "outliers",
+      "method": "sqpnp",
+      "outcome": "completed",
+      "center_error_mm": 957.0983383850122,
+      "nominal_center_error_mm": 11.584995482503135,
+      "rotation_error_deg": 2.5272023447935252,
+      "validation_rmse_px": 1.3062414995984657,
+      "training_rmse_px": 3.0814615865618715,
+      "duration_ms": 0.492856,
+      "quality_accepted": true
+    },
+    {
+      "camera_id": 0,
+      "profile": "gaussian",
+      "method": "ransac_epnp_lm",
+      "outcome": "completed",
+      "center_error_mm": 31.25644737003805,
+      "nominal_center_error_mm": 31.68305240749847,
+      "rotation_error_deg": 1.260676617278838,
+      "validation_rmse_px": 0.7702415604143376,
+      "training_rmse_px": 0.6868933811265948,
+      "duration_ms": 0.34778,
+      "quality_accepted": true
+    },
+    {
+      "camera_id": 1,
+      "profile": "gaussian",
+      "method": "ransac_epnp_lm",
+      "outcome": "completed",
+      "center_error_mm": 38.33944890880361,
+      "nominal_center_error_mm": 9.416169566491988,
+      "rotation_error_deg": 0.5535696769198013,
+      "validation_rmse_px": 0.6708974193072292,
+      "training_rmse_px": 0.7179498627959586,
+      "duration_ms": 0.283838,
+      "quality_accepted": true
+    }
+  ],
+  "figure_sha256": "415ac505a52a0b3570c0f97adb8a58e89799471ef0b62589ecd781ecc00eeeba"
+}

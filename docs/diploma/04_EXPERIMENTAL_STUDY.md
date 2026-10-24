@@ -4821,3 +4821,33 @@ Quality reference не подключён; workflow success не означае�
 Raw reports, hashes, таблица и рецепт: [[validation/THESIS_CORE_PILOT]]. Следующий этап —
 новые сгруппированные calibration observations и immutable inputs/reference registry;
 пилот не расширяет программу дополнительными алгоритмами.
+
+
+## 4.95. Сравнение калибраторов и предел репроекционного критерия
+
+В первом numerical preflight E1 четыре nominal камеры получили известные yaw/pitch/
+along-body perturbations. При фиксированных intrinsics использованы production SQPnP
+и RANSAC EPNP+LM; каждый метод получил одинаковые training и отдельные validation poses.
+Все16 fits выполнены на сервере через sv-client-lib; результаты прочитаны без apply,
+поэтому рабочая калибровка не менялась. Fixture создаёт известные XYZ/UV, без detector
+и без имитации физической фотографии; holdout seeds основной серии не использовались.
+
+При Gaussian noise0.5px median centre errors составили76.827mm (SQPnP) и38.788mm
+(RANSAC+LM), held-out reprojection RMSE0.763/0.758px. При10 injected outliers из96
+training observations centre errors выросли до971.288/44.910mm, RMSE1.384/0.749px.
+Все16 результатов проходят текущий server reprojection gate. Следовательно, малая
+репроекционная ошибка не гарантирует малую ошибку положения в этой постановке.
+Это не основание подобрать новый произвольный порог или объявить калибровку решённой.
+
+![Численный калибровочный пилот](figures/experiments/thesis_calibration_pilot.png)
+
+*Рисунок4.95.1 — spatial/rotation и independent held-out reprojection errors;
+каждая точка — камера одного perturbed rig. Четыре камеры не заменяют независимые сцены.*
+
+Точки небольших мишеней сосредоточены около optical axis; такая геометрия ограничивает
+наблюдаемость pose. RANSAC также не всегда улучшает centre относительно nominal,
+поэтому требуется проверка влияния estimated calibration на итоговое изображение E3.
+Следующая подготовка — заранее разнести board poses и зафиксировать RNG/input identities,
+затем выполнить ограниченную основную серию. Универсальный ranking, physical acceptance
+и quality gate с пространственными гарантиями не заявлены. Полные таблицы, hashes,
+условия и воспроизведение: [[validation/THESIS_CORE_PILOT#Численный пилот калибровки E1]].

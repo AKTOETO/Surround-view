@@ -12,10 +12,13 @@
 1. **Подготовить новый input/observation/reference registry E1–E3.** Протоколv1 и native
    subset зафиксированы ([[research/THESIS_CORE_PROTOCOL]]), сквозной пилот54 trials/
    42 captures выполнен ([[validation/THESIS_CORE_PILOT]]). Осталось заранее записать
-   seed→preset mapping, split groups и hashes новых holdout inputs/true poses/reference;
+   seed→preset mapping, split groups, per-job RNG policy и hashes новых holdout inputs/true poses/reference;
    подготовить два фиксированных view и bounded initial carrier. Исторический pilot
    не заменяет этот gate; до его закрытия не объявлять финальную серию начатой.
-2. **Калибровка и её влияние на обзор.** Отдельные training/validation observations,
+2. **Калибровка и её влияние на обзор.** Native server comparison и16-case numerical
+   pilot выполнены ([[validation/THESIS_CORE_PILOT#Численный пилот калибровки E1]]).
+   До основной серии зафиксировать геометрически разнесённые board poses; narrow-axis
+   pilot не подтверждает достаточную pose accuracy и не заменяет holdout. Отдельные training/validation observations,
    известные yaw/pitch/along-body perturbations и ground truth. Сравнить два метода
    по ошибке позы/отложенной репроекции; затем nominal/estimated/true-control на выходе
    сервера при одном фиксированном fusion/carrier. Отказы считать результатом, не исключать.

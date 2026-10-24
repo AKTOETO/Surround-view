@@ -76,3 +76,79 @@ Audit успешен; negative check с width640 вместо320 отклоня�
 до экспорта figure/audit. py_compile script и git diff --check успешны. Полный CTest в этом срезе
 не повторяется: product binaries не менялись; предыдущая проверенная сборка69/69 описана
 в [[validation/CLIENT_SMOKE#Защита клиентских deadline]].
+
+
+## Численный пилот калибровки E1
+
+25.10.2026. Новый native calibration-run устраняет блокер measurement: completed candidate
+pose доступна без apply, все jobs выполняются одной owner-сессией.16 cases на4 камерах
+(два метода ×два observation profiles) завершены; config revision не изменилась.
+Это numerical preflight с seed9001, **не** новая Blender scene/holdout и не весь E1.
+
+Known fisheye intrinsics из configs/synthetic.json; independent NumPy projection создаёт
+6 board poses/camera (4 training,2 validation),96/48 correspondences. Sigma0.5px; outlier
+profile сохраняет тот же шум и добавляет10 из96 offsets U[−10,10]px. Group split по целым
+poses. R_true=Rx(pitch) R_nominal Rz(−yaw), C_true=C_nominal+[along_body,0,0], t=−RC.
+Yaw/pitch U[−3°,3°], shift U[−0.05,0.05]м. Порядок16 jobs перемешан fixture seed93001.
+Truth не отправляется solver. Метод/validation выполняются серверным production OpenCV.
+
+| Profile | Метод | Completed | Median centre error, mm | Rotation error, deg | Held-out RMSE, px |
+|---|---|---|---:|---:|---:|
+| gaussian | sqpnp |4/4| 76.827 | 0.984 | 0.763 |
+| gaussian | ransac_epnp_lm |4/4| 38.788 | 0.907 | 0.758 |
+| outliers | sqpnp |4/4| 971.288 | 2.296 | 1.384 |
+| outliers | ransac_epnp_lm |4/4| 44.910 | 0.932 | 0.749 |
+
+![Результаты численного пилота](../diploma/figures/experiments/thesis_calibration_pilot.png)
+
+*Рисунок П.2 — каждый marker соответствует камере одного rig; четыре камеры не являются
+четырьмя независимыми сценами. Это scatter numerical errors, не фотографии с детектора.*
+
+Все16 candidates имеют quality_accepted=true. Но при outliers SQPnP даёт spatial errors
+957–1219mm, validation RMSE1.248–1.497px. Gate проверяет только reprojection и не
+подтверждает pose accuracy. Формальный physical false-accept rate без внешних требований
+не определяется. Даже RANSAC не всегда улучшает centre относительно nominal:
+для clean profile улучшение лишь у1/4 камер. Не выбирать другой порог по этим outputs.
+
+Мишени маленькие и близки к optical axis, что ограничивает обусловленность. Это полезный
+отрицательный контроль: до основной серии зафиксировать геометрически разнесённые board
+poses в input registry, без отбора по полученному fit error. Полное angular-coverage
+исследование не добавляется. OpenCV worker RNG в этом pilot не закреплён per-job API;
+для финальной воспроизводимой серии его policy ещё нужно явно определить/записать.
+RANSAC randomness и один mount seed не позволяют объявить универсального победителя.
+
+Raw cases/truth/report/trace: artifacts/thesis-e1-numerical-20261025. Synthetic replay
+служит только data attachment и **не** является изображениями калибровочной мишени.
+Compact results/passports/hashes:
+[thesis_calibration_pilot_v1.json](baselines/thesis_calibration_pilot_v1.json).
+Candidate projection/RMSE независимо пересчитаны и совпали с сервером с допуском1e−7px.
+Сервер после сохранения16 результатов штатно завершён SIGINT.
+
+Подготовка и post-processing (solver в Python отсутствует):
+
+```sh
+python3 docs/diploma/plot_thesis_calibration.py prepare configs/synthetic.json artifacts/e1
+python3 tools/simulator.py --config configs/synthetic.json --frames 2 --output artifacts/e1/replay
+```
+
+Запустить sv-server с configs/synthetic.json, manifest artifacts/e1/replay/manifest.json
+и Unix /tmp/sv-thesis-e1; затем native команду из [[engineering/USAGE#Сравнение калибраторов без изменения сервера]].
+После завершения сервера:
+
+```sh
+MPLCONFIGDIR=/tmp/sv-e1-mpl python3 docs/diploma/plot_thesis_calibration.py plot \
+  artifacts/e1/new-report.json artifacts/e1/truth.json \
+  artifacts/e1/figure.png artifacts/e1/audit.json
+```
+
+Исходный compact audit закрепляет numerical pilot, повтор создаёт новый report/audit;
+случайные RANSAC результаты не требуются побитно прежними. Device/Aurora и detector не проверены.
+
+
+Linux build успешна. Финальный профильный CTest6/6 за6,59с: calibration_job, replay_ipc,
+calibration_observations, research_scenarios, svctl_options, extrinsics. Новые GTest
+проверяют preflight empty/duplicate/extra/oversize и отказ перезаписи до network;
+Unix integration — candidate matrix/duration, completed+failed в одной сессии, сохранение
+config revision и previous report. Полный69-test прогон здесь не повторялся.
+Scientific pilot выполнялся до добавления только preflight test registration в CMake;
+его собственные build passports сохранены в audit, не подменены финальной сборкой.
