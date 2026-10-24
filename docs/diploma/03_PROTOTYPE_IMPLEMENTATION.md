@@ -4314,3 +4314,19 @@ source suite80/80. Контракт: [[engineering/SOURCES#Независимы�
 Это проверка буферизации, а не подтверждение sensor synchronisation или качества fusion.
 Mixed source, hot source configuration, per-camera physical drop counters и квалификация
 блокирующих V4L2 calls остаются отдельными задачами.
+
+
+## 3.80. Общая защита асинхронных deadline клиента и producer
+
+Защита §3.78 вынесена в private `src/internal/message_deadline.hpp` и используется также
+для handshake/partial-message timers sv-client-lib. Поколение и armed исключают действие
+устаревшего successful callback после cancel/rearm. Current-channel check сохраняется;
+реальный timeout по-прежнему вызывает существующее reconnect без replay pending commands.
+Public API, Options и SV01 не меняются, installed consumer не включает private header.
+
+Четыре детерминированных tests проверяют порядок ready/aborted callbacks общего helper.
+Два TCP mock cases проверяют фрагментированные handshake/command ACK и RGBA frames,
+idle450ms при timeout300ms, затем настоящий partial timeout на control/data и новую
+session после reconnect. Это не измерение частоты прежней гонки, overhead, two-host
+latency или аппаратная квалификация. Контракт: [[engineering/CLIENT_LIBRARY#Поколения клиентских deadline]],
+проверки и итоговые результаты: [[validation/CLIENT_SMOKE#Защита клиентских deadline]].

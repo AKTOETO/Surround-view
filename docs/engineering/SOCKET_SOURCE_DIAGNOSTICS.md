@@ -83,7 +83,9 @@ mailbox переполнен и часть trace events пропущена, те
 после полного HELLO/сообщения idle разрешён. Продолжение фрагментированного сообщения
 не продлевает его deadline. SV01, конфиг и публичный SDK не меняются.
 
-В `SocketMessageDeadline` каждый arm получает поколение. Callback проверяет совпадение
+В общем внутреннем `MessageDeadline` каждый arm получает поколение.
+С25.10.2026 helper находится в `src/internal/message_deadline.hpp` и используется также
+в sv-client-lib (ранее назывался SocketMessageDeadline). Callback проверяет совпадение
 поколения и armed; cancel сначала сбрасывает armed, затем отменяет native timer.
 Это необходимо, поскольку уже готовый successful timeout handler нельзя отозвать
 вызовом Asio cancel. Старый callback не закрывает соединение и не снимает новый deadline.

@@ -74,3 +74,34 @@ p95 относится к render/readback CPU wall, не к FPS приложен
 ## Открытые условия
 
 Two-host TCP, UDP, live FrameSource/producer, распределённые часы, runtime конфигуратор/calibration API, device SDK и hardware ещё открыты. Проверенные части checklist отмечены отдельно; все оставшиеся работы перечислены в [[planning/AUDIT]].
+
+
+## Защита клиентских deadline
+
+25.10.2026. Общий private MessageDeadline заменяет отдельные Asio handshake/partial timers
+клиента; тот же helper используется producer source. Public headers, SV01 и retry/command
+policies не менялись. Контракт: [[engineering/CLIENT_LIBRARY#Поколения клиентских deadline]].
+
+Четыре детерминированных GTest в `tests/socket_deadline_tests.cpp` проверяют общий helper
+на successful ready callbacks после cancel/rearm, aborted callbacks, destruction и ошибках
+native setup/cancel. Они воспроизводят порядок доставки callbacks без зависимости от sleep.
+Это не доказательство частоты гонки на физическом сетевом соединении.
+
+`tests/client_deadline_tests.cpp` добавлен в существующий client_release_budget target:
+два TCP mock cases проверяют partial message на control и data каналах. Handshake ACK,
+command ACK и три RGBA frames передаются фрагментами; после завершения сообщений idle450ms
+при timeout300ms не вызывает ошибок. Затем неполный prefix приводит к одному
+partial_message_timeout и новому полному handshake другой session. Непрерывный реальный
+server data stream, remote hosts и consumer latency этим mock не моделируются.
+
+Полная Linux build успешна. Preflight CTest4/4 за6,20с: client_lifecycle, client_release_budget
+(4 GTest, включая2 новых TCP cases), client_command_order и source_work_timing80/80.
+До изменения клиентских timers полный CTest69/69 предыдущей сборки завершился за218,30с;
+это baseline, а не финальная проверка нового client.cpp.
+
+
+Финальный полный прогон **новой** сборки: CTest69/69 за248,76с, включая
+client_transports146,24с (Unix/TCP, installed SDK consumer и Qt), client_release_budget1,68с,
+source_work_timing3,73с (80/80), simulator_configuration_qml10,14с. Полная build и
+проверка git diff --check успешны. Повышение времени относительно baseline218,30с не
+считается измерением overhead: эти CTest-прогоны не являются парным performance опытом.

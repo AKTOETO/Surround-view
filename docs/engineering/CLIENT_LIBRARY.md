@@ -213,3 +213,24 @@ CameraCaptureMode дополнен optional `automatic_properties` (nullable fps
 
 
 На Boost≥1.83 продуктовые JSON-пути используют общую Precise number policy: SV01 decoder, load_config, GUI/CLI intents и archive import. В installed SDK доступен sv/json.hpp. Framing/команды не меняются; Legacy dataset reader и старый Boost имеют отдельные ограничения. Новые config/wire baseline могут отличаться последними binary64 bits. Контракт, regression и миграция: [[engineering/JSON_PRECISION]].
+
+
+## Поколения клиентских deadline
+
+25.10.2026: handshake и partial-message timers используют общий внутренний
+`src/internal/message_deadline.hpp`, как и producer socket backend. Каждый arm получает
+поколение; callback действует только при совпадении поколения и armed. Cancel сначала
+выключает logical guard, затем отменяет native timer: готовый successful Asio callback
+может оставаться в очереди после cancel. Старый callback не закрывает ready-сессию и
+не снимает deadline следующей попытки/сообщения. Current-channel check сохраняется.
+
+Общий handshake budget по-прежнему включает control и data attachment. Partial budget
+начинается с первого фрагмента и не продлевается continuation reads; после полного
+сообщения idle разрешён. Актуальный timeout штатно вызывает fail и существующий bounded
+reconnect; pending commands не воспроизводятся. Параметры Options, SV01 и public API не
+изменены. Общий header приватный, установленному consumer он не нужен.
+
+Guard действует на owning IO thread либо после join. Это защита порядка callbacks,
+не hard real-time deadline; своевременность callback зависит от executor и consumer.
+Измерение частоты прежней гонки/overhead и two-host/Aurora qualification не выполнены.
+Проверки: [[validation/CLIENT_SMOKE#Защита клиентских deadline]], диплом §3.80.

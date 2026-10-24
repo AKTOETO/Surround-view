@@ -1,5 +1,12 @@
 # Состояние прототипа и границы подтверждения
 
+25.10.2026: защита поколений deadline распространена на sv-client-lib: handshake и
+partial-message timers используют общий private MessageDeadline с producer backend.
+Options/protocol/API не меняются; actual timeout и bounded reconnect сохраняются.
+TCP mock проверяет fragmented ACK/frames, idle и recovery для control/data.
+Linux build и полный CTest69/69 за248,76с успешны; аппаратная приёмка не заявлена.
+[[engineering/CLIENT_LIBRARY#Поколения клиентских deadline]].
+
 23.10.2026: аппаратный camera backend теперь соблюдает per-camera Q и вытесняет только
 свои кадры; status16/control64 имеют независимые quotas, depth считает только кадры.
 MOCK-проверки Q1/3/16 подтверждают сохранение медленной камеры, exact drops, четыре
