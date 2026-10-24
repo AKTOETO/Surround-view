@@ -1,0 +1,1577 @@
+{
+  "schema_version": 1,
+  "scope": "registered_numerical_e1_v2_not_detector_or_scene_confirmation",
+  "report_sha256": "98603dc2dc14abe8fb624e8bf50605cf2c53ccb7f833e64571ffd3585981896a",
+  "truth_sha256": "74c567f1c1bcb6469bcc846c267205a8dc6987fa88a7b12a86a72ab23fa51044",
+  "cases_sha256": "556665f2e635b28fa14ca6be84719abacada14d23263f33f25ca49e5262675a6",
+  "catalog": {
+    "version": 5,
+    "modes": [
+      "edge_feather",
+      "hard_best_angle",
+      "angular_feather",
+      "seam_distance_feather",
+      "graph_cut_seam",
+      "multi_band",
+      "graph_cut_multi_band"
+    ],
+    "fallback_display": {
+      "modes": [
+        "legacy",
+        "hatch"
+      ],
+      "scope": "existing_fallback_branch_color_only",
+      "implementation": "screen_tiles_8px_v1",
+      "scene_correspondence": false
+    },
+    "diagnostics": [
+      "color",
+      "coverage",
+      "weights"
+    ],
+    "edge_width_px": {
+      "exclusive_min": 0,
+      "max": 4096
+    },
+    "angle_power": {
+      "exclusive_min": 0,
+      "max": 32
+    },
+    "smoothness_weight": {
+      "min": 0,
+      "max": 100
+    },
+    "pyramid_levels": {
+      "min": 1,
+      "max": 8
+    },
+    "pyramid_boundary": [
+      "zero",
+      "normalized"
+    ],
+    "normalized_pyramid_implementation": "normalized_support_v1",
+    "research_backend": "gles_projection_cpu_fusion_v1",
+    "research_fusion_implementation": "validity_zero_extension_v2",
+    "research_pixel_limit": 262144,
+    "seam_solver": [
+      "binary_pairs",
+      "alpha_expansion"
+    ],
+    "graph_cut_scope": "binary_pairs_default_or_global_weighted_potts_expansion",
+    "alpha_expansion_implementation": "integer_potts_v1",
+    "alpha_expansion_max_sweeps": 8,
+    "apply": "between_render_calls",
+    "persistence": "temporary",
+    "backend": "opengl_es3",
+    "gl_renderer": "AMD Ryzen 9 9950X 16-Core Processor (radeonsi, raphael_mendocino, ACO, DRM 3.64, 7.2.6-arch2-1)",
+    "gl_vendor": "AMD",
+    "source_revision": "faa992cdbb4456debd5293af86689a921e66c987",
+    "source_fingerprint": "74664010ddc1fd90c364b2bf617334e745a77c7e63d35892ec15463cb2ee3308",
+    "build_passport": {
+      "schema_version": 1,
+      "policy": "configured_build_v1",
+      "sha256": "49e6dbf185090b0eb8612e12ac053edf9f4f5d7eca526a88facf66a290c9bcf9",
+      "descriptor": {
+        "configuration": {
+          "cxx_flags": " -O3 -DNDEBUG",
+          "executable_link_flags": " ",
+          "generator": "Ninja",
+          "interprocedural_optimization": "",
+          "name": "Release",
+          "position_independent_code": "",
+          "project_compile_options": [
+            "-Wall",
+            "-Wextra",
+            "-Wpedantic"
+          ],
+          "project_link_options": []
+        },
+        "dependencies": {
+          "egl_configured_version": "1.5",
+          "gles_configured_version": "3.2",
+          "glm_provision": "system",
+          "opencv_configured_version": "5.0.0",
+          "opencv_provision": "system"
+        },
+        "features": {
+          "CMAKE_CROSSCOMPILING": false,
+          "SV_AURORA": false,
+          "SV_BUNDLE_OPENCV": false,
+          "SV_GPU": true,
+          "SV_OPENCV_FETCHED": false,
+          "SV_SANITIZERS": false
+        },
+        "headers": {
+          "boost": "1_92",
+          "compiler_version": "16.2.1 20260810",
+          "cplusplus": 201703,
+          "cxx11_abi": 1,
+          "glm": 1000,
+          "openssl": "OpenSSL 3.6.4 25 Aug 2026",
+          "pointer_bits": 64,
+          "stdlib": "libstdc++",
+          "stdlib_version": 20260810
+        },
+        "schema_version": 1,
+        "scope": "configured_build_v1",
+        "source": {
+          "fingerprint": "74664010ddc1fd90c364b2bf617334e745a77c7e63d35892ec15463cb2ee3308",
+          "revision": "faa992cdbb4456debd5293af86689a921e66c987",
+          "version": "0.6.0"
+        },
+        "target": {
+          "processor": "x86_64",
+          "sdk_id": "unreported",
+          "sysroot": "",
+          "system": "Linux",
+          "system_version": "7.2.6-arch2-1"
+        },
+        "toolchain": {
+          "compiler_id": "GNU",
+          "compiler_target": "",
+          "compiler_version": "16.2.1",
+          "cxx_standard": 17,
+          "toolchain_sha256": null
+        }
+      }
+    }
+  },
+  "client_build_passport": {
+    "schema_version": 1,
+    "policy": "configured_build_v1",
+    "sha256": "49e6dbf185090b0eb8612e12ac053edf9f4f5d7eca526a88facf66a290c9bcf9",
+    "descriptor": {
+      "configuration": {
+        "cxx_flags": " -O3 -DNDEBUG",
+        "executable_link_flags": " ",
+        "generator": "Ninja",
+        "interprocedural_optimization": "",
+        "name": "Release",
+        "position_independent_code": "",
+        "project_compile_options": [
+          "-Wall",
+          "-Wextra",
+          "-Wpedantic"
+        ],
+        "project_link_options": []
+      },
+      "dependencies": {
+        "egl_configured_version": "1.5",
+        "gles_configured_version": "3.2",
+        "glm_provision": "system",
+        "opencv_configured_version": "5.0.0",
+        "opencv_provision": "system"
+      },
+      "features": {
+        "CMAKE_CROSSCOMPILING": false,
+        "SV_AURORA": false,
+        "SV_BUNDLE_OPENCV": false,
+        "SV_GPU": true,
+        "SV_OPENCV_FETCHED": false,
+        "SV_SANITIZERS": false
+      },
+      "headers": {
+        "boost": "1_92",
+        "compiler_version": "16.2.1 20260810",
+        "cplusplus": 201703,
+        "cxx11_abi": 1,
+        "glm": 1000,
+        "openssl": "OpenSSL 3.6.4 25 Aug 2026",
+        "pointer_bits": 64,
+        "stdlib": "libstdc++",
+        "stdlib_version": 20260810
+      },
+      "schema_version": 1,
+      "scope": "configured_build_v1",
+      "source": {
+        "fingerprint": "74664010ddc1fd90c364b2bf617334e745a77c7e63d35892ec15463cb2ee3308",
+        "revision": "faa992cdbb4456debd5293af86689a921e66c987",
+        "version": "0.6.0"
+      },
+      "target": {
+        "processor": "x86_64",
+        "sdk_id": "unreported",
+        "sysroot": "",
+        "system": "Linux",
+        "system_version": "7.2.6-arch2-1"
+      },
+      "toolchain": {
+        "compiler_id": "GNU",
+        "compiler_target": "",
+        "compiler_version": "16.2.1",
+        "cxx_standard": 17,
+        "toolchain_sha256": null
+      }
+    }
+  },
+  "input_plan": {
+    "schema_version": 1,
+    "policy": "thesis_e1_spread_v2",
+    "rig_config": "thesis-rig.json",
+    "mount_seeds": [
+      1001,
+      1002,
+      1003
+    ],
+    "optical_board_centres_m": [
+      [
+        -1.0,
+        -0.4,
+        2.0
+      ],
+      [
+        1.0,
+        0.4,
+        2.5
+      ],
+      [
+        -0.4,
+        0.6,
+        3.0
+      ],
+      [
+        0.5,
+        -0.6,
+        3.5
+      ],
+      [
+        -0.7,
+        0.2,
+        2.2
+      ],
+      [
+        0.8,
+        -0.3,
+        3.2
+      ]
+    ],
+    "board_yaw_rad": [
+      -0.35,
+      0.35,
+      -0.2,
+      0.2,
+      -0.25,
+      0.25
+    ],
+    "training_poses": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "validation_poses": [
+      4,
+      5
+    ],
+    "noise_sigma_px": 0.5,
+    "outliers": 10,
+    "board_inner_corners": [
+      6,
+      4
+    ],
+    "board_spacing_m": 0.04
+  },
+  "input_plan_sha256": "fc14461c038a5a34ff7d1bfc993eb2c2eb9bc3850240304095a85bce5f08410f",
+  "generator_sha256": "a62bad39eba762d63f2c401d861ef62034e7c36dd3450bf1cabfa0cb0ee6de59",
+  "numpy_version": "2.5.3",
+  "configuration_unchanged": true,
+  "results": [
+    {
+      "mount_seed": 1001,
+      "camera_id": 2,
+      "profile": "gaussian",
+      "method": "ransac_epnp_lm",
+      "outcome": "completed",
+      "execution_policy": {
+        "schema_version": 1,
+        "method": "ransac_epnp_lm",
+        "opencv_version": "5.0.0",
+        "rng_policy": "backend_owned_no_seed_parameter",
+        "ransac": {
+          "api": "legacy_solvePnPRansac_EPNP",
+          "iterations": 300,
+          "confidence": 0.999,
+          "threshold_px_option": 3.0,
+          "threshold_normalization": "divide_by_max_fx_fy",
+          "refinement": "solvePnPRefineLM_defaults"
+        }
+      },
+      "center_error_mm": 27.33781509942597,
+      "nominal_center_error_mm": 34.779559548969715,
+      "rotation_error_deg": 0.5304366585696322,
+      "validation_rmse_px": 0.713490421628605,
+      "training_rmse_px": 0.710759832937323,
+      "duration_ms": 0.589558,
+      "quality_accepted": true
+    },
+    {
+      "mount_seed": 1002,
+      "camera_id": 0,
+      "profile": "outliers",
+      "method": "ransac_epnp_lm",
+      "outcome": "completed",
+      "execution_policy": {
+        "schema_version": 1,
+        "method": "ransac_epnp_lm",
+        "opencv_version": "5.0.0",
+        "rng_policy": "backend_owned_no_seed_parameter",
+        "ransac": {
+          "api": "legacy_solvePnPRansac_EPNP",
+          "iterations": 300,
+          "confidence": 0.999,
+          "threshold_px_option": 3.0,
+          "threshold_normalization": "divide_by_max_fx_fy",
+          "refinement": "solvePnPRefineLM_defaults"
+        }
+      },
+      "center_error_mm": 14.828873811228737,
+      "nominal_center_error_mm": 24.76123170681843,
+      "rotation_error_deg": 0.30616530751216775,
+      "validation_rmse_px": 0.6809714397942754,
+      "training_rmse_px": 3.2009190808735712,
+      "duration_ms": 0.883817,
+      "quality_accepted": true
+    },
+    {
+      "mount_seed": 1001,
+      "camera_id": 2,
+      "profile": "outliers",
+      "method": "sqpnp",
+      "outcome": "completed",
+      "execution_policy": {
+        "schema_version": 1,
+        "method": "sqpnp",
+        "opencv_version": "5.0.0",
+        "rng_policy": "backend_owned_no_seed_parameter"
+      },
+      "center_error_mm": 49.68459912759296,
+      "nominal_center_error_mm": 34.779559548969715,
+      "rotation_error_deg": 0.8500657714911626,
+      "validation_rmse_px": 0.796510404579047,
+      "training_rmse_px": 3.1000665415624593,
+      "duration_ms": 0.318845,
+      "quality_accepted": true
+    },
+    {
+      "mount_seed": 1003,
+      "camera_id": 1,
+      "profile": "outliers",
+      "method": "ransac_epnp_lm",
+      "outcome": "completed",
+      "execution_policy": {
+        "schema_version": 1,
+        "method": "ransac_epnp_lm",
+        "opencv_version": "5.0.0",
+        "rng_policy": "backend_owned_no_seed_parameter",
+        "ransac": {
+          "api": "legacy_solvePnPRansac_EPNP",
+          "iterations": 300,
+          "confidence": 0.999,
+          "threshold_px_option": 3.0,
+          "threshold_normalization": "divide_by_max_fx_fy",
+          "refinement": "solvePnPRefineLM_defaults"
+        }
+      },
+      "center_error_mm": 3.243739059445372,
+      "nominal_center_error_mm": 22.309786813967612,
+      "rotation_error_deg": 0.0670979279468376,
+      "validation_rmse_px": 0.7163178488704939,
+      "training_rmse_px": 2.7307021231659543,
+      "duration_ms": 1.084176,
+      "quality_accepted": true
+    },
+    {
+      "mount_seed": 1001,
+      "camera_id": 0,
+      "profile": "outliers",
+      "method": "sqpnp",
+      "outcome": "completed",
+      "execution_policy": {
+        "schema_version": 1,
+        "method": "sqpnp",
+        "opencv_version": "5.0.0",
+        "rng_policy": "backend_owned_no_seed_parameter"
+      },
+      "center_error_mm": 40.93331258247326,
+      "nominal_center_error_mm": 31.2310423118074,
+      "rotation_error_deg": 0.8415324584404685,
+      "validation_rmse_px": 0.9444614080849255,
+      "training_rmse_px": 2.2680255397302465,
+      "duration_ms": 0.317172,
+      "quality_accepted": true
+    },
+    {
+      "mount_seed": 1001,
+      "camera_id": 0,
+      "profile": "outliers",
+      "method": "ransac_epnp_lm",
+      "outcome": "completed",
+      "execution_policy": {
+        "schema_version": 1,
+        "method": "ransac_epnp_lm",
+        "opencv_version": "5.0.0",
+        "rng_policy": "backend_owned_no_seed_parameter",
+        "ransac": {
+          "api": "legacy_solvePnPRansac_EPNP",
+          "iterations": 300,
+          "confidence": 0.999,
+          "threshold_px_option": 3.0,
+          "threshold_normalization": "divide_by_max_fx_fy",
+          "refinement": "solvePnPRefineLM_defaults"
+        }
+      },
+      "center_error_mm": 16.84481182192966,
+      "nominal_center_error_mm": 31.2310423118074,
+      "rotation_error_deg": 0.296734004669497,
+      "validation_rmse_px": 0.7939505153050748,
+      "training_rmse_px": 2.299756397940986,
+      "duration_ms": 1.137848,
+      "quality_accepted": true
+    },
+    {
+      "mount_seed": 1001,
+      "camera_id": 2,
+      "profile": "outliers",
+      "method": "ransac_epnp_lm",
+      "outcome": "completed",
+      "execution_policy": {
+        "schema_version": 1,
+        "method": "ransac_epnp_lm",
+        "opencv_version": "5.0.0",
+        "rng_policy": "backend_owned_no_seed_parameter",
+        "ransac": {
+          "api": "legacy_solvePnPRansac_EPNP",
+          "iterations": 300,
+          "confidence": 0.999,
+          "threshold_px_option": 3.0,
+          "threshold_normalization": "divide_by_max_fx_fy",
+          "refinement": "solvePnPRefineLM_defaults"
+        }
+      },
+      "center_error_mm": 27.96298312806223,
+      "nominal_center_error_mm": 34.779559548969715,
+      "rotation_error_deg": 0.5361397430101317,
+      "validation_rmse_px": 0.7114928542852694,
+      "training_rmse_px": 3.145742293078797,
+      "duration_ms": 0.757437,
+      "quality_accepted": true
+    },
+    {
+      "mount_seed": 1001,
+      "camera_id": 1,
+      "profile": "outliers",
+      "method": "ransac_epnp_lm",
+      "outcome": "completed",
+      "execution_policy": {
+        "schema_version": 1,
+        "method": "ransac_epnp_lm",
+        "opencv_version": "5.0.0",
+        "rng_policy": "backend_owned_no_seed_parameter",
+        "ransac": {
+          "api": "legacy_solvePnPRansac_EPNP",
+          "iterations": 300,
+          "confidence": 0.999,
+          "threshold_px_option": 3.0,
+          "threshold_normalization": "divide_by_max_fx_fy",
+          "refinement": "solvePnPRefineLM_defaults"
+        }
+      },
+      "center_error_mm": 15.029076660598344,
+      "nominal_center_error_mm": 29.89097555545761,
+      "rotation_error_deg": 0.3243207991314894,
+      "validation_rmse_px": 0.7147650545432553,
+      "training_rmse_px": 2.5608825757477267,
+      "duration_ms": 1.030244,
+      "quality_accepted": true
+    },
+    {
+      "mount_seed": 1002,
+      "camera_id": 3,
+      "profile": "gaussian",
+      "method": "sqpnp",
+      "outcome": "completed",
+      "execution_policy": {
+        "schema_version": 1,
+        "method": "sqpnp",
+        "opencv_version": "5.0.0",
+        "rng_policy": "backend_owned_no_seed_parameter"
+      },
+      "center_error_mm": 4.4094053641664015,
+      "nominal_center_error_mm": 15.20867982932861,
+      "rotation_error_deg": 0.10470450928267422,
+      "validation_rmse_px": 0.6707376993431633,
+      "training_rmse_px": 0.6988896228243481,
+      "duration_ms": 0.233142,
+      "quality_accepted": true
+    },
+    {
+      "mount_seed": 1002,
+      "camera_id": 2,
+      "profile": "outliers",
+      "method": "ransac_epnp_lm",
+      "outcome": "completed",
+      "execution_policy": {
+        "schema_version": 1,
+        "method": "ransac_epnp_lm",
+        "opencv_version": "5.0.0",
+        "rng_policy": "backend_owned_no_seed_parameter",
+        "ransac": {
+          "api": "legacy_solvePnPRansac_EPNP",
+          "iterations": 300,
+          "confidence": 0.999,
+          "threshold_px_option": 3.0,
+          "threshold_normalization": "divide_by_max_fx_fy",
+          "refinement": "solvePnPRefineLM_defaults"
+        }
+      },
+      "center_error_mm": 9.929945780380555,
+      "nominal_center_error_mm": 34.03498245850001,
+      "rotation_error_deg": 0.19318618840226887,
+      "validation_rmse_px": 0.6537577340638193,
+      "training_rmse_px": 2.907513676204274,
+      "duration_ms": 0.762175,
+      "quality_accepted": true
+    },
+    {
+      "mount_seed": 1002,
+      "camera_id": 0,
+      "profile": "gaussian",
+      "method": "sqpnp",
+      "outcome": "completed",
+      "execution_policy": {
+        "schema_version": 1,
+        "method": "sqpnp",
+        "opencv_version": "5.0.0",
+        "rng_policy": "backend_owned_no_seed_parameter"
+      },
+      "center_error_mm": 16.18521363156174,
+      "nominal_center_error_mm": 24.76123170681843,
+      "rotation_error_deg": 0.3346188221419035,
+      "validation_rmse_px": 0.6773140219986523,
+      "training_rmse_px": 0.7095461815935804,
+      "duration_ms": 0.092185,
+      "quality_accepted": true
+    },
+    {
+      "mount_seed": 1003,
+      "camera_id": 2,
+      "profile": "outliers",
+      "method": "ransac_epnp_lm",
+      "outcome": "completed",
+      "execution_policy": {
+        "schema_version": 1,
+        "method": "ransac_epnp_lm",
+        "opencv_version": "5.0.0",
+        "rng_policy": "backend_owned_no_seed_parameter",
+        "ransac": {
+          "api": "legacy_solvePnPRansac_EPNP",
+          "iterations": 300,
+          "confidence": 0.999,
+          "threshold_px_option": 3.0,
+          "threshold_normalization": "divide_by_max_fx_fy",
+          "refinement": "solvePnPRefineLM_defaults"
+        }
+      },
+      "center_error_mm": 14.97768129251869,
+      "nominal_center_error_mm": 47.057711251208275,
+      "rotation_error_deg": 0.29919159651623184,
+      "validation_rmse_px": 0.72910417681562,
+      "training_rmse_px": 2.6294110869546596,
+      "duration_ms": 0.860512,
+      "quality_accepted": true
+    },
+    {
+      "mount_seed": 1003,
+      "camera_id": 0,
+      "profile": "outliers",
+      "method": "ransac_epnp_lm",
+      "outcome": "completed",
+      "execution_policy": {
+        "schema_version": 1,
+        "method": "ransac_epnp_lm",
+        "opencv_version": "5.0.0",
+        "rng_policy": "backend_owned_no_seed_parameter",
+        "ransac": {
+          "api": "legacy_solvePnPRansac_EPNP",
+          "iterations": 300,
+          "confidence": 0.999,
+          "threshold_px_option": 3.0,
+          "threshold_normalization": "divide_by_max_fx_fy",
+          "refinement": "solvePnPRefineLM_defaults"
+        }
+      },
+      "center_error_mm": 33.48735635926963,
+      "nominal_center_error_mm": 0.5320672811142124,
+      "rotation_error_deg": 0.6647298364533033,
+      "validation_rmse_px": 0.8735588752016449,
+      "training_rmse_px": 2.7677044088167455,
+      "duration_ms": 0.874559,
+      "quality_accepted": true
+    },
+    {
+      "mount_seed": 1003,
+      "camera_id": 1,
+      "profile": "gaussian",
+      "method": "sqpnp",
+      "outcome": "completed",
+      "execution_policy": {
+        "schema_version": 1,
+        "method": "sqpnp",
+        "opencv_version": "5.0.0",
+        "rng_policy": "backend_owned_no_seed_parameter"
+      },
+      "center_error_mm": 1.9157610599762935,
+      "nominal_center_error_mm": 22.309786813967612,
+      "rotation_error_deg": 0.056413017787400384,
+      "validation_rmse_px": 0.7200444856203166,
+      "training_rmse_px": 0.6633483903759172,
+      "duration_ms": 0.246658,
+      "quality_accepted": true
+    },
+    {
+      "mount_seed": 1003,
+      "camera_id": 3,
+      "profile": "outliers",
+      "method": "ransac_epnp_lm",
+      "outcome": "completed",
+      "execution_policy": {
+        "schema_version": 1,
+        "method": "ransac_epnp_lm",
+        "opencv_version": "5.0.0",
+        "rng_policy": "backend_owned_no_seed_parameter",
+        "ransac": {
+          "api": "legacy_solvePnPRansac_EPNP",
+          "iterations": 300,
+          "confidence": 0.999,
+          "threshold_px_option": 3.0,
+          "threshold_normalization": "divide_by_max_fx_fy",
+          "refinement": "solvePnPRefineLM_defaults"
+        }
+      },
+      "center_error_mm": 9.452819822874563,
+      "nominal_center_error_mm": 35.92996906049001,
+      "rotation_error_deg": 0.13440263278646059,
+      "validation_rmse_px": 0.6439560724536921,
+      "training_rmse_px": 2.9725113312613334,
+      "duration_ms": 1.263656,
+      "quality_accepted": true
+    },
+    {
+      "mount_seed": 1002,
+      "camera_id": 0,
+      "profile": "gaussian",
+      "method": "ransac_epnp_lm",
+      "outcome": "completed",
+      "execution_policy": {
+        "schema_version": 1,
+        "method": "ransac_epnp_lm",
+        "opencv_version": "5.0.0",
+        "rng_policy": "backend_owned_no_seed_parameter",
+        "ransac": {
+          "api": "legacy_solvePnPRansac_EPNP",
+          "iterations": 300,
+          "confidence": 0.999,
+          "threshold_px_option": 3.0,
+          "threshold_normalization": "divide_by_max_fx_fy",
+          "refinement": "solvePnPRefineLM_defaults"
+        }
+      },
+      "center_error_mm": 16.76195752384301,
+      "nominal_center_error_mm": 24.76123170681843,
+      "rotation_error_deg": 0.33641720560208044,
+      "validation_rmse_px": 0.6818968158302308,
+      "training_rmse_px": 0.7088068352466104,
+      "duration_ms": 0.357909,
+      "quality_accepted": true
+    },
+    {
+      "mount_seed": 1001,
+      "camera_id": 3,
+      "profile": "outliers",
+      "method": "ransac_epnp_lm",
+      "outcome": "completed",
+      "execution_policy": {
+        "schema_version": 1,
+        "method": "ransac_epnp_lm",
+        "opencv_version": "5.0.0",
+        "rng_policy": "backend_owned_no_seed_parameter",
+        "ransac": {
+          "api": "legacy_solvePnPRansac_EPNP",
+          "iterations": 300,
+          "confidence": 0.999,
+          "threshold_px_option": 3.0,
+          "threshold_normalization": "divide_by_max_fx_fy",
+          "refinement": "solvePnPRefineLM_defaults"
+        }
+      },
+      "center_error_mm": 7.717074103234665,
+      "nominal_center_error_mm": 48.411697959895584,
+      "rotation_error_deg": 0.20272570714650584,
+      "validation_rmse_px": 0.766852871801146,
+      "training_rmse_px": 2.57815358633154,
+      "duration_ms": 0.766984,
+      "quality_accepted": true
+    },
+    {
+      "mount_seed": 1002,
+      "camera_id": 1,
+      "profile": "gaussian",
+      "method": "sqpnp",
+      "outcome": "completed",
+      "execution_policy": {
+        "schema_version": 1,
+        "method": "sqpnp",
+        "opencv_version": "5.0.0",
+        "rng_policy": "backend_owned_no_seed_parameter"
+      },
+      "center_error_mm": 12.806293282650145,
+      "nominal_center_error_mm": 5.489452952962437,
+      "rotation_error_deg": 0.28160469715370023,
+      "validation_rmse_px": 0.6527814823880312,
+      "training_rmse_px": 0.645339264842016,
+      "duration_ms": 0.356717,
+      "quality_accepted": true
+    },
+    {
+      "mount_seed": 1003,
+      "camera_id": 2,
+      "profile": "gaussian",
+      "method": "ransac_epnp_lm",
+      "outcome": "completed",
+      "execution_policy": {
+        "schema_version": 1,
+        "method": "ransac_epnp_lm",
+        "opencv_version": "5.0.0",
+        "rng_policy": "backend_owned_no_seed_parameter",
+        "ransac": {
+          "api": "legacy_solvePnPRansac_EPNP",
+          "iterations": 300,
+          "confidence": 0.999,
+          "threshold_px_option": 3.0,
+          "threshold_normalization": "divide_by_max_fx_fy",
+          "refinement": "solvePnPRefineLM_defaults"
+        }
+      },
+      "center_error_mm": 15.934502161116852,
+      "nominal_center_error_mm": 47.057711251208275,
+      "rotation_error_deg": 0.32492684565148255,
+      "validation_rmse_px": 0.7271989693942011,
+      "training_rmse_px": 0.7121050179160383,
+      "duration_ms": 0.324105,
+      "quality_accepted": true
+    },
+    {
+      "mount_seed": 1002,
+      "camera_id": 1,
+      "profile": "gaussian",
+      "method": "ransac_epnp_lm",
+      "outcome": "completed",
+      "execution_policy": {
+        "schema_version": 1,
+        "method": "ransac_epnp_lm",
+        "opencv_version": "5.0.0",
+        "rng_policy": "backend_owned_no_seed_parameter",
+        "ransac": {
+          "api": "legacy_solvePnPRansac_EPNP",
+          "iterations": 300,
+          "confidence": 0.999,
+          "threshold_px_option": 3.0,
+          "threshold_normalization": "divide_by_max_fx_fy",
+          "refinement": "solvePnPRefineLM_defaults"
+        }
+      },
+      "center_error_mm": 11.19777671065266,
+      "nominal_center_error_mm": 5.489452952962437,
+      "rotation_error_deg": 0.2512589210195807,
+      "validation_rmse_px": 0.6534253642713159,
+      "training_rmse_px": 0.6451238377810538,
+      "duration_ms": 0.636768,
+      "quality_accepted": true
+    },
+    {
+      "mount_seed": 1003,
+      "camera_id": 3,
+      "profile": "gaussian",
+      "method": "ransac_epnp_lm",
+      "outcome": "completed",
+      "execution_policy": {
+        "schema_version": 1,
+        "method": "ransac_epnp_lm",
+        "opencv_version": "5.0.0",
+        "rng_policy": "backend_owned_no_seed_parameter",
+        "ransac": {
+          "api": "legacy_solvePnPRansac_EPNP",
+          "iterations": 300,
+          "confidence": 0.999,
+          "threshold_px_option": 3.0,
+          "threshold_normalization": "divide_by_max_fx_fy",
+          "refinement": "solvePnPRefineLM_defaults"
+        }
+      },
+      "center_error_mm": 9.769459349439678,
+      "nominal_center_error_mm": 35.92996906049001,
+      "rotation_error_deg": 0.14175288908283334,
+      "validation_rmse_px": 0.6367741341171316,
+      "training_rmse_px": 0.6883395214717916,
+      "duration_ms": 0.283277,
+      "quality_accepted": true
+    },
+    {
+      "mount_seed": 1002,
+      "camera_id": 1,
+      "profile": "outliers",
+      "method": "ransac_epnp_lm",
+      "outcome": "completed",
+      "execution_policy": {
+        "schema_version": 1,
+        "method": "ransac_epnp_lm",
+        "opencv_version": "5.0.0",
+        "rng_policy": "backend_owned_no_seed_parameter",
+        "ransac": {
+          "api": "legacy_solvePnPRansac_EPNP",
+          "iterations": 300,
+          "confidence": 0.999,
+          "threshold_px_option": 3.0,
+          "threshold_normalization": "divide_by_max_fx_fy",
+          "refinement": "solvePnPRefineLM_defaults"
+        }
+      },
+      "center_error_mm": 11.278745145546598,
+      "nominal_center_error_mm": 5.489452952962437,
+      "rotation_error_deg": 0.26440308705242177,
+      "validation_rmse_px": 0.6650059279041793,
+      "training_rmse_px": 2.6623113494980872,
+      "duration_ms": 0.667957,
+      "quality_accepted": true
+    },
+    {
+      "mount_seed": 1002,
+      "camera_id": 3,
+      "profile": "gaussian",
+      "method": "ransac_epnp_lm",
+      "outcome": "completed",
+      "execution_policy": {
+        "schema_version": 1,
+        "method": "ransac_epnp_lm",
+        "opencv_version": "5.0.0",
+        "rng_policy": "backend_owned_no_seed_parameter",
+        "ransac": {
+          "api": "legacy_solvePnPRansac_EPNP",
+          "iterations": 300,
+          "confidence": 0.999,
+          "threshold_px_option": 3.0,
+          "threshold_normalization": "divide_by_max_fx_fy",
+          "refinement": "solvePnPRefineLM_defaults"
+        }
+      },
+      "center_error_mm": 4.272019410212685,
+      "nominal_center_error_mm": 15.20867982932861,
+      "rotation_error_deg": 0.09899042189084684,
+      "validation_rmse_px": 0.6704670836785083,
+      "training_rmse_px": 0.6986857289183833,
+      "duration_ms": 0.553861,
+      "quality_accepted": true
+    },
+    {
+      "mount_seed": 1003,
+      "camera_id": 0,
+      "profile": "outliers",
+      "method": "sqpnp",
+      "outcome": "completed",
+      "execution_policy": {
+        "schema_version": 1,
+        "method": "sqpnp",
+        "opencv_version": "5.0.0",
+        "rng_policy": "backend_owned_no_seed_parameter"
+      },
+      "center_error_mm": 68.87116130639701,
+      "nominal_center_error_mm": 0.5320672811142124,
+      "rotation_error_deg": 1.3715545902423394,
+      "validation_rmse_px": 1.206332994228889,
+      "training_rmse_px": 2.7590784745705546,
+      "duration_ms": 0.095752,
+      "quality_accepted": true
+    },
+    {
+      "mount_seed": 1001,
+      "camera_id": 1,
+      "profile": "gaussian",
+      "method": "sqpnp",
+      "outcome": "completed",
+      "execution_policy": {
+        "schema_version": 1,
+        "method": "sqpnp",
+        "opencv_version": "5.0.0",
+        "rng_policy": "backend_owned_no_seed_parameter"
+      },
+      "center_error_mm": 18.170714440129004,
+      "nominal_center_error_mm": 29.89097555545761,
+      "rotation_error_deg": 0.38001646354485613,
+      "validation_rmse_px": 0.7195354821517005,
+      "training_rmse_px": 0.6496665982635926,
+      "duration_ms": 0.158972,
+      "quality_accepted": true
+    },
+    {
+      "mount_seed": 1002,
+      "camera_id": 1,
+      "profile": "outliers",
+      "method": "sqpnp",
+      "outcome": "completed",
+      "execution_policy": {
+        "schema_version": 1,
+        "method": "sqpnp",
+        "opencv_version": "5.0.0",
+        "rng_policy": "backend_owned_no_seed_parameter"
+      },
+      "center_error_mm": 14.176087520175495,
+      "nominal_center_error_mm": 5.489452952962437,
+      "rotation_error_deg": 0.2917966655745609,
+      "validation_rmse_px": 0.7847657539138612,
+      "training_rmse_px": 2.6264459550315564,
+      "duration_ms": 0.241739,
+      "quality_accepted": true
+    },
+    {
+      "mount_seed": 1001,
+      "camera_id": 2,
+      "profile": "gaussian",
+      "method": "sqpnp",
+      "outcome": "completed",
+      "execution_policy": {
+        "schema_version": 1,
+        "method": "sqpnp",
+        "opencv_version": "5.0.0",
+        "rng_policy": "backend_owned_no_seed_parameter"
+      },
+      "center_error_mm": 26.189092910526806,
+      "nominal_center_error_mm": 34.779559548969715,
+      "rotation_error_deg": 0.5030158813222594,
+      "validation_rmse_px": 0.7045731295463158,
+      "training_rmse_px": 0.7109723915362829,
+      "duration_ms": 0.088177,
+      "quality_accepted": true
+    },
+    {
+      "mount_seed": 1003,
+      "camera_id": 1,
+      "profile": "outliers",
+      "method": "sqpnp",
+      "outcome": "completed",
+      "execution_policy": {
+        "schema_version": 1,
+        "method": "sqpnp",
+        "opencv_version": "5.0.0",
+        "rng_policy": "backend_owned_no_seed_parameter"
+      },
+      "center_error_mm": 46.34097343485731,
+      "nominal_center_error_mm": 22.309786813967612,
+      "rotation_error_deg": 0.9393126354307989,
+      "validation_rmse_px": 0.7276215743424187,
+      "training_rmse_px": 2.7316422517367847,
+      "duration_ms": 0.087005,
+      "quality_accepted": true
+    },
+    {
+      "mount_seed": 1002,
+      "camera_id": 0,
+      "profile": "outliers",
+      "method": "sqpnp",
+      "outcome": "completed",
+      "execution_policy": {
+        "schema_version": 1,
+        "method": "sqpnp",
+        "opencv_version": "5.0.0",
+        "rng_policy": "backend_owned_no_seed_parameter"
+      },
+      "center_error_mm": 110.3380299973252,
+      "nominal_center_error_mm": 24.76123170681843,
+      "rotation_error_deg": 2.252567694655624,
+      "validation_rmse_px": 1.0180939138679639,
+      "training_rmse_px": 3.1860693628360424,
+      "duration_ms": 0.092415,
+      "quality_accepted": true
+    },
+    {
+      "mount_seed": 1001,
+      "camera_id": 3,
+      "profile": "gaussian",
+      "method": "sqpnp",
+      "outcome": "completed",
+      "execution_policy": {
+        "schema_version": 1,
+        "method": "sqpnp",
+        "opencv_version": "5.0.0",
+        "rng_policy": "backend_owned_no_seed_parameter"
+      },
+      "center_error_mm": 9.442053509096102,
+      "nominal_center_error_mm": 48.411697959895584,
+      "rotation_error_deg": 0.2418994108698009,
+      "validation_rmse_px": 0.7736467638756985,
+      "training_rmse_px": 0.6545831758990468,
+      "duration_ms": 0.055145,
+      "quality_accepted": true
+    },
+    {
+      "mount_seed": 1003,
+      "camera_id": 2,
+      "profile": "gaussian",
+      "method": "sqpnp",
+      "outcome": "completed",
+      "execution_policy": {
+        "schema_version": 1,
+        "method": "sqpnp",
+        "opencv_version": "5.0.0",
+        "rng_policy": "backend_owned_no_seed_parameter"
+      },
+      "center_error_mm": 12.31815661778742,
+      "nominal_center_error_mm": 47.057711251208275,
+      "rotation_error_deg": 0.24455640007271817,
+      "validation_rmse_px": 0.7221234436297387,
+      "training_rmse_px": 0.7121090589825533,
+      "duration_ms": 0.15801,
+      "quality_accepted": true
+    },
+    {
+      "mount_seed": 1003,
+      "camera_id": 0,
+      "profile": "gaussian",
+      "method": "sqpnp",
+      "outcome": "completed",
+      "execution_policy": {
+        "schema_version": 1,
+        "method": "sqpnp",
+        "opencv_version": "5.0.0",
+        "rng_policy": "backend_owned_no_seed_parameter"
+      },
+      "center_error_mm": 27.667409015623168,
+      "nominal_center_error_mm": 0.5320672811142124,
+      "rotation_error_deg": 0.551583803385034,
+      "validation_rmse_px": 0.8579163534521552,
+      "training_rmse_px": 0.695003114400469,
+      "duration_ms": 0.215639,
+      "quality_accepted": true
+    },
+    {
+      "mount_seed": 1002,
+      "camera_id": 2,
+      "profile": "gaussian",
+      "method": "sqpnp",
+      "outcome": "completed",
+      "execution_policy": {
+        "schema_version": 1,
+        "method": "sqpnp",
+        "opencv_version": "5.0.0",
+        "rng_policy": "backend_owned_no_seed_parameter"
+      },
+      "center_error_mm": 8.729226633435372,
+      "nominal_center_error_mm": 34.03498245850001,
+      "rotation_error_deg": 0.17601988875126856,
+      "validation_rmse_px": 0.6536462504226248,
+      "training_rmse_px": 0.7101860685330108,
+      "duration_ms": 0.216771,
+      "quality_accepted": true
+    },
+    {
+      "mount_seed": 1001,
+      "camera_id": 0,
+      "profile": "gaussian",
+      "method": "sqpnp",
+      "outcome": "completed",
+      "execution_policy": {
+        "schema_version": 1,
+        "method": "sqpnp",
+        "opencv_version": "5.0.0",
+        "rng_policy": "backend_owned_no_seed_parameter"
+      },
+      "center_error_mm": 19.45377073447301,
+      "nominal_center_error_mm": 31.2310423118074,
+      "rotation_error_deg": 0.3623611883977402,
+      "validation_rmse_px": 0.8072172659014918,
+      "training_rmse_px": 0.6435040939380281,
+      "duration_ms": 0.048462,
+      "quality_accepted": true
+    },
+    {
+      "mount_seed": 1003,
+      "camera_id": 2,
+      "profile": "outliers",
+      "method": "sqpnp",
+      "outcome": "completed",
+      "execution_policy": {
+        "schema_version": 1,
+        "method": "sqpnp",
+        "opencv_version": "5.0.0",
+        "rng_policy": "backend_owned_no_seed_parameter"
+      },
+      "center_error_mm": 28.083326872931078,
+      "nominal_center_error_mm": 47.057711251208275,
+      "rotation_error_deg": 0.5834312836655817,
+      "validation_rmse_px": 0.7340976728436047,
+      "training_rmse_px": 2.6238630018651783,
+      "duration_ms": 0.069301,
+      "quality_accepted": true
+    },
+    {
+      "mount_seed": 1002,
+      "camera_id": 2,
+      "profile": "outliers",
+      "method": "sqpnp",
+      "outcome": "completed",
+      "execution_policy": {
+        "schema_version": 1,
+        "method": "sqpnp",
+        "opencv_version": "5.0.0",
+        "rng_policy": "backend_owned_no_seed_parameter"
+      },
+      "center_error_mm": 15.93497421862709,
+      "nominal_center_error_mm": 34.03498245850001,
+      "rotation_error_deg": 0.24105697253400216,
+      "validation_rmse_px": 0.6743027274256734,
+      "training_rmse_px": 2.8920685015426746,
+      "duration_ms": 0.054634,
+      "quality_accepted": true
+    },
+    {
+      "mount_seed": 1001,
+      "camera_id": 3,
+      "profile": "outliers",
+      "method": "sqpnp",
+      "outcome": "completed",
+      "execution_policy": {
+        "schema_version": 1,
+        "method": "sqpnp",
+        "opencv_version": "5.0.0",
+        "rng_policy": "backend_owned_no_seed_parameter"
+      },
+      "center_error_mm": 91.94758670205859,
+      "nominal_center_error_mm": 48.411697959895584,
+      "rotation_error_deg": 1.7327396734031295,
+      "validation_rmse_px": 0.8867162423946874,
+      "training_rmse_px": 2.5195825253622974,
+      "duration_ms": 0.098346,
+      "quality_accepted": true
+    },
+    {
+      "mount_seed": 1002,
+      "camera_id": 2,
+      "profile": "gaussian",
+      "method": "ransac_epnp_lm",
+      "outcome": "completed",
+      "execution_policy": {
+        "schema_version": 1,
+        "method": "ransac_epnp_lm",
+        "opencv_version": "5.0.0",
+        "rng_policy": "backend_owned_no_seed_parameter",
+        "ransac": {
+          "api": "legacy_solvePnPRansac_EPNP",
+          "iterations": 300,
+          "confidence": 0.999,
+          "threshold_px_option": 3.0,
+          "threshold_normalization": "divide_by_max_fx_fy",
+          "refinement": "solvePnPRefineLM_defaults"
+        }
+      },
+      "center_error_mm": 8.244174373635893,
+      "nominal_center_error_mm": 34.03498245850001,
+      "rotation_error_deg": 0.1709598324957081,
+      "validation_rmse_px": 0.6547785517953698,
+      "training_rmse_px": 0.7095705130987578,
+      "duration_ms": 1.081251,
+      "quality_accepted": true
+    },
+    {
+      "mount_seed": 1002,
+      "camera_id": 3,
+      "profile": "outliers",
+      "method": "sqpnp",
+      "outcome": "completed",
+      "execution_policy": {
+        "schema_version": 1,
+        "method": "sqpnp",
+        "opencv_version": "5.0.0",
+        "rng_policy": "backend_owned_no_seed_parameter"
+      },
+      "center_error_mm": 33.51608274818151,
+      "nominal_center_error_mm": 15.20867982932861,
+      "rotation_error_deg": 0.7413834948145448,
+      "validation_rmse_px": 1.0365771192093787,
+      "training_rmse_px": 2.7847083505382657,
+      "duration_ms": 0.168791,
+      "quality_accepted": true
+    },
+    {
+      "mount_seed": 1003,
+      "camera_id": 3,
+      "profile": "outliers",
+      "method": "sqpnp",
+      "outcome": "completed",
+      "execution_policy": {
+        "schema_version": 1,
+        "method": "sqpnp",
+        "opencv_version": "5.0.0",
+        "rng_policy": "backend_owned_no_seed_parameter"
+      },
+      "center_error_mm": 12.197267986043492,
+      "nominal_center_error_mm": 35.92996906049001,
+      "rotation_error_deg": 0.3952592165005088,
+      "validation_rmse_px": 0.7543740717999163,
+      "training_rmse_px": 2.9454597544382204,
+      "duration_ms": 0.275052,
+      "quality_accepted": true
+    },
+    {
+      "mount_seed": 1002,
+      "camera_id": 3,
+      "profile": "outliers",
+      "method": "ransac_epnp_lm",
+      "outcome": "completed",
+      "execution_policy": {
+        "schema_version": 1,
+        "method": "ransac_epnp_lm",
+        "opencv_version": "5.0.0",
+        "rng_policy": "backend_owned_no_seed_parameter",
+        "ransac": {
+          "api": "legacy_solvePnPRansac_EPNP",
+          "iterations": 300,
+          "confidence": 0.999,
+          "threshold_px_option": 3.0,
+          "threshold_normalization": "divide_by_max_fx_fy",
+          "refinement": "solvePnPRefineLM_defaults"
+        }
+      },
+      "center_error_mm": 3.616107004607073,
+      "nominal_center_error_mm": 15.20867982932861,
+      "rotation_error_deg": 0.10357904416569647,
+      "validation_rmse_px": 0.6666778014304782,
+      "training_rmse_px": 2.860143694718173,
+      "duration_ms": 1.031666,
+      "quality_accepted": true
+    },
+    {
+      "mount_seed": 1001,
+      "camera_id": 1,
+      "profile": "outliers",
+      "method": "sqpnp",
+      "outcome": "completed",
+      "execution_policy": {
+        "schema_version": 1,
+        "method": "sqpnp",
+        "opencv_version": "5.0.0",
+        "rng_policy": "backend_owned_no_seed_parameter"
+      },
+      "center_error_mm": 103.72602074570386,
+      "nominal_center_error_mm": 29.89097555545761,
+      "rotation_error_deg": 1.8491030200293974,
+      "validation_rmse_px": 0.7584331370853046,
+      "training_rmse_px": 2.5149053627705387,
+      "duration_ms": 0.256136,
+      "quality_accepted": true
+    },
+    {
+      "mount_seed": 1003,
+      "camera_id": 3,
+      "profile": "gaussian",
+      "method": "sqpnp",
+      "outcome": "completed",
+      "execution_policy": {
+        "schema_version": 1,
+        "method": "sqpnp",
+        "opencv_version": "5.0.0",
+        "rng_policy": "backend_owned_no_seed_parameter"
+      },
+      "center_error_mm": 10.44978022513576,
+      "nominal_center_error_mm": 35.92996906049001,
+      "rotation_error_deg": 0.14536609679437232,
+      "validation_rmse_px": 0.6373421733099675,
+      "training_rmse_px": 0.6886812067847164,
+      "duration_ms": 0.064783,
+      "quality_accepted": true
+    },
+    {
+      "mount_seed": 1001,
+      "camera_id": 0,
+      "profile": "gaussian",
+      "method": "ransac_epnp_lm",
+      "outcome": "completed",
+      "execution_policy": {
+        "schema_version": 1,
+        "method": "ransac_epnp_lm",
+        "opencv_version": "5.0.0",
+        "rng_policy": "backend_owned_no_seed_parameter",
+        "ransac": {
+          "api": "legacy_solvePnPRansac_EPNP",
+          "iterations": 300,
+          "confidence": 0.999,
+          "threshold_px_option": 3.0,
+          "threshold_normalization": "divide_by_max_fx_fy",
+          "refinement": "solvePnPRefineLM_defaults"
+        }
+      },
+      "center_error_mm": 20.1906245995302,
+      "nominal_center_error_mm": 31.2310423118074,
+      "rotation_error_deg": 0.3744455099312188,
+      "validation_rmse_px": 0.8059434916310625,
+      "training_rmse_px": 0.6433016538485764,
+      "duration_ms": 0.530457,
+      "quality_accepted": true
+    },
+    {
+      "mount_seed": 1003,
+      "camera_id": 1,
+      "profile": "gaussian",
+      "method": "ransac_epnp_lm",
+      "outcome": "completed",
+      "execution_policy": {
+        "schema_version": 1,
+        "method": "ransac_epnp_lm",
+        "opencv_version": "5.0.0",
+        "rng_policy": "backend_owned_no_seed_parameter",
+        "ransac": {
+          "api": "legacy_solvePnPRansac_EPNP",
+          "iterations": 300,
+          "confidence": 0.999,
+          "threshold_px_option": 3.0,
+          "threshold_normalization": "divide_by_max_fx_fy",
+          "refinement": "solvePnPRefineLM_defaults"
+        }
+      },
+      "center_error_mm": 3.177205128802534,
+      "nominal_center_error_mm": 22.309786813967612,
+      "rotation_error_deg": 0.07043381448151056,
+      "validation_rmse_px": 0.7174889802819763,
+      "training_rmse_px": 0.6629479363317036,
+      "duration_ms": 0.654782,
+      "quality_accepted": true
+    },
+    {
+      "mount_seed": 1001,
+      "camera_id": 3,
+      "profile": "gaussian",
+      "method": "ransac_epnp_lm",
+      "outcome": "completed",
+      "execution_policy": {
+        "schema_version": 1,
+        "method": "ransac_epnp_lm",
+        "opencv_version": "5.0.0",
+        "rng_policy": "backend_owned_no_seed_parameter",
+        "ransac": {
+          "api": "legacy_solvePnPRansac_EPNP",
+          "iterations": 300,
+          "confidence": 0.999,
+          "threshold_px_option": 3.0,
+          "threshold_normalization": "divide_by_max_fx_fy",
+          "refinement": "solvePnPRefineLM_defaults"
+        }
+      },
+      "center_error_mm": 9.04270840662628,
+      "nominal_center_error_mm": 48.411697959895584,
+      "rotation_error_deg": 0.23857967123993856,
+      "validation_rmse_px": 0.777332504700346,
+      "training_rmse_px": 0.6543304643479316,
+      "duration_ms": 0.365553,
+      "quality_accepted": true
+    },
+    {
+      "mount_seed": 1003,
+      "camera_id": 0,
+      "profile": "gaussian",
+      "method": "ransac_epnp_lm",
+      "outcome": "completed",
+      "execution_policy": {
+        "schema_version": 1,
+        "method": "ransac_epnp_lm",
+        "opencv_version": "5.0.0",
+        "rng_policy": "backend_owned_no_seed_parameter",
+        "ransac": {
+          "api": "legacy_solvePnPRansac_EPNP",
+          "iterations": 300,
+          "confidence": 0.999,
+          "threshold_px_option": 3.0,
+          "threshold_normalization": "divide_by_max_fx_fy",
+          "refinement": "solvePnPRefineLM_defaults"
+        }
+      },
+      "center_error_mm": 23.661934422335868,
+      "nominal_center_error_mm": 0.5320672811142124,
+      "rotation_error_deg": 0.470925183741617,
+      "validation_rmse_px": 0.8389304702140978,
+      "training_rmse_px": 0.695456029862329,
+      "duration_ms": 0.967385,
+      "quality_accepted": true
+    },
+    {
+      "mount_seed": 1001,
+      "camera_id": 1,
+      "profile": "gaussian",
+      "method": "ransac_epnp_lm",
+      "outcome": "completed",
+      "execution_policy": {
+        "schema_version": 1,
+        "method": "ransac_epnp_lm",
+        "opencv_version": "5.0.0",
+        "rng_policy": "backend_owned_no_seed_parameter",
+        "ransac": {
+          "api": "legacy_solvePnPRansac_EPNP",
+          "iterations": 300,
+          "confidence": 0.999,
+          "threshold_px_option": 3.0,
+          "threshold_normalization": "divide_by_max_fx_fy",
+          "refinement": "solvePnPRefineLM_defaults"
+        }
+      },
+      "center_error_mm": 17.907358527719797,
+      "nominal_center_error_mm": 29.89097555545761,
+      "rotation_error_deg": 0.38124995742644147,
+      "validation_rmse_px": 0.7188362163185437,
+      "training_rmse_px": 0.6496052736498705,
+      "duration_ms": 0.240937,
+      "quality_accepted": true
+    }
+  ],
+  "figure_sha256": "3bd858c517aa2124938da80453353d39d630746d38f096f91e0b99ec33533bf1",
+  "repeat_control": {
+    "report_sha256": "6c16926e9e003bf12549fa7c52229b352298d2cc154c8507f3f56c32a74a0c0d",
+    "input_sha256": "c9087db58ae163f3ce573843fc53d1f4124c8ae2dba79d4c095d5d4ce031eaa0",
+    "order": "reverse_of_primary",
+    "matched_cases": 48,
+    "exact_numeric_fields": [
+      "T_camera_from_vehicle",
+      "training_rmse_px",
+      "validation_rmse_px",
+      "validation_max_error_px",
+      "inliers",
+      "quality_accepted",
+      "execution_policy"
+    ],
+    "counts_as_independent_quality_samples": false
+  },
+  "input_registry": [
+    {
+      "path": "configs/research/thesis-rig.json",
+      "sha256": "91ff47e6fb2a22551d82d3c124d378e71632b5621f5ce9546b12bc537d9aff4d"
+    },
+    {
+      "path": "configs/research/thesis-e1-inputs.json",
+      "sha256": "fc14461c038a5a34ff7d1bfc993eb2c2eb9bc3850240304095a85bce5f08410f"
+    },
+    {
+      "path": "artifacts/thesis-e1-v2-20261025/cases.json",
+      "sha256": "556665f2e635b28fa14ca6be84719abacada14d23263f33f25ca49e5262675a6"
+    },
+    {
+      "path": "artifacts/thesis-e1-v2-20261025/truth.json",
+      "sha256": "74c567f1c1bcb6469bcc846c267205a8dc6987fa88a7b12a86a72ab23fa51044"
+    }
+  ],
+  "groups": [
+    {
+      "mount_seed": 1001,
+      "profile": "gaussian",
+      "method": "sqpnp",
+      "cameras": 4,
+      "median_center_error_mm": 18.812242587301007,
+      "median_rotation_error_deg": 0.37118882597129815,
+      "median_validation_rmse_px": 0.7465911230136995
+    },
+    {
+      "mount_seed": 1001,
+      "profile": "gaussian",
+      "method": "ransac_epnp_lm",
+      "cameras": 4,
+      "median_center_error_mm": 19.048991563625,
+      "median_rotation_error_deg": 0.3778477336788301,
+      "median_validation_rmse_px": 0.7480843605094448
+    },
+    {
+      "mount_seed": 1001,
+      "profile": "outliers",
+      "method": "sqpnp",
+      "cameras": 4,
+      "median_center_error_mm": 70.81609291482577,
+      "median_rotation_error_deg": 1.291402722447146,
+      "median_validation_rmse_px": 0.8416133234868672
+    },
+    {
+      "mount_seed": 1001,
+      "profile": "outliers",
+      "method": "ransac_epnp_lm",
+      "cameras": 4,
+      "median_center_error_mm": 15.936944241264001,
+      "median_rotation_error_deg": 0.3105274019004932,
+      "median_validation_rmse_px": 0.7408089631722007
+    },
+    {
+      "mount_seed": 1002,
+      "profile": "gaussian",
+      "method": "sqpnp",
+      "cameras": 4,
+      "median_center_error_mm": 10.76775995804276,
+      "median_rotation_error_deg": 0.2288122929524844,
+      "median_validation_rmse_px": 0.662191974882894
+    },
+    {
+      "mount_seed": 1002,
+      "profile": "gaussian",
+      "method": "ransac_epnp_lm",
+      "cameras": 4,
+      "median_center_error_mm": 9.720975542144277,
+      "median_rotation_error_deg": 0.2111093767576444,
+      "median_validation_rmse_px": 0.6626228177369391
+    },
+    {
+      "mount_seed": 1002,
+      "profile": "outliers",
+      "method": "sqpnp",
+      "cameras": 4,
+      "median_center_error_mm": 24.7255284834043,
+      "median_rotation_error_deg": 0.5165900801945529,
+      "median_validation_rmse_px": 0.9014298338909126
+    },
+    {
+      "mount_seed": 1002,
+      "profile": "outliers",
+      "method": "ransac_epnp_lm",
+      "cameras": 4,
+      "median_center_error_mm": 10.604345462963575,
+      "median_rotation_error_deg": 0.22879463772734532,
+      "median_validation_rmse_px": 0.6658418646673288
+    },
+    {
+      "mount_seed": 1003,
+      "profile": "gaussian",
+      "method": "sqpnp",
+      "cameras": 4,
+      "median_center_error_mm": 11.383968421461589,
+      "median_rotation_error_deg": 0.19496124843354523,
+      "median_validation_rmse_px": 0.7210839646250277
+    },
+    {
+      "mount_seed": 1003,
+      "profile": "gaussian",
+      "method": "ransac_epnp_lm",
+      "cameras": 4,
+      "median_center_error_mm": 12.851980755278266,
+      "median_rotation_error_deg": 0.23333986736715795,
+      "median_validation_rmse_px": 0.7223439748380887
+    },
+    {
+      "mount_seed": 1003,
+      "profile": "outliers",
+      "method": "sqpnp",
+      "cameras": 4,
+      "median_center_error_mm": 37.21215015389419,
+      "median_rotation_error_deg": 0.7613719595481903,
+      "median_validation_rmse_px": 0.7442358723217606
+    },
+    {
+      "mount_seed": 1003,
+      "profile": "outliers",
+      "method": "ransac_epnp_lm",
+      "cameras": 4,
+      "median_center_error_mm": 12.215250557696628,
+      "median_rotation_error_deg": 0.2167971146513462,
+      "median_validation_rmse_px": 0.7227110128430569
+    }
+  ]
+}

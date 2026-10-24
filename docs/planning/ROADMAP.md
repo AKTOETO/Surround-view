@@ -1,5 +1,12 @@
 # Подробный план реализации
 
+25.10.2026: numerical E1 протоколаv2 выполнен:48/48 fits на3 mount seeds, без
+apply; reverse-order контроль48/48 exact не увеличивает число quality samples.
+При training outliers median centre errors SQPnP/RANSAC+LM43.637/13.054mm;
+при Gaussian12.562/13.566mm, универсальный победитель не установлен.
+Следующая обязательная работа —E3/E2 с independent scene RGB, а не новый calibration sweep.
+[[validation/THESIS_E1]].
+
 25.10.2026: server calibration_result_v1 и native svctl calibration-run позволяют
 сохранить candidate pose/validation без apply в одной owner-сессии. Numerical E1 pilot:
 16/16 completed, все проходят прежний reprojection gate, но SQPnP при outliers даёт
@@ -32,7 +39,8 @@ boundary) и2 carriers (plane, dome_floor); остальные варианты 
 монтажных ошибках и отдельных validation observations; E2 —3×2 fusion/carrier при
 общей калибровке; E3 — влияние nominal/estimated/true-control на итоговый кадр при
 фиксированном renderer profile плюс доступные серверные timings/CPU/RSS/drops.
-Начальная компактная цель:3 независимые сцены ×3 mount seeds; конкретные inputs,
+Вv2 E1 использует3 mount seeds без размножения scene labels (48 fits).
+Для E2/E3 компактная цель:3 независимые сцены ×3 mount seeds; конкретные inputs,
 views, критерии и параметры должны быть записаны до запуска, не выбираться post-hoc.
 Повторы timing не являются независимыми сценами; при такой выборке вывод описательный
 и ограничен испытанными условиями. Исторические просмотренные inputs не считать holdout.

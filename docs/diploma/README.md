@@ -1,5 +1,12 @@
 # Текст диссертации
 
+25.10.2026: numerical E1 протоколаv2 выполнен:48/48 fits на3 mount seeds, без
+apply; reverse-order контроль48/48 exact не увеличивает число quality samples.
+При training outliers median centre errors SQPnP/RANSAC+LM43.637/13.054mm;
+при Gaussian12.562/13.566mm, универсальный победитель не установлен.
+Следующая обязательная работа —E3/E2 с independent scene RGB, а не новый calibration sweep.
+[[validation/THESIS_E1]].
+
 25.10.2026: server calibration_result_v1 и native svctl calibration-run позволяют
 сохранить candidate pose/validation без apply в одной owner-сессии. Numerical E1 pilot:
 16/16 completed, все проходят прежний reprojection gate, но SQPnP при outliers даёт

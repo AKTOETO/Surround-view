@@ -9,19 +9,18 @@
 Этот раздел задаёт текущий приоритет; расширенный backlog ниже не является условием защиты.
 Границы и достаточность сокращённой программы нужно согласовать с руководителем.
 
-1. **Подготовить новый input/observation/reference registry E1–E3.** Протоколv1 и native
-   subset зафиксированы ([[research/THESIS_CORE_PROTOCOL]]), сквозной пилот54 trials/
-   42 captures выполнен ([[validation/THESIS_CORE_PILOT]]). Осталось заранее записать
-   seed→preset mapping, split groups, per-job RNG policy и hashes новых holdout inputs/true poses/reference;
-   подготовить два фиксированных view и bounded initial carrier. Исторический pilot
-   не заменяет этот gate; до его закрытия не объявлять финальную серию начатой.
-2. **Калибровка и её влияние на обзор.** Native server comparison и16-case numerical
-   pilot выполнены ([[validation/THESIS_CORE_PILOT#Численный пилот калибровки E1]]).
-   До основной серии зафиксировать геометрически разнесённые board poses; narrow-axis
-   pilot не подтверждает достаточную pose accuracy и не заменяет holdout. Отдельные training/validation observations,
-   известные yaw/pitch/along-body perturbations и ground truth. Сравнить два метода
-   по ошибке позы/отложенной репроекции; затем nominal/estimated/true-control на выходе
-   сервера при одном фиксированном fusion/carrier. Отказы считать результатом, не исключать.
+1. **Подготовить scene input/reference registry E2–E3.** Протоколv2 зафиксирован;
+   numerical E1 registry и48 fits выполнены ([[validation/THESIS_E1]]). Осталось заранее
+   записать scene seed→preset mapping и hashes новых source RGB/true poses/independent
+   references, подготовить два фиксированных view и bounded initial carrier.
+   Исторические pilot images не заменяют новые scene reference данные.
+2. **Проверить влияние калибровки на обзор (E3).** Численное сравнение двух методов E1
+   завершено в ограниченной known-intrinsics постановке:48/48 cases плюс reverse-order
+   контроль; RNG policy и разнесённые poses закреплены. Не повторять E1 без нового
+   вопроса/изменения реализации. Далее nominal/estimated/true-control на выходе сервера
+   при dome_floor+edge_feather, с заранее выбранным RANSAC+LM и общими independent RGB/
+   mask hashes. Spatial и final-image improvements ещё не доказаны; threshold не
+   подбирать по прежним outputs. Physical detector/Aurora acceptance остаются отдельно.
 3. **Отображение и сшивка.** При общей калибровке сравнить3 fusion ×2 carriers на одинаковых
    inputs/views/budgets. Одна небольшая независимая серия (начальная цель:3 сцены ×3
    mount seeds), без нового полного cross-product всех алгоритмов и факторов. Заранее

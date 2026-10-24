@@ -4851,3 +4851,43 @@ training observations centre errors выросли до971.288/44.910mm, RMSE1.3
 затем выполнить ограниченную основную серию. Универсальный ranking, physical acceptance
 и quality gate с пространственными гарантиями не заявлены. Полные таблицы, hashes,
 условия и воспроизведение: [[validation/THESIS_CORE_PILOT#Численный пилот калибровки E1]].
+
+
+## 4.96. Зарегистрированная численная серия E1
+
+До генерации новых observations в commit c3cad33 закреплены общая rig,3 mount seeds и
+пространственно разнесённые poses мишени. Протоколv2 исключил тройное повторение одних
+known XYZ/UV под разными scene labels: без detector изображения сцены не меняют E1.
+Итого3 rigs ×4 cameras ×2 profiles ×2 methods =48 fits, выполненных сервером без apply.
+Train/validation используют разные целые poses; для contaminated profile к прежнему
+Gaussian noise добавлены10/96 training offsets. Политика/параметры solver записаны в report.
+
+| Profile | Методика | Median centre error, mm | Median rotation error, deg | Held-out RMSE, px |
+|---|---|---:|---:|---:|
+| Gaussian0.5px | SQPnP |12.562|0.263|0.712|
+| Gaussian0.5px | RANSAC+LM |13.566|0.288|0.715|
+| Gaussian +outliers | SQPnP |43.637|0.846|0.791|
+| Gaussian +outliers | RANSAC+LM |13.054|0.281|0.713|
+
+При outliers RANSAC+LM снижает centre error во всех12 парных camera conditions; медианы
+по rigs для SQPnP/RANSAC составляют70.816/15.937,24.726/10.604,37.212/12.215mm.
+На clean Gaussian subset нет такого общего превосходства:7/12 pairs и немного худшая
+общая медиана. Это сравнение двух готовых методик, а не отдельного фактора RANSAC.
+
+![Зарегистрированная E1 серия](figures/experiments/thesis_calibration_e1_v2.png)
+
+*Рисунок4.96.1 — все48 numerical results; точки внутри каждого profile/method представляют
+четыре камеры трёх rigs, а не12 независимых сцен.*
+
+48/48 fits завершены, качество по существующему reprojection gate принято у всех.
+Пересчёт held-out RMSE независимым evaluator совпал с server results с допуском1e−7px.
+Reverse-order контроль дал точно те же T/errors/inliers/quality flags во всех48 случаях;
+он не считается ещё48 quality observations. Runtime state/config не изменились.
+
+Получен ограниченный вывод: в испытанной known-intrinsics постановке RANSAC+LM устойчивее
+к заданным training outliers, а преимущество на обычном Gaussian noise не установлено.
+Физические images/detector, произвольные сцены, модели intrinsics и target Aurora
+этим опытом не квалифицируются. Отличие от narrow pilot нельзя объяснить только poses:
+также изменены rig intrinsics и seeds. Доказательство улучшения конечного обзора требует
+E3 с независимым RGB truth. Inputs/hash registry, source evidence RNG и воспроизведение:
+[[validation/THESIS_E1]], [[references/VISION#S75]].
