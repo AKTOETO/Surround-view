@@ -8,9 +8,9 @@
 
 namespace sv
 {
-// All operations run on the source IO thread (or after it is joined).
+// All operations run on the owning IO thread (or after it is joined).
 // Timer follows the Asio expires_after/async_wait/cancel() interface.
-template <typename Timer> class SocketMessageDeadline
+template <typename Timer> class MessageDeadline
 {
     struct State
     {
@@ -23,14 +23,14 @@ template <typename Timer> class SocketMessageDeadline
 
   public:
 
-    template <typename Context> explicit SocketMessageDeadline(Context &context) : timer_(context)
+    template <typename Context> explicit MessageDeadline(Context &context) : timer_(context)
     {
     }
 
-    SocketMessageDeadline(const SocketMessageDeadline &) = delete;
-    SocketMessageDeadline &operator=(const SocketMessageDeadline &) = delete;
+    MessageDeadline(const MessageDeadline &) = delete;
+    MessageDeadline &operator=(const MessageDeadline &) = delete;
 
-    ~SocketMessageDeadline()
+    ~MessageDeadline()
     {
         cancel();
     }
@@ -40,7 +40,7 @@ template <typename Timer> class SocketMessageDeadline
         if (state_->generation == std::numeric_limits<uint64_t>::max())
         {
             cancel();
-            throw std::overflow_error("source deadline generation exhausted");
+            throw std::overflow_error("message deadline generation exhausted");
         }
         const auto generation = ++state_->generation;
         state_->armed = true;

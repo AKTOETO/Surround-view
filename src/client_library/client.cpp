@@ -1,4 +1,5 @@
 #include "sv/client.hpp"
+#include "message_deadline.hpp"
 #include <atomic>
 #include <boost/asio.hpp>
 #include <boost/asio/generic/stream_protocol.hpp>
@@ -18,7 +19,8 @@ struct Client::Impl
 {
     asio::io_context io;
     asio::executor_work_guard<asio::io_context::executor_type> work{io.get_executor()};
-    asio::steady_timer retry{io}, handshake{io}, commands_timer{io};
+    asio::steady_timer retry{io}, commands_timer{io};
+    MessageDeadline<asio::steady_timer> handshake{io};
     asio::ip::tcp::resolver resolver{io};
     Options options;
     Handler handler;
@@ -32,7 +34,7 @@ struct Client::Impl
     struct Channel
     {
         Socket socket;
-        asio::steady_timer partial;
+        MessageDeadline<asio::steady_timer> partial;
         Decoder decoder;
         std::array<unsigned char, 8192> input{};
         std::deque<std::shared_ptr<std::vector<unsigned char>>> output;
@@ -163,15 +165,8 @@ struct Client::Impl
         }
         failing = false;
         emit(Event::Kind::State, "connecting");
-        handshake.expires_after(std::chrono::milliseconds(options.timeout_ms));
-        handshake.async_wait(
-            [this](auto ec)
-            {
-                if (!ec)
-                {
-                    fail("handshake_timeout");
-                }
-            });
+        handshake.arm(std::chrono::milliseconds(options.timeout_ms),
+                      [this] { fail("handshake_timeout"); });
         control = std::make_shared<Channel>(io);
         open(control, true);
     }
@@ -291,12 +286,11 @@ struct Client::Impl
                                       {
                                           if (c->decoder.buffered() == 0)
                                           {
-                                              c->partial.expires_after(
-                                                  std::chrono::milliseconds(options.timeout_ms));
-                                              c->partial.async_wait(
-                                                  [this, c](auto error)
+                                              c->partial.arm(
+                                                  std::chrono::milliseconds(options.timeout_ms),
+                                                  [this, c]
                                                   {
-                                                      if (!error && current(c))
+                                                      if (current(c))
                                                       {
                                                           fail("partial_message_timeout");
                                                       }

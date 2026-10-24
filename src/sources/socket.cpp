@@ -1,4 +1,4 @@
-#include "socket_message_deadline.hpp"
+#include "message_deadline.hpp"
 #include "sv/protocol.hpp"
 #include "sv/source.hpp"
 #include <algorithm>
@@ -84,7 +84,7 @@ class SocketSource final : public FrameSource
         Socket socket;
         SocketSource &host;
         int id;
-        SocketMessageDeadline<asio::steady_timer> deadline;
+        MessageDeadline<asio::steady_timer> deadline;
         Decoder decoder;
         std::array<unsigned char, 8192> bytes{};
         bool closed = false, hello = false;

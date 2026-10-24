@@ -1,4 +1,4 @@
-#include "socket_message_deadline.hpp"
+#include "message_deadline.hpp"
 #include <boost/asio/error.hpp>
 #include <chrono>
 #include <deque>
@@ -78,7 +78,7 @@ class QueuedTimer
 TEST(SocketDeadline, CompletedMessageSuppressesAlreadyReadySuccessfulTimeout)
 {
     TimerQueue queue;
-    sv::SocketMessageDeadline<QueuedTimer> deadline(queue);
+    sv::MessageDeadline<QueuedTimer> deadline(queue);
     unsigned closes = 0;
     deadline.arm(std::chrono::milliseconds(10), [&] { ++closes; });
     queue.expire();    // Kernel timeout is ready, handler has not run.
@@ -92,7 +92,7 @@ TEST(SocketDeadline, OldReadyAndAbortedCallbacksCannotCloseOrDisarmNewMessage)
     for (const bool expired : {false, true})
     {
         TimerQueue queue;
-        sv::SocketMessageDeadline<QueuedTimer> deadline(queue);
+        sv::MessageDeadline<QueuedTimer> deadline(queue);
         unsigned old_closes = 0, current_closes = 0;
         deadline.arm(std::chrono::milliseconds(10), [&] { ++old_closes; });
         if (expired)
@@ -114,14 +114,14 @@ TEST(SocketDeadline, DestructionAndFailedRearmInvalidateQueuedCallbacks)
     TimerQueue queue;
     unsigned closes = 0;
     {
-        sv::SocketMessageDeadline<QueuedTimer> deadline(queue);
+        sv::MessageDeadline<QueuedTimer> deadline(queue);
         deadline.arm(std::chrono::milliseconds(10), [&] { ++closes; });
         queue.expire();
     }
     queue.dispatch();
     EXPECT_EQ(closes, 0U);
     {
-        sv::SocketMessageDeadline<QueuedTimer> deadline(queue);
+        sv::MessageDeadline<QueuedTimer> deadline(queue);
         deadline.arm(std::chrono::milliseconds(10), [&] { ++closes; });
         queue.expire();
         queue.fail_arm = true;
@@ -139,7 +139,7 @@ TEST(SocketDeadline, DestructionAndFailedRearmInvalidateQueuedCallbacks)
 TEST(SocketDeadline, NativeCancelFailureStillSuppressesThePendingCallback)
 {
     TimerQueue queue;
-    sv::SocketMessageDeadline<QueuedTimer> deadline(queue);
+    sv::MessageDeadline<QueuedTimer> deadline(queue);
     unsigned closes = 0;
     deadline.arm(std::chrono::milliseconds(10), [&] { ++closes; });
     queue.fail_cancel = true;
