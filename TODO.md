@@ -1,44 +1,52 @@
 # Оставшиеся работы
 
-23.10.2026: аппаратный camera backend теперь соблюдает per-camera Q и вытесняет только
-свои кадры; status16/control64 имеют независимые quotas, depth считает только кадры.
-MOCK-проверки Q1/3/16 подтверждают сохранение медленной камеры, exact drops, четыре
-заполненные очереди и status flood. Mixed source/hot source config/physical acceptance
-остаются открытыми. [[engineering/SOURCES#Независимые очереди аппаратных камер]].
+## Дипломный минимум и порядок работы с25.10.2026
 
-23.10.2026: socket message deadline защищён от устаревших ready callbacks после cancel/rearm.
-Поколение и armed guard сохраняют актуальный timeout; полный message разрешает idle,
-неполный frame по-прежнему ограничен общим deadline. Linux профильные CTest3/3,
-source GTest71/71. Это callback ordering regression, не hardware/real-time acceptance.
-[[engineering/SOCKET_SOURCE_DIAGNOSTICS#Отмена deadline неполного сообщения]].
+Срок принят как **01.06.2027** (интерпретация даты автора от25.10.2026).
+Каждую неделю нужен проверяемый результат диплома: данные/таблица/рисунок/текст либо
+работающий сквозной сценарий, а не только количество исправлений и коммитов.
+Календарь и условия завершения: [[planning/ROADMAP#Фокус диплома и еженедельные результаты]].
+Этот раздел задаёт текущий приоритет; расширенный backlog ниже не является условием защиты.
+Границы и достаточность сокращённой программы нужно согласовать с руководителем.
 
-14.10.2026: формы reference height/local support/source occlusion/uncertainty реализованы в sv-simulator с server catalog, omission при выключении и cleanup зависимых полей при смене visibility mode. Исправлены QML signal parameters и DriveWorld FINAL left/right, масштаб/углы/Esc. Полная сборка; selected CTest5/5 за29.86s, world-smoke exit0 без сообщений. [[engineering/CONFIG_SERVICE]].
+1. **Заморозить компактный протокол и воспроизвести один сквозной опыт.** Два имеющихся
+   extrinsic метода (sqpnp и ransac_epnp_lm); три fusion baseline (hard_best_angle,
+   edge_feather, multi_band с одним заранее заданным boundary); два носителя (plane,
+   dome_floor). Intrinsics — существующая fisheye-модель. Параметры фиксируются до
+   подтверждающей серии; обзор литературы может быть шире реализованных методов.
+2. **Калибровка и её влияние на обзор.** Отдельные training/validation observations,
+   известные yaw/pitch/along-body perturbations и ground truth. Сравнить два метода
+   по ошибке позы/отложенной репроекции; затем nominal/estimated/true-control на выходе
+   сервера при одном фиксированном fusion/carrier. Отказы считать результатом, не исключать.
+3. **Отображение и сшивка.** При общей калибровке сравнить3 fusion ×2 carriers на одинаковых
+   inputs/views/budgets. Одна небольшая независимая серия (начальная цель:3 сцены ×3
+   mount seeds), без нового полного cross-product всех алгоритмов и факторов. Заранее
+   зафиксировать единицы повторения;3 сцены дают ограниченную описательную оценку,
+   не доказательство универсального превосходства. Короткая temporal демонстрация —
+   только иллюстрация, без отдельного вывода о flicker/ghost robustness.
+4. **Серверная производительность и платформа.** Общий runner, warmup/чередование/repeats,
+   p50/p95/p99 доступных stage timings, CPU/RSS, drops/age, хэши и выбранные изображения.
+   Использовать существующие telemetry/report API. RPM/запуск Авроры и физическая
+   калибровка проверяются при доступе к стенду; отсутствие стенда фиксируется как
+   незакрытое ограничение, а допустимость вывода согласуется с руководителем.
+5. **Итоговый текст и демонстрация.** Главы о методике, реализации, трёх основных опытах
+   и ограничениях; один воспроизводимый server→library→client сценарий. Существующие
+   exploratory исследования оставить supplementary/приложениями, не превращать каждую
+   инженерную правку в новую исследовательскую главу.
 
-14.10.2026: sv-simulator получил формы ConfigService (fusion/required geometry), validate, explicit runtime/save и process-scoped operation reconciliation. Без ввода JSON; changed groups, immutable retry intent, restart guard и requested/active/persisted comparison. Полная сборка; selected CTest5/5 за29.91s,15 live output cases, native Unix/TCP adapter и offscreen QML checks. SV_SIMULATOR отделён от touchscreen/Aurora. [[engineering/CONFIG_SERVICE]].
+Не блокируют этот минимум: multi-client, UDP/protobuf migration, полный ConfigService,
+mixed sources/hot restart, durable journal, универсальный multi-recording supervisor,
+полный telemetry profiler, автоматический выбор алгоритма, полноценный driving simulator,
+все solver families/ChArUco, depth reconstruction/adaptive mesh, длинные temporal/noise
+матрицы и промышленный hardening. Реализации не удалять; задачи сохраняются ниже.
 
-14.10.2026: config_operations_v1 реализован: explicit apply-once/status через sv-client-lib, process-instance guard, bounded128-entry journal без eviction, retained commit/rejection и reconnect recovery без повторной mutation. Process-scoped GUI reconciliation реализован; durable journal и управляемая retention ещё не реализованы. [[engineering/CONFIG_OPERATIONS]].
+До финальной серии нельзя исключать независимые validation/holdout данные, контроль
+входов/масок/ресурсов, воспроизводимость и отрицательные результаты. Сокращается область
+вывода, а не строгость проверки. Полный CTest — на вехах, профильные tests — по изменению.
 
-14.10.2026: атомарный config_apply_v1 для fusion/surface реализован: explicit persist, GPU prepare→revision recheck→optional atomic rename→noexcept publication; runtime/persist/restart и rollback при disk/prepare/stale errors проверены. Catalog schema2, typed Unix/TCP API. Полная сборка и Mesa CTest60/60, configuration GTest15/15. Operation IDs/status для отдельного process-scoped apply-once уже добавлены; остаются durable recovery/retention, GUI для других групп и restart orchestration. [[engineering/CONFIG_SERVICE]].
+## Расширенный исследовательский backlog
 
-14.10.2026: первый продуктовый ConfigService read реализован: config_read_v1, coherent active/persisted/revision snapshot, typed C++ parser и read_configuration(), Unix/TCP consumer parity, read during lease, bounded oversize rejection без disconnect. Selected CTest5/5; На первом read-срезе schema/validate/update/apply отсутствовали; текущий apply описан выше. [[engineering/CONFIG_SERVICE]].
-
-14.10.2026: последний bounded target-overlap control завершён: independent preflight/capture726/730 target pixels,3520/3520 metric и240/240 anchor checks;26 same-coordinate plane-none→patch-all geometry contrasts. Target RGB MAE33.65→23.85 /33.83→24.08. Следующая работа — ConfigService/library/GUI, оставшиеся исследования отложены до общего ExperimentRunner. [[validation/TARGET_OVERLAP]], §4.92.
-
-14.10.2026: baseline двух новых текстурированных Blender scenes выполнен: 3520/3520 metric checks, 240/240 anchor checks (120 уникальных rays), 1197 paired memberships: 983 all-matching /206 mixed /8 none-matching. Target two-camera-visible interior пуст; balanced target overlap, filter/resolution и exposure/noise matrix остаются обязательными. Final RGB MAE отделена от centre labels и supplementary post-hoc common-domain ROI. [[validation/TEXTURED_SOURCE]], §4.91.
-
-14.10.2026: matched current-Mesa source truth выполнена на36 native captures:78/78 geometry anchors,162/162 primary и3520/3520 lattice metric checks. Inventory1103 paired memberships содержит1101 all-centres matching и2 повторения одной nonmatching coordinate; same-pair RGB ranges1/20 дают counterexample простому confidence threshold. Historical failed2/162 сохранён; далее independent texture-rich scenes, exposure/filter ablations и separate final RGB/ghost/seam evaluation ([[validation/MESA_SOURCE_TRUTH]], §4.90).
-
-14.10.2026: численная атрибуция двух historical pairing failures выполнена:85.268918µm endpoint drift (Z73.015690µm) меняет central gap20.505999→19.193569mm при bias20mm. Decimal80/32 host precision replays и axis substitutions объясняют flip на записанных q; native predicate/defaults не менялись. Primary2 failures сохранены. Далее matched source truth текущего backend и balanced nonuniform paired controls; точный driver/raster механизм не изолирован ([[validation/ENDPOINT_PRECISION]], §4.89).
-
-14.10.2026: source_disagreement_v1 реализован в renderer/server/typed client API; undefined при менее2 eligible cameras, один opt-in pass, Unix/TCP parity и полный Mesa CTest59/59. Frozen audit36 configs/162 cells:160 pairing pass,2 historical eligibility failures; current counts110/46/6. Old/current Mesa11 payloads побайтно совпали в двух attribution controls: backend/runtime sensitivity существует уже у архивного бинарника. Threshold не выбран; correct paired controls отсутствуют ([[validation/SOURCE_DISAGREEMENT]], §4.88).
-
-14.10.2026: native fallback_display legacy/hatch реализован через configure_fusion/catalog v5/typed library и кнопку simulator; seven-mode masks/RGBA restore и полный Mesa CTest59/59 проверены. Это только отображение фактической fallback branch, не scene confidence/general mitigation. Доступные runtime evidence отделены от Blender truth ([[validation/FALLBACK_DISPLAY]], §4.87).
-
-Сверено с кодом и проверочными отчётами 13.10.2026. Выполненные пункты удалены из этого списка; их реализация и результаты описаны в документах по ссылкам. Состояние Linux-прототипа и ограничения: [[prototype/STATUS]]. Подробная последовательность этапов: [[planning/ROADMAP]].
-
-## Приоритет 1 — доказать качество решения для диплома
-
-Ближайшая работа: детализация telemetry метрик/графиков, streaming trace и сценарная запись и остальные ConfigService root groups; формы support/occlusion завершены. Read, discovery, validation и atomic runtime/persistent apply fusion/surface/telemetry уже реализованы ([[engineering/CONFIG_SERVICE]]); остальные root groups пока не поддержаны. Ограниченный target-overlap control завершён ([[validation/TARGET_OVERLAP]]); новые исследовательские ветви до перехода к коду не открывать. Filter/resolution, exposure/noise, temporal и final seam/ghost evaluation остаются открытыми для будущего общего ExperimentRunner. Полное завершение E-STITCH-01 не заявляется.
+Исторический расширенный план (не текущая очередь дипломного минимума): детализация telemetry метрик/графиков, streaming trace и сценарная запись и остальные ConfigService root groups; формы support/occlusion завершены. Read, discovery, validation и atomic runtime/persistent apply fusion/surface/telemetry уже реализованы ([[engineering/CONFIG_SERVICE]]); остальные root groups пока не поддержаны. Ограниченный target-overlap control завершён ([[validation/TARGET_OVERLAP]]); новые исследовательские ветви до перехода к коду не открывать. Filter/resolution, exposure/noise, temporal и final seam/ghost evaluation остаются открытыми для будущего общего ExperimentRunner. Полное завершение E-STITCH-01 не заявляется.
 
 Исследовательские инструменты и первые синтетические прогоны добавлены, но аудит коммитов `ee1bcc5e..HEAD` выявил, что часть опубликованных метрик не подтверждает заявленные выводы. Приоритет 1 **не закрыт**. Exit criteria для полноценного заключения: [[planning/ROADMAP#Критерии готовности исследовательского заключения]]. Проверенные ограничения и расхождения: [[planning/AUDIT]].
 
@@ -47,7 +55,7 @@ source GTest71/71. Это callback ordering regression, не hardware/real-time 
 3. Завершить исследование калибровки на полном рабочем угловом диапазоне и физической геометрии. Production OpenCV, exact/detected replay, equal-RMS directional sensitivity, полный normalized joint Jacobian/spectrum, условные covariance и signed camera/pose attribution на 72 directions выполнены: [[validation/INTRINSIC_DIAGNOSTICS]], [[validation/CALIBRATION_SENSITIVITY]], [[validation/JOINT_CALIBRATION_INFORMATION]], [[validation/CALIBRATION_COMPONENT_ATTRIBUTION]]. Первичный sparse TRF joint runner сошёлся в 110/144 refits; post-hoc dense LM повторил все те же pairs и сошёлся в 144/144: [[validation/CALIBRATION_COMPONENT_SOLVER]]. Остались полное 2D angular coverage; robust-fit ablation без oracle filtering; paired raster blur/noise, tangential/decentering distortions, extrinsics/высота/неровности поверхности; физические фотографии с измеренной геометрией и false accept/reject protocol по обоснованным требованиям. Оба production solver profiles остаются OpenCV KB polynomial order2/4: нужны другие production solver families, настоящий ChArUco detector и исправление предпосылок прежнего comprehensive study. Для сервера нужны registry исходных снимков с проверяемыми hashes и group-based split: [[validation/CALIBRATION_PROVENANCE]]. Client labels не доказывают независимость; исторические jitter thresholds не являются рекомендациями: [[research/CALIBRATION]].
 4. После получения корректных результатов пересмотреть выводы и графики глав 4–5: отделить работающие прототипы и синтетические проверки от экспериментально подтверждённых результатов; удалить/оговорить выводы о превосходстве graph-cut, временной стабильности и обосновании Quality Gate, если новые данные их не подтверждают: [[diploma/README]].
 
-## Приоритет 2 — превратить прототип в управляемую систему
+## Расширенный продуктовый backlog
 
 Реализованные сценарии SV01 зафиксированы отдельно: [[engineering/PROTOCOL_SCENARIOS]] (lifecycle/ACK/frame/recovery; актуальный каталог команд находится в этом документе). Порядок конкурентных команд библиотеки исправлен и проверен; дальнейшие пункты ниже расширяют этот контракт, а не подменяют описание уже существующего API.
 
@@ -81,7 +89,7 @@ source GTest71/71. Это callback ordering regression, не hardware/real-time 
 - UI-фреймворк ноутбучного sv-simulator не ограничен Qt: допустимы SDL3 + Dear ImGui либо другой подходящий стек. Выбор обосновать удобством интерфейса, поддержкой 3D preview и сопровождением; смена стека сама по себе не является целью. Автомобильный sv-client сохраняет отдельные требования Авроры.
 - Критерий приёмки: пользователь подключается к серверу, меняет алгоритм и его параметры, настраивает камеры, запускает сценарий и просматривает отчёт через элементы интерфейса без редактирования JSON. Все команды проходят через sv-client-lib, конфигурацией владеет сервер.
 
-## Приоритет 3 — проверить отказы, производительность и перенос
+## Расширенная приёмка и перенос
 
 12. Подготовить per-camera source config: для каждого camera_id независимо выбирать OpenCV/V4L2 device path (/dev/video* или стабильный /dev/v4l/by-id/*), simulator socket (Unix/TCP) либо replay; поддержать четыре реальные камеры и смешанные реальные/виртуальные входы. Задать для каждой камеры resolution/pixel format/FPS, timestamps/clock mapping, calibration_id, reconnect/backoff и timeout policy. Реализовать составной FrameSource с bounded очередями, согласованными pause/resume semantics и общей синхронизацией; не открывать ненастроенные устройства/порты. Связать schema/validate/apply policy с ConfigService и формами sv-simulator, явно отличать hot-restart конкретного capture worker от перезапуска сервера. Проверить fake adapters, mixed-source skew, disconnect/reconnect и завершение без оборудования, затем реальные драйверы. Текущий source.type выбирает один общий backend для всех четырёх камер; смешанные источники ещё не реализованы. Для общего camera backend startup source.capture уже задаёт per-camera FPS/FOURCC/buffers с проверкой readback и recovery policy; hot schema/forms и полный automatic-mode inventory ещё отсутствуют; checked mode передаётся через telemetry SDK/archive. [[engineering/SOURCES]].
 
