@@ -1,0 +1,67 @@
+{
+  "schema_version": 1,
+  "policy": "thesis_e1_spread_v2",
+  "rig_config": "thesis-rig.json",
+  "mount_seeds": [
+    1001,
+    1002,
+    1003
+  ],
+  "optical_board_centres_m": [
+    [
+      -1.0,
+      -0.4,
+      2.0
+    ],
+    [
+      1.0,
+      0.4,
+      2.5
+    ],
+    [
+      -0.4,
+      0.6,
+      3.0
+    ],
+    [
+      0.5,
+      -0.6,
+      3.5
+    ],
+    [
+      -0.7,
+      0.2,
+      2.2
+    ],
+    [
+      0.8,
+      -0.3,
+      3.2
+    ]
+  ],
+  "board_yaw_rad": [
+    -0.35,
+    0.35,
+    -0.2,
+    0.2,
+    -0.25,
+    0.25
+  ],
+  "training_poses": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "validation_poses": [
+    4,
+    5
+  ],
+  "noise_sigma_px": 0.5,
+  "outliers": 10,
+  "board_inner_corners": [
+    6,
+    4
+  ],
+  "board_spacing_m": 0.04
+}

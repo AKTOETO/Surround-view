@@ -1,0 +1,268 @@
+{
+  "schema_version": 1,
+  "profile_id": "thesis-core-rig-v2",
+  "units": {
+    "length": "m",
+    "angle": "rad",
+    "time": "ns"
+  },
+  "vehicle": {
+    "length_m": 4.6,
+    "width_m": 1.8,
+    "mask_margin_m": 0.1
+  },
+  "cameras": [
+    {
+      "id": 0,
+      "name": "front",
+      "calibration_id": "thesis-nominal-camera0-v2",
+      "resolution": {
+        "width": 400,
+        "height": 400
+      },
+      "projection": {
+        "model": "opencv_fisheye",
+        "fx": 128.0,
+        "fy": 128.0,
+        "cx": 199.5,
+        "cy": 199.5,
+        "alpha": 0.0,
+        "k": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "theta_max_rad": 1.48,
+        "z_epsilon_m": 1e-06
+      },
+      "T_camera_from_vehicle": [
+        [
+          0.0,
+          -1.0,
+          0.0,
+          0.0
+        ],
+        [
+          -0.20791169081775937,
+          -0.0,
+          -0.9781476007338056,
+          1.322097050953647
+        ],
+        [
+          0.9781476007338056,
+          0.0,
+          -0.20791169081775937,
+          -2.131703400536686
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ]
+    },
+    {
+      "id": 1,
+      "name": "right",
+      "calibration_id": "thesis-nominal-camera1-v2",
+      "resolution": {
+        "width": 400,
+        "height": 400
+      },
+      "projection": {
+        "model": "opencv_fisheye",
+        "fx": 128.0,
+        "fy": 128.0,
+        "cx": 199.5,
+        "cy": 199.5,
+        "alpha": 0.0,
+        "k": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "theta_max_rad": 1.48,
+        "z_epsilon_m": 1e-06
+      },
+      "T_camera_from_vehicle": [
+        [
+          -1.0,
+          -6.123233995736766e-17,
+          0.0,
+          0.3499999999999999
+        ],
+        [
+          -1.2730919333264157e-17,
+          0.20791169081775937,
+          -0.9781476007338056,
+          1.3242281727213978
+        ],
+        [
+          5.989426641661592e-17,
+          -0.9781476007338056,
+          -0.20791169081775937,
+          -0.843101267091296
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ]
+    },
+    {
+      "id": 2,
+      "name": "rear",
+      "calibration_id": "thesis-nominal-camera2-v2",
+      "resolution": {
+        "width": 400,
+        "height": 400
+      },
+      "projection": {
+        "model": "opencv_fisheye",
+        "fx": 128.0,
+        "fy": 128.0,
+        "cx": 199.5,
+        "cy": 199.5,
+        "alpha": 0.0,
+        "k": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "theta_max_rad": 1.48,
+        "z_epsilon_m": 1e-06
+      },
+      "T_camera_from_vehicle": [
+        [
+          1.2246467991473532e-16,
+          1.0,
+          -0.0,
+          2.8901664459877536e-16
+        ],
+        [
+          0.20791169081775937,
+          -2.5461838666528314e-17,
+          -0.9781476007338056,
+          1.322097050953647
+        ],
+        [
+          -0.9781476007338056,
+          1.1978853283323184e-16,
+          -0.20791169081775937,
+          -2.131703400536686
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ]
+    },
+    {
+      "id": 3,
+      "name": "left",
+      "calibration_id": "thesis-nominal-camera3-v2",
+      "resolution": {
+        "width": 400,
+        "height": 400
+      },
+      "projection": {
+        "model": "opencv_fisheye",
+        "fx": 128.0,
+        "fy": 128.0,
+        "cx": 199.5,
+        "cy": 199.5,
+        "alpha": 0.0,
+        "k": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "theta_max_rad": 1.48,
+        "z_epsilon_m": 1e-06
+      },
+      "T_camera_from_vehicle": [
+        [
+          1.0,
+          -6.123233995736766e-17,
+          0.0,
+          -0.3499999999999999
+        ],
+        [
+          -1.2730919333264157e-17,
+          -0.20791169081775937,
+          -0.9781476007338056,
+          1.3242281727213978
+        ],
+        [
+          5.989426641661592e-17,
+          0.9781476007338056,
+          -0.20791169081775937,
+          -0.843101267091296
+        ],
+        [
+          0.0,
+          0.0,
+          0.0,
+          1.0
+        ]
+      ]
+    }
+  ],
+  "surface": {
+    "type": "rectangular_bowl_v1",
+    "flat_half_length_m": 2.6,
+    "flat_half_width_m": 1.2,
+    "outer_half_length_m": 14.0,
+    "outer_half_width_m": 14.0,
+    "corner_height_m": 0,
+    "uniform_cells": [
+      32,
+      45
+    ]
+  },
+  "virtual_camera": {
+    "azimuth_rad": 0.8,
+    "elevation_rad": 1.0,
+    "distance_m": 8.5,
+    "fov_y_rad": 1.0,
+    "clip_m": [
+      0.1,
+      100.0
+    ]
+  },
+  "output": {
+    "width": 320,
+    "height": 180
+  },
+  "runtime": {
+    "input_queue_per_camera": 3,
+    "skew_window_ms": 10.0,
+    "max_input_age_ms": 100.0
+  },
+  "fusion": {
+    "angle_power": 2,
+    "diagnostic": "color",
+    "edge_width_px": 24,
+    "fallback_display": {
+      "mode": "hatch"
+    },
+    "mode": "hard_best_angle",
+    "pyramid_boundary": "zero",
+    "pyramid_levels": 4,
+    "smoothness_weight": 0.1
+  },
+  "telemetry": {
+    "enabled": false,
+    "period_ms": 100,
+    "history_capacity": 128
+  }
+}

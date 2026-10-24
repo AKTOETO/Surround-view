@@ -1,14 +1,24 @@
 # Компактный протокол диплома E1–E3
 
-Версия1,25.10.2026. Тема: «Исследование и разработка системы отображения и методик
+Версия2,25.10.2026. Тема: «Исследование и разработка системы отображения и методик
 калибровки функции интерактивного кругового обзора ТС для ОС Аврора».
 Срок и недельные результаты: [[planning/ROADMAP#Фокус диплома и еженедельные результаты]].
 
 Параметры ниже зафиксированы до получения новой подтверждающей выборки. Реестр новых
 inputs/observations/reference с hashes **ещё не сформирован**: это блокер финальной серии.
 Пилот [[validation/THESIS_CORE_PILOT]] использует исторические inputs и проверяет только
-исполнение. Изменение параметров/правил после просмотра новых outputs требует версии2
+исполнение. Изменение параметров/правил после просмотра новых outputs требует следующей версии
 и явного отделения прежнего exploratory результата. Внешняя регистрация не заявляется.
+
+Изменение v1→v2 до новой серии: E1 сокращён144→48 fits без дублирования scene labels;
+геометрия board poses и общая rig зафиксированы в `configs/research/thesis-e1-inputs.json`.
+Это ответ на узкую околоосевую геометрию exploratory pilot9001, не подбор параметров
+по новым mount seeds1001–1003. Их результаты ещё не просмотрены при фиксации этого плана.
+Pilot9001 и его исходные таблицы не переписываются. Pose centres заданы в true optical
+coordinates; R_true=Rx(pitch)R_nominalRz(−yaw), C_true=C_nominal+[along_body,0,0].
+Случайность solver — backend-owned legacy OpenCV API без seed argument; выполнение
+должно сохранять execution_policy/version и проходить ambient-RNG repeatability checks.
+Это не обещание битового совпадения разных OpenCV/ABI/платформ.
 
 ## Вопрос и границы
 
@@ -45,6 +55,11 @@ U[−0.05,0.05]м; направления и порядок преобразов
 но не передаются fit. Nominal config соответствует установке без perturbations.
 Сервер принимает готовые observations через существующий calibration API; solver
 исполняется в C++, а графики и независимая оценка могут использовать Python.
+
+В версии2 E1 выполняется один раз на каждом из3 mount seeds для общей nominal rig
+`configs/research/thesis-rig.json`. Текстуры/семейства сцен не влияют на supplied XYZ/UV
+без detector: повторять тот же E1 под тремя scene labels значило бы размножать данные.
+E2/E3 по-прежнему используют9 rigs (3 scene instances ×3 mount seeds).
 
 E1:6 различных положений условной мишени на камеру,4 training +2 validation; по24
 угла4×6 с шагом0.04м на положение. Совокупность training XYZ должна быть noncoplanar
@@ -89,7 +104,7 @@ carrier walls; оценка только верхнего ракурса не п
 Один заранее выбранный static frame на rig; длинные клипы и temporal ranking исключены.
 
 E2:9 rigs ×2 views ×6 variants =108 quality conditions. E3:9×2×3 =54 conditions.
-E1:9 rigs ×4 cameras ×2 methods ×2 profiles =144 fits, не144 независимых rigs.
+E1:3 mount seeds ×4 cameras ×2 methods ×2 profiles =48 fits, не48 независимых rigs.
 Отдельные fit failures и data-preflight failures сохраняются с denominators.
 
 ## Исполнение и трактовка метрик
