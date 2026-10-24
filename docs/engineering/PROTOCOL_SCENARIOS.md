@@ -484,3 +484,44 @@ O_EXCL reservation нового файла. Отмена/ошибка сохра
 busy save отклоняется. Последующее исполнение заново проверяет inputs/budgets и использует
 прежние lease/reset/apply/render/restore. См. рисунок RR.12 и
 [[engineering/RESEARCH_BATCH#Сохранение черновика без исполнения]].
+
+## CAL-E1: серия калибровок без применения
+
+Application service `run_calibration_cases` работает через существующую sv-client-lib,
+не запускает solver на клиенте. Case labels/observations не доказывают физическую
+независимость данных; сервер проверяет прежний declared-frame/exact-content split.
+
+```plantuml
+@startuml
+participant "svctl calibration-run" as App
+participant "Connection / sv-client-lib" as SDK
+participant "sv-server" as Server
+participant "Calibration worker" as Worker
+App -> App: Preflight cases / sizes / unique IDs
+App -> App: Reserve NEW report (exclusive)
+App -> SDK: Connect once, no reconnect/replay
+SDK -> Server: HELLO / data attachment
+Server --> SDK: calibration_result_v1
+App -> SDK: state / fusion_catalog
+loop Each case (including after rejected or failed fit)
+  SDK -> Server: calibrate(training, validation, provenance, method)
+  Server -> Worker: Queue owner-bound job
+  Server --> SDK: Job ID or rejection
+  loop Until terminal state / bounded wait
+    SDK -> Server: calibration_status(job ID)
+    Worker -> Server: Fit result + validation
+    Server --> SDK: State, errors, candidate transform, duration
+  end
+  SDK --> App: Retain result / rejection / failure
+end
+SDK -> Server: state
+App -> App: Verify unchanged config revision; save report
+note over App,Worker
+No apply_calibration; candidate may fail physical accuracy
+while passing the existing reprojection gate.
+Transport failure stops remaining cases; no mutation retry.
+end note
+@enduml
+```
+
+*Рисунок CAL-E1 — owner-сессия сохраняется до получения всех результатов; применение отсутствует.*

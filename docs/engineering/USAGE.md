@@ -1711,3 +1711,32 @@ Mesa vendor может выбрать AMD GPU, а не llvmpipe/RTX. Этот р
 Следующий запуск — новая output/IPC directory. Шесть панелей и audit сохранённых
 captures формирует `docs/diploma/plot_thesis_pilot.py`; точная команда и ограничения:
 [[validation/THESIS_CORE_PILOT]].
+
+## Сравнение калибраторов без изменения сервера
+
+```sh
+build/svctl --unix /tmp/sv-thesis-e1 --timeout-ms 10000 calibration-run \
+  artifacts/e1/cases.json artifacts/e1/new-report.json
+```
+
+Вход schema1: `{"schema_version":1,"cases":[{"case_id":"cam0/clean/sqpnp",
+"parameters":{...}}]}`. В parameters ровно7 полей: camera_id, method, points, pixels,
+validation_points, validation_pixels, provenance — те же поля существующего calibrate.
+До подключения проверяются1…256 unique case IDs, file≤8MiB и wire size каждого запроса.
+Полную семантику/пары/split проверяет сервер. Parent report directory должен существовать;
+существующий report не перезаписывается. Для следующей серии использовать новый путь.
+
+Требуется calibration_result_v1. Один persistent client последовательно submits/polls
+owner-bound jobs, не вызывает apply_calibration и проверяет config revision до/после.
+Не выполнять calibrate и calibration-status отдельными CLI processes: каждый создаёт
+другую сессию. Успешно завершённый fit может иметь quality_accepted=false — он сохраняется.
+
+`success=true` означает, что вся серия обработана и revision не изменилась;
+`all_completed=true` означает completed у всех fits. Rejected/failed/cancelled сохраняются,
+последующие cases выполняются; CLI exit4 при любом незавершённом fit. При transport error
+серия останавливается с partial report/error, без reconnect/replay. Per-job deadline
+кооперативный: очередной request может добавить свой timeout; OpenCV call не прерывается
+жёстко. Будущий durable resume не реализован.
+
+Numerical fixture и reproduction E1 pilot: [[validation/THESIS_CORE_PILOT#Численный пилот калибровки E1]].
+Solver/validation выполняет C++ server; Python создаёт независимый test fixture и строит график.

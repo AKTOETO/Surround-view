@@ -463,3 +463,19 @@ config, lease и restore не меняются. Контракт файлов и
 в существующем telemetry_read добавляют per-camera producer snapshot. RGB8 producer
 HELLO/frame payload, endpoints и policy pause/replay не меняются.
 [[engineering/SOCKET_SOURCE_DIAGNOSTICS]].
+
+## Получение результата калибровки без применения
+
+25.10.2026: HELLO capability `calibration_result_v1`. Существующий `calibration_status`
+возвращает camera_id и duration_ms; в completed дополнительно calibration_id и4×4
+T_camera_from_vehicle (JSON numbers, row-major). Training/validation errors и старый
+quality_accepted сохраняются. Pending duration0 не является оценкой оставшегося времени;
+terminal duration охватывает worker calibrator и validation, не queue/network latency.
+
+Transform — результат solver, не подтверждённая физическая точность. Чтение результата
+не вызывает apply_calibration и не меняет config revision. Сохраняются прежние owner
+session checks; отдельный новый CLI process не получает доступ к чужому job.
+Новый native `svctl calibration-run` удерживает одну сессию до сохранения результатов:
+[[engineering/USAGE#Сравнение калибраторов без изменения сервера]]. Старый сервер без
+capability отвергается до отправки calibrate. Typed Client command/calibration_status
+по-прежнему доставляет raw ACK; отдельный DTO для transform в этом срезе не вводился.
