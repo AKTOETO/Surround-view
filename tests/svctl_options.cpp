@@ -140,3 +140,13 @@ TEST(SvctlOptions, ReportSeriesIsOfflineBoundedAndPreservesLiteralPaths)
     EXPECT_ANY_THROW(sv::ctl::parse(
         {"research-compare-series", "out.json", "0", "1", "2", "3", "4", "5", "6", "7", "8"}));
 }
+
+TEST(SvctlOptions, CalibrationRunRequiresInputAndNewReport)
+{
+    const auto options = sv::ctl::parse({"calibration-run", "cases.json", "new-report.json"});
+    EXPECT_EQ(options.request.parameters.at("scenario_path"), "cases.json");
+    EXPECT_EQ(options.request.parameters.at("report_path"), "new-report.json");
+    EXPECT_THROW(sv::ctl::parse({"calibration-run", "cases.json"}), std::invalid_argument);
+    EXPECT_THROW(sv::ctl::parse({"calibration-run", "cases.json", "report.json", "extra"}),
+                 std::invalid_argument);
+}

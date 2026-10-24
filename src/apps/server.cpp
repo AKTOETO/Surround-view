@@ -394,6 +394,7 @@ ServerIO::ServerIO(const sv::Connections &n, const std::string &source_type,
                     "source_disagreement_v1",
                     "calibrate",
                     "calibration_provenance_v1",
+                    "calibration_result_v1",
                     "calibration_status",
                     "apply_calibration",
                     "cancel_calibration"};
@@ -1285,6 +1286,8 @@ int main(int argc, char **argv)
                             extra_res["base_config_revision"] =
                                 std::to_string(job_opt->base_config_revision);
                             extra_res["job_state"] = sv::to_string(job_opt->state);
+                            extra_res["camera_id"] = job_opt->camera_id;
+                            extra_res["duration_ms"] = job_opt->duration_ms;
                             const auto &audit = job_opt->split_audit;
                             extra_res["validation_policy"] = sv::calibration_validation_policy;
                             extra_res["dataset_id"] = audit.dataset_id;
@@ -1294,6 +1297,17 @@ int main(int argc, char **argv)
                             extra_res["validation_frames"] = audit.validation_frames;
                             if (job_opt->state == sv::JobState::Completed)
                             {
+                                boost::json::array transform;
+                                for (int row = 0; row < 4; ++row)
+                                {
+                                    const auto &t = job_opt->calibration.camera.T;
+                                    transform.emplace_back(
+                                        boost::json::array{t[row * 4], t[row * 4 + 1],
+                                                           t[row * 4 + 2], t[row * 4 + 3]});
+                                }
+                                extra_res["T_camera_from_vehicle"] = std::move(transform);
+                                extra_res["calibration_id"] =
+                                    job_opt->calibration.camera.calibration_id;
                                 extra_res["training_rmse_px"] =
                                     job_opt->calibration.training_rmse_px;
                                 extra_res["validation_rmse_px"] = job_opt->validation_rmse_px;

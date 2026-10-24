@@ -98,9 +98,10 @@ Options parse(const std::vector<std::string> &args)
     options.request.operation = next();
     auto &operation = options.request.operation;
     auto &parameters = options.request.parameters;
-    if (operation == "research" || operation == "research-batch" ||
-        operation == "research-bundle-export" || operation == "research-bundle-run" ||
-        operation == "research-batch-bundle-export" || operation == "research-batch-bundle-run")
+    if (operation == "calibration-run" || operation == "research" ||
+        operation == "research-batch" || operation == "research-bundle-export" ||
+        operation == "research-bundle-run" || operation == "research-batch-bundle-export" ||
+        operation == "research-batch-bundle-run")
     {
         parameters["scenario_path"] = next();
         parameters["report_path"] = next();
@@ -213,6 +214,7 @@ std::string usage()
            "      calibration-status JOB_ID | cancel-calibration JOB_ID | apply-calibration "
            "JOB_ID\n"
            "      command TYPE [--params JSON_OBJECT]\n"
+           "      calibration-run CASES_JSON NEW_REPORT_JSON\n"
            "      research SCENARIO_JSON REPORT_JSON\n"
            "      research-batch PLAN_JSON NEW_OUTPUT_DIRECTORY\n"
            "      research-compare-series NEW_AUDIT_JSON REPORT_A REPORT_B [REPORT_C ...]\n"

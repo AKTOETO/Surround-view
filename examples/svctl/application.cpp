@@ -1,5 +1,6 @@
 #include "batch.hpp"
 #include "batch_bundle.hpp"
+#include "calibration_run.hpp"
 #include "file_experiment.hpp"
 #include "options.hpp"
 #include "report_output.hpp"
@@ -17,6 +18,22 @@ namespace sv::ctl
 {
 int execute(const Options &options)
 {
+    if (options.request.operation == "calibration-run")
+    {
+        const auto &p = options.request.parameters;
+        client::Options connection;
+        connection.endpoint = options.endpoint;
+        connection.timeout_ms = options.timeout_ms;
+        const auto report = research::run_calibration_cases(
+            std::string(p.at("scenario_path").as_string()),
+            std::string(p.at("report_path").as_string()), connection);
+        std::cout << boost::json::serialize(
+                         boost::json::object{{"success", report.at("success")},
+                                             {"all_completed", report.at("all_completed")},
+                                             {"report_path", p.at("report_path")}})
+                  << '\n';
+        return report.at("success").as_bool() && report.at("all_completed").as_bool() ? 0 : 4;
+    }
     if (options.request.operation == "research-compare-series")
     {
         const auto &p = options.request.parameters;

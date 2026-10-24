@@ -392,6 +392,14 @@ class IntegrationTests(unittest.TestCase):
                 self.assertEqual(status['job_state'],'completed',status)
                 self.assertTrue(status['quality_accepted'],status)
                 self.assertEqual(status['dataset_id'],provenance['dataset_id'])
+                self.assertEqual(status['camera_id'],0)
+                self.assertGreaterEqual(status['duration_ms'],0)
+                estimated = np.asarray(status['T_camera_from_vehicle'])
+                self.assertEqual(estimated.shape,(4,4))
+                self.assertTrue(np.isfinite(estimated).all())
+                self.assertEqual(estimated[3].tolist(),[0,0,0,1])
+                self.assertIn('calibration_id',status)
+                self.assertEqual(status['config_revision'],baseline['config_revision'])
                 self.assertEqual(status['training_frames'],1)
                 self.assertEqual(status['validation_frames'],1)
                 self.assertEqual(status['training_observations'],12)
@@ -418,6 +426,28 @@ class IntegrationTests(unittest.TestCase):
                 self.assertTrue(mixed_status['quality_accepted'],mixed_status)
                 for field in ('training_rmse_px','validation_rmse_px','validation_max_error_px'):
                     self.assertAlmostEqual(mixed_status[field],status[field],places=9)
+                client.close()
+                client = None
+                cases_path = directory/'calibration-cases.json'
+                bad = copy.deepcopy(valid)
+                bad['method'] = 'not-a-solver'
+                cases_path.write_text(json.dumps(dict(schema_version=1,cases=[
+                    dict(case_id='fit',parameters=valid),dict(case_id='failed',parameters=bad)])))
+                output = directory/'calibration-run.json'
+                run = subprocess.run([str(BUILD/'svctl'),'--unix',str(ipc),'calibration-run',
+                    str(cases_path),str(output)],capture_output=True,text=True,timeout=12)
+                self.assertEqual(run.returncode,4,run.stderr)
+                report = json.loads(output.read_text())
+                self.assertTrue(report['success'],report)
+                self.assertFalse(report['all_completed'])
+                self.assertEqual([x['outcome'] for x in report['results']],['completed','failed'])
+                self.assertEqual(report['initial_state']['config_revision'],report['final_state']['config_revision'])
+                self.assertEqual(report['results'][0]['status']['camera_id'],0)
+                previous = output.read_bytes()
+                repeat = subprocess.run([str(BUILD/'svctl'),'--unix',str(ipc),'calibration-run',
+                    str(cases_path),str(output)],capture_output=True,text=True,timeout=4)
+                self.assertNotEqual(repeat.returncode,0)
+                self.assertEqual(output.read_bytes(),previous)
             finally:
                 if client:
                     client.close()
