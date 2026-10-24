@@ -479,3 +479,20 @@ session checks; отдельный новый CLI process не получает 
 [[engineering/USAGE#Сравнение калибраторов без изменения сервера]]. Старый сервер без
 capability отвергается до отправки calibrate. Typed Client command/calibration_status
 по-прежнему доставляет raw ACK; отдельный DTO для transform в этом срезе не вводился.
+
+## Политика выполнения калибровки
+
+HELLO `calibration_execution_v1`: calibration_status содержит execution_policy во всех
+состояниях job, включая failed/cancelled. Сохраняются method, OpenCV version и
+rng_policy=backend_owned_no_seed_parameter. У ransac_epnp_lm дополнительно записаны
+legacy_solvePnPRansac_EPNP, iterations300, confidence0.999, threshold_px_option,
+normalization divide_by_max_fx_fy и solvePnPRefineLM_defaults. Значения iterations/
+confidence вынесены в общие constants; сериализация и вызов solver используют их вместе.
+
+Нового seed-параметра нет. Source evidence для legacy4.10 — [[references/VISION#S75]];
+на текущей5.0.0 GTest проверяет одинаковые результаты при ambient RNG123/987654321,
+предыдущем SQPnP fit и другом thread, а также отсутствие расходования ambient RNG.
+Это regression конкретного backend, не обещание cross-version bitwise identity.
+Metadata не меняет качество/алгоритм, не добавляет apply и не влияет на ownership.
+Прежний server без capability не обязан возвращать execution_policy; новый E1 fixture
+требует поле, исторические numerical pilots остаются читаемыми.

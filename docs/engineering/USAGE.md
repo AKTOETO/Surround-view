@@ -1740,3 +1740,21 @@ owner-bound jobs, не вызывает apply_calibration и проверяет 
 
 Numerical fixture и reproduction E1 pilot: [[validation/THESIS_CORE_PILOT#Численный пилот калибровки E1]].
 Solver/validation выполняет C++ server; Python создаёт независимый test fixture и строит график.
+
+
+### Зарегистрированная численная серия E1
+
+Для новой geometry/rig используйте frozen plan:
+
+```sh
+python3 docs/diploma/plot_thesis_calibration.py prepare configs/research/thesis-rig.json \
+  artifacts/e1-v2-repeat --plan configs/research/thesis-e1-inputs.json
+python3 tools/simulator.py --config configs/research/thesis-rig.json --frames 2 \
+  --output artifacts/e1-v2-repeat/replay
+```
+
+Далее тот же native server/calibration-run, config=thesis-rig.json и новый output report.
+48 requests исполняются solver worker сервера; Python только формирует numerical test
+observations и оценивает known truth. Прежний prepare без --plan сохраняет pilot9001.
+Сервер с calibration_execution_v1 возвращает execution_policy вместо фиктивного RNG seed
+knob. Результаты, repeat control, входные hashes и ограничения: [[validation/THESIS_E1]].

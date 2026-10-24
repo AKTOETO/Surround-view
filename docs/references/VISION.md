@@ -449,3 +449,14 @@ Fisheye camera model / OpenCV. – Текст : электронный // OpenCV
 ## S74
 
 **Hans Knutsson, Carl-Fredrik Westin. Normalized and differential convolution.** Proceedings of IEEE Conference on Computer Vision and Pattern Recognition, 1993. DOI: 10.1109/CVPR.1993.341081. [Запись IEEE и abstract](https://ieeexplore.ieee.org/abstract/document/341081/). Проверены 10.10.2026 bibliographic record и abstract: разделение signal/certainty и нулевая certainty отсутствующих данных. Полный набор операторов статьи не воспроизводился. В проекте используется ограниченный scalar-support Gaussian pyramid вариант; его формулы, native controls и ограничения — [[validation/PYRAMID_BOUNDARY]], §§3.27/4.44 диплома. Constant-field тест не подтверждает качества естественных сцен.
+
+## S75
+
+**OpenCV4.10.0. Legacy solvePnPRansac и RANSACPointSetRegistrator.**
+[solvepnp.cpp](https://github.com/opencv/opencv/blob/4.10.0/modules/calib3d/src/solvepnp.cpp),
+[ptsetreg.cpp](https://github.com/opencv/opencv/blob/4.10.0/modules/calib3d/src/ptsetreg.cpp).
+Проверены25.10.2026 legacy dispatch к point-set registrator и локальная инициализация
+RNG в его run. В этом пути ambient cv::setRNGSeed не задаёт seed локальных выборок.
+Это source evidence версии4.10.0, а не гарантия любой версии/ABI. На установленной
+OpenCV5.0.0 проект отдельно проверяет независимость результата от ambient RNG, порядка
+предыдущих fits и другого worker thread; результаты других платформ могут отличаться.

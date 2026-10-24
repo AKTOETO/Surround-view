@@ -84,6 +84,7 @@
 | S69 | [[references/VISION#S69|S69: перенаправление на S10 (Burt–Adelson)]] | VISION |
 | S70 | [[references/VISION#S70|Khronos OpenGL ES 3.0 cube-map filtering]] | VISION |
 | S71 | [[references/VISION#S71|OpenCV stitching warpers, seam estimators and blenders]] | VISION |
+| S75 | [[references/VISION#S75|OpenCV4.10 legacy PnP RANSAC implementation/RNG]] | VISION |
 
 ## Первое чтение
 
