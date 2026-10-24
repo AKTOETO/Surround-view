@@ -265,7 +265,7 @@ def schedule_family_plan(plan_path, output):
         state.update(state='running', active=item['id'])
         save()
         try:
-            world = build_scene(item['recipe'])
+            world = build_scene(item['recipe'], camera_rig=item.get('camera_rig'))
             bpy.context.window.scene = world
             raw = output / item['id'] / 'raw'
             raw.parent.mkdir()

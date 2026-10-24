@@ -128,10 +128,16 @@ def set_overview_camera(scene):
     scene.view_layers[0].update()
 
 
-def build_scene(recipe=None):
+def build_scene(recipe=None, *, camera_rig=None):
     recipe = validate_scenario(recipe) if recipe is not None else None
-    nominal = configuration()
-    cfg, offsets = perturb(nominal, recipe) if recipe else (nominal, [])
+    if camera_rig is None:
+        nominal = configuration()
+        cfg, offsets = perturb(nominal, recipe) if recipe else (nominal, [])
+    else:
+        from camera_rig import validate_camera_rig, check_rig_recipe
+        camera_rig = validate_camera_rig(camera_rig)
+        check_rig_recipe(camera_rig, recipe)
+        nominal, cfg, offsets = camera_rig['nominal'], camera_rig['actual'], []
     rng = np.random.default_rng(recipe.get('scene_seed', recipe.get('seed', 0))) if recipe else None
     family = recipe['world'].get('family', 'street') if recipe else 'street'
     scene = bpy.data.scenes.new("SV Research Street" if family == "street" else "SV Research Cargo Yard")
@@ -221,6 +227,8 @@ def build_scene(recipe=None):
     scene['sv_nominal_config'] = json.dumps(nominal)
     scene['sv_recipe'] = json.dumps(recipe)
     scene['sv_mount_offsets'] = json.dumps(offsets)
+    if camera_rig is not None:
+        scene['sv_camera_rig_provenance'] = json.dumps(camera_rig['provenance'])
     scene['sv_near_obstacles'] = json.dumps(positions)
     camera = bpy.data.cameras.new("SV capture optics")
     enum_value(camera,'type','PERSP')
@@ -394,6 +402,9 @@ def capture(scene, output, frames=2, face_size=256, start_frame=0, calibration_b
                                                'diagnostic_motion.py','environments.py','render_io.py')},
                 'sha256':{p.relative_to(output).as_posix():hashlib.sha256(p.read_bytes()).hexdigest()
                           for p in sorted([*output.glob('*.png'), *depth_dir.glob('*.exr')])}}
+    if scene.get('sv_camera_rig_provenance'):
+        metadata['camera_rig_provenance'] = json.loads(scene['sv_camera_rig_provenance'])
+        metadata['script_sha256']['camera_rig.py'] = hashlib.sha256(Path(__file__).with_name('camera_rig.py').read_bytes()).hexdigest()
     (output / 'capture.json').write_text(json.dumps(metadata,indent=2)+'\n')
     print(f"SV capture complete: {output}")
     return output

@@ -125,6 +125,8 @@ def convert(source, output, image_format='ppm'):
     truth['environment_family'] = metadata.get('environment_family', 'street')
     truth['environment_layout'] = metadata.get('environment_layout')
     truth['mount_offsets'] = metadata.get('mount_offsets', [])
+    if 'camera_rig_provenance' in metadata:
+        truth['camera_rig_provenance'] = metadata['camera_rig_provenance']
     truth['near_obstacles'] = metadata.get('near_obstacles')
     truth['true_config'] = cfg
     if depth_rows:

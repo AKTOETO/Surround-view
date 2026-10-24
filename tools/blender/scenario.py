@@ -5,6 +5,8 @@ from pathlib import Path
 
 import numpy as np
 
+from camera_rig import validate_camera_rig, check_rig_recipe
+
 
 TRAIN_SEEDS = tuple(range(0, 8))
 HOLDOUT_SEEDS = tuple(range(8, 12))
@@ -169,7 +171,7 @@ def validate_family_plan(plan):
         raise ValueError('family plan schema1 with 1..16 cases required')
     if 'purpose' in result and (not isinstance(result['purpose'], str) or not 1 <= len(result['purpose']) <= 1024):
         raise ValueError('bounded purpose string required')
-    bounds = {'frames': (2, 8), 'face_size': (32, 512), 'frame_step': (1, 30),
+    bounds = {'frames': (1, 8), 'face_size': (32, 512), 'frame_step': (1, 30),
               'width': (16, 640), 'height': (16, 360)}
     options = result.get('capture')
     if not isinstance(options, dict) or set(options) != set(bounds):
@@ -180,11 +182,15 @@ def validate_family_plan(plan):
             raise ValueError('bounded integer capture setting required: ' + key)
     identifiers = set()
     for item in result['cases']:
-        if (not isinstance(item, dict) or set(item) != {'id', 'recipe'}
+        if (not isinstance(item, dict) or not {'id', 'recipe'} <= set(item)
+                or set(item) - {'id', 'recipe', 'camera_rig'}
                 or not isinstance(item['id'], str) or not re.fullmatch(r'[a-zA-Z0-9_-]{1,64}', item['id'])):
             raise ValueError('safe unique case ID and recipe required')
         if item['id'] in identifiers:
             raise ValueError('duplicate family case ID')
         identifiers.add(item['id'])
         item['recipe'] = validate(item['recipe'])
+        if 'camera_rig' in item:
+            item['camera_rig'] = validate_camera_rig(item['camera_rig'])
+            check_rig_recipe(item['camera_rig'], item['recipe'])
     return result

@@ -179,12 +179,28 @@ def main():
     prepare_parser.add_argument('config', type=Path)
     prepare_parser.add_argument('new_directory', type=Path)
     prepare_parser.add_argument('--plan', type=Path)
+    bridge_parser = sub.add_parser('prepare-e3')
+    for name in ('scene_plan', 'truth', 'report', 'new_directory'):
+        bridge_parser.add_argument(name, type=Path)
+    audit_parser = sub.add_parser('audit-e3')
+    for name in ('prepared', 'truth', 'report', 'project_binary', 'audit'):
+        audit_parser.add_argument(name, type=Path)
     plot_parser = sub.add_parser('plot')
     for name in ('report', 'truth', 'figure', 'audit'):
         plot_parser.add_argument(name, type=Path)
     args = parser.parse_args()
     if args.mode == 'prepare':
         prepare(args.config, args.new_directory, args.plan)
+    elif args.mode == 'audit-e3':
+        import sys
+        sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'tools/blender'))
+        from thesis_bridge import audit_e3
+        audit_e3(args.prepared, args.truth, args.report, args.project_binary, args.audit)
+    elif args.mode == 'prepare-e3':
+        import sys
+        sys.path.insert(0, str(Path(__file__).resolve().parents[2] / 'tools/blender'))
+        from thesis_bridge import export_e3
+        export_e3(args.scene_plan, args.truth, args.report, args.new_directory)
     else:
         evaluate(args.report, args.truth, args.figure, args.audit)
 

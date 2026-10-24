@@ -1,4 +1,6 @@
 """Optics/coordinate/file contract tests. No Blender installation is required."""
+import copy
+import importlib.util
 import hashlib
 import json
 from pathlib import Path
@@ -14,6 +16,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools' / 'blender'
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'tools'))
 from rig import configuration, cube_coordinates, vehicle_pose
 from scenario import perturb, validate, near_obstacle_positions, validate_family_plan
+from camera_rig import validate_camera_rig, check_rig_recipe
+from thesis_bridge import export_e3, audit_e3
 from environments import cargo_layout
 from render_io import render_still
 from convert import bilinear, convert, convert_camera, linear_rgb, srgb8
@@ -360,8 +364,14 @@ class BlenderFixtureTests(unittest.TestCase):
             self.assertEqual(manifest['calibration_ids'],[c['calibration_id'] for c in cfg['cameras']])
             for path,expected in manifest['sha256'].items():
                 self.assertEqual(hashlib.sha256((output/path).read_bytes()).hexdigest(),expected)
+            self.assertNotIn('camera_rig_provenance', json.loads((output/'ground_truth.json').read_text()))
+            metadata['camera_rig_provenance'] = dict(policy='thesis_e1_matrix_bridge_v1', mount_seed=1001,
+                nominal_config_sha256='0'*64, e1_truth_sha256='1'*64, e1_report_sha256='2'*64)
+            (source/'capture.json').write_text(json.dumps(metadata))
             png_output = Path(temporary)/'png-replay'
             png_manifest = json.loads(convert(source, png_output, 'png').read_text())
+            self.assertEqual(json.loads((png_output/'ground_truth.json').read_text())['camera_rig_provenance'],
+                             metadata['camera_rig_provenance'])
             for ppm_name, png_name in zip(manifest['frames'][0]['paths'], png_manifest['frames'][0]['paths']):
                 self.assertTrue(png_name.endswith('.png'))
                 with Image.open(output/ppm_name) as ppm, Image.open(png_output/png_name) as png:
@@ -384,6 +394,143 @@ class BlenderFixtureTests(unittest.TestCase):
                 'schema_version':1,'frames':[{}],'sha256':{'../escape':'unused'}}))
             with self.assertRaisesRegex(ValueError,'unsafe'):
                 convert(root,root/'output')
+
+
+class ExplicitCameraRigTests(unittest.TestCase):
+    def bundle(self):
+        base = configuration()
+        actual = copy.deepcopy(base)
+        actual['cameras'][0]['T_camera_from_vehicle'][0][3] += .04
+        return dict(nominal=base, actual=actual, provenance=dict(
+            policy='thesis_e1_matrix_bridge_v1', mount_seed=1001,
+            nominal_config_sha256='0'*64, e1_truth_sha256='1'*64, e1_report_sha256='2'*64))
+
+    def test_explicit_transform_is_exact_and_detached_from_input(self):
+        source = self.bundle()
+        result = validate_camera_rig(source)
+        self.assertEqual(result, source)
+        result['actual']['cameras'][0]['T_camera_from_vehicle'][0][3] = 100
+        self.assertNotEqual(result, source)
+        self.assertEqual(source['nominal'], configuration())
+
+    def test_changed_optics_invalid_transform_and_duplicate_identity_rejected(self):
+        for mode in ('optics', 'nan', 'reflection', 'shape', 'id', 'digest', 'unknown'):
+            bad = self.bundle()
+            camera = bad['actual']['cameras'][0]
+            if mode == 'optics': camera['projection']['fx'] += 1
+            if mode == 'nan': camera['T_camera_from_vehicle'][0][3] = float('nan')
+            if mode == 'reflection':
+                camera['T_camera_from_vehicle'][0][:3] = [-x for x in camera['T_camera_from_vehicle'][0][:3]]
+            if mode == 'shape': camera['T_camera_from_vehicle'].pop()
+            if mode == 'id': camera['id'] = False
+            if mode == 'digest': bad['provenance']['e1_report_sha256'] = 'missing'
+            if mode == 'unknown': bad['extra'] = True
+            with self.subTest(mode=mode), self.assertRaises(ValueError):
+                validate_camera_rig(bad)
+
+    def test_explicit_rig_forbids_second_randomization_and_mismatching_seed(self):
+        bundle = self.bundle()
+        check_rig_recipe(bundle, validate(dict(schema_version=1, mount_seed=1001)))
+        for patch in (dict(mount_seed=1002), dict(mounts=dict(pitch_deg=1)),
+                      dict(mounts=dict(overrides={'0': dict(yaw_deg=1)}))):
+            with self.assertRaises(ValueError):
+                check_rig_recipe(bundle, validate(dict(schema_version=1, **patch)))
+
+    def test_static_plan_accepts_explicit_rig_and_legacy_plan_keeps_legacy_shape(self):
+        root = Path(__file__).resolve().parents[1]
+        original = json.loads((root/'assets/scenarios/quality-families-v1.json').read_text())
+        self.assertNotIn('camera_rig', validate_family_plan(original)['cases'][0])
+        plan = copy.deepcopy(original)
+        plan['capture']['frames'] = 1
+        plan['cases'] = [dict(id='static-e3', recipe=dict(schema_version=1, mount_seed=1001),
+                              camera_rig=self.bundle())]
+        self.assertEqual(validate_family_plan(plan)['cases'][0]['camera_rig'], self.bundle())
+        plan['capture']['frames'] = 0
+        with self.assertRaises(ValueError): validate_family_plan(plan)
+
+    def prepared_e1(self, root):
+        repo = Path(__file__).resolve().parents[1]
+        spec = importlib.util.spec_from_file_location('thesis_fixture', repo/'docs/diploma/plot_thesis_calibration.py')
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        module.prepare(repo/'configs/research/thesis-rig.json', root/'e1', repo/'configs/research/thesis-e1-inputs.json')
+        truth_path = root/'e1/truth.json'
+        truth = json.loads(truth_path.read_text())
+        cases = json.loads((root/'e1/cases.json').read_text())['cases']
+        results = []
+        for case in cases:
+            mount, camera, profile, method = case['case_id'].split('/')
+            seed, index = int(mount[5:]), int(camera[3:])
+            record = next(x for x in truth['cameras'] if x['mount_seed']==seed and x['camera']['id']==index)
+            transform = copy.deepcopy(record['true_transform'])
+            transform[0][3] += .01  # Fake fit distinguishes candidate from the capture truth.
+            results.append(dict(case_id=case['case_id'], outcome='completed', status=dict(
+                camera_id=index, T_camera_from_vehicle=transform, calibration_id=f'candidate-{seed}-{index}',
+                execution_policy=dict(method=method))))
+        report_path = root/'e1/report.json'
+        report_path.write_text(json.dumps(dict(success=True,planned=48,results=results,
+            input_sha256=hashlib.sha256((root/'e1/cases.json').read_bytes()).hexdigest())))
+        return repo/'configs/research/thesis-scene-inputs.json', truth_path, report_path, truth
+
+    def test_bridge_exports_exact_e1_truth_and_candidates_without_rerandomization(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            plan, truth_path, report_path, truth = self.prepared_e1(root)
+            output = root/'e3'
+            registry = export_e3(plan, truth_path, report_path, output)
+            self.assertEqual(registry['state'], 'prepared_no_render')
+            self.assertFalse(registry['independent_rgb_available'])
+            self.assertEqual(len(registry['files']),20)
+            for name, digest in registry['files'].items():
+                self.assertEqual(hashlib.sha256((output/name).read_bytes()).hexdigest(), digest)
+            for view in ('high','low'):
+                capture = json.loads((output/f'capture-{view}.json').read_text())
+                self.assertEqual(len(capture['cases']),9)
+                self.assertEqual(capture['capture']['frames'],1)
+                for case in capture['cases']:
+                    bundle = case['camera_rig']
+                    seed = bundle['provenance']['mount_seed']
+                    for camera in bundle['actual']['cameras']:
+                        record = next(x for x in truth['cameras'] if x['mount_seed']==seed and x['camera']['id']==camera['id'])
+                        self.assertEqual(camera['T_camera_from_vehicle'], record['true_transform'])
+                    nominal = output/f'profiles/{view}/mount{seed}/nominal.json'
+                    self.assertEqual(hashlib.sha256(nominal.read_bytes()).hexdigest(), bundle['provenance']['nominal_config_sha256'])
+            previous = (output/'registry.json').read_bytes()
+            with self.assertRaises(FileExistsError): export_e3(plan, truth_path, report_path, output)
+            self.assertEqual((output/'registry.json').read_bytes(), previous)
+            profile = output/'profiles/high/mount1001/nominal.json'
+            profile.write_text('{}')
+            with self.assertRaisesRegex(ValueError, 'checksum'):
+                audit_e3(output, truth_path, report_path, 'must-not-be-executed', root/'audit.json')
+            self.assertFalse((root/'audit.json').exists())
+
+    def test_bridge_rejects_wrong_sources_and_missing_selected_fit_before_export(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root=Path(temporary)
+            plan, truth_path, report_path, _ = self.prepared_e1(root)
+            original=json.loads(report_path.read_text())
+            wrong_plan=json.loads(plan.read_text())
+            wrong_plan['views'][0]['virtual_camera']['target_m']=[0,0,0]
+            # Keep the legitimate config relative to this temporary plan directory.
+            local_config=root/'thesis-rig.json'
+            local_config.write_bytes((plan.parent/'thesis-rig.json').read_bytes())
+            wrong_plan['rig_config']='thesis-rig.json'
+            wrong_path=root/'wrong-scene-plan.json'
+            wrong_path.write_text(json.dumps(wrong_plan))
+            with self.assertRaisesRegex(ValueError,'startup view'):
+                export_e3(wrong_path, truth_path, report_path, root/'e3')
+            self.assertFalse((root/'e3').exists())
+            for mode in ('input_hash','candidate','reflection'):
+                report=copy.deepcopy(original)
+                if mode=='input_hash': report['input_sha256']='0'*64
+                selected=next(x for x in report['results'] if '/gaussian/ransac_epnp_lm' in x['case_id'])
+                if mode=='candidate': selected['outcome']='failed'
+                if mode=='reflection':
+                    selected['status']['T_camera_from_vehicle'][0][:3] = [-x for x in selected['status']['T_camera_from_vehicle'][0][:3]]
+                report_path.write_text(json.dumps(report))
+                with self.subTest(mode=mode), self.assertRaises(ValueError):
+                    export_e3(plan, truth_path, report_path, root/'e3')
+                self.assertFalse((root/'e3').exists())
 
 
 if __name__ == '__main__':

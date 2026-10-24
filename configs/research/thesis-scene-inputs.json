@@ -1,0 +1,79 @@
+{
+  "schema_version": 1,
+  "purpose": "Thesis E3 frozen scene mapping; matrices copied from E1; images not captured yet",
+  "rig_config": "thesis-rig.json",
+  "e1_input_plan_sha256": "fc14461c038a5a34ff7d1bfc993eb2c2eb9bc3850240304095a85bce5f08410f",
+  "capture": {
+    "frames": 1,
+    "face_size": 256,
+    "frame_step": 6,
+    "width": 320,
+    "height": 180
+  },
+  "estimated_profile": "gaussian/ransac_epnp_lm",
+  "scenes": [
+    {
+      "id": "street-a",
+      "scene_seed": 260101,
+      "world": {
+        "family": "street",
+        "near_obstacle_jitter_m": 0.3,
+        "building_height_m": [
+          5.0,
+          9.0
+        ],
+        "building_spacing_m": 9.0
+      }
+    },
+    {
+      "id": "street-b",
+      "scene_seed": 260102,
+      "world": {
+        "family": "street",
+        "near_obstacle_jitter_m": 0.3,
+        "building_height_m": [
+          8.0,
+          12.0
+        ],
+        "building_spacing_m": 8.5
+      }
+    },
+    {
+      "id": "yard-a",
+      "scene_seed": 260103,
+      "world": {
+        "family": "cargo_yard",
+        "near_obstacle_jitter_m": 0.3
+      }
+    }
+  ],
+  "views": [
+    {
+      "id": "high",
+      "virtual_camera": {
+        "azimuth_rad": 0.8,
+        "elevation_rad": 1.0,
+        "distance_m": 8.5,
+        "fov_y_rad": 1.0,
+        "clip_m": [
+          0.1,
+          100.0
+        ]
+      }
+    },
+    {
+      "id": "low",
+      "virtual_camera": {
+        "azimuth_rad": 0.8,
+        "elevation_rad": 0.35,
+        "distance_m": 8.5,
+        "fov_y_rad": 1.0,
+        "clip_m": [
+          0.1,
+          100.0
+        ]
+      }
+    }
+  ],
+  "mask_policy": "non_ego_any_camera_visible_eroded_2px"
+}
