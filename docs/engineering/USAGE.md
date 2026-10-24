@@ -1663,3 +1663,51 @@ worker shutdown. Закрываются также producer connections с не�
 причину закрытия. Reconnects, timeouts, rejected и dropped — cumulative counters,
 не latency/rate. Это текущий producer, а не состояние сохранённого paused кадра.
 [[engineering/SOCKET_SOURCE_DIAGNOSTICS]].
+
+## Компактный дипломный пилот
+
+Ограниченный протокол E1–E3: [[research/THESIS_CORE_PROTOCOL]]. Исполняемый subset
+`configs/research/thesis-core.json` содержит3 fusion ×2 carriers, один frame,2 warmup
+и7 measured blocks:54 trials/42 captures. Это готовность native pipeline; без
+quality_reference запуск не проверяет качество и не считается подтверждающей серией.
+
+Нужна прежняя запись `artifacts/blender-street` (рецепт [[engineering/BLENDER]]).
+Однократная подготовка тестового config (не продуктовый launcher):
+
+```sh
+python3 - <<'PY'
+import json
+from pathlib import Path
+out = Path('artifacts/thesis-core-repeat')
+out.mkdir(exist_ok=False)
+config = json.loads(Path('artifacts/blender-street/config.json').read_text())
+config['output'] = {'width': 320, 'height': 180}
+config['telemetry'] = {'enabled': False, 'period_ms': 100, 'history_capacity': 128}
+(out / 'config.json').write_text(json.dumps(config, indent=2) + '\n')
+PY
+```
+
+Терминал1:
+
+```sh
+SV_EGL_PLATFORM=surfaceless \
+__EGL_VENDOR_LIBRARY_FILENAMES=/usr/share/glvnd/egl_vendor.d/50_mesa.json \
+build/sv-server --config artifacts/thesis-core-repeat/config.json \
+  --manifest artifacts/blender-street/manifest.json \
+  --ipc-dir /tmp/sv-thesis-repeat --trace artifacts/thesis-core-repeat/trace.jsonl
+```
+
+Терминал2:
+
+```sh
+build/svctl --unix /tmp/sv-thesis-repeat --timeout-ms 10000 research \
+  configs/research/thesis-core.json artifacts/thesis-core-repeat/report.json
+```
+
+После success/restored завершить сервер Ctrl+C. Проверять фактический catalog.gl_renderer:
+Mesa vendor может выбрать AMD GPU, а не llvmpipe/RTX. Этот рецепт повторяет именно pilot;
+для финальной серии подготовить independent reference schema2, новый input registry,
+низкий view и начальный bounded carrier по протоколу, не подменяя pilot inputs.
+Следующий запуск — новая output/IPC directory. Шесть панелей и audit сохранённых
+captures формирует `docs/diploma/plot_thesis_pilot.py`; точная команда и ограничения:
+[[validation/THESIS_CORE_PILOT]].

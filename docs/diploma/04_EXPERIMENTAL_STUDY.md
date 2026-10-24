@@ -4792,3 +4792,32 @@ validation pilot, не внешне зарегистрированная confirm
 temporal metrics, исследование калибровки и целевой платформы. Полный Linux regression после
 изменений прошёл67/67 tests; это подтверждает программную целостность стенда, а не переносимость
 на автомобильное устройство. Воспроизведение: [[engineering/BLENDER]], [[validation/FAMILY_CARRIER_SCREEN]].
+
+
+## 4.94. Сквозной пилот компактной программы диплома
+
+После ограничения объёма работ принят протокол E1–E3: два extrinsic метода, ограниченное
+сравнение3 fusion ×2 carriers, затем влияние оценённой калибровки и серверные затраты.
+Полные параметры и ещё не закрытый input-registry gate:
+[[research/THESIS_CORE_PROTOCOL]]. Пилот использует старую Blender street recording,
+поэтому проверяет исполнимость программы, а не заменяет её подтверждающие результаты.
+
+Native server→sv-client-lib→C++ ExperimentRunner выполнил54 trials, из которых42 measured
+и12 warmup; сохранено42 RGBA. При одинаковых4 input/model identities каждый из6 variants
+даёт стабильный hash по9 повторениям. Active carrier triangles3196/3200 и buffers58512/
+58392 bytes проходят общий активный лимит. Настройки и исходный RGB восстановлены,
+но cursor —нет; resident cache и общая память не равны active mesh budget.
+
+![Шесть native результатов](figures/experiments/thesis_core_pilot.png)
+
+*Рисунок4.94.1 —3 способа сшивки на plane/dome-floor, один frame и верхний view,
+320×180. Это сохранённые результаты сервера, не independent truth и не proof качества.*
+
+Quality reference не подключён; workflow success не означает quality acceptance.
+Фактический renderer — AMD Ryzen9 9950X integrated radeonsi, несмотря на выбор Mesa vendor.
+Измеренные p50 render/readback составили1.885–28.799ms, но7 повторов одного кадра
+недостаточны для общего вывода о производительности. Верхний view почти не различает
+носители на дороге, поэтому финальный протокол включает также низкий ракурс.
+Raw reports, hashes, таблица и рецепт: [[validation/THESIS_CORE_PILOT]]. Следующий этап —
+новые сгруппированные calibration observations и immutable inputs/reference registry;
+пилот не расширяет программу дополнительными алгоритмами.

@@ -1,5 +1,11 @@
 # Состояние прототипа и границы подтверждения
 
+25.10.2026: компактный протокол E1–E3 и configs/research/thesis-core.json зафиксированы;
+сквозной native пилот54 trials/42 captures/6 variants прошёл с точными input guards
+и RGB restore. Это historical Blender input, не независимая quality confirmation.
+Следующая работа — новый grouped input/observation/reference registry, не новые алгоритмы.
+[[research/THESIS_CORE_PROTOCOL]], [[validation/THESIS_CORE_PILOT]].
+
 25.10.2026: защита поколений deadline распространена на sv-client-lib: handshake и
 partial-message timers используют общий private MessageDeadline с producer backend.
 Options/protocol/API не меняются; actual timeout и bounded reconnect сохраняются.

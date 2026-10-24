@@ -1,0 +1,594 @@
+{
+  "schema_version": 1,
+  "scope": "workflow_pilot_not_quality_or_performance_acceptance",
+  "success": true,
+  "restored": true,
+  "cursor_restored": false,
+  "quality_status": "not_requested",
+  "samples": 54,
+  "measured": 42,
+  "report": "artifacts/thesis-core-pilot-20261025/report.json",
+  "report_sha256": "8b000dbb032c79989a41105e9679dc2af499f16c25ca6cf47af06f277c8b3de1",
+  "config_sha256": "76b524c80fca01759dd6b94c1680a23b51c3a6bcc15edcf91f25efc3fb7616de",
+  "manifest_sha256": "d91af117739c24ec52f173369692ad9793804ed1837fecd65f6751f5b7eb96bc",
+  "scenario_input_sha256": "2243777a4b57b619a8618b00607e05e272dfb4c2b6288350bc0d0acbdf84e688",
+  "scenario_sha256": "97ab45d0a48d180915f947f41c2e2b938da7eb7ab165414d0f13e287801fffbf",
+  "trial_plan_sha256": "28116553dfe50577272bd7bacf655410cd2bdf408318dd901880bff877394953",
+  "gl_renderer": "AMD Ryzen 9 9950X 16-Core Processor (radeonsi, raphael_mendocino, ACO, DRM 3.64, 7.2.6-arch2-1)",
+  "server_build_passport": {
+    "schema_version": 1,
+    "policy": "configured_build_v1",
+    "sha256": "636dd9bd001e38e1d313e97158f4dd61067e1dd0f94f9ac9d8b34be2383748f6",
+    "descriptor": {
+      "configuration": {
+        "cxx_flags": " -O3 -DNDEBUG",
+        "executable_link_flags": " ",
+        "generator": "Ninja",
+        "interprocedural_optimization": "",
+        "name": "Release",
+        "position_independent_code": "",
+        "project_compile_options": [
+          "-Wall",
+          "-Wextra",
+          "-Wpedantic"
+        ],
+        "project_link_options": []
+      },
+      "dependencies": {
+        "egl_configured_version": "1.5",
+        "gles_configured_version": "3.2",
+        "glm_provision": "system",
+        "opencv_configured_version": "5.0.0",
+        "opencv_provision": "system"
+      },
+      "features": {
+        "CMAKE_CROSSCOMPILING": false,
+        "SV_AURORA": false,
+        "SV_BUNDLE_OPENCV": false,
+        "SV_GPU": true,
+        "SV_OPENCV_FETCHED": false,
+        "SV_SANITIZERS": false
+      },
+      "headers": {
+        "boost": "1_92",
+        "compiler_version": "16.2.1 20260810",
+        "cplusplus": 201703,
+        "cxx11_abi": 1,
+        "glm": 1000,
+        "openssl": "OpenSSL 3.6.4 25 Aug 2026",
+        "pointer_bits": 64,
+        "stdlib": "libstdc++",
+        "stdlib_version": 20260810
+      },
+      "schema_version": 1,
+      "scope": "configured_build_v1",
+      "source": {
+        "fingerprint": "e1d174b75b7d6beacdb4d00b3dc5cda7d73be4036bd13c544d9e42948ba09183",
+        "revision": "b9f9ca333dda3aa62bd271adcc123bbf7796b4da",
+        "version": "0.6.0"
+      },
+      "target": {
+        "processor": "x86_64",
+        "sdk_id": "unreported",
+        "sysroot": "",
+        "system": "Linux",
+        "system_version": "7.2.6-arch2-1"
+      },
+      "toolchain": {
+        "compiler_id": "GNU",
+        "compiler_target": "",
+        "compiler_version": "16.2.1",
+        "cxx_standard": 17,
+        "toolchain_sha256": null
+      }
+    }
+  },
+  "client_build_passport": {
+    "schema_version": 1,
+    "policy": "configured_build_v1",
+    "sha256": "636dd9bd001e38e1d313e97158f4dd61067e1dd0f94f9ac9d8b34be2383748f6",
+    "descriptor": {
+      "configuration": {
+        "cxx_flags": " -O3 -DNDEBUG",
+        "executable_link_flags": " ",
+        "generator": "Ninja",
+        "interprocedural_optimization": "",
+        "name": "Release",
+        "position_independent_code": "",
+        "project_compile_options": [
+          "-Wall",
+          "-Wextra",
+          "-Wpedantic"
+        ],
+        "project_link_options": []
+      },
+      "dependencies": {
+        "egl_configured_version": "1.5",
+        "gles_configured_version": "3.2",
+        "glm_provision": "system",
+        "opencv_configured_version": "5.0.0",
+        "opencv_provision": "system"
+      },
+      "features": {
+        "CMAKE_CROSSCOMPILING": false,
+        "SV_AURORA": false,
+        "SV_BUNDLE_OPENCV": false,
+        "SV_GPU": true,
+        "SV_OPENCV_FETCHED": false,
+        "SV_SANITIZERS": false
+      },
+      "headers": {
+        "boost": "1_92",
+        "compiler_version": "16.2.1 20260810",
+        "cplusplus": 201703,
+        "cxx11_abi": 1,
+        "glm": 1000,
+        "openssl": "OpenSSL 3.6.4 25 Aug 2026",
+        "pointer_bits": 64,
+        "stdlib": "libstdc++",
+        "stdlib_version": 20260810
+      },
+      "schema_version": 1,
+      "scope": "configured_build_v1",
+      "source": {
+        "fingerprint": "e1d174b75b7d6beacdb4d00b3dc5cda7d73be4036bd13c544d9e42948ba09183",
+        "revision": "b9f9ca333dda3aa62bd271adcc123bbf7796b4da",
+        "version": "0.6.0"
+      },
+      "target": {
+        "processor": "x86_64",
+        "sdk_id": "unreported",
+        "sysroot": "",
+        "system": "Linux",
+        "system_version": "7.2.6-arch2-1"
+      },
+      "toolchain": {
+        "compiler_id": "GNU",
+        "compiler_target": "",
+        "compiler_version": "16.2.1",
+        "cxx_standard": 17,
+        "toolchain_sha256": null
+      }
+    }
+  },
+  "view": {
+    "azimuth_rad": 0.8,
+    "elevation_rad": 1.0,
+    "distance_m": 8.5,
+    "fov_y_rad": 1.0,
+    "clip_m": [
+      0.1,
+      100.0
+    ],
+    "target_m": [
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "inputs": [
+    {
+      "camera_id": 0,
+      "calibration_id": "blender-rig-front-v1",
+      "source_timestamp_ns": "0",
+      "image_identity": {
+        "algorithm": "packed_rgb8_sha256_v1",
+        "sha256": "23691666ee5a1560e24aeb39cf5c08f82f012d25a146cf69017134d5c804aaa5",
+        "width": 400,
+        "height": 400,
+        "pixel_format": "RGB8",
+        "row_origin": "top_left"
+      },
+      "camera_model_sha256": "a2a615810894a4abaf9050aa663db80392abc56e8c2be6a292abd4849d209b10"
+    },
+    {
+      "camera_id": 1,
+      "calibration_id": "blender-rig-right-v1",
+      "source_timestamp_ns": "0",
+      "image_identity": {
+        "algorithm": "packed_rgb8_sha256_v1",
+        "sha256": "cb24b4a935027a5b50481084e5c52bd2f70ecb7a86eb99189d242a0d7bcbca81",
+        "width": 400,
+        "height": 400,
+        "pixel_format": "RGB8",
+        "row_origin": "top_left"
+      },
+      "camera_model_sha256": "e9ce6ae24c589942b559388e848aa290587348b0f268da86a492614447ffcb43"
+    },
+    {
+      "camera_id": 2,
+      "calibration_id": "blender-rig-rear-v1",
+      "source_timestamp_ns": "0",
+      "image_identity": {
+        "algorithm": "packed_rgb8_sha256_v1",
+        "sha256": "d8ba876e4142f0ab9246da70892fc6a4c79447427dd1a8fa5f24760e61743775",
+        "width": 400,
+        "height": 400,
+        "pixel_format": "RGB8",
+        "row_origin": "top_left"
+      },
+      "camera_model_sha256": "2aba03f66ff079bb27a7ce0ae8c5cf32b5cc12dc3c3b55e8045f79ca46f45449"
+    },
+    {
+      "camera_id": 3,
+      "calibration_id": "blender-rig-left-v1",
+      "source_timestamp_ns": "0",
+      "image_identity": {
+        "algorithm": "packed_rgb8_sha256_v1",
+        "sha256": "18751e576acce43b86d3a912d2712fb37a4c3e140a7ba8202088d47be7bd1076",
+        "width": 400,
+        "height": 400,
+        "pixel_format": "RGB8",
+        "row_origin": "top_left"
+      },
+      "camera_model_sha256": "c22dc4793be9f2eb6a440ad54410ab0215c2386b6dea2889f6381fb50543539c"
+    }
+  ],
+  "files": [
+    {
+      "path": "artifacts/blender-street/camera0_0000.ppm",
+      "file_sha256": "d8de34841a6b89242c7958a643981c61a721303ef78ea9030d38088bee3b72ee"
+    },
+    {
+      "path": "artifacts/blender-street/camera1_0000.ppm",
+      "file_sha256": "9f20a4287cbb3b371a8bad23c12ff45744d9c153955aa5605ff6ec043fc18ee0"
+    },
+    {
+      "path": "artifacts/blender-street/camera2_0000.ppm",
+      "file_sha256": "b3f084ab0bdba742a8c3d42f928a41e3c8e68a902cda2491356a0d0c26628a29"
+    },
+    {
+      "path": "artifacts/blender-street/camera3_0000.ppm",
+      "file_sha256": "cfd1e10c184f0eb6ccac6c8a372c81216908d0b115183ac69f74fa049531468b"
+    }
+  ],
+  "variants": [
+    {
+      "variant": 0,
+      "carrier": "plane",
+      "method": "hard_best_angle",
+      "measured": 7,
+      "triangles": 3196,
+      "mesh_resources": {
+        "scope": "carrier_position_index_buffers",
+        "active": {
+          "vertices": 1680,
+          "indices": 9588,
+          "triangles": 3196,
+          "vertex_buffer_bytes": 20160,
+          "index_buffer_bytes": 38352,
+          "buffer_bytes": 58512
+        },
+        "resident": {
+          "vertices": 3346,
+          "indices": 19188,
+          "triangles": 6396,
+          "vertex_buffer_bytes": 40152,
+          "index_buffer_bytes": 76752,
+          "buffer_bytes": 116904
+        }
+      },
+      "rgba_sha256": "e1d935df0ffd1a91f6c915e75db9d47c31ea1d249dcf1ea409bcfc183466cf86",
+      "timings": {
+        "render_wall": {
+          "count": 7,
+          "p50_ms": 2.132703,
+          "p95_ms": 2.348011
+        },
+        "gpu_draw": {
+          "count": 7,
+          "p50_ms": 0.24616,
+          "p95_ms": 0.29884
+        },
+        "upload_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "readback_copy_cpu": {
+          "count": 7,
+          "p50_ms": 1.976336,
+          "p95_ms": 2.122023
+        },
+        "fusion_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "layer_readback_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        }
+      }
+    },
+    {
+      "variant": 1,
+      "carrier": "plane",
+      "method": "edge_feather",
+      "measured": 7,
+      "triangles": 3196,
+      "mesh_resources": {
+        "scope": "carrier_position_index_buffers",
+        "active": {
+          "vertices": 1680,
+          "indices": 9588,
+          "triangles": 3196,
+          "vertex_buffer_bytes": 20160,
+          "index_buffer_bytes": 38352,
+          "buffer_bytes": 58512
+        },
+        "resident": {
+          "vertices": 3346,
+          "indices": 19188,
+          "triangles": 6396,
+          "vertex_buffer_bytes": 40152,
+          "index_buffer_bytes": 76752,
+          "buffer_bytes": 116904
+        }
+      },
+      "rgba_sha256": "04f6b60baa9a449d6c193bc2a323f4fbaf5b545ff59625a05d93e611e07d4064",
+      "timings": {
+        "render_wall": {
+          "count": 7,
+          "p50_ms": 2.024248,
+          "p95_ms": 2.182909
+        },
+        "gpu_draw": {
+          "count": 7,
+          "p50_ms": 0.33284,
+          "p95_ms": 0.34464
+        },
+        "upload_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "readback_copy_cpu": {
+          "count": 7,
+          "p50_ms": 1.924439,
+          "p95_ms": 2.107255
+        },
+        "fusion_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "layer_readback_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        }
+      }
+    },
+    {
+      "variant": 2,
+      "carrier": "plane",
+      "method": "multi_band",
+      "measured": 7,
+      "triangles": 3196,
+      "mesh_resources": {
+        "scope": "carrier_position_index_buffers",
+        "active": {
+          "vertices": 1680,
+          "indices": 9588,
+          "triangles": 3196,
+          "vertex_buffer_bytes": 20160,
+          "index_buffer_bytes": 38352,
+          "buffer_bytes": 58512
+        },
+        "resident": {
+          "vertices": 3346,
+          "indices": 19188,
+          "triangles": 6396,
+          "vertex_buffer_bytes": 40152,
+          "index_buffer_bytes": 76752,
+          "buffer_bytes": 116904
+        }
+      },
+      "rgba_sha256": "f54efffb3bdfc3294490abd1329adfb9cca09652f6cce949272644cd98c296c4",
+      "timings": {
+        "render_wall": {
+          "count": 7,
+          "p50_ms": 26.670552,
+          "p95_ms": 31.313935
+        },
+        "gpu_draw": null,
+        "upload_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "readback_copy_cpu": {
+          "count": 7,
+          "p50_ms": 1.820041,
+          "p95_ms": 2.367168
+        },
+        "fusion_cpu": {
+          "count": 7,
+          "p50_ms": 16.332594,
+          "p95_ms": 19.061878
+        },
+        "layer_readback_cpu": {
+          "count": 7,
+          "p50_ms": 6.992487,
+          "p95_ms": 8.993961
+        }
+      }
+    },
+    {
+      "variant": 3,
+      "carrier": "dome_floor",
+      "method": "hard_best_angle",
+      "measured": 7,
+      "triangles": 3200,
+      "mesh_resources": {
+        "scope": "carrier_position_index_buffers",
+        "active": {
+          "vertices": 1666,
+          "indices": 9600,
+          "triangles": 3200,
+          "vertex_buffer_bytes": 19992,
+          "index_buffer_bytes": 38400,
+          "buffer_bytes": 58392
+        },
+        "resident": {
+          "vertices": 3346,
+          "indices": 19188,
+          "triangles": 6396,
+          "vertex_buffer_bytes": 40152,
+          "index_buffer_bytes": 76752,
+          "buffer_bytes": 116904
+        }
+      },
+      "rgba_sha256": "13c86201fcc494d991562b046f3c8d2410196a0e733525193b36bb77eef8f73f",
+      "timings": {
+        "render_wall": {
+          "count": 7,
+          "p50_ms": 1.884663,
+          "p95_ms": 2.327072
+        },
+        "gpu_draw": {
+          "count": 7,
+          "p50_ms": 0.24184,
+          "p95_ms": 0.25284
+        },
+        "upload_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "readback_copy_cpu": {
+          "count": 7,
+          "p50_ms": 1.790835,
+          "p95_ms": 2.176927
+        },
+        "fusion_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "layer_readback_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        }
+      }
+    },
+    {
+      "variant": 4,
+      "carrier": "dome_floor",
+      "method": "edge_feather",
+      "measured": 7,
+      "triangles": 3200,
+      "mesh_resources": {
+        "scope": "carrier_position_index_buffers",
+        "active": {
+          "vertices": 1666,
+          "indices": 9600,
+          "triangles": 3200,
+          "vertex_buffer_bytes": 19992,
+          "index_buffer_bytes": 38400,
+          "buffer_bytes": 58392
+        },
+        "resident": {
+          "vertices": 3346,
+          "indices": 19188,
+          "triangles": 6396,
+          "vertex_buffer_bytes": 40152,
+          "index_buffer_bytes": 76752,
+          "buffer_bytes": 116904
+        }
+      },
+      "rgba_sha256": "9cba3d19c23a6aaf238cd39bc679c8c8c3261e833a4c43fa8515180f2f431f1b",
+      "timings": {
+        "render_wall": {
+          "count": 7,
+          "p50_ms": 2.094972,
+          "p95_ms": 2.3683
+        },
+        "gpu_draw": {
+          "count": 7,
+          "p50_ms": 0.3378,
+          "p95_ms": 0.34212
+        },
+        "upload_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "readback_copy_cpu": {
+          "count": 7,
+          "p50_ms": 1.964134,
+          "p95_ms": 2.196534
+        },
+        "fusion_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "layer_readback_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        }
+      }
+    },
+    {
+      "variant": 5,
+      "carrier": "dome_floor",
+      "method": "multi_band",
+      "measured": 7,
+      "triangles": 3200,
+      "mesh_resources": {
+        "scope": "carrier_position_index_buffers",
+        "active": {
+          "vertices": 1666,
+          "indices": 9600,
+          "triangles": 3200,
+          "vertex_buffer_bytes": 19992,
+          "index_buffer_bytes": 38400,
+          "buffer_bytes": 58392
+        },
+        "resident": {
+          "vertices": 3346,
+          "indices": 19188,
+          "triangles": 6396,
+          "vertex_buffer_bytes": 40152,
+          "index_buffer_bytes": 76752,
+          "buffer_bytes": 116904
+        }
+      },
+      "rgba_sha256": "c71d2e3517137cc9d76bb8e7d726632730fefa44158a6c6fd0500e70de89483f",
+      "timings": {
+        "render_wall": {
+          "count": 7,
+          "p50_ms": 28.799037,
+          "p95_ms": 28.959231
+        },
+        "gpu_draw": null,
+        "upload_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "readback_copy_cpu": {
+          "count": 7,
+          "p50_ms": 1.86691,
+          "p95_ms": 2.458931
+        },
+        "fusion_cpu": {
+          "count": 7,
+          "p50_ms": 16.271457,
+          "p95_ms": 17.990507
+        },
+        "layer_readback_cpu": {
+          "count": 7,
+          "p50_ms": 8.635471,
+          "p95_ms": 9.361819
+        }
+      }
+    }
+  ],
+  "figure_sha256": "551bb4ed21b28cdb271a49e116cf6cfabc24d5f9c3192a05ff66286f08b3fbdd"
+}

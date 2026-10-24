@@ -9,11 +9,12 @@
 Этот раздел задаёт текущий приоритет; расширенный backlog ниже не является условием защиты.
 Границы и достаточность сокращённой программы нужно согласовать с руководителем.
 
-1. **Заморозить компактный протокол и воспроизвести один сквозной опыт.** Два имеющихся
-   extrinsic метода (sqpnp и ransac_epnp_lm); три fusion baseline (hard_best_angle,
-   edge_feather, multi_band с одним заранее заданным boundary); два носителя (plane,
-   dome_floor). Intrinsics — существующая fisheye-модель. Параметры фиксируются до
-   подтверждающей серии; обзор литературы может быть шире реализованных методов.
+1. **Подготовить новый input/observation/reference registry E1–E3.** Протоколv1 и native
+   subset зафиксированы ([[research/THESIS_CORE_PROTOCOL]]), сквозной пилот54 trials/
+   42 captures выполнен ([[validation/THESIS_CORE_PILOT]]). Осталось заранее записать
+   seed→preset mapping, split groups и hashes новых holdout inputs/true poses/reference;
+   подготовить два фиксированных view и bounded initial carrier. Исторический pilot
+   не заменяет этот gate; до его закрытия не объявлять финальную серию начатой.
 2. **Калибровка и её влияние на обзор.** Отдельные training/validation observations,
    известные yaw/pitch/along-body perturbations и ground truth. Сравнить два метода
    по ошибке позы/отложенной репроекции; затем nominal/estimated/true-control на выходе
