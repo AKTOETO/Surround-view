@@ -10,10 +10,11 @@
 Границы и достаточность сокращённой программы нужно согласовать с руководителем.
 
 1. **Подготовить scene input/reference registry E2–E3.** Протоколv2 зафиксирован;
-   numerical E1 registry и48 fits выполнены ([[validation/THESIS_E1]]). Осталось заранее
-   записать scene seed→preset mapping и hashes новых source RGB/true poses/independent
-   references, подготовить два фиксированных view и bounded initial carrier.
-   Исторические pilot images не заменяют новые scene reference данные.
+   numerical E1 registry и48 fits выполнены ([[validation/THESIS_E1]]). Scene seed mapping,
+   два views,18 startup profiles и exact E1→capture matrices подготовлены и проверены
+   ([[validation/THESIS_E3]]). Осталось получить новые source RGB/independent references
+   и проверить их image/model identities после Blender capture; mask policy закреплена.
+   Blender сейчас недоступен; исторические pilot images не заменяют новые scene reference данные.
 2. **Проверить влияние калибровки на обзор (E3).** Численное сравнение двух методов E1
    завершено в ограниченной known-intrinsics постановке:48/48 cases плюс reverse-order
    контроль; RNG policy и разнесённые poses закреплены. Не повторять E1 без нового

@@ -4891,3 +4891,10 @@ Reverse-order контроль дал точно те же T/errors/inliers/qual
 также изменены rig intrinsics и seeds. Доказательство улучшения конечного обзора требует
 E3 с независимым RGB truth. Inputs/hash registry, source evidence RNG и воспроизведение:
 [[validation/THESIS_E1]], [[references/VISION#S75]].
+
+
+Подготовка следующего E3 выявила несовместимость conventions E1 и legacy Blender: одинаковый
+seed1001 давал различие поворота до5.812° и центра до49.186mm. Поэтому capture plan теперь
+передаёт сами true matrices E1.18 profiles прошли native config/projection checks,
+новые RGB пока отсутствуют; это проверка данных, не дополнительный image-quality опыт.
+Контракт, frozen scene mapping и ограничения: [[validation/THESIS_E3]].

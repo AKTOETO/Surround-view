@@ -1758,3 +1758,22 @@ python3 tools/simulator.py --config configs/research/thesis-rig.json --frames 2 
 observations и оценивает known truth. Прежний prepare без --plan сохраняет pilot9001.
 Сервер с calibration_execution_v1 возвращает execution_policy вместо фиктивного RNG seed
 knob. Результаты, repeat control, входные hashes и ограничения: [[validation/THESIS_E1]].
+
+### Подготовить E3 без Blender
+
+Новые capture plans и nominal/true/estimated startup profiles создаются из источников E1:
+
+```sh
+python3 docs/diploma/plot_thesis_calibration.py prepare-e3 \
+  configs/research/thesis-scene-inputs.json \
+  artifacts/thesis-e1-v2-20261025/truth.json artifacts/thesis-e1-v2-20261025/report.json \
+  artifacts/e3-new-prepared
+python3 docs/diploma/plot_thesis_calibration.py audit-e3 \
+  artifacts/e3-new-prepared artifacts/thesis-e1-v2-20261025/truth.json \
+  artifacts/thesis-e1-v2-20261025/report.json build/sv-project artifacts/e3-new-audit.json
+```
+
+Это подготовка scientific fixtures и native projection checks, а не quality run E3.
+Нужны новый output path, прежние E1 raw files и собранный sv-project. Product server/lib/
+clients не запускают эти Python helpers. Дальнейший Blender export:
+[[engineering/BLENDER#Точные позы E1 для E3]], результаты и ограничения: [[validation/THESIS_E3]].

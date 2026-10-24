@@ -397,3 +397,36 @@ active mesh budget и RGB repeats, собирает carrier-summary.json из na
 прерывают экспорт до публикации completion metadata. Это проверка завершения/наличия, не
 доказательство корректности содержимого: декодирование и hashes проверяются следующим этапом.
 Fault injection покрывает эти отказы без Blender; реальный preview render также прошёл проверку.
+
+## Точные позы E1 для E3
+
+`plot_thesis_calibration.py prepare-e3` подготавливает два family plans из frozen
+scene mapping и **завершённых** native E1 candidates. Case может содержать optional
+camera_rig={nominal,actual,provenance}. Он задаёт actual capture pose напрямую, без
+legacy sampler; непустые mount bounds/overrides вместе с rig запрещены. Существующие
+case без поля сохраняют прежний путь. Family capture допускает1…8 frames, в том числе
+один static E3 frame; верхний предел16 cases на plan не менялся.
+
+Preflight/native config checks без Blender: [[validation/THESIS_E3]]. Когда Blender/MCP
+доступен, выполнить в его console (каждый capture output новый):
+
+```python
+from pathlib import Path
+import importlib, sys
+root = Path('/home/bogdan/prog/MAI/surround-view')
+sys.path.insert(0, str(root / 'tools/blender'))
+for name in ('camera_rig', 'scenario', 'scene', 'paired_truth'):
+    importlib.reload(importlib.import_module(name))
+import paired_truth
+paired_truth.schedule_family_plan(
+    root / 'artifacts/e3-new-prepared/capture-high.json',
+    root / 'artifacts/e3-high-new')
+```
+
+Дождаться job.json complete, затем аналогично выполнить capture-low.json в другом
+output. Не менять helpers/inputs во время render. Старые scenes не удаляются; обычные
+правила cancellation/progress остаются. capture.json сохраняет camera_rig_provenance
+и camera_rig.py SHA; последующая проверка должна сравнить фактические matrices с E1,
+а не доверять только labels/seed. Этот новый adapter пока проверен offline, его Blender
+runtime qualification остаётся открытой. Estimated camera profiles не используются для
+генерации source RGB или direct reference: они нужны только исследуемому серверу.

@@ -5,7 +5,8 @@
 Срок и недельные результаты: [[planning/ROADMAP#Фокус диплома и еженедельные результаты]].
 
 Параметры ниже зафиксированы до получения новой подтверждающей выборки. Numerical E1 input/observation registry сформирован и серия выполнена: [[validation/THESIS_E1]].
-Реестр новых scene inputs/independent RGB references E2/E3 **ещё не сформирован**: это их блокер.
+Scene seed mapping и explicit E1 pose/profile registry E2/E3 подготовлены: [[validation/THESIS_E3]].
+Новые source RGB/independent RGB references пока не получены; это блокер image trials.
 Пилот [[validation/THESIS_CORE_PILOT]] использует исторические inputs и проверяет только
 исполнение. Изменение параметров/правил после просмотра новых outputs требует следующей версии
 и явного отделения прежнего exploratory результата. Внешняя регистрация не заявляется.
@@ -34,6 +35,8 @@ coordinates; R_true=Rx(pitch)R_nominalRz(−yaw), C_true=C_nominal+[along_body,0
 | E3 | Nominal / estimated / true-control calibration | dome_floor + edge_feather, те же inputs/reference/view | Изменение конечной RGB ошибки; Linux server timings и доступные counters |
 
 E3 использует заранее выбранный ransac_epnp_lm, а не победителя по E1 holdout.
+Для E3 зафиксирован Gaussian observation profile (без injected outliers) после E1,
+до получения новых scene RGB; отдельные камеры не отбираются по fit error.
 True-control — эталон параметров камеры, не эталон конечного изображения: carrier всё
 ещё приближает геометрию сцены. Неудачный fit остаётся в таблице failures; его нельзя
 заменять удачным методом или новой реализацией без смены версии протокола.
@@ -77,7 +80,8 @@ intrinsics fitting и физическая геометрия не исслед�
 
 Для E2/E3 нужен direct-view RGB из независимого Blender renderer, не server capture.
 Фиксированная mask исключает ego и невидимые reference области по независимой truth,
-а не по ошибке исследуемого метода. Сохраняются image/model/config/reference hashes.
+а не по ошибке исследуемого метода. Для E3 scene plan закрепляет non-ego/any-camera-visible
+mask по independent object/visibility truth с erosion2px до просмотра новых RGB. Сохраняются image/model/config/reference hashes.
 Reference schema2 и actual-camera input guards обязательны. В E3 model/calibration guards
 должны соответствовать nominal/estimated/true-control **используемой** config, поэтому
 создаются отдельные reference manifests с общими неизменными direct RGB/mask hashes;
@@ -141,3 +145,41 @@ reports, таблицы и репрезентативные изображени
 На Aurora повторить тот же subset при доступном SDK/устройстве и описать ABI/GPU/драйверы.
 Без этого Linux/synthetic результат нельзя объявлять квалификацией ОС Аврора; границы
 такого диплома и формулировку вклада согласовать с руководителем заранее.
+
+
+## Передача поз E1 в E3
+
+Capture не пересэмплирует камеры по seed: legacy Blender и E1 используют разные pitch/
+slide conventions. Explicit camera_rig переносит exact nominal/actual matrices и source
+hashes; дополнительная perturbation запрещена. Стартовые profiles проверяются native
+loader. target_m относится к FRAME/reference view, а не к startup virtual_camera;
+в startup используются пять поддержанных полей и target[0,0,0].
+[[validation/THESIS_E3]] фиксирует offline checks, runtime Blender пока не испытан.
+
+```plantuml
+@startuml
+artifact "Frozen E1 truth / native candidates" as E1
+artifact "Explicit poses / profiles / SHA registry" as Rig
+component "Blender capture (pending)" as Blender
+artifact "Same four source RGB" as Inputs
+artifact "Independent direct RGB / fixed mask" as Truth
+component "sv-server + sv-client-lib runner" as Server
+component "C++ quality evaluator" as Eval
+E1 --> Rig : Copy matrices; no new RNG
+Rig --> Blender : True rig + scene/view
+Blender --> Inputs
+Blender --> Truth
+Inputs --> Server : Reuse pixels for every calibration state
+Rig --> Server : nominal / estimated / true-control config
+Server --> Eval : Final RGBA + actual model/view guards
+Truth --> Eval : Shared reference pixels for all three states
+note bottom of Eval
+Profile-specific IDs/model guards differ.
+Independent RGB/mask remain identical within case/view.
+Offline profiles are prepared; RGB/render results are pending.
+end note
+@enduml
+```
+
+*Рисунок E3.1 — источник камер и независимый эталон используют true rig, оценённая
+калибровка применяется только в исследуемом серверном пути.*

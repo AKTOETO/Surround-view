@@ -1,5 +1,12 @@
 # Текст диссертации
 
+25.10.2026: без Blender подготовлен E3 scene mapping и18 native-validated profiles.
+Устранён риск несовпадения E1/legacy Blender poses по одному seed: capture получает
+explicit true matrices, дополнительная randomization запрещена.72 capture matrices,
+3456 native projections и24 RMSE controls сверены; это preflight, не image-quality E3.
+Новые RGB/masks и actual Blender adapter test остаются открытыми по доступности среды.
+[[validation/THESIS_E3]].
+
 25.10.2026: numerical E1 протоколаv2 выполнен:48/48 fits на3 mount seeds, без
 apply; reverse-order контроль48/48 exact не увеличивает число quality samples.
 При training outliers median centre errors SQPnP/RANSAC+LM43.637/13.054mm;
