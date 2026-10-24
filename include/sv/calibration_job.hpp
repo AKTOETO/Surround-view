@@ -62,6 +62,7 @@ struct CalibrationJobResult
     bool quality_accepted = false;
     std::string error_message;
     double duration_ms = 0.0;
+    ExtrinsicOptions options;
 };
 
 class CalibrationJobManager
@@ -149,6 +150,7 @@ class CalibrationJobManager
         task.result.job_id = job_id;
         task.result.camera_id = camera_id;
         task.result.state = JobState::Pending;
+        task.result.options = options;
 
         jobs_[job_id] = task;
         queue_.push_back(job_id);
@@ -346,6 +348,7 @@ class CalibrationJobManager
             res.job_id = job_id;
             res.base_config_revision = task.result.base_config_revision;
             res.camera_id = task.camera_id;
+            res.options = task.options;
 
             try
             {
@@ -407,6 +410,7 @@ class CalibrationJobManager
                         res.job_id = job_id;
                         res.base_config_revision = task.result.base_config_revision;
                         res.camera_id = task.camera_id;
+                        res.options = task.options;
                         res.state = JobState::Cancelled;
                         res.duration_ms =
                             std::chrono::duration<double, std::milli>(end_time - start_time)

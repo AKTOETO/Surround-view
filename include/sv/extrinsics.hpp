@@ -3,6 +3,9 @@
 
 namespace sv
 {
+inline constexpr int extrinsic_ransac_iterations = 300;
+inline constexpr double extrinsic_ransac_confidence = .999;
+
 struct ExtrinsicOptions
 {
     std::string method = "iterative";

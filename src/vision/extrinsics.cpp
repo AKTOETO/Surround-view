@@ -69,7 +69,8 @@ ExtrinsicCalibration calibrate_extrinsics(const Camera &initial, const std::vect
         // Threshold is in normalized pinhole coordinates, not fisheye pixels.
         const double threshold = options.ransac_threshold_px / std::max(initial.fx, initial.fy);
         success = cv::solvePnPRansac(objects, normalized, cv::Matx33d::eye(), cv::noArray(), rvec,
-                                     tvec, false, 300, threshold, .999, indices, cv::SOLVEPNP_EPNP);
+                                     tvec, false, extrinsic_ransac_iterations, threshold,
+                                     extrinsic_ransac_confidence, indices, cv::SOLVEPNP_EPNP);
         if (success && indices.total() >= 6)
         {
             std::vector<cv::Point3d> selected_objects;

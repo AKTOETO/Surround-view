@@ -395,6 +395,7 @@ ServerIO::ServerIO(const sv::Connections &n, const std::string &source_type,
                     "calibrate",
                     "calibration_provenance_v1",
                     "calibration_result_v1",
+                    "calibration_execution_v1",
                     "calibration_status",
                     "apply_calibration",
                     "cancel_calibration"};
@@ -1288,6 +1289,22 @@ int main(int argc, char **argv)
                             extra_res["job_state"] = sv::to_string(job_opt->state);
                             extra_res["camera_id"] = job_opt->camera_id;
                             extra_res["duration_ms"] = job_opt->duration_ms;
+                            boost::json::object policy{
+                                {"schema_version", 1},
+                                {"method", job_opt->options.method},
+                                {"opencv_version", sv::opencv_version()},
+                                {"rng_policy", "backend_owned_no_seed_parameter"}};
+                            if (job_opt->options.method == "ransac_epnp_lm")
+                            {
+                                policy["ransac"] = boost::json::object{
+                                    {"api", "legacy_solvePnPRansac_EPNP"},
+                                    {"iterations", sv::extrinsic_ransac_iterations},
+                                    {"confidence", sv::extrinsic_ransac_confidence},
+                                    {"threshold_px_option", job_opt->options.ransac_threshold_px},
+                                    {"threshold_normalization", "divide_by_max_fx_fy"},
+                                    {"refinement", "solvePnPRefineLM_defaults"}};
+                            }
+                            extra_res["execution_policy"] = std::move(policy);
                             const auto &audit = job_opt->split_audit;
                             extra_res["validation_policy"] = sv::calibration_validation_policy;
                             extra_res["dataset_id"] = audit.dataset_id;

@@ -1,7 +1,9 @@
 #include "sv/extrinsics.hpp"
 #include <cmath>
+#include <future>
 #include <gtest/gtest.h>
 #include <limits>
+#include <opencv2/core.hpp>
 
 namespace
 {
@@ -86,4 +88,35 @@ TEST(Extrinsics, RejectsDegeneracyAndInvalidInput)
         point = {0, 0, 4};
     }
     EXPECT_ANY_THROW(sv::calibrate_extrinsics(fixture.initial, fixture.points, fixture.pixels, {}));
+}
+
+TEST(Extrinsics, LegacyRansacIsIndependentOfAmbientRngAndPreviousFit)
+{
+    Fixture fixture;
+    for (size_t i = 0; i < fixture.pixels.size(); i += 8)
+    {
+        fixture.pixels[i].u += 30;
+        fixture.pixels[i].v -= 25;
+    }
+    const auto original = cv::theRNG().state;
+    const auto run = [&]
+    {
+        return sv::calibrate_extrinsics(fixture.initial, fixture.points, fixture.pixels,
+                                        {"ransac_epnp_lm", 3});
+    };
+    cv::theRNG().state = 123;
+    const auto first = run();
+    EXPECT_EQ(cv::theRNG().state, 123U);
+    cv::theRNG().state = 987654321;
+    (void)sv::calibrate_extrinsics(fixture.initial, fixture.points, fixture.pixels, {"sqpnp", 3});
+    const auto second = run();
+    EXPECT_EQ(cv::theRNG().state, 987654321U);
+    cv::theRNG().state = original;
+    const auto threaded = std::async(std::launch::async, run).get();
+    for (const auto &result : {second, threaded})
+    {
+        EXPECT_EQ(result.inliers, first.inliers);
+        EXPECT_DOUBLE_EQ(result.training_rmse_px, first.training_rmse_px);
+        EXPECT_EQ(result.camera.T, first.camera.T);
+    }
 }
