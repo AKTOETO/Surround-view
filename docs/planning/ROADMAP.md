@@ -1,5 +1,11 @@
 # Подробный план реализации
 
+30.10.2026: CPU/GPU Linux RPM из чистой9168acb собраны и проверены: installed core4737
+checks, source fixture и external client consumer в обоих; CPU17 pass/1 expected skip,
+GPU25 pass/0 skip. Source archives совпали, payload не содержит artifacts/build/private
+files. GUI выключен в host packages. Aurora SDK/device/Qt5/desktop acceptance остаются
+открытыми; новый research sweep не требуется. [[validation/SOURCES_SMOKE]].
+
 29.10.2026: завершены E2 (108 conditions/3024 metric checks) и отдельный PC profile
 (216 conditions,30 measured repeats,6480 measured trials,1248 CPU/RSS samples через SDK).
 E2/E3 matched output18/18 exact; workflow/quality/restore guards пройдены. Два GUI на

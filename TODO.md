@@ -13,6 +13,8 @@ E1–E3 synthetic core и отдельный PC timing profile завершен�
 server/library/оба GUI replay smoke проверен. Свидетельства: [[validation/THESIS_E1]],
 [[validation/THESIS_E2]], [[validation/THESIS_E3]], [[validation/THESIS_PC_PERFORMANCE]],
 [[validation/THESIS_DEMO]]. Не повторять серии без нового вопроса/изменения реализации.
+CPU/GPU host RPM и extracted-payload consumers проверены30.10.2026
+([[validation/SOURCES_SMOKE]]); target SDK/Qt5/device этим не квалифицированы.
 
 1. **Свести диплом в окончательную редакцию.** §§4.96–4.99 и основное заключение уже
    содержат результаты. Упорядочить исторические exploratory материалы как приложения,

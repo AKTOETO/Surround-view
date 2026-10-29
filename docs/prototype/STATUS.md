@@ -1,5 +1,10 @@
 # Состояние прототипа и границы подтверждения
 
+30.10.2026: CPU/GPU Linux RPM собраны из9168acb и проверены на извлечённом payload;
+4737 core checks, source fixture и external client consumer в обоих. Installed CPU
+qualification17 pass/1 skip, GPU25 pass/0 skip. Host GUI выключен, SDK/Аврора/physical
+cameras и экран не проверены. [[validation/SOURCES_SMOKE]].
+
 29.10.2026: E2 и отдельный PC profile завершены (108 quality/216 timing conditions).
 Native quality guards и независимый audit пройдены, CPU/RSS получены через library.
 CLI и оба Qt GUI на новом Blender replay прошли smoke; full Linux CTest70/70 за194,94с.

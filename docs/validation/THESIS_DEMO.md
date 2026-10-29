@@ -75,3 +75,7 @@ Aurora Qt5/Silica lifecycle, rpm-validator и установка на автом
 остаются отдельной приёмкой. Linux host RPM проверяет payload/consumer, но не заменяет
 целевые ABI/permissions. Исходные данные и этапы: [[engineering/AURORA]],
 [[engineering/PLATFORM_TEST]], [[validation/ACCEPTANCE]].
+
+30.10.2026 дополнительно собраны и проверены CPU/GPU Linux RPM из чистой9168acb:
+[[validation/SOURCES_SMOKE#Текущая проверка CPU/GPU RPM 30.10.2026]]. Они содержат server/
+library/tools, GUI выключен default spec; это не пакетная приёмка автомобильного UI.

@@ -1,5 +1,50 @@
 # Проверка FrameSource и виртуальных камер 0.6.0
 
+## Текущая проверка CPU/GPU RPM 30.10.2026
+
+После E1–E3, PC performance и GUI-port исправления оба Linux x86_64 RPM собраны из
+чистого commit9168acb431230b69e47baffe8d1dab0802f7754e. Source archives побайтно совпали.
+Это лабораторная host-проверка через rpmbuild --nodeps/host macros, не разрешение
+Aurora BuildRequires, не target ABI и не установка в системную RPM database.
+
+| Профиль/payload | Извлечённая platform qualification | SHA256 RPM |
+|---|---|---|
+| artifacts/rpm-thesis-cpu-20261029/RPMS/x86_64/surround-view-cpu-0.6.0-3.x86_64.rpm |17 pass,0 fail,1 expected GPU skip|8c17150f5476c8fe1e4d153806a00133eaffeeb04117ea20a9bb6d5a370d30c2|
+| artifacts/rpm-thesis-gpu-20261029/RPMS/x86_64/surround-view-0.6.0-4.x86_64.rpm |25 pass,0 fail,0 skip|b3d6199c3402a23d24376d77e306d222463b2ad80a9c23e9aff1ed54605dacfd|
+
+Из каждого извлечённого payload выполнены4737 core checks и native source fixture;
+внешний consumer собран только через установленные headers/static libraries/CMake exports,
+без линковки Qt/OpenCV/EGL/GLES. Проверены список файлов/Requires и отсутствие build,
+artifacts,Git/cache в payload; photographic sv-scene выполнен в обоих профилях,
+sv-bench дополнительно в GPU. FetchContent/network не использовались.
+
+Actual installed GL_RENDERER NVIDIA GeForce RTX5070Ti, хотя verifier задаёт
+LIBGL_ALWAYS_SOFTWARE=1. Этот env сам по себе не доказывает Mesa/llvmpipe.
+Installed GPU smoke использует8 samples/2 warmup/1 context: не PC performance baseline.
+Fingerprint d2e0d802f324ff66d0542ed38ad974bdbc57f6d0a57cce6d5e30231db4442fd1
+совпадает с GUI demo build. E2/PC timing reports на прежней a3ae77… не изменены.
+
+Оба пакета собраны с default sv_with_client=0: Qt GUI и его desktop/icon payload
+этим испытанием не проверяются. Их target Qt5/Silica/validator проверка остаётся открытой,
+как и реальные камеры/автомобильный экран. Дата suffix каталогов — начало работы29.10,
+завершение проверки произошло30.10.
+
+Raw build.log/files.txt/requires.txt/SOURCE_TESTS.md/CLIENT_CONSUMER.md/INSTALLED_REPORT.md
+сохранены рядом с RPM. Compact audit с package/source/archive/report/passport hashes:
+[thesis_host_rpm_v1.json](baselines/thesis_host_rpm_v1.json).
+
+Повторить из чистого Git в **новые** output directories:
+
+```sh
+python3 tools/verify_host_rpm.py --output artifacts/rpm-thesis-cpu-repeat \
+  --profile cpu --toolchain-root artifacts/rpm-tools
+python3 tools/verify_host_rpm.py --output artifacts/rpm-thesis-gpu-repeat \
+  --profile gpu --toolchain-root artifacts/rpm-tools
+```
+
+Не устанавливать эти host-пакеты как Aurora aarch64: нужна отдельная SDK сборка
+([[engineering/AURORA]]). Последующие разделы сохраняют исторические проверки.
+
 Дата: 06.10.2026. Linux host, GCC 16.2/OpenCV 5/Boost 1.92; интеграция сервера — EGL surfaceless. GPU regression groups дополнительно повторены с явным Mesa EGL vendor; Blender/socket smoke — NVIDIA RTX 5070 Ti. Реализация и границы: [[engineering/SOURCES]]. Исторические platform baselines и RPM 0.5.0 не изменены.
 
 ## Результаты
