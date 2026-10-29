@@ -92,75 +92,108 @@ boost::json::object run_calibration_cases(const std::filesystem::path &input,
             const auto &item = value.as_object();
             auto &results = report.at("results").as_array();
             results.emplace_back(boost::json::object{{"case_id", item.at("case_id")},
-                                                     {"parameters_sha256", nullptr}});
+                                                     {"parameters_sha256", nullptr},
+                                                     {"outcome", "not_submitted"}});
             auto &result = results.back().as_object();
             const auto parameters = item.at("parameters").as_object();
             const auto encoded = boost::json::serialize(parameters);
             result["parameters_sha256"] = sha256(encoded.data(), encoded.size());
-            const auto admission = connection.request("calibrate", parameters);
-            result["admission"] = admission;
-            if (!admission.at("accepted").as_bool())
+            try
             {
-                result["outcome"] = "rejected";
-                all_completed = false;
-                continue;
-            }
-            const auto job = admission.at("job_id");
-            result["job_id"] = job;
-            const auto deadline =
-                std::chrono::steady_clock::now() + std::chrono::milliseconds(options.timeout_ms);
-            while (true)
-            {
-                const auto status = connection.request("calibration_status", {{"job_id", job}});
-                result["status"] = status;
-                if (!status.at("accepted").as_bool())
+                result["outcome"] = "admission_unknown";
+                const auto admission = connection.request("calibrate", parameters);
+                result["admission"] = admission;
+                if (!admission.at("accepted").as_bool())
                 {
-                    throw std::runtime_error("calibration status rejected");
+                    result["outcome"] = "rejected";
+                    all_completed = false;
+                    continue;
                 }
-                const auto state = status.at("job_state").as_string();
-                if (state == "completed" || state == "failed" || state == "cancelled")
+                const auto job = admission.at("job_id");
+                if (!job.is_string() || job.as_string().empty() || job.as_string().size() > 128)
                 {
-                    if (state == "completed")
+                    throw std::runtime_error("invalid calibration admission job identity");
+                }
+                result["job_id"] = job;
+                result["outcome"] = "result_unknown";
+                const auto deadline = std::chrono::steady_clock::now() +
+                                      std::chrono::milliseconds(options.timeout_ms);
+                while (true)
+                {
+                    const auto status = connection.request("calibration_status", {{"job_id", job}});
+                    result["status"] = status;
+                    if (!status.at("accepted").as_bool())
                     {
-                        const auto &matrix = status.at("T_camera_from_vehicle").as_array();
-                        if (matrix.size() != 4)
+                        result["outcome"] = "status_rejected";
+                        throw std::runtime_error("calibration status rejected");
+                    }
+                    result["outcome"] = "invalid_result";
+                    if (status.at("job_id") != job ||
+                        status.at("camera_id") != parameters.at("camera_id"))
+                    {
+                        throw std::runtime_error("calibration status identity mismatch");
+                    }
+                    const auto state = status.at("job_state").as_string();
+                    if (state == "completed" || state == "failed" || state == "cancelled")
+                    {
+                        if (state == "completed")
                         {
-                            throw std::runtime_error("invalid calibration result transform");
-                        }
-                        for (const auto &row : matrix)
-                        {
-                            if (row.as_array().size() != 4)
+                            const auto &matrix = status.at("T_camera_from_vehicle").as_array();
+                            if (matrix.size() != 4)
                             {
                                 throw std::runtime_error("invalid calibration result transform");
                             }
-                            for (const auto &coordinate : row.as_array())
+                            for (const auto &row : matrix)
                             {
-                                if (!coordinate.is_number() ||
-                                    !std::isfinite(coordinate.to_number<double>()))
+                                if (row.as_array().size() != 4)
                                 {
                                     throw std::runtime_error(
-                                        "nonfinite calibration result transform");
+                                        "invalid calibration result transform");
+                                }
+                                for (const auto &coordinate : row.as_array())
+                                {
+                                    if (!coordinate.is_number() ||
+                                        !std::isfinite(coordinate.to_number<double>()))
+                                    {
+                                        throw std::runtime_error(
+                                            "nonfinite calibration result transform");
+                                    }
                                 }
                             }
                         }
+                        result["outcome"] = state;
+                        all_completed = all_completed && state == "completed";
+                        break;
                     }
-                    result["outcome"] = state;
-                    all_completed = all_completed && state == "completed";
-                    break;
+                    if (state != "pending" && state != "running")
+                    {
+                        throw std::runtime_error("unknown calibration job state");
+                    }
+                    result["outcome"] = "result_unknown";
+                    if (std::chrono::steady_clock::now() >= deadline)
+                    {
+                        result["outcome"] = "timeout";
+                        try
+                        {
+                            result["cancel_ack"] =
+                                connection.request("cancel_calibration", {{"job_id", job}});
+                        }
+                        catch (const std::exception &error)
+                        {
+                            result["cancel_error"] = error.what();
+                        }
+                        throw std::runtime_error("calibration case deadline exceeded");
+                    }
+                    std::this_thread::sleep_for(std::chrono::milliseconds(10));
                 }
-                if (state != "pending" && state != "running")
-                {
-                    throw std::runtime_error("unknown calibration job state");
-                }
-                if (std::chrono::steady_clock::now() >= deadline)
-                {
-                    result["outcome"] = "timeout";
-                    (void)connection.request("cancel_calibration", {{"job_id", job}});
-                    throw std::runtime_error("calibration case deadline exceeded");
-                }
-                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            }
+            catch (const std::exception &error)
+            {
+                result["error"] = error.what();
+                throw;
             }
         }
+        report["all_completed"] = all_completed;
         const auto final = connection.request("state");
         report["final_state"] = final;
         if (!final.at("accepted").as_bool() ||
@@ -169,12 +202,19 @@ boost::json::object run_calibration_cases(const std::filesystem::path &input,
             throw std::runtime_error("configuration changed during calibration cases");
         }
         report["success"] = true;
-        report["all_completed"] = all_completed;
     }
     catch (const std::exception &error)
     {
         report["error"] = error.what();
     }
+    const auto started = report.at("results").as_array().size();
+    report["started_cases"] = started;
+    boost::json::array unstarted;
+    for (size_t index = started; index < cases.size(); ++index)
+    {
+        unstarted.emplace_back(cases[index].as_object().at("case_id"));
+    }
+    report["unstarted_case_ids"] = std::move(unstarted);
     output.write(report);
     return report;
 }
