@@ -4,6 +4,7 @@
 #include "sv/vision.hpp"
 #include <algorithm>
 #include <boost/version.hpp>
+#include <charconv>
 #include <cmath>
 #include <cstdlib>
 #include <glm/detail/setup.hpp>
@@ -19,6 +20,32 @@ namespace
 {
 using Object = boost::json::object;
 using Array = boost::json::array;
+
+constexpr const char *usage =
+    "Usage: sv-platform-test --config FILE --output NEW_DIR [options]\n"
+    "  --manifest FILE        Recorded inputs with declared SHA-256 hashes\n"
+    "  --label NAME           Platform label (default: unnamed)\n"
+    "  --egl-platform MODE    default | surfaceless | device\n"
+    "  --cpu-only             Skip GPU qualification\n"
+    "  --require-gpu          Fail if GPU qualification is unavailable\n"
+    "  --iterations N         Samples per workload, 2..10000 (default: 60)\n"
+    "  --warmup N             Warmup frames, 0..1000 (default: 10)\n"
+    "  --repeats N            Context repeats, 1..10 (default: 3)\n"
+    "  --opencv-threads N     OpenCV threads, 1..64 (default: 1)\n"
+    "  --help, -h             Print help without starting qualification\n";
+
+int integer_option(const std::string &key, const std::string &text, int minimum, int maximum)
+{
+    int value = 0;
+    const auto parsed = std::from_chars(text.data(), text.data() + text.size(), value);
+    if (parsed.ec != std::errc{} || parsed.ptr != text.data() + text.size() || value < minimum ||
+        value > maximum)
+    {
+        throw std::invalid_argument(key + " requires an integer in " + std::to_string(minimum) +
+                                    ".." + std::to_string(maximum));
+    }
+    return value;
+}
 
 void criterion(Array &checks, const char *id, const char *status, const std::string &detail)
 {
@@ -394,7 +421,12 @@ int main(int argc, char **argv)
         for (int i = 1; i < argc; ++i)
         {
             std::string key = argv[i];
-            if (key == "--cpu-only")
+            if (key == "--help" || key == "-h")
+            {
+                std::cout << usage;
+                return 0;
+            }
+            else if (key == "--cpu-only")
             {
                 cpu_only = true;
             }
@@ -404,9 +436,15 @@ int main(int argc, char **argv)
             }
             else
             {
+                if (key != "--config" && key != "--manifest" && key != "--output" &&
+                    key != "--label" && key != "--egl-platform" && key != "--iterations" &&
+                    key != "--warmup" && key != "--repeats" && key != "--opencv-threads")
+                {
+                    throw std::runtime_error("unknown argument: " + key);
+                }
                 if (++i >= argc)
                 {
-                    throw std::runtime_error("missing argument value");
+                    throw std::runtime_error("missing argument value: " + key);
                 }
                 std::string value = argv[i];
                 if (key == "--config")
@@ -431,34 +469,27 @@ int main(int argc, char **argv)
                 }
                 else if (key == "--iterations")
                 {
-                    iterations = std::stoi(value);
+                    iterations = integer_option(key, value, 2, 10000);
                 }
                 else if (key == "--warmup")
                 {
-                    warmup = std::stoi(value);
+                    warmup = integer_option(key, value, 0, 1000);
                 }
                 else if (key == "--repeats")
                 {
-                    repeats = std::stoi(value);
+                    repeats = integer_option(key, value, 1, 10);
                 }
                 else if (key == "--opencv-threads")
                 {
-                    opencv_threads = std::stoi(value);
-                }
-                else
-                {
-                    throw std::runtime_error("unknown argument: " + key);
+                    opencv_threads = integer_option(key, value, 1, 64);
                 }
             }
         }
-        if (config_path.empty() || output.empty() || iterations < 2 || iterations > 10000 ||
-            warmup < 0 || warmup > 1000 || repeats < 1 || repeats > 10 ||
+        if (config_path.empty() || output.empty() ||
             (egl != "default" && egl != "surfaceless" && egl != "device") ||
-            (cpu_only && require_gpu) || opencv_threads < 1 || opencv_threads > 64)
+            (cpu_only && require_gpu))
         {
-            throw std::runtime_error(
-                "usage: sv-platform-test --config FILE --output NEW_DIR [--manifest FILE --label "
-                "NAME --egl-platform default|surfaceless|device --cpu-only --require-gpu]");
+            throw std::runtime_error(usage);
         }
         if (std::filesystem::exists(output))
         {
