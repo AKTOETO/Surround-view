@@ -1,5 +1,12 @@
 # Метрическая 3D-сцена Blender и четырёхкамерный replay
 
+29.10.2026 подключение повторно проверено: Blender5.2.3 LTS/EEVEE, add-on1.8/protocol13
+(MCP ожидает15, execute_code fallback работает). По frozen E1 matrices получены18 новых
+captures/reference sets, image-quality E3 завершена54/54 server conditions.
+Raw worlds восстанавливаются procedural scripts и configs/research/thesis-scene-inputs.json;
+street.blend сохранён в каждом raw output, Git LFS не требуется. Команды/артефакты:
+[[validation/THESIS_E3#Артефакты и воспроизведение выполненного E3]].
+
 Проверено 06.10.2026: Blender MCP отвечает, add-on 1.8 / protocol 13 совместимы, Blender **5.2.2 LTS** имеет доступ к проекту. Подключение использовано для создания отдельной сцены `SV Research Street`; исходная пользовательская сцена сохранена. Внешние asset libraries и генераторы на данном подключении отключены. Авторские скрипты создают все объекты самостоятельно.
 
 ## Что реализовано
@@ -427,6 +434,8 @@ paired_truth.schedule_family_plan(
 output. Не менять helpers/inputs во время render. Старые scenes не удаляются; обычные
 правила cancellation/progress остаются. capture.json сохраняет camera_rig_provenance
 и camera_rig.py SHA; последующая проверка должна сравнить фактические matrices с E1,
-а не доверять только labels/seed. Этот новый adapter пока проверен offline, его Blender
-runtime qualification остаётся открытой. Estimated camera profiles не используются для
+а не доверять только labels/seed.29.10.2026 adapter проверен на18 новых runtime captures:
+config/provenance/recipes/intended optical matrices и независимые projector checks совпали;
+подробные результаты и ограничения float precision — [[validation/THESIS_E3]].
+Estimated camera profiles не используются для
 генерации source RGB или direct reference: они нужны только исследуемому серверу.

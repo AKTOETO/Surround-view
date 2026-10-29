@@ -6,7 +6,9 @@
 
 Параметры ниже зафиксированы до получения новой подтверждающей выборки. Numerical E1 input/observation registry сформирован и серия выполнена: [[validation/THESIS_E1]].
 Scene seed mapping и explicit E1 pose/profile registry E2/E3 подготовлены: [[validation/THESIS_E3]].
-Новые source RGB/independent RGB references пока не получены; это блокер image trials.
+29.10.2026 получены18 новых captures/references, image-quality часть E3 выполнена;
+E2 и отдельный performance profile остаются открытыми. Результаты и mask concrete kernel:
+[[validation/THESIS_E3]]. Параметры плана не менялись после просмотра новых outputs.
 Пилот [[validation/THESIS_CORE_PILOT]] использует исторические inputs и проверяет только
 исполнение. Изменение параметров/правил после просмотра новых outputs требует следующей версии
 и явного отделения прежнего exploratory результата. Внешняя регистрация не заявляется.
@@ -154,7 +156,7 @@ slide conventions. Explicit camera_rig переносит exact nominal/actual m
 hashes; дополнительная perturbation запрещена. Стартовые profiles проверяются native
 loader. target_m относится к FRAME/reference view, а не к startup virtual_camera;
 в startup используются пять поддержанных полей и target[0,0,0].
-[[validation/THESIS_E3]] фиксирует offline checks, runtime Blender пока не испытан.
+[[validation/THESIS_E3]] фиксирует offline checks и выполненные29.10 Blender/native trials.
 
 ```plantuml
 @startuml

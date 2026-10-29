@@ -205,3 +205,16 @@ strict preflight не меняют cargo layout. Metadata хранит actual la
 Blender version/engine; для точного воспроизведения сверяйте их, а не только seed. Проверка через
 живой MCP подтвердила4 сцены и сохранённую первоначальную Scene/Cube. План — validation pilot,
 не обещание готовности всех S0–S5 или независимого confirmatory holdout.
+
+## A10 — Исходные recipes компактного E3
+
+`configs/research/thesis-scene-inputs.json` задаёт авторские street-a260101,
+street-b260102 и cargo yard-a260103, два views и3 mount seeds. Исходный мир строится
+теми же tracked scene.py/environments.py; точные камеры передаются через camera_rig.py
+из E1. Новые внешние модели/текстуры не скачивались, Git LFS не используется.
+18 snapshots street.blend и camera/direct PNG/NPY получены29.10.2026 и относятся к
+результатам выполнения в artifacts/thesis-e3-capture-{high,low}-20261029, а не к новым
+исходным binary assets. Исходники/план остаются в обычном Git; удаление artifacts требует
+повторного capture, для другого Blender/backend побитовая идентичность не обещается.
+Восстановление мира/камер, provenance и completed native quality results:
+[[validation/THESIS_E3#Артефакты и воспроизведение выполненного E3]].

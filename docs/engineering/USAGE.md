@@ -1802,3 +1802,13 @@ python3 docs/diploma/plot_thesis_calibration.py audit-e3 \
 Нужны новый output path, прежние E1 raw files и собранный sv-project. Product server/lib/
 clients не запускают эти Python helpers. Дальнейший Blender export:
 [[engineering/BLENDER#Точные позы E1 для E3]], результаты и ограничения: [[validation/THESIS_E3]].
+
+### Выполнить image-quality E3 на новых Blender captures
+
+29.10.2026 серия завершена:18 captures,54 server conditions,18 paired contrasts.
+Подготовка общего RGB/mask fixture, отдельные nominal/estimated/true manifests и точные
+native server/CLI команды: [[validation/THESIS_E3#Артефакты и воспроизведение выполненного E3]].
+Используйте `plot_thesis_e3.py prepare` только для scientific fixtures, затем существующий
+`svctl research`. Renderer/solver/evaluator не перенесены в Python. Для независимого
+пересчёта378 measured RGBA и рисунка — `plot_thesis_e3.py audit`.
+Короткие quality repeats не заменяют отдельное performance измерение и испытания Авроры.

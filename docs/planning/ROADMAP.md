@@ -1,5 +1,13 @@
 # Подробный план реализации
 
+29.10.2026: получены18 новых Blender captures и выполнена image-quality часть E3:
+54 native conditions,18/18 paired MAE improvements, median gain4.038 RGB8 levels.
+1512 metric checks против сохранённых RGBA, max difference7.11e−15; input/model guards,
+общие RGB/masks и restore проверены. Это ограниченный synthetic результат, не автомобильная
+приёмка. Следующая очередь: E2 на этих же данных → отдельный performance profile →
+сведение выводов/демонстрация и целевой стенд. Новый calibration sweep не нужен.
+[[validation/THESIS_E3]], глава4 §4.97.
+
 29.10.2026: исправлен CLI sv-platform-test (help, строгие числовые параметры до создания
 output); CLI/report tests2/2. Linux CPU smoke17 pass/0 fail/1 expected GPU skip;
 это проверка инструмента доставки отчёта, не новый performance baseline. Порядок первого

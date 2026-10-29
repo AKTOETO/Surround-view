@@ -1,5 +1,12 @@
 # Состояние прототипа и границы подтверждения
 
+29.10.2026: image-quality E3 выполнена на18 новых Blender captures:54 native conditions,
+18/18 парных улучшений MAE estimated относительно nominal, median gain4.038 RGB8 levels.
+1512 independently recomputed metric values, max difference7.11e−15. В pipeline нет
+Python-рендерера: кадры/калибровка на сервере, evaluator C++ клиента, Python только
+fixture/oracle/рисунок. E2, отдельный performance profile, Aurora/физические камеры
+ещё не закрыты. [[validation/THESIS_E3]], диплом §4.97.
+
 25.10.2026: без Blender подготовлен E3 scene mapping и18 native-validated profiles.
 Устранён риск несовпадения E1/legacy Blender poses по одному seed: capture получает
 explicit true matrices, дополнительная randomization запрещена.72 capture matrices,

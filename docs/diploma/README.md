@@ -1,5 +1,12 @@
 # Текст диссертации
 
+29.10.2026: §4.97 содержит завершённую image-quality часть E3, таблицу и24-панельный
+рисунок новых Blender/server результатов.54 conditions,18 paired cells; estimated
+calibration снижает RGB MAE в18/18, median gain4.038 levels. Independent native/offline
+metric parity1512 values; true calibration оставляет заметную carrier/parallax ошибку.
+E2, отдельный performance profile и аппаратная приёмка остаются открытыми.
+[[validation/THESIS_E3]].
+
 25.10.2026: без Blender подготовлен E3 scene mapping и18 native-validated profiles.
 Устранён риск несовпадения E1/legacy Blender poses по одному seed: capture получает
 explicit true matrices, дополнительная randomization запрещена.72 capture matrices,
