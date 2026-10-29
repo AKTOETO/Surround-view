@@ -53,6 +53,22 @@ def process_ip_sockets(pid):
 
 
 class ClientTransportTests(unittest.TestCase):
+    def test_simulator_rejects_malformed_tcp_ports_before_connect(self):
+        binary = BUILD / 'examples/sv-simulator/sv-simulator'
+        if not binary.exists():
+            self.skipTest('simulator not built')
+        environment = dict(os.environ, QT_QPA_PLATFORM='offscreen', QT_QUICK_BACKEND='software')
+        for invalid in ('65535tail', '12.5', '-1', '0', '65536', '+12', ' 12', '',
+                        '999999999999999999999'):
+            for index in (0, 1):
+                ports = ['6400', '6401']
+                ports[index] = invalid
+                with self.subTest(value=invalid, channel=index):
+                    result = subprocess.run([str(binary), '--tcp', '127.0.0.1', *ports, '--smoke'],
+                        text=True, capture_output=True, env=environment, timeout=5)
+                    self.assertEqual(result.returncode, 2, result.stdout + result.stderr)
+                    self.assertIn('sv-simulator:', result.stderr)
+
     def run_profile(self, profile, qt=False, probe=None, simulator=False, discover=False):
         with tempfile.TemporaryDirectory(prefix='sv-transport-') as td:
             directory = Path(td)

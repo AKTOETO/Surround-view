@@ -1,6 +1,7 @@
 #include "research_comparison.hpp"
 #include "research_controller.hpp"
 #include "simulator_bridge.hpp"
+#include "sv/protocol.hpp"
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
@@ -12,7 +13,7 @@ namespace
 {
 uint16_t parse_port(const char *value)
 {
-    const auto parsed = std::stoul(value);
+    const auto parsed = sv::parse_decimal_u64(value);
     if (parsed < 1 || parsed > 65535)
     {
         throw std::invalid_argument("port must be in 1..65535");
