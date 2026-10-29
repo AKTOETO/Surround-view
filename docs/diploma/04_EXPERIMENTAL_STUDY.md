@@ -4980,3 +4980,101 @@ baseline. E2 должен отдельно сравнить ограниченн
 входах, после чего нужен отдельный warmup5/repeats30 профиль и аппаратная проверка.
 Raw data, hashes, код генерации рисунка, команды и limitations:
 [[validation/THESIS_E3]], [plot_thesis_e3.py](plot_thesis_e3.py).
+
+## 4.98. Ограниченное сравнение способов сшивки и носителей
+
+Следующий опыт E2 использует18 новых scene/mount/view cells E3 и true calibration.
+Это позволяет сравнить способ отображения без смешения с ошибкой оценки монтажа.
+На каждом неизменном наборе source RGB/reference/mask проверены hard_best_angle,
+edge_feather24px и normalized multiband4 levels на plane и dome_floor. Варианты
+переключает native сервер по командам клиентской библиотеки в рандомизированных блоках;
+вычисления исследуемых алгоритмов не выполняются в offline Python-реализации.
+
+Бюджеты активной сетки близки: plane3196 triangles/58512 buffer bytes и
+dome3200/58392, при общем лимите1810 vertices и60500 bytes. Это ограничение geometry
+buffers, а не всей CPU/GPU памяти. Полная сцена с поднятыми объектами не аппроксимируется
+этими носителями точно, даже если внешние параметры камер заданы без ошибки.
+
+| Ракурс | Носитель | Hard median MAE | Feather median MAE | Multiband median MAE |
+|---|---|---:|---:|---:|
+| high | plane |8.863|8.626|8.691|
+| high | dome_floor |8.857|8.621|8.686|
+| low | plane |21.084|20.977|21.020|
+| low | dome_floor |20.619|20.597|20.619|
+
+Каждая медиана описывает9 отдельных scene/mount cells; различное число ROI pixels
+не превращается в неявный вес сцены. Dome уменьшил MAE во всех54 matched comparisons
+с plane. В high разница мала: median dome−plane около−0.006 RGB8 levels. В low median
+разницы для hard/feather/multiband равны−0.885/−0.819/−0.814, отдельные разницы лежат
+между−6.458 и−0.280. Это результат для данного source-visible ROI и двух ракурсов,
+не доказательство универсального преимущества купола для произвольной сцены.
+
+Feather улучшил hard в24/36 paired cells, multiband улучшил feather в7/36.
+Контрпример: low-yard/dome даёт median MAE22.001/24.173/24.059 соответственно.
+Усложнение смешивания не устраняет геометрическое рассогласование проекций и не
+гарантирует меньшую RGB ошибку. Разделение parallax, seam visibility и ghosting требует
+других endpoints; в рамках дипломного минимума они не подменяются общей MAE.
+
+![Сопоставление шести вариантов и прямого эталона](figures/experiments/thesis_e2_fusion_carrier.png)
+
+*Рисунок4.98.1 — direct Blender RGB и3 fusion ×2 carriers для3 scenes×2 views.
+Mount1001 выбран заранее; показаны полные кадры, числа MAE относятся к общей ROI.
+Ego из оценки исключён. Все методы получают одинаковые физические наблюдения.*
+
+108 conditions дали972 trials, в том числе756 measured captures.18/18 workflows
+успешны и восстановили исходный вывод; all-repeat hashes каждого условия совпали.
+3024 независимо пересчитанных metric values отличаются от C++ не более3.55e−15.
+Дублирующий dome+feather контроль побайтно совпал с E3 во всех18 cells. Поэтому
+полученные различия относятся к заданным серверным вариантам при общей калибровке,
+а не к разным входам или offline/native расхождению. Полная трассируемость:
+[[validation/THESIS_E2]], [plot_thesis_e2.py](plot_thesis_e2.py).
+
+## 4.99. Производительность конвейера и расходы наблюдения на ПК
+
+После quality серии выполнен отдельный короткий профиль:5 warmup+30 measured trials
+на каждый вариант, с теми же inputs/calibration/view. Сохранение каждого RGBA отключено,
+но frame readback, SHA256 и native quality evaluator остаются включёнными. Для каждого
+набора запущены отдельные процессы с telemetry off/on50ms,capacity256; порядок off/on
+чередуется между наборами. Всего216 timing conditions,7560 trials/6480 measured.
+
+| Вариант | Median render p95 off,ms | On,ms | Fusion CPU p95 off,ms |
+|---|---:|---:|---:|
+| plane/hard |0.271|0.283|0|
+| plane/feather |0.264|0.280|0|
+| plane/multiband |10.816|10.865|7.587|
+| dome/hard |0.287|0.275|0|
+| dome/feather |0.250|0.281|0|
+| dome/multiband |11.557|11.575|8.036|
+
+В таблице median per-run p95 по18 cases, а не квантиль объединённых отсчётов.
+Render wall включает ожидание/readback; его нельзя складывать с GPU draw/readback
+как с независимыми стадиями. GPU draw для hard/feather измерен отдельно, а для текущего
+CPU multiband path отсутствует и не заменяется нулём. Проверены count/p50/p95;
+эмпирический p99 при N=30 равен maximum и не характеризует устойчивый хвост latency.
+
+Через серверную телеметрию и native клиентскую библиотеку получены1248 samples,
+принадлежащих measured-frame interval. Median per-run CPU p50=21.075% одного logical
+core; per-run RSS p95 лежит в160.41…163.43MiB. CPU клиента/evaluator сюда не входит,
+RSS не является VRAM. Median collector wall p95=0.0482ms. Samples усредняют предыдущий
+интервал и не дают строгого per-algorithm CPU attribution. Polling snapshots выполнен
+после timing trials; работа самого collector шла во время on-profile.
+
+![Задержки стадий и доступные процессные метрики](figures/experiments/thesis_pc_performance.png)
+
+*Рисунок4.99.1 — median per-run render p95 off/on и CPU/RSS фиксированного
+high/street-a/mount1001 on-run. Слева логарифмическая шкала. Это короткий paused replay,
+без измерения физического sensor-to-display, thermal режима или нагрузки всей ОС.*
+
+All-output hashes и native quality совпали с E2, workflows/restores успешны36/36.
+Dropped batches max0 относится к paused replay и не доказывает устойчивость физических
+камер. Off/on differences разного знака не дают точного причинного процента overhead:
+выполнен один paired process run на input/profile, GPU/OS clocks не стабилизировались
+специальным аппаратным стендом. Исследуемая реализация multiband существенно дороже
+hard/feather и не выиграла quality во всех условиях; это обосновывает сохранение
+переключаемых режимов и простого baseline для демонстрации.
+
+Данные показывают работоспособность и стоимость native конвейера на RTX5070Ti в
+измеренном режиме. Они не являются прогнозом FPS реального видеозахвата/GUI на Авроре.
+Перед сравнением с автомобильной платформой нужны одинаковая финальная implementation
+fingerprint и методика обоих запусков. Raw reports, observation policies и ограничения:
+[[validation/THESIS_PC_PERFORMANCE]], [plot_thesis_performance.py](plot_thesis_performance.py).
