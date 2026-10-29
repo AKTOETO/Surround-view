@@ -525,3 +525,22 @@ end note
 ```
 
 *Рисунок CAL-E1 — owner-сессия сохраняется до получения всех результатов; применение отсутствует.*
+
+### Частичный отчёт при ошибке CAL-E1
+
+Wire-команды не изменены. Application service различает отсутствие доказательства admission
+(`admission_unknown`), известный job без результата (`result_unknown`), отказ запроса статуса
+(`status_rejected`) и некорректный ответ (`invalid_result`). Перед принятием результата
+проверяется совпадение job/camera ID; completed дополнительно требует конечную матрицу4×4.
+При этих ошибках серия прекращается без reconnect и повторного calibrate.
+
+Истечение клиентского deadline даёт `timeout`; попытка cancel сохраняется отдельно как
+`cancel_ack`/`cancel_error` и не меняет основную причину сбоя. ACK cancel не доказывает
+терминальное состояние worker. `started_cases` считает локальные записи, не принятые jobs;
+`unstarted_case_ids` позволяет выделить неисполненный остаток. Если все fits завершились,
+но финальный state недоступен, сохраняются completed outcomes и `all_completed=true`,
+а весь workflow имеет `success=false`. Не включать такие отчёты в научную серию как
+полностью проверенные. Формат и значения outcomes: [[engineering/USAGE#Сравнение калибраторов без изменения сервера]].
+
+TCP fault regressions вызывают настоящий client SDK с mock peer; они не заменяют
+solver/real-device tests. Нет обещания checkpoint/durable resume при аварийном завершении.

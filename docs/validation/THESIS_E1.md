@@ -117,3 +117,17 @@ RNG regression и проверка policy в настоящем server IPC. По
 
 Численное сравнение E1 в этом объёме выполнено. Следующий этап —E3 и E2 с independent
 scene RGB/масками и теми же nominal/true/candidate models, без нового семейства солверов.
+
+## Надёжность partial report (29.10.2026)
+
+В `research_scenarios` добавлены10 TCP fault regressions настоящего client SDK с mock peer:
+потеря admission/status, пустой job ID, отклонённый status, потеря/отказ cancel после
+deadline, неверные job/camera ID, матрица неправильного размера и потеря финального state.
+Проверяются отсутствие повторного submit, outcomes, остаток cases, сохранение исходной
+ошибки timeout и равенство записанного отчёта возвращённому объекту. Контракт:
+[[engineering/PROTOCOL_SCENARIOS#Частичный отчёт при ошибке CAL-E1]].
+
+Это инженерная проверка orchestration/reporting, не новые calibration samples и не
+доказательство качества изображения. Результаты48 fits и их исходные hashes не менялись.
+Linux build успешна; профильные CTest `research_scenarios`, `replay_ipc`, `svctl_options`
+прошли3/3 за6,97с, включая все10 новых fault cases. Полная suite здесь не повторялась.

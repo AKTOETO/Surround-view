@@ -1,5 +1,12 @@
 # Подробный план реализации
 
+29.10.2026: частичные calibration-run reports различают неизвестный admission/result,
+отказ status, некорректный результат и timeout; cancel failure не скрывает deadline.
+10 TCP fault cases и3/3 профильных CTest пройдены. Это инженерная надёжность runner,
+не новая серия E1 и не закрытие E2/E3. Без Blender приоритет — подготовка воспроизводимого
+запуска и отчёта на целевом устройстве; новые алгоритмы в дипломную программу не добавлять.
+[[validation/THESIS_E1#Надёжность partial report (29.10.2026)]].
+
 25.10.2026: без Blender подготовлен E3 scene mapping и18 native-validated profiles.
 Устранён риск несовпадения E1/legacy Blender poses по одному seed: capture получает
 explicit true matrices, дополнительная randomization запрещена.72 capture matrices,
