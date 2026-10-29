@@ -2,7 +2,8 @@
 
 29.10.2026: **image-quality часть E3 выполнена**:18 новых Blender captures,54 native
 условия nominal/estimated/true,18 парных сравнений. Estimated снижает MAE относительно
-nominal в18/18 ячейках. Отдельный performance profile и аппаратная Аврора ещё не проверены.
+nominal в18/18 ячейках. Позднее29.10 выполнены [[validation/THESIS_E2]] и отдельный
+[[validation/THESIS_PC_PERFORMANCE]]; аппаратная Аврора ещё не проверена.
 Итоговые данные и ограничения — в разделе [[validation/THESIS_E3#Результат серверной серии 29.10.2026]].
 Далее сначала сохранено описание исторического preflight от25.10, когда RGB ещё не было.
 
@@ -236,5 +237,7 @@ ctest --test-dir build -R '^blender_fixture$' --output-on-failure
 Fixture regression suite29/29 (25 прежних+4 новых), CTest1/1 за3,06с. Новые checks
 проверяют kernel/ego/visibility/empty mask, совпадение с C++ known-answer hashes,
 numeric/metadata separation и испорченные/нехэшированные/выходящие за root файлы.
-Полный CTest и rebuild не повторялись: C++ product code не менялся. E2 comparison,
-отдельные server performance trials, физические камеры и Aurora остаются открытыми.
+На момент этого E3 среза полный CTest/rebuild не повторялись: C++ product code не менялся.
+Последующие E2 comparison и server performance trials выполнены29.10; после GUI-port
+исправления полный CTest70/70 пройден ([[validation/THESIS_DEMO]]). Физические камеры и
+Aurora остаются открытыми.

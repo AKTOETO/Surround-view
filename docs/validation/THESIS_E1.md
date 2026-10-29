@@ -5,6 +5,9 @@
 ограниченная numerical серия, не физическая калибровка, detector benchmark или scene-RGB
 confirmation. Прежний pilot9001 сохранён отдельно: [[validation/THESIS_CORE_PILOT]].
 
+Последующие image-quality E2/E3 и короткий PC performance profile выполнены29.10.2026:
+[[validation/THESIS_E2]], [[validation/THESIS_E3]], [[validation/THESIS_PC_PERFORMANCE]].
+
 ## План и данные до запуска
 
 Commit c3cad33 закрепил configs/research/thesis-rig.json и thesis-e1-inputs.json до
