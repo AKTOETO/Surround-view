@@ -1,0 +1,3067 @@
+{
+  "schema_version": 1,
+  "scope": "E3_static_synthetic_calibration_effect",
+  "conditions": 54,
+  "native_trials": 486,
+  "measured_captures": 378,
+  "metric_comparisons": 1512,
+  "max_metric_difference": 7.105427357601002e-15,
+  "improved_pairs": 18,
+  "paired": [
+    {
+      "view": "high",
+      "case_id": "street-a-m1001",
+      "nominal_mae": 16.706623708223983,
+      "estimated_mae": 9.459683786032816,
+      "true_mae": 9.487898379101145,
+      "improvement": 7.246939922191167,
+      "estimated_minus_true": -0.028214593068328853
+    },
+    {
+      "view": "high",
+      "case_id": "street-a-m1002",
+      "nominal_mae": 11.776773434287577,
+      "estimated_mae": 9.44176698285763,
+      "true_mae": 9.43694613410467,
+      "improvement": 2.3350064514299476,
+      "estimated_minus_true": 0.004820848752959961
+    },
+    {
+      "view": "high",
+      "case_id": "street-a-m1003",
+      "nominal_mae": 13.674790160835235,
+      "estimated_mae": 9.410751725265275,
+      "true_mae": 9.399344719018073,
+      "improvement": 4.26403843556996,
+      "estimated_minus_true": 0.011407006247202034
+    },
+    {
+      "view": "high",
+      "case_id": "street-b-m1001",
+      "nominal_mae": 15.84002633311389,
+      "estimated_mae": 8.78294293784111,
+      "true_mae": 8.774044893711908,
+      "improvement": 7.05708339527278,
+      "estimated_minus_true": 0.00889804412920192
+    },
+    {
+      "view": "high",
+      "case_id": "street-b-m1002",
+      "nominal_mae": 11.397165823329734,
+      "estimated_mae": 8.647047615014927,
+      "true_mae": 8.621006499693012,
+      "improvement": 2.7501182083148077,
+      "estimated_minus_true": 0.026041115321914887
+    },
+    {
+      "view": "high",
+      "case_id": "street-b-m1003",
+      "nominal_mae": 12.486372898624554,
+      "estimated_mae": 8.605111224316522,
+      "true_mae": 8.582922963717666,
+      "improvement": 3.881261674308032,
+      "estimated_minus_true": 0.022188260598856147
+    },
+    {
+      "view": "high",
+      "case_id": "yard-a-m1001",
+      "nominal_mae": 13.711592004889422,
+      "estimated_mae": 5.606748609759226,
+      "true_mae": 5.538681516022667,
+      "improvement": 8.104843395130196,
+      "estimated_minus_true": 0.06806709373655906
+    },
+    {
+      "view": "high",
+      "case_id": "yard-a-m1002",
+      "nominal_mae": 10.896910781815038,
+      "estimated_mae": 5.492350256745683,
+      "true_mae": 5.488937005210095,
+      "improvement": 5.404560525069355,
+      "estimated_minus_true": 0.0034132515355871362
+    },
+    {
+      "view": "high",
+      "case_id": "yard-a-m1003",
+      "nominal_mae": 9.237591697169627,
+      "estimated_mae": 5.569426243089762,
+      "true_mae": 5.541017066594363,
+      "improvement": 3.6681654540798654,
+      "estimated_minus_true": 0.028409176495398647
+    },
+    {
+      "view": "low",
+      "case_id": "street-a-m1001",
+      "nominal_mae": 25.68120277207815,
+      "estimated_mae": 20.097912700963306,
+      "true_mae": 20.15851276853477,
+      "improvement": 5.583290071114845,
+      "estimated_minus_true": -0.06060006757146397
+    },
+    {
+      "view": "low",
+      "case_id": "street-a-m1002",
+      "nominal_mae": 22.10114273021201,
+      "estimated_mae": 20.11601714506668,
+      "true_mae": 20.19438754103216,
+      "improvement": 1.9851255851453296,
+      "estimated_minus_true": -0.07837039596547868
+    },
+    {
+      "view": "low",
+      "case_id": "street-a-m1003",
+      "nominal_mae": 24.655403235766332,
+      "estimated_mae": 20.18721337120744,
+      "true_mae": 20.201580832407064,
+      "improvement": 4.468189864558891,
+      "estimated_minus_true": -0.014367461199622511
+    },
+    {
+      "view": "low",
+      "case_id": "street-b-m1001",
+      "nominal_mae": 25.43773325476331,
+      "estimated_mae": 20.54232141687946,
+      "true_mae": 20.610881948536633,
+      "improvement": 4.895411837883849,
+      "estimated_minus_true": -0.06856053165717313
+    },
+    {
+      "view": "low",
+      "case_id": "street-b-m1002",
+      "nominal_mae": 22.48488108627969,
+      "estimated_mae": 20.530629044615058,
+      "true_mae": 20.596744747094398,
+      "improvement": 1.9542520416646312,
+      "estimated_minus_true": -0.0661157024793404
+    },
+    {
+      "view": "low",
+      "case_id": "street-b-m1003",
+      "nominal_mae": 24.767336056551624,
+      "estimated_mae": 20.572438421837926,
+      "true_mae": 20.585606079136397,
+      "improvement": 4.194897634713698,
+      "estimated_minus_true": -0.013167657298470914
+    },
+    {
+      "view": "low",
+      "case_id": "yard-a-m1001",
+      "nominal_mae": 26.280982693455343,
+      "estimated_mae": 24.237318480206884,
+      "true_mae": 24.17329752668921,
+      "improvement": 2.0436642132484586,
+      "estimated_minus_true": 0.06402095351767301
+    },
+    {
+      "view": "low",
+      "case_id": "yard-a-m1002",
+      "nominal_mae": 24.966491523743432,
+      "estimated_mae": 24.08661313241466,
+      "true_mae": 24.031790092858795,
+      "improvement": 0.8798783913287735,
+      "estimated_minus_true": 0.05482303955586332
+    },
+    {
+      "view": "low",
+      "case_id": "yard-a-m1003",
+      "nominal_mae": 26.75366345803976,
+      "estimated_mae": 24.201713472925142,
+      "true_mae": 24.194800039694353,
+      "improvement": 2.551949985114618,
+      "estimated_minus_true": 0.006913433230788968
+    }
+  ],
+  "fixtures": [
+    {
+      "view": "high",
+      "case_id": "street-a-m1001",
+      "sha256": "6e2ae32260b89bcb6c479ac074dc6c900b76e57df858994679a2c0e6bef8ce01",
+      "capture_sha256": "761faa77f2a630e5bc7100b0d66385e553715df98a7d5ca02852da33a2513e08",
+      "paired_truth_sha256": "c7bc9d50c822b69dd34714bcb8e5b8420917288b41045d955ace74614533b0d4",
+      "roi_pixels": 46867,
+      "shared_truth_sha256": "0010f0f6520f387bda79a704834d0334022d4a612c9f92c9e60bbf052bdf0774",
+      "shared_mask_sha256": "7168a4d274bfc09ffaeaa1da5da3201c6a048716cf0aecc7d37066794827bfa4"
+    },
+    {
+      "view": "high",
+      "case_id": "street-a-m1002",
+      "sha256": "7db5867378daa33d66dbff110a007c0aec3bbb2c6ea8f1e4380a245f3dbd008d",
+      "capture_sha256": "a0423b1c8af23045a1b35b44dcc498c29a822bf14b6672c3baec3a589f559b7a",
+      "paired_truth_sha256": "d0bf5c156fdc80cd9a9a976baf7a4102422b6eeaaf40d3b1ff7d48c32dcddbe3",
+      "roi_pixels": 47018,
+      "shared_truth_sha256": "0010f0f6520f387bda79a704834d0334022d4a612c9f92c9e60bbf052bdf0774",
+      "shared_mask_sha256": "87bf8f0b69da794e9cddcccc0d9ab3ff66bf23afb98f5063287b7ab1046141b3"
+    },
+    {
+      "view": "high",
+      "case_id": "street-a-m1003",
+      "sha256": "ee47e7b7684b35d597b623d518961103ad9c9e7678ceb7c53b17307a2cb9ef00",
+      "capture_sha256": "00b285d839252a273ed83ffdee3a6b1fd1b54e2799e7134fa9cefd036e9e14be",
+      "paired_truth_sha256": "4274a69df36ae949049c5bdf89eb261a060225e514307e08f1cc8877ddeb9deb",
+      "roi_pixels": 46901,
+      "shared_truth_sha256": "0010f0f6520f387bda79a704834d0334022d4a612c9f92c9e60bbf052bdf0774",
+      "shared_mask_sha256": "bd9ba58e7fab534dace2bf7a4384c89432fd32752eb02d9f6094a367deb044c8"
+    },
+    {
+      "view": "high",
+      "case_id": "street-b-m1001",
+      "sha256": "023d3a85a828467bdf39fdc4cf702c0ff7664bb2458c097f1d96ecd8188c0c6e",
+      "capture_sha256": "933cf18c0ad57b0b4e5470844c669528d0bd1f6275914aa6e0e2c17e50a4097b",
+      "paired_truth_sha256": "3276349533053df1f9adfc00ac7c6335486f6dbb3108290e804fb317665a5ab9",
+      "roi_pixels": 47089,
+      "shared_truth_sha256": "f2179a0ea99bf8ffab365d255eb5b993bcaf191cd61f326e400c3475f1f0eafd",
+      "shared_mask_sha256": "7d0091c19aeb029d8c8685ef3f64950f2e93e892f9b63508ceef5491e1d2139b"
+    },
+    {
+      "view": "high",
+      "case_id": "street-b-m1002",
+      "sha256": "d05a730d86c6455879baf203fbf7d4f2c6b16c97f299e5b593e4080cc27bbcde",
+      "capture_sha256": "e63429bfa6dab2b97d42bf0ceddc5e850291592525694afc39681509bcd5f429",
+      "paired_truth_sha256": "444680c5090dd179e8044311308aeb2a1c885abaed87440185dceedeeed3648e",
+      "roi_pixels": 47233,
+      "shared_truth_sha256": "f2179a0ea99bf8ffab365d255eb5b993bcaf191cd61f326e400c3475f1f0eafd",
+      "shared_mask_sha256": "c0093471d7b0266a85dfce4259fae1f2d6c1ff5cbf8c79c77ad29a5f675c9034"
+    },
+    {
+      "view": "high",
+      "case_id": "street-b-m1003",
+      "sha256": "302afe9b24c432ea6cc9ccbae322404441346d432668d0386793ea1aed215528",
+      "capture_sha256": "9c3a6accebe7ec484c9e1c22284a826d3f1043b4e9235a6ce6658cba5e466ab3",
+      "paired_truth_sha256": "55ee89fe567b8fa7f1971f8e49f019ce2d0ff717f9d3f13219038902b9475b04",
+      "roi_pixels": 47112,
+      "shared_truth_sha256": "f2179a0ea99bf8ffab365d255eb5b993bcaf191cd61f326e400c3475f1f0eafd",
+      "shared_mask_sha256": "1bc82e239a5d92a7c9514eba2ce9940ae1e61b73fc483130e53935607e655406"
+    },
+    {
+      "view": "high",
+      "case_id": "yard-a-m1001",
+      "sha256": "a2958f9a4cd950963eefefb289b31fb6d740dbfdd8960af3c06379e80ba73a4c",
+      "capture_sha256": "380118417d7e1be67b7784d64f61b4fbadba38b54609dd88caf299e9edaf9ece",
+      "paired_truth_sha256": "a50e7126a8ae0baa14a35bd429cb907857f485559b0ee093b4fb690dc8476060",
+      "roi_pixels": 44177,
+      "shared_truth_sha256": "b58af8d8ebb36b7a07b80c5338725239a7792a011d7674e84e622c245b476584",
+      "shared_mask_sha256": "801914bab7e12ced1cbe75d3fa84550b899676bbf11b2bc55f4f98caa2c2a894"
+    },
+    {
+      "view": "high",
+      "case_id": "yard-a-m1002",
+      "sha256": "5016626f6dc42268a740d6b528c192c4b4f6db15378b48954de224f8935aa20d",
+      "capture_sha256": "cfd7338277251444409a99b578ec0762224d8cd7ac9d5cfb9b6c14566702f7a9",
+      "paired_truth_sha256": "8b9411beff6a4105da7b161f24d6cd1113f6f3e621976599fa2a537247c46341",
+      "roi_pixels": 44337,
+      "shared_truth_sha256": "b58af8d8ebb36b7a07b80c5338725239a7792a011d7674e84e622c245b476584",
+      "shared_mask_sha256": "c0397611afe18d3d3ccf498d57f54e8ff7d590abf123083c9ba851152a77edcc"
+    },
+    {
+      "view": "high",
+      "case_id": "yard-a-m1003",
+      "sha256": "e283c20058f492c95281bc196bb20bf0d47c23f707067ab57447a1982e3d04eb",
+      "capture_sha256": "f2c8ab998f5a1774f372e5a57cb811181eaca0d79c7ec950ff52fc8d3816d471",
+      "paired_truth_sha256": "f6976a5355f3f1193438d640694cd1d8d1734c632ab2dcffec0a2e5bb58ba0b5",
+      "roi_pixels": 44258,
+      "shared_truth_sha256": "b58af8d8ebb36b7a07b80c5338725239a7792a011d7674e84e622c245b476584",
+      "shared_mask_sha256": "7cf8ea713ac5c4239fd0cfc55d1bc67dbfc101fe4c390723e8c6185e0b4a5229"
+    },
+    {
+      "view": "low",
+      "case_id": "street-a-m1001",
+      "sha256": "ca262ee34994be6f52e16bfd7c5e58fc0c2d22fbe903258359b84b03a36297fc",
+      "capture_sha256": "00605f6d7bdc0b21cbc503aeacda2fbb38125b17951f2f911f03f54b23e62da2",
+      "paired_truth_sha256": "736e2997f68b802e71aae5354059945a899ac0e3633c986975567ee523dd00c7",
+      "roi_pixels": 40451,
+      "shared_truth_sha256": "adb0cd5439485d3664f971f15b9b8cafcad531498fe113ab069a63ba707b2fd9",
+      "shared_mask_sha256": "e0f8b027c2b8edd1a5308a5e46cb65415ac57c3973c19e299d6808f14440cc58"
+    },
+    {
+      "view": "low",
+      "case_id": "street-a-m1002",
+      "sha256": "f4a09950670525c76d35bffc37ead5937d3c3434c037de84a7768e3ab7a486f4",
+      "capture_sha256": "a497742f4ba1360cde9acaa277f45bc0a74a48e9490902120c00087d8a787e3b",
+      "paired_truth_sha256": "476b3bfd4320417f9fbf181026ecf660f9b1ba0624b77b5a74131952e27fe5f9",
+      "roi_pixels": 40517,
+      "shared_truth_sha256": "adb0cd5439485d3664f971f15b9b8cafcad531498fe113ab069a63ba707b2fd9",
+      "shared_mask_sha256": "e87f324304c4f15b0a1ef54c96a763946b4eb9ce3b18df6937337089cd5be87b"
+    },
+    {
+      "view": "low",
+      "case_id": "street-a-m1003",
+      "sha256": "94adeddac2f3fbce7d725326ec14e79a8c4afd0d7fbb37f28f3ffd1a0246bc1f",
+      "capture_sha256": "716e072fcdf5743ad0318c66b84403c1ce3fa94b655a77bc4d1ab6b99d4c6a21",
+      "paired_truth_sha256": "2b74c6086ade686778ccda821d910ea12811f5c3c8ae3beb37661e2631a3eb1f",
+      "roi_pixels": 40485,
+      "shared_truth_sha256": "adb0cd5439485d3664f971f15b9b8cafcad531498fe113ab069a63ba707b2fd9",
+      "shared_mask_sha256": "25e79596e5881445f08f3179dabd9c63f51268967540dd3205a72e71c93c5b38"
+    },
+    {
+      "view": "low",
+      "case_id": "street-b-m1001",
+      "sha256": "c947c4d872bed5f9571b3d9862f230633885005a4e889b4a5205e8aeb6061b2f",
+      "capture_sha256": "84d33d102069d5cbc63fdd0bb926fce913c81ffe7581f9c04a21c5a1841e9d22",
+      "paired_truth_sha256": "550514bbf944b8fb074eaf6387650616e61149425c51ac323af34298e933a430",
+      "roi_pixels": 40728,
+      "shared_truth_sha256": "00ede324da5b5d2894b7abf0d93a7c12632b3103236a3b9fcfec0b2dc50be584",
+      "shared_mask_sha256": "8eddc574e8334e4d18fd7c59f57f013c02a2f8fcb7f552199f8ed226b7790142"
+    },
+    {
+      "view": "low",
+      "case_id": "street-b-m1002",
+      "sha256": "6dd6b77be6158812671952e1c532f5e86101bcc39539c2849a527e5d417fc622",
+      "capture_sha256": "a97ec64ad75c0cb290401a586f04b6adbcec1b77f8ef01523fc48ad215e1548b",
+      "paired_truth_sha256": "e21ae6aa2d7162165ba855282e97f93d4d10417e5b543b303cd773bf0965d500",
+      "roi_pixels": 40898,
+      "shared_truth_sha256": "00ede324da5b5d2894b7abf0d93a7c12632b3103236a3b9fcfec0b2dc50be584",
+      "shared_mask_sha256": "cd56a467000d2446b5e8907b3c72612eff462085d0c99777bd48d6d191c10f82"
+    },
+    {
+      "view": "low",
+      "case_id": "street-b-m1003",
+      "sha256": "27d688a612c094ad2a51ebc9e29276272fe7f0139cead0ba1019801d471f3f89",
+      "capture_sha256": "973faac0c31c8515e3cb157e3885950111e88f10684fce8907bd0a3be28ee4d2",
+      "paired_truth_sha256": "1b997323197b6458a88617a7389205c36300d76ab81e035cc257442d5a3be744",
+      "roi_pixels": 40883,
+      "shared_truth_sha256": "00ede324da5b5d2894b7abf0d93a7c12632b3103236a3b9fcfec0b2dc50be584",
+      "shared_mask_sha256": "34b39dd1b106a5eecb8d9c37c77d96beb52117baabf2e4be0e4beef612d4859b"
+    },
+    {
+      "view": "low",
+      "case_id": "yard-a-m1001",
+      "sha256": "b97bfb4f30b9420621e37ad74beb3ac0b39cb60c0c66ab9a711a2754397980ad",
+      "capture_sha256": "0a2ce6670ee5ca36db6a9a139b5dd8c50af11fc834bfb5f7b2907f0850bb6aed",
+      "paired_truth_sha256": "baa6d2a13fed5db714ae500fdde4889094ea2813b3d10a085f89d2d325c8f7e2",
+      "roi_pixels": 10054,
+      "shared_truth_sha256": "876613cccccd3dadc47885e6ebaeb9e918994733e8b2ccc1bcc21b570480b638",
+      "shared_mask_sha256": "6f6ac46810a7e0e1d1d00dcb7b98d5746238dadb8b036d41505688e558e5c31b"
+    },
+    {
+      "view": "low",
+      "case_id": "yard-a-m1002",
+      "sha256": "8c33180a64ec0eb73df490d2f5ccd5464dce87d70b8c99247730f74fce5f66da",
+      "capture_sha256": "9e372c6f75beeb48c0cf90f3e77271b5ea2559079efef7b239cb57acc98ec01f",
+      "paired_truth_sha256": "90f80eb9886cba39e8af5995b977849e06e5f521896ff522719cf0e02917dcbe",
+      "roi_pixels": 10087,
+      "shared_truth_sha256": "876613cccccd3dadc47885e6ebaeb9e918994733e8b2ccc1bcc21b570480b638",
+      "shared_mask_sha256": "0a6c9ef624560e68900f2bcfc26fb8dbbfd040a65bebbb714dba0ef193b10ac8"
+    },
+    {
+      "view": "low",
+      "case_id": "yard-a-m1003",
+      "sha256": "3ae22545da7024134ac9209052245bdf438b6a853fb00ccc47955d53284e76b2",
+      "capture_sha256": "40f99c739692976a8704a29d4efae5484687d74c5c17f2eb571189d9107ce610",
+      "paired_truth_sha256": "249d91ff3e05475fd8f38bff8a629b117560fd8ae86b09b5f9522bd0574a860b",
+      "roi_pixels": 10077,
+      "shared_truth_sha256": "876613cccccd3dadc47885e6ebaeb9e918994733e8b2ccc1bcc21b570480b638",
+      "shared_mask_sha256": "515024ad47abf99895acb2f4921bc9a397cca7a343d065fe295325857088e445"
+    }
+  ],
+  "rows": [
+    {
+      "view": "high",
+      "case_id": "street-a-m1001",
+      "state": "nominal",
+      "report_sha256": "37870191e63c123376bfd4624ad6cb3f1f231b8f286e89de067b2ca8db3a0324",
+      "roi_pixels": 46867,
+      "rgba_sha256": "fe6c75770783afc9f5d50f21ee37300286c3c4f7ea0c34913ae0bdb88853cc36",
+      "selected_pixels": 46867,
+      "mae_rgb8": 16.706623708223983,
+      "rmse_rgb8": 29.1796766881498,
+      "max_absolute_rgb8": 187,
+      "exact_match": false,
+      "psnr_db": 18.829194096961814,
+      "timings": {
+        "render_wall": {
+          "count": 7,
+          "p50_ms": 0.320837,
+          "p95_ms": 0.968885
+        },
+        "gpu_draw": {
+          "count": 7,
+          "p50_ms": 0.011424,
+          "p95_ms": 0.013728
+        },
+        "upload_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "readback_copy_cpu": {
+          "count": 7,
+          "p50_ms": 0.258689,
+          "p95_ms": 0.915553
+        },
+        "fusion_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "layer_readback_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        }
+      },
+      "gl_renderer": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+      "source_fingerprint": "a3ae77f9c3d29ce854593902b6e61c7e20621443da9524d4d269cc456cc0a5da",
+      "server_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876",
+      "client_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876"
+    },
+    {
+      "view": "high",
+      "case_id": "street-a-m1001",
+      "state": "estimated",
+      "report_sha256": "9ec95f5b06b94eda1da8e3db9ff5d54eaac181e9c542b217a819d91c80c0ae22",
+      "roi_pixels": 46867,
+      "rgba_sha256": "f57915a6342498362f26e2b35410479fd2ba1f55168ea76cdd67819ee3199323",
+      "selected_pixels": 46867,
+      "mae_rgb8": 9.459683786032816,
+      "rmse_rgb8": 16.116384862598533,
+      "max_absolute_rgb8": 191,
+      "exact_match": false,
+      "psnr_db": 23.985451011037448,
+      "timings": {
+        "render_wall": {
+          "count": 7,
+          "p50_ms": 0.272236,
+          "p95_ms": 0.638969
+        },
+        "gpu_draw": {
+          "count": 7,
+          "p50_ms": 0.009184,
+          "p95_ms": 0.010176
+        },
+        "upload_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "readback_copy_cpu": {
+          "count": 7,
+          "p50_ms": 0.179861,
+          "p95_ms": 0.28507
+        },
+        "fusion_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "layer_readback_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        }
+      },
+      "gl_renderer": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+      "source_fingerprint": "a3ae77f9c3d29ce854593902b6e61c7e20621443da9524d4d269cc456cc0a5da",
+      "server_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876",
+      "client_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876"
+    },
+    {
+      "view": "high",
+      "case_id": "street-a-m1001",
+      "state": "true",
+      "report_sha256": "195d1f129215d46f6435ec6c09dcda1f319b08b5e6fb180010a8dd9205222f8e",
+      "roi_pixels": 46867,
+      "rgba_sha256": "0d38ade09ea682430ab46116ac90f97d5410375ce1b658165e970f6afa795d3d",
+      "selected_pixels": 46867,
+      "mae_rgb8": 9.487898379101145,
+      "rmse_rgb8": 16.10405413104043,
+      "max_absolute_rgb8": 190,
+      "exact_match": false,
+      "psnr_db": 23.992099174876568,
+      "timings": {
+        "render_wall": {
+          "count": 7,
+          "p50_ms": 0.14839,
+          "p95_ms": 0.172787
+        },
+        "gpu_draw": {
+          "count": 7,
+          "p50_ms": 0.008512,
+          "p95_ms": 0.009952
+        },
+        "upload_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "readback_copy_cpu": {
+          "count": 7,
+          "p50_ms": 0.125437,
+          "p95_ms": 0.140957
+        },
+        "fusion_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "layer_readback_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        }
+      },
+      "gl_renderer": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+      "source_fingerprint": "a3ae77f9c3d29ce854593902b6e61c7e20621443da9524d4d269cc456cc0a5da",
+      "server_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876",
+      "client_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876"
+    },
+    {
+      "view": "high",
+      "case_id": "street-a-m1002",
+      "state": "nominal",
+      "report_sha256": "10bb23378f7118e2e4a9fc6ecedfb2d6c047ee73b0fc2fad25922fd34578635e",
+      "roi_pixels": 47018,
+      "rgba_sha256": "f4a89fb8e1d6dca8635e53cbe18c2b3a82af6525aac86cb082d60ed7c297fc87",
+      "selected_pixels": 47018,
+      "mae_rgb8": 11.776773434287577,
+      "rmse_rgb8": 21.543821355638265,
+      "max_absolute_rgb8": 171,
+      "exact_match": false,
+      "psnr_db": 21.46434882491581,
+      "timings": {
+        "render_wall": {
+          "count": 7,
+          "p50_ms": 0.24336,
+          "p95_ms": 0.350544
+        },
+        "gpu_draw": {
+          "count": 7,
+          "p50_ms": 0.008672,
+          "p95_ms": 0.010496
+        },
+        "upload_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "readback_copy_cpu": {
+          "count": 7,
+          "p50_ms": 0.157739,
+          "p95_ms": 0.217722
+        },
+        "fusion_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "layer_readback_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        }
+      },
+      "gl_renderer": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+      "source_fingerprint": "a3ae77f9c3d29ce854593902b6e61c7e20621443da9524d4d269cc456cc0a5da",
+      "server_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876",
+      "client_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876"
+    },
+    {
+      "view": "high",
+      "case_id": "street-a-m1002",
+      "state": "estimated",
+      "report_sha256": "024b92d10405bc55ea8dabdacf6036b6d3804e773309b5ab9026ae5210ac77be",
+      "roi_pixels": 47018,
+      "rgba_sha256": "f5475a062c691300f99a45c2d6a4184fef93e00db729a5d9b1363688b0e51de6",
+      "selected_pixels": 47018,
+      "mae_rgb8": 9.44176698285763,
+      "rmse_rgb8": 16.12142277332137,
+      "max_absolute_rgb8": 191,
+      "exact_match": false,
+      "psnr_db": 23.982736264588475,
+      "timings": {
+        "render_wall": {
+          "count": 7,
+          "p50_ms": 0.171484,
+          "p95_ms": 0.188697
+        },
+        "gpu_draw": {
+          "count": 7,
+          "p50_ms": 0.009824,
+          "p95_ms": 0.009984
+        },
+        "upload_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "readback_copy_cpu": {
+          "count": 7,
+          "p50_ms": 0.129325,
+          "p95_ms": 0.145485
+        },
+        "fusion_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "layer_readback_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        }
+      },
+      "gl_renderer": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+      "source_fingerprint": "a3ae77f9c3d29ce854593902b6e61c7e20621443da9524d4d269cc456cc0a5da",
+      "server_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876",
+      "client_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876"
+    },
+    {
+      "view": "high",
+      "case_id": "street-a-m1002",
+      "state": "true",
+      "report_sha256": "67f436419a0d59fdf1df419c4c1cab4fd5e205cd06c9b79eb780299ecb9da178",
+      "roi_pixels": 47018,
+      "rgba_sha256": "45e8007988da8af019f3c25ca7fadde1c353a349d9ed0985b5ee6ff709f9000c",
+      "selected_pixels": 47018,
+      "mae_rgb8": 9.43694613410467,
+      "rmse_rgb8": 16.11013513673776,
+      "max_absolute_rgb8": 191,
+      "exact_match": false,
+      "psnr_db": 23.98881994009194,
+      "timings": {
+        "render_wall": {
+          "count": 7,
+          "p50_ms": 0.190591,
+          "p95_ms": 0.226459
+        },
+        "gpu_draw": {
+          "count": 7,
+          "p50_ms": 0.008544,
+          "p95_ms": 0.00896
+        },
+        "upload_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "readback_copy_cpu": {
+          "count": 7,
+          "p50_ms": 0.139644,
+          "p95_ms": 0.173969
+        },
+        "fusion_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "layer_readback_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        }
+      },
+      "gl_renderer": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+      "source_fingerprint": "a3ae77f9c3d29ce854593902b6e61c7e20621443da9524d4d269cc456cc0a5da",
+      "server_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876",
+      "client_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876"
+    },
+    {
+      "view": "high",
+      "case_id": "street-a-m1003",
+      "state": "nominal",
+      "report_sha256": "9485eb6a1f6739f620bf8423779a737a2a35af9d34a1e119f100fa90652c3021",
+      "roi_pixels": 46901,
+      "rgba_sha256": "31c0f2fc4c7fdb2b05ca545f7a0c8219cb2d6adfeaf5d028486bbcef457b647e",
+      "selected_pixels": 46901,
+      "mae_rgb8": 13.674790160835235,
+      "rmse_rgb8": 24.857467795019176,
+      "max_absolute_rgb8": 191,
+      "exact_match": false,
+      "psnr_db": 20.221665900251324,
+      "timings": {
+        "render_wall": {
+          "count": 7,
+          "p50_ms": 0.139654,
+          "p95_ms": 0.159712
+        },
+        "gpu_draw": {
+          "count": 7,
+          "p50_ms": 0.009088,
+          "p95_ms": 0.01056
+        },
+        "upload_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "readback_copy_cpu": {
+          "count": 7,
+          "p50_ms": 0.122311,
+          "p95_ms": 0.136308
+        },
+        "fusion_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "layer_readback_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        }
+      },
+      "gl_renderer": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+      "source_fingerprint": "a3ae77f9c3d29ce854593902b6e61c7e20621443da9524d4d269cc456cc0a5da",
+      "server_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876",
+      "client_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876"
+    },
+    {
+      "view": "high",
+      "case_id": "street-a-m1003",
+      "state": "estimated",
+      "report_sha256": "b662667b2a0d1cd60c9ec42e8971b73c061a5fd61ff7d5e8df15a94311d81194",
+      "roi_pixels": 46901,
+      "rgba_sha256": "0c0ca2f9bc5b6dc6f18df8cbb32717de060bdf52cef295dbe7a4053cf8187d76",
+      "selected_pixels": 46901,
+      "mae_rgb8": 9.410751725265275,
+      "rmse_rgb8": 15.940873040795868,
+      "max_absolute_rgb8": 191,
+      "exact_match": false,
+      "psnr_db": 24.08056155051712,
+      "timings": {
+        "render_wall": {
+          "count": 7,
+          "p50_ms": 0.192865,
+          "p95_ms": 0.212623
+        },
+        "gpu_draw": {
+          "count": 7,
+          "p50_ms": 0.0096,
+          "p95_ms": 0.010112
+        },
+        "upload_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "readback_copy_cpu": {
+          "count": 7,
+          "p50_ms": 0.140256,
+          "p95_ms": 0.14804
+        },
+        "fusion_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "layer_readback_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        }
+      },
+      "gl_renderer": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+      "source_fingerprint": "a3ae77f9c3d29ce854593902b6e61c7e20621443da9524d4d269cc456cc0a5da",
+      "server_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876",
+      "client_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876"
+    },
+    {
+      "view": "high",
+      "case_id": "street-a-m1003",
+      "state": "true",
+      "report_sha256": "cc0f723a7350626d9e96f76d812a5ab4ec1fe35f5bbae93f96cdf2f883af30b6",
+      "roi_pixels": 46901,
+      "rgba_sha256": "d82f58a210a408288e2ce4326f33e5c253ce31938366775d99c9d1565193da4e",
+      "selected_pixels": 46901,
+      "mae_rgb8": 9.399344719018073,
+      "rmse_rgb8": 15.888417928420038,
+      "max_absolute_rgb8": 191,
+      "exact_match": false,
+      "psnr_db": 24.109190509294102,
+      "timings": {
+        "render_wall": {
+          "count": 7,
+          "p50_ms": 0.24857,
+          "p95_ms": 0.289508
+        },
+        "gpu_draw": {
+          "count": 7,
+          "p50_ms": 0.008512,
+          "p95_ms": 0.009504
+        },
+        "upload_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "readback_copy_cpu": {
+          "count": 7,
+          "p50_ms": 0.161245,
+          "p95_ms": 0.181163
+        },
+        "fusion_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "layer_readback_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        }
+      },
+      "gl_renderer": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+      "source_fingerprint": "a3ae77f9c3d29ce854593902b6e61c7e20621443da9524d4d269cc456cc0a5da",
+      "server_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876",
+      "client_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876"
+    },
+    {
+      "view": "high",
+      "case_id": "street-b-m1001",
+      "state": "nominal",
+      "report_sha256": "bbb829536a0af46fab4b7a2abc1efdda72c3de266d96d98bde3305d9e08c4553",
+      "roi_pixels": 47089,
+      "rgba_sha256": "b1b19312489e341e3835ca28089f61cb23986e275509819b17d8002899696400",
+      "selected_pixels": 47089,
+      "mae_rgb8": 15.84002633311389,
+      "rmse_rgb8": 28.357466157375793,
+      "max_absolute_rgb8": 189,
+      "exact_match": false,
+      "psnr_db": 19.07745515958132,
+      "timings": {
+        "render_wall": {
+          "count": 7,
+          "p50_ms": 0.215458,
+          "p95_ms": 0.257617
+        },
+        "gpu_draw": {
+          "count": 7,
+          "p50_ms": 0.00992,
+          "p95_ms": 0.01024
+        },
+        "upload_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "readback_copy_cpu": {
+          "count": 7,
+          "p50_ms": 0.148551,
+          "p95_ms": 0.169972
+        },
+        "fusion_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "layer_readback_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        }
+      },
+      "gl_renderer": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+      "source_fingerprint": "a3ae77f9c3d29ce854593902b6e61c7e20621443da9524d4d269cc456cc0a5da",
+      "server_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876",
+      "client_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876"
+    },
+    {
+      "view": "high",
+      "case_id": "street-b-m1001",
+      "state": "estimated",
+      "report_sha256": "9b9490087b2367411d85bbc9a5f1cc272a5ea4b259af3e088fd6a86f0b0d6661",
+      "roi_pixels": 47089,
+      "rgba_sha256": "5d66a165286fd99c4cfca07530f8c9a946a36214a857edd93f0ac38a2e00d08e",
+      "selected_pixels": 47089,
+      "mae_rgb8": 8.78294293784111,
+      "rmse_rgb8": 14.950119399720645,
+      "max_absolute_rgb8": 192,
+      "exact_match": false,
+      "psnr_db": 24.637910384991542,
+      "timings": {
+        "render_wall": {
+          "count": 7,
+          "p50_ms": 0.24288,
+          "p95_ms": 0.268849
+        },
+        "gpu_draw": {
+          "count": 7,
+          "p50_ms": 0.008992,
+          "p95_ms": 0.010208
+        },
+        "upload_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "readback_copy_cpu": {
+          "count": 7,
+          "p50_ms": 0.157267,
+          "p95_ms": 0.170512
+        },
+        "fusion_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "layer_readback_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        }
+      },
+      "gl_renderer": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+      "source_fingerprint": "a3ae77f9c3d29ce854593902b6e61c7e20621443da9524d4d269cc456cc0a5da",
+      "server_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876",
+      "client_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876"
+    },
+    {
+      "view": "high",
+      "case_id": "street-b-m1001",
+      "state": "true",
+      "report_sha256": "95442253e97efdadc1bf21ea6849dc45a29af4210b44e0eb41abc970ab8e7ff3",
+      "roi_pixels": 47089,
+      "rgba_sha256": "88de078ff1bfafaf89dfa2c6e606cc0a8654aa8afa218d44c8c76ce389ab53dc",
+      "selected_pixels": 47089,
+      "mae_rgb8": 8.774044893711908,
+      "rmse_rgb8": 14.759988350871005,
+      "max_absolute_rgb8": 192,
+      "exact_match": false,
+      "psnr_db": 24.749083314161467,
+      "timings": {
+        "render_wall": {
+          "count": 7,
+          "p50_ms": 0.249613,
+          "p95_ms": 0.285581
+        },
+        "gpu_draw": {
+          "count": 7,
+          "p50_ms": 0.008736,
+          "p95_ms": 0.009376
+        },
+        "upload_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "readback_copy_cpu": {
+          "count": 7,
+          "p50_ms": 0.167708,
+          "p95_ms": 0.199548
+        },
+        "fusion_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "layer_readback_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        }
+      },
+      "gl_renderer": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+      "source_fingerprint": "a3ae77f9c3d29ce854593902b6e61c7e20621443da9524d4d269cc456cc0a5da",
+      "server_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876",
+      "client_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876"
+    },
+    {
+      "view": "high",
+      "case_id": "street-b-m1002",
+      "state": "nominal",
+      "report_sha256": "d1ec7d94698595bf4ae9705735a24bf2b83187ed49cdded8f22ade93682becef",
+      "roi_pixels": 47233,
+      "rgba_sha256": "d8911cdf244d5766d2b617324889284ccdb3af7dd0a2e96c6a23f90f03e57881",
+      "selected_pixels": 47233,
+      "mae_rgb8": 11.397165823329734,
+      "rmse_rgb8": 21.280820544090933,
+      "max_absolute_rgb8": 170,
+      "exact_match": false,
+      "psnr_db": 21.571036219958973,
+      "timings": {
+        "render_wall": {
+          "count": 7,
+          "p50_ms": 0.242529,
+          "p95_ms": 0.359059
+        },
+        "gpu_draw": {
+          "count": 7,
+          "p50_ms": 0.008512,
+          "p95_ms": 0.010496
+        },
+        "upload_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "readback_copy_cpu": {
+          "count": 7,
+          "p50_ms": 0.159162,
+          "p95_ms": 0.221479
+        },
+        "fusion_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "layer_readback_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        }
+      },
+      "gl_renderer": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+      "source_fingerprint": "a3ae77f9c3d29ce854593902b6e61c7e20621443da9524d4d269cc456cc0a5da",
+      "server_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876",
+      "client_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876"
+    },
+    {
+      "view": "high",
+      "case_id": "street-b-m1002",
+      "state": "estimated",
+      "report_sha256": "f6153ed91daaabe7590a06483c68d7945c26ff025dabc793a060427efee6d9d6",
+      "roi_pixels": 47233,
+      "rgba_sha256": "64b2c5c5f8b81b14dcbbcdfef6e3e068970b6be0c926aa955a49734dab8af8ec",
+      "selected_pixels": 47233,
+      "mae_rgb8": 8.647047615014927,
+      "rmse_rgb8": 14.600384555029967,
+      "max_absolute_rgb8": 192,
+      "exact_match": false,
+      "psnr_db": 24.843517715006705,
+      "timings": {
+        "render_wall": {
+          "count": 7,
+          "p50_ms": 0.160674,
+          "p95_ms": 0.169951
+        },
+        "gpu_draw": {
+          "count": 7,
+          "p50_ms": 0.00912,
+          "p95_ms": 0.010208
+        },
+        "upload_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "readback_copy_cpu": {
+          "count": 7,
+          "p50_ms": 0.128794,
+          "p95_ms": 0.13721
+        },
+        "fusion_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "layer_readback_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        }
+      },
+      "gl_renderer": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+      "source_fingerprint": "a3ae77f9c3d29ce854593902b6e61c7e20621443da9524d4d269cc456cc0a5da",
+      "server_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876",
+      "client_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876"
+    },
+    {
+      "view": "high",
+      "case_id": "street-b-m1002",
+      "state": "true",
+      "report_sha256": "3484d3508bfa49d941b87f8787a1b3c97d0b31afdb0a45292c6615cf619a30af",
+      "roi_pixels": 47233,
+      "rgba_sha256": "7325fb36cff5bc3ebffb1a2f462a5192a8fc5eba45fcb140ee748a57c75f81c6",
+      "selected_pixels": 47233,
+      "mae_rgb8": 8.621006499693012,
+      "rmse_rgb8": 14.503408780654283,
+      "max_absolute_rgb8": 192,
+      "exact_match": false,
+      "psnr_db": 24.901401852750162,
+      "timings": {
+        "render_wall": {
+          "count": 7,
+          "p50_ms": 0.17466,
+          "p95_ms": 0.226649
+        },
+        "gpu_draw": {
+          "count": 7,
+          "p50_ms": 0.008544,
+          "p95_ms": 0.008768
+        },
+        "upload_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "readback_copy_cpu": {
+          "count": 7,
+          "p50_ms": 0.131168,
+          "p95_ms": 0.173007
+        },
+        "fusion_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "layer_readback_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        }
+      },
+      "gl_renderer": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+      "source_fingerprint": "a3ae77f9c3d29ce854593902b6e61c7e20621443da9524d4d269cc456cc0a5da",
+      "server_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876",
+      "client_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876"
+    },
+    {
+      "view": "high",
+      "case_id": "street-b-m1003",
+      "state": "nominal",
+      "report_sha256": "eff18698ee046cd8a30c30b8fcc170a874e91894b1748576131705af9d51c4d5",
+      "roi_pixels": 47112,
+      "rgba_sha256": "b55e9ebd9953d779b7ff63e884330212a4589b0a69899774271f38e81f71f468",
+      "selected_pixels": 47112,
+      "mae_rgb8": 12.486372898624554,
+      "rmse_rgb8": 22.847380633979196,
+      "max_absolute_rgb8": 192,
+      "exact_match": false,
+      "psnr_db": 20.954075267971646,
+      "timings": {
+        "render_wall": {
+          "count": 7,
+          "p50_ms": 0.287955,
+          "p95_ms": 0.374739
+        },
+        "gpu_draw": {
+          "count": 7,
+          "p50_ms": 0.009568,
+          "p95_ms": 0.010048
+        },
+        "upload_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "readback_copy_cpu": {
+          "count": 7,
+          "p50_ms": 0.174761,
+          "p95_ms": 0.215588
+        },
+        "fusion_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "layer_readback_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        }
+      },
+      "gl_renderer": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+      "source_fingerprint": "a3ae77f9c3d29ce854593902b6e61c7e20621443da9524d4d269cc456cc0a5da",
+      "server_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876",
+      "client_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876"
+    },
+    {
+      "view": "high",
+      "case_id": "street-b-m1003",
+      "state": "estimated",
+      "report_sha256": "02051a94c562b9567dfedc46469720d35c46e884c45d5aa4305f67c42bc71117",
+      "roi_pixels": 47112,
+      "rgba_sha256": "cab4bcf2773828bfbca71adc03ad8c5c33a6f40153dc693810022d1f243376f6",
+      "selected_pixels": 47112,
+      "mae_rgb8": 8.605111224316522,
+      "rmse_rgb8": 14.325636095825152,
+      "max_absolute_rgb8": 192,
+      "exact_match": false,
+      "psnr_db": 25.00852531104091,
+      "timings": {
+        "render_wall": {
+          "count": 7,
+          "p50_ms": 0.172496,
+          "p95_ms": 0.197093
+        },
+        "gpu_draw": {
+          "count": 7,
+          "p50_ms": 0.008448,
+          "p95_ms": 0.010144
+        },
+        "upload_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "readback_copy_cpu": {
+          "count": 7,
+          "p50_ms": 0.129745,
+          "p95_ms": 0.155194
+        },
+        "fusion_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "layer_readback_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        }
+      },
+      "gl_renderer": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+      "source_fingerprint": "a3ae77f9c3d29ce854593902b6e61c7e20621443da9524d4d269cc456cc0a5da",
+      "server_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876",
+      "client_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876"
+    },
+    {
+      "view": "high",
+      "case_id": "street-b-m1003",
+      "state": "true",
+      "report_sha256": "f459f3b2a10e8bef96bbd98be2be751ae3d7dcda01f1860cf286e635e897ae1a",
+      "roi_pixels": 47112,
+      "rgba_sha256": "a907a3670b803c197c64570d4f4a902498b041c079249e03115b79cf3a9bcfca",
+      "selected_pixels": 47112,
+      "mae_rgb8": 8.582922963717666,
+      "rmse_rgb8": 14.198088274375847,
+      "max_absolute_rgb8": 191,
+      "exact_match": false,
+      "psnr_db": 25.08620616859869,
+      "timings": {
+        "render_wall": {
+          "count": 7,
+          "p50_ms": 0.188066,
+          "p95_ms": 0.246467
+        },
+        "gpu_draw": {
+          "count": 7,
+          "p50_ms": 0.008608,
+          "p95_ms": 0.008928
+        },
+        "upload_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "readback_copy_cpu": {
+          "count": 7,
+          "p50_ms": 0.1428,
+          "p95_ms": 0.178347
+        },
+        "fusion_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "layer_readback_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        }
+      },
+      "gl_renderer": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+      "source_fingerprint": "a3ae77f9c3d29ce854593902b6e61c7e20621443da9524d4d269cc456cc0a5da",
+      "server_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876",
+      "client_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876"
+    },
+    {
+      "view": "high",
+      "case_id": "yard-a-m1001",
+      "state": "nominal",
+      "report_sha256": "804881928367f925ae7e5bd8c3349c3ad54e1f1a42e68b092e91d3c7c6074572",
+      "roi_pixels": 44177,
+      "rgba_sha256": "613e6942a68f3a07e8a70bf9c82958214ba3a2d1e8e6639be9948fcfecf07eb5",
+      "selected_pixels": 44177,
+      "mae_rgb8": 13.711592004889422,
+      "rmse_rgb8": 25.082139247787143,
+      "max_absolute_rgb8": 170,
+      "exact_match": false,
+      "psnr_db": 20.1435121171096,
+      "timings": {
+        "render_wall": {
+          "count": 7,
+          "p50_ms": 0.187495,
+          "p95_ms": 0.2853
+        },
+        "gpu_draw": {
+          "count": 7,
+          "p50_ms": 0.009472,
+          "p95_ms": 0.010016
+        },
+        "upload_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "readback_copy_cpu": {
+          "count": 7,
+          "p50_ms": 0.134915,
+          "p95_ms": 0.213244
+        },
+        "fusion_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "layer_readback_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        }
+      },
+      "gl_renderer": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+      "source_fingerprint": "a3ae77f9c3d29ce854593902b6e61c7e20621443da9524d4d269cc456cc0a5da",
+      "server_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876",
+      "client_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876"
+    },
+    {
+      "view": "high",
+      "case_id": "yard-a-m1001",
+      "state": "estimated",
+      "report_sha256": "b3bf53ea582e07c21c2db47e452d7b67b4123f8cac219635ef044bee6bb52d00",
+      "roi_pixels": 44177,
+      "rgba_sha256": "35672d90e7deee8317903e81e58fb22d88c132f5b3d79720470e531d3d2a5115",
+      "selected_pixels": 44177,
+      "mae_rgb8": 5.606748609759226,
+      "rmse_rgb8": 11.11226215324551,
+      "max_absolute_rgb8": 190,
+      "exact_match": false,
+      "psnr_db": 27.214754039824115,
+      "timings": {
+        "render_wall": {
+          "count": 7,
+          "p50_ms": 0.173789,
+          "p95_ms": 0.200078
+        },
+        "gpu_draw": {
+          "count": 7,
+          "p50_ms": 0.008672,
+          "p95_ms": 0.010336
+        },
+        "upload_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "readback_copy_cpu": {
+          "count": 7,
+          "p50_ms": 0.127973,
+          "p95_ms": 0.168539
+        },
+        "fusion_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "layer_readback_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        }
+      },
+      "gl_renderer": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+      "source_fingerprint": "a3ae77f9c3d29ce854593902b6e61c7e20621443da9524d4d269cc456cc0a5da",
+      "server_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876",
+      "client_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876"
+    },
+    {
+      "view": "high",
+      "case_id": "yard-a-m1001",
+      "state": "true",
+      "report_sha256": "643ff63168812c812bc846a21aaa812cb83b8d1fa04b9051c8f6f3c42e099364",
+      "roi_pixels": 44177,
+      "rgba_sha256": "663ca151455f985810cd47252e78b7ab92e57818239cd51a489503c3c8c26e60",
+      "selected_pixels": 44177,
+      "mae_rgb8": 5.538681516022667,
+      "rmse_rgb8": 10.965043531194468,
+      "max_absolute_rgb8": 183,
+      "exact_match": false,
+      "psnr_db": 27.330596405380415,
+      "timings": {
+        "render_wall": {
+          "count": 7,
+          "p50_ms": 0.184309,
+          "p95_ms": 0.220227
+        },
+        "gpu_draw": {
+          "count": 7,
+          "p50_ms": 0.008544,
+          "p95_ms": 0.009664
+        },
+        "upload_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "readback_copy_cpu": {
+          "count": 7,
+          "p50_ms": 0.138953,
+          "p95_ms": 0.142019
+        },
+        "fusion_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "layer_readback_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        }
+      },
+      "gl_renderer": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+      "source_fingerprint": "a3ae77f9c3d29ce854593902b6e61c7e20621443da9524d4d269cc456cc0a5da",
+      "server_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876",
+      "client_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876"
+    },
+    {
+      "view": "high",
+      "case_id": "yard-a-m1002",
+      "state": "nominal",
+      "report_sha256": "a92e4245350f4d464653a7b7234d64380a9422eeb5e552a8e7c10df43ea5c25b",
+      "roi_pixels": 44337,
+      "rgba_sha256": "4c63ca2bbfecae28043d676ad1d882f7166225ab2525c9be7d1994eefec59391",
+      "selected_pixels": 44337,
+      "mae_rgb8": 10.896910781815038,
+      "rmse_rgb8": 20.034344172769963,
+      "max_absolute_rgb8": 150,
+      "exact_match": false,
+      "psnr_db": 22.095301002537457,
+      "timings": {
+        "render_wall": {
+          "count": 7,
+          "p50_ms": 0.321198,
+          "p95_ms": 0.542387
+        },
+        "gpu_draw": {
+          "count": 7,
+          "p50_ms": 0.00848,
+          "p95_ms": 0.009856
+        },
+        "upload_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "readback_copy_cpu": {
+          "count": 7,
+          "p50_ms": 0.205318,
+          "p95_ms": 0.31158
+        },
+        "fusion_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "layer_readback_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        }
+      },
+      "gl_renderer": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+      "source_fingerprint": "a3ae77f9c3d29ce854593902b6e61c7e20621443da9524d4d269cc456cc0a5da",
+      "server_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876",
+      "client_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876"
+    },
+    {
+      "view": "high",
+      "case_id": "yard-a-m1002",
+      "state": "estimated",
+      "report_sha256": "9ca5531bb8f229a501ceba682907128af7b73b8ae8efd562cc1bed284a975ef5",
+      "roi_pixels": 44337,
+      "rgba_sha256": "b0815631aeecd081ad53dc5993073b17194d190ca81e5d6880f063696f8cc1e1",
+      "selected_pixels": 44337,
+      "mae_rgb8": 5.492350256745683,
+      "rmse_rgb8": 10.960283595618318,
+      "max_absolute_rgb8": 189,
+      "exact_match": false,
+      "psnr_db": 27.33436777677288,
+      "timings": {
+        "render_wall": {
+          "count": 7,
+          "p50_ms": 0.256856,
+          "p95_ms": 0.319835
+        },
+        "gpu_draw": {
+          "count": 7,
+          "p50_ms": 0.009664,
+          "p95_ms": 0.010304
+        },
+        "upload_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "readback_copy_cpu": {
+          "count": 7,
+          "p50_ms": 0.168409,
+          "p95_ms": 0.180121
+        },
+        "fusion_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "layer_readback_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        }
+      },
+      "gl_renderer": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+      "source_fingerprint": "a3ae77f9c3d29ce854593902b6e61c7e20621443da9524d4d269cc456cc0a5da",
+      "server_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876",
+      "client_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876"
+    },
+    {
+      "view": "high",
+      "case_id": "yard-a-m1002",
+      "state": "true",
+      "report_sha256": "95b9136239d2f3ea1e8d4c194e924429ba18f70019b87d9bf1a46c9a8ae51735",
+      "roi_pixels": 44337,
+      "rgba_sha256": "c1595d17b74d998270050f0264b145c1ce9e12a74f177c2bf46e091f05a2021e",
+      "selected_pixels": 44337,
+      "mae_rgb8": 5.488937005210095,
+      "rmse_rgb8": 10.921931728077523,
+      "max_absolute_rgb8": 184,
+      "exact_match": false,
+      "psnr_db": 27.364814459161913,
+      "timings": {
+        "render_wall": {
+          "count": 7,
+          "p50_ms": 0.253791,
+          "p95_ms": 0.309346
+        },
+        "gpu_draw": {
+          "count": 7,
+          "p50_ms": 0.008608,
+          "p95_ms": 0.008768
+        },
+        "upload_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "readback_copy_cpu": {
+          "count": 7,
+          "p50_ms": 0.163019,
+          "p95_ms": 0.183287
+        },
+        "fusion_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "layer_readback_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        }
+      },
+      "gl_renderer": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+      "source_fingerprint": "a3ae77f9c3d29ce854593902b6e61c7e20621443da9524d4d269cc456cc0a5da",
+      "server_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876",
+      "client_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876"
+    },
+    {
+      "view": "high",
+      "case_id": "yard-a-m1003",
+      "state": "nominal",
+      "report_sha256": "a80e6f0ff9f9d1cf1069de1c476de0cc1caf1fb9b3b3d27ebed8f7827a670050",
+      "roi_pixels": 44258,
+      "rgba_sha256": "7a6783a5eb7df7562f2fff1459eb424959f7a48ce77aa05abe049914cc32784c",
+      "selected_pixels": 44258,
+      "mae_rgb8": 9.237591697169627,
+      "rmse_rgb8": 18.10322370580265,
+      "max_absolute_rgb8": 172,
+      "exact_match": false,
+      "psnr_db": 22.97568524612512,
+      "timings": {
+        "render_wall": {
+          "count": 7,
+          "p50_ms": 0.164141,
+          "p95_ms": 0.21658
+        },
+        "gpu_draw": {
+          "count": 7,
+          "p50_ms": 0.008672,
+          "p95_ms": 0.010272
+        },
+        "upload_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "readback_copy_cpu": {
+          "count": 7,
+          "p50_ms": 0.133934,
+          "p95_ms": 0.154403
+        },
+        "fusion_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "layer_readback_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        }
+      },
+      "gl_renderer": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+      "source_fingerprint": "a3ae77f9c3d29ce854593902b6e61c7e20621443da9524d4d269cc456cc0a5da",
+      "server_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876",
+      "client_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876"
+    },
+    {
+      "view": "high",
+      "case_id": "yard-a-m1003",
+      "state": "estimated",
+      "report_sha256": "0299cab8605418e62f909465516d3f13f905cf1b6f04fbb9c3680554e40ea30c",
+      "roi_pixels": 44258,
+      "rgba_sha256": "3c1e43bd383be40363990934615dfd656cf47737ddb4366a7e52a5b87280e877",
+      "selected_pixels": 44258,
+      "mae_rgb8": 5.569426243089762,
+      "rmse_rgb8": 11.064178133891406,
+      "max_absolute_rgb8": 190,
+      "exact_match": false,
+      "psnr_db": 27.252420422215657,
+      "timings": {
+        "render_wall": {
+          "count": 7,
+          "p50_ms": 0.215007,
+          "p95_ms": 0.237108
+        },
+        "gpu_draw": {
+          "count": 7,
+          "p50_ms": 0.008544,
+          "p95_ms": 0.008608
+        },
+        "upload_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "readback_copy_cpu": {
+          "count": 7,
+          "p50_ms": 0.151416,
+          "p95_ms": 0.162247
+        },
+        "fusion_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "layer_readback_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        }
+      },
+      "gl_renderer": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+      "source_fingerprint": "a3ae77f9c3d29ce854593902b6e61c7e20621443da9524d4d269cc456cc0a5da",
+      "server_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876",
+      "client_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876"
+    },
+    {
+      "view": "high",
+      "case_id": "yard-a-m1003",
+      "state": "true",
+      "report_sha256": "5a18def11a09821eb70d9530dc618be87abbcf36245028c4c4feffb571b89ede",
+      "roi_pixels": 44258,
+      "rgba_sha256": "7e794dd195d98bf03d9e278a3b6330f89bfb17944ec1386e10a7092222721b28",
+      "selected_pixels": 44258,
+      "mae_rgb8": 5.541017066594363,
+      "rmse_rgb8": 10.99049547136123,
+      "max_absolute_rgb8": 183,
+      "exact_match": false,
+      "psnr_db": 27.310458175809494,
+      "timings": {
+        "render_wall": {
+          "count": 7,
+          "p50_ms": 0.195099,
+          "p95_ms": 0.261104
+        },
+        "gpu_draw": {
+          "count": 7,
+          "p50_ms": 0.008736,
+          "p95_ms": 0.008832
+        },
+        "upload_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "readback_copy_cpu": {
+          "count": 7,
+          "p50_ms": 0.148591,
+          "p95_ms": 0.17437
+        },
+        "fusion_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "layer_readback_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        }
+      },
+      "gl_renderer": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+      "source_fingerprint": "a3ae77f9c3d29ce854593902b6e61c7e20621443da9524d4d269cc456cc0a5da",
+      "server_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876",
+      "client_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876"
+    },
+    {
+      "view": "low",
+      "case_id": "street-a-m1001",
+      "state": "nominal",
+      "report_sha256": "9b04380e6c0190798f3933c4c3c3f68a49cab3f2802ebe8480ce15623e96d51f",
+      "roi_pixels": 40451,
+      "rgba_sha256": "af02424a66316360ea4ba916a79551044657b7cf89adb6ff498509c28ef7a26a",
+      "selected_pixels": 40451,
+      "mae_rgb8": 25.68120277207815,
+      "rmse_rgb8": 36.75346192855716,
+      "max_absolute_rgb8": 148,
+      "exact_match": false,
+      "psnr_db": 16.82483854944094,
+      "timings": {
+        "render_wall": {
+          "count": 7,
+          "p50_ms": 0.186323,
+          "p95_ms": 0.268729
+        },
+        "gpu_draw": {
+          "count": 7,
+          "p50_ms": 0.008704,
+          "p95_ms": 0.009024
+        },
+        "upload_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "readback_copy_cpu": {
+          "count": 7,
+          "p50_ms": 0.142991,
+          "p95_ms": 0.211511
+        },
+        "fusion_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "layer_readback_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        }
+      },
+      "gl_renderer": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+      "source_fingerprint": "a3ae77f9c3d29ce854593902b6e61c7e20621443da9524d4d269cc456cc0a5da",
+      "server_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876",
+      "client_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876"
+    },
+    {
+      "view": "low",
+      "case_id": "street-a-m1001",
+      "state": "estimated",
+      "report_sha256": "39441222f5db64a2d920b5272756bbe404070c73a9878044581d4fac713579cd",
+      "roi_pixels": 40451,
+      "rgba_sha256": "5a2229dd1f169193c16fcd6189508530c99822a4f4eaac23bc4ba3bd7e51ae08",
+      "selected_pixels": 40451,
+      "mae_rgb8": 20.097912700963306,
+      "rmse_rgb8": 29.556820082272957,
+      "max_absolute_rgb8": 132,
+      "exact_match": false,
+      "psnr_db": 18.717649449276628,
+      "timings": {
+        "render_wall": {
+          "count": 7,
+          "p50_ms": 0.195911,
+          "p95_ms": 0.242479
+        },
+        "gpu_draw": {
+          "count": 7,
+          "p50_ms": 0.008672,
+          "p95_ms": 0.008864
+        },
+        "upload_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "readback_copy_cpu": {
+          "count": 7,
+          "p50_ms": 0.141898,
+          "p95_ms": 0.16907
+        },
+        "fusion_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "layer_readback_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        }
+      },
+      "gl_renderer": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+      "source_fingerprint": "a3ae77f9c3d29ce854593902b6e61c7e20621443da9524d4d269cc456cc0a5da",
+      "server_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876",
+      "client_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876"
+    },
+    {
+      "view": "low",
+      "case_id": "street-a-m1001",
+      "state": "true",
+      "report_sha256": "b6c5216b08cfd9bbe9fdc85d2fc58edfe7dad8da4cc74a6ea005444287e4c03d",
+      "roi_pixels": 40451,
+      "rgba_sha256": "b51d76ac962293c97031702eb641ba89fa2cc4af664b329d4c0475e24b9bf4f0",
+      "selected_pixels": 40451,
+      "mae_rgb8": 20.15851276853477,
+      "rmse_rgb8": 29.546294368574202,
+      "max_absolute_rgb8": 132,
+      "exact_match": false,
+      "psnr_db": 18.720743201251132,
+      "timings": {
+        "render_wall": {
+          "count": 7,
+          "p50_ms": 0.183908,
+          "p95_ms": 0.209086
+        },
+        "gpu_draw": {
+          "count": 7,
+          "p50_ms": 0.008736,
+          "p95_ms": 0.008864
+        },
+        "upload_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "readback_copy_cpu": {
+          "count": 7,
+          "p50_ms": 0.140687,
+          "p95_ms": 0.154863
+        },
+        "fusion_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "layer_readback_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        }
+      },
+      "gl_renderer": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+      "source_fingerprint": "a3ae77f9c3d29ce854593902b6e61c7e20621443da9524d4d269cc456cc0a5da",
+      "server_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876",
+      "client_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876"
+    },
+    {
+      "view": "low",
+      "case_id": "street-a-m1002",
+      "state": "nominal",
+      "report_sha256": "64c954fc8b9e59dd1d432ac08fd62224b5bb2575fc99503d919e765efed0416a",
+      "roi_pixels": 40517,
+      "rgba_sha256": "f32248638d64c4e211c70703f1ab47b199db90236a1bbb5765771a0f2eead3e1",
+      "selected_pixels": 40517,
+      "mae_rgb8": 22.10114273021201,
+      "rmse_rgb8": 33.28544511143112,
+      "max_absolute_rgb8": 151,
+      "exact_match": false,
+      "psnr_db": 17.685716229615508,
+      "timings": {
+        "render_wall": {
+          "count": 7,
+          "p50_ms": 0.157027,
+          "p95_ms": 0.172327
+        },
+        "gpu_draw": {
+          "count": 7,
+          "p50_ms": 0.008736,
+          "p95_ms": 0.010016
+        },
+        "upload_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "readback_copy_cpu": {
+          "count": 7,
+          "p50_ms": 0.126249,
+          "p95_ms": 0.133974
+        },
+        "fusion_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "layer_readback_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        }
+      },
+      "gl_renderer": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+      "source_fingerprint": "a3ae77f9c3d29ce854593902b6e61c7e20621443da9524d4d269cc456cc0a5da",
+      "server_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876",
+      "client_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876"
+    },
+    {
+      "view": "low",
+      "case_id": "street-a-m1002",
+      "state": "estimated",
+      "report_sha256": "e1a0f1522d0e4dafd8c7970d24b4f3bd8027a5108f1bf7a1b2c62e00412c5e5b",
+      "roi_pixels": 40517,
+      "rgba_sha256": "8fd76dcf6983f2a6afa888b967057f0e96ba32468b2c2847544b8c2eead048af",
+      "selected_pixels": 40517,
+      "mae_rgb8": 20.11601714506668,
+      "rmse_rgb8": 29.55041300675048,
+      "max_absolute_rgb8": 133,
+      "exact_match": false,
+      "psnr_db": 18.719532506499934,
+      "timings": {
+        "render_wall": {
+          "count": 7,
+          "p50_ms": 0.191342,
+          "p95_ms": 0.265964
+        },
+        "gpu_draw": {
+          "count": 7,
+          "p50_ms": 0.008768,
+          "p95_ms": 0.009664
+        },
+        "upload_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "readback_copy_cpu": {
+          "count": 7,
+          "p50_ms": 0.136078,
+          "p95_ms": 0.164531
+        },
+        "fusion_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "layer_readback_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        }
+      },
+      "gl_renderer": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+      "source_fingerprint": "a3ae77f9c3d29ce854593902b6e61c7e20621443da9524d4d269cc456cc0a5da",
+      "server_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876",
+      "client_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876"
+    },
+    {
+      "view": "low",
+      "case_id": "street-a-m1002",
+      "state": "true",
+      "report_sha256": "b3e310bed7eb4158398cdb044a5aeaeac04a737c0ebc55ad8a4cb92779bd1605",
+      "roi_pixels": 40517,
+      "rgba_sha256": "2de92b047c197fb6f905049ae64a4f04465edaae956475dadf94994a90c166a4",
+      "selected_pixels": 40517,
+      "mae_rgb8": 20.19438754103216,
+      "rmse_rgb8": 29.64832389261188,
+      "max_absolute_rgb8": 133,
+      "exact_match": false,
+      "psnr_db": 18.690800679810206,
+      "timings": {
+        "render_wall": {
+          "count": 7,
+          "p50_ms": 0.185752,
+          "p95_ms": 0.241938
+        },
+        "gpu_draw": {
+          "count": 7,
+          "p50_ms": 0.008768,
+          "p95_ms": 0.008896
+        },
+        "upload_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "readback_copy_cpu": {
+          "count": 7,
+          "p50_ms": 0.143272,
+          "p95_ms": 0.160654
+        },
+        "fusion_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "layer_readback_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        }
+      },
+      "gl_renderer": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+      "source_fingerprint": "a3ae77f9c3d29ce854593902b6e61c7e20621443da9524d4d269cc456cc0a5da",
+      "server_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876",
+      "client_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876"
+    },
+    {
+      "view": "low",
+      "case_id": "street-a-m1003",
+      "state": "nominal",
+      "report_sha256": "7df32f01adb950c9b59fdd7e3a606ea5b1614bffd48e9c59c2151ecd5b49fb59",
+      "roi_pixels": 40485,
+      "rgba_sha256": "7ec2987b1a2900b32ee4aff871e599e28f684d89b8f339bd4b8a26a032427cd8",
+      "selected_pixels": 40485,
+      "mae_rgb8": 24.655403235766332,
+      "rmse_rgb8": 35.465179822878206,
+      "max_absolute_rgb8": 156,
+      "exact_match": false,
+      "psnr_db": 17.1347602838852,
+      "timings": {
+        "render_wall": {
+          "count": 7,
+          "p50_ms": 0.162948,
+          "p95_ms": 0.176825
+        },
+        "gpu_draw": {
+          "count": 7,
+          "p50_ms": 0.008704,
+          "p95_ms": 0.008832
+        },
+        "upload_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "readback_copy_cpu": {
+          "count": 7,
+          "p50_ms": 0.122692,
+          "p95_ms": 0.133303
+        },
+        "fusion_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "layer_readback_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        }
+      },
+      "gl_renderer": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+      "source_fingerprint": "a3ae77f9c3d29ce854593902b6e61c7e20621443da9524d4d269cc456cc0a5da",
+      "server_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876",
+      "client_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876"
+    },
+    {
+      "view": "low",
+      "case_id": "street-a-m1003",
+      "state": "estimated",
+      "report_sha256": "9db0eae2725bb0a75b4d64ec53e395732606649c2ebe9053672ef265496ec06a",
+      "roi_pixels": 40485,
+      "rgba_sha256": "6925d53495e364dd2cdf278eb0b8ece195973352561cf39a9486fc9654ad1ab3",
+      "selected_pixels": 40485,
+      "mae_rgb8": 20.18721337120744,
+      "rmse_rgb8": 29.498431441257097,
+      "max_absolute_rgb8": 132,
+      "exact_match": false,
+      "psnr_db": 18.734825143026264,
+      "timings": {
+        "render_wall": {
+          "count": 7,
+          "p50_ms": 0.171675,
+          "p95_ms": 0.19534
+        },
+        "gpu_draw": {
+          "count": 7,
+          "p50_ms": 0.008672,
+          "p95_ms": 0.008928
+        },
+        "upload_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "readback_copy_cpu": {
+          "count": 7,
+          "p50_ms": 0.128934,
+          "p95_ms": 0.143962
+        },
+        "fusion_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "layer_readback_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        }
+      },
+      "gl_renderer": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+      "source_fingerprint": "a3ae77f9c3d29ce854593902b6e61c7e20621443da9524d4d269cc456cc0a5da",
+      "server_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876",
+      "client_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876"
+    },
+    {
+      "view": "low",
+      "case_id": "street-a-m1003",
+      "state": "true",
+      "report_sha256": "36b513be6cd70073a7c641c9cc338211bd7ac1fc5eac9fe81a1edfffb655d951",
+      "roi_pixels": 40485,
+      "rgba_sha256": "54df4e95e1e80aa9a2a127cee9249e4e9e176653df3cc9e0663329f68d78a0c2",
+      "selected_pixels": 40485,
+      "mae_rgb8": 20.201580832407064,
+      "rmse_rgb8": 29.49230852256292,
+      "max_absolute_rgb8": 133,
+      "exact_match": false,
+      "psnr_db": 18.7366282394534,
+      "timings": {
+        "render_wall": {
+          "count": 7,
+          "p50_ms": 0.184128,
+          "p95_ms": 0.241938
+        },
+        "gpu_draw": {
+          "count": 7,
+          "p50_ms": 0.008864,
+          "p95_ms": 0.010304
+        },
+        "upload_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "readback_copy_cpu": {
+          "count": 7,
+          "p50_ms": 0.14269,
+          "p95_ms": 0.156266
+        },
+        "fusion_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "layer_readback_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        }
+      },
+      "gl_renderer": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+      "source_fingerprint": "a3ae77f9c3d29ce854593902b6e61c7e20621443da9524d4d269cc456cc0a5da",
+      "server_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876",
+      "client_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876"
+    },
+    {
+      "view": "low",
+      "case_id": "street-b-m1001",
+      "state": "nominal",
+      "report_sha256": "f4369929641ce4311bac37bdc159a22387eac0f764927331ad48e2a44c11f4be",
+      "roi_pixels": 40728,
+      "rgba_sha256": "8ccd7a54d9577ea009873ff0899ca88801683458861660e507ea403c5e7d574c",
+      "selected_pixels": 40728,
+      "mae_rgb8": 25.43773325476331,
+      "rmse_rgb8": 36.41002081380379,
+      "max_absolute_rgb8": 148,
+      "exact_match": false,
+      "psnr_db": 16.906385064706324,
+      "timings": {
+        "render_wall": {
+          "count": 7,
+          "p50_ms": 0.191051,
+          "p95_ms": 0.24848
+        },
+        "gpu_draw": {
+          "count": 7,
+          "p50_ms": 0.008768,
+          "p95_ms": 0.009088
+        },
+        "upload_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "readback_copy_cpu": {
+          "count": 7,
+          "p50_ms": 0.142951,
+          "p95_ms": 0.173608
+        },
+        "fusion_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "layer_readback_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        }
+      },
+      "gl_renderer": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+      "source_fingerprint": "a3ae77f9c3d29ce854593902b6e61c7e20621443da9524d4d269cc456cc0a5da",
+      "server_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876",
+      "client_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876"
+    },
+    {
+      "view": "low",
+      "case_id": "street-b-m1001",
+      "state": "estimated",
+      "report_sha256": "c56f54741ecdd0fc3ee2857fb5359a33bd89f66f9c98c8a2fd5f25a0054109b2",
+      "roi_pixels": 40728,
+      "rgba_sha256": "0cc4a99cb5aba4750685aacdfbfab943da0a8a5e460de43a8c555a460f5eaad1",
+      "selected_pixels": 40728,
+      "mae_rgb8": 20.54232141687946,
+      "rmse_rgb8": 29.83122155198649,
+      "max_absolute_rgb8": 138,
+      "exact_match": false,
+      "psnr_db": 18.637382857612835,
+      "timings": {
+        "render_wall": {
+          "count": 7,
+          "p50_ms": 0.257798,
+          "p95_ms": 0.279639
+        },
+        "gpu_draw": {
+          "count": 7,
+          "p50_ms": 0.008704,
+          "p95_ms": 0.009088
+        },
+        "upload_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "readback_copy_cpu": {
+          "count": 7,
+          "p50_ms": 0.1745,
+          "p95_ms": 0.185401
+        },
+        "fusion_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "layer_readback_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        }
+      },
+      "gl_renderer": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+      "source_fingerprint": "a3ae77f9c3d29ce854593902b6e61c7e20621443da9524d4d269cc456cc0a5da",
+      "server_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876",
+      "client_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876"
+    },
+    {
+      "view": "low",
+      "case_id": "street-b-m1001",
+      "state": "true",
+      "report_sha256": "74a74222d3cd67ae1de4b3541e09471a8821a61891cbfa075522a5af0500640f",
+      "roi_pixels": 40728,
+      "rgba_sha256": "77fb782d68af89f15b2f33dc1fb6dc3553f1d5fd611580d006fcda801c71f2e4",
+      "selected_pixels": 40728,
+      "mae_rgb8": 20.610881948536633,
+      "rmse_rgb8": 29.82747813963656,
+      "max_absolute_rgb8": 140,
+      "exact_match": false,
+      "psnr_db": 18.63847288695481,
+      "timings": {
+        "render_wall": {
+          "count": 7,
+          "p50_ms": 0.21653,
+          "p95_ms": 0.312762
+        },
+        "gpu_draw": {
+          "count": 7,
+          "p50_ms": 0.008896,
+          "p95_ms": 0.009376
+        },
+        "upload_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "readback_copy_cpu": {
+          "count": 7,
+          "p50_ms": 0.150956,
+          "p95_ms": 0.193667
+        },
+        "fusion_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "layer_readback_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        }
+      },
+      "gl_renderer": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+      "source_fingerprint": "a3ae77f9c3d29ce854593902b6e61c7e20621443da9524d4d269cc456cc0a5da",
+      "server_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876",
+      "client_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876"
+    },
+    {
+      "view": "low",
+      "case_id": "street-b-m1002",
+      "state": "nominal",
+      "report_sha256": "e3b6854e7e3cf92a4b9fa38d02c2de21eba25d0d62c2e6724202b2eaeb22c6f0",
+      "roi_pixels": 40898,
+      "rgba_sha256": "1041f8124a283ffd0e45e501e3c4cea5028bc21df263a7cb9a0c7afc59845cab",
+      "selected_pixels": 40898,
+      "mae_rgb8": 22.48488108627969,
+      "rmse_rgb8": 33.35487673262339,
+      "max_absolute_rgb8": 151,
+      "exact_match": false,
+      "psnr_db": 17.667616808706423,
+      "timings": {
+        "render_wall": {
+          "count": 7,
+          "p50_ms": 0.246888,
+          "p95_ms": 0.394476
+        },
+        "gpu_draw": {
+          "count": 7,
+          "p50_ms": 0.008736,
+          "p95_ms": 0.008928
+        },
+        "upload_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "readback_copy_cpu": {
+          "count": 7,
+          "p50_ms": 0.159703,
+          "p95_ms": 0.212823
+        },
+        "fusion_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "layer_readback_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        }
+      },
+      "gl_renderer": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+      "source_fingerprint": "a3ae77f9c3d29ce854593902b6e61c7e20621443da9524d4d269cc456cc0a5da",
+      "server_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876",
+      "client_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876"
+    },
+    {
+      "view": "low",
+      "case_id": "street-b-m1002",
+      "state": "estimated",
+      "report_sha256": "bfe6eff5c173b5fc966622fb2ef78d42d565afe2816336013e98adc65f13a6db",
+      "roi_pixels": 40898,
+      "rgba_sha256": "df208230e03eeda3e1424c5a194078b7c3a64c782436489ab0097a972418841c",
+      "selected_pixels": 40898,
+      "mae_rgb8": 20.530629044615058,
+      "rmse_rgb8": 29.803082923964475,
+      "max_absolute_rgb8": 138,
+      "exact_match": false,
+      "psnr_db": 18.6455797851314,
+      "timings": {
+        "render_wall": {
+          "count": 7,
+          "p50_ms": 0.209036,
+          "p95_ms": 0.257618
+        },
+        "gpu_draw": {
+          "count": 7,
+          "p50_ms": 0.008928,
+          "p95_ms": 0.009952
+        },
+        "upload_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "readback_copy_cpu": {
+          "count": 7,
+          "p50_ms": 0.152699,
+          "p95_ms": 0.168028
+        },
+        "fusion_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "layer_readback_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        }
+      },
+      "gl_renderer": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+      "source_fingerprint": "a3ae77f9c3d29ce854593902b6e61c7e20621443da9524d4d269cc456cc0a5da",
+      "server_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876",
+      "client_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876"
+    },
+    {
+      "view": "low",
+      "case_id": "street-b-m1002",
+      "state": "true",
+      "report_sha256": "2047c6e963ee62f89f8294691ac3b5a638db50fb6008b21e3ec623ba59e26084",
+      "roi_pixels": 40898,
+      "rgba_sha256": "b629fb1f6377424df50e9866a953d7dcffabfba8aedb55596e93700a5afaadac",
+      "selected_pixels": 40898,
+      "mae_rgb8": 20.596744747094398,
+      "rmse_rgb8": 29.87484052622934,
+      "max_absolute_rgb8": 140,
+      "exact_match": false,
+      "psnr_db": 18.624691695254608,
+      "timings": {
+        "render_wall": {
+          "count": 7,
+          "p50_ms": 0.182275,
+          "p95_ms": 0.194508
+        },
+        "gpu_draw": {
+          "count": 7,
+          "p50_ms": 0.008704,
+          "p95_ms": 0.00992
+        },
+        "upload_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "readback_copy_cpu": {
+          "count": 7,
+          "p50_ms": 0.143011,
+          "p95_ms": 0.150695
+        },
+        "fusion_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "layer_readback_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        }
+      },
+      "gl_renderer": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+      "source_fingerprint": "a3ae77f9c3d29ce854593902b6e61c7e20621443da9524d4d269cc456cc0a5da",
+      "server_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876",
+      "client_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876"
+    },
+    {
+      "view": "low",
+      "case_id": "street-b-m1003",
+      "state": "nominal",
+      "report_sha256": "20a1c5dcd2ac76b55c1a2e9bb6804b8a532dc6eacce574910365c226c45bcc3d",
+      "roi_pixels": 40883,
+      "rgba_sha256": "bfa118d8eee1d13fc3c3ad929de6f7728db241850a0c8ec95f65bf85b52fc5d6",
+      "selected_pixels": 40883,
+      "mae_rgb8": 24.767336056551624,
+      "rmse_rgb8": 35.52677109939769,
+      "max_absolute_rgb8": 148,
+      "exact_match": false,
+      "psnr_db": 17.11968885232738,
+      "timings": {
+        "render_wall": {
+          "count": 7,
+          "p50_ms": 0.194147,
+          "p95_ms": 0.21675
+        },
+        "gpu_draw": {
+          "count": 7,
+          "p50_ms": 0.008832,
+          "p95_ms": 0.009472
+        },
+        "upload_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "readback_copy_cpu": {
+          "count": 7,
+          "p50_ms": 0.148962,
+          "p95_ms": 0.15876
+        },
+        "fusion_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "layer_readback_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        }
+      },
+      "gl_renderer": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+      "source_fingerprint": "a3ae77f9c3d29ce854593902b6e61c7e20621443da9524d4d269cc456cc0a5da",
+      "server_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876",
+      "client_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876"
+    },
+    {
+      "view": "low",
+      "case_id": "street-b-m1003",
+      "state": "estimated",
+      "report_sha256": "f0a221059841ece0ac00375292d60cb1afec0b161b000d44d379c04fec68a8f5",
+      "roi_pixels": 40883,
+      "rgba_sha256": "95a399f929f4d04228f2f7bb0d3bd086b48f2e44790b3f780aa7800f716d54aa",
+      "selected_pixels": 40883,
+      "mae_rgb8": 20.572438421837926,
+      "rmse_rgb8": 29.716603837461687,
+      "max_absolute_rgb8": 137,
+      "exact_match": false,
+      "psnr_db": 18.670820117223485,
+      "timings": {
+        "render_wall": {
+          "count": 7,
+          "p50_ms": 0.175683,
+          "p95_ms": 0.219205
+        },
+        "gpu_draw": {
+          "count": 7,
+          "p50_ms": 0.0088,
+          "p95_ms": 0.009152
+        },
+        "upload_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "readback_copy_cpu": {
+          "count": 7,
+          "p50_ms": 0.133172,
+          "p95_ms": 0.150334
+        },
+        "fusion_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "layer_readback_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        }
+      },
+      "gl_renderer": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+      "source_fingerprint": "a3ae77f9c3d29ce854593902b6e61c7e20621443da9524d4d269cc456cc0a5da",
+      "server_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876",
+      "client_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876"
+    },
+    {
+      "view": "low",
+      "case_id": "street-b-m1003",
+      "state": "true",
+      "report_sha256": "8a06f59228563f8b4f1c9deecf7e83d65af38dfb4fde787e22f115b6ae5fc5ad",
+      "roi_pixels": 40883,
+      "rgba_sha256": "bd5963120a4e38f9e7eb38ca2aff211aa52d8da29236ff3a27f872c24005e0c6",
+      "selected_pixels": 40883,
+      "mae_rgb8": 20.585606079136397,
+      "rmse_rgb8": 29.704701061258454,
+      "max_absolute_rgb8": 140,
+      "exact_match": false,
+      "psnr_db": 18.67429988603862,
+      "timings": {
+        "render_wall": {
+          "count": 7,
+          "p50_ms": 0.140687,
+          "p95_ms": 0.157147
+        },
+        "gpu_draw": {
+          "count": 7,
+          "p50_ms": 0.00864,
+          "p95_ms": 0.009824
+        },
+        "upload_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "readback_copy_cpu": {
+          "count": 7,
+          "p50_ms": 0.119536,
+          "p95_ms": 0.131699
+        },
+        "fusion_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "layer_readback_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        }
+      },
+      "gl_renderer": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+      "source_fingerprint": "a3ae77f9c3d29ce854593902b6e61c7e20621443da9524d4d269cc456cc0a5da",
+      "server_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876",
+      "client_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876"
+    },
+    {
+      "view": "low",
+      "case_id": "yard-a-m1001",
+      "state": "nominal",
+      "report_sha256": "7ae25c1fb1e48a4f50c02de56466a35f1f4b4ed0d499b1d2dfced1fa7af38273",
+      "roi_pixels": 10054,
+      "rgba_sha256": "bba42f8ceb32e56c65edb059d89e39d2962b8fea5abeecb9250080321bdbf100",
+      "selected_pixels": 10054,
+      "mae_rgb8": 26.280982693455343,
+      "rmse_rgb8": 40.20787647564826,
+      "max_absolute_rgb8": 160,
+      "exact_match": false,
+      "psnr_db": 16.044580867964335,
+      "timings": {
+        "render_wall": {
+          "count": 7,
+          "p50_ms": 0.189749,
+          "p95_ms": 0.230786
+        },
+        "gpu_draw": {
+          "count": 7,
+          "p50_ms": 0.00864,
+          "p95_ms": 0.009504
+        },
+        "upload_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "readback_copy_cpu": {
+          "count": 7,
+          "p50_ms": 0.14245,
+          "p95_ms": 0.173188
+        },
+        "fusion_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "layer_readback_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        }
+      },
+      "gl_renderer": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+      "source_fingerprint": "a3ae77f9c3d29ce854593902b6e61c7e20621443da9524d4d269cc456cc0a5da",
+      "server_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876",
+      "client_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876"
+    },
+    {
+      "view": "low",
+      "case_id": "yard-a-m1001",
+      "state": "estimated",
+      "report_sha256": "e172235c24db9976f17dd89acb64a055432cdf323d5f1c68874c6277f858a0f0",
+      "roi_pixels": 10054,
+      "rgba_sha256": "1aa48295c55a4f4f35cc3c0bef551675f9eb244ca645d2e97ff99754626db65c",
+      "selected_pixels": 10054,
+      "mae_rgb8": 24.237318480206884,
+      "rmse_rgb8": 41.60980218915102,
+      "max_absolute_rgb8": 172,
+      "exact_match": false,
+      "psnr_db": 15.74689058499241,
+      "timings": {
+        "render_wall": {
+          "count": 7,
+          "p50_ms": 0.209687,
+          "p95_ms": 0.386732
+        },
+        "gpu_draw": {
+          "count": 7,
+          "p50_ms": 0.008768,
+          "p95_ms": 0.009088
+        },
+        "upload_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "readback_copy_cpu": {
+          "count": 7,
+          "p50_ms": 0.149954,
+          "p95_ms": 0.217712
+        },
+        "fusion_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "layer_readback_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        }
+      },
+      "gl_renderer": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+      "source_fingerprint": "a3ae77f9c3d29ce854593902b6e61c7e20621443da9524d4d269cc456cc0a5da",
+      "server_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876",
+      "client_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876"
+    },
+    {
+      "view": "low",
+      "case_id": "yard-a-m1001",
+      "state": "true",
+      "report_sha256": "66e95260a17ff976fe87d0db4781282510426a7012e55ffbccdf81fff36e5979",
+      "roi_pixels": 10054,
+      "rgba_sha256": "a04ab883a977b9a5067860ff02323e5591c41e4faa5f861b6b98eb2c0e1e0dd3",
+      "selected_pixels": 10054,
+      "mae_rgb8": 24.17329752668921,
+      "rmse_rgb8": 41.48211139688893,
+      "max_absolute_rgb8": 172,
+      "exact_match": false,
+      "psnr_db": 15.773586540220805,
+      "timings": {
+        "render_wall": {
+          "count": 7,
+          "p50_ms": 0.240275,
+          "p95_ms": 0.312892
+        },
+        "gpu_draw": {
+          "count": 7,
+          "p50_ms": 0.008736,
+          "p95_ms": 0.00912
+        },
+        "upload_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "readback_copy_cpu": {
+          "count": 7,
+          "p50_ms": 0.170473,
+          "p95_ms": 0.181343
+        },
+        "fusion_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "layer_readback_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        }
+      },
+      "gl_renderer": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+      "source_fingerprint": "a3ae77f9c3d29ce854593902b6e61c7e20621443da9524d4d269cc456cc0a5da",
+      "server_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876",
+      "client_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876"
+    },
+    {
+      "view": "low",
+      "case_id": "yard-a-m1002",
+      "state": "nominal",
+      "report_sha256": "e2aa74f411546baab1eba5bc529646da3e6408ee289f8f83f35fc50824ba0044",
+      "roi_pixels": 10087,
+      "rgba_sha256": "789f1640606f70bc8b8985e47e437d56ca9218347da76ddb79709cda98ea8043",
+      "selected_pixels": 10087,
+      "mae_rgb8": 24.966491523743432,
+      "rmse_rgb8": 40.0966929686177,
+      "max_absolute_rgb8": 159,
+      "exact_match": false,
+      "psnr_db": 16.068632507750046,
+      "timings": {
+        "render_wall": {
+          "count": 7,
+          "p50_ms": 0.254432,
+          "p95_ms": 0.371574
+        },
+        "gpu_draw": {
+          "count": 7,
+          "p50_ms": 0.00864,
+          "p95_ms": 0.0096
+        },
+        "upload_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "readback_copy_cpu": {
+          "count": 7,
+          "p50_ms": 0.170563,
+          "p95_ms": 0.22743
+        },
+        "fusion_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "layer_readback_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        }
+      },
+      "gl_renderer": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+      "source_fingerprint": "a3ae77f9c3d29ce854593902b6e61c7e20621443da9524d4d269cc456cc0a5da",
+      "server_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876",
+      "client_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876"
+    },
+    {
+      "view": "low",
+      "case_id": "yard-a-m1002",
+      "state": "estimated",
+      "report_sha256": "6fc5a8df5aeb8595be1cd580c8502f380579dd484b652c5d3cd197aa59e11a3b",
+      "roi_pixels": 10087,
+      "rgba_sha256": "9e423423700b6c2015a574d27b121617cf90733c04ae84f4c8500732c5ab6e8a",
+      "selected_pixels": 10087,
+      "mae_rgb8": 24.08661313241466,
+      "rmse_rgb8": 41.49509449388695,
+      "max_absolute_rgb8": 170,
+      "exact_match": false,
+      "psnr_db": 15.770868450417835,
+      "timings": {
+        "render_wall": {
+          "count": 7,
+          "p50_ms": 0.231779,
+          "p95_ms": 0.414264
+        },
+        "gpu_draw": {
+          "count": 7,
+          "p50_ms": 0.008704,
+          "p95_ms": 0.010144
+        },
+        "upload_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "readback_copy_cpu": {
+          "count": 7,
+          "p50_ms": 0.161866,
+          "p95_ms": 0.226579
+        },
+        "fusion_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "layer_readback_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        }
+      },
+      "gl_renderer": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+      "source_fingerprint": "a3ae77f9c3d29ce854593902b6e61c7e20621443da9524d4d269cc456cc0a5da",
+      "server_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876",
+      "client_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876"
+    },
+    {
+      "view": "low",
+      "case_id": "yard-a-m1002",
+      "state": "true",
+      "report_sha256": "b97497c0506c36cced1733ae3d61691a1f856bd7eebc6beeca21edf0776fff08",
+      "roi_pixels": 10087,
+      "rgba_sha256": "c6d1f5ce76b8d20b733c746132089f4d92fc677b2f673602131cb8ade2b82731",
+      "selected_pixels": 10087,
+      "mae_rgb8": 24.031790092858795,
+      "rmse_rgb8": 41.38237756735501,
+      "max_absolute_rgb8": 170,
+      "exact_match": false,
+      "psnr_db": 15.794494831954394,
+      "timings": {
+        "render_wall": {
+          "count": 7,
+          "p50_ms": 0.148802,
+          "p95_ms": 0.223613
+        },
+        "gpu_draw": {
+          "count": 7,
+          "p50_ms": 0.008544,
+          "p95_ms": 0.008768
+        },
+        "upload_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "readback_copy_cpu": {
+          "count": 7,
+          "p50_ms": 0.123214,
+          "p95_ms": 0.198986
+        },
+        "fusion_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "layer_readback_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        }
+      },
+      "gl_renderer": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+      "source_fingerprint": "a3ae77f9c3d29ce854593902b6e61c7e20621443da9524d4d269cc456cc0a5da",
+      "server_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876",
+      "client_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876"
+    },
+    {
+      "view": "low",
+      "case_id": "yard-a-m1003",
+      "state": "nominal",
+      "report_sha256": "ea824daa9f78257c38c24ea280f2f4dceaba9d1ecfc2a03dd8eb2292f4bd8595",
+      "roi_pixels": 10077,
+      "rgba_sha256": "90ebf311404e5992bc554ea7a8bfd157f4dcba32afc40945afba357367ba6500",
+      "selected_pixels": 10077,
+      "mae_rgb8": 26.75366345803976,
+      "rmse_rgb8": 44.337029902422316,
+      "max_absolute_rgb8": 171,
+      "exact_match": false,
+      "psnr_db": 15.195471673521197,
+      "timings": {
+        "render_wall": {
+          "count": 7,
+          "p50_ms": 0.23808,
+          "p95_ms": 0.333161
+        },
+        "gpu_draw": {
+          "count": 7,
+          "p50_ms": 0.008672,
+          "p95_ms": 0.008896
+        },
+        "upload_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "readback_copy_cpu": {
+          "count": 7,
+          "p50_ms": 0.164191,
+          "p95_ms": 0.214065
+        },
+        "fusion_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "layer_readback_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        }
+      },
+      "gl_renderer": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+      "source_fingerprint": "a3ae77f9c3d29ce854593902b6e61c7e20621443da9524d4d269cc456cc0a5da",
+      "server_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876",
+      "client_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876"
+    },
+    {
+      "view": "low",
+      "case_id": "yard-a-m1003",
+      "state": "estimated",
+      "report_sha256": "b915c2bd0d9cc0d469a0d503f7cedaa255f186d31a941af685aa658a130e9c8c",
+      "roi_pixels": 10077,
+      "rgba_sha256": "2ff1fa93db8ea7ebf5cf06ae5ab72f3df50cd6f689a06bb2a605dfa5472aca61",
+      "selected_pixels": 10077,
+      "mae_rgb8": 24.201713472925142,
+      "rmse_rgb8": 41.60876119246942,
+      "max_absolute_rgb8": 170,
+      "exact_match": false,
+      "psnr_db": 15.747107891850954,
+      "timings": {
+        "render_wall": {
+          "count": 7,
+          "p50_ms": 0.15305,
+          "p95_ms": 0.191582
+        },
+        "gpu_draw": {
+          "count": 7,
+          "p50_ms": 0.00864,
+          "p95_ms": 0.009344
+        },
+        "upload_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "readback_copy_cpu": {
+          "count": 7,
+          "p50_ms": 0.124205,
+          "p95_ms": 0.144764
+        },
+        "fusion_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "layer_readback_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        }
+      },
+      "gl_renderer": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+      "source_fingerprint": "a3ae77f9c3d29ce854593902b6e61c7e20621443da9524d4d269cc456cc0a5da",
+      "server_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876",
+      "client_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876"
+    },
+    {
+      "view": "low",
+      "case_id": "yard-a-m1003",
+      "state": "true",
+      "report_sha256": "9246e388f1376cac0b9355f9b94040abb9fce54c160c9f59d171e43eaf0207aa",
+      "roi_pixels": 10077,
+      "rgba_sha256": "9060a94f46d74971b32b0eb931cfb28f4328376df5ba726b93e85e37db910f81",
+      "selected_pixels": 10077,
+      "mae_rgb8": 24.194800039694353,
+      "rmse_rgb8": 41.540687988514286,
+      "max_absolute_rgb8": 169,
+      "exact_match": false,
+      "psnr_db": 15.761329909550119,
+      "timings": {
+        "render_wall": {
+          "count": 7,
+          "p50_ms": 0.181814,
+          "p95_ms": 0.207563
+        },
+        "gpu_draw": {
+          "count": 7,
+          "p50_ms": 0.008768,
+          "p95_ms": 0.00912
+        },
+        "upload_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "readback_copy_cpu": {
+          "count": 7,
+          "p50_ms": 0.141127,
+          "p95_ms": 0.16384
+        },
+        "fusion_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        },
+        "layer_readback_cpu": {
+          "count": 7,
+          "p50_ms": 0.0,
+          "p95_ms": 0.0
+        }
+      },
+      "gl_renderer": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+      "source_fingerprint": "a3ae77f9c3d29ce854593902b6e61c7e20621443da9524d4d269cc456cc0a5da",
+      "server_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876",
+      "client_build_passport": "fbd24c145330b343435df6b25e0b1eddbdf303233e7ee2e42cde8cb614612876"
+    }
+  ],
+  "figure_sha256": "adb150aca36f56fbdb13cbf8777c577183eb48b5474a3e77bb85a9e8499c75b3",
+  "script_sha256": "31f255b98a0c439eb6ae56fffb0461efff04dcdee4406f3366cc6ad1c91f2d79",
+  "limitations": [
+    "three procedural instances, shared mount seeds; not independent population samples",
+    "no physical cameras/Aurora acceptance; no photometric noise or moving scene",
+    "true calibration does not eliminate carrier parallax/occlusion error",
+    "quality repeats are identical; not additional independent scenes",
+    "quality timing run is descriptive, separate performance profile pending"
+  ]
+}

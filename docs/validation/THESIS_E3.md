@@ -1,4 +1,10 @@
-# E3: подготовка входов и контракт E1→Blender
+# E3: влияние калибровки на конечный обзор
+
+29.10.2026: **image-quality часть E3 выполнена**:18 новых Blender captures,54 native
+условия nominal/estimated/true,18 парных сравнений. Estimated снижает MAE относительно
+nominal в18/18 ячейках. Отдельный performance profile и аппаратная Аврора ещё не проверены.
+Итоговые данные и ограничения — в разделе [[validation/THESIS_E3#Результат серверной серии 29.10.2026]].
+Далее сначала сохранено описание исторического preflight от25.10, когда RGB ещё не было.
 
 25.10.2026. Статус: **offline preflight выполнен; изображения и quality results E3
 ещё не получены**. MCP Blender не подключается; по указанию автора работа продолжается
@@ -96,3 +102,139 @@ mask hashes. Calibration IDs/model guards различаются, independent RG
 После этого выполнить E3. Не подменять новый RGB историческими картинками другого rig.
 
 PlantUML E3.1 прошёл syntax check; новый mask policy пока только декларация, без построения маски.
+
+## Результат серверной серии 29.10.2026
+
+MCP подключён к Blender5.2.3 LTS, EEVEE. Дополнение protocol13 (server ожидает15), но
+execute_code и renders работают; обновление дополнения не требовалось для опыта.
+Оба frozen capture plans выполнены без изменения seeds/параметров:3 scene instances
+(street-a, street-b, yard-a),3 mounts,2 views. Во всех18 captures config/provenance/recipe,
+timestamp0, intended optical poses и72 camera transforms сверены с E1→capture registry.
+Blender projector checks каждой сцены и virtual reference имеют ошибку≤0.001px.
+Это численный контроль координат; Blender matrices имеют конечную float precision.
+
+На каждом case/view cubemap конвертирован один раз в4×400×400 RGB8. Для nominal,
+estimated и true-control копируются **те же байты** source RGB, direct RGB и mask;
+меняются только config calibration/model guards. Все source image identities также
+совпали между high/low. Schema2 guards проверяет native runner, а не только Python audit.
+Ни fit, ни rendering, ни рабочая оценка качества не выполняются Python-скриптом:
+sv-server рендерит, C++ evaluator клиента считает метрики через существующий protocol.
+Python — Blender fixture export, независимый пересчёт сохранённых RGBA и рисунок.
+
+### Маска, повторения и проверка результата
+
+Зафиксированная до просмотра новых server outputs policy: labels≠0, объект не ego,
+visibility bits≠0; затем erosion квадратным5×5 kernel (радиус2 в метрике Чебышёва),
+вне изображения false. Маска зависит только от independent object/visibility truth.
+Она **не** исключает границы между двумя допустимыми объектами и не строится по carrier
+validity или ошибке. Это конкретизация ранее записанной erosion2px, не подбор по результату.
+ROI44177…47233 pixels для high и10054…40898 для low; одна и та же mask в трёх ветвях.
+Малый ROI low-yard нужно учитывать: эти pixel-weighted оценки не описывают весь кадр.
+
+Два warmup и7 measured repeats на условие:486 native trials,378 сохранённых RGBA.
+54/54 workflows success/restored, baseline/restored RGB hashes совпали. Replay cursor
+не восстанавливается. В каждом условии все9 outputs имеют один hash: повторения не
+увеличивают число независимых quality observations.18 paired scene/mount/view cells
+также не являются18 независимыми сценами: mounts и оценки E1 повторяются между scenes/views.
+1512 значений MAE/RMSE/max/PSNR пересчитаны из сохранённых bytes, максимальное отличие
+от C++7.11e−15; malformed/mismatched inputs не пропускаются. Порог качества не назначался:
+quality_status=not_requested означает отсутствие acceptance criteria, метрики вычислены.
+
+### Парные различия
+
+Ниже median по3 mount seeds внутри scene/view; RGB8 MAE и разность median paired
+improvements приводятся отдельно (разность медиан не обязана равняться медиане разностей).
+
+| View/сцена | Nominal MAE | Estimated MAE | True-control MAE | Median nominal−estimated |
+|---|---:|---:|---:|---:|
+| high/street-a |13.675|9.442|9.437|4.264|
+| high/street-b |12.486|8.647|8.621|3.881|
+| high/yard-a |10.897|5.569|5.539|5.405|
+| low/street-a |24.655|20.116|20.194|4.468|
+| low/street-b |24.767|20.542|20.597|4.195|
+| low/yard-a |26.281|24.202|24.173|2.044|
+
+Во всех18 cells estimated улучшает nominal; median paired gain4.038 RGB8 levels.
+Estimated−true от−0.0784 до+0.0681 MAE, median+0.00587. Небольшое преимущество estimated
+над true в части cells не доказывает более точную физическую позу: проекционная
+поверхность и итоговый RGB endpoint допускают компенсацию иных ошибок.
+True-control MAE остаётся5.49…24.19: правильная калибровка не устраняет parallax,
+occlusion, cubemap resampling и несоответствие геометрии dome_floor настоящей сцене.
+Именно это отделяет влияние калибровки от предела выбранного способа отображения.
+
+![Независимый эталон и результаты сервера с тремя калибровками](../diploma/figures/experiments/thesis_e3_calibration.png)
+
+*Рисунок E3.2 — direct Blender truth и native dome_floor+edge_feather для nominal,
+estimated RANSAC+LM и true-control. Все6 scene/view rows используют заранее фиксированный
+mount1001, а не лучший пример. Показан полный кадр, MAE считается только по общей ROI;
+ego в ROI не входит. Верхние3 строки —high, нижние3 —low.*
+
+Actual GL_RENDERER: NVIDIA GeForce RTX5070Ti/PCIe/SSE2. Source fingerprint
+a3ae77f9c3d29ce854593902b6e61c7e20621443da9524d4d269cc456cc0a5da;
+client/server passport digests закреплены для каждого report. Короткие7 timing samples
+с сохранением каждого RGBA — описательные, не performance acceptance. Опыты идут по
+отдельным процессам/ветвям; межветочные timings не рандомизированы и не ранжируются.
+Нужен отдельный frozen warmup5/repeats30 performance profile.
+
+## Артефакты и воспроизведение выполненного E3
+
+Raw captures: artifacts/thesis-e3-capture-high-20261029 и thesis-e3-capture-low-20261029.
+В каждом case/raw сохранены street.blend,20 cubemap PNG,overview/direct RGB,NPY truth и
+capture/paired metadata. Это результаты эксперимента, не новые скачанные assets;
+исходная сцена восстанавливается tracked scene.py/environments.py/rig.py и frozen plans.
+Файлы мира не зависят от Git LFS. User default scene сохранена, исследовательские сцены
+созданы отдельно. Данные исследования не заменять симуляторной тестовой шахматной сценой.
+
+Fixtures/configs/manifests/scenarios/reports/RGBA/traces:
+artifacts/thesis-e3-runs-20261029. Compact audit:
+[thesis_e3_quality_v1.json](baselines/thesis_e3_quality_v1.json),54 rows,18 paired contrasts,
+capture/reference/mask/report/figure hashes и1512 metric checks.
+
+В живом Blender по MCP (пути заменить своими, output directories новые):
+
+```python
+import sys
+from pathlib import Path
+root = Path('/home/bogdan/prog/MAI/surround-view')
+sys.path.insert(0, str(root / 'tools/blender'))
+from paired_truth import schedule_family_plan
+schedule_family_plan(root / 'artifacts/thesis-e3-ready-20261025/capture-high.json',
+                     root / 'artifacts/e3-new-high')
+# Дождаться job.json state=complete; затем аналогично capture-low.json в другой output.
+```
+
+Подготовить fixture case/view (остальные — тем же способом; existing output отвергается):
+
+```sh
+python3 docs/diploma/plot_thesis_e3.py prepare artifacts/thesis-e3-ready-20261025 \
+  artifacts/e3-new-high high street-a-m1001 artifacts/e3-new-runs/high/street-a-m1001
+```
+
+Запустить сервер и CLI для каждой из трёх branches; ни Python dispatcher, ни новый
+продуктовый runner не нужны:
+
+```sh
+build/sv-server --config artifacts/e3-new-runs/high/street-a-m1001/nominal/config.json \
+  --manifest artifacts/e3-new-runs/high/street-a-m1001/nominal/manifest.json \
+  --loop false --ipc-dir /tmp/sv-e3-new \
+  --trace artifacts/e3-new-runs/high/street-a-m1001/nominal/trace.jsonl
+# В другом терминале:
+build/svctl --unix /tmp/sv-e3-new --timeout-ms 10000 research \
+  artifacts/e3-new-runs/high/street-a-m1001/nominal/scenario.json \
+  artifacts/e3-new-runs/high/street-a-m1001/nominal/report.json
+```
+
+Остановить сервер штатно; для estimated/true использовать соответствующую branch,
+для следующего опыта новый report path. После всех54 условий:
+
+```sh
+MPLCONFIGDIR=/tmp/sv-e3-mpl python3 docs/diploma/plot_thesis_e3.py audit \
+  artifacts/e3-new-runs artifacts/e3-new-figure.png artifacts/e3-new-audit.json
+ctest --test-dir build -R '^blender_fixture$' --output-on-failure
+```
+
+Fixture regression suite29/29 (25 прежних+4 новых), CTest1/1 за3,06с. Новые checks
+проверяют kernel/ego/visibility/empty mask, совпадение с C++ known-answer hashes,
+numeric/metadata separation и испорченные/нехэшированные/выходящие за root файлы.
+Полный CTest и rebuild не повторялись: C++ product code не менялся. E2 comparison,
+отдельные server performance trials, физические камеры и Aurora остаются открытыми.
