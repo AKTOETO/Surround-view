@@ -1,5 +1,11 @@
 # Подробный план реализации
 
+29.10.2026: исправлен CLI sv-platform-test (help, строгие числовые параметры до создания
+output); CLI/report tests2/2. Linux CPU smoke17 pass/0 fail/1 expected GPU skip;
+это проверка инструмента доставки отчёта, не новый performance baseline. Порядок первого
+запуска установленного бинарника на устройстве: [[engineering/PLATFORM_TEST#Устройство и сравнение]].
+SDK/RPM, GPU и реальные автомобильные камеры остаются непроверенными на целевой платформе.
+
 29.10.2026: частичные calibration-run reports различают неизвестный admission/result,
 отказ status, некорректный результат и timeout; cancel failure не скрывает deadline.
 10 TCP fault cases и3/3 профильных CTest пройдены. Это инженерная надёжность runner,

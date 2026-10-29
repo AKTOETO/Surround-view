@@ -4,6 +4,12 @@
 
 ## Контракт опыта
 
+`sv-platform-test --help` (или `-h`) печатает полный список флагов без загрузки config,
+создания output directory и инициализации GPU. Числовые флаги принимают только целые
+десятичные значения без пробелов/суффиксов: iterations2…10000, warmup0…1000,
+repeats1…10, opencv-threads1…64. Например, `--iterations 60abc` отвергается до начала
+измерений; ошибка называет флаг. Это предотвращает незаметную подмену параметров опыта.
+
 `sv-platform-test` — C++-программа, собираемая тем же кодом для ПК и устройства. Не требует Python, Git, исходного дерева или реальных камер во время запуска. Профиль `surround-view-platform-v1`, JSON schema 1. Создаёт `REPORT.md`, `report.json`, контрольное изображение и marker PNG в **новом** каталоге; существующий каталог отвергается. Markdown содержит полный машинный отчёт в ограждённом JSON-блоке, чтобы его можно было сохранить в Obsidian и впоследствии сравнить.
 
 По умолчанию четыре RGB8-изображения создаются целочисленно в памяти. Их содержимое побайтно воспроизводится независимо от CPU/OpenCV/SIMD. Вход 320×180 для каждой камеры, исходная конфигурация `configs/synthetic.json`; её файловый SHA-256 тоже сохраняется. Этот контрольный набор проверяет реализацию и нагрузку, а не качество фотографической сцены.
@@ -94,6 +100,20 @@ sv-platform-test --config /usr/share/surround-view/configs/synthetic.json \
   --egl-platform default --require-gpu
 ```
 
+Перед полной серией можно выполнить короткий CPU smoke установленного бинарника:
+
+```sh
+sv-platform-test --help
+sv-platform-test --config /usr/share/surround-view/configs/synthetic.json \
+  --output "$HOME/sv-results/cpu-smoke-01" --label Aurora-CPU-smoke \
+  --cpu-only --iterations 2 --warmup 0 --repeats 1
+```
+
+Для штатного CPU smoke ожидается `partial` с `GPU_BACKEND=skip`, без failed criteria.
+Сохранить REPORT.md и report.json, затем запускать обязательную GPU-квалификацию выше
+в другом новом каталоге. Этот запуск не проверяет /dev/video*, IPC/UI, RPM installation
+или sensor-to-display и не даёт performance baseline. Аврорный результат ещё не получен.
+
 Если устройство поддерживает только отдельный backend, повторить в новом каталоге с подтверждённым `surfaceless` либо `device`; режим EGL намеренно может различаться. При ошибке сохранить failed report, выполнить CPU-only квалификацию и исследовать причину. Эмулятор/QEMU годится для smoke-проверки запуска, его времена нельзя считать аппаратными показателями устройства.
 
 Скопировать результаты на ПК (точные команды и RPM-путь — [[engineering/AURORA]]) и сравнить:
@@ -112,6 +132,13 @@ python3 tools/compare_reports.py docs/validation/baselines/PC_RTX_V06.md \
 ## Короткая квалификация 0.4.0
 
 На 06.10.2026 пройдены 25 критериев с 3 iterations, 1 warmup, 1 repeat. Это smoke, не performance baseline. Свидетельства: [[validation/SURFACE_SCREENING]]. Для сравнения с Авророй заново получить полные PC/target отчёты одной revision и параметров; исторические 0.2.0 отчёты строгую сопоставимость с 0.4.0 не удовлетворяют.
+
+29.10.2026 CPU smoke после исправления CLI выполнен на Linux:17 pass,0 fail,1 skip
+(GPU_BACKEND), статус partial. Raw report: artifacts/platform-cpu-readiness-20261029;
+source fingerprint a3ae77f9c3d29ce854593902b6e61c7e20621443da9524d4d269cc456cc0a5da.
+CTest platform_cli/platform_reports прошли2/2 за1,36с. CLI regression включает36
+некорректных числовых значений с проверкой отсутствия output directory, help и ошибки
+unknown/missing argument. Это не обновление полных GPU baseline и не приёмка устройства.
 
 ## Полные PC baselines 0.5.0
 
