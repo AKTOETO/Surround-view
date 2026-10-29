@@ -8,7 +8,7 @@
 
 Добавлен процедурный 3D-стенд Blender с автомобилем, четырьмя разнесёнными камерами и заданной траекторией. Экспортированные кадры поступают в сервер через replay worker либо четыре Unix/TCP-входа виртуальных камер. `sv-simulator` содержит отдельный интерактивный визуальный driving preview на Qt Quick 3D; он пока не передаёт live-кадры камер в сервер и не создаёт calibration observations. Мир хранится в Git как скрипты и готовый `.blend` в `assets/scenes/metric-street/`, без Git LFS.
 
-Сервер поддерживает семь методов сшивки: три GPU baseline и четыре native GLES/CPU варианта, включая binary graph-cut и multiband. Алгоритмы и пять носителей переключаются через `sv-client-lib` без перезапуска; CLI-сценарии проверяют повторяемость и восстановление. [Проверки и ограничения](docs/validation/NATIVE_FUSION.md), [режимы рендера](docs/engineering/RENDERING.md), [исследование методов](docs/research/PROJECTION_AND_STITCHING.md). Итоговая оценка качества на независимых сценах и Авроре остаётся открытой.
+Сервер поддерживает семь методов сшивки: три GPU baseline и четыре native GLES/CPU варианта, включая binary graph-cut и multiband. Алгоритмы и пять носителей переключаются через `sv-client-lib` без перезапуска. Ограниченная synthetic программа E1–E3 и PC timing profile выполнены; аппаратная Аврора остаётся непроверенной. [Результаты E2](docs/validation/THESIS_E2.md), [E3](docs/validation/THESIS_E3.md), [производительность](docs/validation/THESIS_PC_PERFORMANCE.md), [запуск демонстрации](docs/validation/THESIS_DEMO.md).
 
 - [Первые шаги проекта](TODO.md), [аудит выполнения](docs/planning/AUDIT.md).
 - [Источники кадров и виртуальные камеры](docs/engineering/SOURCES.md).

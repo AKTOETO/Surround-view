@@ -1812,3 +1812,15 @@ native server/CLI команды: [[validation/THESIS_E3#Артефакты и �
 `svctl research`. Renderer/solver/evaluator не перенесены в Python. Для независимого
 пересчёта378 measured RGBA и рисунка — `plot_thesis_e3.py audit`.
 Короткие quality repeats не заменяют отдельное performance измерение и испытания Авроры.
+
+### Завершённые E2 и PC performance profile
+
+После E3 использованы те же inputs/reference/masks при true calibration:108 E2 conditions
+и отдельный warmup5/repeats30 профиль с отключённым сохранением RGBA, telemetry off/on.
+Команды подготовки и native запуска: [[validation/THESIS_E2]],
+[[validation/THESIS_PC_PERFORMANCE]]. Product operations выполняют sv-server/sv-client-lib/
+svctl; Python сохраняется только для scientific fixtures, audit и рисунков.
+
+Сквозной запуск на новом Blender replay, автомобильный клиент и ноутбучный симулятор:
+[[validation/THESIS_DEMO#Запустить с интерфейсом]]. Для TCP порты симулятора — canonical
+decimal1…65535: пробелы, signs и суффиксы отклоняются до подключения.

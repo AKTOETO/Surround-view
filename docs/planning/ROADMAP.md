@@ -1,5 +1,13 @@
 # Подробный план реализации
 
+29.10.2026: завершены E2 (108 conditions/3024 metric checks) и отдельный PC profile
+(216 conditions,30 measured repeats,6480 measured trials,1248 CPU/RSS samples через SDK).
+E2/E3 matched output18/18 exact; workflow/quality/restore guards пройдены. Два GUI на
+новом Blender replay прошли smoke, Linux CTest70/70 за194,94с. Основное заключение
+сведено в главе5; следующие обязательные работы — редакция/приложения и target SDK/device,
+а не новые исследования. [[validation/THESIS_E2]], [[validation/THESIS_PC_PERFORMANCE]],
+[[validation/THESIS_DEMO]], §§4.98–4.99.
+
 29.10.2026: получены18 новых Blender captures и выполнена image-quality часть E3:
 54 native conditions,18/18 paired MAE improvements, median gain4.038 RGB8 levels.
 1512 metric checks против сохранённых RGBA, max difference7.11e−15; input/model guards,

@@ -6,9 +6,10 @@
 
 Параметры ниже зафиксированы до получения новой подтверждающей выборки. Numerical E1 input/observation registry сформирован и серия выполнена: [[validation/THESIS_E1]].
 Scene seed mapping и explicit E1 pose/profile registry E2/E3 подготовлены: [[validation/THESIS_E3]].
-29.10.2026 получены18 новых captures/references, image-quality часть E3 выполнена;
-E2 и отдельный performance profile остаются открытыми. Результаты и mask concrete kernel:
-[[validation/THESIS_E3]]. Параметры плана не менялись после просмотра новых outputs.
+29.10.2026 получены18 новых captures/references, выполнены image-quality E2/E3 и отдельный
+PC performance profile. Результаты: [[validation/THESIS_E2]], [[validation/THESIS_E3]],
+[[validation/THESIS_PC_PERFORMANCE]]. Параметры плана не менялись после просмотра новых
+outputs. Аппаратная приёмка остаётся отдельным этапом.
 Пилот [[validation/THESIS_CORE_PILOT]] использует исторические inputs и проверяет только
 исполнение. Изменение параметров/правил после просмотра новых outputs требует следующей версии
 и явного отделения прежнего exploratory результата. Внешняя регистрация не заявляется.

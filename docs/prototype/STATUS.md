@@ -1,5 +1,13 @@
 # Состояние прототипа и границы подтверждения
 
+29.10.2026: E2 и отдельный PC profile завершены (108 quality/216 timing conditions).
+Native quality guards и независимый audit пройдены, CPU/RSS получены через library.
+CLI и оба Qt GUI на новом Blender replay прошли smoke; full Linux CTest70/70 за194,94с.
+Исправлен strict TCP-port parser симулятора. Core synthetic исследование завершено,
+остаётся итоговая редакция и target SDK/реальные камеры/экран. Ни offscreen GUI, ни MOCK
+не подтверждают аппаратную приёмку. [[validation/THESIS_E2]],
+[[validation/THESIS_PC_PERFORMANCE]], [[validation/THESIS_DEMO]].
+
 29.10.2026: image-quality E3 выполнена на18 новых Blender captures:54 native conditions,
 18/18 парных улучшений MAE estimated относительно nominal, median gain4.038 RGB8 levels.
 1512 independently recomputed metric values, max difference7.11e−15. В pipeline нет

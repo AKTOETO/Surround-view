@@ -1,0 +1,106 @@
+{
+  "schema_version": 1,
+  "scope": "Linux_native_server_library_CLI_two_GUI_replay_smoke",
+  "actual_renderer": "NVIDIA GeForce RTX 5070 Ti/PCIe/SSE2",
+  "client_received": 64,
+  "client_present_submit": 63,
+  "simulator_frame_smoke_exit": 0,
+  "server_shutdown_clean": true,
+  "initial_state": {
+    "command_id": "1",
+    "accepted": true,
+    "reason": "ok",
+    "state_revision": "0",
+    "paused": false,
+    "azimuth_rad": 0.8,
+    "elevation_rad": 0.35,
+    "distance_m": 8.5,
+    "fusion_mode": "edge_feather",
+    "diagnostic_view": "color",
+    "output_product": "final_frame",
+    "config_revision": "0",
+    "source_type": "replay",
+    "experiment_lease": {
+      "state": "idle",
+      "lease_id": "",
+      "deadline_monotonic_ns": "0",
+      "error": ""
+    },
+    "fusion": {
+      "mode": "edge_feather",
+      "diagnostic": "color",
+      "edge_width_px": 24.0,
+      "angle_power": 2.0,
+      "smoothness_weight": 0.1,
+      "pyramid_levels": 4,
+      "pyramid_boundary": "normalized"
+    },
+    "surface": {
+      "type": "dome_floor_v1",
+      "dome_radius_m": 14.0,
+      "dome_latitude_cells": 14,
+      "dome_longitude_cells": 64,
+      "floor_radial_cells": 12
+    }
+  },
+  "after_orbit": {
+    "command_id": "1",
+    "accepted": true,
+    "reason": "ok",
+    "state_revision": "1",
+    "paused": false,
+    "azimuth_rad": 1.7000000000000002,
+    "elevation_rad": 0.85,
+    "distance_m": 8.5,
+    "fusion_mode": "edge_feather",
+    "diagnostic_view": "color",
+    "output_product": "final_frame",
+    "config_revision": "0",
+    "source_type": "replay",
+    "experiment_lease": {
+      "state": "idle",
+      "lease_id": "",
+      "deadline_monotonic_ns": "0",
+      "error": ""
+    },
+    "fusion": {
+      "mode": "edge_feather",
+      "diagnostic": "color",
+      "edge_width_px": 24.0,
+      "angle_power": 2.0,
+      "smoothness_weight": 0.1,
+      "pyramid_levels": 4,
+      "pyramid_boundary": "normalized"
+    },
+    "surface": {
+      "type": "dome_floor_v1",
+      "dome_radius_m": 14.0,
+      "dome_latitude_cells": 14,
+      "dome_longitude_cells": 64,
+      "floor_radial_cells": 12
+    }
+  },
+  "server_config_revision_unchanged": true,
+  "source_fingerprint": "d2e0d802f324ff66d0542ed38ad974bdbc57f6d0a57cce6d5e30231db4442fd1",
+  "files": {
+    "camera0_0000.ppm": "8ea10eb60d7c5e5824a16d85b2fbdc4ea73a95b7843a1e45d628d14b21c159f8",
+    "camera1_0000.ppm": "64c0cf3c00efae5c8e9b2ab64a3a55334738cebbe7b95b4fbedf045ffa0472de",
+    "camera2_0000.ppm": "41d089710d17172570cc2dc46d416bf10a83b5abc9942dc3e736bd5f6e09b72f",
+    "camera3_0000.ppm": "80c454b418684821594d73c0f90fd65ad59fb57d75281c4281041f7ed810befb",
+    "client.log": "07e2e48c3207789a2787dd2f5a64c647d5e04702996af1d70ae7947efbb00c49",
+    "config.json": "0d1c974d4e1840df22a3a5bc9951e67490fd05cd1aabcbfe7dc83019fee37690",
+    "manifest.json": "ed2959996df161bbc8ef6758fd7fcfa5c0d74d2615cd42ed1a246d13a3a91a89",
+    "orbit.json": "96fc6e113cfd6d2becf8f79922229d7fb88f228f16a1a263ba36b23739898ff3",
+    "server.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "simulator.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "state-after.json": "96fc6e113cfd6d2becf8f79922229d7fb88f228f16a1a263ba36b23739898ff3",
+    "state-before.json": "662324777a5a6749074b9e7851bfb5367496b5b775e1a1ff0c701a10de240bd7",
+    "trace.jsonl": "13f50cf5eca268be646861546366156d74e8ff4d3e0289714e21e84ad7c62df7"
+  },
+  "limitations": [
+    "offscreen software Qt presentation, not physical display latency",
+    "single static recorded scene, not driving physics",
+    "sequential sessions, not multi-client acceptance",
+    "Linux Qt6, not target Aurora Qt5 validation"
+  ]
+}

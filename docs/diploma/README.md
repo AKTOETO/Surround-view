@@ -1,5 +1,12 @@
 # Текст диссертации
 
+29.10.2026: §§4.98–4.99 закрывают ограниченные E2 и PC performance profile:108 quality
+conditions,216 timing conditions по30 samples, CPU/RSS через server telemetry/library.
+Глава5 содержит единое заключение E1–E3 с ограничениями. Сквозной replay через оба GUI
+проверен; полный CTest70/70. Дальше редакция текста/исторических приложений и аппаратный
+этап, новые research families не нужны. [[validation/THESIS_E2]],
+[[validation/THESIS_PC_PERFORMANCE]], [[validation/THESIS_DEMO]].
+
 29.10.2026: §4.97 содержит завершённую image-quality часть E3, таблицу и24-панельный
 рисунок новых Blender/server результатов.54 conditions,18 paired cells; estimated
 calibration снижает RGB MAE в18/18, median gain4.038 levels. Independent native/offline
