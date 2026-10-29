@@ -8,6 +8,7 @@ import sys
 import tempfile
 from types import SimpleNamespace
 import unittest
+from test_thesis_e3 import E3FixtureTests
 
 import numpy as np
 from PIL import Image
